@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+<h2>{{title}}</h2>
+<hr/>
+{% if not participants %}
+	<h3>{% trans "No match." %}</h3>
+	<hr/>
+	<a class="btn btn-primary" id="focus" href="{{path}}">{% trans "OK" %}</a>
+	<a class="btn btn-primary" href="{{path}}ParticipantAdd/{{competition.id}}">{% trans "Add by Name" %}</a>
+{% else %}
+<table>
+<thead>
+	<tr>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Bib" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Role" %}</th>
+		<th>{% trans "Category" %}</th>
+		<th>{% trans "Confirmed" %}</th>
+		<th>{% trans "Paid" %}</th>
+		{% if competition.using_tags %}
+			<th>{% trans "Tag" %}</th>
+			<th>{% trans "Tag2" %}</th>
+		{% endif %}
+		<th>{% trans "From" %}</th>
+		<th class="hidden-print"></th>
+	</tr>
+</thead>
+<tbody>
+	{% for p in participants %}
+		{% with h=p.license_holder %}
+		<tr onclick="jump('{{cancelUrl}}ParticipantEdit/{{p.id}}/');">
+			<td>{{p.license_holder.full_name}}</td>
+			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+			<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
+			<td>{{h.get_gender_display}}</td>
+			<td>{{p.get_role_display}}</td>
+			<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
+			<td>
+					{% if p.role == 110 %}
+						{% if p.confirmed %}
+							<span class="label label-default"><span class="glyphicon glyphicon-ok"></span></span>
+						{% else %}
+							<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+						{% endif %}
+					{% endif %}
+			</td>
+			<td>
+				{% if p.role == 110 %}
+					{% if p.paid %}
+						<span class="label label-default"><span class="glyphicon glyphicon-ok"></span></span>
+					{% else %}
+						<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+					{% endif %}
+				{% endif %}
+			</td>
+			{% if competition.using_tags %}
+				<td>{{p.tag}}</td>
+				<td>{{p.tag2}}</td>
+			{% endif %}
+			<td>{{h.location}}</td>
+			<td class="hidden-print">
+				<a class="btn btn-primary" href="{{cancelUrl}}ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
+			</td>
+		</tr>
+		{% endwith %}
+	{% endfor %}
+</tbody>
+</table>
+<hr/>
+<a class="btn btn-primary hidden-print" id="focus" href="{{path}}">{% trans "OK" %}</a>
+{% endif %}
+{% endblock content %}

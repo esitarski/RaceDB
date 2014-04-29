@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<h3><strong>{{participant.license_holder.full_name}}</strong>: {{participant.category.full_name}}</h3>
+<h3>{% trans "Competition Age" %}: <strong>{{competition_age}}</strong></h3>
+<hr/>
+{% crispy form %}
+<hr/>
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th>{% trans "Code" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Description" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	<tr onclick="jump('{{path}}ParticipantCategorySelect/{{participant.id}}/0/');">
+		<td>----</td>
+		<td>----</td>
+		<td>----</td>
+		<td>
+			<a class="btn btn-success" href="{{path}}ParticipantCategorySelect/{{participant.id}}/0/">{% trans "Select" %}</a>
+		</td>
+	</tr>
+	{% for c in categories %}
+		<tr onclick="jump('{{path}}ParticipantCategorySelect/{{participant.id}}/{{c.id}}/');">
+			<td>{{c.code}}</td>
+			<td>{{c.get_gender_display}}</td>
+			<td>{{c.description}}</td>
+			<td>
+				<a class="btn btn-success" href="{{path}}ParticipantCategorySelect/{{participant.id}}/{{c.id}}/">{% trans "Select" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock content %}

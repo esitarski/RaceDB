@@ -1,0 +1,205 @@
+[TOC]
+
+# Tutorial
+Welcome to RaceDB!
+
+RaceDB was designed to fill the "empty space" between on-line registration systems and results systems.
+It is designed to streamline competitor confirmation, team, category selection, bib and rfid tag assignment.
+
+RaceDB is intended to be used from race-to-race.  Data entered for one race for License Holders, Teams, etc. can be reused for future races.
+
+It is designed to be multi-user, fast, paperless, and "prep-free".  As a web application, it supports any number of connections at the race.  You are free to organize your check-in anyway you wish - one station at small races, or many stations for large ones.
+As is supports barcode readers to quickly identify competitors, it is easy for competitors to move from one station to the next in the check-in process.  It supports electronic signature pads for sign-in, and it supports the Impinj RFID reader to write tags on-the-fly as they are handed out.
+
+Of course, RaceDB guarantees unique bib numbers and chip tags.
+
+The output of RaceDB is start lists for each event, as well as a perfectly formatted Excel file for CrossMgr.  You can close registration a few minutes before the races starts, generate the Excel file and start the race with confidence that nothing was missed.
+
+Unlike manual systems, RaceDB supports competitor check-in for any race and category at any time before the race start.
+
+RaceDB was designed to be fast and clean.  Understanding these will save you a lot of time and frustration.
+Review the [Screen Navigation and Conventions][].  After you have done so, go back to this Tutorial.
+
+## The Database
+
+RaceDB stores all your data in a file called __RaceDB.sqlite3__.
+
+This is a standard sqlite database file.  If you want to, you can download sqlite and read it directly yourself, or access it from Python, PHP, Java or any other language of your choice.
+
+Make sure you make a backup of this file first if you are trying to change the database yourself and are worried that something might go wrong.
+
+It is also important to make regular backups and keep them off-site.  This is the only file you need to backup.
+
+## The Command Line
+
+Being a web/database application, RaceDB has a command line.  You need to open a cmd/terminal, "cd" to the RaceDB install directory and type commands.  For example:
+
+* __python manage.py --help__: Get help on all commands.  You will be specifically interested in the *core* commands.
+* __python manage.py launch --help__: Get help on the *launch* command.  Interesting options include *--host*, *--port* and *--rfid_reader*.
+* __python manage.py launch --rfid_reader__: Launch RaceDB and connect to an RFID reader.
+
+You can create your own shortcuts to commands by writing .bat or shell files.  For example, if you want your own command to launch RaceDB with the RFID reader, and not automatically launch a browser, you can make a file as follows called "launch_rfid.bat" (or "launch_rfid.sh"):
+
+    python manage.py launch --rfid_reader --no_browser
+
+Running the script will launch RaceDB with your options.
+
+The underlying Django system has many commands for managing your database, creating backups, etc.  See [here](https://docs.djangoproject.com/en/1.6/ref/django-admin/) for full details.  There are some dangerous commands in there, so be careful.
+
+Of particular interest are:
+
+* __dumpdata__: Dumps all the database data in json formst.  Useful to transfer data between databases and to create database-independent backups
+* __loaddata__: Loads data into the database from a file created with *dumpdata*.
+
+There are additional commands provided by [django-extensions](http://django-extensions.readthedocs.org/en/latest/).
+
+Django is a large and comprehensive framework with lots of functionality.
+
+## Structure Data and Dynamic Data
+
+RaceDB keeps track of data from from race to race to minimize data input.
+It also needs to keep track of race structure, including:
+
+* [Category Formats][]
+* [Number Sets][]
+* [Race Classes][]
+* [Disciplines][]
+
+It is important to remember that all Competitions with their Category Formats, Mass Start Events and Waves are built on these lists.
+
+If you edit this underlying data, you are, in effect, changing it for all Competitions that are using it.  As the saying goes "With great power comes great responsibility".
+
+This makes it easy to fix spelling errors or add a Category to a series of Races.
+
+However, be mindful that RaceDB has __cascading delete__.
+This means that if you _delete_ a Category Format (for example), you will also delete all other data that uses it (for example, Competitions).
+Be careful.
+
+## Configuring Your First Competition
+
+There are a number of elements that you need to configure for a Competition.  You only have to go through this once for each race format - once you have configured a Competition, you can "Copy" the Competition and re-use it.
+
+### New Competition
+
+Launch RaceDB.  Make sure it is in a separate window from this tutorial - this will make it easier to follow along with the Tutorial.
+
+In RaceDB, press the "Competitions" button.  This shows a list of Competitions, which is nothing because you don't have any yet.
+
+Notice how the Breadcrumb buttons at the top of the screen show you where you are?
+
+Just for fun, click on the QR-Code icon at the right of the breadcrumbs.  If you had an iPad connected to the wifi with this server, you could get to this page easily by taking a picture of this QR-Code.  Click "OK" to get back to the Competitions screen.
+
+Now, click on "New Competition".
+
+You will see a number of fields you might expect about a Competition.
+
+But, what is a "Category Format"?  A "Category Format" is a set of categories to use for the race.  Use the existing Category Formats, or define your own (see [Category Formats][]).
+
+* Select "UCI - Road Reference" as the Category Format.
+* Set the Name to "Great Competition".
+* Set the Organizer to "Great Organizer".
+
+The rest of the fields are optional - for a real competition, try to fill in as many fields as possible.
+
+* Pick "Road" for Discipline.  You can customize these - see [Disciplines][].  
+* Pick "Regional" as Race Class.
+* Set the "Start Date" as today.
+
+Then, set all of "Using Tags/Chip Reader", "Use Competitor's Existing Tags", and "Use Competitor's Existing Bib".
+
+Now, press "OK".
+
+### Competition Dashboard
+
+This brings you to the Competition Dashboard.  The Dashboard shows you everything you need to know about your competition in one place.
+
+A competition consists of a number of Mass Start Events, and a set of Category Numbers.
+
+The structure looks like this:
+
+{% include "CompetitionStructure.md" %}
+
+#### Category Numbers
+
+Category Numbers are the number ranges allows for each category or a group of categories.
+
+Press the "New" button after "Category Numbers".
+
+This shows you a screen with all the Categories in the "UCI - Road Reference" Category Format.
+
+In the Categories column, select the RMU and RME categories.  Then, set the number range on the right to "1-199".  Then, press OK.
+
+This assigns the numbers 1-199 to the Men Under 23 and Men Elite categories.  This means that both of these categories can be allocated numbers from the same number pool in the range 1-199.  If you wanted to reserve a separate number range for RMU competitors different from RME competitors, that is OK too.  The allocation of number ranges to Categories is separate from how Categories are started together in a race.
+
+Press the "New" button to create another Category Numbers range.  On the right, select "RWMA", "RWMB" and "RWMC" - all the master's women.  Change the number range on the right to 300-399 and press OK.
+
+Assigning every Category its own set of Category Numbers is the most flexible way to do the allocation, however, it can be the most wasteful of numbers if you set the ranges too large.
+
+#### Mass Start Events
+
+A Mass Start Event is a group of competitors all on course together.  All the bib numbers and tags must be unique.  A Mass Start Event can have a number of start waves with a "Start Offset" - the time gap from the first start wave.
+
+A competitor normally participates in one Mass Start Event in his/her category, however, it is possible to enter a competitor for two different categories at the same Competition (more on that later).
+
+Next to "Mass Start Events", press "New".
+
+Enter "Morning Race" as the name, then press "Save".  This will reveal the "New Start Wave" button.  Press it.
+
+Select "RMU" and "RME" as the categories in the first wave, and press OK.
+
+Press "New Start Wave" again.
+This time, select "RWMA", "RWMB", "RWMC", and press OK.
+
+You have just configured two start Waves for the Morning Race.  The first wave is U23 and Elite Men, the second wave is Masters Women.
+Press OK to return to the Race Dashboard.
+
+#### Entering Participants
+
+Since RaceDB now knows the Mass Start Events and Waves by Category, it can place competitors in those waves automatically.
+
+To show how this works, let's enter a Participant.  Press the "Show Participants / Manual Entry" button on the Race Dashboard.
+This shows the Participant list, which is empty as we have not participants.
+
+Now, press the "Add Participant Manually" button.
+
+This brings up a list of the License Holders.  Type in "contador" in the Search text and press Enter.
+This should find Alberto Contador.  Add him to the race by clicking on the row.
+
+Alberto now appears as a Participant, but with some information missing.  Click on the the Category row, then chose "RME" (Road Men Elite) from the category list.
+
+Notice that Alberto now has a "Start 1: 10 a.m. Wave A - Morning Race <date>".  RaceDB figures this out based on the Category.
+
+To show how this works go to the "Competition Dashboard" (press that button in the breadcrumbs at the top of the screen).
+Then click on the "Edit" button of the 10am Mass Start.  Change the start time to 11:00 (just edit it), and press OK.
+
+Return to "Show Participants / Manual Entry", then click on Alberto's row.  Alberto's start is updated to the new start wave time automatically.
+
+You can design your start waves and number ranges *after* getting pre-registration competitors, and *before* assigning bib numbers.
+It is easy to combine starts and waves to match the competitor count by category.
+
+##### Bib Number
+
+To assign Alberto a Bib number, click on that row.  This brings up a list of all the available numbers.  Let's give Alberto bib #1 by clicking on it.
+
+Click on the "Bib" again.  Notice that #1 is no longer available.  Move the mouse pointer over #1 - notice the name shown in the hover-text? 
+The hover-text shows the name of competitor with that bib.
+
+##### Chip Tag
+
+To assign Alberto a Chip Tag, click on that row.  To have RaceDB generate a Tag, press "Auto Generate Tag".
+"Auto Generate Tag" uses the Tag Format as defined in [System Info][], and the database's Licence Holder record id, which is unique for all License Holders.
+
+"Write Tag" writes the tag using the RFID reader.  Before you can use this, you must specify the Antenna to write to.  Of course, the RFID reader must be connected to the network, and RaceDB must have been launched with the "--rfid_reader" option.
+
+For more details, see [Hardware and Devices][].
+
+
+#### Entering a License Holder More than Once, but in Different Categories
+
+Sometimes it is possible for a competitor to ride in more than one race in two Categories.  For example, a rider might race in his Master's category in the morning races, then race in his Ability category in the afternoon.  Or a rider may race his regular Ability category, then "race up" in the next Ability category later in the day.
+
+This often involves paying a separate entry fee for participating in each race.
+
+This is possible in RaceDB.  After entering the License Holder in his/her primary Category, you can enter the same License Holder again in a different category as another Participant.
+
+You may need to issue another Bib number to the rider.  If you have issued Chip Tags and used the "Auto Generate Tag" feature, you will not need to re-issue tags.  All tags generated with "Auto Generate" are unique across all License Holders and are carried-forward to multiply-entered License Holders.

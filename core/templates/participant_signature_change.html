@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="{% static "js/scriptel-easyscript.js" %}"></script>
+{% endblock srcjavascript %}
+
+{% block onload %}
+	document.getElementById("div_id_signature").style.display = 'none';
+
+	var escript = new ScriptelEasyScript();
+	escript.addSignatureListener(document.body);
+	escript.registerSignatureCallback(function(sig) {
+		var signature_text = document.getElementById("id_signature");
+		signature_text.value = JSON.stringify( sig );
+		document.getElementById("id_signature_form").submit();
+	});
+{% endblock onload %}
+
+{% block content %}
+
+<h2>{{title}}</h2>
+<h2>{% trans "Participant"%}: <strong>{{participant.license_holder.full_name}}</strong></h2>
+{% if participant.team %}
+	<h2>{% trans "Team"%}: <strong>{{participant.team.name}}</strong>
+	</h2>
+{% endif %}
+{% if participant.category %}
+	<h2>{% trans "Category" %}: <strong>{{participant.category.code}}:</strong>
+	{{participant.category.get_gender_display}}, {{participant.category.description}}
+	</h2>
+{% endif %} 
+<hr/>
+<h3>
+{% trans "Ask the participant to sign on the signature pad, then use the Pen to press OK." %}</br>
+</h3>
+<hr/>
+{% crispy form %}
+{% endblock content %}

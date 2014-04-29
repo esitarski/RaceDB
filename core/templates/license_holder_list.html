@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+<table class="table table-striped table-hover">
+{% spaceless %}
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Last" %}</th>
+		<th>{% trans "First" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Date of Birth" %}</th>
+		<th>{% trans "City" %}</th>
+		<th>{% trans "State/Prov" %}</th>
+		<th>{% trans "Nationality" %}</th>
+		<th>{% trans "License" %}</th>
+		<th>{% trans "UCI Code" %}</th>
+		{% if isEdit %}
+		<th class="hidden-print"></th>
+		{% endif %}
+	</tr>
+</thead>
+{% endspaceless %}
+{% spaceless %}
+<tbody>
+	{% for h in license_holders %}
+		{% if isEdit %}
+		<tr onclick="jump('{{path}}LicenseHolderEdit/{{h.id}}/');">
+		{% else %}
+		<tr>
+		{% endif %}
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{h.last_name}}</td>
+			<td>{{h.first_name}}</td>
+			<td>{{h.get_gender_display}}</td>
+			<td>{{h.date_of_birth}}</td>
+			<td>{{h.city}}</td>
+			<td>{{h.state_prov}}</td>
+			<td>{{h.nationality}}</td>
+			<td>{{h.license_code}}</td>
+			<td>{{h.uci_code}}</td>
+			{% if isEdit %}
+			<td class="hidden-print">
+				<a class="btn btn-warning" href="{{path}}LicenseHolderDelete/{{h.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-success" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a>
+			</td>
+			{% endif %}
+		</tr>
+	{% endfor %}
+</tbody>
+{% endspaceless %}
+</table>
+<hr/>
+({% trans "maximum 200 results" %})
+{% endblock content %}

@@ -1,0 +1,37 @@
+[TOC]
+
+# Screen Navigation and Conventions
+
+## Getting Around the Screen
+
+RaceDB is a web-based application that runs in a web browser.  It is designed to be quick and easy and follows web conventions.
+
+### Breadcrumbs
+
+At the top of the screen are the "breadcrumbs".  These show you where you are in the program.  To return to any higher-level screen, you can click on the button to return to it.
+
+Caution: using breadcrumb buttons for navigation is the equivalent of doing a Cancel, then jumping to the other screen.  If you have made changes in the current screen, always press Save or OK to commit those changes first.
+
+#### QR-Code for the Current Page
+At the far right of the breadcrumb list is the QR-Code button.  Press it to create a QR-Code of the current screen.  This makes it easy to get volunteers' devices configured to the pages in the application - just have them take a picture of the QR-Code and go to the encoded url on their device.
+
+### Fields with a "*"
+On some screens, there are fields with a "*" next to the field name.  This means that this is a required field.
+
+### Clicking on a Row - Same as Pressing the "Green" Button
+Clicking *anywhere* on a row in a table will trigger the action button shown in Green, which is the most common action.  This makes it much quicker to navigate through the system for the most common operations.
+
+### Amber Means Caution
+Any operation that can't be undone is colored amber.  This applies to "Delete" buttons as well as "Cancel" buttons (Cancel can lose any data you have entered in the form).
+
+### Delete is Always Confirmed
+RaceDB will always confirm the data to delete before it actually deletes it.  So, if you press the Delete button by mistake, you can always Cancel out of the delete confirmation screen.
+
+### Save Button
+Saves the current data and stays on the screen.
+
+### Cancel Button
+Does not save the current data, moves to the last screen.
+
+### OK Button
+The equivalent of Save and then Cancel, all in one button.

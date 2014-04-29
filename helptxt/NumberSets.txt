@@ -1,0 +1,22 @@
+[TOC]
+
+# Number Sets
+
+__Number Sets__ allow you to track existing Bib numbers handed out to riders from Competition to Competition.
+The __Number Set__ can be configured in the Competition edit screen.
+
+For example, say you are running an MTB series and a Road series.
+Let's pick a particular rider name Pat.
+
+Pat rides in one category in MTB and a different category in Road.
+Naturally, Pat has a number for each discipline used for each race for the entire season.  Say 117 for MTB and 207 for Road.
+
+When Pat comes to a MTB race, we want to use the MTB bib number: 117.
+And, when Pat comes to a Road race we want to use the Road bib number: 207.
+
+This is accomplished by using a different __Number Set__ for each race type.
+
+Define a __Number Set__ called "MTB Numbers" and another __Number Set__ called "Road Numbers".  Then, associate each __Number Set__ with each race in each series, respectively.
+
+Now, RaceDB can correctly find the different Bib numbers.
+

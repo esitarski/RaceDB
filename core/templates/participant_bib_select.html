@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<h3><strong>{{participant.license_holder.full_name}}</strong><br/>
+<br/>
+{{participant.team.full_name}}<br/>
+{{participant.category.full_name}}
+{% if participant.bib %}<br/><br/>Bib: <strong>{{participant.bib}}</strong>{% endif %}
+</h3>
+<hr/>
+<style>
+.btn-bib {
+	font-size: 150%;
+	font-weight: bold;
+	margin: 2px;
+}
+.badge-bib {
+	font-size: 140%;
+	margin: 10px;
+}
+</style>
+{% spaceless %}
+{% if participant.bib %}
+	<a href="./ParticipantBibSelect/{{participant.id}}/0/" class="btn btn-default btn-bib">{% trans "No bib" %}</a>
+{% endif %}
+{% if category_numbers_defined %}
+	{% for b in bibs %}
+		{% if b.license_holder %}
+			<span class="badge badge-bib" title="{{b.license_holder.full_name}}">{{b.bib}}</span>
+		{% else %}
+			<a href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/" class="btn btn-default btn-bib">{{b.bib}}</a>
+		{% endif %}
+	{% endfor %}
+	<hr/>
+	<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+{% else %}
+	<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "No Category Numbers Defined" %}</a>
+	<hr/>
+	{% trans "Return to the Competition and define Numbers for this Category." %}<br/>
+	{% trans "For more info, see the" %} <a href="{% static "docs/Tutorial.html" %}" target="_blank">{% trans "Tutorial" %}</a>.
+{% endif %}
+{% endspaceless %}
+{% endblock content %}

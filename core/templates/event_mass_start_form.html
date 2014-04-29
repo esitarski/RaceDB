@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<h2 class="hidden-print">{{title}}</h2>
+<h2><strong>{{instance.competition.name}}</strong>: {{instance.competition.date_range_str}}</h2>
+<h2 class="visible-print"><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
+<hr class="hidden-print"/>
+{% crispy form %}
+<hr/>
+{% spaceless %}
+{% with wave_set=instance.wave_set.all %}
+	{% if wave_set %}
+		<h2 class="visible-print">{% trans "Waves" %}</h2>
+		<table class="table table-striped table-hover">
+		<thead>
+			<tr>
+				<th>{% trans "Wave" %}</th>
+				<th>{% trans "Start Offset" %}</th>
+				<th>{% trans "Categories" %}</th>
+				<th>{% trans "Starters" %}</th>
+				{% if isEdit %}
+					<th class="hidden-print"></th>
+				{% endif %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for w in wave_set %}
+				<tr onclick="jump('./WaveEdit/{{w.id}}/');">
+					<td>{{w.name}}</td>
+					<td>{{w.start_offset}}</td>
+					<td>{{w.category_text}}</td>
+					<td>{{w.get_participants.count}}</td>
+					{% if isEdit %}
+						<td class="hidden-print">
+							<a class="btn btn-warning hidden-print" href="./WaveDelete/{{w.id}}/">Delete</a>&nbsp;
+							<a class="btn btn-success hidden-print" href="./WaveEdit/{{w.id}}/">Edit</a>
+						</td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+		</tbody>
+		</table>
+	{% endif %}
+{% endwith %}
+<style>
+.badge-bib {
+	font-size: 140%;
+	margin: 3px;
+}
+</style>
+{% with duplicate_bibs=instance.get_duplicate_bibs %}
+	{% if duplicate_bibs %}
+		<hr/>
+		<h2>{% trans "Duplicate Bib Numbers:" %}</h2>
+		{% for bib in duplicate_bibs %}
+			<span class="badge badge-bib">{{bib}}</span>
+		{% endfor %}
+	{% endif %}
+{% endwith %}
+{% with potential_duplicate_bibs=instance.get_potential_duplicate_bibs %}
+	{% if potential_duplicate_bibs %}
+		<h3>{% trans "Potential Duplicate Bib Numbers:" %}</h3>
+		{% for categoriesLeft, categoriesRight, bibs in potential_duplicate_bibs %}
+			<h3>{{categoriesLeft}} &hArr; {{categoriesRight}}</h3>
+			{% for bib in bibs %}
+				<span class="badge badge-bib">{{bib}}</span>
+			{% endfor %}
+			<br/>
+		{% endfor %}
+	{% endif %}
+{% endwith %}
+{% endspaceless %}
+{% endblock content %}

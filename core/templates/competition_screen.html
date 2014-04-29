@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load get_field_name %}
+{% load yes_no %}
+
+<h2>{{title}}</h2>
+<hr/>
+<div class="panel panel-default">
+	<div class="panel-title">
+		{% trans "Competition Details"%}
+		<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{c.id}}">{% trans "Change" %}</a>
+	</div>
+	<div class="row">
+		<div class="col-md-4">{{competition.name}}</div>
+		<div class="col-md-4">{(competition.description}}</div>
+		<div class="col-md-4">{{category_format}}</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">{{competition.city}}</div>
+		<div class="col-md-4">{{competition.stateProv}}</div>
+		<div class="col-md-4">{{competition.country}}</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">{{competition.organizer}}</div>
+		<div class="col-md-4">{{competition.organizer_email}}</div>
+		<div class="col-md-4">{{competition.organizer_phone}}</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">{{competition.discipline}}</div>
+		<div class="col-md-4">{{competition.race_class}}</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">{{competition.start_date}}</div>
+		<div class="col-md-4">{{competition.number_of_days}}</div>
+		<div class="col-md-4">{{competition.distance_unit}}</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">
+			{{competition|get_field_name:"using_tags"}}: <strong>{{competition.using_tags|yes_no}}</strong>
+		</div>
+		<div class="col-md-4">
+			{{competition|get_field_name:"use_existing_tags"}}: <strong>{{competition.use_existing_tags}}</strong>
+		</div>
+		<div class="col-md-4">
+			{{competition|get_field_name:"use_existing_bibs"}}: <strong>{{competition.use_existing_bibs}}</strong>
+		</div>
+	</div>
+</div>
+<hr/>
+<h2>{% trans "Mass Start Events" %}</h2>
+<table class="table table-striped table-hover">
+<thead>
+	<tr>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Type" %}</th>
+		<th>{% trans "Waves" %}</th>
+		<th>{% trans "Date" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for e in events %}
+		<tr>
+			<td>{{e.name}}</td>
+			<td>{{e.get_event_type_display}}</td>
+			<td>{{e.wave_text}}</td>
+			<td>{{e.date_time}}</td>
+			<td></td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+<h2>{% trans "Category Numbers" %}</h2>
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th>{% trans "Categories" %}</th>
+		<th>{% trans "Numbers" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for c in category_numbers %}
+		<tr>
+			<td>{{c.category_list}}</td>
+			<td>{{c.range_str}}</td>
+			<td></td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock content %}

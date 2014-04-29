@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<hr class="hidden-print"/>
+{% crispy form %}
+<hr class="hidden-print"/>
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Name" %}</th>
+		<th class="hidden-print"></th>
+		<th class="hidden-print"></th>
+	</tr>
+</thead>
+<tbody>
+	{% for r in disciplines %}
+		<tr onclick="jump('{{path}}DisciplineEdit/{{r.id}}/');">
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{r.name}}</td>
+			<td class="hidden-print">
+				<a class="btn btn-warning" href="{{path}}DisciplineDelete/{{r.id}}/">Delete</a>
+				<a class="btn btn-success" href="{{path}}DisciplineEdit/{{r.id}}/">Edit</a>
+			</td>
+			<td class="hidden-print">
+				<div class="btn-group">
+					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}DisciplineUp/{{r.id}}/">
+						<span class="glyphicon glyphicon-arrow-up"></span></a> {% endif %}
+					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}DisciplineDown/{{r.id}}/">
+						<span class="glyphicon glyphicon-arrow-down"></span></a> {% endif %}
+				</div>
+			</td>
+
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock content %}

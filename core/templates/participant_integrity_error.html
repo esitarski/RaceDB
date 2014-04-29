@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+
+<h2>{{title}}</h2>
+
+<h3>{% tran "Integrity Error:" %} {{conflict_explanation}}</h3>
+
+{% spaceless %}
+<h2>{% trans "Participant" %}</h2>
+{% with p=participant %}
+<table class="table table-hover table-condensed">
+	<tr><td>{% trans "Name" %}</td><td><strong>{{p.license_holder.full_name}}</strong></td></tr>
+	<tr><td>{% trans "Category" %}</td><td><strong>{{p.category.code}}</strong></td></tr>
+	<tr><td>{% trans "Bib" %}</td><td><strong>{{p.bib}}</strong></td></tr>
+	{% if competition.using_tags %}
+		<tr><td>{% trans "Tag"%}</td><td><strong>{{p.tag}}</td></tr>
+	{% endif %}
+</table>
+{% endwith %}
+
+<h2>{% trans "Conflict" %}</h2>
+{% with p=participant %}
+<table class="table table-hover table-condensed">
+	<tr><td>{% trans "Name" %}</td><td><strong>{{p.license_holder.full_name}}</strong></td></tr>
+	<tr><td>{% trans "Category" %}</td><td><strong>{{p.category.code}}</strong></td></tr>
+	<tr><td>{% trans "Bib" %}</td><td><strong>{{p.bib}}</strong></td></tr>
+	{% if competition.using_tags %}
+		<tr><td>{% trans "Tag"%}</td><td><strong>{{p.tag}}</td></tr>
+	{% endif %}
+</table>
+{% endwith %}
+{% endspaceless %}
+
+<hr/>
+<a class="btn btn-primary" href="{{path}}">{% trans "OK" %}</a>
+{% endblock content %}

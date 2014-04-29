@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load get_field_name %}
+{% load yes_no %}
+
+<style>
+#dashboard {
+	font-size: 125%;
+}
+</style>
+
+<div class="panel panel-default" id="dashboard">
+	<div class="panel-heading">
+		<div class="panel-title">
+			<h2><strong>{{competition.name}}:</strong> {% trans "Dashboard" %}</h2>
+		</div>
+	</div>
+	<div class="panel-body">
+		<div class="row">
+			<div class="col-md-12">
+				<strong>{{competition.name}}</strong>{% if competition.description %}, {{competition.description}}{% endif %},
+				{{competition.category_format.name}}</div>
+		</div>
+		<div class="row">
+			<div class="col-md-4">{% trans "by" %}: <strong>{{competition.organizer}}</strong></div>
+			<div class="col-md-4">{{competition.organizer_email}}</div>
+			<div class="col-md-4">{{competition.organizer_phone}}</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">{{competition.city}}, {{competition.stateProv}}, {{competition.country}}</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">{{competition.discipline}}, {{competition.race_class}}</div>
+		</div>
+		<div class="row">
+			<div class="col-md-4">
+				<strong>{{competition.start_date}}</strong>
+			</div>
+			<div class="col-md-4">
+				{{competition|get_field_name:"number_of_days"}}: <strong>{{competition.number_of_days}}</strong>
+			</div>
+			<div class="col-md-4">
+				{{competition|get_field_name:"distance_unit"}}: <strong>{{competition.get_distance_unit_display}}</strong>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-4">
+				{{competition|get_field_name:"using_tags"}}: <strong>{{competition.using_tags|yes_no}}</strong>
+			</div>
+			<div class="col-md-4">
+				{{competition|get_field_name:"use_existing_tags"}}: <strong>{{competition.use_existing_tags|yes_no}}</strong>
+			</div>
+			<div class="col-md-4">
+				{{competition|get_field_name:"number_set"}}: <strong>{{competition.number_set.name}}</strong>
+			</div>
+		</div>
+		<div class="row hidden-print">
+			<div class="col-md-12">
+				<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+				&nbsp;&nbsp;
+				<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{competition.id}}">{% trans "Edit" %}</a>
+				&nbsp;&nbsp;
+				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;{% trans "Show Participants / Manual Entry" %}</a>
+				&nbsp;&nbsp;
+				<a class="btn btn-success" href="{{path}}ParticipantScan/{{competition.id}}"><span class="glyphicon glyphicon-barcode"></span>&nbsp;&nbsp;{% trans "Barcode Entry" %}</a>
+				{% if competition.using_tags %}
+					&nbsp;&nbsp;
+					<a class="btn btn-success" href="{{path}}ParticipantRfidScan/{{competition.id}}"><span class="glyphicon glyphicon-tag"></span>&nbsp;&nbsp;{% trans "RFID Entry" %}</a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+<h3>
+	{% trans "Mass Start Events" %}:
+	<a class="btn btn-primary hidden-print" href="{{path}}EventMassStartNew/{{competition.id}}/">{% trans "New" %}</a>
+</h3>
+<table class="table table-striped table-hover">
+<thead>
+	<tr>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Type" %}</th>
+		<th>{% trans "Waves" %}</th>
+		<th>{% trans "Date" %}</th>
+		<th class="text-center">{% trans "Starters" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for e in events %}
+		<tr onclick="jump('{{path}}StartList/{{e.id}}/');">
+			<td>{{e.name}}</td>
+			<td>{{e.get_event_type_display}}</td>
+			<td>{{e.wave_text}}</td>
+			<td>{{e.date_time}}</td>
+			<td class="text-center">{{e.get_participant_count}}</td>
+			<td>
+				<a class="btn btn-warning hidden-print" href="{{path}}EventMassStartDelete/{{e.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-primary hidden-print" href="{{path}}EventMassStartEdit/{{e.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-primary hidden-print" href="{{path}}EventMassStartCrossMgr/{{e.id}}/">
+					<span class="glyphicon glyphicon-download"></span>&nbsp;&nbsp;{% trans "CrossMgr" %}
+				</a>
+				<a class="btn btn-success hidden-print" href="{{path}}StartList/{{e.id}}/">{% trans "Start List" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+<h3>
+	{% trans "Category Numbers" %}:
+	<a class="btn btn-primary hidden-print" href="{{path}}CategoryNumbersNew/{{competition.id}}/">{% trans "New" %}</a>
+</h3>
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th>{% trans "Categories" %}</th>
+		<th>{% trans "Numbers" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for c in category_numbers %}
+		<tr onclick="jump('{{path}}CategoryNumbersEdit/{{c.id}}/');">
+			<td>{{c.category_list}}</td>
+			<td>{{c.range_str}}</td>
+			<td>
+				<a class="btn btn-warning hidden-print" href="{{path}}CategoryNumbersDelete/{{c.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-success hidden-print" href="{{path}}CategoryNumbersEdit/{{c.id}}/">{% trans "Edit" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock content %}

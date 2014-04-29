@@ -1,0 +1,27 @@
+[TOC]
+
+# Competitions
+
+In a nutshell, a Competition is a set of Mass Start events with some extra information.  A Mass Start event is a set of uniquely numbered riders on course at the same time, and can have a number of Start Waves within it.
+Each Start Wave consists of one or more Categories starting together.
+
+This is summarized as:
+
+{% include "CompetitionStructure.md" %}
+
+This is the fundamental structure of a competition.  Get comfortable with this structure, as it forms the foundation of everything else.
+
+You describe this structure in RaceDB.  It then "knows" exactly where riders need to go when the check-in.
+
+RaceDB has a powerful "Copy" feature that allows you to use the same race structure over again.  So, once you have your race formats defined, using them again for future races is quick.
+
+# Competitions Screen
+
+Shows a list of all Competitions in the system with the most recent shown first.  You can use the "Search text" feature to find a particular Competition.
+
+Clicking on a Competition row triggers the default button (Dashboard).  This brings you to the main Competetion screen, the [Competition Dashboard][].
+
+## Competition Copy
+Makes a copy of the competition including all category information, Mass Start Events, Start Waves and Category numbers.  The Participants are not copied.
+
+To create a new Competition from an existing one, press Copy, then change the fields in the new Competition to customize it (for example, Name, Date, Organizer).

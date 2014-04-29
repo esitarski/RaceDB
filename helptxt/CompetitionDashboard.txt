@@ -1,0 +1,46 @@
+[TOC]
+
+# Competition Dashboard
+
+This is the primary interface for working with a Competition.  Every significant action to a competition is initiated from this screen.
+
+## Participants
+Participant records link the following information together:
+
+* Competition
+* License Holder
+* Category
+* Team
+* Bib
+* Tag and Tag2
+
+The following combinations have a contraint to force the combination to be unique in the database:
+
+* Competition, License Holder and Category
+* Competition, Bib and Category
+* Competition, Tag and Category
+* Competition, Tag2 and Category
+
+If this means nothing to you, don't worry - just know that these contraints make it:
+
+* Impossible to enter the same competitor more than once in the same category
+* Impossible to enter more than one competitor with the same bib number
+* Impossible to enter to have more then one tag with the same value in the same category
+
+However, it is possible to enter a Licence Holder more than once in the Competition.  This is done by entering the License Holder as a different Participant each time.
+
+## Edit
+
+Edits the current Competition.
+
+Of particular interest is the __Number Sets__ field.
+
+
+
+## Show Participants / Manual Entry
+
+## Scan Participants / Automatic Entry
+
+## Mass Start Events
+
+## Category Numbers

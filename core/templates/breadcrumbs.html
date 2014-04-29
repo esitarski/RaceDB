@@ -1,0 +1,21 @@
+{% load staticfiles %}
+<style>
+.breadcrumb > li + li:before {
+    color: #CCCCCC;
+	font-size: 150%;
+    content: " ";
+    padding: 0 5px;
+}
+</style>
+{% spaceless %}
+<ul class="breadcrumb hidden-print">
+{% for bc in breadcrumbs %}
+	{% if forloop.first %}
+		<li><a href="{{bc.url}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a></li>
+	{% else %}
+		<li><a class="btn btn-info" href="{{bc.url}}">{{bc.name}}</a></li>
+	{% endif %}
+{% endfor %}
+	<li><a href="{{path}}QRCode/"><img src="{% static "images/qrcode.jpg" %}" alt="QRCode"></img></a></li>
+</ul>
+{% endspaceless %}

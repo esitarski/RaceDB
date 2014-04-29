@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<h3><strong>{{participant.license_holder.full_name}}</strong>: {{participant.get_role_display}}</h3>
+<hr/>
+{% for role_category, roles in participant.COMPETITION_ROLE_CHOICES %}
+	<h3>{{role_category}}:</h3>
+	{% for role_code, role_name in roles %}
+		&nbsp;&nbsp;&nbsp;<a class="btn btn-success" href="{{path}}ParticipantRoleSelect/{{participant.id}}/{{role_code}}/">{{role_name}}</a>
+	{% endfor %}
+{% endfor %}
+<hr/>
+<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+{% endblock content %}

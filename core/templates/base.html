@@ -1,0 +1,60 @@
+<html lang="en">
+<head>
+<title>RaceDB by Edward Sitarski</title>
+{% load staticfiles %}
+{% include "meta.html" %}
+<link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
+<link rel="stylesheet" href="{% static "bootstrap/css/bootstrap-theme.min.css" %}">
+<link rel="stylesheet" href="{% static "bootstrap/css/datepicker.css" %}">
+<link rel="stylesheet" href="{% static "bootstrap/css/bootstrap-datetimepicker.min.css" %}">
+{% block linkstyles %}
+{% endblock linkstyles %}
+<script type="text/javascript" src="{% static "js/jquery-2.0.3.min.js" %}"></script>
+<!-- <script type="text/javascript" src="{% static "js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.min.js" %}"></script> -->
+{% block srcjavascript %}
+{% endblock srcjavascript %}
+<style>
+.row { margin: 8px 0px; }
+</style>
+<script type="text/javascript">
+{% block javascript %}
+{% endblock javascript %}
+
+function onLoad()
+{
+	$('.dateinput').datepicker({
+		format: "yyyy-mm-dd",
+		autoclose: true,
+		todayHighlight: true
+	});
+	
+	$('.datetimeinput').datetimepicker({
+		format: 'yyyy-mm-dd hh:ii:ss',
+	});
+	
+	// Give the first visible form field the keyboard focus.
+	$(document).ready(function() {
+		$('form:first *:input[type!=hidden]:first').focus();
+	});
+	
+	if( document.getElementById("focus") )
+		document.getElementById("focus").focus();
+{% block onload %}
+{% endblock onload %}
+}
+function jump( link ) { window.location = link; }
+</script>
+</head>
+<body onload="onLoad()">
+{% if not exclude_breadcrumbs %}
+{% include "breadcrumbs.html" %}
+{% endif %}
+<div class="container">
+{% block content %}
+{% endblock content %}
+</div>
+<script type="text/javascript" src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+<script type="text/javascript" src="{% static "bootstrap/js/bootstrap-datetimepicker.min.js" %}"></script>
+<script type="text/javascript" src="{% static "js/bootstrap-datepicker.js" %}"></script>
+</body>
+</html>

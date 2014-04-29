@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load i18n %}
+
+{% block content %}
+
+<script type="text/javascript" src="{% static "js/qrcode.min.js" %}"></script>
+
+<br/><br/><br/>
+<h2>{{qrpath}}</h2>
+<br/><br/><br/>
+<div id="qrcode"></div>
+<script type="text/javascript">
+new QRCode("qrcode", {
+    text: "{{qrpath}}",
+    width: 512,
+    height: 512,
+    colorDark : "#000000",
+    colorLight : "#ffffff",
+    correctLevel : QRCode.CorrectLevel.H
+});
+</script>
+<br/><br/><br/>
+<a href="{{cancelUrl}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a>
+<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "OK" %}</a>
+{% endblock content %}

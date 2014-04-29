@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row text-center"><img src="{% static "images/RaceDB_big.png" %}" alt="RaceDB"></img></div>
+<div class="panel panel-default">
+	<div class="panel-heading">{% trans "Competition and Participant Data" %}</div>
+	<div class="panel-body">
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}Competitions/">{% trans "Competitions" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Single or multi-day competition with one or more Events" %}
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}LicenseHolders/">{% trans "License Holders" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "License Holder Functions (Add, Update, ...)" %}
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}Teams/">{% trans "Teams" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Team Functions (Add, Update, ...)" %}
+			</div>
+		</div>
+	</div>
+</div>
+<div class="panel panel-default">
+	<div class="panel-heading">{% trans "Structure Data" %}</div>
+	<div class="panel-body">
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}CategoryFormats/">{% trans "Category Formats" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Categories for competitors.  How competitors are ranked in a Competition and across a Series." %}
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}NumberSets/">{% trans "Number Sets" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Sets of Numbers kept by the riders and reused from Race to Race." %}
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}RaceClasses/">{% trans "Race Classes" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Sanction levels for races." %}
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}Disciplines/">{% trans "Disciplines" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Race disciplines (for example, Road, Track, MTB, Para)." %}
+			</div>
+		</div>
+	</div>
+</div>
+<div class="panel panel-default">
+	<div class="panel-heading">{% trans "System Wide Data" %}</div>
+	<div class="panel-body">
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{{path}}SystemInfoEdit/">{% trans "System Info" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Edit system-wide information." %}
+			</div>
+		</div>
+	</div>
+</div>
+<div class="panel panel-default">
+	<div class="panel-heading">{% trans "Help and Tutorial" %}</div>
+	<div class="panel-body">
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{% static "docs/Main.html" %}" target="_blank">{% trans "Help" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "Help about RaceDB." %}
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn btn-primary btn-block active" role="button" href="{% static "docs/Tutorial.html" %}" target="_blank">{% trans "Tutorial" %}</a>
+			</div>
+			<div class="col-md-10">
+				{% trans "RaceDB Tutorial." %}
+			</div>
+		</div>
+	</div>
+</div>
+<p>Created by Edward Sitarski, Toronto, Ontario, 2014. Comments?  Questions? <a href="mailto:edward.sitarski@gmail.com">Email me.</a></p>
+{% endblock content %}

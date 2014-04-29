@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<h2>{{title}}</h2>
+{% with e=instance.wave.event c=instance.wave.event.competition w=instance.wave %}
+<h2>Competition: <strong>{{c.name}}</strong></h2>
+<h2>Mass Start: <strong>{{e.name}}</strong></h2>
+<h2>Wave: <strong>{{w.name}}</strong></h2>
+{% endwith %}
+<hr/>
+{% crispy form %}
+<hr/>
+{% endblock content %}

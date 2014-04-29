@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load staticfiles %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="{% static "js/scriptel-easyscript.js" %}"></script>
+{% endblock srcjavascript %}
+
+{% block onload %}
+	{% if participant.signature %}
+		var escript = new ScriptelEasyScript();
+		var canvas = document.getElementById("signature");
+		var ctx = canvas.getContext("2d");
+		ctx.fillStyle="#FFFF88";
+		ctx.fillRect(0,0,canvas.width,canvas.height);
+		var sig = {{participant.signature|safe}};
+		escript.drawSignatureOnCanvas(sig, canvas);
+	{% endif %}
+{% endblock onload %}
+
+{% block content %}
+<style>
+.Row:hover {
+	background-color: #EEE;
+}
+.table tbody>tr>td {
+    vertical-align: middle;
+	font-size: 135%;
+	border-top: none;
+}
+</style>
+<h3 class="visible-print text-center">{% trans "Race Voucher" %}</h3>
+<hr class="visible-print" />
+{% with p=participant h=participant.license_holder c=participant.competition %}
+<h2><strong>{{c.name}}</strong>: {{c.start_date}}
+</h2>
+<hr/>
+{% spaceless %}
+<table class="table table-hover table-condensed">
+<tr onclick="jump({% if isEdit %}'{{path}}LicenseHolderEdit/{{h.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Participant" %}:</td>
+	<td>
+		<strong>{{h.full_name}}:</strong>
+		{{h.get_gender_display}},
+		{% if h.license_code %} {{h.license_code}}, {% endif %}
+		{% if h.uci_code %} {{h.uci_code}}, {% endif %}
+		{% if h.city %} {{h.city}}, {% endif %}
+		{% if h.state_prov %} {{h.state_prov}}, {% endif %}
+		{% if h.nationality %} {{h.nationality}} {% endif %}
+	</td>
+	<td>
+		{% if isEdit %}
+			<a class="btn btn-success hidden-print" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a>
+		{% endif %}
+	</td>
+</tr>
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantRoleChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Role" %}:</td>
+	<td>
+		<strong>{{p.get_role_display}}</strong>
+		{% if p.is_competitor %}
+			&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Competition Age" %}: <strong>{{competition_age}}</strong>
+		{% endif %}
+	</td>
+	<td>
+		{% if isEdit %}
+			<a class="btn btn-success hidden-print" href="{{path}}ParticipantRoleChange/{{p.id}}/">{% trans "Change" %}</a>
+		{% endif %}
+	</td>
+</tr>
+{% if p.is_with_team %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantTeamChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Team" %}:</td>
+	<td>
+		{% if p.team %}
+			<strong>{{p.team.name}}</strong><span>
+			{% if p.team.code %}, {{p.team.code}}{% endif %}</span>,
+			{{p.team.get_team_type_display}}<span>
+			{% if p.team.nation_code %}, {{p.team.nation_code}}{% endif %}</span>
+		{% else %}
+			<span class="label label-danger">{% trans "No team" %}</span>
+		{% endif %}
+	</td>
+	<td>
+		{% if isEdit %}
+			<a class="btn btn-success hidden-print" href="{{path}}ParticipantTeamChange/{{p.id}}/">{% trans "Change" %}</a>
+		{% endif %}
+	</td>
+</tr>
+{% endif %}
+{% if p.is_competitor %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantCategoryChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Category" %}:</td>
+	<td>
+		{% if p.category %}
+			<strong>{{p.category.code}}:</strong>
+			{{p.category.description}}, {{p.category.get_gender_display}}
+		{% else %}
+			{% if p.role == 110 %}<span class="label label-danger">{% endif %}
+				{% trans "No category" %}
+			{% if p.role == 110 %}</span>{% endif %}
+		{% endif %} 
+	</td>
+	<td>
+		{% if isEdit %}
+			<a class="btn btn-success hidden-print" href="{{path}}ParticipantCategoryChange/{{p.id}}/">{% trans "Change" %}</a>
+		{% endif %}
+	</td>
+</tr>
+{% if p.role == 110 and p.category %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Confirmed" %}:</td>
+	<td>
+		{% if p.confirmed %}
+			<span class="label label-default"><span class="glyphicon glyphicon-ok"></span> {% trans "Yes" %}</span>
+		{% else %}
+			<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span> {% trans "No" %}</span>
+		{% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantConfirmedChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
+{% if p.role == 110 and p.category %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantSignatureChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Signature" %}:</td>
+	<td>
+	{% if p.signature %}
+		<canvas width="240" height="64" id="signature"></canvas>
+	{% else %}
+		<span class="label label-danger">{% trans "No signature" %}</span>
+	{% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantSignatureChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
+{% if p.role == 110 and p.category %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantPreregisteredChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Preregistered" %}:</td>
+	<td>
+		{% if p.preregistered %}
+			<span class="label label-default"><span class="glyphicon glyphicon-ok"></span> {% trans "Yes" %}</span>
+		{% else %}
+			<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span> {% trans "No" %}</span>
+		{% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantPreregisteredChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantPaidChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Paid" %}:</td>
+	<td>
+		{% if p.paid %}
+			<span class="label label-default"><span class="glyphicon glyphicon-ok"></span> {% trans "Yes" %}</span>
+		{% else %}
+			<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span> {% trans "No" %}</span>
+		{% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantPaidChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
+{% if p.category %}
+	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantBibChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+		<td class="text-right">{% trans "Bib" %}:</td>
+		<td>
+			{% if p.bib %} <strong>{{p.bib}}</strong> {% else %} <span class="label label-danger">{% trans "No bib" %}</span> {% endif %}
+		</td>
+		{% if isEdit %}
+			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantBibChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		{% endif %}
+	</tr>
+{% endif %}
+{% if c.using_tags %}
+	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantTagChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+		<td class="text-right">{% if p.tag and p.tag2 %}{% trans "Chip Tags" %}{% else %}{% trans "Chip Tag" %}{% endif %}:</td>
+		<td>
+			{% if not p.tag and not p.tag2 %}
+				 <span class="label label-danger">{% trans "No tag" %}</span>
+			{% endif %}
+			{% if p.tag %} <strong>{{p.tag}}{% if p.tag2 %},{% endif %}</strong>{% endif %}
+			{% if p.tag2 %} <strong>{{p.tag2}} </strong>{% endif %}
+		</td>
+		{% if isEdit %}
+			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantTagChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		{% endif %}
+	</tr>
+{% endif %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantNoteChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Note" %}:</td>
+	<td>{{p.note}}</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantNoteChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+</table>
+{% endspaceless %}
+{% if p.is_competitor %}
+	{% with sw=p.get_start_waves %}
+		{% if sw %}
+			<hr/>
+				{% for w in sw %}
+					<h3>
+					{% trans "Start" %} {{forloop.counter}}:
+					<span class="label label-default">{{w.event.date_time|time}}</span>
+					<strong>{{w.name}}</strong> -
+					{{w.event.name}} -
+					{{w.event.date_time|date}}
+					</h3>
+				{% endfor %}
+		{% endif %}
+	{% endwith %}
+{% endif %}
+<hr/>
+	{% if isEdit %}
+		<a class="btn btn-primary hidden-print"  id="focus" href="{{cancelUrl}}" autofocus>{% trans "OK" %}</a>
+		<button class="btn btn-success hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
+	{% else %}
+		<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+		<a class="btn btn-warning hidden-print" href="{{cancelUrl}}ParticipantDoDelete/{{p.id}}/">{% trans "OK" %}</a>
+	{% endif %}
+{% endwith %}
+{% endblock content %}

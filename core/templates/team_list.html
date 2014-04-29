@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<hr class="hidden-print"/>
+{% crispy form %}
+<hr class="hidden-print"/>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>Name</th>
+		<th>Team Code</th>
+		<th>Team Type</th>
+		<th>Nation Code</th>
+		<th class="hidden-print"></th>
+	</tr>
+</thead>
+<tbody>
+	{% for t in teams %}
+		<tr onclick="jump('./TeamEdit/{{t.id}}/');">
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{t.name}}</td>
+			<td>{{t.team_code}}</td>
+			<td>{{t.get_team_type_display}}</td>
+			<td>{{t.nation_code}}</td>
+			<td class="hidden-print">
+				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">Delete</a>
+				&nbsp;
+				<a class="btn btn-success" href="./TeamEdit/{{t.id}}/">Edit</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+({% trans "maximum 200 results shown" %})
+{% endblock content %}

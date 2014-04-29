@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block onload %}
+document.getElementById("submit-id-read-tag-submit").focus();
+{% endblock %}
+
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h1>{{title}}</h1>
+<hr/>
+{% crispy form %}
+
+{% if not status %}
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<div class="row">
+	<h3>{% trans "Status" %}: {% trans "Failure" %}</h3>
+	<dl>
+	{% for se in status_entries %}
+		<dt>{{se.0}}</dt>
+		{% for line in se.1 %}
+			<dd>{{line|linebreaks}}</dd>
+		{% endfor %}
+		<br/>
+	{% endfor %}
+	</dl>
+	<h4>{% trans "Fix the problem(s) and try again." %}</h4>
+</div>
+{% endif %}
+
+{% endblock content %}

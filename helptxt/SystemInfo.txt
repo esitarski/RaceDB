@@ -1,0 +1,40 @@
+[TOC]
+
+# System Info
+
+Information applied to the entire system.
+
+## Tag Template
+
+This specifies the template to use to automatically create RFID tags.
+
+RaceDB can create RFID tags on-the-fly at race check-in.
+
+It create guaranteed unique RFID tag values for competitors based on their "License Holder" internal database key: no rider can get the same RFID tag code.
+
+However, it is important to add extra characters to the tags that are unique to your system.  This is to prevent "tag pollution" - competitors crossing the line with tags from other race timing systems that match tags codes in use in your race.
+
+It may also be important to assign extra characters so you can distinguish tags from year to year (for example, if you are charging a series fee and want to re-issue unique tags each year).
+
+The Tag Template addresses these problems.  It can be any sequence of hex characters (i.e. chars in "0123456789ABCDEF") with a sequence of "#" characters in it.  The "#" is where RaceDB writes its unique id number.
+
+When RaceDB initializes, it creates a random 4-char hex prefix, followed by '######', followed by the current 2-digit year, for example "EDDE######14'.  With this template, RaceDB will create tags of the form:
+
+* EDDE00001114
+* EDDE00018714
+* EDDE01200014
+* EDDE09882014
+* ...
+
+That is, the '######' part is filled in with unique database id, and the other characters in the template are added.
+Change the template to suit your purposes.  All new generated tags will the follow the template.
+
+## RFID Reader Server Host
+
+## RFID Reader Server Port
+
+These fields are currently hardcoded - don't worry about them.
+
+Under the covers, RaceDB requires a server to talk to the RFID reader to manage requests to write tags from the web clients.   This server manages a queue of requests, and sends each request one-at-a-time to the reader.
+
+This server is launched and managed automatically when RaceDB is launched with the --rfid_reader option.
