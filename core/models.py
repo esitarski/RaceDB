@@ -919,7 +919,7 @@ class Participant(models.Model):
 					try:
 						nse = NumberSetEntry.objects.get( number_set=competition.number_set, license_holder=license_holder )
 						if nse.bib != self.bib:
-							nse.bib = bib
+							nse.bib = self.bib
 							nse.save()
 					except NumberSetEntry.DoesNotExist:
 						NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()

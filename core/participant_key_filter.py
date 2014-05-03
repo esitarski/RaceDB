@@ -3,7 +3,6 @@ from models import *
 from django.db.models import Q
 from django.db import transaction, IntegrityError
 
-@transaction.atomic
 def participant_key_filter( competition, key ):
 	# Convert the key to upper.
 	# The license_code, tag and tag2 are all stored in upper-case, so it is safe to do

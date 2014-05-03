@@ -1505,7 +1505,7 @@ def ParticipantCategoryChange( request, participantId ):
 	if gender is not None and gender >= 0:
 		categories = categories.filter( Q(gender=gender) | Q(gender=2) )
 	return render_to_response( 'participant_category_select.html', RequestContext(request, locals()) )	
-	
+
 def ParticipantCategorySelect( request, participantId, categoryId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
