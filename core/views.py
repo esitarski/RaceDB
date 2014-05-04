@@ -1744,7 +1744,7 @@ def ParticipantTagChange( request, participantId ):
 				participant.tag = license_holder.get_unique_tag()
 				try:
 					participant.save()
-					return HttpResponseRedirect(getContext(request,'path'))
+					return HttpResponseRedirect(getContext(request,'cancelUrl'))
 				except Exception as e:
 					# Report the error - probably a non-unique field.
 					status = False
