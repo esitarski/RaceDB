@@ -113,9 +113,9 @@
 	<td class="text-right">{% trans "Confirmed" %}:</td>
 	<td>
 		{% if p.confirmed %}
-			<span class="label label-default"><span class="glyphicon glyphicon-ok"></span> {% trans "Yes" %}</span>
+			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span> {% trans "No" %}</span>
+			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 	</td>
 	{% if isEdit %}
@@ -130,7 +130,7 @@
 	{% if p.signature %}
 		<canvas width="240" height="64" id="signature"></canvas>
 	{% else %}
-		<span class="label label-danger">{% trans "No signature" %}</span>
+		<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No signature" %}</span>
 	{% endif %}
 	</td>
 	{% if isEdit %}
@@ -143,9 +143,9 @@
 	<td class="text-right">{% trans "Preregistered" %}:</td>
 	<td>
 		{% if p.preregistered %}
-			<span class="label label-default"><span class="glyphicon glyphicon-ok"></span> {% trans "Yes" %}</span>
+			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span> {% trans "No" %}</span>
+			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 	</td>
 	{% if isEdit %}
@@ -157,9 +157,9 @@
 	<td class="text-right">{% trans "Paid" %}:</td>
 	<td>
 		{% if p.paid %}
-			<span class="label label-default"><span class="glyphicon glyphicon-ok"></span> {% trans "Yes" %}</span>
+			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span> {% trans "No" %}</span>
+			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 	</td>
 	{% if isEdit %}

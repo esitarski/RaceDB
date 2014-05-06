@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% load staticfiles %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 <h2>{{title}}: <strong>{{competition.name}}</strong></h2>
@@ -50,18 +51,18 @@
 			<td class="text-center">
 					{% if p.role == 110 %}
 						{% if p.confirmed %}
-							<span class="label label-default"><span class="glyphicon glyphicon-ok"></span></span>
+							<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
 						{% else %}
-							<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+							<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
 						{% endif %}
 					{% endif %}
 			</td>
 			<td class="text-center">
 				{% if p.role == 110 %}
 					{% if p.paid %}
-						<span class="label label-default"><span class="glyphicon glyphicon-ok"></span></span>
+						<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
 					{% else %}
-						<span class="label label-danger"><span class="glyphicon glyphicon-remove"></span></span>
+						<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
 					{% endif %}
 				{% endif %}
 			</td>

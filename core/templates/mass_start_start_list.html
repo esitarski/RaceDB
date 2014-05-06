@@ -2,6 +2,7 @@
 
 {% block content %}
 {% load i18n %}
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 
 <h2 class="hidden-print">{{title}}</h2>
@@ -10,7 +11,7 @@
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
 <div class="hidden-print">
 <hr/>
-<button class="btn btn-primary" id="focus" onClick="window.print()"><span class="glyphicon glyphicon-print"></span>&nbsp;&nbsp;{% trans "Print" %}</button>
+<button class="btn btn-primary" id="focus" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <hr/>

@@ -2,6 +2,7 @@
 
 {% block content %}
 {% load i18n %}
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 
 <h2>{{title}}</h2>
@@ -35,9 +36,9 @@
 			<td class="hidden-print">
 				<div class="btn-group">
 					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}CategoryUp/{{c.id}}/">
-						<span class="glyphicon glyphicon-arrow-up"></span></a> {% endif %}
+						<image src="{% static "images/glyphicons_213_up_arrow.png" %}" ></a> {% endif %}
 					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}CategoryDown/{{c.id}}/">
-						<span class="glyphicon glyphicon-arrow-down"></span></a> {% endif %}
+						<image src="{% static "images/glyphicons_212_down_arrow.png" %}" ></a> {% endif %}
 				</div>
 			</td>
 			{% endif %}

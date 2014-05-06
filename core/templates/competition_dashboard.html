@@ -2,6 +2,7 @@
 
 {% block content %}
 {% load i18n %}
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 {% load get_field_name %}
 {% load yes_no %}
@@ -63,12 +64,12 @@
 				&nbsp;&nbsp;
 				<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{competition.id}}">{% trans "Edit" %}</a>
 				&nbsp;&nbsp;
-				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;{% trans "Show Participants / Manual Entry" %}</a>
+				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><image src="{% static "images/glyphicons_043_group.png" %}">&nbsp;&nbsp;{% trans "Show Participants / Manual Entry" %}</a>
 				&nbsp;&nbsp;
-				<a class="btn btn-success" href="{{path}}ParticipantScan/{{competition.id}}"><span class="glyphicon glyphicon-barcode"></span>&nbsp;&nbsp;{% trans "Barcode Entry" %}</a>
+				<a class="btn btn-success" href="{{path}}ParticipantScan/{{competition.id}}"><image src="{% static "images/glyphicons_259_barcode.png" %}">&nbsp;&nbsp;{% trans "Barcode Entry" %}</a>
 				{% if competition.using_tags %}
 					&nbsp;&nbsp;
-					<a class="btn btn-success" href="{{path}}ParticipantRfidScan/{{competition.id}}"><span class="glyphicon glyphicon-tag"></span>&nbsp;&nbsp;{% trans "RFID Entry" %}</a>
+					<a class="btn btn-success" href="{{path}}ParticipantRfidScan/{{competition.id}}"><image src="{% static "images/glyphicons_065_tag.png" %}">&nbsp;&nbsp;{% trans "RFID Entry" %}</a>
 				{% endif %}
 			</div>
 		</div>
@@ -101,7 +102,7 @@
 				<a class="btn btn-warning hidden-print" href="{{path}}EventMassStartDelete/{{e.id}}/">{% trans "Delete" %}</a>
 				<a class="btn btn-primary hidden-print" href="{{path}}EventMassStartEdit/{{e.id}}/">{% trans "Edit" %}</a>
 				<a class="btn btn-primary hidden-print" href="{{path}}EventMassStartCrossMgr/{{e.id}}/">
-					<span class="glyphicon glyphicon-download"></span>&nbsp;&nbsp;{% trans "CrossMgr" %}
+					<image src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
 				</a>
 				<a class="btn btn-success hidden-print" href="{{path}}StartList/{{e.id}}/">{% trans "Start List" %}</a>
 			</td>
