@@ -220,8 +220,8 @@
 {% endif %}
 <hr/>
 	{% if isEdit %}
-		<a class="btn btn-primary hidden-print"  id="focus" href="{{cancelUrl}}" autofocus>{% trans "OK" %}</a>
-		<button class="btn btn-success hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
+		<a class="btn btn-success hidden-print"  id="focus" href="{{cancelUrl}}" autofocus>{% trans "OK" %}</a>
+		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
 	{% else %}
 		<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 		<a class="btn btn-warning hidden-print" href="{{cancelUrl}}ParticipantDoDelete/{{p.id}}/">{% trans "OK" %}</a>

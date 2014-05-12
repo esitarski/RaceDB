@@ -44,12 +44,13 @@ def pushUrl( request, name, *args, **kwargs ):
 	cancelUrl = kwargs.pop( 'cancelUrl', False )
 	while name.endswith('/'):
 		name = name[:-1]
-	parameters = u'/'.join( unicode(a) for a in args )
 	target = getContext(request, 'cancelUrl' if cancelUrl else 'path')
-	if parameters:
-		return u'{}{}/{}/'.format( target, name, parameters )
+	if args:
+		url = u'{}{}/{}/'.format( target, name, u'/'.join( unicode(a) for a in args ) )
 	else:
-		return u'{}{}/'.format( target, name )
+		url = u'{}{}/'.format( target, name )
+	print 'pushUrl', url
+	return url
 
 def setFormReadOnly( form ):
 	instance = getattr( form, 'instance', None )
@@ -1339,7 +1340,7 @@ def Participants( request, competitionId ):
 		q_list.append( Q(paid = bool(int(participant_filter['confirmed']))) )
 	
 	if 0 <= int(participant_filter.get('paid',-1)) <= 1:
-		q_list.apend( Q(paid = bool(int(participant_filter['paid']))) )
+		q_list.append( Q(paid = bool(int(participant_filter['paid']))) )
 	
 	participants = Participant.objects.select_related('team', 'license_holder').filter( *q_list )
 	
@@ -1944,13 +1945,13 @@ class ParticipantRfidScanForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Field('rfid_antenna'),
-			),
-			Row(),
-			Row(
 				button_args[0],
 				button_args[1],
-			)
+			),
+			HTML('<br/>' * 12),
+			Row(
+				Col(Field('rfid_antenna'), 6 ),
+			),
 		)
 
 def ParticipantRfidScan( request, competitionId ):
@@ -1981,6 +1982,7 @@ def ParticipantRfidScan( request, competitionId ):
 				)
 			else:
 				status, response = ReadTag(rfid_antenna)
+				#status, response = True, {'tags': ['A7A2103148']}
 				if not status:
 					status_entries.append(
 						(_('Tag Read Failure'), response.get('errors',[]) ),
@@ -2004,16 +2006,41 @@ def ParticipantRfidScan( request, competitionId ):
 			if not status:
 				return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
 				
-			participants = participant_key_filter( competition, tag )
-			if len(participants) != 1:
-				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
-			else:
+			license_holder, participants = participant_key_filter( competition, tag, False )
+			if len(participants) == 1:
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
+			if len(participants) > 1:
+				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
+			
+			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
 		form = ParticipantRfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
 		
 	return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
+
+def LicenseHolderAddConfirm( request, competitionId, licenseHolderId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	competition_age = competition.competition_age( license_holder )
+	return render_to_response( 'license_holder_add_confirm.html', RequestContext(request, locals()) )
+
+def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	
+	# Try to create a new participant from the license_holder.
+	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
+	try:
+		participant.save()
+		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
+	except IntegrityError as e:
+		# If this participant exists already, recover silently by going directly to the existing participant.
+		participants = list(Participant.objects.filter(competition=competition, license_holder=license_holder))
+		if participants:
+			participant = participants[0]
+			return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
+		return license_holder, participants
+
 #--------------------------------------------------------------------------
 class SystemInfoForm( ModelForm ):
 	class Meta:

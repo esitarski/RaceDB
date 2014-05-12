@@ -734,7 +734,7 @@ class LicenseHolder(models.Model):
 	uci_code = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI Code') )
 	
 	license_code = models.CharField( max_length=32, null=True, unique=True, verbose_name=_('License Code') )
-				
+	
 	existing_bib = models.PositiveSmallIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Existing Bib') )
 	
 	existing_tag = models.CharField( max_length=36, null=True, blank=True, unique=True, verbose_name=_('Existing Tag') )

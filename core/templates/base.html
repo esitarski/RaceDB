@@ -31,6 +31,10 @@ function onLoad()
 		format: 'yyyy-mm-dd hh:ii:ss',
 	});
 	
+	$('.btn').click(function() {
+		$(this).css( {"background-color": '#000000'} );
+	});
+	
 	// Give the first visible form field the keyboard focus.
 	$(document).ready(function() {
 		$('form:first *:input[type!=hidden]:first').focus();
