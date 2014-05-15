@@ -20,22 +20,6 @@
 {% block javascript %}
 {% endblock javascript %}
 
-function findBootstrapEnvironment() {
-	var envs = ['xs', 'sm', 'md', 'lg'];
-
-	$el = $('<div>');
-	$el.appendTo($('body'));
-
-	for (var i = envs.length - 1; i >= 0; --i) {
-		var env = envs[i];
-		$el.addClass('hidden-'+env);
-		if ($el.is(':hidden')) {
-			$el.remove();
-			return env
-		}
-	}
-}
-
 function onLoad()
 {
 	// Set consistent date format.
@@ -55,10 +39,9 @@ function onLoad()
 		$(this).css( {"background-color": '#000000'} );
 	});
 	
-	// Make click targets larger for devices.
+	// Make click targets larger for touch devices.
 	var is_touch_device = 'ontouchstart' in document.documentElement;
-	var env = findBootstrapEnvironment();
-	if( is_touch_device and (env == 'xs' || env == 'sm') ) {
+	if( is_touch_device ) {
 		$('.btn').each(function() {
 			$(this).css( {"font-size": '120%'} );
 		});

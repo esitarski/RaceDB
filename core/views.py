@@ -49,7 +49,6 @@ def pushUrl( request, name, *args, **kwargs ):
 		url = u'{}{}/{}/'.format( target, name, u'/'.join( unicode(a) for a in args ) )
 	else:
 		url = u'{}{}/'.format( target, name )
-	print 'pushUrl', url
 	return url
 
 def setFormReadOnly( form ):
@@ -178,7 +177,7 @@ def GenericModelForm( ModelClass ):
 			
 	return Form
 
-def GenericNew( ModelClass, request, ModelFormClass = None, template = None, additional_context = {} ):
+def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
 	title = _('New {}').format(ModelClass._meta.verbose_name.title())
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
@@ -198,7 +197,7 @@ def GenericNew( ModelClass, request, ModelFormClass = None, template = None, add
 			if 'save-submit' in request.POST:
 				return HttpResponseRedirect( pushUrl(request, '{}Edit'.format(ModelClass.__name__), instance.id, cancelUrl=True) )
 	else:
-		instance = ModelClass()
+		instance = ModelClass( **instance_fields )
 		form = ModelFormClass( instance=instance, button_mask=NEW_BUTTONS )
 	
 	form_context = {}
@@ -325,14 +324,14 @@ def LicenseHoldersDisplay( request ):
 			try:
 				license_holders = [LicenseHolder.objects.get(uci_code = search_text.upper())]
 				break
-			except (self.DoesNotExist, self.MultipleObjectsReturned) as e:
+			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
 				pass
 		
 		if search_text[-3:].isdigit():
 			try:
 				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper())]
 				break
-			except (self.DoesNotExist, self.MultipleObjectsReturned) as e:
+			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
 				pass
 		
 		q = Q()
@@ -345,7 +344,9 @@ def LicenseHoldersDisplay( request ):
 	return render_to_response( 'license_holder_list.html', RequestContext(request, locals()) )
 
 def LicenseHolderNew( request ):
-	return GenericNew( LicenseHolder, request, LicenseHolderForm )
+	return GenericNew( LicenseHolder, request, LicenseHolderForm,
+		instance_fields={'license_code': 'TEMP'}
+	)
 	
 def LicenseHolderEdit( request, licenseHolderId ):
 	return GenericEdit( LicenseHolder, request, licenseHolderId, LicenseHolderForm )
@@ -1887,12 +1888,12 @@ class ParticipantScanForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Field('scan', size=40)
+				Field('scan', size=40),
 			),
 			Row(
 				button_args[0],
 				button_args[1],
-			)
+			),
 		)
 
 def ParticipantScan( request, competitionId ):
@@ -1982,7 +1983,7 @@ def ParticipantRfidScan( request, competitionId ):
 				)
 			else:
 				status, response = ReadTag(rfid_antenna)
-				#status, response = True, {'tags': ['A7A2103148']}
+				#status, response = True, {'tags': ['A7A2102303']}
 				if not status:
 					status_entries.append(
 						(_('Tag Read Failure'), response.get('errors',[]) ),

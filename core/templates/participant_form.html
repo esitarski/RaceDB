@@ -220,7 +220,13 @@
 {% endif %}
 <hr/>
 	{% if isEdit %}
-		<a class="btn btn-success hidden-print"  id="focus" href="{{cancelUrl}}" autofocus>{% trans "OK" %}</a>
+		<a class="btn btn-success hidden-print"  id="focus" href="{{cancelUrl}}" autofocus>
+			{% if "RfidScan" in path %}
+				{% trans "Confirm Entry and Scan Next RFID Tag" %}
+			{% else %}
+				{% trans "OK" %}
+			{% endif %}
+		</a>
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
 	{% else %}
 		<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Cancel" %}</a>

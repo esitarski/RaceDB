@@ -92,7 +92,7 @@ def init_ccn( fname = fnameDefault ):
 				continue
 				
 			if not ur.get('License Numbers',''):
-				print 'Row {}: Missing License Code '.format( i )
+				print 'Row {}: Missing License Code '.format(i)
 				continue
 			
 			attributes = {

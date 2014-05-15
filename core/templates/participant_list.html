@@ -32,7 +32,6 @@
 		<th>{% trans "Paid" %}</th>
 		{% if competition.using_tags %}
 			<th>{% trans "Tag" %}</th>
-			<th>{% trans "Tag2" %}</th>
 		{% endif %}
 		<th>{% trans "From" %}</th>
 		<th class="hidden-print"></th>
@@ -52,13 +51,13 @@
 			<td>{{h.license_code}}</td>
 			<td>{{h.uci_code}}</td>
 			<td class="text-center">
-					{% if p.role == 110 %}
-						{% if p.confirmed %}
-							<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
-						{% else %}
-							<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
-						{% endif %}
+				{% if p.role == 110 %}
+					{% if p.confirmed %}
+						<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
+					{% else %}
+						<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
 					{% endif %}
+				{% endif %}
 			</td>
 			<td class="text-center">
 				{% if p.role == 110 %}
@@ -69,10 +68,7 @@
 					{% endif %}
 				{% endif %}
 			</td>
-			{% if competition.using_tags %}
-				<td>{{p.tag|default_if_none:""}}</td>
-				<td>{{p.tag2|default_if_none:""}}</td>
-			{% endif %}
+			{% if competition.using_tags %}<td>{{p.get_tag_str}}</td>{% endif %}
 			<td>{{h.get_location}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>

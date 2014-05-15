@@ -20,6 +20,7 @@
 		<th>{% trans "City" %}</th>
 		<th>{% trans "State/Prov" %}</th>
 		<th>{% trans "Nationality" %}</th>
+		{% if competition.using_tags %}<th>{% trans "Tag" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 		<th class="hidden-print"></th>
 	</tr>
@@ -41,6 +42,7 @@
 			<td>{{h.city}}</td>
 			<td>{{h.state_prov}}</td>
 			<td>{{h.nationality}}</td>
+			{% if competition.using_tags %}<td>{{h.get_existing_tag_str}}</td>{% endif %}
 			<td class="hidden-print"><a class="btn btn-primary" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a></td>
 			<td class="hidden-print">
 				{% if h.id in license_holders_in_competition %}

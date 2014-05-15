@@ -1,5 +1,5 @@
 from django.db import models
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Max
 from django.db.models import Q
 
@@ -767,6 +767,12 @@ class LicenseHolder(models.Model):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		
 		super(LicenseHolder, self).save( *args, **kwargs )
+		
+		# If the license_code is TEMP, add the record id to make it a unique temporary code.
+		if self.license_code == u'TEMP':
+			self.license_code = u'TEMP{}'.format( self.id )
+			self.search_text = self.get_search_text()[:self.SearchTextLength]
+			super(LicenseHolder, self).save( *args, **kwargs )
 
 	def __unicode__( self ):
 		return '%s, %s (%s, %s, %s, %s)' % (
@@ -796,7 +802,10 @@ class LicenseHolder(models.Model):
 	def get_unique_tag( self ):
 		system_info = SystemInfo.get_singleton()
 		return getTagFormatStr( system_info.tag_template ).format( n=self.id )
-		
+	
+	def get_existing_tag_str( self ):
+		return u', '.join( [t for t in [self.existing_tag, self.existing_tag2] if t] )
+	
 	class Meta:
 		verbose_name = _('LicenseHolder')
 		verbose_name_plural = _('LicenseHolders')
@@ -1061,6 +1070,9 @@ class Participant(models.Model):
 			pass
 		
 		return False, _('Unknown Integrity Error.'), None
+	
+	def get_tag_str( self ):
+		return u', '.join( [t for t in [self.tag, self.tag2] if t] )
 	
 	class Meta:
 		unique_together = (
