@@ -19,6 +19,9 @@ def date_from_value( s ):
 	if isinstance(s, (float, int)):
 		return datetime.date( *(xldate_as_tuple(s, datemode)[:3]) )
 	
+	if not s:
+		return datetime.date.today()
+	
 	# Assume month, day, year format.
 	mm, dd, yy = [int(v.strip()) for v in s.split( '/' )]
 	
@@ -41,7 +44,7 @@ def date_from_value( s ):
 		raise e
 		
 def gender_from_str( s ):
-	return 0 if s.lower().strip().startswith(u'm') else 1
+	return 1 if s.lower().strip()[:1] in 'wf' else 0
 
 def set_attributes( obj, attributes ):
 	changed = False
@@ -113,6 +116,8 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			license_code	= to_int_str(ur.get('License Numbers',u''))
 			last_name		= to_str(ur.get('Last Name',u'')).strip()
 			first_name		= to_str(ur.get('First Name',u'')).strip()
+			gender			= gender_from_str(ur.get('Gender',u'').strip())
+			date_of_birth	= date_from_value(ur.get('Date of Birth',u'').strip())
 			preregistered	= to_bool(ur.get('Preregistered', True))
 			paid			= to_bool(ur.get('Paid', None))
 			bib				= to_int(ur.get('Bib', None))
@@ -120,7 +125,7 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			team_name		= to_str(ur.get('Team', None))
 			category_code   = to_str(ur.get('Category', None))
 
-			if license_code:
+			if license_code and license_code != u'TEMP':
 				try:
 					license_holder = LicenseHolder.objects.get( license_code=license_code )
 				except LicenseHolder.DoesNotExist:
@@ -128,13 +133,19 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 					continue
 			else:
 				try:
+					# No license code.  Try to find the participant by name.
 					# Case insensitive comparison.
 					license_holder = LicenseHolder.objects.get( last_name__iexact=last_name, first_name__iexact=first_name )
 				except LicenseHolder.DoesNotExist:
-					print( u'Row {}: cannot find LicenceHolder from Last,First Name: "{}","{}"'.format(
-							i, last_name, first_name,
-					) )
-					continue
+					# No name match.
+					# Create a temporary license holder.
+					license_holder = LicenseHolder(
+						license_code='TEMP',
+						last_name=last_name,
+						first_name=first_name,
+						gender=gender,
+						date_of_birth=date_of_birth )
+					license_holder.save()
 				except LicenseHolder.MultipleObjectsReturned:
 					print( u'Row {}: found multiple LicenceHolders matching Last,First Name: "{}","{}"'.format(
 							i, last_name, first_name,
