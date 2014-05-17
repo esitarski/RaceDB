@@ -1413,7 +1413,7 @@ def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	
-	participant = Participant( competition=competition, license_holder=license_holder ).init_default_values()
+	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
 	
 	try:
 		# Fails if the license_holder is non-unique.
@@ -1955,7 +1955,7 @@ class ParticipantRfidScanForm( Form ):
 			),
 		)
 
-def ParticipantRfidScan( request, competitionId ):
+def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	
@@ -1983,6 +1983,7 @@ def ParticipantRfidScan( request, competitionId ):
 				)
 			else:
 				status, response = ReadTag(rfid_antenna)
+				# DEBUG DEBUG
 				#status, response = True, {'tags': ['A7A2102303']}
 				if not status:
 					status_entries.append(

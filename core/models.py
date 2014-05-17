@@ -895,7 +895,7 @@ class Participant(models.Model):
 	)
 	role=models.PositiveSmallIntegerField(choices=COMPETITION_ROLE_CHOICES, default=110, verbose_name=_('Role') )
 	
-	preregistered=models.BooleanField( default=True, verbose_name=_('Preregistered') )
+	preregistered=models.BooleanField( default=False, verbose_name=_('Preregistered') )
 	
 	registration_timestamp=models.DateTimeField( auto_now_add=True )
 	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True )

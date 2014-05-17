@@ -16,7 +16,8 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*ParticipantScan/(?P<competitionId>\d+)/$', views.ParticipantScan),
 	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/$', views.ParticipantRfidScan),
-		
+	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidScan),
+	
 	url(r'^(?i).*CategoryNumbers/(?P<competitionId>\d+)/$', views.CategoryNumbersDisplay),
 	url(r'^(?i).*CategoryNumbersNew/(?P<competitionId>\d+)/$', views.CategoryNumbersNew),
 	url(r'^(?i).*CategoryNumbersEdit/(?P<categoryNumbersId>\d+)/$', views.CategoryNumbersEdit),

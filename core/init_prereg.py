@@ -19,11 +19,11 @@ def date_from_value( s ):
 	if isinstance(s, (float, int)):
 		return datetime.date( *(xldate_as_tuple(s, datemode)[:3]) )
 	
-	if not s:
-		return datetime.date.today()
-	
 	# Assume month, day, year format.
-	mm, dd, yy = [int(v.strip()) for v in s.split( '/' )]
+	try:
+		mm, dd, yy = [int(v.strip()) for v in s.split( '/' )]
+	except:
+		return datetime.date( 1900, 1, 1 )		# Default date.
 	
 	# Correct for 2-digit year.
 	for century in [0, 1900, 2000, 2100]:
@@ -113,19 +113,23 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 	def process_ur_records( ur_records ):
 		
 		for i, ur in ur_records:
-			license_code	= to_int_str(ur.get('License Numbers',u''))
-			last_name		= to_str(ur.get('Last Name',u'')).strip()
-			first_name		= to_str(ur.get('First Name',u'')).strip()
-			gender			= gender_from_str(ur.get('Gender',u'').strip())
-			date_of_birth	= date_from_value(ur.get('Date of Birth',u'').strip())
-			preregistered	= to_bool(ur.get('Preregistered', True))
-			paid			= to_bool(ur.get('Paid', None))
-			bib				= to_int(ur.get('Bib', None))
-			tag			 	= to_tag(ur.get('Tag', None))
-			team_name		= to_str(ur.get('Team', None))
-			category_code   = to_str(ur.get('Category', None))
+			license_code	= to_int_str(ur.get('License Numbers'.lower(),u''))
+			last_name		= to_str(ur.get('Last Name'.lower(),u'')).strip()
+			first_name		= to_str(ur.get('First Name'.lower(),u'')).strip()
+			gender			= gender_from_str(ur.get('Gender'.lower(),u'').strip())
+			for alias in ['Date of Birth', 'DOB']:
+				v = ur.get(alias.lower(),u'').strip()
+				if v:
+					date_of_birth	= date_from_value(v)
+					break
+			preregistered	= to_bool(ur.get('Preregistered'.lower(), True))
+			paid			= to_bool(ur.get('Paid'.lower(), None))
+			bib				= to_int(ur.get('Bib'.lower(), None))
+			tag			 	= to_tag(ur.get('Tag'.lower(), None))
+			team_name		= to_str(ur.get('Team'.lower(), None))
+			category_code   = to_str(ur.get('Category'.lower(), None))
 
-			if license_code and license_code != u'TEMP':
+			if license_code and license_code.upper() != u'TEMP':
 				try:
 					license_holder = LicenseHolder.objects.get( license_code=license_code )
 				except LicenseHolder.DoesNotExist:
@@ -133,7 +137,7 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 					continue
 			else:
 				try:
-					# No license code.  Try to find the participant by name.
+					# No license code.  Try to find the participant by last/first name.
 					# Case insensitive comparison.
 					license_holder = LicenseHolder.objects.get( last_name__iexact=last_name, first_name__iexact=first_name )
 				except LicenseHolder.DoesNotExist:
@@ -179,6 +183,7 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 						i, team_name,
 					) )
 			participant.team = team
+			participant.preregistered = True
 			
 			category = None
 			if category_code is not None:
@@ -245,7 +250,7 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			print u'\n'.join( fields )
 			continue
 			
-		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
+		ur = dict( (f.lower(), row[c].value) for c, f in enumerate(fields) )
 		ur_records.append( (r+1, ur) )
 		if len(ur_records) == 1000:
 			process_ur_records( ur_records )
