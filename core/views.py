@@ -2009,6 +2009,9 @@ def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
 				return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
 				
 			license_holder, participants = participant_key_filter( competition, tag, False )
+			if not license_holder:
+				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
+			
 			if len(participants) == 1:
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
 			if len(participants) > 1:

@@ -2,9 +2,11 @@
 
 {% block onload %}
 document.getElementById("submit-id-read-tag-submit").focus();
-{% if autoSubmit %}
+
+{% if autoSubmit and status %}
 document.forms[0].submit();
 {% endif %}
+
 {% endblock %}
 
 {% block content %}
