@@ -349,10 +349,18 @@ def LicenseHolderNew( request ):
 	)
 	
 def LicenseHolderEdit( request, licenseHolderId ):
-	return GenericEdit( LicenseHolder, request, licenseHolderId, LicenseHolderForm )
+	return GenericEdit( LicenseHolder, request,
+		licenseHolderId,
+		LicenseHolderForm,
+		template='license_holder_form.html',
+	)
 	
 def LicenseHolderDelete( request, licenseHolderId ):
-	return GenericDelete( LicenseHolder, request, licenseHolderId, LicenseHolderForm )
+	return GenericDelete( LicenseHolder, request,
+		licenseHolderId,
+		LicenseHolderForm,
+		template='license_holder_form.html',
+	)
 	
 #--------------------------------------------------------------------------------------------
 class TeamForm( ModelForm ):

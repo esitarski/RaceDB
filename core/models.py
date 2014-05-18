@@ -806,6 +806,11 @@ class LicenseHolder(models.Model):
 	def get_existing_tag_str( self ):
 		return u', '.join( [t for t in [self.existing_tag, self.existing_tag2] if t] )
 	
+	def get_participation_as_competitor( self ):
+		return Participant.objects.select_related('competition', 'team', 'category').filter(
+			license_holder=self, role=Participant.Competitor, category__isnull=False
+		).order_by( '-competition__start_date' )
+	
 	class Meta:
 		verbose_name = _('LicenseHolder')
 		verbose_name_plural = _('LicenseHolders')
