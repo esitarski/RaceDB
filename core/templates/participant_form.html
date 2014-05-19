@@ -17,6 +17,8 @@
 		var sig = {{participant.signature|safe}};
 		escript.drawSignatureOnCanvas(sig, canvas);
 	{% endif %}
+	
+	{% include "antenna_watermark.html" %}
 {% endblock onload %}
 
 {% block content %}

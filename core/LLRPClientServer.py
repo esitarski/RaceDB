@@ -45,13 +45,14 @@ def transact( s, message ):
 	return receiveMessage( s )
 
 class LLRPServer( threading.Thread ):
-	def __init__( self, LLRPHost, host = 'localhost', port = defaultPort, transmitPower = None, messageQ = None ):
+	def __init__( self, LLRPHost, host = 'localhost', port = defaultPort, transmitPower = None, receiverSensitivity = None, messageQ = None ):
 		print 'LLRPServer:', host, defaultPort
 		self.LLRPHost = LLRPHost
 		self.host = host
 		self.port = port
 		self.tagWriter = None
 		self.transmitPower = transmitPower
+		self.receiverSensitivity = receiverSensitivity
 		self.messageQ = messageQ
 		self.exception_termination = False
 		super(LLRPServer, self).__init__( name='LLRPServer' )
@@ -75,7 +76,7 @@ class LLRPServer( threading.Thread ):
 		if self.is_alive():
 			self.shutdown()
 			
-		self.tagWriter = TagWriter( self.LLRPHost, transmitPower=self.transmitPower )
+		self.tagWriter = TagWriter( self.LLRPHost, transmitPower=self.transmitPower, receiverSensitivity=self.receiverSensitivity)
 		self.tagWriter.Connect()
 		self.start()
 		self.logMessage( 'connect success' )
@@ -280,13 +281,14 @@ class LLRPClient( object ):
 def writeLog( message ):
 	print u'[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message )
 
-def runServer( host='localhost', llrp_host=None, transmitPower=None ):
+def runServer( host='localhost', llrp_host=None, transmitPower=None, receiverSensitivity=None ):
 	messageQ = Queue()
 	
 	LLRPHost = llrp_host if llrp_host and llrp_host.lower() != 'autodetect' else AutoDetect(callback = lambda m: writeLog('AutoDetect Checking: ' + m))
 	transmitPower = transmitPower if transmitPower else None
+	receiverSensitivity = receiverSensitivity if receiverSensitivity else None
 	
-	server = LLRPServer( LLRPHost=LLRPHost, messageQ=messageQ, transmitPower=transmitPower )
+	server = LLRPServer( LLRPHost=LLRPHost, messageQ=messageQ, transmitPower=transmitPower, receiverSensitivity=receiverSensitivity )
 	
 	writeLog( 'Starting on {}:{}'.format(server.host, server.port) )
 	writeLog( 'LLRP Reader on {}:{}'.format(server.LLRPHost, 5084) )
@@ -300,7 +302,7 @@ def runServer( host='localhost', llrp_host=None, transmitPower=None ):
 			while True:
 				time.sleep( 3 )
 				try:
-					server = LLRPServer( LLRPHost = LLRPHost, messageQ = messageQ, transmitPower=transmitPower )
+					server = LLRPServer( LLRPHost = LLRPHost, messageQ = messageQ, transmitPower=transmitPower, receiverSensitivity=receiverSensitivity )
 					server.run()
 					writeLog( 'Successfully reconnected.' )
 				except Exception as e:

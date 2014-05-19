@@ -7,11 +7,14 @@ document.getElementById("submit-id-read-tag-submit").focus();
 document.forms[0].submit();
 {% endif %}
 
+{% include "antenna_watermark.html" %}
+
 {% endblock %}
 
 {% block content %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load staticfiles %}
 <h1>{{title}}</h1>
 <hr/>
 {% crispy form %}

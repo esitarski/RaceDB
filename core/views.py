@@ -1451,6 +1451,7 @@ def ParticipantEdit( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	isEdit = True
+	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
 	
 def ParticipantDelete( request, participantId ):

@@ -26,6 +26,8 @@ def launch_server( **options ):
 		}
 		if options['rfid_transmit_power'] > 0:
 			kwargs['transmitPower'] = options['rfid_transmit_power']
+		if options['rfid_receiver_sensitivity'] > 0:
+			kwargs['receiverSensitivity'] = options['rfid_receiver_sensitivity']
 		print 'Launching RFID server thread...'
 		for k, v in kwargs.iteritems():
 			print '    {}={}'.format( k, v if isinstance(v, (int,long,float)) else '"{}"'.format(v) )
@@ -80,6 +82,11 @@ class Command(BaseCommand):
 			type='int',
 			default=0,
 			help='Transmit power for rfid reader (0=max).  Consult your reader for details.'),
+		make_option('--rfid_receiver_sensitivity',
+			dest='rfid_receiver_sensitivity',
+			type='int',
+			default=0,
+			help='Receiver sensitivity for rfid reader (0=max).  Consult your reader for details.'),
 		make_option('--no_browser',
 			dest='no_browser',
 			action='store_true',

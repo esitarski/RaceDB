@@ -1,6 +1,13 @@
 {% extends "base.html" %}
+
+{% block onload %}
+{% include "antenna_watermark.html" %}
+{% endblock onload %}
+
 {% block content %}
+
 {% load i18n %}
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 <h2>{{title}}</h2>
 <h2><strong>{{participant.license_holder.full_name}}</strong></h2>
