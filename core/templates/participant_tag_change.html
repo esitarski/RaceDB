@@ -2,6 +2,8 @@
 
 {% block onload %}
 {% include "antenna_watermark.html" %}
+if( document.getElementById("submit-id-auto-generate-and-write-tag-submit") )
+	document.getElementById("submit-id-auto-generate-and-write-tag-submit").focus();
 {% endblock onload %}
 
 {% block content %}
@@ -9,6 +11,8 @@
 {% load i18n %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
+
+{% spaceless %}
 <h2>{{title}}</h2>
 <h2><strong>{{participant.license_holder.full_name}}</strong></h2>
 {% if participant.team %}
@@ -22,4 +26,5 @@
 {% endif %} 
 <hr/>
 {% crispy form %}
+{% endspaceless %}
 {% endblock content %}

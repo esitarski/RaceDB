@@ -1379,7 +1379,7 @@ def Participants( request, competitionId ):
 	
 	if participant_filter.get('team_text','').strip():
 		search_field_re = utils.matchSearchToRegEx( participant_filter['team_text'] )
-		participants = (p for p in participants if search_field_re.match(p.team.search_text) )
+		participants = (p for p in participants if search_field_re.match(p.team.search_text if p.team else u'') )
 	
 	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 
@@ -1711,8 +1711,9 @@ class ParticipantTagForm( Form ):
 		button_args = [
 			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
-			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag'), css_class = 'btn btn-success' ),
-			Submit( 'write-tag-submit', _('Write Tag'), css_class = 'btn btn-success' ),
+			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
+			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
+			Submit( 'auto-generate-and-write-tag-submit', _('Auto Generate and Write Tag'), css_class='btn btn-success' ),
 		]
 		
 		self.helper.layout = Layout(
@@ -1723,19 +1724,26 @@ class ParticipantTagForm( Form ):
 			),
 			HTML( '<br/>' ),
 			Row(
-				button_args[0],
-				button_args[1],
-				button_args[2],
+				button_args[4],
+				HTML( '&nbsp;' * 5 ),
 				button_args[3],
-			)
+			),
+			HTML( '<br/>' * 2 ),
+			Row(
+				button_args[2],
+			),
+			HTML( '<br/>' * 2 ),
+			Row( 
+				button_args[0],
+				HTML( '&nbsp;' * 5 ),
+				button_args[1],
+			),
 		)
 
 def ParticipantTagChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
-	system_info = SystemInfo.get_singleton()
-	tag_template = SystemInfo.get_singleton().tag_template
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	
 	if request.method == 'POST':
@@ -1749,24 +1757,10 @@ def ParticipantTagChange( request, participantId ):
 
 			tag = form.cleaned_data['tag'].strip().upper()
 			make_this_existing_tag = form.cleaned_data['make_this_existing_tag']
-			request.session['rfid_antenna'] = rfid_antenna = int(form.cleaned_data['rfid_antenna'])
+			rfid_antenna = request.session['rfid_antenna'] = int(form.cleaned_data['rfid_antenna'])
 			
-			if 'auto-generate-tag-submit' in request.POST:
-				participant.tag = license_holder.get_unique_tag()
-				try:
-					participant.save()
-					return HttpResponseRedirect(getContext(request,'cancelUrl'))
-				except Exception as e:
-					# Report the error - probably a non-unique field.
-					status = False
-					status_entries.append(
-						(_('Participant Save Failure'), (
-							u'{}'.format(e),
-						)),
-					)
-					return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
-
-				return HttpResponseRedirect(getContext(request,'path'))
+			if 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
+				tag = license_holder.get_unique_tag()
 			
 			participant.tag = tag
 			try:
@@ -1788,9 +1782,15 @@ def ParticipantTagChange( request, participantId ):
 					license_holder.save()
 				except Exception as e:
 					# Report the error - probably a non-unique field.
-					pass
-					
-			if 'write-tag-submit' in request.POST:
+					status = False
+					status_entries.append(
+						(_('LicenseHolder') + u': ' + _('Existing Tag Save Exception:'), (
+							unicode(e),
+						)),
+					)
+					return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
+			
+			if 'write-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
 				if not rfid_antenna:
 					status = False
 					status_entries.append(
@@ -1828,6 +1828,8 @@ def ParticipantTagChange( request, participantId ):
 				# if status: fall through to ok-submit case.
 			
 			# ok-submit
+			if 'auto-generate-tag-submit' in request.POST:
+				return HttpResponseRedirect(getContext(request,'path'))
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = ParticipantTagForm( initial = dict(tag=participant.tag, rfid_antenna=rfid_antenna, make_this_existing_tag=competition.use_existing_tags) )
