@@ -21,6 +21,7 @@ Next to the QR-code button is the User Status button.  This will look like super
 #### Logout Button
 At the right of the breadcrumb list is the QR-Code button.  Press it to create a QR-Code of the current screen.  This makes it easy to get volunteers' devices configured to the pages in the application - just have them take a picture of the QR-Code and go to the encoded url on their device.
 
+The logout button makes it easy to change users.  Press it, login as another username, and you are returned exactly where you were in the program.
 
 ### Fields with a "*"
 On some screens, there are fields with a "*" next to the field name.  This means that this is a required field.
