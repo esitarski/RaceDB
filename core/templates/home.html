@@ -34,6 +34,7 @@
 		</div>
 	</div>
 </div>
+{% if request.user.is_superuser %}
 <div class="panel panel-default">
 	<div class="panel-heading">{% trans "Structure Data" %}</div>
 	<div class="panel-body">
@@ -84,6 +85,7 @@
 		</div>
 	</div>
 </div>
+{% endif %}
 <div class="panel panel-default">
 	<div class="panel-heading">{% trans "Help and Tutorial" %}</div>
 	<div class="panel-body">

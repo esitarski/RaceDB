@@ -71,8 +71,8 @@
 			{% if competition.using_tags %}<td>{{p.get_tag_str}}</td>{% endif %}
 			<td>{{h.get_location}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
-				<a class="btn btn-success" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-warning btn-sm" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-success btn-sm" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
 			</td>
 		</tr>
 		{% endwith %}

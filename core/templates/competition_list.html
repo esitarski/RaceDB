@@ -29,10 +29,12 @@
 			<td>{{c.discipline.name}}</td>
 			<td>{{c.race_class.name}}</td>
 			<td>
-				<a class="btn btn-warning" href="{{path}}CompetitionDelete/{{c.id}}">{% trans "Delete" %}</a>
-				&nbsp;
-				<a class="btn btn-primary" href="{{path}}CompetitionCopy/{{c.id}}">{% trans "Copy" %}</a>
-				&nbsp;&nbsp;&nbsp;
+				{% if request.user.is_superuser %}
+					<a class="btn btn-warning" href="{{path}}CompetitionDelete/{{c.id}}">{% trans "Delete" %}</a>
+					&nbsp;
+					<a class="btn btn-primary" href="{{path}}CompetitionCopy/{{c.id}}">{% trans "Copy" %}</a>
+					&nbsp;&nbsp;&nbsp;
+				{% endif %}
 				<a class="btn btn-success" href="{{path}}CompetitionDashboard/{{c.id}}">{% trans "Dashboard" %}</a>
 			</td>
 		</tr>

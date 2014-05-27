@@ -13,7 +13,14 @@ At the top of the screen are the "breadcrumbs".  These show you where you are in
 Caution: using breadcrumb buttons for navigation is the equivalent of doing a Cancel, then jumping to the other screen.  If you have made changes in the current screen, always press Save or OK to commit those changes first.
 
 #### QR-Code for the Current Page
-At the far right of the breadcrumb list is the QR-Code button.  Press it to create a QR-Code of the current screen.  This makes it easy to get volunteers' devices configured to the pages in the application - just have them take a picture of the QR-Code and go to the encoded url on their device.
+On the right of the breadcrumb list is the QR-Code button.  Press it to create a QR-Code of the current screen.  This makes it easy to get volunteers' devices configured to the pages in the application - just have them take a picture of the QR-Code and go to the encoded url on their device.
+
+#### User Status Icon
+Next to the QR-code button is the User Status button.  This will look like superman if you are logged in as "super".  It looks like a regular person when you are loged in as "reg".
+
+#### Logout Button
+At the right of the breadcrumb list is the QR-Code button.  Press it to create a QR-Code of the current screen.  This makes it easy to get volunteers' devices configured to the pages in the application - just have them take a picture of the QR-Code and go to the encoded url on their device.
+
 
 ### Fields with a "*"
 On some screens, there are fields with a "*" next to the field name.  This means that this is a required field.

@@ -117,4 +117,7 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*SystemInfoEdit/$', views.SystemInfoEdit),
 	url(r'^(?i).*QRCode/$', views.QRCode),
+	
+	url(r'^(?i)login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}),
+	url(r'^(?i).*logout/$', views.Logout),
 )

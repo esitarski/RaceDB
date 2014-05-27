@@ -16,6 +16,8 @@ from django.db import transaction, IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import Template, Context, RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 from django import forms
 from django.forms import ModelForm, Form
@@ -36,6 +38,8 @@ from ReadWriteTag import ReadTag, WriteTag
 
 #---------------------------------------------------------------------
 from context_processors import getContext
+
+import create_users
 
 # Maximum return for large queries.
 MaxReturn = 200
@@ -299,6 +303,7 @@ class LicenseHolderForm( ModelForm ):
 		addFormButtons( self, button_mask )
 
 reUCICode = re.compile( '^[A-Z]{3}[0-9]{8}$', re.IGNORECASE )
+@login_required
 def LicenseHoldersDisplay( request ):
 	search_text = request.session.get('license_holder_filter', '')
 	btns = [('new-submit', 'New', 'btn btn-success')]
@@ -343,11 +348,13 @@ def LicenseHoldersDisplay( request ):
 	isEdit = True
 	return render_to_response( 'license_holder_list.html', RequestContext(request, locals()) )
 
+@login_required
 def LicenseHolderNew( request ):
 	return GenericNew( LicenseHolder, request, LicenseHolderForm,
 		instance_fields={'license_code': 'TEMP'}
 	)
 	
+@login_required
 def LicenseHolderEdit( request, licenseHolderId ):
 	return GenericEdit( LicenseHolder, request,
 		licenseHolderId,
@@ -355,6 +362,7 @@ def LicenseHolderEdit( request, licenseHolderId ):
 		template='license_holder_form.html',
 	)
 	
+@login_required
 def LicenseHolderDelete( request, licenseHolderId ):
 	return GenericDelete( LicenseHolder, request,
 		licenseHolderId,
@@ -385,6 +393,7 @@ class TeamForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
+@login_required
 def TeamsDisplay( request ):
 	search_text = request.session.get('teams_filter', '')
 	btns = [('new-submit', _('New Team'), 'btn btn-success')]
@@ -409,12 +418,15 @@ def TeamsDisplay( request ):
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render_to_response( 'team_list.html', RequestContext(request, locals()) )
 
+@login_required
 def TeamNew( request ):
 	return GenericNew( Team, request, TeamForm )
 	
+@login_required
 def TeamEdit( request, teamId ):
 	return GenericEdit( Team, request, teamId, TeamForm )
 	
+@login_required
 def TeamDelete( request, teamId ):
 	return GenericDelete( Team, request, teamId, TeamForm )
 
@@ -487,6 +499,7 @@ class RaceClassForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
+@login_required
 def RaceClassesDisplay( request ):
 	NormalizeSequence( RaceClass.objects.all() )
 	if request.method == 'POST':
@@ -504,31 +517,38 @@ def RaceClassesDisplay( request ):
 	race_classes = RaceClass.objects.all()
 	return render_to_response( 'race_class_list.html', RequestContext(request, locals()) )
 
+@login_required
 def RaceClassNew( request ):
 	return GenericNew( RaceClass, request, RaceClassForm )
 
+@login_required
 def RaceClassEdit( request, raceClassId ):
 	return GenericEdit( RaceClass, request, raceClassId, RaceClassForm )
 	
+@login_required
 def RaceClassDelete( request, raceClassId ):
 	return GenericDelete( RaceClass, request, raceClassId, RaceClassForm )
 
+@login_required
 def RaceClassDown( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	SwapAdjacentSequence( RaceClass, raceClass, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
+@login_required
 def RaceClassUp( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	SwapAdjacentSequence( RaceClass, raceClass, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
+@login_required
 def RaceClassBottom( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	NormalizeSequence( RaceClass.objects.all() )
 	MoveSequence( RaceClass, raceClass, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
+@login_required
 def RaceClassTop( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	NormalizeSequence( RaceClass.objects.all() )
@@ -569,6 +589,7 @@ class DisciplineForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
+@login_required
 def DisciplinesDisplay( request ):
 	NormalizeSequence( Discipline.objects.all() )
 	if request.method == 'POST':
@@ -586,31 +607,38 @@ def DisciplinesDisplay( request ):
 	disciplines = Discipline.objects.all()
 	return render_to_response( 'discipline_list.html', RequestContext(request, locals()) )
 
+@login_required
 def DisciplineNew( request ):
 	return GenericNew( Discipline, request, DisciplineForm )
 
+@login_required
 def DisciplineEdit( request, disciplineId ):
 	return GenericEdit( Discipline, request, disciplineId, DisciplineForm )
 	
+@login_required
 def DisciplineDelete( request, disciplineId ):
 	return GenericDelete( Discipline, request, disciplineId, DisciplineForm )
 
+@login_required
 def DisciplineDown( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	SwapAdjacentSequence( Discipline, discipline, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
+@login_required
 def DisciplineUp( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	SwapAdjacentSequence( Discipline, discipline, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
+@login_required
 def DisciplineBottom( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	NormalizeSequence( Discipline.objects.all() )
 	MoveSequence( Discipline, discipline, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
+@login_required
 def DisciplineTop( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	NormalizeSequence( Discipline.objects.all() )
@@ -650,6 +678,7 @@ class NumberSetForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 
+@login_required
 def NumberSetsDisplay( request ):
 	NormalizeSequence( NumberSet.objects.all() )
 	if request.method == 'POST':
@@ -667,9 +696,11 @@ def NumberSetsDisplay( request ):
 	number_sets = NumberSet.objects.all()
 	return render_to_response( 'number_set_list.html', RequestContext(request, locals()) )
 
+@login_required
 def NumberSetNew( request ):
 	return GenericNew( NumberSet, request, NumberSetForm )
 
+@login_required
 def NumberSetEdit( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	return GenericEdit(
@@ -678,25 +709,30 @@ def NumberSetEdit( request, numberSetId ):
 		additional_context={'number_set_entries':NumberSetEntry.objects.filter(number_set=number_set).order_by('bib')}
 	)
 	
+@login_required
 def NumberSetDelete( request, numberSetId ):
 	return GenericDelete( NumberSet, request, numberSetId, NumberSetForm )
 
+@login_required
 def NumberSetDown( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	SwapAdjacentSequence( NumberSet, number_set, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
+@login_required
 def NumberSetUp( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	SwapAdjacentSequence( NumberSet, number_set, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
+@login_required
 def NumberSetBottom( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	NormalizeSequence( NumberSet.objects.all() )
 	MoveSequence( NumberSet, number_set, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
+@login_required
 def NumberSetTop( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	NormalizeSequence( NumberSet.objects.all() )
@@ -755,12 +791,15 @@ def CategoryFormatsDisplay( request ):
 	category_formats = applyFilter( search_text, CategoryFormat.objects.all(), CategoryFormat.get_search_text )
 	return render_to_response( 'category_format_list.html', RequestContext(request, locals()) )
 
+@login_required
 def CategoryFormatNew( request ):
 	return GenericNew( CategoryFormat, request, CategoryFormatForm, template = 'category_format_form.html' )
 
+@login_required
 def CategoryFormatEdit( request, categoryFormatId ):
 	return GenericEdit( CategoryFormat, request, categoryFormatId, CategoryFormatForm, template = 'category_format_form.html' )
 	
+@login_required
 def CategoryFormatCopy( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
 	category_format_new = category_format.make_copy()
@@ -768,6 +807,8 @@ def CategoryFormatCopy( request, categoryFormatId ):
 	category_format.save()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryFormatDelete( request, categoryFormatId ):
 	return GenericDelete( CategoryFormat, request, categoryFormatId, template = 'category_format_form.html' )
 
@@ -784,11 +825,15 @@ def CategorySwapAdjacent( category, swapBefore ):
 			break
 		cBefore = c
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryDown( request, categoryId ):
 	category = get_object_or_404( Category, pk=categoryId )
 	CategorySwapAdjacent( category, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryUp( request, categoryId ):
 	category = get_object_or_404( Category, pk=categoryId )
 	CategorySwapAdjacent( category, True )
@@ -820,6 +865,8 @@ class CategoryForm( ModelForm ):
 		addFormButtons( self, button_mask )
 
 		
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryNew( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
 
@@ -847,9 +894,13 @@ def CategoryNew( request, categoryFormatId ):
 	
 	return render_to_response( 'category_form.html', RequestContext(request, locals()) )
 
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryEdit( request, categoryId ):
 	return GenericEdit( Category, request, categoryId, CategoryForm, template = 'category_form.html' )
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryDelete( request, categoryId ):
 	return GenericDelete( Category, request, categoryId, CategoryForm )
 
@@ -901,9 +952,10 @@ class CompetitionForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 
+@login_required
 def CompetitionsDisplay( request ):
 	search_text = request.session.get('competition_filter', '')
-	btns = [('new-submit', _('New Competition'), 'btn btn-success')]
+	btns = [('new-submit', _('New Competition'), 'btn btn-success')] if request.user.is_superuser else []
 	if request.method == 'POST':
 	
 		if 'cancel-submit' in request.POST:
@@ -923,6 +975,8 @@ def CompetitionsDisplay( request ):
 	competitions = sorted( competitions, key = lambda x: x.start_date, reverse = True )
 	return render_to_response( 'competition_list.html', RequestContext(request, locals()) )
 
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CompetitionNew( request ):
 	missing = []
 	if not CategoryFormat.objects.count():
@@ -953,6 +1007,8 @@ def CompetitionNew( request ):
 	
 	return render_to_response( 'competition_form.html', RequestContext(request, locals()) )
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CompetitionEdit( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return GenericEdit(
@@ -961,6 +1017,8 @@ def CompetitionEdit( request, competitionId ):
 		additional_context = dict(events=competition.get_events(), category_numbers=competition.categorynumbers_set.all()),
 	)
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CompetitionCopy( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	competition_new = competition.make_copy()
@@ -968,6 +1026,8 @@ def CompetitionCopy( request, competitionId ):
 	competition_new.save()
 	return HttpResponseRedirect(getContext(request, 'cancelUrl'))
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CompetitionDelete( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return GenericDelete(
@@ -976,17 +1036,20 @@ def CompetitionDelete( request, competitionId ):
 		additional_context = dict(events=competition.get_events()),
 	)
 	
+@login_required
 def CompetitionDashboard( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	events = competition.get_events()
 	category_numbers=competition.categorynumbers_set.all()
 	return render_to_response( 'competition_dashboard.html', RequestContext(request, locals()) )
 	
+@login_required
 def StartLists( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	events = competition.get_events()
 	return render_to_response( 'start_lists.html', RequestContext(request, locals()) )
 	
+@login_required
 def StartList( request, eventId ):
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
@@ -1011,11 +1074,14 @@ def GetCategoryNumbersForm( competition, category_numbers = None ):
 			self.helper['competition'].wrap( Field, type='hidden' )
 	return CategoryNumbersForm
 		
+@login_required
 def CategoryNumbersDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	category_numbers_list = sorted( CategoryNumbers.objects.filter(competition = competition), key = CategoryNumbers.get_key )
 	return render_to_response( 'category_numbers_list.html', RequestContext(request, locals()) )
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryNumbersNew( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	category_numbers_list = CategoryNumbers.objects.filter( competition = competition )
@@ -1040,6 +1106,8 @@ def CategoryNumbersNew( request, competitionId ):
 	
 	return render_to_response( 'category_numbers_form.html', RequestContext(request, locals()) )
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryNumbersEdit( request, categoryNumbersId ):
 	category_numbers = get_object_or_404( CategoryNumbers, pk=categoryNumbersId )
 	competition = category_numbers.competition
@@ -1053,6 +1121,8 @@ def CategoryNumbersEdit( request, categoryNumbersId ):
 		),
 	)
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def CategoryNumbersDelete( request, categoryNumbersId ):
 	category_numbers = get_object_or_404( CategoryNumbers, pk=categoryNumbersId )
 	competition = category_numbers.competition
@@ -1099,10 +1169,13 @@ class EventMassStartForm( ModelForm ):
 			] )
 		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Start Lists') if button_mask == EDIT_BUTTONS else None )
 
+@login_required
 def EventMassStartDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'event_mass_start_list.html', RequestContext(request, locals()) )
 
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def EventMassStartNew( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -1126,16 +1199,21 @@ def EventMassStartNew( request, competitionId ):
 	
 	return render_to_response( 'event_mass_start_form.html', RequestContext(request, locals()) )
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def EventMassStartEdit( request, eventId ):
 	return GenericEdit( EventMassStart, request, eventId, EventMassStartForm,
 		template = 'event_mass_start_form.html'
 	)
 
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def EventMassStartDelete( request, eventId ):
 	return GenericDelete( EventMassStart, request, eventId, EventMassStartForm,
 		template = 'event_mass_start_form.html',
 	)
 
+@login_required
 def EventMassStartCrossMgr( request, eventId ):
 	eventMassStart = get_object_or_404( EventMassStart, pk=eventId )
 	competition = eventMassStart.competition
@@ -1194,6 +1272,8 @@ def GetWaveForm( event_mass_start, wave = None ):
 			
 	return WaveForm
 
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def WaveNew( request, eventMassStartId ):
 	event_mass_start = get_object_or_404( EventMassStart, pk=eventMassStartId )
 	
@@ -1233,12 +1313,16 @@ def WaveNew( request, eventMassStartId ):
 	
 	return render_to_response( 'wave_form.html', RequestContext(request, locals()) )
 
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def WaveEdit( request, waveId ):
 	wave = get_object_or_404( Wave, pk=waveId )
 	return GenericEdit( Wave, request, waveId, GetWaveForm(wave.event, wave),
 		template = 'wave_form.html'
 	)
 	
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def WaveDelete( request, waveId ):
 	wave = get_object_or_404( Wave, pk=waveId )
 	return GenericDelete( Wave, request, waveId, GetWaveForm(wave.event, wave),
@@ -1295,6 +1379,7 @@ class ParticipantSearchForm( Form ):
 			]
 		)
 
+@login_required
 def Participants( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -1385,6 +1470,7 @@ def Participants( request, competitionId ):
 
 #--------------------------------------------------------------------------------------------
 
+@login_required
 def ParticipantAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -1417,6 +1503,7 @@ def ParticipantAdd( request, competitionId ):
 		
 	return render_to_response( 'participant_add_list.html', RequestContext(request, locals()) )
 
+@login_required
 def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -1433,6 +1520,7 @@ def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 		
 	return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
 
+@login_required
 def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -1447,6 +1535,7 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 	
 	return ParticipantAddToCompetition( request, competitionId, licenseHolderId )
 
+@login_required
 def ParticipantEdit( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition_age = participant.competition.competition_age( participant.license_holder )
@@ -1454,12 +1543,14 @@ def ParticipantEdit( request, participantId ):
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
 	
+@login_required
 def ParticipantDelete( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	isEdit = False
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
 	
+@login_required
 def ParticipantDoDelete( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	participant.delete()
@@ -1494,6 +1585,7 @@ class ParticipantCategorySelectForm( Form ):
 			button_args[1],
 		)
 		
+@login_required
 def ParticipantCategoryChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -1517,6 +1609,7 @@ def ParticipantCategoryChange( request, participantId ):
 		categories = categories.filter( Q(gender=gender) | Q(gender=2) )
 	return render_to_response( 'participant_category_select.html', RequestContext(request, locals()) )	
 
+@login_required
 def ParticipantCategorySelect( request, participantId, categoryId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -1534,10 +1627,12 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 
 #--------------------------------------------------------------------------
+@login_required
 def ParticipantRoleChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	return render_to_response( 'participant_role_select.html', RequestContext(request, locals()) )
 
+@login_required
 def ParticipantRoleSelect( request, participantId, role ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	participant.role = int(role)
@@ -1545,6 +1640,7 @@ def ParticipantRoleSelect( request, participantId, role ):
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 	
 #--------------------------------------------------------------------------
+@login_required
 def ParticipantBooleanChange( request, participantId, field ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	setattr( participant, field, not getattr(participant, field) )
@@ -1553,6 +1649,7 @@ def ParticipantBooleanChange( request, participantId, field ):
 	
 #--------------------------------------------------------------------------
 
+@login_required
 def ParticipantTeamChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	search_text = request.session.get('teams_filter', '')
@@ -1579,6 +1676,7 @@ def ParticipantTeamChange( request, participantId ):
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render_to_response( 'participant_team_select.html', RequestContext(request, locals()) )
 	
+@login_required
 def ParticipantTeamSelect( request, participantId, teamId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	if int(teamId):
@@ -1595,6 +1693,7 @@ class Bib( object ):
 		self.bib = bib
 		self.license_holder = license_holder
 
+@login_required
 def ParticipantBibChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	if not participant.category:
@@ -1626,6 +1725,7 @@ def ParticipantBibChange( request, participantId ):
 	del allocated_numbers
 	return render_to_response( 'participant_bib_select.html', RequestContext(request, locals()) )
 	
+@login_required
 def ParticipantBibSelect( request, participantId, bib ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -1674,6 +1774,7 @@ class ParticipantNoteForm( Form ):
 			)
 		)
 		
+@login_required
 def ParticipantNoteChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -1740,6 +1841,7 @@ class ParticipantTagForm( Form ):
 			),
 		)
 
+@login_required
 def ParticipantTagChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -1859,6 +1961,7 @@ class ParticipantSignatureForm( Form ):
 			)
 		)
 
+@login_required
 def ParticipantSignatureChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	
@@ -1907,6 +2010,7 @@ class ParticipantScanForm( Form ):
 			),
 		)
 
+@login_required
 def ParticipantScan( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -1931,10 +2035,12 @@ def ParticipantScan( request, competitionId ):
 		
 	return render_to_response( 'participant_scan_form.html', RequestContext(request, locals()) )
 	
+@login_required
 def ParticipantNotFound( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'participant_not_found.html', RequestContext(request, locals()) )
 	
+@login_required
 def ParticipantMultiFound( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'participant_multi_found.html', RequestContext(request, locals()) )
@@ -1966,6 +2072,7 @@ class ParticipantRfidScanForm( Form ):
 			),
 		)
 
+@login_required
 def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
@@ -2034,12 +2141,14 @@ def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
 		
 	return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
 
+@login_required
 def LicenseHolderAddConfirm( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	competition_age = competition.competition_age( license_holder )
 	return render_to_response( 'license_holder_add_confirm.html', RequestContext(request, locals()) )
 
+@login_required
 def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -2087,6 +2196,8 @@ class SystemInfoForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
+@login_required
+@user_passes_test( lambda u: u.is_superuser )
 def SystemInfoEdit( request ):
 	return GenericEdit( SystemInfo, request, SystemInfo.get_singleton().id, SystemInfoForm )
 	
@@ -2098,3 +2209,11 @@ def QRCode( request ):
 	qrpath = os.path.dirname( qrpath )
 	qrpath = os.path.dirname( qrpath ) + '/'
 	return render_to_response( 'qrcode.html', RequestContext(request, locals()) )
+	
+#--------------------------------------------------------------------------
+
+def Logout( request ):
+	logout( request )
+	next = getContext(request, 'cancelUrl')
+	print next
+	return HttpResponseRedirect('/RaceDB/login?next=' + next)

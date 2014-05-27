@@ -17,6 +17,7 @@
 <hr/>
 </div>
 <h2 class="visible-print">{% trans "Waves" %}</h2>
+{% spaceless %}
 <table class="table table-striped table-hover">
 <thead>
 	<tr>
@@ -29,19 +30,23 @@
 </thead>
 <tbody>
 	{% for w in instance.wave_set.all %}
-		<tr onclick="jump('{{path}}WaveEdit/{{w.id}}/');">
+		<tr onclick="jump('./WaveEdit/{{w.id}}/');">
 			<td>{{w.name}}</td>
 			<td>{{w.start_offset}}</td>
 			<td>{{w.category_text}}</td>
 			<td class="text-center">{{w.get_participants.count}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}WaveDelete/{{w.id}}/">{% trans "Delete" %}</a>
-				<a class="btn btn-success" href="{{path}}WaveEdit/{{w.id}}/">{% trans "Edit" %}</a>
+				{% if request.user.is_superuser %}
+					<a class="btn btn-warning btn-xs" href="./WaveDelete/{{w.id}}/">{% trans "Delete" %}</a>
+					&nbsp;&nbsp;
+					<a class="btn btn-success btn-xs" href="./WaveEdit/{{w.id}}/">{% trans "Edit" %}</a>
+				{% endif %}
 			</td>
 		</tr>
 	{% endfor %}
 </tbody>
 </table>
+{% endspaceless %}
 {% spaceless %}
 <div class="hidden-print">
 {% with duplicate_bibs=instance.get_duplicate_bibs %}
@@ -81,14 +86,15 @@
 <tbody>
 	{% for p in w.get_participants %}
 		{% with h=p.license_holder %}
-		<tr onclick="jump('{{path}}ParticipantEdit/{{p.id}}/');">
+		<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
 			<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
-				<a class="btn btn-success" href="{{path}}ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
+				&nbsp;&nbsp;
+				<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
 			</td>
 		</tr>
 		{% endwith %}
