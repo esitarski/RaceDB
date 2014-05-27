@@ -20,7 +20,7 @@ from optparse import make_option
 def launch_server( **options ):
 
 	# Start the rfid server.
-	if options['rfid_reader'] or options['rfid_reader_host'] != 'localhost' or options['rfid_transmit_power'] > 0:
+	if any([options['rfid_reader'], options['rfid_reader_host'], options['rfid_transmit_power'] > 0, options['rfid_receiver_sensitivity'] > 0]):
 		kwargs = {
 			'llrp_host': options['rfid_reader_host'],
 		}
