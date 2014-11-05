@@ -2561,10 +2561,6 @@ class SystemInfoForm( ModelForm ):
 			Row(
 				Col(Field('tag_template', size=24), 6),
 			),
-			Row(
-				Col(Field('rfid_server_host', size=40), 3),
-				Col(Field('rfid_server_port', size=40), 3),
-			),
 			HTML( '<hr/' ),
 		)
 		addFormButtons( self, button_mask )
