@@ -17,5 +17,6 @@
 
 [Screen Navigation and Conventions]: ScreenNavigation.html
 [Hardware and Devices]: Hardware.html
+[Users and Roles]:	UsersAndRoles.html
 
 [Commands]:			Commands.html
