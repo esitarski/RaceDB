@@ -1500,6 +1500,7 @@ def CategoryNumbersDelete( request, categoryNumbersId ):
 class EventMassStartForm( ModelForm ):
 	class Meta:
 		model = EventMassStart
+		fields = '__all__'
 	
 	def newWaveCB( self, request, eventMassStart ):
 		return HttpResponseRedirect( pushUrl(request,'WaveNew',eventMassStart.id) )
@@ -2541,6 +2542,7 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 class SystemInfoForm( ModelForm ):
 	class Meta:
 		model = SystemInfo
+		fields = '__all__'
 		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)

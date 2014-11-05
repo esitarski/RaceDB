@@ -1,6 +1,7 @@
 import markdown
-from django import template
+import django
 from django.conf import settings
+from django import template
 import django.template.loader		# Required magic: otherwise the standard template tags will not be available.
 
 import re
@@ -23,6 +24,7 @@ settings.configure(
 		'.',
 	),
 )
+django.setup()
 
 @contextmanager 
 def working_directory(directory): 
