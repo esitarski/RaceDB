@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# coding=utf-8
 
 track_penalties = \
 u'''For not holding his/her line during the sprint
