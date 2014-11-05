@@ -4,18 +4,19 @@
 
 All commands can be run in the form:
 
-    python cmd <parameters>
+    python manage.py cmd <parameters>
 
 ## Data Initialization
 
 ### init_usac <filename.csv>
 Reads a usac .csv formatted data dump.
+It initializes riders using the USAC license number as the key.
+If is OK to run this command multiple times on the same data. If the license number for a rider is already in the database, the record data will be updated.  If it is new rider, a record will be added.
 
 ### init_ccn <spreadsheet.xlsx>
 Reads a ccn (Canadian Cycling) formatted spreadsheet.  This command looks for the sheet ending in "CCN" and reads it.
-It initialized riders using the "Licence Numbers" as the key.
-If is OK to run this command multiple times on the same data. If the license numbers exist already, the data will be updated.  If they don't exist,
-they will be created.
+It initializes riders using the "Licence Numbers" as the key.
+If is OK to run this command multiple times on the same data. If the license number for a rider is already in the database, the record data will be updated.  If it is new rider, a record will be added.
 
 ### init_prereg <spreadsheet.xlsx>
 
@@ -26,7 +27,9 @@ Initialize Pre-registered riders for a race.  For details, do:
 This command creates Participant records for a Competition.  The Participant records link LicenseHolders, Categories and Teams together.
 This command does not create LicenseHolder records or Teams.
 
-This command finds LicenseHolders by a specified License Number, or by doing a lookup by LastName and FirstName.  Using the License Code is much more reliable - if the names are spelled incorrectly, or there are riders with the same name, this will fail.
+This command finds LicenseHolders by a specified License Number, or by doing a lookup by LastName and FirstName.  Using the License Code is much more reliable - if the names are spelled incorrectly, or there are riders with the same name, matching by name will fail.
+
+If is OK to run this command multiple times on the same data.  If the rider is already entered, he/she is not entered again.
 
 Column|Description
 ------|-----------
@@ -36,7 +39,7 @@ Last Name|Optional.  If present, and there is no License code, this will be comb
 Team|Optional.  If present, this will be used to find the team.  The name must match 100% correctly
 Category|Optional.  If present, this is used to find the Category of the rider.  This must match one of the Category names of the CategoryFormat assigned to the race.
 Bib|Optional.  If present, this will initialize the Bib of the Participant.  If the Competition has the "Use Existing Bib" flag set, this will also change the "Existing Bib" in the LicenseHolder record.
-Tag{Optional. If present, this will initialize the Tag of the Participant.  If the Competition has the "Use Existing Tag" flag set, this will also change the "Existing Tag" in the LicenseHolder record.
+Tag|Optional. If present, this will initialize the Tag of the Participant.  If the Competition has the "Use Existing Tag" flag set, this will also change the "Existing Tag" in the LicenseHolder record.
 
 ## Database Commands
 
@@ -54,5 +57,5 @@ For details, see [the Django docs.](https://docs.djangoproject.com/en/1.6/ref/dj
 
 ### dbshell
 
-Gives you command-line access to the database so you can type in SQL statements.  You need to have installed sqlite for this to work.
+Gives you command-line access to the database so you can type in SQL statements.  You need to have sqlite installed for this to work.
 For details, see [the Django docs.](https://docs.djangoproject.com/en/1.6/ref/django-admin/#dbshell).
