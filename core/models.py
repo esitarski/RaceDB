@@ -684,8 +684,8 @@ class Wave( models.Model ):
 			if any( c in my_categories for c in categories_cur ):
 				my_category_numbers.add( cn )
 		
-		other_bibs = set.union( *[c.get_numbers() for c in other_category_numbers] )
-		my_bibs = set.union( *[c.get_numbers() for c in my_category_numbers] )
+		other_bibs = set.union( *[c.get_numbers() for c in other_category_numbers] ) if other_category_numbers else set()
+		my_bibs = set.union( *[c.get_numbers() for c in my_category_numbers] ) if my_category_numbers else set()
 		
 		return sorted( other_bibs & my_bibs )
 	
