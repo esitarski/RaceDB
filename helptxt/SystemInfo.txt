@@ -28,13 +28,3 @@ When RaceDB initializes, it creates a random 4-char hex prefix, followed by '###
 
 That is, the '######' part is filled in with unique database id, and the other characters in the template are added.
 Change the template to suit your purposes.  All new generated tags will the follow the template.
-
-## RFID Reader Server Host
-
-## RFID Reader Server Port
-
-These fields are currently hardcoded - don't worry about them.
-
-Under the covers, RaceDB requires a server to talk to the RFID reader to manage requests to write tags from the web clients.   This server manages a queue of requests, and sends each request one-at-a-time to the reader.
-
-This server is launched and managed automatically when RaceDB is launched with the --rfid_reader option.

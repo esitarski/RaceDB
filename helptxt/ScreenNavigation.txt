@@ -8,7 +8,7 @@ RaceDB is a web-based application that runs in a web browser.  It is designed to
 
 ### Breadcrumbs
 
-At the top of the screen are the "breadcrumbs".  These show you where you are in the program.  To return to any higher-level screen, you can click on the button to return to it.
+At the top of the screen are the "breadcrumbs".  These show you where you are in the program.  To return to any higher-level screen, you can click on the button to return to it.  To return to the top, click on the __RaceDB__ logo.
 
 Caution: using breadcrumb buttons for navigation is the equivalent of doing a Cancel, then jumping to the other screen.  If you have made changes in the current screen, always press Save or OK to commit those changes first.
 
@@ -16,15 +16,15 @@ Caution: using breadcrumb buttons for navigation is the equivalent of doing a Ca
 On the right of the breadcrumb list is the QR-Code button.  Press it to create a QR-Code of the current screen.  This makes it easy to get volunteers' devices configured to the pages in the application - just have them take a picture of the QR-Code and go to the encoded url on their device.
 
 #### User Status Icon
-Next to the QR-code button is the User Status button.  This will look like superman if you are logged in as "super".  It looks like a regular person when you are loged in as "reg".
+Next to the QR-code button is the User Status button.  This will look like superman if you are logged in as "super".  It looks like a regular person when you are logged in as "reg".
 
 #### Logout Button
 At the right of the breadcrumb list is the QR-Code button.  Press it to create a QR-Code of the current screen.  This makes it easy to get volunteers' devices configured to the pages in the application - just have them take a picture of the QR-Code and go to the encoded url on their device.
 
 The logout button makes it easy to change users.  Press it, login as another username, and you are returned exactly where you were in the program.
 
-### Fields with a "*"
-On some screens, there are fields with a "*" next to the field name.  This means that this is a required field.
+### Fields with a __*__
+On some screens, there are fields with a __*__ next to the field name.  This is a required field.
 
 ### Clicking on a Row - Same as Pressing the "Green" Button
 Clicking *anywhere* on a row in a table will trigger the action button shown in Green, which is the most common action.  This makes it much quicker to navigate through the system for the most common operations.
