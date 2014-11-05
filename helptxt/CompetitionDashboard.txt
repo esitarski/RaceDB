@@ -14,7 +14,7 @@ Participant records link the following information together:
 * Bib
 * Tag and Tag2
 
-The following combinations have a contraint to force the combination to be unique in the database:
+The following combinations have a constraint to force the combination to be unique in the database:
 
 * Competition, License Holder and Category
 * Competition, Bib and Category
@@ -31,16 +31,48 @@ However, it is possible to enter a Licence Holder more than once in the Competit
 
 ## Edit
 
-Edits the current Competition.
+Shows information about the current Competition.
 
-Of particular interest is the __Number Sets__ field.
+### Category Format
 
+The format of Categories to be used for this Competition.  See [Category Formats][] for details.
 
+### Number Set
 
-## Show Participants / Manual Entry
+The "set of numbers" used for this competition.  If you have a number set (say, 1-999) that you are giving out over a series, this tells RaceDB that RaceDB which existing number each rider will have.
 
-## Scan Participants / Automatic Entry
+### Season's Pass
+
+The Season's Pass is a list of rider who have purchased a particular Season's Pass (see [Seasonm's Pass][] for details).  After choosing a __Season's Pass__ for the Competition, any rider checking in who has a Season's Pass will automatically be recorded as having Paid for the race.
+
+### Using Tags/Chip Reader
+
+Tells RaceDB to enable Tags/Chips features.  To use the chip reader, make sure it is connected to the computer and start RaceDB with the command:
+
+    python manage.py launch --rfid_reader
+
+### Use Competitor's Existing Tags
+
+Tell's RaceDB to use the competitors existing tag codes.
+
+### Show Participants / Manual Entry
+
+Shows a searchable list of Participants in the Competition and allows you to enter Participants manually from the full License Holder list.
+
+### Barcode Entry
+
+Allows you to enter Participants from a barcode scan of the license code.  Requires a barcode reader connected.
+
+### RFID Entry
+
+Allows you to enter Participants from a scan of their RFID chip.  Requires an RFID reader connected to the computer.
 
 ## Mass Start Events
 
+Defines the set of Mass Starts for your event.  For each Mass Start, you indicate which Category(ies) are in the start, and the Start Offset.
+
+You can also create an Excel configuration file for CrossMgr by pressing the CrossMgr button.
+
 ## Category Numbers
+
+Defines the number ranges to be used for each Category.  Choose the Categories on the left, the enter a number range on the right.

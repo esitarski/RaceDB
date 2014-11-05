@@ -1,0 +1,34 @@
+[TOC]
+
+# Users and Roles
+
+There are two types of users in the system:
+
+1. __super__: the super user can create/edit/delete anything
+1. __reg__: the registration staff person can check it riders only
+
+RaceDB security is not designed for public access over the internet, and it is meant to be run locally.
+
+The password for __super__ is super, the password for __reg__ is reg.
+All staff working on registration should login with the __reg__ login.
+
+As a __reg__ user, a much simpler vew of the system is presented, for example, Delete options are absent.
+
+Additionally, Competitions are only shown if they are active today.  This makes it harder for a __reg__ user to start registering
+people for the wrong competition.
+
+Don't tell your registration staff about the __super__ login.
+
+It is best to do work on the system logged in __reg__ as much as possible, even if you are the super user.
+It is a lot harder to mess things up that way.
+
+You can quickly tell if you are __super__ or __reg__ by looking at the icon at the top of the screen.
+When super-user, it looks like superman.  When reg, it looks like a regular person.
+
+You can also quickly log in and log out by pressing the round red button at the top of the screen.
+Of course, changing users returns you to the same web page.
+
+This is useful feature if you find yourself at a __reg__ user's computer and you have to do something on the spot to fix a problem.
+Just log in as __super__, make your change right on the screen, then log back in as __reg__.
+
+

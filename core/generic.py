@@ -60,5 +60,5 @@ def CreateGeneric( ModelClass, ModelFormClass ):
 			self.additional_buttons = []
 			addFormButtons( self, self.button_mask, self.additional_buttons )
 			
-	return { '{}New
+	return {}
 

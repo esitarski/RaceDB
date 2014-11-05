@@ -110,20 +110,23 @@ def init_oca( fname = fnameDefault ):
 			except Exception as e:
 				print 'Line {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.dob, ur, e )
 				continue
-			
+				
 			attributes = {
 				'license_code':	ur.license,
 				'last_name':	ur.last_name,
 				'first_name':	ur.first_name,
 				'gender':		gender_from_str(ur.sex),
 				'date_of_birth':date_of_birth,
-				'city':			ur.city,
 				'state_prov':	'Ontario',
 				'nationality':	'Canada',
 				'uci_code':		ur.uci_code,
 			}
 			if attributes['uci_code'][:3] != 'CAN':
 				attributes['nationality'] = ''
+			try:
+				attributes['city'] = ur.city
+			except:
+				pass
 			
 			try:
 				lh = LicenseHolder.objects.get( license_code=ur.license )
@@ -139,7 +142,7 @@ def init_oca( fname = fnameDefault ):
 			team_name = ur.club or ur.trade_team
 			TeamHint.objects.filter( license_holder=lh ).delete()
 			if team_name:
-				team_names = [t.strip() for f in team_name.split(',')]
+				team_names = [t.strip() for t in team_name.split(',') if t.strip()]
 				for count, team_name in enumerate(team_names):
 					team = Team.objects.get_or_create( name=team_name )[0]
 					if count == len(team_names)-1:

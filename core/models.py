@@ -205,11 +205,51 @@ class NumberSet(models.Model):
 		verbose_name_plural = _('Number Sets')
 		ordering = ['sequence']
 
+#-------------------------------------------------------------------
+class SeasonsPass(models.Model):
+	name = models.CharField( max_length = 64, verbose_name = _('Name') )
+	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = lambda:SeasonsPass.objects.count() )
+
+	def __unicode__( self ):
+		return self.name
+		
+	def clone( self ):
+		name_new = None
+		for i in xrange(1, 1000):
+			name_new = u'{} Copy({})'.format( self.name.split( ' Copy(' )[0], i )
+			if not SeasonsPass.objects.exists( name = name_new ):
+				break
+		seasons_pass_new = SeasonsPass( name = name_new )
+		seasons_pass_new.save()
+		for sph in SeasonsPass.objects.filter( seasons_pass = self ):
+			sph.seasons_pass = seasons_pass_new
+			sph.save()
+		return seasons_pass_new
+	
+	class Meta:
+		verbose_name = _("Season's Pass")
+		verbose_name_plural = _("Season's Passes")
+		ordering = ['sequence']
+
+class SeasonsPassHolder(models.Model):
+	seasons_pass = models.ForeignKey( 'SeasonsPass', db_index = True, verbose_name = _("Season's Pass") )
+	license_holder = models.ForeignKey( 'LicenseHolder', unique = True, db_index = True, verbose_name = _("LicenseHolder") )
+	
+	def __unicode__( self ):
+		return u''.join( [unicode(self.seasons_pass), u': ', unicode(self.license_holder)] )
+	
+	class Meta:
+		ordering = ['license_holder__search_text']
+		verbose_name = _("Season's Pass Holder")
+		verbose_name_plural = _("Season's Pass Holders")
+
+#-------------------------------------------------------------------
 class Competition(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
 	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('Description') )
 	
 	number_set = models.ForeignKey( NumberSet, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Number Set') )
+	seasons_pass = models.ForeignKey( SeasonsPass, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Season's Pass") )
 	
 	city = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('City') )
 	stateProv = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('StateProv') )
@@ -460,6 +500,14 @@ class CategoryNumbers( models.Model ):
 	
 	def __contains__( self, n ):
 		return n in self.getNumbers()
+		
+	def add_bib( self, n ):
+		if n not in self:
+			self.range_str += u', {}'.format( n )
+			
+	def remove_bib( self, n ):
+		if n in self:
+			self.range_str += u', -{}'.format( n )
 		
 	def save(self, *args, **kwargs):
 		self.normalize()
@@ -782,7 +830,7 @@ class LicenseHolder(models.Model):
 		)
 		
 	def full_name( self ):
-		return "%s, %s" % (self.last_name.upper(), self.first_name)
+		return u"{}, {}".format(self.last_name.upper(), self.first_name)
 		
 	def full_license( self ):
 		return u', '.join( f for f in [self.uci_code, self.license_code] if f )
@@ -966,6 +1014,10 @@ class Participant(models.Model):
 	@property
 	def is_competitor( self ):
 		return self.role == Participant.Competitor
+		
+	@property
+	def is_seasons_pass_holder( self ):
+		return self.competition.seasons_pass and SeasonsPassHolder.objects.filter(seasons_pass=self.competition.seasons_pass, license_holder=self.license_holder).exists()
 
 	@property
 	def role_full_name( self ):
@@ -977,7 +1029,7 @@ class Participant(models.Model):
 	
 	@property
 	def needs_tag( self ):
-		return self.competition.usingTags and not self.tag and not self.tag2
+		return self.competition.using_tags and not self.tag and not self.tag2
 	
 	@property
 	def name( self ):
@@ -985,7 +1037,11 @@ class Participant(models.Model):
 		if self.team:
 			fields.append( self.team.short_name() )
 		return u''.join( [u'{} '.format(self.bib) if self.bib else u'', u', '.join( [f for f in fields if f] )] )
-			
+	
+	@property
+	def full_name_team( self ):
+		return u':  '.join( n for n in [self.license_holder.full_name(), self.team.name if self.team else None] if n )
+	
 	def __unicode__( self ):
 		return self.name
 	
@@ -1017,7 +1073,9 @@ class Participant(models.Model):
 	
 		self.role = 0
 		init_date = None
-		for pp in Participant.objects.filter( license_holder=self.license_holder ).order_by( '-competition__start_date' ):
+		for pp in sorted(	Participant.objects.filter(license_holder=self.license_holder),
+							key = lambda x: (x.competition.start_date, -(x.category.sequence if x.category else 999999)),
+							reverse = True ):
 			if init_values(pp):
 				init_date = pp.competition.start_date
 				break
@@ -1032,8 +1090,33 @@ class Participant(models.Model):
 		except TeamHint.DoesNotExist:
 			pass
 		
+		if self.is_seasons_pass_holder:
+			self.paid = True
+		
 		self.role = Participant._meta.get_field_by_name('role')[0].default
 		return self
+	
+	@property
+	def show_confirm( self ):
+		return	self.is_competitor and \
+				self.bib and \
+				self.category and \
+				self.paid and \
+				not self.needs_tag
+		
+	def auto_confirm( self ):
+		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:
+			self.confirmed = True
+		return self
+	
+	def get_other_category_participants( self ):
+		return list(
+					Participant.objects.filter(
+						competition = self.competition,
+						license_holder = self.license_holder,
+						role = self.Competitor,
+					).exclude( id=self.id )
+				)
 	
 	def get_bib_conflicts( self ):
 		if not self.bib:

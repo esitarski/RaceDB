@@ -5,6 +5,7 @@ import time
 import datetime
 import threading
 import argparse
+import random
 from Queue import Queue, Empty
 
 import traceback
@@ -14,9 +15,35 @@ from pyllrp.TagInventory import TagInventory
 from pyllrp.TagWriter import TagWriter
 from AutoDetect import AutoDetect
 
-terminator = bytes('\r\n')
-defaultPort = 50111
+#-----------------------------------------------------------------------
+# Find a unique port for the LLRPServer.
+# Required for simultaneous instances of RaceDB.
+#
+def findUnusedPort( host='localhost', portStart=50111, portRange=10 ):
+	ports = list(xrange(portStart, portStart+portRange))
+	random.shuffle( ports )
+	for port in ports:
+		try:
+			server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+			server.bind( (host, port) )
+			server.listen( 5 )
+			server.close()
+			return port
+		except Exception as e:
+			pass
+	return None
 
+defaultPort = None
+
+def getDefaultPort( host='localhost' ):
+	global defaultPort
+	if defaultPort is None:
+		defaultPort = findUnusedPort( host=host )
+	return defaultPort
+	
+#-----------------------------------------------------------------------
+
+terminator = bytes('\r\n')
 HexChars = set( '0123456789ABCDEF' )
 
 def receiveAll( s ):
@@ -45,11 +72,13 @@ def transact( s, message ):
 	return receiveMessage( s )
 
 class LLRPServer( threading.Thread ):
-	def __init__( self, LLRPHost, host = 'localhost', port = defaultPort, transmitPower = None, receiverSensitivity = None, messageQ = None ):
-		print 'LLRPServer:', host, defaultPort
+	def __init__( self, LLRPHost, host='localhost', port=None, transmitPower=None, receiverSensitivity=None, messageQ=None ):
 		self.LLRPHost = LLRPHost
+		
 		self.host = host
-		self.port = port
+		self.port = getDefaultPort( host=self.host ) if port is None else port
+		print 'LLRPServer: init: ', self.host, self.port
+		
 		self.tagWriter = None
 		self.transmitPower = transmitPower
 		self.receiverSensitivity = receiverSensitivity
@@ -255,9 +284,9 @@ class LLRPServer( threading.Thread ):
 		server.close()
 
 class LLRPClient( object ):
-	def __init__( self, host='localhost', port=defaultPort ):
+	def __init__( self, host='localhost', port=None ):
 		self.host = host
-		self.port = port
+		self.port = getDefaultPort( host=self.host ) if port is None else port
 	
 	def sendCmd( self, **kwargs ):
 		try:
@@ -284,26 +313,36 @@ def writeLog( message ):
 def runServer( host='localhost', llrp_host=None, transmitPower=None, receiverSensitivity=None ):
 	messageQ = Queue()
 	
-	LLRPHost = llrp_host if llrp_host and llrp_host.lower() != 'autodetect' else AutoDetect(callback = lambda m: writeLog('AutoDetect Checking: ' + m))
 	transmitPower = transmitPower if transmitPower else None
 	receiverSensitivity = receiverSensitivity if receiverSensitivity else None
 	
-	server = LLRPServer( LLRPHost=LLRPHost, messageQ=messageQ, transmitPower=transmitPower, receiverSensitivity=receiverSensitivity )
+	server = None
+	retryDelaySeconds = 3
 	
-	writeLog( 'Starting on {}:{}'.format(server.host, server.port) )
-	writeLog( 'LLRP Reader on {}:{}'.format(server.LLRPHost, 5084) )
-	
-	server.connect()
+	# Outer loop - connect/reconnect to the reader.
 	while True:
-		writeLog( messageQ.get() )
-		messageQ.task_done()
-		if server.exception_termination:
-			writeLog( 'Exceptional RFID Reader Termination.  Attempting to reconnect...' )
-			while True:
-				time.sleep( 3 )
-				try:
-					server = LLRPServer( LLRPHost = LLRPHost, messageQ = messageQ, transmitPower=transmitPower, receiverSensitivity=receiverSensitivity )
-					server.run()
-					writeLog( 'Successfully reconnected.' )
-				except Exception as e:
-					writeLog( e )
+		if server is not None:
+			writeLog( 'Attempting reconnect in {} seconds...'.format(retryDelaySeconds) )
+			time.sleep( retryDelaySeconds )
+		
+		LLRPHost = llrp_host if llrp_host and llrp_host.lower() != 'autodetect' else AutoDetect(callback = lambda m: writeLog('AutoDetect Checking: ' + m))
+		writeLog( 'runServer: LLRP Reader on ({}:{})'.format(LLRPHost, 5084) )
+		
+		server = LLRPServer( LLRPHost=LLRPHost, messageQ=messageQ, transmitPower=transmitPower, receiverSensitivity=receiverSensitivity )
+		writeLog( 'runServer: LLRP Server on ({}:{})'.format(server.host, server.port) )
+	
+		try:
+			server.connect()
+			writeLog( 'runServer: Successfully connected!' )
+		except Exception as e:
+			writeLog( 'runServer: {}'.format(e) )
+			writeLog( 'runServer: Connection fails.' )
+			continue
+		
+		# Inner loop - process messages from the reader.
+		while True:
+			writeLog( 'runServer: Server: ' + messageQ.get() )
+			messageQ.task_done()
+			if server.exception_termination:
+				writeLog( 'runServer: Exceptional RFID Reader Termination.' )
+				break

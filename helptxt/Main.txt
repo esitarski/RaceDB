@@ -11,8 +11,13 @@ Get started with RaceDB
 
 * [Category Formats][]
 * [Number Sets][]
+* [Season's Passes][]
 * [Race Classes][]
 * [Disciplines][]
+
+## Users and Roles
+
+* [Users and Roles][]
 
 ## Commands
 

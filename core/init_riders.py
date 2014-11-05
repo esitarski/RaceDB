@@ -3,6 +3,7 @@ from django.db import transaction
 import datetime
 import string
 from models import Rider
+from large_delete_all import large_delete_all
 
 tdf = '''
 1	Alberto Contador	 Spain	Saxo Bank-SunGard	28	5
@@ -205,7 +206,7 @@ tdf = '''
 219	Yannick Talabardon	 France	Saur-Sojasun	29	47'''
 
 def init_riders():
-	Rider.objects.all().delete()
+	large_delete_all( Rider )
 
 	tdf = tdf.strip()
 	lines = tdf.split( '\n' )

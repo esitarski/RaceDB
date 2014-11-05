@@ -13,26 +13,27 @@
 </h3>
 <hr/>
 <style>
-.btn-bib {
-	font-size: 150%;
-	font-weight: bold;
-	margin: 2px;
+.label-bib {
+	font-size: 140%;
+	margin: 10px;
+	background-color: #CCCCCC;
+	display: inline-block;
 }
-.badge-bib {
+.btn-bib-available {
 	font-size: 140%;
 	margin: 10px;
 }
 </style>
 {% spaceless %}
 {% if participant.bib %}
-	<a href="./ParticipantBibSelect/{{participant.id}}/0/" class="btn btn-default btn-bib">{% trans "No bib" %}</a>
+	<a href="./ParticipantBibSelect/{{participant.id}}/0/" class="btn btn-default">{% trans "No bib" %}</a>
 {% endif %}
 {% if category_numbers_defined %}
 	{% for b in bibs %}
 		{% if b.license_holder %}
-			<span class="badge badge-bib" title="{{b.license_holder.full_name}}">{{b.bib}}</span>
+			<span class="label label-default label-bib" title="{{b.full_name}}">{{b.bib}}</span>
 		{% else %}
-			<a href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/" class="btn btn-default btn-bib">{{b.bib}}</a>
+			<a class="btn btn-success btn-bib-available" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/">{{b.bib}}</a>
 		{% endif %}
 	{% endfor %}
 	<hr/>

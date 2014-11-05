@@ -1,0 +1,10 @@
+{% load i18n %}
+{% load staticfiles %}
+
+{% if rfid_antenna %}
+var body = document.body;
+body.style.backgroundImage = "url({% static "images/Antenna1.png" %})".replace( 'Antenna1.png', 'Antenna' + {{rfid_antenna}} + '.png' );
+body.style.backgroundRepeat = 'no-repeat';
+body.style.backgroundAttachment = 'fixed';
+body.style.backgroundPosition = 'center';
+{% endif %}

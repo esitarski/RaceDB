@@ -6,6 +6,9 @@
 <hr/>
 {% crispy form %}
 <hr/>
+{% if just_for_today %}
+	<h3>{% trans "Competitions shown only for today, " %} {% now "l F jS, Y" %}</h3>
+{% endif %}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">
 <thead>

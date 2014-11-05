@@ -48,14 +48,17 @@
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-md-4">
+			<div class="col-md-3">
 				{{competition|get_field_name:"using_tags"}}: <strong>{{competition.using_tags|yes_no}}</strong>
 			</div>
-			<div class="col-md-4">
+			<div class="col-md-3">
 				{{competition|get_field_name:"use_existing_tags"}}: <strong>{{competition.use_existing_tags|yes_no}}</strong>
 			</div>
-			<div class="col-md-4">
+			<div class="col-md-3">
 				{{competition|get_field_name:"number_set"}}: <strong>{{competition.number_set.name}}</strong>
+			</div>
+			<div class="col-md-3">
+				{{competition|get_field_name:"seasons_pass"}}: <strong>{{competition.seasons_pass.name}}</strong>
 			</div>
 		</div>
 		<div class="row hidden-print">

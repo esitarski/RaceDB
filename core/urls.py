@@ -4,6 +4,7 @@ from core import views
 
 urlpatterns = patterns('',
     url(r'^$', views.home, name='home'),
+    url(r'^(?P<rfid_antenna>\d+)/$', views.home, name='home'),
 	
 	url(r'^(?i).*Competitions/$', views.CompetitionsDisplay),
 	url(r'^(?i).*CompetitionNew/$', views.CompetitionNew),
@@ -67,6 +68,7 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*LicenseHolders/$', views.LicenseHoldersDisplay),
 	url(r'^(?i).*LicenseHolderNew/$', views.LicenseHolderNew),
+	url(r'^(?i).*LicenseHolderTagChange/(?P<licenseHolderId>\d+)/$', views.LicenseHolderTagChange),
 	url(r'^(?i).*LicenseHolderEdit/(?P<licenseHolderId>\d+)/$', views.LicenseHolderEdit),
 	url(r'^(?i).*LicenseHolderDelete/(?P<licenseHolderId>\d+)/$', views.LicenseHolderDelete),
 	
@@ -96,6 +98,21 @@ urlpatterns = patterns('',
 	url(r'^(?i).*NumberSetDown/(?P<numberSetId>\d+)/$', views.NumberSetDown),
 	url(r'^(?i).*NumberSetTop/(?P<numberSetId>\d+)/$', views.NumberSetTop),
 	url(r'^(?i).*NumberSetBottom/(?P<numberSetId>\d+)/$', views.NumberSetBottom),
+	
+	url(r'^(?i).*SeasonsPasses/$', views.SeasonsPassesDisplay),
+	url(r'^(?i).*SeasonsPassNew/$', views.SeasonsPassNew),
+	url(r'^(?i).*SeasonsPassCopy/(?P<seasonsPassId>\d+)/$', views.SeasonsPassCopy),
+	url(r'^(?i).*SeasonsPassEdit/(?P<seasonsPassId>\d+)/$', views.SeasonsPassEdit),
+	url(r'^(?i).*SeasonsPassDelete/(?P<seasonsPassId>\d+)/$', views.SeasonsPassDelete),
+	url(r'^(?i).*SeasonsPassUp/(?P<seasonsPassId>\d+)/$', views.SeasonsPassUp),
+	url(r'^(?i).*SeasonsPassDown/(?P<seasonsPassId>\d+)/$', views.SeasonsPassDown),
+	url(r'^(?i).*SeasonsPassTop/(?P<seasonsPassId>\d+)/$', views.SeasonsPassTop),
+	url(r'^(?i).*SeasonsPassBottom/(?P<seasonsPassId>\d+)/$', views.SeasonsPassBottom),
+	
+	url(r'^(?i).*SeasonsPassHolderAdd/(?P<seasonsPassId>\d+)/$', views.SeasonsPassHolderAdd),
+	url(r'^(?i).*SeasonsPassHolderRemove/(?P<seasonsPassHolderId>\d+)/$', views.SeasonsPassHolderRemove),
+	url(r'^(?i).*SeasonsPassLicenseHolderAdd/(?P<seasonsPassId>\d+)/(?P<licenseHolderId>\d+)/$', views.SeasonsPassLicenseHolderAdd),
+	url(r'^(?i).*SeasonsPassLicenseHolderRemove/(?P<seasonsPassId>\d+)/(?P<licenseHolderId>\d+)/$', views.SeasonsPassLicenseHolderRemove),
 	
 	url(r'^(?i).*RaceClasses/$', views.RaceClassesDisplay),
 	url(r'^(?i).*RaceClassNew/$', views.RaceClassNew),

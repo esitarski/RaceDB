@@ -4,6 +4,7 @@ from django.db import transaction
 import datetime
 import string
 from models import *
+from large_delete_all import large_delete_all
 
 tdf = '''
 1	Chris Froome	 United Kingdom	Team Sky	28	1
@@ -466,8 +467,8 @@ for c in countryCodes.split( '\n' ):
 def init_license_holders():
 	global tdf
 	
-	LicenseHolder.objects.all().delete()
-	Team.objects.all().delete()
+	large_delete_all( LicenseHolder )
+	large_delete_all( Team )
 
 	tdf = tdf.decode('iso-8859-1').strip()
 	lines = tdf.split( '\n' )

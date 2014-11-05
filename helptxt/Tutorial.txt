@@ -17,7 +17,7 @@ The output of RaceDB is start lists for each event, as well as a perfectly forma
 
 Unlike manual systems, RaceDB supports competitor check-in for any race and category at any time before the race start.
 
-RaceDB was designed to be fast and clean.  Understanding these will save you a lot of time and frustration.
+RaceDB was designed to be fast and clean.
 Review the [Screen Navigation and Conventions][].  After you have done so, go back to this Tutorial.
 
 ## The Database

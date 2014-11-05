@@ -7,6 +7,7 @@
 
 [Category Formats]:	CategoryFormats.html
 [Number Sets]:		NumberSets.html
+[Season's Passes]:	SeasonsPasses.html
 [Race Classes]:		RaceClasses.html
 [Disciplines]:		Disciplines.html
 

@@ -1,11 +1,9 @@
 
-from models import SystemInfo
 from LLRPClientServer import LLRPClient
 import traceback
 
 def _get_client():
-	system_info = SystemInfo.get_singleton()
-	return LLRPClient( system_info.rfid_server_host, system_info.rfid_server_port )
+	return LLRPClient()
 
 def WriteTag( tag, antenna ):
 	client = _get_client()

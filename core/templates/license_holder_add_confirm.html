@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block onload %}
+{% include "antenna_watermark.html" %}
+{% endblock onload %}
+
+{% block content %}
+{% load staticfiles %}
+{% load i18n %}
+<h2>{{title}}</h2>
+<h2><strong>{{competition.name}}</strong></h2>
+<hr/>
+{% spaceless %}
+<style>
+#confirmationenter {
+	font-size: 180%;
+}
+.table>tbody>tr>th, .table>tbody>tr>td {
+    border-top: none;
+}
+</style>
+
+<table class="table" id="confirmationenter">
+	<tbody>
+		<tr>
+			<td class="text-right">{% trans "Name" %}:</td>
+			<td><strong>{{license_holder.last_name}}, {{license_holder.first_name}}</strong></td>
+		</tr>
+		<tr><td class="text-right">{% trans "Gender" %}:</td>			<td><strong>{{license_holder.get_gender_display}}</strong></td></tr>
+		<tr>
+			<td class="text-right">{% trans "Date of Birth" %}:</td>
+			<td><strong>{{license_holder.date_of_birth}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Competition Age" %}: <strong>{{competition_age}}</strong></td>
+		</tr>
+		<tr><td class="text-right">{% trans "From" %}:</td>				<td><strong>{{license_holder.city}}, {{license_holder.state_prov}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "Nationality" %}:</td>		<td><strong>{{license_holder.nationality}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "License" %}:</td>			<td><strong>{{license_holder.license_code}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "UCI Code" %}:</td>			<td><strong>{{license_holder.uci_code}}</strong></td></tr>
+		{% if competition.use_tags and competition.use_existing_tags %}
+			<tr>
+				<td class="text-right">{% trans "Existing Tags" %}:</td>
+				<td>
+					<strong>
+						{% if license_holder.existing_tag %}{{license_holder.existing_tag}}{% endif %}{% if license_holder.existing_tag2 %}, {{license_holder.existing_tag2}}{% endif %}
+					</strong>
+				</td>
+			</tr>
+		{% endif %}
+	</tbody>
+</table>
+{% endspaceless %}
+<hr/>
+<a class="btn btn-success" id="focus" href="{{cancelUrl}}/LicenseHolderConfirmAddToCompetition/{{competition.id}}/{{license_holder.id}}">
+	{% trans "Enter in Race" %}
+</a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+{% endblock content %}

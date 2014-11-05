@@ -13,7 +13,7 @@ import webbrowser
 
 import RaceDB.wsgi
 import RaceDB.urls
-from core.LLRPClientServer import runServer, defaultPort as LLRPServerDefaultPort
+from core.LLRPClientServer import runServer
 from core.models import SystemInfo
 from optparse import make_option
 

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load staticfiles %}
+<h1>{{title}}</h1>
+<hr/>
+{% crispy form %}
+{% with participation=instance.get_participation_as_competitor %}
+{% if participation %}
+<hr/>
+<h2>{% trans "Participation" %}</h2>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Date" %}</th>
+		<th>{% trans "Category" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Competition" %}</th>
+		<th>{% trans "Discipline" %}</th>
+		<th>{% trans "Format" %}</th>
+		<th>{% trans "Class" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for p in participation %}
+	<tr>
+		<td class="text-right">{{forloop.counter}}.</td>
+		<td>{{p.competition.date_range_str}}</td>
+		<td>{% if p.category %}{{p.category.code}} ({{p.category.get_gender_display}}){% endif %}</td>
+		<td>{{p.team.name}}</td>
+		<td>{{p.competition.name}}</td>
+		<td>{{p.competition.discipline.name}}</td>
+		<td>{{p.competition.category_format.name}}</td>
+		<td>{{p.competition.race_class.name}}</td>
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+{% endif %}
+{% endwith %}
+{% endblock content %}

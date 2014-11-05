@@ -110,7 +110,7 @@
 		{% endif %}
 	</td>
 </tr>
-{% if p.role == 110 and p.category %}
+{% if p.show_confirm %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Confirmed" %}:</td>
 	<td>
@@ -163,6 +163,7 @@
 		{% else %}
 			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
+		{% if p.is_seasons_pass_holder %} {% trans "(Season's Pass Holder)" %} {% endif %}
 	</td>
 	{% if isEdit %}
 		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantPaidChange/{{p.id}}/">{% trans "Change" %}</a></td>
@@ -220,6 +221,27 @@
 		{% endif %}
 	{% endwith %}
 {% endif %}
+	{% with others=p.get_other_category_participants %}
+		<hr/>
+		<h3>{% trans "Additional Categories" %}:
+		{% if others %}
+			{% for o in others %}
+				<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{o.id}}">
+					{% if o.category %}{{o.category.code}}{% else %}{% trans "No Category" %}{% endif %}
+					-
+					{% if o.bib %} {% trans "Bib" %}: {{o.bib}} {% else %}{% trans "No Bib" %}{% endif %}
+				</a>
+			{% endfor %}
+		{% else %}
+			{% trans "None" %}
+		{% endif %}
+		{% if isEdit %}
+			<a class="btn btn-success hidden-print" id="focus" href="{{popUrl}}ParticipantAddToCompetitionDifferentCategory/{{p.competition.id}}/{{p.license_holder.id}}">
+				{% trans "Add Additional Category" %}
+			</a>
+		{% endif %}
+		</h3>
+	{% endwith %}
 <hr/>
 	{% if isEdit %}
 		{% if "ParticipantRfidScan" in path %}

@@ -1,5 +1,6 @@
 from django.db import transaction
 from models import Discipline, RaceClass, NumberSet
+from large_delete_all import large_delete_all
 
 disciplines = [
 	'Road',
@@ -39,7 +40,7 @@ def init_static():
 			(RaceClass, race_classes),
 			(NumberSet, number_sets),
 		]:
-		cls.objects.all().delete()		
+		large_delete_all( cls )
 		with transaction.commit_on_success():
 			for i, name in enumerate(values):
 				print i, name
