@@ -424,7 +424,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 								)
 							else:
 								status_entries.append(
-									(_('Tag read match rider tag'), [u'{} = {}'.format(tag, tagRead)] ),
+									(_('Tag read matches rider tag'), [u'{} = {}'.format(tag, tagRead)] ),
 								)
 						return render_to_response( 'rfid_validate.html', RequestContext(request, locals()) )
 					else:
