@@ -396,7 +396,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 						status, response = ReadTag(rfid_antenna)
 						tagRead = ''
 						# DEBUG DEBUG
-						#status, response = True, {'tags': ['E26D00051114','E26D00061114']}
+						status, response = True, {'tags': ['E26D00061114']}
 						if not status:
 							status_entries.append(
 								(_('Tag Read Failure'), response.get('errors',[]) ),
@@ -418,9 +418,14 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 							)
 						elif status:
 							if tagRead != tag:
+								try:
+									license_holder_other = LicenseHolder.objects.get(existing_tag=tagRead)
+									additional_message = u'{} != {} ({})'.format(tag, tagRead, license_holder_other.full_name())
+								except LicenseHolder.DoesNotExist:
+									additional_message = u'{} != {} ({})'.format(tag, tagRead, _('No match'))
 								status = False
 								status_entries.append(
-									(_('Tag read does NOT match rider tag'), [u'{} != {}'.format(tag, tagRead)] ),
+									(_('Tag read does NOT match rider tag'), [additional_message] ),
 								)
 							else:
 								status_entries.append(
