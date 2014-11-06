@@ -293,6 +293,7 @@ class LicenseHolderTagForm( Form ):
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
+			Submit( 'read-validate-tag-submit', _('Read / Validate Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'auto-generate-and-write-tag-submit', _('Auto Generate and Write Tag'), css_class='btn btn-success' ),
 		]
 		
@@ -304,9 +305,11 @@ class LicenseHolderTagForm( Form ):
 			),
 			HTML( '<br/>' ),
 			Row(
-				button_args[4],
+				button_args[5],
 				HTML( '&nbsp;' * 5 ),
 				button_args[3],
+				HTML( '&nbsp;' * 5 ),
+				button_args[4],
 			),
 			HTML( '<br/>' * 2 ),
 			Row(
@@ -354,7 +357,10 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 				)
 				return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
 			
-			if 'write-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
+			# Check for tag actions.
+			if any(submit_btn in request.POST for submit_btn in ('read-validate-tag-submit','write-tag-submit','auto-generate-and-write-tag-submit') ):
+			
+				# Check for valid antenna.
 				if not rfid_antenna:
 					status = False
 					status_entries.append(
@@ -363,14 +369,18 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 							_('Please specify the RFID Antenna.'),
 						)),
 					)
+				
+				# Check for missing tag.
 				if not tag:
 					status = False
 					status_entries.append(
 						(_('Empty Tag'), (
-							_('Cannot write an empty Tag.'),
+							_('Cannot write/validate an empty Tag.'),
 							_('Please specify a Tag.'),
 						)),
 					)
+				
+				# Check for valid tag.
 				elif not utils.allHex(tag):
 					status = False
 					status_entries.append(
@@ -381,11 +391,49 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 					)
 				
 				if status:
-					status, response = WriteTag(tag, rfid_antenna)
-					if not status:
-						status_entries = [
-							(_('Tag Write Failure'), response.get('errors',[]) ),
-						]
+					if 'read-validate-tag-submit' in request.POST:
+						# Handle reading/validating an existing tag.
+						status, response = ReadTag(rfid_antenna)
+						tagRead = ''
+						# DEBUG DEBUG
+						status, response = True, {'tags': ['E26D00051114','E26D00061114']}
+						if not status:
+							status_entries.append(
+								(_('Tag Read Failure'), response.get('errors',[]) ),
+							)
+						else:
+							tags = response.get('tags', [])
+							try:
+								tagRead = tags[0]
+							except (AttributeError, IndexError) as e:
+								status = False
+								status_entries.append(
+									(_('Tag Read Failure'), [e] ),
+								)
+						
+						if tagRead and len(tags) > 1:
+							status = False
+							status_entries.append(
+								(_('Multiple Tags Read'), tags ),
+							)
+						elif status:
+							if tagRead != tag:
+								status = False
+								status_entries.append(
+									(_('Tag read does NOT match rider tag'), [u'{} != {}'.format(tag, tagRead)] ),
+								)
+							else:
+								status_entries.append(
+									(_('Tag read match rider tag'), [u'{} = {}'.format(tag, tagRead)] ),
+								)
+						return render_to_response( 'rfid_validate.html', RequestContext(request, locals()) )
+					else:
+						# Handle writing the tag.
+						status, response = WriteTag(tag, rfid_antenna)
+						if not status:
+							status_entries = [
+								(_('Tag Write Failure'), response.get('errors',[]) ),
+							]
 				
 				if not status:
 					return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
