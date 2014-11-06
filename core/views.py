@@ -396,7 +396,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 						status, response = ReadTag(rfid_antenna)
 						tagRead = ''
 						# DEBUG DEBUG
-						status, response = True, {'tags': ['E26D00051114','E26D00061114']}
+						#status, response = True, {'tags': ['E26D00051114','E26D00061114']}
 						if not status:
 							status_entries.append(
 								(_('Tag Read Failure'), response.get('errors',[]) ),
