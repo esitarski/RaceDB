@@ -28,3 +28,10 @@ When RaceDB initializes, it creates a random 4-char hex prefix, followed by '###
 
 That is, the '######' part is filled in with unique database id, and the other characters in the template are added.
 Change the template to suit your purposes.  All new generated tags will the follow the template.
+
+## Reg Closure Minutes
+
+The number of minutes that registration is considered __closed__ before an event.
+If __-1__, then registration is never considered closed.
+
+Currently, this just shows a warning message on the __Participant Form__ showing the late registered __Start Waves__ - it does not physically stop the registration process.

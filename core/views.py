@@ -1809,7 +1809,7 @@ def Participants( request, competitionId ):
 		if 'add-participant-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request, 'ParticipantAdd', competition.id) )
 			
-		form = ParticipantSearchForm( request.POST, competition = competition )
+		form = ParticipantSearchForm( request.POST, competition=competition )
 		if form.is_valid():
 			participant_filter = request.session[pfKey] = form.cleaned_data
 			participant_filter_no_scan = participant_filter.copy()
@@ -1996,7 +1996,7 @@ class ParticipantCategorySelectForm( Form ):
 			button_args[0],
 			button_args[1],
 		)
-		
+
 @external_access
 def ParticipantCategoryChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
@@ -2613,6 +2613,9 @@ class SystemInfoForm( ModelForm ):
 		self.helper.layout = Layout(
 			Row(
 				Col(Field('tag_template', size=24), 6),
+			),
+			Row(
+				Col(Field('reg_closure_minutes', size=6), 6),
 			),
 			HTML( '<hr/' ),
 		)

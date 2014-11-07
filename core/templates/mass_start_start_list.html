@@ -25,6 +25,7 @@
 		<th>{% trans "Start Offset" %}</th>
 		<th>{% trans "Categories" %}</th>
 		<th class="text-center">{% trans "Starters" %}</th>
+		<th class="text-center">{% trans "Late Reg" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -35,6 +36,7 @@
 			<td>{{w.start_offset}}</td>
 			<td>{{w.category_text}}</td>
 			<td class="text-center">{{w.get_participants.count}}</td>
+			<td class="text-center">{{w.get_late_reg.count}}</td>
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning btn-xs" href="./WaveDelete/{{w.id}}/">{% trans "Delete" %}</a>
@@ -80,25 +82,29 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Category" %}</th>
+		<th>{% trans "Late Reg" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
 <tbody>
-	{% for p in w.get_participants %}
-		{% with h=p.license_holder %}
-		<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
-			<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
-			<td>{{p.license_holder.full_name}}</td>
-			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-			<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
-			<td class="hidden-print">
-				<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
-				&nbsp;&nbsp;
-				<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
-			</td>
-		</tr>
-		{% endwith %}
-	{% endfor %}
+	{% with late_reg_set=w.get_late_reg_set %}
+		{% for p in w.get_participants %}
+			{% with h=p.license_holder %}
+			<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
+				<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
+				<td>{{p.license_holder.full_name}}</td>
+				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+				<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
+				<td>{% if p in late_reg_set %}<span class="label label-warning">{% trans "Late" %}</span>{% endif %}</td>
+				<td class="hidden-print">
+					<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
+					&nbsp;&nbsp;
+					<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
+				</td>
+			</tr>
+			{% endwith %}
+		{% endfor %}
+	{% endwith %}
 </tbody>
 </table>
 {% endspaceless %}

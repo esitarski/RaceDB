@@ -205,6 +205,7 @@
 </tr>
 </table>
 {% endspaceless %}
+
 {% if p.is_competitor %}
 	{% with sw=p.get_start_waves %}
 		{% if sw %}
@@ -216,6 +217,9 @@
 					<strong>{{w.name}}</strong> -
 					{{w.event.name}} -
 					{{w.event.date_time|date}}
+					{% if w.is_late %}
+						<span class="label label-warning">{% trans "Late Registration.  Not in Start List." %}</span>
+					{% endif %}
 					</h3>
 				{% endfor %}
 		{% endif %}
@@ -258,5 +262,6 @@
 		<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 		<a class="btn btn-warning hidden-print" href="{{cancelUrl}}ParticipantDoDelete/{{p.id}}/">{% trans "OK" %}</a>
 	{% endif %}
+
 {% endwith %}
 {% endblock content %}

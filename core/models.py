@@ -67,6 +67,8 @@ class SystemInfo(models.Model):
 	rfid_server_host = models.CharField( max_length = 32, default = RFID_SERVER_HOST_DEFAULT, verbose_name = _('RFID Reader Server Host')  )
 	rfid_server_port = models.PositiveSmallIntegerField( default = RFID_SERVER_PORT_DEFAULT, verbose_name = _('RFID Reader Server Port') )
 	
+	reg_closure_minutes = models.IntegerField( default = -1, verbose_name = _('Reg Closure Minutes'), help_text=_('Minutes before race start to close registration for "reg" users.  Use -1 for None.') )
+	
 	@classmethod
 	def get_tag_template_default( cls ):
 		tNow = datetime.datetime.now()
@@ -83,6 +85,10 @@ class SystemInfo(models.Model):
 		else:
 			for system_info in cls.objects.all():
 				return system_info
+	
+	@classmethod
+	def get_reg_closure_minutes( cls ):
+		return cls.get_singleton().reg_closure_minutes
 	
 	def save( self, *args, **kwargs ):
 		self.tag_template = getValidTagFormatStr( self.tag_template )
@@ -529,6 +535,12 @@ class Event( models.Model ):
 	)
 	event_type = models.PositiveSmallIntegerField( choices=EVENT_TYPE_CHOICES, default = 0, verbose_name = ('Event Type') )
 	
+	def reg_is_late( self, reg_closure_minutes, registration_timestamp ):
+		if reg_closure_minutes < 0:
+			return False
+		delta = self.date_time - registration_timestamp
+		return delta.total_seconds()/60.0 < reg_closure_minutes
+	
 	def __unicode__( self ):
 		return u'%s, %s (%s)' % (self.date_time, self.name, self.competition.name)
 		
@@ -689,11 +701,27 @@ class Wave( models.Model ):
 		
 		return sorted( other_bibs & my_bibs )
 	
+	def get_participants_unsorted( self ):
+		return Participant.objects.filter( competition=self.event.competition, category__in=self.categories.all() )
+	
 	def get_participants( self ):
-		return Participant.objects.filter( competition=self.event.competition, category__in=self.categories.all() ).order_by( 'bib' )
+		return self.get_participants_unsorted().order_by( 'bib' )
 	
 	def get_participant_count( self ):
-		return Participant.objects.filter( competition=self.event.competition, category__in=self.categories.all() ).count()
+		return self.get_participants_unsorted().count()
+		
+	def reg_is_late( self, reg_closure_minutes, registration_timestamp ):
+		return self.event.reg_is_late( reg_closure_minutes, registration_timestamp )
+	
+	def get_late_reg( self ):
+		latest_reg_timestamp = self.event.date_time - datetime.timedelta( seconds=SystemInfo.get_reg_closure_minutes()*60 )
+		return self.get_participants_unsorted().filter( registration_timestamp__gt=latest_reg_timestamp )
+	
+	def get_late_reg_set( self ):
+		return set( self.get_late_reg() )
+	
+	def get_late_reg_count( self ):
+		return self.get_late_reg().count()
 	
 	@property
 	def category_text( self ):
@@ -1130,7 +1158,11 @@ class Participant(models.Model):
 	def get_start_waves( self ):
 		if not self.category:
 			return []
-		return sorted( Wave.objects.filter(event__competition = self.competition, categories=self.category), key=Wave.get_start_time )
+		waves = sorted( Wave.objects.filter(event__competition = self.competition, categories=self.category), key=Wave.get_start_time )
+		reg_closure_minutes = SystemInfo.get_reg_closure_minutes()
+		for w in waves:
+			w.is_late = w.reg_is_late( reg_closure_minutes, self.registration_timestamp )
+		return waves
 	
 	def explain_integrity_error( self ):
 		try:
@@ -1571,3 +1603,6 @@ class Participant(models.Model):
 	# class Meta:
 		# verbose_name = _("Series")
 		# verbose_name_plural = _("Series")
+
+# Apply upgrades.
+import migrate_data
