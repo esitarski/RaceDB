@@ -2445,12 +2445,12 @@ def ParticipantScan( request, competitionId ):
 			
 		form = ParticipantScanForm( request.POST )
 		if form.is_valid():
-			scan = form.cleaned_data['scan']
-			scan = scan.strip()
+			scan = form.cleaned_data['scan'].strip()
 			if not scan:
 				return HttpResponseRedirect(getContext(request,'path'))
 				
-			participants = participant_key_filter( competition, scan )
+			# ON74600
+			license_holder, participants = participant_key_filter( competition, scan )
 			if len(participants) != 1:
 				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
 			else:
