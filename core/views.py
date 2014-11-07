@@ -421,8 +421,8 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 								try:
 									license_holder_other = LicenseHolder.objects.get(existing_tag=tagRead)
 									additional_message = u'{} != {} ({})'.format(tag, tagRead, license_holder_other.full_name())
-								except LicenseHolder.DoesNotExist:
-									additional_message = u'{} != {} ({})'.format(tag, tagRead, _('No match'))
+								except  (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
+									additional_message = u'{} != {}'.format(tag, tagRead)
 								status = False
 								status_entries.append(
 									(_('Tag read does NOT match rider tag'), [additional_message] ),
