@@ -14,28 +14,38 @@
 <hr/>
 <style>
 .label-bib {
-	font-size: 140%;
+	font-size: 130%;
 	margin: 10px;
 	background-color: #CCCCCC;
 	display: inline-block;
 }
 .btn-bib-available {
-	font-size: 140%;
+	font-size: 130%;
 	margin: 10px;
 }
 </style>
 {% spaceless %}
 {% if participant.bib %}
-	<a href="./ParticipantBibSelect/{{participant.id}}/0/" class="btn btn-default">{% trans "No bib" %}</a>
+	<a href="./ParticipantBibSelect/{{participant.id}}/0/" class="btn btn-warning btn-bib-available">{% trans "No Bib" %}</a><br/>
 {% endif %}
 {% if category_numbers_defined %}
+	{% spaceless %}
+	<table><tbody>
+	<tr>
 	{% for b in bibs %}
+		<td>
 		{% if b.license_holder %}
 			<span class="label label-default label-bib" title="{{b.full_name}}">{{b.bib}}</span>
 		{% else %}
 			<a class="btn btn-success btn-bib-available" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/">{{b.bib}}</a>
 		{% endif %}
+		</td>
+		{% if forloop.last %}</tr>
+		{% elif forloop.counter|divisibleby:10 %}</tr><tr>
+		{% endif %}
 	{% endfor %}
+	</tbody></table>
+	{% endspaceless %}
 	<hr/>
 	<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 {% else %}

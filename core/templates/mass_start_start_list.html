@@ -5,6 +5,7 @@
 {% load staticfiles %}
 {% load crispy_forms_tags %}
 
+{% with late_reg_exists=instance.get_late_reg_exists %}
 <h2 class="hidden-print">{{title}}</h2>
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 <h2><strong>{{instance.competition.name}}</strong></h2>
@@ -25,7 +26,7 @@
 		<th>{% trans "Start Offset" %}</th>
 		<th>{% trans "Categories" %}</th>
 		<th class="text-center">{% trans "Starters" %}</th>
-		<th class="text-center">{% trans "Late Reg" %}</th>
+		{% if late_reg_exists %}<th class="text-center">{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -36,7 +37,7 @@
 			<td>{{w.start_offset}}</td>
 			<td>{{w.category_text}}</td>
 			<td class="text-center">{{w.get_participants.count}}</td>
-			<td class="text-center">{{w.get_late_reg.count}}</td>
+			{% if late_reg_exists %}<td class="text-center">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning btn-xs" href="./WaveDelete/{{w.id}}/">{% trans "Delete" %}</a>
@@ -82,7 +83,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Category" %}</th>
-		<th>{% trans "Late Reg" %}</th>
+		{% if late_reg_exists %}<th>{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -95,7 +96,7 @@
 				<td>{{p.license_holder.full_name}}</td>
 				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 				<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
-				<td>{% if p in late_reg_set %}<span class="label label-warning">{% trans "Late" %}</span>{% endif %}</td>
+				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
 				<td class="hidden-print">
 					<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
 					&nbsp;&nbsp;
@@ -109,4 +110,5 @@
 </table>
 {% endspaceless %}
 {% endfor %}
+{% endwith %}{# late_reg_exists #}
 {% endblock content %}

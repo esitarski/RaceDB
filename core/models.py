@@ -631,6 +631,9 @@ class EventMassStart( Event ):
 	def get_participant_count( self ):
 		return sum( w.get_participant_count() for w in self.wave_set.all() )
 
+	def get_late_reg_exists( self ):
+		return any( w.get_late_reg().exists() for w in self.wave_set.all() )
+		
 	@property
 	def wave_text( self ):
 		return u', '.join( u'{} ({})'.format(w.name, w.category_text) for w in self.wave_set.all() )
