@@ -72,8 +72,8 @@ def transact( s, message ):
 	return receiveMessage( s )
 
 class LLRPServer( threading.Thread ):
-	def __init__( self, LLRPHost, host='localhost', port=None, transmitPower=None, receiverSensitivity=None, messageQ=None ):
-		self.LLRPHost = LLRPHost
+	def __init__( self, LLRPHostFunc, host='localhost', port=None, transmitPower=None, receiverSensitivity=None, messageQ=None ):
+		self.LLRPHostFunc = LLRPHostFunc
 		
 		self.host = host
 		self.port = getDefaultPort( host=self.host ) if port is None else port
@@ -114,7 +114,7 @@ class LLRPServer( threading.Thread ):
 		self.logMessage( 'shutdown complete' )
 	
 	def connectTagWriter( self ):
-		self.tagWriter = TagWriter( self.LLRPHost, transmitPower=self.transmitPower, receiverSensitivity=self.receiverSensitivity )
+		self.tagWriter = TagWriter( self.LLRPHostFunc(), transmitPower=self.transmitPower, receiverSensitivity=self.receiverSensitivity )
 		self.tagWriter.Connect()
 	
 	def connect( self ):
@@ -352,6 +352,12 @@ class LLRPClient( object ):
 def writeLog( message ):
 	print u'[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message )
 
+def doAutoDetect():
+	LLRPHost = AutoDetect( callback=lambda m: writeLog('AutoDetect Checking: ' + m) )
+	if LLRPHost:
+		writeLog( 'AutoDetect: LLRP Reader found on ({}:{})'.format(LLRPHost, 5084) )
+	return LLRPHost
+	
 def runServer( host='localhost', llrp_host=None, transmitPower=None, receiverSensitivity=None ):
 	messageQ = Queue()
 	
@@ -361,16 +367,19 @@ def runServer( host='localhost', llrp_host=None, transmitPower=None, receiverSen
 	server = None
 	retryDelaySeconds = 3
 	
+	# Define function to get llrp_host name.
+	if llrp_host and llrp_host.lower() != 'autodetect':
+		LLRPHostFunc = lambda : llrp_host
+	else:
+		LLRPHostFunc = doAutoDetect
+	
 	# Outer loop - connect/reconnect to the reader.
 	while True:
 		if server is not None:
 			writeLog( 'Attempting reconnect in {} seconds...'.format(retryDelaySeconds) )
 			time.sleep( retryDelaySeconds )
 		
-		LLRPHost = llrp_host if llrp_host and llrp_host.lower() != 'autodetect' else AutoDetect(callback = lambda m: writeLog('AutoDetect Checking: ' + m))
-		writeLog( 'runServer: LLRP Reader on ({}:{})'.format(LLRPHost, 5084) )
-		
-		server = LLRPServer( LLRPHost=LLRPHost, messageQ=messageQ, transmitPower=transmitPower, receiverSensitivity=receiverSensitivity )
+		server = LLRPServer( LLRPHostFunc=LLRPHostFunc, messageQ=messageQ, transmitPower=transmitPower, receiverSensitivity=receiverSensitivity )
 		writeLog( 'runServer: LLRP Server on ({}:{})'.format(server.host, server.port) )
 	
 		try:

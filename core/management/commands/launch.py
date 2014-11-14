@@ -49,7 +49,7 @@ def launch_server( **options ):
 		).start()
 		print 'A browser will be launched in a few moments at: {}'.format(url)
 		
-	print 'To stop the server, click in the window and press Ctrl-c.'
+	print 'To stop the server, click in this window and press Ctrl-c.'
 
 	# Add DjangoWhiteNoise to serve up static files efficiently in waitress.
 	#serve( DjangoWhiteNoise(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
