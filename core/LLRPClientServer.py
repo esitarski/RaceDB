@@ -93,20 +93,35 @@ class LLRPServer( threading.Thread ):
 	
 	def shutdown( self ):
 		s = self.getClientSocket()
-		sendMessage( s, dict(cmd='shutdown') )
-		s.close()
+		
+		try:
+			sendMessage( s, dict(cmd='shutdown') )
+		except Exception as e:
+			self.logMessage( 'shutdown exception:', e )
+		
+		try:
+			s.close()
+		except Exception as e:
+			self.logMessage( 's.close() exception:', e )
 		
 		if self.tagWriter:
-			self.tagWriter.Disconnect()
-		self.tagWriter = None
+			try:
+				self.tagWriter.Disconnect()
+			except Exception as e:
+				self.logMessage( 'tagWriter.Disconnect() exception:', e )
+			self.tagWriter = None
+		
 		self.logMessage( 'shutdown complete' )
+	
+	def connectTagWriter( self ):
+		self.tagWriter = TagWriter( self.LLRPHost, transmitPower=self.transmitPower, receiverSensitivity=self.receiverSensitivity )
+		self.tagWriter.Connect()
 	
 	def connect( self ):
 		if self.is_alive():
 			self.shutdown()
 			
-		self.tagWriter = TagWriter( self.LLRPHost, transmitPower=self.transmitPower, receiverSensitivity=self.receiverSensitivity)
-		self.tagWriter.Connect()
+		self.connectTagWriter()
 		self.start()
 		self.logMessage( 'connect success' )
 	
@@ -146,7 +161,7 @@ class LLRPServer( threading.Thread ):
 		else:
 			return ( dict(success=False, errors=['Unknown request']) ), True
 	
-	def writeTag( self, tag, antenna ):
+	def writeTag( self, tag, antenna, callCount = 0 ):
 		errors = []
 		
 		tag = str(tag).lstrip('0').upper()
@@ -165,12 +180,26 @@ class LLRPServer( threading.Thread ):
 			return False, errors
 		
 		if not (1 <= antenna <= 4):
-			errors.append( 'Tag Write Failure: Invalid antenna.  Must be 1, 2, 3 or 4.' )
+			errors.append( 'Tag Write Failure: Antenna not in range.  Must be 1, 2, 3 or 4.' )
 			return False, errors
 			
 		try:
 			self.tagWriter.WriteTag( '', tag, antenna )
 		except Exception as e:
+			eOriginal = e
+			self.logMessage( 'tagWriter.WriteTag("","{}",{}) fails: {}'.format(tag, antenna, eOriginal) )
+			if callCount == 0:
+				self.logMessage( 'Attempting reader reconnect.' )
+				try:
+					self.connectTagWriter()
+					return self.writeTag( tag, antenna, callCount+1 )
+				
+				except Exception as e:
+					errors.append( 'Tag Write Failure: {}.'.format(eOriginal) )
+					errors.append( 'Reader reconnect failure: {}.'.format(e) )
+					errors.append( traceback.format_exc() )
+					return False, errors
+				
 			errors.append( 'Tag Write Failure: {}.'.format(e) )
 			errors.append( traceback.format_exc() )
 			return False, errors
@@ -206,7 +235,7 @@ class LLRPServer( threading.Thread ):
 			
 		return not errors, errors
 	
-	def readTags( self, antenna ):
+	def readTags( self, antenna, callCount=0 ):
 		errors = []
 		tagInventory = []
 		try:
@@ -214,6 +243,19 @@ class LLRPServer( threading.Thread ):
 			if not tagInventory:
 				errors.append( 'No tags read.' )
 		except Exception as e:
+			eOriginal = e
+			self.logMessage( 'tagWriter.GetTagInventory({}) fails: {}'.format(antenna, eOriginal) )
+			if callCount == 0:
+				self.logMessage( 'Attempting reader reconnect.' )
+				try:
+					self.connectTagWriter()
+					return self.readTags( antenna, callCount+1 )
+				except Exception as e:
+					errors.append( 'Read Tag Failure: {}'.format(eOriginal) )
+					errors.append( 'Reader reconnect failure: {}.'.format(e) )
+					errors.append( traceback.format_exc() )
+					return [], errors
+			
 			errors.append( 'Read Tag Failure: {}'.format(e) )
 			errors.append( traceback.format_exc() )
 			
