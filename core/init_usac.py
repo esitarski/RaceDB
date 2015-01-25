@@ -3,6 +3,7 @@ import datetime
 import HTMLParser
 from collections import namedtuple
 from models import *
+from utils import toUnicode
 from django.db import transaction
 from django.db.models import Q
 import csv, codecs
@@ -12,34 +13,34 @@ earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
 
 class UTF8Recoder(object):
-    """
-    Iterator that reads an encoded stream and reencodes the input to UTF-8
-    """
-    def __init__(self, f, encoding):
-        self.reader = codecs.getreader(encoding)(f)
+	"""
+	Iterator that reads an encoded stream and reencodes the input to UTF-8
+	"""
+	def __init__(self, f, encoding):
+		self.reader = codecs.getreader(encoding)(f)
 
-    def __iter__(self):
-        return self
+	def __iter__(self):
+		return self
 
-    def next(self):
-        return self.reader.next().encode("utf-8")
+	def next(self):
+		return self.reader.next().encode('utf-8')
 
 class UnicodeReader(object):
-    """
-    A CSV reader which will iterate over lines in the CSV file "f",
-    which is encoded in the given encoding.
-    """
+	"""
+	A CSV reader which will iterate over lines in the CSV file "f",
+	which is encoded in the given encoding.
+	"""
 
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
-        f = UTF8Recoder(f, encoding)
-        self.reader = csv.reader(f, dialect=dialect, **kwds)
+	def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+		f = UTF8Recoder(f, encoding)
+		self.reader = csv.reader(f, dialect=dialect, **kwds)
 
-    def next(self):
-        row = self.reader.next()
-        return [unicode(s, "utf-8") for s in row]
+	def next(self):
+		row = self.reader.next()
+		return [toUnicode(s) for s in row]
 
-    def __iter__(self):
-        return self
+	def __iter__(self):
+		return self
 
 fnameDefault = 'wp_p_universal.csv'
 

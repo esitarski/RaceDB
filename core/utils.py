@@ -28,6 +28,22 @@ def removeDiacritic( s ):
 	else:
 		return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore')
 
+def toUnicode( s ):
+	if isinstance( s, unicode ):
+		return s
+		
+	encodings = (
+		'utf-8', 'iso-8859-1', 'iso-8859-2', 'iso-8859-3', 'iso-8859-4', 'iso-8859-5',
+		'iso-8859-7', 'iso-8859-8', 'iso-8859-9', 'iso-8859-10', 'iso-8859-11',
+		'iso-8859-13', 'iso-8859-14', 'iso-8859-15',' utf-8', 
+	)
+	for encoding in encodings:
+		try:
+			return unicode( s, encoding )
+		except UnicodeDecodeError as e:
+			pass
+	raise e
+
 reSep = re.compile( u'[:;,-/. \t]+' )
 def normalizeSeparators( s ):
 	return reSep.sub( u' ', s )
