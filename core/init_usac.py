@@ -3,7 +3,7 @@ import datetime
 import HTMLParser
 from collections import namedtuple
 from models import *
-from utils import toUnicode
+from utils import toUnicode, removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 import csv, codecs
@@ -128,7 +128,8 @@ def init_usac( fname = fnameDefault, states = '' ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			print u'{:>6}: {:>8} {:>10} {}, {} {}'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'), lh.last_name, lh.first_name, lh.state_prov )
+			print u'{:>6}: {:>8} {:>10} {}, {} {}'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'),
+				removeDiacritic(lh.last_name), removeDiacritic(lh.first_name), removeDiacritic(lh.state_prov) )
 			
 			teams = dict( ((th.discipline, th.team.team_type), th) for th in TeamHint.objects.select_related('team').filter(license_holder=lh) )
 			th_used = set()
@@ -155,7 +156,11 @@ def init_usac( fname = fnameDefault, states = '' ):
 				except KeyError:
 					th = TeamHint( **attributes )
 					th.save()
-				print u'{} {}: {} ({})'.format(' '*16, discipline, attributes['team'].name, ['Club', 'Team'][ttype])
+				print u'{} {}: {} ({})'.format( ' '*16,
+					removeDiacritic(discipline),
+					removeDiacritic(attributes['team'].name),
+					['Club', 'Team'][ttype]
+				)
 				th_used.add( th )
 				
 			th_delete = set( teams.values() ) - th_used
@@ -169,7 +174,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 			if i == 0:
 				# Get the header fields from the first row.
 				fields = [html_parser.unescape(v.strip()).replace(' ','_').replace('#','').lower() for v in row]
-				print '\n'.join( fields )
+				print removeDiacritic( '\n'.join(fields) )
 				usac_record = namedtuple('usac_record', fields)
 				continue
 			
