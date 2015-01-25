@@ -5,6 +5,7 @@ import datetime
 import string
 from models import *
 from large_delete_all import large_delete_all
+from utils import removeDiacritic
 
 tdf = '''
 1	Chris Froome	 United Kingdom	Team Sky	28	1
@@ -491,12 +492,14 @@ def init_license_holders():
 			
 			uci_code = nationality_code + date_of_birth.strftime( '%Y%m%d' )
 			
-			print first_name, last_name, gender, date_of_birth, nationality, uci_code, team
+			print removeDiacritic(first_name), removeDiacritic(last_name), \
+				removeDiacritic(gender), removeDiacritic(date_of_birth), removeDiacritic(nationality), \
+				removeDiacritic(uci_code), removeDiacritic(team)
 			r = LicenseHolder(
 							first_name=first_name,
 							last_name=last_name,
 							gender=gender,
-							nationality = nationality,
+							nationality=nationality,
 							date_of_birth=date_of_birth,
 							uci_code=uci_code,
 							license_code = unicode(count+1) )

@@ -3,6 +3,7 @@ import sys
 import re
 import urllib
 import unicodedata
+import datetime
 
 def uniquify(seq, idfun=None):  
 	# order preserving 
@@ -23,10 +24,10 @@ def removeDiacritic( s ):
 	Accept a unicode string, and return a normal string (bytes in Python 3)
 	without any diacritical marks.
 	'''
-	if type(s) == str:
-		return s
-	else:
+	if isinstance(s, unicode):
 		return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore')
+	else:
+		return s
 
 def toUnicode( s ):
 	if isinstance( s, unicode ):
