@@ -163,7 +163,7 @@ def init_ccn( fname = fnameDefault ):
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [toUnicode(f.value).strip() for f in row]
-			print '\n'.join( fields )
+			print u'\n'.join( fields )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
