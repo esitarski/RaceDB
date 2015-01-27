@@ -149,7 +149,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 			if i == 0:
 				# Get the header fields from the first row.
 				fields = [html_parser.unescape(v.strip()).replace(' ','_').replace('#','').lower() for v in row]
-				print removeDiacritic( '\n'.join(fields) )
+				print removeDiacritic( u'\n'.join(fields) )
 				usac_record = namedtuple('usac_record', fields)
 				continue
 			
