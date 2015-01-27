@@ -12,35 +12,10 @@ today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
 
-class UTF8Recoder(object):
-	"""
-	Iterator that reads an encoded stream and reencodes the input to UTF-8
-	"""
-	def __init__(self, f, encoding):
-		self.reader = codecs.getreader(encoding)(f)
-
-	def __iter__(self):
-		return self
-
-	def next(self):
-		return self.reader.next().encode('utf-8')
-
-class UnicodeReader(object):
-	"""
-	A CSV reader which will iterate over lines in the CSV file "f",
-	which is encoded in the given encoding.
-	"""
-
-	def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
-		f = UTF8Recoder(f, encoding)
-		self.reader = csv.reader(f, dialect=dialect, **kwds)
-
-	def next(self):
-		row = self.reader.next()
-		return [toUnicode(s) for s in row]
-
-	def __iter__(self):
-		return self
+def unicode_csv_reader(utf8_data, dialect=csv.excel, **kwargs):
+    csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
+    for row in csv_reader:
+        yield [toUnicode(cell) for cell in row]
 
 fnameDefault = 'wp_p_universal.csv'
 
@@ -169,7 +144,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 
 	ur_records = []
 	with open(fname, 'rU') as fp:
-		usac_reader = UnicodeReader( fp )
+		usac_reader = unicode_csv_reader( fp )
 		for i, row in enumerate(usac_reader):
 			if i == 0:
 				# Get the header fields from the first row.
