@@ -32,6 +32,8 @@ def removeDiacritic( s ):
 def toUnicode( s ):
 	if isinstance( s, unicode ):
 		return s
+	if not isinstance( s, str ):
+		return unicode(s)
 		
 	encodings = (
 		'utf-8', 'iso-8859-1', 'iso-8859-2', 'iso-8859-3', 'iso-8859-4', 'iso-8859-5',

@@ -473,7 +473,9 @@ def init_license_holders():
 
 	tdf = tdf.decode('iso-8859-1').strip()
 	lines = tdf.split( '\n' )
-	with transaction.commit_on_success():
+	
+	@transaction.atomic
+	def process_records( lines ):
 		for count, line in enumerate(lines):
 			fields = line.split( '\t' )
 			
@@ -512,6 +514,8 @@ def init_license_holders():
 						team_type = 7,
 					)
 				t.save()
+				
+	process_records( lines )
 
 if __name__ == '__main__':
 	init_license_holders()

@@ -4,6 +4,7 @@ from xlrd import open_workbook, xldate_as_tuple
 import HTMLParser
 from collections import namedtuple
 from models import *
+from utils import toUnicode, removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 
@@ -62,12 +63,12 @@ def to_int_str( v ):
 		return unicode(long(v))
 	except:
 		pass
-	return unicode(v)
+	return toUnicode(v)
 		
 def to_str( v ):
-	return unicode(v)
+	return toUnicode(v)
 
-fnameDefault = 'CyclingBC_28_Mar_2014_EV-Race-List.xls'
+fnameDefault = r'EV\CyclingBC_28_Mar_2014_EV-Race-List.xls'
 def init_ccn( fname = fnameDefault ):
 	global datemode
 	
@@ -118,7 +119,13 @@ def init_ccn( fname = fnameDefault ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'), lh.uci_code, lh.last_name, lh.first_name, lh.city, lh.state_prov )
+			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format(
+				i,
+				removeDiacritic(lh.license_code),
+				lh.date_of_birth.strftime('%Y/%m/%d'),
+				lh.uci_code,
+				removeDiacritic(lh.last_name), removeDiacritic(lh.first_name),
+				removeDiacritic(lh.city), removeDiacritic(lh.state_prov) )
 			TeamHint.objects.filter( license_holder=lh ).delete()
 			
 			teams = [t.strip() for t in ur.get('Afiliates','').split(',')]
@@ -155,13 +162,13 @@ def init_ccn( fname = fnameDefault ):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unicode(f.value).strip() for f in row]
+			fields = [toUnicode(f.value).strip() for f in row]
 			print '\n'.join( fields )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
 		ur_records.append( (r+1, ur) )
-		if len(ur_records) == 1000:
+		if len(ur_records) == 3000:
 			process_ur_records( ur_records )
 			ur_records = []
 			
