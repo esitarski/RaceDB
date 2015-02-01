@@ -95,7 +95,7 @@ class SystemInfo(models.Model):
 		self.rfid_server_host = (self.rfid_server_host or self.RFID_SERVER_HOST_DEFAULT)
 		self.rfid_server_port = (self.rfid_server_port or self.RFID_SERVER_PORT_DEFAULT)
 		
-		super(SystemInfo, self).save( *args, **kwargs )
+		return super(SystemInfo, self).save( *args, **kwargs )
 		
 	class Meta:
 		verbose_name = _('SystemInfo')
@@ -153,7 +153,7 @@ class Category(models.Model):
 	)
 	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default = 0, verbose_name = _('Gender') )
 	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name = _('Description') )
-	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
+	sequence = models.PositiveSmallIntegerField( default = 0, verbose_name = _('Sequence') )
 	
 	def save( self, *args, **kwargs ):
 		init_sequence( Category, self )
@@ -189,7 +189,7 @@ class Discipline(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence( Discipline, self )
-		return super( Discipline, self ).__save__( *args, **kwargs )
+		return super( Discipline, self ).save( *args, **kwargs )
 	
 	def __unicode__( self ):
 		return self.name
@@ -205,7 +205,7 @@ class RaceClass(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence( RaceClass, self )
-		return super( RaceClass, self ).__save__( *args, **kwargs )
+		return super( RaceClass, self ).save( *args, **kwargs )
 	
 	def __unicode__( self ):
 		return self.name
@@ -221,7 +221,7 @@ class NumberSet(models.Model):
 
 	def save( self, *args, **kwargs ):
 		init_sequence( NumberSet, self )
-		return super( NumberSet, self ).__save__( *args, **kwargs )
+		return super( NumberSet, self ).save( *args, **kwargs )
 	
 	def __unicode__( self ):
 		return self.name
@@ -238,7 +238,7 @@ class SeasonsPass(models.Model):
 
 	def save( self, *args, **kwargs ):
 		init_sequence( SeasonsPass, self )
-		return super( SeasonsPass, self ).__save__( *args, **kwargs )
+		return super( SeasonsPass, self ).save( *args, **kwargs )
 	
 	def __unicode__( self ):
 		return self.name
@@ -314,7 +314,7 @@ class Competition(models.Model):
 		if self.pk:
 			try:
 				competition_original = Competition.objects.get( pk = self.pk )
-			except Exceptione as e:
+			except Exception as e:
 				competition_original = None
 			if competition_original and competition_original.start_date != self.start_date:
 				time_delta = (
@@ -323,12 +323,13 @@ class Competition(models.Model):
 				)
 				self.adjust_event_times( time_delta )
 			
-		super(Competition, self).save(*args, **kwargs)
+		return super(Competition, self).save(*args, **kwargs)
 	
 	@transaction.atomic
 	def make_copy( self ):
 		category_numbers = self.categorynumbers_set.all()
 		event_mass_starts = self.eventmassstart_set.all()
+		event_tts = self.eventtt_set.all()
 	
 		competition_new = self
 		competition_new.pk = None
@@ -338,6 +339,8 @@ class Competition(models.Model):
 		for cn in category_numbers:
 			cn.make_copy( competition_new )
 		for e in event_mass_starts:
+			e.make_copy( competition_new )
+		for e in event_tts:
 			e.make_copy( competition_new )
 		
 		return competition_new
@@ -371,7 +374,7 @@ class Competition(models.Model):
 	
 	def get_events( self ):
 		events = list( EventMassStart.objects.filter(competition = self) )
-		#events.extend( list(EventTimeTrial.objects.filter(competition = self)) )
+		events.extend( list(EventTT.objects.filter(competition = self)) )
 		events.sort( key = lambda e: e.date_time )
 		return events
 		
@@ -541,7 +544,7 @@ class CategoryNumbers( models.Model ):
 		
 	def save(self, *args, **kwargs):
 		self.normalize()
-		super(CategoryNumbers, self).save( *args, **kwargs )
+		return super(CategoryNumbers, self).save( *args, **kwargs )
 		
 	class Meta:
 		verbose_name = _('CategoryNumbers')
@@ -558,6 +561,19 @@ class Event( models.Model ):
 		#(2, _('Sprint')),
 	)
 	event_type = models.PositiveSmallIntegerField( choices=EVENT_TYPE_CHOICES, default = 0, verbose_name = ('Event Type') )
+	
+	optional = models.BooleanField( default=False, verbose_name=_('Optional'), help_text=_('Otherwise this Event is included for all Participants') )
+	option_id = models.PositiveIntegerField( default=0, verbose_name = _('Option Id') )
+	
+	def save( self, *args, **kwargs ):
+		if self.optional:
+			if not self.option_id:
+				self.option_id = ParticipantOption.new_option_id()
+		else:
+			if self.option_id:
+				ParticipantOption.delete_option_id( self.option_id )
+				self.option_id = 0
+		return super( Event, self ).save( *args, **kwargs )
 	
 	def reg_is_late( self, reg_closure_minutes, registration_timestamp ):
 		if reg_closure_minutes < 0:
@@ -577,13 +593,6 @@ class Event( models.Model ):
 #---------------------------------------------------------------------------------------------------------
 
 class EventMassStart( Event ):
-	# Required for each event subclass.
-	# penalties = generic.GenericRelation('Penalty')
-	# observations = generic.GenericRelation('Observation')
-	# kom_points = generic.GenericRelation('KOMPoints')
-	# sprint_points = generic.GenericRelation('SprintPoints')
-	# time_bonuses = generic.GenericRelation('TimeBonus')
-	
 	def make_copy( self, competition_new ):
 		time_diff = self.date_time - datetime.datetime.combine(self.competition.start_date, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone())
 		waves = self.wave_set.all()
@@ -669,22 +678,20 @@ class EventMassStart( Event ):
 	class Meta:
 		verbose_name = _('Mass Start Event')
 		verbose_name_plural = _('Mass Starts Event')
-	
-class Wave( models.Model ):
-	event = models.ForeignKey( EventMassStart, db_index = True )
-	
+
+class WaveBase( models.Model ):
 	name = models.CharField( max_length = 32 )
 	categories = models.ManyToManyField( Category, verbose_name = _('Categories') )
 	
-	start_offset = DurationField( default = 0, verbose_name = _('Start Offset') )
-	
 	distance = models.FloatField( null = True, blank = True, verbose_name = _('Distance') )
 	laps = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Laps') )
-	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
 	
 	@property
 	def distance_unit( self ):
 		return self.event.competition.get_distance_unit_display() if self.event else ''
+	
+	def get_category_format( self ):
+		return self.event.competition.category_format
 	
 	def make_copy( self, event_new ):
 		categories = self.categories.all()
@@ -694,12 +701,6 @@ class Wave( models.Model ):
 		wave_new.save()
 		wave_new.categories = categories
 		return wave_new
-	
-	def get_category_format( self ):
-		return self.event.competition.category_format
-	
-	def get_start_time( self ):
-		return self.event.date_time + self.start_offset
 	
 	def get_potential_duplicate_bibs( self ):
 		if not self.id:
@@ -729,7 +730,20 @@ class Wave( models.Model ):
 		return sorted( other_bibs & my_bibs )
 	
 	def get_participants_unsorted( self ):
-		return Participant.objects.filter( competition=self.event.competition, category__in=self.categories.all() )
+		if not self.event.option_id:
+			return Participant.objects.filter(
+				competition=self.event.competition,
+				category__in=self.categories.all(),
+			)
+		else:
+			return Participant.objects.filter(
+				competition=self.event.competition,
+				category__in=self.categories.all(),
+				pk__in=ParticipantOption.objects.filter(
+							competition=self.event.competition,
+							option_id=self.event.option_id,
+						).values_list('participant__pk', flat=True)
+			)
 	
 	def get_participants( self ):
 		return self.get_participants_unsorted().order_by( 'bib' )
@@ -737,6 +751,16 @@ class Wave( models.Model ):
 	def get_participant_count( self ):
 		return self.get_participants_unsorted().count()
 		
+	def could_participate( self, participant ):
+		return participant.category.pk in set( self.categories.all().values_list('pk',flat=True) )
+	
+	def is_participating( self, participant ):
+		return (not self.event.option_id or
+					ParticipantOption.objects.filter(
+						competition=self.event.competition,
+						participant=participant,
+						option_id=self.event.option_id).exists()) and self.could_participate(participant)
+	
 	def reg_is_late( self, reg_closure_minutes, registration_timestamp ):
 		return self.event.reg_is_late( reg_closure_minutes, registration_timestamp )
 	
@@ -753,6 +777,20 @@ class Wave( models.Model ):
 	@property
 	def category_text( self ):
 		return u', '.join( category.code for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+	
+	class Meta:
+		verbose_name = _('Wave Base')
+		verbose_name_plural = _('Wave Bases')
+		abstract = True
+
+class Wave( WaveBase ):
+	event = models.ForeignKey( EventMassStart, db_index = True )
+	start_offset = DurationField( default = 0, verbose_name = _('Start Offset') )
+	
+	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
+	
+	def get_start_time( self ):
+		return self.event.date_time + self.start_offset
 	
 	class Meta:
 		verbose_name = _('Wave')
@@ -796,7 +834,7 @@ class Team(models.Model):
 
 	def save( self, *args, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
-		super(Team, self).save( *args, **kwargs )
+		return super(Team, self).save( *args, **kwargs )
 	
 	def full_name( self ):
 		fields = [self.name, self.team_code, self.get_team_type_display(), self.nation_code]
@@ -913,6 +951,13 @@ class LicenseHolder(models.Model):
 		return Participant.objects.select_related('competition', 'team', 'category').filter(
 			license_holder=self, role=Participant.Competitor, category__isnull=False
 		).order_by( '-competition__start_date' )
+	
+	def get_tt_metric( self, ref_date ):
+		years = (self.date_of_birth - ref_date).days / 365.26
+		dy = years - 24.0	# Fastest estimated year.
+		if dy < 0:
+			dy *= 4
+		return -(dy ** 2)
 	
 	class Meta:
 		verbose_name = _('LicenseHolder')
@@ -1048,7 +1093,7 @@ class Participant(models.Model):
 				license_holder.existing_tag2 = self.tag2
 				license_holder.save()
 		
-		super(Participant, self).save( *args, **kwargs )
+		return super(Participant, self).save( *args, **kwargs )
 	
 	@property
 	def roleCode( self ):
@@ -1233,403 +1278,177 @@ class Participant(models.Model):
 		verbose_name_plural = _('Participants')
 
 #---------------------------------------------------------------------------------------------------------
+
+class EntryTT( models.Model ):
+	event = models.ForeignKey( 'EventTT', db_index = True, verbose_name=_('Event') )
+	participant = models.ForeignKey( 'Participant', db_index = True, verbose_name=_('Participant') )
+	
+	est_speed = models.FloatField( default=0.0, verbose_name=_('Est. Speed') )
+	hint_sequence = models.PositiveIntegerField( default=0, verbose_name = _('Hint Sequence') )
+	
+	start_sequence = models.PositiveIntegerField( default = 0, db_index = True, verbose_name = _('Start Sequence') )
+	
+	start_time = DurationField( null = True, blank = True, verbose_name=_('Start Time') )
+	
+	finish_time = DurationField( null = True, blank = True, verbose_name=_('Finish Time') )
+	adjustment_time = DurationField( null = True, blank = True, verbose_name=_('Adjustment Time') )
+	adjustment_note = models.CharField( max_length = 128, default = '', verbose_name=_('Adjustment Note') )
+	
+	@transaction.atomic
+	def move_to( self, start_sequence_target ):
+		while self.start_sequence != start_sequence_target:
+			dir = -1 if self.start_sequence > start_sequence_target else 1
+			try:
+				e = EntryTT.objects.get(event=self.event, start_sequence=self.start_sequence+dir)
+				self.start_sequence, e.start_sequence = e.start_sequence, self.start_sequence
+				self.start_time, e.start_time = e.start_time, self.start_time
+				e.save()
+			except (EntryTT.DoesNotExist, EntryTT.MultipleObjectsReturned) as e:
+				self.save()
+				return False
+		self.save()
+		return True
+	
+	class Meta:
+		unique_together = (
+			('event', 'participant',),
+		)
+		index_together = (
+			('event', 'start_sequence',),
+		)
+
+		verbose_name = _("Time Trial Entry")
+		verbose_name_plural = _("Time Trial Entry")
+		ordering = ['start_time']
+
+class EventTT( Event ):
+	def __init__( self, *args, **kwargs ):
+		kwargs['event_type'] = 1
+		super( EventTT, self ).__init__( *args, **kwargs )
+
+	@transaction.atomic
+	def create_initial_seeding( self, respect_existing_hints=True ):
+		esp_speed = {}
+		hint_sequence = {}
+		for e in EntryTT.objects.filter(event=self).values_list('participant__pk', 'est_speed', 'hint_sequence'):
+			est_speed[e[0]] = e[1]
+			hint_sequence[e[0]] = e[2]
 		
-# class EventTimeTrial( Event ):
-	# penalties = generic.GenericRelation('Penalty')			# Required for each event subclass.
-	# observations = generic.GenericRelation('Observation')	# Required for each event subclass.
+		sequenceCur = 0
+		tCur = datetime.timedelta( seconds = 0 )
+		for wave_tt in self.wavett_set.all():
+			tCur += wave_tt.gap_before_wave
+			participants = sorted(
+				wave_tt.get_participants_unsorted(),
+				key = lambda p: (
+					p.category.sequence,
+					hint_sequence.get(p.pk, 0) if respect_existing_hints else 0,
+					est_speed.get(p.pk, 0.0),
+					p.license_holder.get_tt_metric(self.date_time.date)
+				)
+			)
+			last_fastest = len(participants) - wave_tt.num_fastest_participants
+			for i, p in enumerate(participants):
+				if i != 0:
+					tCur += fastest_participants_start_gap if i >= last_fastest else regular_start_gap
+				entry_tt = EntryTT.get_or_create(event=self, participant=p)
+				entry_tt.start_time = tCur
+				entry_tt.start_sequence = sequenceCur
+				entry_tt.save()
+				sequenceCur += 1
+	
+	# Time Trial fields
+	class Meta:
+		verbose_name = _('Time Trial Event')
+		verbose_name_plural = _('Time Trial Events')
 
-	# # Time Trial fields
-	# # Fields for assigning start times.
-	# start_time = models.TimeField( null = True, blank = True )
-	
-	# first_participant_gap = models.PositiveSmallIntegerField(
-						# choices=[(60*i, '%d min' % i) for i in xrange(1, 11)],
-						# help_text = 'Time before first participant.',
-						# default = 1*60 )
-	# start_gap = models.PositiveSmallIntegerField(
-						# choices=[(0,  '0 sec'),(30,  '30 sec')] + [(60*i, '%d min' % i) for i in xrange(1, 11)],
-						# help_text = 'Gap between participant starts',
-						# default = 1*60 )
-	# heat_size = models.PositiveSmallIntegerField(
-						# choices=[(i, '%d' % i) for i in xrange(1, 11)],
-						# help_text = 'Number of participants started in each heat (usually 1)',
-						# default = 1 )
-	# wave_gap = models.PositiveSmallIntegerField(
-						# choices=[(60*i, '%d min' % i) for i in xrange(5, 61, 5)],
-						# help_text = 'Gap between start waves',
-						# default = 5*60)
-	# num_fastest_participants = models.PositiveSmallIntegerField(
-						# choices=[(i, '%d' % i) for i in xrange(0, 16)],
-						# help_text = 'Number of participants to get Fastest participants gap',
-						# default = 5)
-	# fastest_participants_gap = models.PositiveSmallIntegerField(
-						# choices=[(60*i, '%d min' % i) for i in xrange(1, 11)],
-						# help_text = 'Gap between fastest participants',
-						# default = 2*60 )
-	
-	# # Registration and stopwatch control.
-	# registration_status = models.CharField(max_length=1, choices=(('1', 'Open'), ('0', 'Closed')), default = '1')
-	# stopwatch_start_time = DurationField( null = True, blank = True )
+#---------------------------------------------------------------------------------------------
 
-	# class Meta:
-		# verbose_name = _('EventTimeTrial')
-		# verbose_name_plural = _('EventTimeTrials')
+class WaveTT( WaveBase ):
+	event = models.ForeignKey( EventTT, db_index = True )
+	
+	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
+	
+	# Fields for assigning start times.	
+	gap_before_wave = DurationField( verbose_name=_('Gap Before Wave'), default = 5*60 )
+	regular_start_gap = DurationField( verbose_name=_('Regular Start Gap'), default = 1*60 )
+	fastest_participants_start_gap = DurationField( verbose_name=_('Fastest Participants Start Gap'), default = 2*60 )
+	num_fastest_participants = models.PositiveSmallIntegerField(
+						verbose_name=_('Number of Fastest Participants'),
+						choices=[(i, '%d' % i) for i in xrange(0, 16)],
+						help_text = 'Number of participants to get Fastest participants gap',
+						default = 5)
+	
+	def save( self, *args, **kwargs ):
+		init_sequence( WaveTT, self )
+		return super( WaveTT, self ).__save__( *args, **kwargs )
+	
+	def get_speed( self, participant ):
+		try:
+			entry_tt = EntryTT.objects.get( event=self.event, participant=participant )
+		except Exception as e:
+			return None
+		distance = self.distance * (self.laps or 1.0)
+		try:
+			return distance / (entry_tt.finish_time - entry_tt.start_time)
+		except Exception as e:
+			return None
+	
+	@property
+	def category_text( self ):
+		return u', '.join( category.code for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+	
+	class Meta:
+		verbose_name = _('TTWave')
+		verbose_name_plural = _('TTWaves')
+		ordering = ['sequence']
 
-# class PenaltyClass(models.Model):
-	# name = models.CharField( max_length = 64 )
-	# description = models.CharField( max_length = 80, default = '' )
-		
-	# class Meta:
-		# verbose_name = _('PenaltyClass')
-		# verbose_name_plural = _("PenaltyClasses")
-		# ordering = ['name']
+class ParticipantOption( models.Model ):
+	competition = models.ForeignKey( Competition, db_index = True )
+	participant = models.ForeignKey( Participant, db_index = True )
+	option_id = models.PositiveIntegerField( verbose_name = ('Option Id') )
+	
+	@staticmethod
+	@transaction.atomic
+	def set_option_ids( competition, participant, option_ids = [] ):
+		ParticipantOptions.objects.filter(competition=competition, participant=participant).delete()
+		for option_id in option_ids:
+			ParticipantOption( competition=competition, participant=participant, option_id=option_id ).save()
+	
+	@staticmethod
+	def get_option_ids( competition, participant ):
+		return ParticipantOption.objects.filter(competition=competition, participant=participant).values_list('option_id', flat=True)
+	
+	@staticmethod
+	def delete_option_id( competition, option_id ):
+		ParticipantOptions.objects.filter(competition=competition, option_id=option_id).delete()
+	
+	@staticmethod
+	def new_option_id( competition ):
+		''' Get a unique option_id across MassStarts and Time Trials for this competition. '''
+		ids = set()
+		for EventClass in (EventMassStart, EventTT):
+			ids |= set( EventClass.objects.filter(competition=competition)
+							.exclude(option_id=0)
+							.values_list('option_id', flat=True) )
+		for id in xrange(1, 1000000):
+			if id not in ids:
+				break
+		return id
 
-# class PenaltyTemplate(models.Model):
-	# penalty_class = models.ForeignKey( PenaltyClass, db_index = True )
-	# code = models.PositiveSmallIntegerField( db_index = True, default = 1 )
-	
-	# template_en = models.CharField( max_length = 160, default = '' )
-	# template_fr = models.CharField( max_length = 160, default = '' )
-	# template_es = models.CharField( max_length = 160, default = '' )
-	
-	# class Meta:
-		# verbose_name = _('PenaltyTemplate')
-		# verbose_name_plural = _("PenaltyTemplates")
-		# ordering = ['code']
+	class Meta:
+		unique_together = (
+			('competition', 'participant','option_id'),
+		)
+		index_together = (
+			('competition', 'participant','option_id'),
+			('competition', 'participant'),
+			('competition', 'option_id'),
+		)
+		verbose_name = _("Participant Option")
+		verbose_name_plural = _("Participant Options")
 
-# class Penalty(models.Model):
-	# competition = models.ForeignKey( Competition, db_index = True )
-	
-	# content_type = models.ForeignKey(ContentType)
-	# object_id = models.PositiveIntegerField()
-	# event = generic.GenericForeignKey('content_type', 'object_id')
-	
-	# PENALTY_TYPE_CHOICES = (
-		# (1,	_('WARNING')),
-		# (2,	_('FINE')),
-		# (3,	_('RELEGATION')),
-		# (4,	_('DISQUALIFICATION')),
-	# )
-	# penalty_type = models.PositiveSmallIntegerField(choices=PENALTY_TYPE_CHOICES, default = 1)
-	
-	# participant = models.ForeignKey( 'Participant', related_name='penalties' )
-	# participant_victim = models.ForeignKey( 'Participant', null = True, related_name='victim_of_penalties' )
-	
-	# fine_amount = models.PositiveIntegerField( blank = True )
-	# time_penalty = DurationField( blank = True )
-	
-	# distance = models.FloatField( default = 0.0, verbose_name = _('Distance') )
-	# timestamp = models.DateTimeField( auto_now_add = True, verbose_name = _('Timestamp') )
-	
-	# description_en = models.CharField( max_length = 240, default = '' )
-	# description_fr = models.CharField( max_length = 240, default = '' )
-	# description_es = models.CharField( max_length = 240, default = '' )
-	
-	# class Meta:
-		# verbose_name = _('Penalty')
-		# verbose_name_plural = _("Penalties")
-		# ordering = ['distance', 'penalty_type']
-
-# #---------------------------------------------------------------------------------------------
-	
-# class EventEntry( models.Model ):
-	# competition = models.ForeignKey( Competition, db_index = True )
-	# participant = models.ForeignKey( 'Participant', db_index = True )
-	
-	# STATUS_CHOICES = (
-		# (0, _('Finisher')),
-		# (1, _('DNF')),
-		# (2, _('PUL')),
-		# (3, _('OTL')),
-		# (4, _('DNS')),
-		# (5, _('DQ')),			# Disqualified from this event.
-		# (6, _('Eliminated')),	# Eliminated from the competition.
-		# (7, _('NP')),
-	# )
-	# status = models.PositiveSmallIntegerField( choices=STATUS_CHOICES, default = 0 )
-	
-	# class Meta:
-		# verbose_name = _("EventEntry")
-		# verbose_name_plural = _("EventEntries")
-		# abstract = True
-
-# #---------------------------------------------------------------------------------------------
-
-# class MassStartEntry( EventEntry ):
-	# event = models.ForeignKey( "EventMassStart", db_index = True )
-	# official_rank = models.PositiveSmallIntegerField( null = True, blank = True )
-	# official_time = DurationField( null = True, blank = True )
-	
-	# laps_down = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Laps Down') )
-	
-	# class Meta:
-		# verbose_name = _('MassStartEntry')
-		# verbose_name_plural = _('MassStartEntries')
-
-# #---------------------------------------------------------------------------------------------
-
-# class TimeTrialEntry( EventEntry ):
-	# #--------------------------------------------------------------------------------------------
-	# # Time Trial fields
-	# #--------------------------------------------------------------------------------------------
-	# event = models.ForeignKey( 'EventTimeTrial', db_index = True )
-	
-	# start_rank = models.PositiveSmallIntegerField( null = True, blank = True )
-	# est_speed = models.FloatField()
-
-	# WAVE_CHOICES = [(c, unicode(i+1)) for i, c in enumerate(u'123456789abcdef')]
-	# start_wave = models.CharField(max_length = 1, choices = WAVE_CHOICES, default = '1' ) 
-	
-	# start_time = DurationField( null = True, blank = True )		# in race time, not clock time
-	# finish_time = DurationField( null = True, blank = True )	# in race time, not clock time
-	
-	# observation = models.ForeignKey( 'Observation', null = True, on_delete = models.SET_NULL,
-									# help_text="Observation for the Finish Time" )
-	
-	# start_time_early = DurationField( default = 0.0, help_text="Participant advantage for jumping start." )
-	
-	# adjustment_name_1 = models.CharField( max_length = 32, default = '', help_text="Adjustment Name" )
-	# adjustment_time_1 = DurationField( default = 0.0, help_text="Time adjustment" )
-	# adjustment_count_1 = models.PositiveSmallIntegerField( default = 0, help_text="Number of times to apply adjustment" )
-	
-	# adjustment_name_2 = models.CharField( max_length = 32, default = '', help_text="Adjustment Name" )
-	# adjustment_time_2 = DurationField( default = 0.0, help_text="Time adjustment" )
-	# adjustment_count_2 = models.PositiveSmallIntegerField( default = 0, help_text="Number of times to apply adjustment" )
-	
-	# def __unicode__( self ):
-		# return '%d: %s' % (self.bib, self.participant.full_name())
-	
-	# @property
-	# def time_delta( self ):
-		# ''' Compute time without penalties. '''
-		# try:
-			# t = self.finish_time - self.start_time
-			# if t.total_seconds() < 0:
-				# return None
-			# if self.start_time_early:
-				# t += self.start_time_early
-			# return t
-		# except TypeError:
-			# return None
-	
-	# @property
-	# def ride_time( self ):
-		# ''' Ride time reserved for finishers. '''
-		# return self.time_delta if self.status == '0' else None
-		
-	# @property
-	# def est_ride_time( self ):
-		# return datetime.timedelta( seconds = (self.course.distance / self.est_speed) * (60.0 * 60.0) )
-		
-	# @property
-	# def total_time_adjustments( self ):
-		# t = None
-		# if self.adjustment_time_1 and self.adjustment_count_1:
-			# t = self.adjustment_time_1 * self.adjustment_count_1
-			
-		# if self.adjustment_time_2 and self.adjustment_count_2:
-			# if not t:
-				# t = self.adjustment_time_2 * self.adjustment_count_2
-			# else:
-				# t += self.adjustment_time_2 * self.adjustment_count_2
-		# return t
-	
-	# @property
-	# def final_time( self ):
-		# ''' Compute time with penalties. '''
-		# try:
-			# t = self.ride_time
-			# if self.adjustment_time_1 and self.adjustment_count_1:
-				# t += self.adjustment_time_1 * self.adjustment_count_1
-			# if self.adjustment_time_2 and self.adjustment_count_2:
-				# t += self.adjustment_time_2 * self.adjustment_count_2
-			# return t
-		# except (AttributeError, TypeError, ValueError):
-			# return None
-			
-	# class Meta:
-		# verbose_name = _("TimeTrialEntry")
-		# verbose_name_plural = _("TimeTrialEntries")
-
-# #-------------------------------------------------------------------------------------
-
-# class KOMPoints( models.Model ):
-	# competition = models.ForeignKey( Competition, db_index = True )
-	
-	# content_type = models.ForeignKey(ContentType)
-	# object_id = models.PositiveIntegerField()
-	# event = generic.GenericForeignKey('content_type', 'object_id')
-	
-	# name = models.CharField( max_length = 64 )
-	# description = models.CharField( max_length = 80, default = '' )
-	
-	# distance = models.FloatField()
-	
-	# class Meta:
-		# verbose_name = _("KOMPoints")
-		# verbose_name_plural = _("KOMPoints")
-		# ordering = ['distance']
-	
-# class KOMPointsResult( models.Model ):
-	# kom = models.ForeignKey( KOMPoints )
-	
-	# points = models.PositiveSmallIntegerField( default = 5 )
-	# participant = models.ForeignKey( Participant, blank = True )
-	
-	# class Meta:
-		# verbose_name = _("KOMPointsResult")
-		# verbose_name_plural = _("KOMPointsResult")
-		# ordering = ['-points']
-		
-# #-------------------------------------------------------------------------------------
-
-# class SprintPoints( models.Model ):
-	# competition = models.ForeignKey( Competition, db_index = True )
-	
-	# content_type = models.ForeignKey(ContentType)
-	# object_id = models.PositiveIntegerField()
-	# event = generic.GenericForeignKey('content_type', 'object_id')
-	
-	# name = models.CharField( max_length = 64 )
-	# description = models.CharField( max_length = 80, default = '' )
-	
-	# distance = models.FloatField()
-	
-	# class Meta:
-		# verbose_name = _("SprintPoints")
-		# verbose_name_plural = _("SprintPoints")
-		# ordering = ['distance']
-	
-# class SprintPointsResult( models.Model ):
-	# race_sprint = models.ForeignKey( SprintPoints )
-	
-	# points = models.PositiveSmallIntegerField( default = 5 )
-	# participant = models.ForeignKey( Participant, blank = True )
-	
-	# class Meta:
-		# verbose_name = _("SprintPointsResult")
-		# verbose_name_plural = _("SprintPointsResults")
-		# ordering = ['-points']
-
-# #-------------------------------------------------------------------------------------
-
-# class TimeBonus( models.Model ):
-	# competition = models.ForeignKey( Competition, db_index = True )
-	
-	# content_type = models.ForeignKey(ContentType)
-	# object_id = models.PositiveIntegerField()
-	# event = generic.GenericForeignKey('content_type', 'object_id')
-	
-	# name = models.CharField( max_length = 64 )
-	# description = models.CharField( max_length = 80, default = '' )
-	
-	# distance = models.FloatField()
-	
-	# class Meta:
-		# verbose_name = _('TimeBonus')
-		# verbose_name_plural = _("TimeBonuses")
-		# ordering = ['distance']
-	
-# class TimeBonusResult( models.Model ):
-	# time_bonus = models.ForeignKey( TimeBonus )
-	
-	# time_granted = DurationField()
-	# participant = models.ForeignKey( Participant, blank = True )
-	
-	# class Meta:
-		# verbose_name = _('TimeBonusResult')
-		# verbose_name_plural = _("TimeBonuseResults")
-		# ordering = ['-time_granted']
-
-# #-------------------------------------------------------------------------------------
-
-# class Observation( models.Model ):
-	# content_type = models.ForeignKey(ContentType)
-	# object_id = models.PositiveIntegerField()
-	# event = generic.GenericForeignKey('content_type', 'object_id')
-	
-	# bib = models.PositiveSmallIntegerField()
-	# OBSERVATION_TYPE_CHOICES = (
-		# (0, _('FinishLine')),
-		# (1, _('Turnaround')),
-		# (2, _('Checkpoint')),
-		# (3, _('Crash')),
-		# (4, _('Mechanical')),
-	# )
-	# observation_type = models.PositiveSmallIntegerField( choices=OBSERVATION_TYPE_CHOICES, default = 0 )
-	
-	# distance = models.FloatField( null = True, blank = True )
-	# race_time = DurationField( null = True, blank = True )
-	
-	# note = models.CharField( blank = True, default = '', max_length = 256 )
-	
-	# active = models.BooleanField( default = True )
-	
-	# class Meta:
-		# verbose_name = _('Observation')
-		# verbose_name_plural = _("Observations")
-		# ordering = ['distance', 'race_time']
-	
 #-------------------------------------------------------------------------------------
-# class Series( models.Model ):
-	# name = models.CharField( max_length = 80, help_text='Name of the Series' )
-	# organizer = models.CharField( max_length = 80, default = '', help_text='Organizer of the Series' )
-	
-	# category_format = models.ForeignKey( 'CategoryFormat', help_text='Format used for Participant Categories in each event.' )
-	
-	# SERIES_RANKING_CHOICES = (
-		# ('P',	'Total Points'),
-		# ('A',	'Average of Best Speeds'),
-	# )
-	# ranking_policy = models.CharField( max_length = 1, choices=make_choices(SERIES_RANKING_CHOICES), default = 'P', help_text='Policy used to combine results from events.' )
-	
-	# points_for_1  = models.PositiveSmallIntegerField( default = 25 )
-	# points_for_2  = models.PositiveSmallIntegerField( default = 24 )
-	# points_for_3  = models.PositiveSmallIntegerField( default = 23 )
-	# points_for_4  = models.PositiveSmallIntegerField( default = 22 )
-	# points_for_5  = models.PositiveSmallIntegerField( default = 21 )
-	# points_for_6  = models.PositiveSmallIntegerField( default = 20 )
-	# points_for_7  = models.PositiveSmallIntegerField( default = 19 )
-	# points_for_8  = models.PositiveSmallIntegerField( default = 18 )
-	# points_for_9  = models.PositiveSmallIntegerField( default = 17 )
-	# points_for_10 = models.PositiveSmallIntegerField( default = 16 )
-	# points_for_11 = models.PositiveSmallIntegerField( default = 15 )
-	# points_for_12 = models.PositiveSmallIntegerField( default = 14 )
-	# points_for_13 = models.PositiveSmallIntegerField( default = 13 )
-	# points_for_14 = models.PositiveSmallIntegerField( default = 12 )
-	# points_for_15 = models.PositiveSmallIntegerField( default = 11 )
-	# points_for_16 = models.PositiveSmallIntegerField( default = 10 )
-	# points_for_17 = models.PositiveSmallIntegerField( default =  9 )
-	# points_for_18 = models.PositiveSmallIntegerField( default =  8 )
-	# points_for_19 = models.PositiveSmallIntegerField( default =  7 )
-	# points_for_20 = models.PositiveSmallIntegerField( default =  6 )
-	# points_for_21 = models.PositiveSmallIntegerField( default =  5 )
-	# points_for_22 = models.PositiveSmallIntegerField( default =  4 )
-	# points_for_23 = models.PositiveSmallIntegerField( default =  3 )
-	# points_for_24 = models.PositiveSmallIntegerField( default =  2 )
-	# points_for_25 = models.PositiveSmallIntegerField( default =  1 )
-	
-	# points_for_participation = models.PositiveSmallIntegerField( default = 1, help_text='Points awarded for participating' )
-	# number_of_best_events_for_points = models.PositiveSmallIntegerField( default = 5, help_text='Number of best points to use for Total Points.' )
-	# TIE_BREAKING_RULE = (
-		# ('R',	'Most recent event'),
-		# ('W',	'Most wins over other participant'),
-	# )
-	# tie_breaking_rule = models.CharField( max_length = 1, choices=make_choices(TIE_BREAKING_RULE), default = 'R', help_text='Rule to break ties for same number of points.' )
-	
-# -------------------------------------------------------------------------------------------------
-	
-	# number_of_best_events_for_average = models.PositiveSmallIntegerField( default = 5, help_text='Number of best times to use for Average Speed.' )
-	
-	# def full_name( self ):
-		# return self.name + ', ' + self.organizer
-	
-	# def __unicode__( self ):
-		# return self.name
-	
-	# class Meta:
-		# verbose_name = _("Series")
-		# verbose_name_plural = _("Series")
 
 # Apply upgrades.
-#import migrate_data
+# import migrate_data
