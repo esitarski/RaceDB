@@ -138,7 +138,11 @@ class CategoryFormat(models.Model):
 		ordering = ['name']
 		verbose_name = _('CategoryFormat')
 		verbose_name_plural = _('CategoryFormats')
-	
+
+def init_sequence( Class, obj ):
+	if not obj.sequence:
+		obj.sequence = Class.objects.count() + 1
+		
 class Category(models.Model):
 	format = models.ForeignKey( CategoryFormat, db_index = True )
 	code = models.CharField( max_length=16, default='', verbose_name = _('Code') )
@@ -149,7 +153,11 @@ class Category(models.Model):
 	)
 	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default = 0, verbose_name = _('Gender') )
 	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name = _('Description') )
-	sequence = models.PositiveSmallIntegerField( default = lambda:Category.objects.count(), verbose_name = _('Sequence') )
+	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
+	
+	def save( self, *args, **kwargs ):
+		init_sequence( Category, self )
+		return super( Category, self ).__save__( *args, **kwargs )
 	
 	def make_copy( self, category_format ):
 		category_new = self
@@ -177,7 +185,11 @@ class Category(models.Model):
 
 class Discipline(models.Model):
 	name = models.CharField( max_length = 64 )
-	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = lambda:Discipline.objects.count() )
+	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = 0 )
+	
+	def save( self, *args, **kwargs ):
+		init_sequence( Discipline, self )
+		return super( Discipline, self ).__save__( *args, **kwargs )
 	
 	def __unicode__( self ):
 		return self.name
@@ -189,7 +201,11 @@ class Discipline(models.Model):
 
 class RaceClass(models.Model):
 	name = models.CharField( max_length = 64 )
-	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = lambda:RaceClass.objects.count() )
+	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = 0 )
+	
+	def save( self, *args, **kwargs ):
+		init_sequence( RaceClass, self )
+		return super( RaceClass, self ).__save__( *args, **kwargs )
 	
 	def __unicode__( self ):
 		return self.name
@@ -201,8 +217,12 @@ class RaceClass(models.Model):
 
 class NumberSet(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
-	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = lambda:NumberSet.objects.count() )
+	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = 0 )
 
+	def save( self, *args, **kwargs ):
+		init_sequence( NumberSet, self )
+		return super( NumberSet, self ).__save__( *args, **kwargs )
+	
 	def __unicode__( self ):
 		return self.name
 	
@@ -214,8 +234,12 @@ class NumberSet(models.Model):
 #-------------------------------------------------------------------
 class SeasonsPass(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
-	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = lambda:SeasonsPass.objects.count() )
+	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = 0 )
 
+	def save( self, *args, **kwargs ):
+		init_sequence( SeasonsPass, self )
+		return super( SeasonsPass, self ).__save__( *args, **kwargs )
+	
 	def __unicode__( self ):
 		return self.name
 		
@@ -1608,4 +1632,4 @@ class Participant(models.Model):
 		# verbose_name_plural = _("Series")
 
 # Apply upgrades.
-import migrate_data
+#import migrate_data
