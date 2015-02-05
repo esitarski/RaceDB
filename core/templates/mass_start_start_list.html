@@ -36,7 +36,7 @@
 			<td>{{w.name}}</td>
 			<td>{{w.start_offset}}</td>
 			<td>{{w.category_text}}</td>
-			<td class="text-center">{{w.get_participants.count}}</td>
+			<td class="text-center">{{w.get_participants_unordered.count}}</td>
 			{% if late_reg_exists %}<td class="text-center">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}

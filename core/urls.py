@@ -15,6 +15,8 @@ urlpatterns = patterns('',
 	url(r'^(?i).*StartLists/(?P<competitionId>\d+)/$', views.StartLists),
 	url(r'^(?i).*StartList/(?P<eventId>\d+)/$', views.StartList),
 	
+	url(r'^(?i).*StartListTT/(?P<eventTTId>\d+)/$', views.StartListTT),
+	
 	url(r'^(?i).*ParticipantScan/(?P<competitionId>\d+)/$', views.ParticipantScan),
 	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/$', views.ParticipantRfidScan),
 	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidScan),
@@ -33,6 +35,19 @@ urlpatterns = patterns('',
 	url(r'^(?i).*WaveNew/(?P<eventMassStartId>\d+)/$', views.WaveNew),
 	url(r'^(?i).*WaveEdit/(?P<waveId>\d+)/$', views.WaveEdit),
 	url(r'^(?i).*WaveDelete/(?P<waveId>\d+)/$', views.WaveDelete),
+	
+	url(r'^(?i).*EventTTs/(?P<competitionId>\d+)/$', views.EventTTDisplay),
+	url(r'^(?i).*EventTTNew/(?P<competitionId>\d+)/$', views.EventTTNew),
+	url(r'^(?i).*EventTTEdit/(?P<eventTTId>\d+)/$', views.EventTTEdit),
+	url(r'^(?i).*EventTTCrossMgr/(?P<eventTTId>\d+)/$', views.EventTTCrossMgr),
+	url(r'^(?i).*EventTTDelete/(?P<eventTTId>\d+)/$', views.EventTTDelete),
+	
+	url(r'^(?i).*SeedingEdit/(?P<eventTTId>\d+)/$', views.SeedingEdit),
+	url(r'^(?i).*GenerateStartTimes/(?P<eventTTId>\d+)/$', views.GenerateStartTimes),
+	
+	url(r'^(?i).*WaveTTNew/(?P<eventTTId>\d+)/$', views.WaveTTNew),
+	url(r'^(?i).*WaveTTEdit/(?P<waveTTId>\d+)/$', views.WaveTTEdit),
+	url(r'^(?i).*WaveTTDelete/(?P<waveTTId>\d+)/$', views.WaveTTDelete),
 	
 	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', views.Participants),
 	url(r'^(?i).*ParticipantAdd/(?P<competitionId>\d+)/$', views.ParticipantAdd),
@@ -65,6 +80,7 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*ParticipantTagChange/(?P<participantId>\d+)/$', views.ParticipantTagChange ),
 	url(r'^(?i).*ParticipantNoteChange/(?P<participantId>\d+)/$', views.ParticipantNoteChange ),
+	url(r'^(?i).*ParticipantOptionChange/(?P<participantId>\d+)/$', views.ParticipantOptionChange ),
 	
 	url(r'^(?i).*LicenseHolders/$', views.LicenseHoldersDisplay),
 	url(r'^(?i).*LicenseHolderNew/$', views.LicenseHolderNew),

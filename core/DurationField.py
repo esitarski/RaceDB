@@ -11,24 +11,30 @@ import math
 
 reDuration = re.compile( r'^[+-]?([0-9]*:)*[0-9]+\.?[0-9]*$' )
 
+def format_seconds( secs ):
+	if secs < 0:
+		sgnStr = '-'
+		secs = -secs
+	else:
+		sgnStr = ''
+	fraction, seconds = math.modf( secs )
+	seconds = int(seconds)
+	hours = seconds // (60*60)
+	minutes = (seconds // 60) % 60
+	seconds %= 60
+	if fraction > 0.000001:
+		secStr = '{:06.3f}'.format( seconds + fraction )
+	else:
+		secStr = '{:02d}'.format( seconds )
+		
+	if hours:
+		return '{}{}:{:02d}:{}'.format(sgnStr, hours, minutes, secStr )
+	return '{}{}:{}'.format(sgnStr, minutes, secStr )
+
 class formatted_timedelta(datetime.timedelta):
 	def __repr__( self ):
-		secs = self.total_seconds()
-		if secs < 0:
-			sgn = '-'
-			secs = -secs
-		else:
-			sgn = ''
-		fract, ss = math.modf( secs )
-		ss = int(ss)
-		hh = ss // (60*60)
-		mm = (ss // 60) % 60
-		ss %= 60
-		if fract < 0.000001:
-			return '%s%d:%02d:%02d' % (sgn, hh, mm, ss)
-		else:
-			return '%s%d:%02d:%02d.%s' % (sgn, hh, mm, ss, ('%.3f' % fract)[2:])
-			
+		return format_seconds( self.total_seconds() )
+
 	def __unicode__( self ):
 		return unicode(self.__repr__())
 		
@@ -44,16 +50,19 @@ class DurationFormField( CharField ):
 		value = super(CharField, self).clean(value)
 		value = value.strip()
 		if value and not reDuration.match(value):
-			raise FormValidationError('Must be in format [-]HH:MM:SS.SSS')
+			raise FormValidationError('Must be in format [-]HH:MM:SS.ddd')
 		return value
 
 #------------------------------------------------------------------------------------
-		
+
 class DurationField( FloatField ):
 
 	description = "Floating point representation of timedelta."
 
 	__metaclass__ = models.SubfieldBase
+	
+	def __init__( self, *args, **kwargs ):
+		super( DurationField, self ).__init__( *args, **kwargs )
 	
 	def to_python(self, value):
 		if value is None:
@@ -63,27 +72,27 @@ class DurationField( FloatField ):
 			return value
 			
 		if isinstance(value, datetime.timedelta):
-			return formatted_timedelta( seconds = value.total_seconds() )
+			return formatted_timedelta( seconds=value.total_seconds() )
 			
 		if isinstance(value, (int, long, float)):
-			return formatted_timedelta(seconds=value)
+			return formatted_timedelta( seconds=value )
 			
 		if isinstance(value, datetime.time):
-			return formatted_timedelta( seconds = value.hour * 60*60 + value.minute * 60 +
+			return formatted_timedelta( seconds = value.hour * 60.0*60.0 + value.minute * 60.0 +
 									   value.second + value.microsecond / 1000000.0 )
 			
 		try:
-			secs = 0.0
-			value = value.strip()
+			# Try parsing the value as a string.
 			
+			value = value.strip()
 			sgn = 1
-			if value:
-				if value[0] == '-':
-					sgn = -1
-					value = value[1:]
-				elif value[0] == '+':
-					value = value[1:]
-				
+			if value.startswith('-'):
+				sgn = -1
+				value = value[1:]
+			elif value.startswith('+'):
+				value = value[1:]
+			
+			secs = 0.0
 			for f in value.split(':'):
 				try:
 					secs = secs * 60.0 + float(f)
@@ -101,26 +110,12 @@ class DurationField( FloatField ):
 			return None
 		
 	def value_to_string(self, instance):
-		timedelta = getattr(instance, self.name)
-		if timedelta:
-			posSecs = timedelta.total_seconds()
-			if posSecs < 0.0:
-				posSecs = -posSecs
-				sgnStr = '-'
-			else:
-				sgnStr = ''
-			fraction, seconds = math.modf( posSecs )
-			seconds = int(seconds)
-			if fraction:
-				return '%s%d:%02d:%02d.%s' % (sgnStr, seconds // (60*60), (seconds // 60) % 60, seconds % 60, ('%.3f' % fraction)[2:] )
-			else:
-				return '%s%d:%02d:%02d' % (sgnStr, seconds // (60*60), (seconds // 60) % 60, seconds % 60 )
+		td = getattr(instance, self.name)
+		if td:
+			return format_seconds( td.total_seconds() )
 		return None
 		
 	def formfield(self, form_class=DurationFormField, **kwargs):
-		defaults = {"help_text": "[-]HH:MM:SS.SSS"}
+		defaults = {"help_text": "[-]HH:MM:SS.ddd"}
 		defaults.update(kwargs)
 		return form_class(**defaults)
-		
-#from south.modelsinspector import add_introspection_rules
-#add_introspection_rules([], ["^DurationField\."])

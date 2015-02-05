@@ -23,6 +23,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django import forms
 from django.forms import ModelForm, Form
 from django.forms.models import inlineformset_factory
+from django.forms.formsets import formset_factory
 
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -32,7 +33,7 @@ from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
 from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
-from get_crossmgr_excel import get_crossmgr_excel
+from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from participant_key_filter import participant_key_filter
 
 from ReadWriteTag import ReadTag, WriteTag
@@ -1450,7 +1451,8 @@ def CompetitionDelete( request, competitionId ):
 @external_access
 def CompetitionDashboard( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	events = competition.get_events()
+	events_mass_start = competition.get_events_mass_start()
+	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
 	return render_to_response( 'competition_dashboard.html', RequestContext(request, locals()) )
 	
@@ -1466,6 +1468,91 @@ def StartList( request, eventId ):
 	time_stamp = datetime.datetime.now()
 	return render_to_response( 'mass_start_start_list.html', RequestContext(request, locals()) )
 	
+@external_access
+def StartListTT( request, eventTTId ):
+	instance = get_object_or_404( EventTT, pk=eventTTId )
+	time_stamp = datetime.datetime.now()
+	return render_to_response( 'tt_start_list.html', RequestContext(request, locals()) )
+	
+#--------------------------------------------------------------------------------------------
+class AdjustmentForm( Form ):
+	adjustment = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'adjustment'}) )
+	entry_tt_pk = forms.CharField( widget=forms.HiddenInput() )
+
+class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000) ):
+	def __init__( self, *args, **kwargs ):
+		if 'entry_tts' in kwargs:
+			entry_tts = list( kwargs['entry_tts'] )
+			del kwargs['entry_tts']
+			super( AdjustmentFormSet, self ).__init__( initial=[{'adjustment': '', 'entry_tt_pk': unicode(e.pk), } for e in entry_tts] )
+			
+			# Add the entry_tt to each form to support the display.
+			for i, form in enumerate(self):
+				form.entry_tt = entry_tts[i]
+		else:
+			super( AdjustmentFormSet, self ).__init__( *args, **kwargs )
+
+def SeedingEdit( request, eventTTId ):
+	instance = get_object_or_404( EventTT, pk=eventTTId )
+	if request.method == 'POST':
+		adjustment_formset = AdjustmentFormSet( request.POST )
+		reNum = re.compile( '[^0-9]' )
+		if adjustment_formset.is_valid():
+			eda = []
+			for d in adjustment_formset.cleaned_data:
+				adjustment = d['adjustment'].strip()
+				if not adjustment:
+					continue
+
+				direction = adjustment[0]
+				direction = direction if direction in ('+','-') else None
+					
+				try:
+					adjustment = int( reNum.sub(u'', adjustment) )
+				except ValueError:
+					continue
+				
+				pk = d['entry_tt_pk']
+				try:
+					pk = int(pk)
+				except ValueError:
+					pass
+				
+				try:
+					entry_tt = EntryTT.objects.get( pk=pk )
+				except EntryTT.DoesNotExist as e:
+					continue
+					
+				eda.append( (entry_tt, direction, adjustment) )
+			
+			with transaction.atomic():
+				for entry_tt, direction, adjustment in eda:
+					if direction == '-':
+						entry_tt.move_to( entry_tt.start_sequence - adjustment )
+				for entry_tt, direction, adjustment in reversed(eda):
+					if direction == '+':
+						entry_tt.move_to( entry_tt.start_sequence + adjustment )
+				
+				eda.sort( key = lambda v: (v[2], v[0].start_sequence) )
+				
+				for entry_tt, direction, adjustment in eda:
+					if direction is None and adjustment < entry_tt.start_sequence:
+						entry_tt.move_to( adjustment )
+				for entry_tt, direction, adjustment in reversed(eda):
+					if direction is None and adjustment > entry_tt.start_sequence:
+						entry_tt.move_to( adjustment )
+	
+	entry_tts=list(instance.entrytt_set.all())
+	for e in entry_tts:
+		e.clock_time = instance.date_time + e.start_time
+	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts )
+	return render_to_response( 'seeding_edit.html', RequestContext(request, locals()) )
+
+def GenerateStartTimes( request, eventTTId ):
+	instance = get_object_or_404( EventTT, pk=eventTTId )
+	instance.create_initial_seeding()
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
 #--------------------------------------------------------------------------------------------
 def GetCategoryNumbersForm( competition, category_numbers = None ):
 	class CategoryNumbersForm( GenericModelForm(CategoryNumbers) ):
@@ -1569,9 +1656,11 @@ class EventMassStartForm( ModelForm ):
 		self.helper.layout = Layout(
 			Field( 'competition', type='hidden' ),
 			Field( 'event_type', type='hidden' ),
+			Field( 'option_id', type='hidden' ),
 			Row(
 				Col(Field('name', size=40), 4),
 				Col(Field('date_time', size=24), 4),
+				Col(Field('optional'), 4),
 			),
 		)
 		self.additional_buttons = []
@@ -1604,7 +1693,6 @@ def EventMassStartNew( request, competitionId ):
 	else:
 		instance = EventMassStart(
 			competition = competition,
-			event_type = 0,
 			date_time = datetime.datetime.combine( competition.start_date, datetime.time(10, 0, 0) ),
 		)
 		form = EventMassStartForm( instance = instance, button_mask = NEW_BUTTONS )
@@ -1742,6 +1830,207 @@ def WaveDelete( request, waveId ):
 	)
 
 #--------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
+
+class EventTTForm( ModelForm ):
+	class Meta:
+		model = EventTT
+		fields = '__all__'
+	
+	def newWaveTTCB( self, request, eventTT ):
+		return HttpResponseRedirect( pushUrl(request,'WaveTTNew',eventTT.id) )
+	
+	def __init__( self, *args, **kwargs ):
+		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
+		
+		super(EventTTForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline hidden-print'
+		
+		self.helper.layout = Layout(
+			Field( 'competition', type='hidden' ),
+			Field( 'event_type', type='hidden' ),
+			Field( 'option_id', type='hidden' ),
+			Row(
+				Col(Field('name', size=40), 4),
+				Col(Field('date_time', size=24), 4),
+				Col(Field('optional'), 4),
+			),
+		)
+		self.additional_buttons = []
+		if button_mask == EDIT_BUTTONS:
+			self.additional_buttons.extend( [
+				('new-wave-submit', _('New TT Wave'), 'btn btn-success', self.newWaveTTCB),
+			] )
+		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Start Lists') if button_mask == EDIT_BUTTONS else None )
+
+@external_access
+def EventTTDisplay( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	return render_to_response( 'event_tt_list.html', RequestContext(request, locals()) )
+
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def EventTTNew( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = EventTTForm(request.POST, button_mask = NEW_BUTTONS)
+		if form.is_valid():
+			instance = form.save()
+			
+			if 'ok-submit' in request.POST or 'save-submit' in request.POST:
+				return HttpResponseRedirect( pushUrl(request, 'EventTTEdit', instance.id, cancelUrl=True) )
+	else:
+		instance = EventTT(
+			competition = competition,
+			date_time = datetime.datetime.combine( competition.start_date, datetime.time(10, 0, 0) ),
+		)
+		form = EventTTForm( instance = instance, button_mask = NEW_BUTTONS )
+	
+	return render_to_response( 'event_tt_form.html', RequestContext(request, locals()) )
+	
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def EventTTEdit( request, eventTTId ):
+	return GenericEdit( EventTT, request, eventTTId, EventTTForm,
+		template = 'event_tt_form.html'
+	)
+
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def EventTTDelete( request, eventTTId ):
+	return GenericDelete( EventTT, request, eventTTId, EventTTForm,
+		template = 'event_tt_form.html',
+	)
+
+@external_access
+def EventTTCrossMgr( request, eventTTId ):
+	eventTT = get_object_or_404( EventTT, pk=eventTTId )
+	competition = eventTT.competition
+	xl = get_crossmgr_excel_tt( eventTT )
+	response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	response['Content-Disposition'] = 'attachment; filename={}-{}-{}.xlsx'.format(
+		eventTT.date_time.strftime('%Y-%m-%d'),
+		utils.removeDiacritic(competition.name),
+		utils.removeDiacritic(eventTT.name),
+	)
+	return response
+
+#--------------------------------------------------------------------------------------------
+
+def GetWaveTTForm( event_tt, wave_tt = None ):
+	class WaveTTForm( ModelForm ):
+		class Meta:
+			model = WaveTT
+			fields = '__all__'
+
+		def __init__( self, *args, **kwargs ):
+			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
+			
+			super(WaveTTForm, self).__init__(*args, **kwargs)
+			
+			category_list = event_tt.get_categories_without_wave()
+			
+			if wave_tt is not None and wave_tt.pk is not None:
+				category_list.extend( wave_tt.categories.all() )
+				category_list.sort( key = lambda c: c.sequence )
+				self.fields['distance'].label = u'{} ({})'.format( _('Distance'), wave_tt.distance_unit )
+			
+			categories_field = self.fields['categories']
+			categories_field.choices = [(category.id, category.full_name()) for category in category_list]
+			categories_field.label = _('Available Categories')
+			
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'form-inline hidden-print'
+			
+			self.helper.layout = Layout(
+				Field( 'event', type='hidden' ),
+				Field( 'sequence', type='hidden' ),
+				Row(
+					Col(Field('name', size=40), 4),
+				),
+				Row(
+					Col(Field('distance'), 3),
+					Col(Field('laps'), 3),
+				),
+				Row(
+					Col(Field('gap_before_wave'), 3),
+					Col(Field('regular_start_gap'), 3),
+					Col(Field('fastest_participants_start_gap'), 3),
+					Col(Field('num_fastest_participants'), 3),
+				),
+				Row(
+					Col(Field('categories', size=12, css_class='hidden-print'), 6),
+				),
+			)
+			addFormButtons( self, button_mask )
+			
+	return WaveTTForm
+
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def WaveTTNew( request, eventTTId ):
+	event_tt = get_object_or_404( EventTT, pk=eventTTId )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = GetWaveTTForm(event_tt)(request.POST, button_mask = NEW_BUTTONS)
+		if form.is_valid():
+			instance = form.save()
+			
+			if 'ok-submit' in request.POST:
+				return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			if 'save-submit' in request.POST:
+				return HttpResponseRedirect( pushUrl(request, 'WaveTTEdit', instance.id, cancelUrl = True) )
+	else:
+		wave_tt = WaveTT()
+		wave_tt.event = event_tt
+		wave_tts_existing = list( event_tt.wavett_set.all() )
+		c = len( wave_tts_existing )
+		wave_ttLetter = []
+		while 1:
+			wave_ttLetter.append( string.ascii_uppercase[c % 26] )
+			c //= 26
+			if c == 0:
+				break
+		wave_ttLetter.reverse()
+		wave_ttLetter = ''.join( wave_ttLetter )
+		wave_tt.name = _('WaveTT') + ' ' + wave_ttLetter
+		if wave_tts_existing:
+			wave_tt_last = wave_tts_existing[-1]
+			wave_tt.start_offset = wave_tt_last.start_offset + datetime.timedelta(seconds = 60.0)
+			wave_tt.distance = wave_tt_last.distance
+			wave_tt.laps = wave_tt_last.laps
+			wave_tt.minutes = wave_tt_last.minutes
+		form = GetWaveTTForm(event_tt, wave_tt)(instance = wave_tt, button_mask = NEW_BUTTONS)
+	
+	return render_to_response( 'wave_tt_form.html', RequestContext(request, locals()) )
+
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def WaveTTEdit( request, waveTTId ):
+	wave_tt = get_object_or_404( WaveTT, pk=waveTTId )
+	return GenericEdit( WaveTT, request, waveTTId, GetWaveTTForm(wave_tt.event, wave_tt),
+		template = 'wave_tt_form.html'
+	)
+	
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def WaveTTDelete( request, waveTTId ):
+	wave_tt = get_object_or_404( WaveTT, pk=waveTTId )
+	return GenericDelete( WaveTT, request, waveTTId, GetWaveTTForm(wave_tt.event, wave_tt),
+		template = 'wave_tt_form.html'
+	)
+
+#----------------------------------------------------------------------------
 
 class ParticipantSearchForm( Form ):
 	scan = forms.CharField( required = False, label = _('Scan Search') )
@@ -1791,6 +2080,7 @@ class ParticipantSearchForm( Form ):
 			]
 		)
 
+		
 @external_access
 def Participants( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2220,6 +2510,62 @@ def ParticipantNoteChange( request, participantId ):
 		
 	return render_to_response( 'participant_note_change.html', RequestContext(request, locals()) )
 
+#--------------------------------------------------------------------------
+def GetParticipantOptionForm( participation_optional_events ):
+	choices = [(event.option_id, u'{} ({})'.format(event.name, event.get_event_type_display()))
+					for event, is_participating in participation_optional_events]
+	
+	class ParticipantOptionForm( Form ):
+		options = forms.MultipleChoiceField( required = False, label = _('Optional Events'), choices=choices )
+		
+		def __init__(self, *args, **kwargs):
+			super(ParticipantOptionForm, self).__init__(*args, **kwargs)
+			
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'navbar-form navbar-left'
+			
+			button_args = [
+				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			]
+			
+			self.helper.layout = Layout(
+				Row(
+					Field('options', css_class = 'form-control', size = '20'),
+				),
+				Row(
+					button_args[0],
+					button_args[1],
+				)
+			)
+	
+	return ParticipantOptionForm
+		
+@external_access
+def ParticipantOptionChange( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	competition = participant.competition
+	license_holder = participant.license_holder
+	
+	participation_events = participant.get_participant_events()
+	participation_optional_events = [(event, is_participating) for event, optional, is_participating in participation_events if optional]
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = GetParticipantOptionForm( participation_optional_events )( request.POST )
+		if form.is_valid():
+			options = form.cleaned_data['options']
+			ParticipantOption.set_option_ids( participant, options )
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = GetParticipantOptionForm( participation_optional_events )(
+			initial = dict(options = [event.option_id for event, is_participating in participation_optional_events if is_participating])
+		)
+		
+	return render_to_response( 'participant_option_change.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
 
 class ParticipantTagForm( Form ):

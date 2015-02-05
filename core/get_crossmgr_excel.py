@@ -63,7 +63,93 @@ def get_number_range_str( numbers ):
 
 def get_gender_str( g ):
 	return [u'Men', u'Women', u'Open'][g]
+
+def write_row_data( ws, row, row_data, format = None ):
+	if format is None:
+		for col, d in enumerate(row_data):
+			ws.write( row, col, d )
+	else:
+		for col, d in enumerate(row_data):
+			ws.write( row, col, d, format )
+	return row + 1
+
+def add_categories_page( wb, title_format, event ):
+	#---------------------------------------------------------------------------------------------------
+	# Category information.
+	#
+	ws = wb.add_worksheet('--CrossMgr-Categories')
 	
+	participant_categories = set( p.category for p in Participant.objects.filter(competition = event.competition) )
+	
+	row = write_row_data( ws, 0, category_headers, title_format )
+	for wave in event.get_wave_set().all():
+		categories = set( c for c in wave.categories.all() if c in participant_categories )
+		categories = sorted( categories, key = lambda c: c.sequence )
+		if not categories:
+			continue
+		if len(categories) == 1:
+			category = categories[0]
+			row_data = [
+				u'Wave',
+				category.code,
+				get_gender_str(category.gender),
+				get_number_range_str( p.bib for p in
+					Participant.objects.filter(competition = competition, category = category) if p.bib ),
+				unicode(wave.start_offset),
+				wave.laps if wave.laps else u'',
+				wave.distance if wave.distance else u'',
+				getattr(wave, 'minutes', None) or u'',
+			]
+			row = write_row_data( ws, row, row_data )
+		else:
+			genders = list( set(c.gender for c in categories) )
+			row_data = [
+				u'Wave',
+				wave.name,
+				get_gender_str( 2 if len(genders) != 1 else genders[0] ),
+				u'',	# No ranges here - these come from the categories.
+				unicode(getattr(wave,'start_offset',u'')),
+				wave.laps if wave.laps else u'',
+				wave.distance if wave.distance else u'',
+				getattr(wave, 'minutes', None) or u'',
+			]			
+			row = write_row_data( ws, row, row_data )
+			
+			for category in categories:
+				row_data = [
+					u'Component',
+					category.code,
+					category.gender,
+					get_number_range_str( p.bib for p in
+						Participant.objects.filter(competition=event.competition, category=category) if p.bib ),
+					unicode(getattr(wave,'start_offset',u'')),
+					u'',
+					u'',
+					u'',
+				]
+				row = write_row_data( ws, row, row_data )
+
+def add_properties_page( wb, title_format, event, raceNumber ):
+	competition = event.competition
+	
+	ws = wb.add_worksheet('--CrossMgr-Properties')
+	row = write_row_data( ws, 0, property_headers, title_format )
+	row_data = [
+		competition.name,
+		competition.organizer,
+		competition.city,
+		competition.stateProv,
+		competition.country,
+		event.date_time.strftime( '%Y-%m-%d' ),
+		event.date_time.strftime( '%H:%M' ),
+		raceNumber,
+		competition.discipline.name,
+		competition.using_tags,
+		['km', 'miles'][competition.distance_unit],
+		False,
+	]
+	row = write_row_data( ws, row, row_data )
+
 def get_crossmgr_excel( event_mass_start ):
 	competition = event_mass_start.competition
 
@@ -77,19 +163,10 @@ def get_crossmgr_excel( event_mass_start ):
 	#
 	ws = wb.add_worksheet('Registration')
 	
-	def write_row_data( ws, row, row_data, format = None ):
-		if format is None:
-			for col, d in enumerate(row_data):
-				ws.write( row, col, d )
-		else:
-			for col, d in enumerate(row_data):
-				ws.write( row, col, d, format )
-		return row + 1
-	
 	table = [list(data_headers)] if competition.using_tags else [list(data_headers[:-2])]
 	
-	categories = sorted( set.union( *[set(w.categories.all()) for w in event_mass_start.wave_set.all()] ), key = lambda c: c.sequence )
-	for p in Participant.objects.select_related('license_holder').filter(competition = competition, category__in = categories).order_by('bib'):
+	categories = sorted( set.union( *[set(w.categories.all()) for w in event_mass_start.get_wave_set().all()] ), key = lambda c: c.sequence )
+	for p in event_mass_start.get_participants():
 		row_data = [
 			p.bib if p.bib else '',
 			p.license_holder.last_name, p.license_holder.first_name,
@@ -115,88 +192,75 @@ def get_crossmgr_excel( event_mass_start ):
 		write_row_data( ws, row, table[row] )
 	
 	table = None
-	#---------------------------------------------------------------------------------------------------
-	# Category information.
-	#
-	ws = wb.add_worksheet('--CrossMgr-Categories')
 	
-	participant_categories = set( p.category for p in Participant.objects.filter(competition = competition) )
+	add_categories_page( wb, title_format, event_mass_start )
 	
-	row = write_row_data( ws, 0, category_headers, title_format )
-	for wave in event_mass_start.wave_set.all():
-		categories = set( c for c in wave.categories.all() if c in participant_categories )
-		categories = sorted( categories, key = lambda c: c.sequence )
-		if not categories:
-			continue
-		if len(categories) == 1:
-			category = categories[0]
-			row_data = [
-				u'Wave',
-				category.code,
-				get_gender_str(category.gender),
-				get_number_range_str( p.bib for p in
-					Participant.objects.filter(competition = competition, category = category) if p.bib ),
-				unicode(wave.start_offset),
-				wave.laps if wave.laps else u'',
-				wave.distance if wave.distance else u'',
-				wave.minutes if wave.minutes else u'',
-			]
-			row = write_row_data( ws, row, row_data )
-		else:
-			genders = list( set(c.gender for c in categories) )
-			row_data = [
-				u'Wave',
-				wave.name,
-				get_gender_str( 2 if len(genders) != 1 else genders[0] ),
-				u'',	# No ranges here - these come from the categories.
-				unicode(wave.start_offset),
-				wave.laps if wave.laps else u'',
-				wave.distance if wave.distance else u'',
-				wave.minutes if wave.minutes else u'',
-			]			
-			row = write_row_data( ws, row, row_data )
-			
-			for category in categories:
-				row_data = [
-					u'Component',
-					category.code,
-					category.gender,
-					get_number_range_str( p.bib for p in
-						Participant.objects.filter(competition = competition, category = category) if p.bib ),
-					unicode(wave.start_offset),
-					u'',
-					u'',
-					u'',
-				]
-				row = write_row_data( ws, row, row_data )
-	
-	#---------------------------------------------------------------------------------------------------
-	# Property information.
-	#
-	ws = wb.add_worksheet('--CrossMgr-Properties')
-	
-	row = write_row_data( ws, 0, property_headers, title_format )
-
 	raceNumber = 1
 	for ms in competition.eventmassstart_set.all():
 		if ms == event_mass_start:
 			break
 		raceNumber += 1
-	row_data = [
-		competition.name,
-		competition.organizer,
-		competition.city,
-		competition.stateProv,
-		competition.country,
-		event_mass_start.date_time.strftime( '%Y-%m-%d' ),
-		event_mass_start.date_time.strftime( '%H:%M' ),
-		raceNumber,
-		competition.discipline.name,
-		competition.using_tags,
-		['km', 'miles'][competition.distance_unit],
-		False,
-	]
-	row = write_row_data( ws, row, row_data )
+	add_properties_page( wb, title_format, event_mass_start, raceNumber )
+	
+	wb.close()
+	return output.getvalue()
+
+#------------------------------------------------------------------------------------------------
+
+def get_crossmgr_excel_tt( event_tt ):
+	competition = event_tt.competition
+
+	output = StringIO.StringIO()
+	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
+	
+	title_format = wb.add_format( dict(bold = True) )
+	
+	#---------------------------------------------------------------------------------------------------
+	# Competitor data
+	#
+	ws = wb.add_worksheet('Registration')
+	
+	table = [['StartTime'] + list(data_headers)] if competition.using_tags else [['StartTime'] + list(data_headers[:-2])]
+	
+	categories = sorted( set.union( *[set(w.categories.all()) for w in event_tt.get_wave_set().all()] ), key = lambda c: c.sequence )
+	for p in event_tt.get_participants():
+		# Convert to Excel time which is a fraction of a day.
+		start_time = event_tt.get_start_time( p )
+		row_data = [
+			start_time.total_seconds() / (24.0*60.0*60.0) if start_time else u'',
+			p.bib if p.bib else u'',
+			p.license_holder.last_name, p.license_holder.first_name,
+			p.team.name if p.team else u'',
+			p.license_holder.nationality, p.license_holder.state_prov, p.license_holder.city,
+			p.category.code, competition.competition_age(p.license_holder), get_gender_str(p.license_holder.gender),
+			p.license_holder.license_code, p.license_holder.uci_code,
+		]
+		if competition.using_tags:
+			row_data.extend( [p.tag, p.tag2] )
+			
+		table.append( row_data )
+	
+	# Remove empty columns.
+	for col in xrange(len(table[0])-1, 0, -1):
+		if not any( table[row][col] for row in xrange(1, len(table)) ):
+			for row in xrange(0, len(table)):
+				del table[row][col]
+	
+	# Write the rider data.
+	write_row_data( ws, 0, table[0], title_format )
+	for row in xrange(1, len(table)):
+		write_row_data( ws, row, table[row] )
+	
+	table = None
+	
+	add_categories_page( wb, title_format, event_tt )
+	
+	raceNumber = 1 + competition.eventmassstart_set.all().count()
+	for ms in competition.eventtt_set.all():
+		if ms == event_tt:
+			break
+		raceNumber += 1
+	add_properties_page( wb, title_format, event_tt, raceNumber )
 	
 	wb.close()
 	return output.getvalue()

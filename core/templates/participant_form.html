@@ -203,6 +203,22 @@
 		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantNoteChange/{{p.id}}/">{% trans "Change" %}</a></td>
 	{% endif %}
 </tr>
+{% if p.has_optional_events %}
+	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantOptionChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+		<td class="text-right">{% trans "Optional Events" %}:</td>
+		<td>
+			{% for event, optional, is_participating in p.get_participant_events %}
+				{% if optional %}
+					{% if is_participating %}<strong>&#x2713;{% endif %}{{event.name}}{% if is_participating %}</strong>{% endif %}
+					({{event.get_event_type_display}})
+				{% endif %}
+			{% endfor %}
+		</td>
+		{% if isEdit %}
+			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantOptionChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		{% endif %}
+	</tr>
+{% endif %}
 </table>
 {% endspaceless %}
 
@@ -212,13 +228,32 @@
 			<hr/>
 				{% for w in sw %}
 					<h3>
-					{% trans "Start" %} {{forloop.counter}}:
+					{% trans "Mass Start" %} {{forloop.counter}}:
 					<span class="label label-default">{{w.event.date_time|time}}</span>
 					<strong>{{w.name}}</strong> -
 					{{w.event.name}} -
+					{{w.event_type_display_name}}
 					{{w.event.date_time|date}}
 					{% if w.is_late %}
 						<span class="label label-warning">{% trans "Late Reg.  No Placing.  Alert Timing Immediately." %}</span>
+					{% endif %}
+					</h3>
+				{% endfor %}
+		{% endif %}
+	{% endwith %}
+	{% with swtt=p.get_start_wave_tts %}
+		{% if swtt %}
+			<hr/>
+				{% for w in swtt %}
+					<h3>
+					{% trans "TT Start" %} {{forloop.counter}}:
+					<span class="label label-default">{{w.event.date_time|time}}</span>
+					<strong>{{w.name}}</strong> -
+					{{w.event.name}} -
+					{{w.event_type_display_name}}
+					{{w.event.date_time|date}}
+					{% if w.is_late %}
+						<span class="label label-warning">{% trans "Late Reg.  No Seeding.  Alert Timing Immediately." %}</span>
 					{% endif %}
 					</h3>
 				{% endfor %}
