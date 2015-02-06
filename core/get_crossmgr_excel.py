@@ -87,20 +87,21 @@ def add_categories_page( wb, title_format, event ):
 		categories = sorted( categories, key = lambda c: c.sequence )
 		if not categories:
 			continue
-		if len(categories) == 1:
-			category = categories[0]
-			row_data = [
-				u'Wave',
-				category.code,
-				get_gender_str(category.gender),
-				get_number_range_str( p.bib for p in
-					Participant.objects.filter(competition = competition, category = category) if p.bib ),
-				unicode(wave.start_offset),
-				wave.laps if wave.laps else u'',
-				wave.distance if wave.distance else u'',
-				getattr(wave, 'minutes', None) or u'',
-			]
-			row = write_row_data( ws, row, row_data )
+		
+		participants = list( wave.get_participants_unsorted() )
+		if len(categories) == 1 or event.event_type == 1:	# If only one category, or if this is a time trial, do not output Component waves.
+			for category in categories:
+				row_data = [
+					u'Wave',
+					category.code,
+					get_gender_str(category.gender),
+					get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
+					unicode(getattr(wave,'start_offset',u'')),
+					wave.laps if wave.laps else u'',
+					wave.distance if wave.distance else u'',
+					getattr(wave, 'minutes', None) or u'',
+				]
+				row = write_row_data( ws, row, row_data )
 		else:
 			genders = list( set(c.gender for c in categories) )
 			row_data = [
@@ -119,9 +120,8 @@ def add_categories_page( wb, title_format, event ):
 				row_data = [
 					u'Component',
 					category.code,
-					category.gender,
-					get_number_range_str( p.bib for p in
-						Participant.objects.filter(competition=event.competition, category=category) if p.bib ),
+					get_gender_str(category.gender),
+					get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
 					unicode(getattr(wave,'start_offset',u'')),
 					u'',
 					u'',

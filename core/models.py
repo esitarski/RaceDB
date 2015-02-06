@@ -694,7 +694,11 @@ class Event( models.Model ):
 	
 	def __unicode__( self ):
 		return u'%s, %s (%s)' % (self.date_time, self.name, self.competition.name)
-		
+	
+	@property
+	def short_name( self ):
+		return u'{} ({})'.format( self.name, {0:_('Mass'), 1:_('TT')}.get(self.event_type,u'') )
+	
 	class Meta:
 		verbose_name = _('Event')
 		verbose_name_plural = _('Events')
