@@ -209,8 +209,10 @@
 		<td>
 			{% for event, optional, is_participating in p.get_participant_events %}
 				{% if optional %}
-					{% if is_participating %}<strong>&#x2713;{% endif %}{{event.name}}{% if is_participating %}</strong>{% endif %}
+					{% if is_participating %}<span class="label label-success">&#x2713;
+					{% else %}<span class="label label-default">{% endif %}{{event.name}}
 					({{event.get_event_type_display}})
+					{% if is_participating %}</span>{% endif %}
 				{% endif %}
 			{% endfor %}
 		</td>
