@@ -220,6 +220,20 @@
 		{% endif %}
 	</tr>
 {% endif %}
+{% if p.has_tt_events %}
+	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantEstSpeedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+		<td class="text-right">{% trans "Est. TT Speed" %}:</td>
+		<td>
+		{% if p.est_kmh > 0.0 %}
+			<strong>{{p.est_speed_display}}</strong>
+		{% else %}
+			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+		{% endif %}</td>
+		{% if isEdit %}
+			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantEstSpeedChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		{% endif %}
+	</tr>
+{% endif %}
 </table>
 {% endspaceless %}
 

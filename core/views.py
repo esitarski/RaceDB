@@ -639,20 +639,19 @@ def TeamDelete( request, teamId ):
 @transaction.atomic
 def NormalizeSequence( objs ):
 	for sequence, o in enumerate(objs):
-		o.sequence = sequence
+		o.sequence = sequence + 1
 		o.save()
 	
 def SwapAdjacentSequence( Class, obj, swapBefore ):
 	NormalizeSequence( Class.objects.all() )
-	oBefore = None
-	for o in Class.objects.all().order_by( 'sequence' if swapBefore else '-sequence' ):
-		if o.id == obj.id:
-			if oBefore:
-				oBefore.sequence, obj.sequence = obj.sequence, oBefore.sequence
-				oBefore.save()
-				obj.save()
-			break
-		oBefore = o
+	try:
+		objAdjacent = Class.objects.get( sequence=obj.sequence + (-1 if swapBefore else 1) )
+	except Class.DoesNotExist:
+		return
+		
+	objAdjacent.sequence, obj.sequence = obj.sequence, objAdjacent.sequence
+	objAdjacent.save()
+	obj.save()
 
 @transaction.atomic
 def MoveSequence( Class, obj, toTop ):
@@ -1214,18 +1213,17 @@ def CategoryFormatCopy( request, categoryFormatId ):
 def CategoryFormatDelete( request, categoryFormatId ):
 	return GenericDelete( CategoryFormat, request, categoryFormatId, template = 'category_format_form.html' )
 
+@transaction.atomic
 def CategorySwapAdjacent( category, swapBefore ):
-	NormalizeSequence( Category.objects.filter(format = category.format) )
-	categories = Category.objects.filter( format = category.format ).order_by( 'sequence' if swapBefore else '-sequence' )
-	cBefore = None
-	for c in categories:
-		if c.id == category.id:
-			if cBefore:
-				cBefore.sequence, category.sequence = category.sequence, cBefore.sequence
-				cBefore.save()
-				category.save()
-			break
-		cBefore = c
+	NormalizeSequence( Category.objects.filter(format=category.format) )
+	try:
+		categoryAdjacent = Category.objects.get(format=category.format, sequence=category.sequence + (-1 if swapBefore else 1) )
+	except Category.DoesNotExist:
+		return
+		
+	categoryAdjacent.sequence, category.sequence = category.sequence, categoryAdjacent.sequence
+	categoryAdjacent.save()
+	category.save()
 	
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
@@ -1476,6 +1474,7 @@ def StartListTT( request, eventTTId ):
 	
 #--------------------------------------------------------------------------------------------
 class AdjustmentForm( Form ):
+	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
 	adjustment = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'adjustment'}) )
 	entry_tt_pk = forms.CharField( widget=forms.HiddenInput() )
 
@@ -1484,11 +1483,25 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 		if 'entry_tts' in kwargs:
 			entry_tts = list( kwargs['entry_tts'] )
 			del kwargs['entry_tts']
-			super( AdjustmentFormSet, self ).__init__( initial=[{'adjustment': '', 'entry_tt_pk': unicode(e.pk), } for e in entry_tts] )
+			super( AdjustmentFormSet, self ).__init__(
+				initial=[{
+					'est_speed':u'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
+					'adjustment': '',
+					'entry_tt_pk': unicode(e.pk),
+				} for e in entry_tts]
+			)
 			
 			# Add the entry_tt to each form to support the display.
+			# Also add a flag when the time gap changes.
+			tDelta = datetime.timedelta( seconds = 0 )
 			for i, form in enumerate(self):
 				form.entry_tt = entry_tts[i]
+				if i > 0:
+					tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
+					if tDeltaCur != tDelta:
+						if i > 1:
+							form.gap_change = True
+						tDelta = tDeltaCur
 		else:
 			super( AdjustmentFormSet, self ).__init__( *args, **kwargs )
 
@@ -1498,49 +1511,64 @@ def SeedingEdit( request, eventTTId ):
 		adjustment_formset = AdjustmentFormSet( request.POST )
 		reNum = re.compile( '[^0-9]' )
 		if adjustment_formset.is_valid():
-			eda = []
-			for d in adjustment_formset.cleaned_data:
-				adjustment = d['adjustment'].strip()
-				if not adjustment:
-					continue
+			def get_eda():
+				''' Get the entry_tt, direction and adjustment for each line in the form. '''
+				''' Also commit the est_speed to the entry. '''
+				eda = []
+				for d in adjustment_formset.cleaned_data:
+					pk = d['entry_tt_pk']
+					try:
+						pk = int(pk)
+					except ValueError:
+						pass
+					
+					try:
+						entry_tt = EntryTT.objects.get( pk=pk )
+					except EntryTT.DoesNotExist:
+						continue
+					
+					try:
+						est_kmh = entry_tt.participant.competition.to_kmh(float(d['est_speed']))
+						if entry_tt.participant.est_kmh != est_kmh:
+							entry_tt.participant.est_kmh = est_kmh
+							entry_tt.participant.save()
+					except ValueError:
+						pass
+						
+					adjustment = d['adjustment'].strip()
+					if not adjustment:
+						continue
 
-				direction = adjustment[0]
-				direction = direction if direction in ('+','-') else None
+					direction = adjustment[0] if adjustment[0] in ('+','-') else None
+						
+					try:
+						adjustment = int( reNum.sub(u'', adjustment) )
+					except ValueError:
+						continue
 					
-				try:
-					adjustment = int( reNum.sub(u'', adjustment) )
-				except ValueError:
-					continue
-				
-				pk = d['entry_tt_pk']
-				try:
-					pk = int(pk)
-				except ValueError:
-					pass
-				
-				try:
-					entry_tt = EntryTT.objects.get( pk=pk )
-				except EntryTT.DoesNotExist as e:
-					continue
-					
-				eda.append( (entry_tt, direction, adjustment) )
+					eda.append( (entry_tt, direction, adjustment) )
+				return eda
 			
 			with transaction.atomic():
-				for entry_tt, direction, adjustment in eda:
-					if direction == '-':
-						entry_tt.move_to( entry_tt.start_sequence - adjustment )
-				for entry_tt, direction, adjustment in reversed(eda):
-					if direction == '+':
-						entry_tt.move_to( entry_tt.start_sequence + adjustment )
-				
-				eda.sort( key = lambda v: (v[2], v[0].start_sequence) )
-				
-				for entry_tt, direction, adjustment in eda:
-					if direction is None and adjustment < entry_tt.start_sequence:
-						entry_tt.move_to( adjustment )
-				for entry_tt, direction, adjustment in reversed(eda):
-					if direction is None and adjustment > entry_tt.start_sequence:
-						entry_tt.move_to( adjustment )
+				eda = get_eda()
+				if "apply_adjustments" in request.POST:
+					for entry_tt, direction, adjustment in eda:
+						if direction == '-':
+							entry_tt.move_to( entry_tt.start_sequence - adjustment )
+					for entry_tt, direction, adjustment in reversed(eda):
+						if direction == '+':
+							entry_tt.move_to( entry_tt.start_sequence + adjustment )
+					
+					eda.sort( key = lambda v: (v[2], v[0].start_sequence) )
+					
+					for entry_tt, direction, adjustment in eda:
+						if direction is None and adjustment < entry_tt.start_sequence:
+							entry_tt.move_to( adjustment )
+					for entry_tt, direction, adjustment in reversed(eda):
+						if direction is None and adjustment > entry_tt.start_sequence:
+							entry_tt.move_to( adjustment )
+				elif "regenerate_start_times" in request.POST:
+					instance.create_initial_seeding()
 	
 	entry_tts=list(instance.entrytt_set.all())
 	for e in entry_tts:
@@ -2566,6 +2594,59 @@ def ParticipantOptionChange( request, participantId ):
 		)
 		
 	return render_to_response( 'participant_option_change.html', RequestContext(request, locals()) )
+#--------------------------------------------------------------------------
+def GetParticipantEstSpeedForm( competition ):
+	class ParticipantEstSpeedForm( Form ):
+		est_speed = forms.FloatField( required = False, label=_('Estimated Speed for Time Trial') )
+		
+		def __init__(self, *args, **kwargs):
+			super(ParticipantEstSpeedForm, self).__init__(*args, **kwargs)
+			
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'navbar-form navbar-left'
+			
+			button_args = [
+				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			]
+			
+			self.helper.layout = Layout(
+				Row(
+					Field('est_speed', css_class = 'form-control', size = '20'),
+					HTML( competition.speed_unit_display ),
+				),
+				Row(
+					button_args[0],
+					button_args[1],
+				)
+			)
+	
+	return ParticipantEstSpeedForm
+		
+@external_access
+def ParticipantEstSpeedChange( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	competition = participant.competition
+	license_holder = participant.license_holder
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = GetParticipantEstSpeedForm(competition)( request.POST )
+		if form.is_valid():
+			est_speed = form.cleaned_data['est_speed']
+			participant.est_kmh = competition.to_kmh( est_speed or 0.0 )
+			participant.save()
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = GetParticipantEstSpeedForm(competition)(
+			initial = dict( est_speed = competition.to_local_speed(participant.est_kmh) )
+		)
+		
+	return render_to_response( 'participant_est_speed_change.html', RequestContext(request, locals()) )
+	
 #--------------------------------------------------------------------------
 
 class ParticipantTagForm( Form ):

@@ -309,6 +309,16 @@ class Competition(models.Model):
 	)
 	distance_unit = models.PositiveSmallIntegerField(choices=DISTANCE_UNIT_CHOICES, default = 0, verbose_name = _('Distance Unit') )
 	
+	@property
+	def speed_unit_display( self ):
+		return 'km/h' if self.distance_unit == 0 else 'mph'
+		
+	def to_local_speed( self, kmh ):
+		return kmh if self.distance_unit == 0 else kmh * 0.621371
+		
+	def to_kmh( self, speed ):
+		return speed if self.distance_unit == 0 else speed / 0.621371
+	
 	def save(self, *args, **kwargs):
 		''' If the start_date has changed, automatically update all the event dates too. '''
 		if self.pk:
@@ -1081,7 +1091,7 @@ class Participant(models.Model):
 			)
 		),
 	)
-	role=models.PositiveSmallIntegerField(choices=COMPETITION_ROLE_CHOICES, default=110, verbose_name=_('Role') )
+	role=models.PositiveSmallIntegerField( choices=COMPETITION_ROLE_CHOICES, default=110, verbose_name=_('Role') )
 	
 	preregistered=models.BooleanField( default=False, verbose_name=_('Preregistered') )
 	
@@ -1099,6 +1109,12 @@ class Participant(models.Model):
 	confirmed=models.BooleanField( default=False, verbose_name=_('Confirmed') )
 	
 	note=models.TextField( blank=True, default='', verbose_name=_('Note') )
+	
+	est_kmh=models.FloatField( default=0.0, verbose_name=_('Est Kmh') )
+	
+	@property
+	def est_speed_display( self ):
+		return u'{:g} {}'.format( self.competition.to_local_speed(self.est_kmh), self.competition.speed_unit_display )
 	
 	def save( self, *args, **kwargs ):
 		competition = self.competition
@@ -1127,7 +1143,7 @@ class Participant(models.Model):
 				license_holder.existing_tag = self.tag
 				license_holder.existing_tag2 = self.tag2
 				license_holder.save()
-		
+				
 		return super(Participant, self).save( *args, **kwargs )
 	
 	@property
@@ -1192,6 +1208,9 @@ class Participant(models.Model):
 			self.tag2 = self.license_holder.existing_tag2
 	
 		def init_values( pp ):
+			if not self.est_kmh and pp.competition.discipline==self.competition.discipline and pp.est_kmh:
+				self.est_kmh = pp.est_kmh
+			
 			if not self.team and pp.team:
 				team = pp.team
 				while 1:
@@ -1216,6 +1235,19 @@ class Participant(models.Model):
 				break
 		#if not self.role:
 		#	self.role = Participant._meta.get_field_by_name('role')[0].default
+
+		# If we still don't have an est_kmh, try to get one from a previous competition of the same discipline.
+		if not self.est_kmh:
+			for est_kmh in Participant.objects.filter(
+						license_holder=self.license_holder,
+						competition__discipline=self.competition.discipline
+					).exclude(
+						est_kmh=0.0
+					).order_by(
+						'-competition__start_date'
+					).values_list('est_kmh', flat=True):
+				self.est_kmh = est_kmh
+				break
 		
 		try:
 			th = TeamHint.objects.get( license_holder=self.license_holder, discipline=self.competition.discipline )
@@ -1287,6 +1319,9 @@ class Participant(models.Model):
 		
 	def has_optional_events( self ):
 		return any( optional for event, optional, entered in self.get_participant_events() )
+		
+	def has_tt_events( self ):
+		return any( entered and event.event_type == 1 for event, optional, entered in self.get_participant_events() )
 	
 	def explain_integrity_error( self ):
 		try:
@@ -1384,11 +1419,11 @@ class EventTT( Event ):
 	def create_initial_seeding( self, respect_existing_hints=True ):
 		est_speed = {}
 		hint_sequence = {}
-		for e in EntryTT.objects.filter(event=self).values_list('participant__pk', 'est_speed', 'hint_sequence'):
+		for e in EntryTT.objects.filter(event=self).values_list('participant__pk', 'participant__est_kmh', 'hint_sequence'):
 			est_speed[e[0]] = e[1]
 			hint_sequence[e[0]] = e[2]
 		
-		sequenceCur = 0
+		sequenceCur = 1
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
 			tCur += wave_tt.gap_before_wave
@@ -1494,6 +1529,20 @@ class WaveTT( WaveBase ):
 			p.clock_time = None if p.start_time is None else self.event.date_time + p.start_time
 		
 		participants.sort( key=lambda p: p.start_time if p.start_time else datetime.timedelta(days=100) )
+		
+		tDelta = datetime.timedelta(seconds = 0)
+		for i in xrange(1, len(participants)):
+			pPrev = participants[i-1]
+			p = participants[i]
+			try:
+				tDeltaCur = p.start_time - pPrev.start_time
+				if tDeltaCur != tDelta:
+					if i > 1:
+						p.gap_change = True
+					tDelta = tDeltaCur
+			except Exception as e:
+				pass
+		
 		return participants
 	
 	class Meta:
