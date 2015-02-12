@@ -1414,9 +1414,16 @@ class EventTT( Event ):
 	def __init__( self, *args, **kwargs ):
 		kwargs['event_type'] = 1
 		super( EventTT, self ).__init__( *args, **kwargs )
+		
+	create_seeded_startlist = models.BooleanField( default=True, verbose_name=_('Create Seeded Startlist'),
+		help_text=_('If True, seeded start times will be generated in the startlist for CrossMgr.  If False, no seeded times will be generated, and the TT time will start on the first recorded time in CrossMgr.') )
 
 	@transaction.atomic
 	def create_initial_seeding( self, respect_existing_hints=True ):
+		if not self.create_seeded_startlist:
+			EntryTT.objects.delete( event=self )
+			return
+		
 		est_speed = {}
 		hint_sequence = {}
 		for e in EntryTT.objects.filter(event=self).values_list('participant__pk', 'participant__est_kmh', 'hint_sequence'):
@@ -1518,10 +1525,22 @@ class WaveTT( WaveBase ):
 		
 	def get_participants( self ):
 		participants = list( self.get_participants_unsorted().select_related('competition','license_holder','team') )
+		
+		if not self.event.create_seeded_startlist:
+			participants.sort( key=lambda p: p.bib or 0 )
+			for p in participants:
+				p.start_time = None
+				p.clock_time = None				
+			return participants
+		
 		start_times = {
 			pk: datetime.timedelta(seconds=start_time)
-			for pk, start_time in EntryTT.objects.filter(participant__competition=self.event.competition, event=self.event).values_list(
-					'participant__pk', 'start_time'
+			for pk, start_time in EntryTT.objects.filter(
+					participant__competition=self.event.competition,
+					event=self.event
+				).values_list(
+					'participant__pk',
+					'start_time'
 				)
 		}
 		for p in participants:

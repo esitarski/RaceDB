@@ -1696,7 +1696,7 @@ class EventMassStartForm( ModelForm ):
 			self.additional_buttons.extend( [
 				('new-wave-submit', _('New Start Wave'), 'btn btn-success', self.newWaveCB),
 			] )
-		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Start Lists') if button_mask == EDIT_BUTTONS else None )
+		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Waves') if button_mask == EDIT_BUTTONS else None )
 
 @external_access
 def EventMassStartDisplay( request, competitionId ):
@@ -1858,7 +1858,6 @@ def WaveDelete( request, waveId ):
 	)
 
 #--------------------------------------------------------------------------------------------
-#--------------------------------------------------------------------------------------------
 
 class EventTTForm( ModelForm ):
 	class Meta:
@@ -1885,13 +1884,18 @@ class EventTTForm( ModelForm ):
 				Col(Field('date_time', size=24), 4),
 				Col(Field('optional'), 4),
 			),
+			Row(
+				Col(HTML(''), 4),
+				Col(HTML(''), 4),
+				Col(Field('create_seeded_startlist', size=40), 4),
+			),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
 				('new-wave-submit', _('New TT Wave'), 'btn btn-success', self.newWaveTTCB),
 			] )
-		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Start Lists') if button_mask == EDIT_BUTTONS else None )
+		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Waves') if button_mask == EDIT_BUTTONS else None )
 
 @external_access
 def EventTTDisplay( request, competitionId ):

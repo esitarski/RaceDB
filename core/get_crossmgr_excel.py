@@ -225,7 +225,7 @@ def get_crossmgr_excel_tt( event_tt ):
 	categories = sorted( set.union( *[set(w.categories.all()) for w in event_tt.get_wave_set().all()] ), key = lambda c: c.sequence )
 	for p in event_tt.get_participants():
 		# Convert to Excel time which is a fraction of a day.
-		start_time = event_tt.get_start_time( p )
+		start_time = event_tt.get_start_time(p) if event_tt.create_seeded_startlist else None
 		row_data = [
 			start_time.total_seconds() / (24.0*60.0*60.0) if start_time else u'',
 			p.bib if p.bib else u'',
