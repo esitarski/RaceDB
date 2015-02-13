@@ -154,6 +154,19 @@ But, make a backup of your database file, just in case.
 
 Unzip RaceDB.zip into the folder you unzipped it in before.
 
+Now, make sure that all the dependencies are up-to-date:
+
+Make sure you are connected to the internet.
+In the RaceDB folder, run the follow command:
+
+  Windows:    python dependencies.py --upgrade
+  Linux/Mac:  sudo python dependencies.py --upgrade
+
+You will see a text scrolling up as any updated modules are installed.
+
+By patient!
+This may take a few minutes as the modules are downloaded and configured.
+
 In the RaceDB folder, run the follow command:
 
   python manage.py migrate
