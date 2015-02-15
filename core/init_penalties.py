@@ -105,7 +105,7 @@ For protest with hands off handlebar
 Pour avoir levé la main en guise de protestation
 Por realizar gestor de protesta levantando las manos del manillar
 
-For using two pserons to give information to the team/rider
+For using two persons to give information to the team/rider
 Pour avoir utilise deux personnes pour informer son équipe/coureur
 Por utilizar dos personas para informar a su equipo
 
