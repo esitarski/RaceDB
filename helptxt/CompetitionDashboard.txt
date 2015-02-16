@@ -69,7 +69,24 @@ Allows you to enter Participants from a scan of their RFID chip.  Requires an RF
 
 ## Mass Start Events
 
-Defines the set of Mass Starts for your event.  For each Mass Start, you indicate which Category(ies) are in the start, and the Start Offset.
+Defines the set of Mass Starts for your competition.  For each Mass Start, you indicate which Category(ies) are in the start, and the Start Offset.
+
+You can also create an Excel configuration file for CrossMgr by pressing the CrossMgr button.
+
+## Time Trial Events
+
+Defines the set of Time Trial for your competition.  For each Time Trial, you indicate which Category(ies) are in each Wave.
+
+When a Time Trial event is available for a rider, it will be possible to enter the Rider's average speed in the __Participant Edit__ screen.  This estimated speed is used to create the start lists with the fastest riders starting at the end.
+
+Within each start wave, you indicate how you want the seeding to be done:
+
+Rule|Explanation
+|---|-----------
+Gap Before Wave (GBW)|Time gap before each wave starts
+Regular Start Gap (RSG)|Time between starts for regular riders
+Fastest Participants Start Gap (FSG)|Time between starts for the fastest riders
+Number of Fastest Participants (NFP)|The number of riders at the end of the wave that are considered fast
 
 You can also create an Excel configuration file for CrossMgr by pressing the CrossMgr button.
 

@@ -2,8 +2,12 @@
 
 # Competitions
 
-In a nutshell, a Competition is a set of Mass Start events with some extra information.  A Mass Start event is a set of uniquely numbered riders on course at the same time, and can have a number of Start Waves within it.
+In a nutshell, a Competition is a set of Mass Start events or Time Trial events with some extra information.
+
+A Mass Start event is a set of uniquely numbered riders on course at the same time, and can have a number of Start Waves within it.
 Each Start Wave consists of one or more Categories starting together.
+
+A Time Trial event is a sequence of uniquely numbered riders on course one at a time, and can have a number of Start Waves within it.  Each rider is assigned a Start Time in a process known as __seeding__.
 
 This is summarized as:
 

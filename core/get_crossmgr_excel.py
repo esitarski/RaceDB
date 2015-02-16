@@ -69,8 +69,19 @@ def write_row_data( ws, row, row_data, format = None ):
 		for col, d in enumerate(row_data):
 			ws.write( row, col, d )
 	else:
+		if isinstance(format, list):
+			col_format = { col:f for col, f in enumerate(format) }
+			default_format = None
+		else:
+			col_format = {}
+			default_format = format
+		
 		for col, d in enumerate(row_data):
-			ws.write( row, col, d, format )
+			f = col_format.get(col, default_format)
+			if f is not None:
+				ws.write( row, col, d, f )
+			else:
+				ws.write( row, col, d )
 	return row + 1
 
 def add_categories_page( wb, title_format, event ):
@@ -146,7 +157,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.discipline.name,
 		competition.using_tags,
 		['km', 'miles'][competition.distance_unit],
-		False,
+		competition.event_type == 1,					# Time Trial
 	]
 	row = write_row_data( ws, row, row_data )
 
@@ -214,6 +225,7 @@ def get_crossmgr_excel_tt( event_tt ):
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
+	time_format = wb.add_format( dict(num_format='h:mm:ss') )
 	
 	#---------------------------------------------------------------------------------------------------
 	# Competitor data
@@ -248,8 +260,9 @@ def get_crossmgr_excel_tt( event_tt ):
 	
 	# Write the rider data.
 	write_row_data( ws, 0, table[0], title_format )
+	format = [time_format]
 	for row in xrange(1, len(table)):
-		write_row_data( ws, row, table[row] )
+		write_row_data( ws, row, table[row], format )
 	
 	table = None
 	
