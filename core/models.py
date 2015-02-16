@@ -389,7 +389,7 @@ class Competition(models.Model):
 		return EventTT.objects.filter(competition = self).order_by('date_time')
 		
 	def get_events( self ):
-		return list(self.get_events_mass_start()) + list(self.get_events_tt)
+		return list(self.get_events_mass_start()) + list(self.get_events_tt())
 		
 	def get_categories( self ):
 		return Category.objects.filter( format = self.category_format )
