@@ -82,6 +82,7 @@ urlpatterns = patterns('',
 	url(r'^(?i).*ParticipantNoteChange/(?P<participantId>\d+)/$', views.ParticipantNoteChange ),
 	url(r'^(?i).*ParticipantOptionChange/(?P<participantId>\d+)/$', views.ParticipantOptionChange ),
 	url(r'^(?i).*ParticipantEstSpeedChange/(?P<participantId>\d+)/$', views.ParticipantEstSpeedChange ),
+	url(r'^(?i).*ParticipantEstSpeedSet/(?P<participantId>\d+)/(?P<est_speed>\d+\.\d+)/$', views.ParticipantEstSpeedSet ),
 	
 	url(r'^(?i).*LicenseHolders/$', views.LicenseHoldersDisplay),
 	url(r'^(?i).*LicenseHolderNew/$', views.LicenseHolderNew),

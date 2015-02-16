@@ -2646,9 +2646,35 @@ def ParticipantEstSpeedChange( request, participantId ):
 		form = GetParticipantEstSpeedForm(competition)(
 			initial = dict( est_speed = competition.to_local_speed(participant.est_kmh) )
 		)
-		
+	
+	speed_rc = {}
+	if competition.distance_unit == 0:
+		for col, kmh in enumerate(xrange(20, 51)):
+			for row, decimal in enumerate(xrange(0, 10)):
+				speed_rc[(col, row)] = u'{}.{:01d}'.format(kmh, decimal)
+	else:
+		for col, mph in enumerate(xrange(12, 32)):
+			for row, decimal in enumerate(xrange(0, 10)):
+				speed_rc[(col, row)] = u'{}.{:01d}'.format(mph, decimal)
+	
+	row_max = max( row for row, col in speed_rc.iterkeys() ) + 1
+	col_max = max( col for row, col in speed_rc.iterkeys() ) + 1
+	
+	speed_table = [ [ speed_rc[(row, col)] for col in xrange(col_max) ] for row in xrange(row_max) ]
+	speed_table.reverse()
+	
 	return render_to_response( 'participant_est_speed_change.html', RequestContext(request, locals()) )
 	
+@external_access
+def ParticipantEstSpeedSet( request, participantId, est_speed ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	competition = participant.competition
+	
+	est_speed = float(est_speed)
+	participant.est_kmh = competition.to_kmh( est_speed or 0.0 )
+	participant.save()
+	
+	return HttpResponseRedirect(getContext(request,'pop3Url'))
 #--------------------------------------------------------------------------
 
 class ParticipantTagForm( Form ):

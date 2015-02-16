@@ -1,6 +1,7 @@
 
 import re
 import os
+import sys
 import locale
 import datetime
 import StringIO
@@ -157,7 +158,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.discipline.name,
 		competition.using_tags,
 		['km', 'miles'][competition.distance_unit],
-		competition.event_type == 1,					# Time Trial
+		event.event_type == 1,					# Time Trial
 	]
 	row = write_row_data( ws, row, row_data )
 
@@ -235,11 +236,16 @@ def get_crossmgr_excel_tt( event_tt ):
 	table = [['StartTime'] + list(data_headers)] if competition.using_tags else [['StartTime'] + list(data_headers[:-2])]
 	
 	categories = sorted( set.union( *[set(w.categories.all()) for w in event_tt.get_wave_set().all()] ), key = lambda c: c.sequence )
-	for p in event_tt.get_participants():
+	
+	participants = list( event_tt.get_participants() )
+	start_times = { p: event_tt.get_start_time(p) for p in participants } if event_tt.create_seeded_startlist else {}
+	participants.sort( key=lambda p: (start_times.get(p, datetime.timedelta(seconds=10000.0*60*24*24)), p.bib or 9999999) )
+	
+	for p in participants:
 		# Convert to Excel time which is a fraction of a day.
-		start_time = event_tt.get_start_time(p) if event_tt.create_seeded_startlist else None
+		start_time = start_times.get(p, None)
 		row_data = [
-			start_time.total_seconds() / (24.0*60.0*60.0) if start_time else u'',
+			start_time.total_seconds() / (24.0*60.0*60.0) if start_time is not None else u'',
 			p.bib if p.bib else u'',
 			p.license_holder.last_name, p.license_holder.first_name,
 			p.team.name if p.team else u'',
