@@ -2038,11 +2038,9 @@ def WaveTTNew( request, eventTTId ):
 		wave_tt.name = _('WaveTT') + ' ' + wave_ttLetter
 		if wave_tts_existing:
 			wave_tt_last = wave_tts_existing[-1]
-			wave_tt.start_offset = wave_tt_last.start_offset + datetime.timedelta(seconds = 60.0)
 			wave_tt.distance = wave_tt_last.distance
 			wave_tt.laps = wave_tt_last.laps
-			wave_tt.minutes = wave_tt_last.minutes
-		form = GetWaveTTForm(event_tt, wave_tt)(instance = wave_tt, button_mask = NEW_BUTTONS)
+		form = GetWaveTTForm(event_tt, wave_tt)(instance=wave_tt, button_mask=NEW_BUTTONS)
 	
 	return render_to_response( 'wave_tt_form.html', RequestContext(request, locals()) )
 

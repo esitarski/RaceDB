@@ -39,15 +39,13 @@ def pypi():
 	
 	googleDrive = r"c:\GoogleDrive\Downloads\All Platforms\RaceDB"
 	
-	'''
 	# Delete any existing releases (for the moment).
 	for root, dirs, files in os.walk( googleDrive ):
 		for f in files:
 			fname = os.path.join( root, f )
-			if os.path.splitext(fname)[1] == '.zip' and os.path.basename(fname) != os.path.basename(zfname):
+			if os.path.splitext(fname)[1] == '.zip' and os.path.basename(fname) != os.path.basename(zfname) and not '0.2.69' in fname:
 				print( 'removing: {}'.format(fname) )
 				os.remove( fname )
-	'''
 	
 	for fname in [zfname, 'Install-Readme.txt']:
 		print( 'releasing: {}'.format(fname) )
