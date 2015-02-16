@@ -28,7 +28,7 @@ def pypi():
 	for root, dirs, files in os.walk( '.' ):
 		for f in files:
 			fname = os.path.join( root, f )
-			if any( d in fname for d in ['EV', 'GFRR', 'usac_heatmap', 'usac_bug'] ):
+			if any( d in fname for d in ['EV', 'GFRR', 'usac_heatmap', 'usac_bug', 'migrations_old'] ):
 				continue
 			if os.path.splitext(fname)[1][1:] in suffixes:
 				print( 'writing: {}'.format(fname) )
