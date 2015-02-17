@@ -1491,11 +1491,20 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 				} for e in entry_tts]
 			)
 			
+			# Get the waves for each participant.
+			participant_wave = {}
+			for event in set( ett.event for ett in entry_tts ):
+				for wave in event.get_wave_set().all():
+					for p in wave.get_participants_unsorted():
+						participant_wave[p.pk] = wave
+			
 			# Add the entry_tt to each form to support the display.
+			# Also add the wave.
 			# Also add a flag when the time gap changes.
 			tDelta = datetime.timedelta( seconds = 0 )
 			for i, form in enumerate(self):
 				form.entry_tt = entry_tts[i]
+				form.wave = participant_wave.get(entry_tts[i].participant.pk, None)
 				if i > 0:
 					tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
 					if tDeltaCur != tDelta:

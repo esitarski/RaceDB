@@ -175,6 +175,10 @@ class Category(models.Model):
 		
 	def __unicode__( self ):
 		return u'{} ({}) [{}]'.format(self.code, self.description, self.format.name)
+		
+	@property
+	def code_gender( self ):
+		return u'{} ({})'.format(self.code, self.get_gender_display())
 	
 	class Meta:
 		verbose_name = _('Category')
@@ -824,7 +828,7 @@ class WaveBase( models.Model ):
 	
 	@property
 	def category_text( self ):
-		return u', '.join( category.code for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
 	
 	class Meta:
 		verbose_name = _('Wave Base')
@@ -1524,7 +1528,7 @@ class WaveTT( WaveBase ):
 	
 	@property
 	def category_text( self ):
-		return u', '.join( category.code for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
 		
 	def get_participants( self ):
 		participants = list( self.get_participants_unsorted().select_related('competition','license_holder','team') )
