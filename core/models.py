@@ -1444,7 +1444,7 @@ class EventTT( Event ):
 			participants = sorted(
 				wave_tt.get_participants_unsorted(),
 				key = lambda p: (
-					p.category.sequence,
+					# p.category.sequence,
 					hint_sequence.get(p.pk, 0) if respect_existing_hints else 0,
 					est_speed.get(p.pk, 0.0),
 					p.license_holder.get_tt_metric(self.date_time.date())
