@@ -158,7 +158,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.discipline.name,
 		competition.using_tags,
 		['km', 'miles'][competition.distance_unit],
-		event.event_type == 1,					# Time Trial
+		True if event.event_type == 1 else False,		# Time Trial
 	]
 	row = write_row_data( ws, row, row_data )
 
