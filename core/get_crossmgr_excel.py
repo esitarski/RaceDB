@@ -258,7 +258,7 @@ def get_crossmgr_excel_tt( event_tt ):
 			
 		table.append( row_data )
 	
-	# Remove empty columns (but leave StartTime column).
+	# Remove empty columns (but leave Bib and StartTime column).
 	for col in xrange(len(table[0])-1, 1, -1):
 		if not any( table[row][col] for row in xrange(1, len(table)) ):
 			for row in xrange(0, len(table)):
