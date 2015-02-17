@@ -102,7 +102,7 @@
 		<tr onclick="jump('{{path}}StartList/{{e.id}}/');">
 			<td>{{e.name}}</td>
 			<td>{{e.get_event_type_display}} ({% if e.optional %}{% trans "Optional" %}{% else %}{% trans "Included" %}{% endif %})</td>
-			<td>{{e.wave_text}}</td>
+			<td>{{e.wave_text_html|safe}}</td>
 			<td>{{e.date_time}}</td>
 			<td class="text-center">{{e.get_participant_count}}</td>
 			<td>
@@ -141,7 +141,7 @@
 		<tr onclick="jump('{{path}}StartListTT/{{e.id}}/');">
 			<td>{{e.name}}</td>
 			<td>{{e.get_event_type_display}} ({% if e.optional %}{% trans "Optional" %}{% else %}{% trans "Included" %}{% endif %})</td>
-			<td>{{e.wave_text}}</td>
+			<td>{{e.wave_text_html|safe}}</td>
 			<td>{{e.date_time}}</td>
 			<td class="text-center">{{e.get_participant_count}}</td>
 			<td>

@@ -1576,7 +1576,7 @@ def SeedingEdit( request, eventTTId ):
 					for entry_tt, direction, adjustment in reversed(eda):
 						if direction is None and adjustment > entry_tt.start_sequence:
 							entry_tt.move_to( adjustment )
-				elif "regenerate_start_times" in request.POST:
+				if "regenerate_start_times" in request.POST:
 					instance.create_initial_seeding()
 	
 	entry_tts=list(instance.entrytt_set.all())
@@ -2069,6 +2069,30 @@ def WaveTTDelete( request, waveTTId ):
 		template = 'wave_tt_form.html'
 	)
 
+@transaction.atomic
+def WaveTTSwapAdjacent( waveTT, swapBefore ):
+	NormalizeSequence( WaveTT.objects.filter(event=waveTT.event) )
+	try:
+		waveTTAdjacent = WaveTT.objects.get(event=waveTT.event, sequence=waveTT.sequence + (-1 if swapBefore else 1) )
+	except WaveTT.DoesNotExist:
+		return
+		
+	waveTTAdjacent.sequence, waveTT.sequence = waveTT.sequence, waveTTAdjacent.sequence
+	waveTTAdjacent.save()
+	waveTT.save()
+
+@external_access
+def WaveTTDown( request, waveTTId ):
+	waveTT = get_object_or_404( WaveTT, pk=waveTTId )
+	WaveTTSwapAdjacent( waveTT, False )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+@external_access
+def WaveTTUp( request, waveTTId ):
+	waveTT = get_object_or_404( WaveTT, pk=waveTTId )
+	WaveTTSwapAdjacent( waveTT, True )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
 #----------------------------------------------------------------------------
 
 class ParticipantSearchForm( Form ):

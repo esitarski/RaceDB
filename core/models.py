@@ -700,8 +700,12 @@ class Event( models.Model ):
 		return u', '.join( u'{} ({})'.format(w.name, w.category_text) for w in self.get_wave_set().all() )
 	
 	@property
+	def wave_text_line_html( self ):
+		return u', '.join( u'<strong>{}</strong> {}'.format(w.name, w.category_text) for w in self.get_wave_set().all() )
+	
+	@property
 	def wave_text_html( self ):
-		return u'<br/>'.join( u'<strong>{}</strong>:&nbsp;&nbsp;{}'.format(w.name, w.category_text) for w in self.get_wave_set().all() )
+		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}</strong>:&nbsp;&nbsp;{}'.format(w.name, w.category_text) for w in self.get_wave_set().all() ) + u'</li></ol>'
 	
 	def get_participants( self ):
 		participants = set()
@@ -829,6 +833,10 @@ class WaveBase( models.Model ):
 	@property
 	def category_text( self ):
 		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+	
+	@property
+	def category_text_html( self ):
+		return u'<ol><li>' + u'</li><li>'.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) ) + u'</li></ol>'
 	
 	class Meta:
 		verbose_name = _('Wave Base')
@@ -1426,16 +1434,16 @@ class EventTT( Event ):
 		help_text=_('If True, seeded start times will be generated in the startlist for CrossMgr.  If False, no seeded times will be generated, and the TT time will start on the first recorded time in CrossMgr.') )
 
 	@transaction.atomic
-	def create_initial_seeding( self, respect_existing_hints=True ):
+	def create_initial_seeding( self, respect_existing_hints=False ):
 		if not self.create_seeded_startlist:
 			EntryTT.objects.delete( event=self )
 			return
 		
-		est_speed = {}
+		est_kmh = {}
 		hint_sequence = {}
-		for e in EntryTT.objects.filter(event=self).values_list('participant__pk', 'participant__est_kmh', 'hint_sequence'):
-			est_speed[e[0]] = e[1]
-			hint_sequence[e[0]] = e[2]
+		for pk, kmh, hint in EntryTT.objects.filter(event=self).values_list('participant__pk', 'participant__est_kmh', 'hint_sequence'):
+			est_kmh[pk] = kmh
+			hint_sequence[pk] = hint
 		
 		sequenceCur = 1
 		tCur = datetime.timedelta( seconds = 0 )
@@ -1444,9 +1452,8 @@ class EventTT( Event ):
 			participants = sorted(
 				wave_tt.get_participants_unsorted(),
 				key = lambda p: (
-					# p.category.sequence,
 					hint_sequence.get(p.pk, 0) if respect_existing_hints else 0,
-					est_speed.get(p.pk, 0.0),
+					est_kmh.get(p.pk, 0.0),
 					p.license_holder.get_tt_metric(self.date_time.date())
 				)
 			)
@@ -1465,14 +1472,53 @@ class EventTT( Event ):
 			return EntryTT.objects.get(event=self, participant=participant).start_time
 		except EntryTT.DoesNotExist as e:
 			return None
+			
+	def get_participants_seeded( self ):
+		participants = set()
+		for w in self.get_wave_set().all():
+			participants_cur = set( w.get_participants_unsorted().select_related('competition','license_holder','team') )
+			for p in participants_cur:
+				p.wave = w
+			participants |= participants_cur
+
+		participants = list( participants )
+		
+		if self.create_seeded_startlist:
+			start_times = {
+				pk: datetime.timedelta(seconds=start_time)
+				for pk, start_time in EntryTT.objects.filter(
+						participant__competition=self.competition,
+						event=self,
+					).values_list(
+						'participant__pk',
+						'start_time',
+					)
+			}
+		else:
+			start_times = {}
+			
+		for p in participants:
+			p.start_time = start_times.get( p.pk, None )
+			p.clock_time = None if p.start_time is None else self.date_time + p.start_time
+		
+		participants.sort( key=lambda p: (p.start_time.total_seconds() if p.start_time else 1000.0*24.0*60.0*60.0, p.bib or 0) )
+		
+		tDelta = datetime.timedelta( seconds = 0 )
+		for i, p in enumerate(participants):
+			if i > 0:
+				try:
+					tDeltaCur = p.start_time - participants[i-1].start_time
+					if tDeltaCur != tDelta:
+						if i > 1:
+							p.gap_change = True
+						tDelta = tDeltaCur
+				except Exception as e:
+					pass
+		
+		return participants		
 	
-	@property
-	def wave_text( self ):
-		return u', '.join( u'{} ({})'.format(w.name, w.category_text) for w in self.wavett_set.all() )
-	
-	@property
-	def wave_text_html( self ):
-		return u'<br/>'.join( u'<strong>{}</strong>:&nbsp;&nbsp;{}'.format(w.name, w.category_text) for w in self.wavett_set.all() )
+	def get_unseeded_count( self ):
+		return sum( 1 for p in self.get_participants_seeded() if p.start_time is None ) if self.create_seeded_startlist else 0
 	
 	# Time Trial fields
 	class Meta:
@@ -1487,11 +1533,11 @@ class WaveTT( WaveBase ):
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
 	
 	# Fields for assigning start times.	
-	gap_before_wave = DurationField( verbose_name=_('Gap Before Wave (GBW)'), default = 5*60 )
-	regular_start_gap = DurationField( verbose_name=_('Regular Start Gap (RSG)'), default = 1*60 )
-	fastest_participants_start_gap = DurationField( verbose_name=_('Fastest Participants Start Gap (FSG)'), default = 2*60 )
+	gap_before_wave = DurationField( verbose_name=_('Gap Before Wave'), default = 5*60 )
+	regular_start_gap = DurationField( verbose_name=_('Regular Start Gap'), default = 1*60 )
+	fastest_participants_start_gap = DurationField( verbose_name=_('Fastest Participants Start Gap'), default = 2*60 )
 	num_fastest_participants = models.PositiveSmallIntegerField(
-						verbose_name=_('Number of Fastest Participants (NFP)'),
+						verbose_name=_('Number of Fastest Participants'),
 						choices=[(i, '%d' % i) for i in xrange(0, 16)],
 						help_text = 'Participants to get the Fastest gap',
 						default = 5)
@@ -1512,24 +1558,36 @@ class WaveTT( WaveBase ):
 			return None
 	
 	@property
+	def gap_rules_html( self ):
+		summary = [u'<table>']
+		try:
+			for label, value in (
+					(_('GapBefore'), self.gap_before_wave),
+					(_('RegGap'), self.regular_start_gap),
+					(_('FastGap'), self.fastest_participants_start_gap),
+					(_('NumFast'), self.num_fastest_participants),
+				):
+				summary.append( u'<tr><td class="text-right">{}&nbsp&nbsp</td><td class="text-right">{}</td><tr>'.format(label, unicode(value)) )
+		except Exception as e:
+			return e
+		summary.append( '</table>' )
+		return u''.join( summary )
+	
+	@property
 	def gap_rules_text( self ):
 		summary = []
 		try:
 			for label, value in (
-					(_('GBW'), self.gap_before_wave),
-					(_('RSG'), self.regular_start_gap),
-					(_('FSG'), self.fastest_participants_start_gap),
-					(_('NFP'), self.num_fastest_participants),
+					(_('GapBefore'), self.gap_before_wave),
+					(_('RegGap'), self.regular_start_gap),
+					(_('FastGap'), self.fastest_participants_start_gap),
+					(_('NumFast'), self.num_fastest_participants),
 				):
 				summary.append( u'{}={}'.format(label, unicode(value)) )
 		except Exception as e:
 			return e
 		return u' '.join( summary )
 	
-	@property
-	def category_text( self ):
-		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
-		
 	def get_participants( self ):
 		participants = list( self.get_participants_unsorted().select_related('competition','license_holder','team') )
 		
@@ -1554,7 +1612,7 @@ class WaveTT( WaveBase ):
 			p.start_time = start_times.get( p.pk, None )
 			p.clock_time = None if p.start_time is None else self.event.date_time + p.start_time
 		
-		participants.sort( key=lambda p: p.start_time if p.start_time else datetime.timedelta(days=100) )
+		participants.sort( key=lambda p: (p.start_time if p.start_time else datetime.timedelta(days=100), p.bib or 0) )
 		
 		tDelta = datetime.timedelta(seconds = 0)
 		for i in xrange(1, len(participants)):
@@ -1570,6 +1628,21 @@ class WaveTT( WaveBase ):
 				pass
 		
 		return participants
+	
+	def get_unseeded_participants( self ):
+		if not self.event.create_seeded_startlist:
+			return []
+		
+		has_start_time = set(
+			EntryTT.objects.filter(
+				participant__competition=self.event.competition,
+				event=self.event
+			).values_list(
+				'participant__pk',
+				flat=True
+			)
+		)
+		return [p for p in self.get_participants_unsorted() if p.pk not in has_start_time]
 	
 	class Meta:
 		verbose_name = _('TTWave')

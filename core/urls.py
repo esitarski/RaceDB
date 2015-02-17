@@ -48,6 +48,8 @@ urlpatterns = patterns('',
 	url(r'^(?i).*WaveTTNew/(?P<eventTTId>\d+)/$', views.WaveTTNew),
 	url(r'^(?i).*WaveTTEdit/(?P<waveTTId>\d+)/$', views.WaveTTEdit),
 	url(r'^(?i).*WaveTTDelete/(?P<waveTTId>\d+)/$', views.WaveTTDelete),
+	url(r'^(?i).*WaveTTUp/(?P<waveTTId>\d+)/$', views.WaveTTUp),
+	url(r'^(?i).*WaveTTDown/(?P<waveTTId>\d+)/$', views.WaveTTDown),
 	
 	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', views.Participants),
 	url(r'^(?i).*ParticipantAdd/(?P<competitionId>\d+)/$', views.ParticipantAdd),

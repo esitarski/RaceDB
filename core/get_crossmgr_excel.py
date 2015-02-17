@@ -17,7 +17,7 @@ data_headers = (
 	'Bib#',
 	'LastName', 'FirstName',
 	'Team',
-	'Nat.', 'StateProv.', 'City',
+	'Nat.', 'StateProv', 'City',
 	'Category', 'Age', 'Gender',
 	'License', 'UCICode',
 	'Tag', 'Tag2',
@@ -192,7 +192,7 @@ def get_crossmgr_excel( event_mass_start ):
 			
 		table.append( row_data )
 	
-	# Remove empty columns.
+	# Remove empty columns.  Keep Bib column.
 	for col in xrange(len(table[0])-1, 0, -1):
 		if not any( table[row][col] for row in xrange(1, len(table)) ):
 			for row in xrange(0, len(table)):
@@ -258,7 +258,7 @@ def get_crossmgr_excel_tt( event_tt ):
 			
 		table.append( row_data )
 	
-	# Remove empty columns (but leave Bib and StartTime column).
+	# Remove empty columns.  Keep Bib and StartTime column.
 	for col in xrange(len(table[0])-1, 1, -1):
 		if not any( table[row][col] for row in xrange(1, len(table)) ):
 			for row in xrange(0, len(table)):
