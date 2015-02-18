@@ -47,6 +47,7 @@ property_headers = (
 	'Enable RFID',
 	'Distance Unit',
 	'Time Trial',
+	'RFID Option',
 )
 	
 def get_number_range_str( numbers ):
@@ -159,6 +160,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.using_tags,
 		['km', 'miles'][competition.distance_unit],
 		True if event.event_type == 1 else False,		# Time Trial
+		event.rfid_option,
 	]
 	row = write_row_data( ws, row, row_data )
 

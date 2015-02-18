@@ -1699,6 +1699,7 @@ class EventMassStartForm( ModelForm ):
 				Col(Field('date_time', size=24), 4),
 				Col(Field('optional'), 4),
 			),
+			Row( Field('rfid_option') ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
@@ -1898,6 +1899,7 @@ class EventTTForm( ModelForm ):
 				Col(HTML(''), 4),
 				Col(Field('create_seeded_startlist', size=40), 4),
 			),
+			Row( Field('rfid_option') ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:

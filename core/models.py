@@ -591,6 +591,13 @@ class Event( models.Model ):
 		help_text=_('Allows Participants to choose whether to enter.  Otherwise the Event is included for all participants.') )
 	option_id = models.PositiveIntegerField( default=0, verbose_name = _('Option Id') )
 	
+	RFID_OPTION_CHOICES = (
+		(0, _('Manual Start: Collect every chip. Does NOT restart race clock on first read.')),
+		(1, _('Automatic Start: Reset start clock on first tag read.  All riders get the start time of the first read.')),
+		(2, _('Manual Start: Skip first tag read for all riders.  Required when start run-up passes the finish line.')),
+	)
+	rfid_option = models.PositiveIntegerField( choices=RFID_OPTION_CHOICES, default=1, verbose_name = _('RFID Option') )
+	
 	@property
 	def is_optional( self ):
 		return self.option_id != 0
