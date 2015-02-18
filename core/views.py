@@ -1889,6 +1889,7 @@ class EventTTForm( ModelForm ):
 			Field( 'competition', type='hidden' ),
 			Field( 'event_type', type='hidden' ),
 			Field( 'option_id', type='hidden' ),
+			Field( 'rfid_option', type='hidden' ),
 			Row(
 				Col(Field('name', size=40), 4),
 				Col(Field('date_time', size=24), 4),
@@ -1899,7 +1900,6 @@ class EventTTForm( ModelForm ):
 				Col(HTML(''), 4),
 				Col(Field('create_seeded_startlist', size=40), 4),
 			),
-			Row( Field('rfid_option') ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
