@@ -1223,9 +1223,9 @@ class Participant(models.Model):
 	@transaction.atomic
 	def add_to_default_optonal_events( self ):
 		if self.category:
-			for e in [event for event in competition.get_events() if event.select_by_default and event.could_participate(self)]:
+			for e in [event for event in self.competition.get_events() if event.select_by_default and event.could_participate(self)]:
 				try:
-					ParticipantOption( competition=e.competition, participant=participant, option_id=e.option_id ).save()
+					ParticipantOption( competition=e.competition, participant=self, option_id=e.option_id ).save()
 				except Exception as e:
 					pass
 	

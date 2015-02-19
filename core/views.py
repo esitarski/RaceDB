@@ -2121,7 +2121,7 @@ class ParticipantSearchForm( Form ):
 		
 		if competition:
 			self.fields['category'].choices = \
-				[(-1, '----')] + [(category.id, category.code) for category in competition.get_categories()]
+				[(-1, '----')] + [(category.id, category.code_gender) for category in competition.get_categories()]
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
 		self.fields['role_type_text'].choices = roleChoices
