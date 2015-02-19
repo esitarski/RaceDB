@@ -207,6 +207,8 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 					print( conflict_participant )
 				continue
 			
+			participant.add_to_default_optonal_events()
+			
 			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format(
 				i,
 				license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'), license_holder.uci_code,

@@ -43,6 +43,7 @@ def participant_key_filter( competition, key, auto_add_participant = True ):
 	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
 	try:
 		participant.save()
+		participant.add_to_default_optonal_events()
 		return license_holder, [participant]
 		
 	except IntegrityError as e:

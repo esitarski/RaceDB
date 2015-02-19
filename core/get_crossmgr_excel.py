@@ -241,7 +241,10 @@ def get_crossmgr_excel_tt( event_tt ):
 	
 	participants = list( event_tt.get_participants() )
 	start_times = { p: event_tt.get_start_time(p) for p in participants } if event_tt.create_seeded_startlist else {}
-	participants.sort( key=lambda p: (start_times.get(p, datetime.timedelta(seconds=10000.0*60*24*24)), p.bib or 9999999) )
+	def get_start_time( p ):
+		t = start_times.get(p, None)
+		return t.total_seconds() if t is not None else 10000.0*60*24*24
+	participants.sort( key=lambda p: (get_start_time(p), p.bib or 9999999) )
 	
 	for p in participants:
 		# Convert to Excel time which is a fraction of a day.

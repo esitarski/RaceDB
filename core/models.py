@@ -588,8 +588,10 @@ class Event( models.Model ):
 	event_type = models.PositiveSmallIntegerField( choices=EVENT_TYPE_CHOICES, default = 0, verbose_name = ('Event Type') )
 	
 	optional = models.BooleanField( default=False, verbose_name=_('Optional'),
-		help_text=_('Allows Participants to choose whether to enter.  Otherwise the Event is included for all participants.') )
+		help_text=_('Allows Participants to choose to enter.  Otherwise the Event is included for all participants.') )
 	option_id = models.PositiveIntegerField( default=0, verbose_name = _('Option Id') )
+	select_by_default = models.BooleanField( default=False, verbose_name=_('Select by Default'),
+		help_text=_('If the event is Optional, Participants will be automatically added to the event, but can opt-out later.') )
 	
 	RFID_OPTION_CHOICES = (
 		(0, _('Manual Start: Collect every chip. Does NOT restart race clock on first read.')),
@@ -1218,6 +1220,15 @@ class Participant(models.Model):
 	def __unicode__( self ):
 		return self.name
 	
+	@transaction.atomic
+	def add_to_default_optonal_events( self ):
+		if self.category:
+			for e in [event for event in competition.get_events() if event.select_by_default and event.could_participate(self)]:
+				try:
+					ParticipantOption( competition=e.competition, participant=participant, option_id=e.option_id ).save()
+				except Exception as e:
+					pass
+	
 	def init_default_values( self ):
 		if self.competition.number_set:
 			try:
@@ -1283,6 +1294,7 @@ class Participant(models.Model):
 			self.paid = True
 		
 		self.role = Participant._meta.get_field_by_name('role')[0].default
+		
 		return self
 	
 	@property
@@ -1522,11 +1534,28 @@ class EventTT( Event ):
 				except Exception as e:
 					pass
 		
-		return participants		
+		return participants
 	
 	def get_unseeded_count( self ):
 		return sum( 1 for p in self.get_participants_seeded() if p.start_time is None ) if self.create_seeded_startlist else 0
-	
+		
+	def has_unseeded( self ):
+		if not self.create_seeded_startlist:
+			return False
+		participants = set( p.pk for p in self.get_participants() )
+		start_times = set(
+			EntryTT.objects.filter(
+				participant__competition=self.competition,
+				event=self,
+			).values_list(
+				'participant__pk',
+				flat=True,
+			)
+		)
+		participants_with_start_times = participants & start_times
+		return len(participants_with_start_times) < len(participants)
+		
+
 	# Time Trial fields
 	class Meta:
 		verbose_name = _('Time Trial Event')

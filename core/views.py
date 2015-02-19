@@ -1695,9 +1695,12 @@ class EventMassStartForm( ModelForm ):
 			Field( 'event_type', type='hidden' ),
 			Field( 'option_id', type='hidden' ),
 			Row(
-				Col(Field('name', size=40), 4),
-				Col(Field('date_time', size=24), 4),
-				Col(Field('optional'), 4),
+				Col(Field('name', size=40), 6),
+				Col(Field('date_time', size=24), 6),
+			),
+			Row(
+				Col(Field('optional'), 6),
+				Col(Field('select_by_default'), 6),
 			),
 			Row( Field('rfid_option') ),
 		)
@@ -1893,12 +1896,11 @@ class EventTTForm( ModelForm ):
 			Row(
 				Col(Field('name', size=40), 4),
 				Col(Field('date_time', size=24), 4),
-				Col(Field('optional'), 4),
+				Col(Field('create_seeded_startlist', size=40), 4),
 			),
 			Row(
-				Col(HTML(''), 4),
-				Col(HTML(''), 4),
-				Col(Field('create_seeded_startlist', size=40), 4),
+				Col(Field('optional'), 6),
+				Col(Field('select_by_default'), 6),
 			),
 		)
 		self.additional_buttons = []
@@ -2280,6 +2282,7 @@ def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 	try:
 		# Fails if the license_holder is non-unique.
 		participant.save()
+		participant.add_to_default_optonal_events()
 	except IntegrityError as e:
 		# Recover silently by going directly to edit screen with existing participant.
 		for participant in Participant.objects.filter( competition=competition, license_holder=license_holder ):
@@ -2385,13 +2388,18 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 		category = get_object_or_404( Category, pk=categoryId )
 	else:
 		category = None
+	
+	category_changed = (participant.category != category)
 	participant.category = category
+	
 	try:
 		participant.auto_confirm().save()
 	except IntegrityError:
 		has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
 		return render_to_response( 'participant_integrity_error.html', RequestContext(request, locals()) )
 
+	if category_changed:
+		participant.add_to_default_optonal_events()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 
 #--------------------------------------------------------------------------
@@ -3072,6 +3080,7 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
 	try:
 		participant.auto_confirm().save()
+		participant.add_to_default_optonal_events()
 		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
 	except IntegrityError as e:
 		# If this participant exists already, recover silently by going directly to the existing participant.
