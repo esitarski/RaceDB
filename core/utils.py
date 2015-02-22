@@ -98,13 +98,14 @@ def splitCapWords( word ):
 		word = word[:i] + ' ' + word[i:]
 	return word
 
+reRFID = re.compile( 'RFID', re.IGNORECASE )
 class Breadcrumb( object ):
 	def __init__( self, name, url ):
 		if not url.endswith( '/' ):
 			url += '/'
 		while url.endswith( '//' ):
 			url = url[:-1]
-		self.name = name
+		self.name = reRFID.sub('RFID', name)
 		self.url = url
 
 reNum = re.compile( '^\d+$' )

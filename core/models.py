@@ -588,10 +588,10 @@ class Event( models.Model ):
 	event_type = models.PositiveSmallIntegerField( choices=EVENT_TYPE_CHOICES, default = 0, verbose_name = ('Event Type') )
 	
 	optional = models.BooleanField( default=False, verbose_name=_('Optional'),
-		help_text=_('Allows Participants to choose to enter.  Otherwise the Event is included for all participants.') )
+		help_text=_('Allows Participants to choose to enter the Event.  Otherwise the Event is included for all participants.') )
 	option_id = models.PositiveIntegerField( default=0, verbose_name = _('Option Id') )
 	select_by_default = models.BooleanField( default=False, verbose_name=_('Select by Default'),
-		help_text=_('If the event is Optional, Participants will be automatically added to the event, but can opt-out later.') )
+		help_text=_('If the Event is "Optional", and "Select by Default", Participants will be automatically added to the Event (but can opt-out later).') )
 	
 	RFID_OPTION_CHOICES = (
 		(0, _('Manual Start: Collect every chip. Does NOT restart race clock on first read.')),
@@ -1452,39 +1452,31 @@ class EventTT( Event ):
 	create_seeded_startlist = models.BooleanField( default=True, verbose_name=_('Create Seeded Startlist'),
 		help_text=_('If True, seeded start times will be generated in the startlist for CrossMgr.  If False, no seeded times will be generated, and the TT time will start on the first recorded time in CrossMgr.') )
 
-	@transaction.atomic
-	def create_initial_seeding( self, respect_existing_hints=False ):
-		if not self.create_seeded_startlist:
-			EntryTT.objects.delete( event=self )
-			return
+	def create_initial_seeding( self ):
+		while EntryTT.objects.filter(event=self).exists():
+			with transaction.atomic():
+				ids = EntryTT.objects.filter(event=self).values_list('pk', flat=True)[:999]
+				EntryTT.objects.filter(pk__in=ids).delete()
 		
-		est_kmh = {}
-		hint_sequence = {}
-		for pk, kmh, hint in EntryTT.objects.filter(event=self).values_list('participant__pk', 'participant__est_kmh', 'hint_sequence'):
-			est_kmh[pk] = kmh
-			hint_sequence[pk] = hint
-		
-		sequenceCur = 1
-		tCur = datetime.timedelta( seconds = 0 )
-		for wave_tt in self.wavett_set.all():
-			tCur += wave_tt.gap_before_wave
-			participants = sorted(
-				wave_tt.get_participants_unsorted(),
-				key = lambda p: (
-					hint_sequence.get(p.pk, 0) if respect_existing_hints else 0,
-					est_kmh.get(p.pk, 0.0),
-					p.license_holder.get_tt_metric(self.date_time.date())
+		with transaction.atomic():
+			sequenceCur = 1
+			tCur = datetime.timedelta( seconds = 0 )
+			for wave_tt in self.wavett_set.all():
+				tCur += wave_tt.gap_before_wave
+				participants = sorted(
+					wave_tt.get_participants_unsorted(),
+					key = lambda p: (
+						p.est_kmh,
+						p.license_holder.get_tt_metric(self.date_time.date())
+					)
 				)
-			)
-			last_fastest = len(participants) - wave_tt.num_fastest_participants
-			for i, p in enumerate(participants):
-				if i != 0:
-					tCur += wave_tt.fastest_participants_start_gap if i >= last_fastest else wave_tt.regular_start_gap
-				entry_tt, created = EntryTT.objects.get_or_create(event=self, participant=p)
-				entry_tt.start_time = tCur
-				entry_tt.start_sequence = sequenceCur
-				entry_tt.save()
-				sequenceCur += 1
+				last_fastest = len(participants) - wave_tt.num_fastest_participants
+				for i, p in enumerate(participants):
+					if i != 0:
+						tCur += wave_tt.fastest_participants_start_gap if i >= last_fastest else wave_tt.regular_start_gap
+					entry_tt = EntryTT( event=self, participant=p, start_time=tCur, start_sequence=sequenceCur )
+					entry_tt.save()
+					sequenceCur += 1
 	
 	def get_start_time( self, participant ):
 		try:
