@@ -1458,25 +1458,27 @@ class EventTT( Event ):
 				ids = EntryTT.objects.filter(event=self).values_list('pk', flat=True)[:999]
 				EntryTT.objects.filter(pk__in=ids).delete()
 		
-		with transaction.atomic():
-			sequenceCur = 1
-			tCur = datetime.timedelta( seconds = 0 )
-			for wave_tt in self.wavett_set.all():
-				tCur += wave_tt.gap_before_wave
-				participants = sorted(
-					wave_tt.get_participants_unsorted(),
-					key = lambda p: (
-						p.est_kmh,
-						p.license_holder.get_tt_metric(self.date_time.date())
-					)
+		sequenceCur = 1
+		tCur = datetime.timedelta( seconds = 0 )
+		for wave_tt in self.wavett_set.all():
+			tCur += wave_tt.gap_before_wave
+			participants = sorted(
+				wave_tt.get_participants_unsorted(),
+				key = lambda p: (
+					p.est_kmh,
+					p.license_holder.get_tt_metric(self.date_time.date())
 				)
-				last_fastest = len(participants) - wave_tt.num_fastest_participants
-				for i, p in enumerate(participants):
-					if i != 0:
-						tCur += wave_tt.fastest_participants_start_gap if i >= last_fastest else wave_tt.regular_start_gap
-					entry_tt = EntryTT( event=self, participant=p, start_time=tCur, start_sequence=sequenceCur )
-					entry_tt.save()
-					sequenceCur += 1
+			)
+			last_fastest = len(participants) - wave_tt.num_fastest_participants
+			entry_tt_pending = []
+			for i, p in enumerate(participants):
+				if i != 0:
+					tCur += wave_tt.fastest_participants_start_gap if i >= last_fastest else wave_tt.regular_start_gap
+				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
+				sequenceCur += 1
+				
+			EntryTT.objects.bulk_create( entry_tt_pending )
+			entry_tt_pending = []
 	
 	def get_start_time( self, participant ):
 		try:
@@ -1592,10 +1594,11 @@ class WaveTT( WaveBase ):
 			for label, value in (
 					(_('GapBefore'), self.gap_before_wave),
 					(_('RegGap'), self.regular_start_gap),
-					(_('FastGap'), self.fastest_participants_start_gap),
-					(_('NumFast'), self.num_fastest_participants),
+					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
+					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
-				summary.append( u'<tr><td class="text-right">{}&nbsp&nbsp</td><td class="text-right">{}</td><tr>'.format(label, unicode(value)) )
+				if value is not None:
+					summary.append( u'<tr><td class="text-right">{}&nbsp&nbsp</td><td class="text-right">{}</td><tr>'.format(label, unicode(value)) )
 		except Exception as e:
 			return e
 		summary.append( '</table>' )
@@ -1608,10 +1611,11 @@ class WaveTT( WaveBase ):
 			for label, value in (
 					(_('GapBefore'), self.gap_before_wave),
 					(_('RegGap'), self.regular_start_gap),
-					(_('FastGap'), self.fastest_participants_start_gap),
-					(_('NumFast'), self.num_fastest_participants),
+					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
+					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
-				summary.append( u'{}={}'.format(label, unicode(value)) )
+				if value is not None:
+					summary.append( u'{}={}'.format(label, unicode(value)) )
 		except Exception as e:
 			return e
 		return u' '.join( summary )
