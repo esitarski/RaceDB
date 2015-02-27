@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from utils import toUnicode, removeDiacritic
 import sqlite3
 import sys
@@ -27,7 +28,12 @@ table_fields = [
 ]
 
 def fix_utf8( dbFileName = dbFileNameDefault ):
-	db = sqlite3.connect( dbFileName )
+	try:
+		db = sqlite3.connect( dbFileName )
+	except Exception as e:
+		print e
+		sys.exit()
+		
 	db.text_factory = toUnicode
 	cursor = db.cursor()
 	
