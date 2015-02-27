@@ -6,6 +6,7 @@ from collections import namedtuple
 from models import *
 from django.db import transaction
 from django.db.models import Q
+from utils import toUnicode, removeDiacritic
 
 datemode = None
 
@@ -65,7 +66,7 @@ def to_int_str( v ):
 	return unicode(v)
 		
 def to_str( v ):
-	return unicode(v)
+	return toUnicode(v)
 
 def init_ccn( fname ):
 	global datemode
@@ -120,7 +121,9 @@ def init_ccn( fname ):
 			
 			fields = {u'i': i}
 			fields.update( attributes )
-			print u'{i:>6}: {license_code:>8} {date_of_birth:%Y/%m/%d} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}, {nationality}'.format( **fields )
+			print removeDiacritic(
+				u'{i:>6}: {license_code:>8} {date_of_birth:%Y/%m/%d} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}, {nationality}'.format( **fields )
+			)
 			TeamHint.objects.filter( license_holder=lh ).delete()
 			
 			team_name = ur.get('Team','')
@@ -151,7 +154,7 @@ def init_ccn( fname ):
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unicode(f.value).strip() for f in row]
-			print '\n'.join( fields )
+			print removeDiacritic( u'\n'.join(fields) )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )

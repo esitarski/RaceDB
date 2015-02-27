@@ -7,6 +7,7 @@ from models import *
 from utils import toUnicode, removeDiacritic
 from django.db import transaction
 from django.db.models import Q
+from fix_utf8 import fix_utf8
 
 datemode = None
 

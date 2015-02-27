@@ -547,7 +547,7 @@ def LicenseHoldersDisplay( request ):
 			q &= Q( search_text__contains = n )
 		license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
 		break
-		
+	
 	isEdit = True
 	return render_to_response( 'license_holder_list.html', RequestContext(request, locals()) )
 

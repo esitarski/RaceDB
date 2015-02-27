@@ -73,6 +73,11 @@ DATABASES = {
     }
 }
 
+try:
+	print 'databaseFile="{}"'.format( DATABASES['default']['NAME'] )
+except Exception as e:
+	pass
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 

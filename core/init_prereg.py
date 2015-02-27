@@ -7,6 +7,7 @@ from models import *
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from large_delete_all import large_delete_all
+from utils import toUnicode, removeDiacritic
 
 datemode = None
 
@@ -65,7 +66,7 @@ def to_int_str( v ):
 def to_str( v ):
 	if v is None:
 		return v
-	return unicode(v)
+	return toUnicode(v)
 	
 def to_bool( v ):
 	if v is None:
@@ -146,9 +147,12 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 						date_of_birth=date_of_birth )
 					license_holder.save()
 				except LicenseHolder.MultipleObjectsReturned:
-					print( u'Row {}: found multiple LicenceHolders matching Last,First Name: "{}","{}"'.format(
-							i, last_name, first_name,
-					) )
+					print( removeDiacritic(
+								u'Row {}: found multiple LicenceHolders matching Last,First Name: "{}","{}"'.format(
+									i, last_name, first_name,
+							)
+						)
+					)
 					continue
 				
 			try:
@@ -209,11 +213,12 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			
 			participant.add_to_default_optonal_events()
 			
-			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format(
-				i,
-				license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'), license_holder.uci_code,
-				license_holder.last_name, license_holder.first_name,
-				license_holder.city, license_holder.state_prov
+			print removeDiacritic(u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format(
+					i,
+					license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'), license_holder.uci_code,
+					license_holder.last_name, license_holder.first_name,
+					license_holder.city, license_holder.state_prov
+				)
 			)
 	
 	try:
