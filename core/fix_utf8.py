@@ -3,7 +3,7 @@ from utils import toUnicode, removeDiacritic
 import sqlite3
 import sys
 
-# Normalize all data in the database to utf8.
+# Normalize imported database text fields to utf8.
 
 dbFileNameDefault = 'RaceDB.sqlite3'
 

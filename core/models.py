@@ -437,6 +437,24 @@ class Competition(models.Model):
 					participant_events.append( (event, event.is_optional, event.is_participating(participant)) )
 		return participant_events
 	
+	def get_participants( self ):
+		participants = set()
+		for event in self.get_events():
+			participants |= set(event.get_participants())
+		return participants
+		
+	@transaction.atomic
+	def auto_generate_missing_tags( self ):
+		for participant in self.get_participants():
+			if participant.tag:
+				continue
+			license_holder = participant.license_holder
+			if not license_holder.existing_tag:
+				license_holder.existing_tag = license_holder.get_unique_tag()
+				license_holder.save()
+			participant.tag = license_holder.existing_tag
+			participant.save()
+	
 	class Meta:
 		verbose_name = _('Competition')
 		verbose_name_plural = _('Competitions')

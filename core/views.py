@@ -1312,6 +1312,10 @@ class CompetitionForm( ModelForm ):
 		model = Competition
 		fields = '__all__'
 	
+	def autoGenerateMissingTags( self, request, competition ):
+		competition.auto_generate_missing_tags()
+		return HttpResponseRedirect( '.' )
+		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
@@ -1353,7 +1357,14 @@ class CompetitionForm( ModelForm ):
 				Col('use_existing_tags', 3),
 			),
 		)
-		addFormButtons( self, button_mask )
+		
+		self.additional_buttons = []
+		if button_mask == EDIT_BUTTONS:
+			self.additional_buttons.append(
+				('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags'), 'btn btn-success', self.autoGenerateMissingTags),
+			)
+		
+		addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
 
 @external_access
 def CompetitionsDisplay( request ):
@@ -1445,7 +1456,7 @@ def CompetitionDelete( request, competitionId ):
 		template = 'competition_form.html',
 		additional_context = dict(events=competition.get_events()),
 	)
-	
+
 @external_access
 def CompetitionDashboard( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
