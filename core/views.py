@@ -9,6 +9,8 @@ import pprint
 import utils
 from WriteLog import logCall
 
+import patch_sqlite_text_factory
+
 from models import *
 
 from django.db.models import Q
