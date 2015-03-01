@@ -9,6 +9,8 @@ from django.contrib.contenttypes import generic
 from django.utils.timezone import get_default_timezone
 from django.core.exceptions import ObjectDoesNotExist
 
+import patch_sqlite_text_factory
+
 from DurationField import DurationField
 from get_abbrev import get_abbrev
 
