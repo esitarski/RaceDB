@@ -86,8 +86,9 @@ LANGUAGE_CODE = 'en-us'
 try:
 	import time_zone
 	TIME_ZONE = time_zone.TIME_ZONE
-except Exception as e:
+except ImportError:
 	TIME_ZONE = 'America/Toronto'
+
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True

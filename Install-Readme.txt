@@ -93,7 +93,26 @@ By patient!
 This may take a few minutes as the modules are downloaded and configured.
 
 ***********************************************************************
-Step 6:  Initialize the Database
+Step 6:  Set your timezone.
+
+cd to the RaceDB directory.
+There is another RaceDB directory there.
+cd to that one.
+
+Use an editor to create a file called "time_zone.py".
+In your time_zone.py file, add the following line:
+
+TIME_ZONE = '<your_time_zone>'
+
+where <your_time_zone> is the timezone you are in from http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+Make sure <your_time_zone> is surrounded by quotes.
+Do not put anything else in the file.
+Save it.
+Quit editor.
+Return to the main RaceDB directory with: cd ..
+
+***********************************************************************
+Step 7:  Initialize the Database
 
 In your cmd/terminal enter two commands:
 
@@ -113,7 +132,7 @@ This data includes:
 * Some Tdf Teams
 
 ***********************************************************************
-Step 7:  Start the RaceDB Server (run RaceDB)
+Step 8:  Start the RaceDB Server (run RaceDB)
 
 In your cmd/terminal enter:
 
@@ -149,7 +168,7 @@ Upgrading:
 
 These instructions assume that you are running RaceDB 0.2.50 or later.
 
-The upgrade will *not* replace your existing database.
+The upgrade will *not* replace your existing database or time zone.
 But, make a backup of your database file, just in case.
 
 Unzip RaceDB.zip into the folder you unzipped it in before.
