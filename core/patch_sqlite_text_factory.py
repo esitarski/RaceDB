@@ -20,14 +20,13 @@ def to_unicode( s ):
         'windows-1250', 'windows-1251', 'windows-1252',
         'windows-1253', 'windows-1254', 'windows-1255',
         'windows-1257', 'windows-1258',
-        'utf-8',     # Include utf8 again for the final exception.
     )
     for encoding in encodings:
         try:
             return unicode( s, encoding )
         except UnicodeDecodeError as e:
             pass
-    raise e
+    return unicode( s, 'utf-8', 'ignore' )
 
 if not hasattr(DatabaseWrapper, 'get_new_connection_is_patched'):
     _get_new_connection = DatabaseWrapper.get_new_connection
