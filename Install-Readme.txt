@@ -93,23 +93,30 @@ By patient!
 This may take a few minutes as the modules are downloaded and configured.
 
 ***********************************************************************
-Step 6:  Set your timezone.
+Step 6:  Set your time zone.
 
 cd to the RaceDB directory.
-There is another RaceDB directory there.
-cd to that one.
+There is another RaceDB directory in there.
+cd to that one with "cd RaceDB".
 
-Use an editor to create a file called "time_zone.py".
+Use an text editor to create a file called "time_zone.py".
 In your time_zone.py file, add the following line:
 
 TIME_ZONE = '<your_time_zone>'
 
-where <your_time_zone> is the timezone you are in from http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-Make sure <your_time_zone> is surrounded by quotes.
+where <your_time_zone> is your timezone from http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+Make sure <your_time_zone> is surrounded by quotes as shown.
+
 Do not put anything else in the file.
-Save it.
-Quit editor.
-Return to the main RaceDB directory with: cd ..
+Then save it and quit the editor.
+Return to the main RaceDB directory with "cd ..".
+
+If you mess things up and need to start over, delete both the time_zone.py and time_zone.pyc file that may be present in the RaceDB/RaceDB folder as follows:
+
+Windows:   del time_zone.*
+Linux:     rm time_zone.*
+
+You can then create a new time_zone.py file.
 
 ***********************************************************************
 Step 7:  Initialize the Database
