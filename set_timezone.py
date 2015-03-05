@@ -57,6 +57,7 @@ try:
 						listbox1.see( row )
 						listbox1.selection_set( row )
 						break
+				break
 except Exception as e:
 	pass
 
@@ -77,6 +78,7 @@ def cancel_callback():
 
 button_frame = Frame( root )
 button_frame.grid( row=rowCur, column=0, padx=8, pady=8 )
+rowCur += 1
 
 button_ok = Button( button_frame, text='OK', command=ok_callback )
 button_cancel = Button( button_frame, text='Cancel', command=cancel_callback )
