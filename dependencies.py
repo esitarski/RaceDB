@@ -16,6 +16,7 @@ dependencies = [
 	'xlsxwriter',
 	'iso3166',
 	'xlrd',
+	'pytz',
 	pyllrp,
 ]
 
