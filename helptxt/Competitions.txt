@@ -29,3 +29,22 @@ Clicking on a Competition row triggers the default button (Dashboard).  This bri
 Makes a copy of the competition including all category information, Mass Start Events, Start Waves and Category numbers.  The Participants are not copied.
 
 To create a new Competition from an existing one, press Copy, then change the fields in the new Competition to customize it (for example, Name, Date, Organizer).
+
+## Competition Edit
+
+Shows all the data associated with a Competition.
+
+There are two additional buttons:
+
+1. __Auto Generate Missing Tags for Existing Participants__
+1. __Reapply Number Set to Existing Participants__
+
+The first automatically generates missing tags for all participants.
+
+The second re-applies the number set to get the Bib numbers of all participants.
+Use this feature if:
+
+1. You change the NumberSet of a Competition after you have added Participants.  This will apply the new Number Set values to all existing riders.
+1. Or, you add pre-reg Participants to two future races.  In one, you assign bib numbers, but you want the same bib numbers to show up in the other.
+
+Other than that, you don't need to worry about it.
