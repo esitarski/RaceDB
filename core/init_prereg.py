@@ -198,6 +198,8 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 					) )
 			participant.category = category
 			
+			participant.init_default_values()
+			
 			try:
 				participant.save()
 			except IntegrityError as e:

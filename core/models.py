@@ -1250,7 +1250,7 @@ class Participant(models.Model):
 					pass
 	
 	def init_default_values( self ):
-		if self.competition.number_set:
+		if self.competition.number_set and not self.bib:
 			try:
 				self.bib = NumberSetEntry.objects.get( number_set=self.competition.number_set, license_holder=self.license_holder ).bib
 			except NumberSetEntry.DoesNotExist:
