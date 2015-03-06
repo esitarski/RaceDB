@@ -203,10 +203,10 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			try:
 				participant.save()
 			except IntegrityError as e:
-				print( u'Row {}: Error={}\nBib={} Category={} License={} Name={}'.format(
+				print( removeDiacritic(u'Row {}: Error={}\nBib={} Category={} License={} Name="{}, {}"'.format(
 					i, e,
-					bib, category_code, license_code, name,
-				) )
+					bib, category_code, license_code, last_name, first_name,
+				) ) )
 				success, integrity_error_message, conflict_participant = participant.explain_integrity_error()
 				if success:
 					print( integrity_error_message )

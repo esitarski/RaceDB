@@ -1307,65 +1307,76 @@ def CategoryDelete( request, categoryId ):
 
 #--------------------------------------------------------------------------------------------
 
-class CompetitionForm( ModelForm ):
-	class Meta:
-		model = Competition
-		fields = '__all__'
-	
-	def autoGenerateMissingTags( self, request, competition ):
-		competition.auto_generate_missing_tags()
-		return HttpResponseRedirect( '.' )
+def GetCompetitionForm( competition_cur = None ):
+	class CompetitionForm( ModelForm ):
+		class Meta:
+			model = Competition
+			fields = '__all__'
 		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
-		
-		super(CompetitionForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=40), 4),
-				Col(Field('description', size=40), 4),
-				Col('category_format', 4),
-			),
-			Row(
-				Col(Field('city', size=40), 4),
-				Col(Field('stateProv', size=40), 4),
-				Col(Field('country', size=40), 4),
-			),
-			Row(
-				Col(Field('organizer', size=40), 3),
-				Col(Field('organizer_contact', size=40), 3),
-				Col(Field('organizer_email', size=40), 3),
-				Col(Field('organizer_phone', size=20), 3),
-			),
-			Row(
-				Col('discipline', 2),
-				Col('race_class', 2),
-			),
-			Row(
-				Col('start_date', 2),
-				Col('number_of_days', 2),
-				Col('distance_unit', 2),
-				Col('number_set', 3),
-				Col('seasons_pass', 3),
-			),
-			Row(
-				Col('using_tags', 3),
-				Col('use_existing_tags', 3),
-			),
-		)
-		
-		self.additional_buttons = []
-		if button_mask == EDIT_BUTTONS:
-			self.additional_buttons.append(
-				('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags'), 'btn btn-success', self.autoGenerateMissingTags),
+		def autoGenerateMissingTags( self, request, competition ):
+			competition.auto_generate_missing_tags()
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		def applyNumberSet( self, request, competition ):
+			competition.apply_number_set()
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		def __init__( self, *args, **kwargs ):
+			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
+			
+			super(CompetitionForm, self).__init__(*args, **kwargs)
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'form-inline'
+			
+			self.helper.layout = Layout(
+				Row(
+					Col(Field('name', size=40), 4),
+					Col(Field('description', size=40), 4),
+					Col('category_format', 4),
+				),
+				Row(
+					Col(Field('city', size=40), 4),
+					Col(Field('stateProv', size=40), 4),
+					Col(Field('country', size=40), 4),
+				),
+				Row(
+					Col(Field('organizer', size=40), 3),
+					Col(Field('organizer_contact', size=40), 3),
+					Col(Field('organizer_email', size=40), 3),
+					Col(Field('organizer_phone', size=20), 3),
+				),
+				Row(
+					Col('discipline', 2),
+					Col('race_class', 2),
+				),
+				Row(
+					Col('start_date', 2),
+					Col('number_of_days', 2),
+					Col('distance_unit', 2),
+					Col('number_set', 3),
+					Col('seasons_pass', 3),
+				),
+				Row(
+					Col('using_tags', 3),
+					Col('use_existing_tags', 3),
+				),
 			)
-		
-		addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
-
+			
+			self.additional_buttons = []
+			if button_mask == EDIT_BUTTONS:
+				self.additional_buttons.append(
+					('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags'), 'btn btn-success', self.autoGenerateMissingTags),
+				)
+				if competition_cur and competition_cur.number_set:
+					self.additional_buttons.append(
+						('apply-number-set-submit', _('Reapply Number Set to Existing Participants'), 'btn btn-success', self.applyNumberSet),
+					)
+			
+			addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
+	
+	return CompetitionForm
+			
 @external_access
 def CompetitionsDisplay( request ):
 	search_text = request.session.get('competition_filter', '')
@@ -1409,7 +1420,7 @@ def CompetitionNew( request ):
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-		form = CompetitionForm(request.POST, button_mask = NEW_BUTTONS)
+		form = GetCompetitionForm()(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
 			instance = form.save()
 			
@@ -1424,7 +1435,7 @@ def CompetitionNew( request ):
 		for category_format in CategoryFormat.objects.all():
 			competition.category_format = category_format
 			break
-		form = CompetitionForm( instance = competition, button_mask = NEW_BUTTONS )
+		form = GetCompetitionForm(competition)( instance = competition, button_mask = NEW_BUTTONS )
 	
 	return render_to_response( 'competition_form.html', RequestContext(request, locals()) )
 	
@@ -1433,7 +1444,7 @@ def CompetitionNew( request ):
 def CompetitionEdit( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return GenericEdit(
-		Competition, request, competitionId, CompetitionForm,
+		Competition, request, competitionId, GetCompetitionForm(competition),
 		template = 'competition_form.html',
 		additional_context = dict(events=competition.get_events(), category_numbers=competition.categorynumbers_set.all()),
 	)
@@ -1452,7 +1463,7 @@ def CompetitionCopy( request, competitionId ):
 def CompetitionDelete( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return GenericDelete(
-		Competition, request, competitionId, CompetitionForm,
+		Competition, request, competitionId, GetCompetitionForm(competition),
 		template = 'competition_form.html',
 		additional_context = dict(events=competition.get_events()),
 	)

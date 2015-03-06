@@ -457,6 +457,19 @@ class Competition(models.Model):
 			participant.tag = license_holder.existing_tag
 			participant.save()
 	
+	@transaction.atomic
+	def apply_number_set( self ):
+		if not self.number_set:
+			return
+		for participant in self.get_participants():
+			bib_last = participant.bib
+			try:
+				participant.bib = NumberSetEntry.objects.get( number_set=self.number_set, license_holder=participant.license_holder ).bib
+			except NumberSetEntry.DoesNotExist as e:
+				participant.bib = None
+			if bib_last != participant.bib:
+				participant.save()
+	
 	class Meta:
 		verbose_name = _('Competition')
 		verbose_name_plural = _('Competitions')
@@ -1250,10 +1263,10 @@ class Participant(models.Model):
 					pass
 	
 	def init_default_values( self ):
-		if self.competition.number_set and not self.bib:
+		if not self.bib and self.competition.number_set:
 			try:
 				self.bib = NumberSetEntry.objects.get( number_set=self.competition.number_set, license_holder=self.license_holder ).bib
-			except NumberSetEntry.DoesNotExist:
+			except NumberSetEntry.DoesNotExist as e:
 				pass
 		
 		if self.competition.use_existing_tags:
