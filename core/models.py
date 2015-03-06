@@ -21,6 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 import utils
 import random
 import iso3166
+from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr
 
 def fixNullUpper( s ):
@@ -884,6 +885,13 @@ class WaveBase( models.Model ):
 	@property
 	def category_text( self ):
 		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+	
+	@property
+	def category_count_text( self ):
+		category_count = defaultdict( int )
+		for p in self.get_participants_unsorted():
+			category_count[p.category] += 1
+		return u', '.join( u'{} {}'.format(category.code_gender, category_count[category]) for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
 	
 	@property
 	def category_text_html( self ):
