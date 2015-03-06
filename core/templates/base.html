@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>RaceDB by Edward Sitarski</title>
+<title>{% if page_title %}{{page_title}}{% else %}RaceDB by Edward Sitarski{% endif %}</title>
 {% load staticfiles %}
 {% include "meta.html" %}
 <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">

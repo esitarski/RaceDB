@@ -1475,12 +1475,14 @@ def StartLists( request, competitionId ):
 def StartList( request, eventId ):
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
+	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
 	return render_to_response( 'mass_start_start_list.html', RequestContext(request, locals()) )
 	
 @external_access
 def StartListTT( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	time_stamp = datetime.datetime.now()
+	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
 	return render_to_response( 'tt_start_list.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------------------------
