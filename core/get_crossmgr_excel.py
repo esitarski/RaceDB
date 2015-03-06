@@ -8,9 +8,7 @@ import StringIO
 import utils
 
 from django.utils.translation import ugettext_lazy as _
-from django.conf import settings
 from django.utils import timezone
-from django.utils.formats import date_format
 
 from models import *
 
