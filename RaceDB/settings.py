@@ -88,6 +88,7 @@ try:
 	TIME_ZONE = time_zone.TIME_ZONE
 except ImportError:
 	TIME_ZONE = 'America/Toronto'
+print 'TIME_ZONE="{}"'.format( TIME_ZONE )
 
 USE_I18N = True
 USE_L10N = True

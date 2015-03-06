@@ -5,9 +5,12 @@ import sys
 import locale
 import datetime
 import StringIO
-
 import utils
+
 from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
+from django.utils import timezone
+from django.utils.formats import date_format
 
 from models import *
 
@@ -145,6 +148,8 @@ def add_categories_page( wb, title_format, event ):
 def add_properties_page( wb, title_format, event, raceNumber ):
 	competition = event.competition
 	
+	server_date_time = timezone.localtime(event.date_time)
+	
 	ws = wb.add_worksheet('--CrossMgr-Properties')
 	row = write_row_data( ws, 0, property_headers, title_format )
 	row_data = [
@@ -153,8 +158,8 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.city,
 		competition.stateProv,
 		competition.country,
-		event.date_time.strftime( '%Y-%m-%d' ),
-		event.date_time.strftime( '%H:%M' ),
+		server_date_time.strftime( '%Y-%m-%d' ),
+		server_date_time.strftime( '%H:%M' ),
 		raceNumber,
 		competition.discipline.name,
 		competition.using_tags,
