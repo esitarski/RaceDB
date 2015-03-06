@@ -1314,12 +1314,16 @@ def GetCompetitionForm( competition_cur = None ):
 			fields = '__all__'
 		
 		def autoGenerateMissingTags( self, request, competition ):
-			competition.auto_generate_missing_tags()
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			participants_changed = competition.auto_generate_missing_tags()
+			participants_changed_count = len(participants_changed)
+			title = _('Tags Updated')
+			return render_to_response( 'participants_changed.html', RequestContext(request, locals()) )
 			
 		def applyNumberSet( self, request, competition ):
-			competition.apply_number_set()
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			participants_changed = competition.apply_number_set()
+			participants_changed_count = len(participants_changed)
+			title = _('Bib Numbers Updated')
+			return render_to_response( 'participants_changed.html', RequestContext(request, locals()) )
 			
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
@@ -1366,7 +1370,7 @@ def GetCompetitionForm( competition_cur = None ):
 			self.additional_buttons = []
 			if button_mask == EDIT_BUTTONS:
 				self.additional_buttons.append(
-					('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags'), 'btn btn-success', self.autoGenerateMissingTags),
+					('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags for Existing Participants'), 'btn btn-success', self.autoGenerateMissingTags),
 				)
 				if competition_cur and competition_cur.number_set:
 					self.additional_buttons.append(

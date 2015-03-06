@@ -447,6 +447,7 @@ class Competition(models.Model):
 		
 	@transaction.atomic
 	def auto_generate_missing_tags( self ):
+		participants_changed = []
 		for participant in self.get_participants():
 			if participant.tag:
 				continue
@@ -456,19 +457,27 @@ class Competition(models.Model):
 				license_holder.save()
 			participant.tag = license_holder.existing_tag
 			participant.save()
+			participants_changed.append( participant )
+		
+		participants_changed.sort( key=lambda p: (p.bib or 99999999, p.license_holder.search_text) ) 
+		return participants_changed
 	
 	@transaction.atomic
 	def apply_number_set( self ):
-		if not self.number_set:
-			return
-		for participant in self.get_participants():
-			bib_last = participant.bib
-			try:
-				participant.bib = NumberSetEntry.objects.get( number_set=self.number_set, license_holder=participant.license_holder ).bib
-			except NumberSetEntry.DoesNotExist as e:
-				participant.bib = None
-			if bib_last != participant.bib:
-				participant.save()
+		participants_changed = []
+		if self.number_set:
+			for participant in self.get_participants():
+				bib_last = participant.bib
+				try:
+					participant.bib = NumberSetEntry.objects.get( number_set=self.number_set, license_holder=participant.license_holder ).bib
+				except NumberSetEntry.DoesNotExist as e:
+					participant.bib = None
+				if bib_last != participant.bib:
+					participant.save()
+					participants_changed.append( participant )
+		
+		participants_changed.sort( key=lambda p: (p.bib or 99999999, p.license_holder.search_text) ) 
+		return participants_changed
 	
 	class Meta:
 		verbose_name = _('Competition')
