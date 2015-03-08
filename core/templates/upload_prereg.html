@@ -18,12 +18,14 @@ Creates, or updates Participants for this Competition.
 <ul>
 <li>The prereg data <strong>must</strong> be the first Sheet of the spreadsheet</li>
 <li>The first Row must be a <strong>Header Row</strong>.</li>
-<li>The Header Row can include some, or all, of the following column headers (see below).</li>
+<li>The Header Row must contain a <strong>License</strong> column.</li>
+<li>It can include some, or all, of the following column headers (see below).</li>
 <li>Prereg data must be in the columns specified by the Header Row.  Additional header columns are ignored.</li>
 </ul>
 </p>
 <p>
-Prereg data is intended to match existing License Holders in the database.
+Prereg data is intended to match pre-existing <strong>License Holders</strong> in the database.
+Pre-existing License Holders are either imported (init_oca, init_cca, init_usac, etc.) or entered manually.
 <ul>
 <li>If the <strong>License</strong> matches an existing License Holder, all other data fields are ignored (LastName, FirstName, Gender and Date of Birth).</li>
 <li>If the <strong>License</strong> does not match an existing License Holder, the License Holder record is created using the <strong>License</strong> and the data fields (LastName, FirstName, Gender, Date of Birth).</li>
@@ -35,7 +37,9 @@ Prereg data is intended to match existing License Holders in the database.
 </ul>
 </p>
 <p>
-The same prereg data can be imported into the same Competition without causing problems or duplicates.
+The same prereg data sheet can be imported into the same Competition without problems (Participants will not be duplicated).
+<br/>
+This is because all TEMP License codes will match by name, and all <strong>License</strong> codes will existing License Holders.
 </p>
 <table class="table">
 <thead>
