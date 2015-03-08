@@ -65,7 +65,7 @@ It also needs to keep track of race structure, including:
 * [Race Classes][]
 * [Disciplines][]
 
-It is important to remember that all Competitions with their Category Formats, Mass Start Events and Waves are built on these lists.
+It is important to remember that all Competitions with their Category Formats, Mass Start, Time Trial Events and Waves are built on these lists.
 
 If you edit this underlying data, you are, in effect, changing it for all Competitions that are using it.  As the saying goes "With great power comes great responsibility".
 
@@ -113,7 +113,7 @@ Now, press "OK".
 
 This brings you to the Competition Dashboard.  The Dashboard shows you everything you need to know about your competition in one place.
 
-A competition consists of a number of Mass Start Events, and a set of Category Numbers.
+A competition consists of a number of Mass Start Events and/or Time Trial Events, and a set of Category Numbers.
 
 The structure looks like this:
 
@@ -193,6 +193,17 @@ To assign Alberto a Chip Tag, click on that row.  To have RaceDB generate a Tag,
 
 For more details, see [Hardware and Devices][].
 
+#### Time Trial Events
+
+A Time Trial Event is a group of competitors with separated timed starts.  All the bib numbers and tags must be unique.  A Time Trial Event can have a number of start waves which consists of a number of Categories.
+
+At race check-in, RaceDB collects the estimated speed of the riders.  It then uses this information to make an initial start list.
+
+Time Trial Start Waves support a number of rules to generate the start times including the time before the Wave, the regular gap between riders, the gap between the fastest riders and the number riders considered "fastest" in the wave.
+
+Riders with a Start Wave are are initially sequenced by estimated speed across all categories in the Wave.  This is by design, as it allows you to combine similar categories for more effcient times.  If you do not want categories to mix in the Wave, set up a Wave for each category.
+
+Of course, it is possible to manually edit the start list sequence afterwards.
 
 #### Entering a License Holder More than Once, but in Different Categories
 

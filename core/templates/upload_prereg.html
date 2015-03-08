@@ -54,16 +54,16 @@ The same prereg data sheet can be imported into the same Competition any number 
 <tr><th>Column</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Regional License code (<strong>not UCI code</strong>).</td></tr>
-<tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Optional.  Rider's Last name (data field)</td></tr>
-<tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Optional.  Rider's First name (data field)</td></tr>
+<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Required.  Regional License code (<strong>not UCI code</strong>).</td></tr>
+<tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Optional data field.  Rider's Last name.</td></tr>
+<tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Optional data field.  Rider's First name.</td></tr>
 <tr><td><strong>Gender</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else, include blank is is read as <strong>Men</strong>.</td></tr>
-<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong></td><td>Optional.  The rider's birthday as an Excel date (data field).</td></tr>
+<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong></td><td>Optional data field.  The rider's birthday as an Excel date.</td></tr>
 <tr><td><strong>Team</strong></td><td>Optional data field.  Rider's Team.  The Team must already be defined in the database.</td></tr>
-<tr><td><strong>Category</strong></td><td>Optional data field.  Rider's Category for this race.  The field must match the Category Code of a Category in the Competition.</td></tr>
-<tr><td><strong>Preregistered</strong></td><td>Optional data field.  Sets the rider's preregistered flag.  Default is True. **</td></tr>
+<tr><td><strong>Category</strong></td><td>Optional data field.  Rider's Category for this race.  The field must match the Category Code of a Category in the Competition's Category Format.</td></tr>
+<tr><td><strong>Preregistered</strong></td><td>Optional.  Sets the rider's preregistered flag.  Default is True. **</td></tr>
 <tr><td><strong>Paid</strong></td><td>Optional.  Indicates that the rider has paid.  Default is False. **</td></tr>
-<tr><td><strong>Bib</strong></td><td>Optional.  Bib number for the rider.  Overrides the Number Set value for the rider's bib.  Not required if riders keep their numbers between races.</td></tr>
+<tr><td><strong>Bib</strong></td><td>Optional.  Bib number for the rider.  Bib numbers can also be assigned from the RaceDB interface beforehand, or given out on race day on-the-fly.  Not required if using <strong>Number Sets</strong>.</td></tr>
 <tr><td><strong>Tag</strong></td><td>Optional.  RFID tag for the rider.  Not required if auto-generated tags or if re-using existing tags.</td></tr>
 </tbody>
 </table>
