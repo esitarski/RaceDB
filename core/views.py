@@ -1529,19 +1529,15 @@ class UploadPreregForm( Form ):
 		addFormButtons( self, button_mask = OK_BUTTON | CANCEL_BUTTON )
 
 def handle_upload_prereg( competitionId, excel_contents, clear_existing ):
-	print 'handle_upload_prereg: called'
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO.StringIO()
-	print 'handle_upload_prereg: calling init_prereg'
 	init_prereg(
 		competitionId=competitionId,
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
 		clear_existing=clear_existing,
 	)
-	print 'handle_upload_prereg: getting results_str'
 	results_str = message_stream.getvalue()
-	print results_str
 	return results_str
 		
 @external_access

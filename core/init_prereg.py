@@ -270,7 +270,7 @@ def init_prereg(
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unicode(f.value).strip() for f in row]
-			messsage_stream_write( u'Headers:\n' )
+			messsage_stream_write( u'Header Row:\n' )
 			for f in fields:
 				messsage_stream_write( u'            {}\n'.format(f) )
 			
