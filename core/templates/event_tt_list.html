@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<h2>{% trans "Competition" %}: <strong>{{competition.name}}</strong></h2>
+<hr/>
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+<a class="btn btn-primary" href="{{path}}/EventTTNew/{{competition.id}}">{% trans "New Time Trial Event" %}</a>
+<table class="table table-striped table-hover">
+<thead>
+	<tr>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Type" %}</th>
+		<th>{% trans "Waves" %}</th>
+		<th>{% trans "Date" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for e in competition.eventtt_set.all %}
+		<tr onclick="jump('{{path}}EventTTEdit/{{e.id}}/');">
+			<td>{{e.name}}</td>
+			<td>{{e.get_event_type_display}}</td>
+			<td>{{e.wave_text_html|safe}}</td>
+			<td>{{e.date_time}}</td>
+			<td>
+				<a class="btn btn-warning" href="{{path}}EventTTDelete/{{e.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-primary" href="{{path}}EventTTEdit/{{e.id}}/">{% trans "Edit" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock content %}

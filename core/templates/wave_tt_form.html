@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% with c=instance.event.competition e=instance.event %}
+<h1 class="visible-print">{% trans "Start List" %}</h1>
+<h2><span class="hidden-print">{% trans "Competition" %}: </span><strong>{{c.name}}</strong></h2>
+<h2><span class="hidden-print">{% trans "Time Trial" %}: </span><strong>{{e.name}}</strong>: {{e.date_time}}</h2>
+<h2><span class="hidden-print">{{title}}{% if instance.name %}: </span><strong>{{instance.name}}</strong>{% endif %}</h2>
+{% endwith %}
+<hr/>
+{% crispy form %}
+{% with potential_duplicate_bibs=instance.get_potential_duplicate_bibs %}
+{% if potential_duplicate_bibs %}
+	<style>
+	.badge {
+		font-size: 165%;
+		margin: 3px;
+	}
+	</style>
+	
+	<hr/>
+	<h3>{% trans "Potential Duplicate Bibs:" %}</h3>
+	{% for n in potential_duplicate_bibs %}
+		<span class="badge">{{n}}</span>
+	{% endfor %}
+{% endif %}
+{% endwith %}
+{% endblock content %}

@@ -12,6 +12,7 @@ urlpatterns = patterns('',
 	url(r'^(?i).*CompetitionEdit/(?P<competitionId>\d+)/$', views.CompetitionEdit),
 	url(r'^(?i).*CompetitionDelete/(?P<competitionId>\d+)/$', views.CompetitionDelete),
 	url(r'^(?i).*CompetitionDashboard/(?P<competitionId>\d+)/$', views.CompetitionDashboard),
+	url(r'^(?i).*UploadPrereg/(?P<competitionId>\d+)/$', views.UploadPrereg),
 	url(r'^(?i).*StartLists/(?P<competitionId>\d+)/$', views.StartLists),
 	url(r'^(?i).*StartList/(?P<eventId>\d+)/$', views.StartList),
 	

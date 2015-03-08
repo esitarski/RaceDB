@@ -5,6 +5,8 @@ locale.setlocale(locale.LC_ALL, '')
 import datetime
 import string
 import pprint
+import StringIO
+from init_prereg import init_prereg
 
 import utils
 from WriteLog import logCall
@@ -1313,6 +1315,9 @@ def GetCompetitionForm( competition_cur = None ):
 			model = Competition
 			fields = '__all__'
 		
+		def uploadPrereg( self, request, competition ):
+			return HttpResponseRedirect( pushUrl(request, 'UploadPrereg', competition.id) )
+		
 		def autoGenerateMissingTags( self, request, competition ):
 			participants_changed = competition.auto_generate_missing_tags()
 			participants_changed_count = len(participants_changed)
@@ -1370,11 +1375,15 @@ def GetCompetitionForm( competition_cur = None ):
 			self.additional_buttons = []
 			if button_mask == EDIT_BUTTONS:
 				self.additional_buttons.append(
-					('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags for Existing Participants'), 'btn btn-success', self.autoGenerateMissingTags),
+					('upload-prereg-list-submit', _('Upload Prereg List'), 'btn btn-success', self.uploadPrereg),
 				)
+				if competition_cur and competition_cur.using_tags:
+					self.additional_buttons.append(
+						('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags for Existing Participants'), 'btn btn-primary', self.autoGenerateMissingTags),
+					)
 				if competition_cur and competition_cur.number_set:
 					self.additional_buttons.append(
-						('apply-number-set-submit', _('Reapply Number Set to Existing Participants'), 'btn btn-success', self.applyNumberSet),
+						('apply-number-set-submit', _('Reapply Number Set to Existing Participants'), 'btn btn-primary', self.applyNumberSet),
 					)
 			
 			addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
@@ -1500,6 +1509,60 @@ def StartListTT( request, eventTTId ):
 	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
 	return render_to_response( 'tt_start_list.html', RequestContext(request, locals()) )
 	
+#--------------------------------------------------------------------------------------------
+class UploadPreregForm( Form ):
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	clear_existing = forms.BooleanField( required=False, label=_('Clear All Participants First'), help_text=_("Removes all existing Participants from the Competition before the Upload.  Use with Caution.") )
+	
+	def __init__( self, *args, **kwargs ):
+		super( UploadPreregForm, self ).__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col( Field('excel_file',  accept=".xls,.xlsx"), 8),
+				Col( Field('clear_existing'), 4 ),
+			),
+		)
+		addFormButtons( self, button_mask = OK_BUTTON | CANCEL_BUTTON )
+
+def handle_upload_prereg( competitionId, excel_contents, clear_existing ):
+	print 'handle_upload_prereg: called'
+	worksheet_contents = excel_contents.read()
+	message_stream = StringIO.StringIO()
+	print 'handle_upload_prereg: calling init_prereg'
+	init_prereg(
+		competitionId=competitionId,
+		worksheet_contents=worksheet_contents,
+		message_stream=message_stream,
+		clear_existing=clear_existing,
+	)
+	print 'handle_upload_prereg: getting results_str'
+	results_str = message_stream.getvalue()
+	print results_str
+	return results_str
+		
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def UploadPrereg( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = UploadPreregForm(request.POST, request.FILES)
+		if form.is_valid():
+			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )
+			del request.FILES['excel_file']
+			return render_to_response( 'upload_results.html', RequestContext(request, locals()) )
+	else:
+		form = UploadPreregForm()
+	
+	return render_to_response( 'upload_prereg.html', RequestContext(request, locals()) )
+
 #--------------------------------------------------------------------------------------------
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )

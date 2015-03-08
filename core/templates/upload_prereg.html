@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<style>
+#id_excel_file { width: 600px; }
+</style>
+<h2>{{title}}</h2>
+<h2>{{competition.name}}, {{competition.date_range_str}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+<p>
+<h3>Import pre-registered riders into this Competition from an Excel spreadsheet.</h3>
+<p>
+Creates, or updates Participants for this Competition.
+</p>
+<ul>
+<li>The prereg data <strong>must</strong> be the first Sheet of the spreadsheet</li>
+<li>The first Row must be a <strong>Header Row</strong>.</li>
+<li>The Header Row can include some, or all, of the following column headers (see below).</li>
+<li>Prereg data must be in the columns specified by the Header Row.  Additional header columns are ignored.</li>
+</ul>
+</p>
+<p>
+Prereg data is intended to match existing License Holders in the database.
+<ul>
+<li>If the <strong>License</strong> matches an existing License Holder, all other data fields are ignored (LastName, FirstName, Gender and Date of Birth).</li>
+<li>If the <strong>License</strong> does not match an existing License Holder, the License Holder record is created using the <strong>License</strong> and the data fields (LastName, FirstName, Gender, Date of Birth).</li>
+<li>If the <strong>License</strong> field is blank, or "TEMP":
+	<ul>
+	<li>RaceDB attempts to find the License Holder based on an exact match of the First and Last name.</li>
+	<li>If that fails, RaceDB creates a unique, temporary License code using the data fields (LastName, FirstName, Gender, Date of Birth)</li>
+	</ul>
+</ul>
+</p>
+<p>
+The same prereg data can be imported into the same Competition without causing problems or duplicates.
+</p>
+<table class="table">
+<thead>
+<tr><th>Column</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Regional License code (<strong>not UCI code</strong>).</td></tr>
+<tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Rider's Last name (data field)</td></tr>
+<tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Rider's First name (data field)</td></tr>
+<tr><td><strong>Gender</strong></td><td>Gender of the rider.  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else, include blank is is read as <strong>Men</strong> (data field).</td></tr>
+<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong></td><td>The rider's birthday as an Excel date (data field).</td></tr>
+<tr><td><strong>Team</strong></td><td>Team of the rider</td></tr>
+<tr><td><strong>Category</strong></td><td>Category of the rider.  </td></tr>
+<tr><td><strong>Preregistered</strong></td><td>Sets the rider's preregistered flag. **</td></tr>
+<tr><td><strong>Paid</strong></td><td>Indicates that the rider has paid. **</td></tr>
+<tr><td><strong>Bib</strong></td><td>Bib number for the rider.  Overrides the Number Set value for the rider's bib.  Not required if riders keep their numbers between races.</td></tr>
+<tr><td><strong>Tag</strong></td><td>RFID tag for the rider.  Not required if for auto-generated tags.</td></tr>
+</tbody>
+</table>
+</p>
+<p>
+** Read as True if the cell value's first character is any of 't', 'T', 'y', 'Y' or 1.  Otherwise False.
+</p>
+{% endblock content %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load staticfiles %}
+<h2>{% trans "Upload Results" %}</h2>
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+<hr/>
+<pre>
+{{results_str}}
+</pre>
+{% endblock content %}

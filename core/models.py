@@ -1021,6 +1021,11 @@ class LicenseHolder(models.Model):
 			except KeyError:
 				pass
 		
+		try:
+			self.license_code = self.license_code.lstrip('0')
+		except Exception as e:
+			pass
+		
 		for f in ['license_code', 'existing_tag', 'existing_tag2']:
 			setattr( self, f, fixNullUpper(getattr(self, f)) )
 			

@@ -87,31 +87,51 @@ def to_tag( v ):
 		return None
 	return unicode(v).split(u'.')[0]
 
-def init_prereg( competition_name, worksheet_name, clear_existing ):
+def init_prereg(
+		competition_name='', worksheet_name='', clear_existing=False,
+		competitionId=None, worksheet_contents=None, message_stream=sys.stdout ):
 	global datemode
 	
 	tstart = datetime.datetime.now()
 
-	try:
-		competition = Competition.objects.get( name=competition_name )
-	except Competition.DoesNotExist:
-		print( u'Cannot find Competition: "{}"'.format(competition_name) )
-		return
-	except Competition.MultipleObjectsReturned:
-		print( u'Found multiple Competitions matching: "{}"'.format(competition_name) )
-		return
+	if message_stream == sys.stdout or message_stream == sys.stderr:
+		def messsage_stream_write( s ):
+			message_stream.write( removeDiacritic(s) )
+	else:
+		def messsage_stream_write( s ):
+			message_stream.write( unicode(s) )
+	
+	if competitionId is not None:
+		competition = Competition.objects.get( pk=competitionId )
+	else:
+		try:
+			competition = Competition.objects.get( name=competition_name )
+		except Competition.DoesNotExist:
+			messsage_stream_write( u'Cannot find Competition: "{}"\n'.format(competition_name) )
+			return
+		except Competition.MultipleObjectsReturned:
+			messsage_stream_write( u'Found multiple Competitions matching: "{}"\n'.format(competition_name) )
+			return
 	
 	if clear_existing:
 		Participant.objects.filter(competition=competition).delete()
+		
+	def get_key( d, keys, default_value ):
+		for k in keys:
+			try:
+				return d[k.lower()]
+			except KeyError:
+				pass
+		return default_value
 	
 	# Process the records in large transactions for efficiency.
 	@transaction.atomic
 	def process_ur_records( ur_records ):
 		
 		for i, ur in ur_records:
-			license_code	= to_int_str(ur.get('License Numbers'.lower(),u''))
-			last_name		= to_str(ur.get('Last Name'.lower(),u'')).strip()
-			first_name		= to_str(ur.get('First Name'.lower(),u'')).strip()
+			license_code	= to_int_str(get_key(ur,('License','License Numbers','LicenseNumbers','License Code','LicenseCode'),u''))
+			last_name		= to_str(get_key(ur,('LastName','Last Name'),u'')).strip()
+			first_name		= to_str(get_key(ur,('FirstName','First Name'),u'')).strip()
 			gender			= gender_from_str(ur.get('Gender'.lower(),u'').strip())
 			for alias in ['Date of Birth', 'DOB']:
 				v = ur.get(alias.lower(),u'').strip()
@@ -129,7 +149,7 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 				try:
 					license_holder = LicenseHolder.objects.get( license_code=license_code )
 				except LicenseHolder.DoesNotExist:
-					print( u'Row {}: cannot find LicenceHolder from LicenseCode: {}'.format(i, license_code) )
+					messsage_stream_write( u'Row {}: cannot find LicenceHolder from LicenseCode: {}\n'.format(i, license_code) )
 					continue
 			else:
 				try:
@@ -147,10 +167,8 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 						date_of_birth=date_of_birth )
 					license_holder.save()
 				except LicenseHolder.MultipleObjectsReturned:
-					print( removeDiacritic(
-								u'Row {}: found multiple LicenceHolders matching Last,First Name: "{}","{}"'.format(
-									i, last_name, first_name,
-							)
+					messsage_stream_write( u'Row {}: found multiple LicenceHolders matching Last,First Name: "{}","{}"\n'.format(
+							i, last_name, first_name,
 						)
 					)
 					continue
@@ -160,9 +178,7 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			except Participant.DoesNotExist:
 				participant = Participant( competition=competition, license_holder=license_holder )
 			except Participant.MultipleObjectsReturned:
-				print( u'Row {}: found multiple Participants for this competition and license_holder.'.format(
-						i,
-				) )
+				messsage_stream_write( u'Row {}: found multiple Participants for this competition and license_holder.\n'.format(i) )
 				continue
 			
 			for attr, value in [ ('preregistered',preregistered), ('paid',paid), ('bib',bib), ('tag',tag), ]:
@@ -174,11 +190,11 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 				try:
 					team = Team.objects.get(name=team_name)
 				except Team.DoesNotExist:
-					print( u'Row {}: unrecognized Team name (ignoring): "{}"'.format(
+					messsage_stream_write( u'Row {}: unrecognized Team name (ignoring): "{}"\n'.format(
 						i, team_name,
 					) )
 				except Team.MultipleObjectsReturned:
-					print( u'Row {}: multiple Teams match name (ignoring): "{}"'.format(
+					messsage_stream_write( u'Row {}: multiple Teams match name (ignoring): "{}"\n'.format(
 						i, team_name,
 					) )
 			participant.team = team
@@ -189,11 +205,11 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 				try:
 					category = Category.objects.get( format=competition.category_format, code=category_code )
 				except Category.DoesNotExist:
-					print( u'Row {}: unrecognized Category code (ignoring): "{}"'.format(
+					messsage_stream_write( u'Row {}: unrecognized Category code (ignoring): "{}"\n'.format(
 						i, category_code,
 					) )
 				except Category.MultipleObjectsReturned:
-					print( u'Row {}: multiple Categories match code (ignoring): "{}"'.format(
+					messsage_stream_write( u'Row {}: multiple Categories match code (ignoring): "{}"\n'.format(
 						i, category_code,
 					) )
 			participant.category = category
@@ -203,45 +219,48 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			try:
 				participant.save()
 			except IntegrityError as e:
-				print( removeDiacritic(u'Row {}: Error={}\nBib={} Category={} License={} Name="{}, {}"'.format(
+				messsage_stream_write( u'Row {}: Error={}\nBib={} Category={} License={} Name="{}, {}"\n'.format(
 					i, e,
 					bib, category_code, license_code, last_name, first_name,
-				) ) )
+				) )
 				success, integrity_error_message, conflict_participant = participant.explain_integrity_error()
 				if success:
-					print( integrity_error_message )
-					print( conflict_participant )
+					messsage_stream_write( u'{}\n'.format(integrity_error_message) )
+					messsage_stream_write( u'{}\n'.format(conflict_participant) )
 				continue
 			
 			participant.add_to_default_optonal_events()
 			
-			print removeDiacritic(u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format(
-					i,
-					license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'), license_holder.uci_code,
-					license_holder.last_name, license_holder.first_name,
-					license_holder.city, license_holder.state_prov
+			messsage_stream_write( u'Row {:>6}: {:>8} {:>10} {}, {}, {}, {}\n'.format(
+						i,
+						license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'), license_holder.uci_code,
+						license_holder.last_name, license_holder.first_name,
+						license_holder.city, license_holder.state_prov
 				)
 			)
 	
-	try:
-		fname, sheet_name = worksheet_name.split('$')
-	except:
-		fname = worksheet_name
-		sheet_name = None
-		
+	sheet_name = None
+	if worksheet_contents is not None:
+		wb = open_workbook( file_contents = worksheet_contents )
+	else:
+		try:
+			fname, sheet_name = worksheet_name.split('$')
+		except:
+			fname = worksheet_name
+		wb = open_workbook( fname )
+	
 	ur_records = []
-	wb = open_workbook( fname )
 	datemode = wb.datemode
 	
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
 		if cur_sheet_name == sheet_name or sheet_name is None:
-			print u'Reading sheet: {}'.format(cur_sheet_name)
+			messsage_stream_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
 			ws = wb.sheet_by_name(cur_sheet_name)
 			break
 	
 	if not ws:
-		print u'Cannot find sheet "{}"'.format(sheet_name)
+		messsage_stream_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 		
 	num_rows = ws.nrows
@@ -251,7 +270,14 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unicode(f.value).strip() for f in row]
-			print u'\n'.join( fields )
+			messsage_stream_write( u'Headers:\n' )
+			for f in fields:
+				messsage_stream_write( u'            {}\n'.format(f) )
+			
+			fields_lower = [f.lower() for f in fields]
+			if not any( r.lower() in fields_lower for r in ('License','License Numbers','LicenseNumbers','License Code','LicenseCode') ):
+				messsage_stream_write( u'License column not found in Header Row.  Aborting.\n' )
+				return
 			continue
 			
 		ur = dict( (f.lower(), row[c].value) for c, f in enumerate(fields) )
@@ -262,4 +288,4 @@ def init_prereg( competition_name, worksheet_name, clear_existing ):
 			
 	process_ur_records( ur_records )
 	
-	print u'Initialization in: ', datetime.datetime.now() - tstart
+	messsage_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
