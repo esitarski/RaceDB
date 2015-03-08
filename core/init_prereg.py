@@ -133,6 +133,7 @@ def init_prereg(
 			last_name		= to_str(get_key(ur,('LastName','Last Name'),u'')).strip()
 			first_name		= to_str(get_key(ur,('FirstName','First Name'),u'')).strip()
 			gender			= gender_from_str(ur.get('Gender'.lower(),u'').strip())
+			date_of_birth   = None
 			for alias in ['Date of Birth', 'DOB']:
 				v = ur.get(alias.lower(),u'').strip()
 				if v:
@@ -203,7 +204,7 @@ def init_prereg(
 			category = None
 			if category_code is not None:
 				try:
-					category = Category.objects.get( format=competition.category_format, code=category_code )
+					category = Category.objects.get( format=competition.category_format, code=category_code, gender=gender )
 				except Category.DoesNotExist:
 					messsage_stream_write( u'Row {}: unrecognized Category code (ignoring): "{}"\n'.format(
 						i, category_code,
