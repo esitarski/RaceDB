@@ -5,6 +5,7 @@ from collections import namedtuple
 from models import *
 from django.db import transaction
 from django.db.models import Q
+from utils import gender_from_str
 import csv, codecs
 
 today = datetime.date.today()
@@ -40,9 +41,6 @@ def date_from_str( s ):
 		print yy, mm, dd
 		raise e
 		
-def gender_from_str( s ):
-	return 0 if s.lower().startswith('m') else 1
-
 def set_attributes( obj, attributes ):
 	changed = False
 	for key, value in attributes.iteritems():

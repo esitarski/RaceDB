@@ -1315,12 +1315,13 @@ class Participant(models.Model):
 	
 		self.role = 0
 		init_date = None
-		for pp in sorted(	Participant.objects.filter(license_holder=self.license_holder),
-							key = lambda x: (x.competition.start_date, -(x.category.sequence if x.category else 999999)),
-							reverse = True ):
-			if init_values(pp):
-				init_date = pp.competition.start_date
-				break
+		
+		if not self.est_kmh or not self.team or not self.role or not self.category:
+			for pp in Participant.objects.filter(license_holder=self.license_holder).order_by('-competition__start_date')[:4]:
+				if init_values(pp):
+					init_date = pp.competition.start_date
+					break
+
 		#if not self.role:
 		#	self.role = Participant._meta.get_field_by_name('role')[0].default
 

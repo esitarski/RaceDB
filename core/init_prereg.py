@@ -7,13 +7,16 @@ from models import *
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from large_delete_all import large_delete_all
-from utils import toUnicode, removeDiacritic
+from utils import toUnicode, removeDiacritic, gender_from_str
+from collections import defaultdict
 
 datemode = None
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
+
+import time
 
 def date_from_value( s ):
 	if isinstance(s, datetime.date):
@@ -45,9 +48,6 @@ def date_from_value( s ):
 		print yy, mm, dd
 		raise e
 		
-def gender_from_str( s ):
-	return 1 if s.lower().strip()[:1] in 'wf' else 0
-
 def set_attributes( obj, attributes ):
 	changed = False
 	for key, value in attributes.iteritems():
@@ -123,11 +123,12 @@ def init_prereg(
 			except KeyError:
 				pass
 		return default_value
+		
+	times = defaultdict(float)
 	
 	# Process the records in large transactions for efficiency.
 	@transaction.atomic
 	def process_ur_records( ur_records ):
-		
 		for i, ur in ur_records:
 			license_code	= to_int_str(get_key(ur,('License','License Numbers','LicenseNumbers','License Code','LicenseCode'),u''))
 			last_name		= to_str(get_key(ur,('LastName','Last Name'),u'')).strip()
@@ -146,6 +147,7 @@ def init_prereg(
 			team_name		= to_str(ur.get('Team'.lower(), None))
 			category_code   = to_str(ur.get('Category'.lower(), None))
 
+			exec_time = time.time()
 			if license_code and license_code.upper() != u'TEMP':
 				try:
 					license_holder = LicenseHolder.objects.get( license_code=license_code )
@@ -173,7 +175,9 @@ def init_prereg(
 						)
 					)
 					continue
-				
+			
+			times['license_holder'] += time.time() - exec_time
+
 			try:
 				participant = Participant.objects.get( competition=competition, license_holder=license_holder )
 			except Participant.DoesNotExist:
@@ -186,6 +190,7 @@ def init_prereg(
 				if value is not None:
 					setattr( participant, attr, value )
 			
+			exec_time = time.time()
 			team = None
 			if team_name is not None:
 				try:
@@ -201,6 +206,9 @@ def init_prereg(
 			participant.team = team
 			participant.preregistered = True
 			
+			times['team'] += time.time() - exec_time
+			
+			exec_time = time.time()
 			category = None
 			if category_code is not None:
 				try:
@@ -215,8 +223,13 @@ def init_prereg(
 					) )
 			participant.category = category
 			
-			participant.init_default_values()
+			times['category'] += time.time() - exec_time
 			
+			exec_time = time.time()
+			participant.init_default_values()
+			times['init_default_values'] += time.time() - exec_time
+			
+			exec_time = time.time()
 			try:
 				participant.save()
 			except IntegrityError as e:
@@ -231,6 +244,8 @@ def init_prereg(
 				continue
 			
 			participant.add_to_default_optonal_events()
+			
+			times['participant'] += time.time() - exec_time
 			
 			messsage_stream_write( u'Row {:>6}: {:>8} {:>10} {}, {}, {}, {}\n'.format(
 						i,
@@ -281,7 +296,7 @@ def init_prereg(
 				return
 			continue
 			
-		ur = dict( (f.lower(), row[c].value) for c, f in enumerate(fields) )
+		ur = { f.lower(): row[c].value for c, f in enumerate(fields) }
 		ur_records.append( (r+1, ur) )
 		if len(ur_records) == 1000:
 			process_ur_records( ur_records )
@@ -289,4 +304,8 @@ def init_prereg(
 			
 	process_ur_records( ur_records )
 	
+	messsage_stream_write( u'\n' )
+	for section, total in sorted( times.iteritems(), key = lambda e: e[1], reverse=True ):
+		messsage_stream_write( u'{}={:.6f}\n'.format(section, total) )
+	messsage_stream_write( u'\n' )
 	messsage_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )

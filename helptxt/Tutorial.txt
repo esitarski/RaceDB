@@ -26,7 +26,12 @@ RaceDB stores all your data in a file called __RaceDB.sqlite3__.
 
 This is a standard sqlite database file.  If you want to, you can download sqlite and read it directly yourself, or access it from Python, PHP, Java or any other language of your choice.
 
-Make sure you make a backup of this file first if you are trying to change the database yourself and are worried that something might go wrong.
+Changing the database yourself is not recommended, as it is easy to mess up.
+Make sure you make a backup of this file first.
+Remember:
+
+* RaceDB expect text to be utf-8 format.  Although it will accept data in other iso format, it may not interpret characters correctly.
+* RaceDB data imports do a lot of checking to ensure clean data.  For example, it takes great care to remove leading/trailing spaces from text fields, as well as removing leading zeros from license codes.  Don't put bad text into the database!
 
 It is also important to make regular backups and keep them off-site.  This is the only file you need to backup.
 
@@ -205,7 +210,7 @@ Riders with a Start Wave are are initially sequenced by estimated speed across a
 
 Of course, it is possible to manually edit the start list sequence afterwards.
 
-#### Entering a License Holder More than Once, but in Different Categories
+#### Entering the Same License Holder More than Once in an Event in Different Categories
 
 Sometimes it is possible for a competitor to ride in more than one race in two Categories.  For example, a rider might race in his Master's category in the morning races, then race in his Ability category in the afternoon.  Or a rider may race his regular Ability category, then "race up" in the next Ability category later in the day.
 

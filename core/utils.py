@@ -86,6 +86,9 @@ HexChars = set( '0123456789ABCDEFabcef' )
 def allHex( tag ):
 	return all( c in HexChars for c in tag.strip() )
 
+def gender_from_str( s ):
+	return 1 if s.lower().strip()[:1] in 'wf' else 0
+
 #---------------------------------------------------------------------------------------
 
 reCap = re.compile( '[a-z0-9][A-Z]' )
