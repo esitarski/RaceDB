@@ -1,7 +1,12 @@
 import re
 import os
 import locale
-locale.setlocale(locale.LC_ALL, '')
+
+try:
+	locale.setlocale(locale.LC_ALL, "")
+except Exception as e:
+	print 'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e)
+
 import datetime
 import string
 import pprint
