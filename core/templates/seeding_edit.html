@@ -112,6 +112,7 @@
 		<th>{% trans "Category" %}</th>
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
+		<th>{% trans "Seed Early" %}</th>
 		<th>{% trans "Adjust" %}</th>
 	</tr>
 </thead>
@@ -128,6 +129,7 @@
 			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 			<td>{{w.name}}</td>
 			<td>{{form.est_speed}}</td>
+			<td>{{form.seed_early}}</td>
 			<td>{{form.adjustment}}{{form.entry_tt_pk}}</td>
 		</tr>
 		{% endwith %}

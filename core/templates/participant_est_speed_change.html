@@ -14,13 +14,19 @@
 	</h2>
 {% endif %} 
 <hr/>
+<script>
+function setSpeed( speed ) {
+	var est_speed = document.getElementById('id_est_speed');
+	est_speed.value = speed;
+}
+</script>
 {% crispy form %}
 <div class="span12 row">
 <table class="table-condensed">
 {% for row in speed_table %}
 	<tr>
 		{% for speed in row %}
-			<td><a class="btn btn-primary" href="./ParticipantEstSpeedSet/{{participant.id}}/{{speed}}">{{speed}}</a></td>
+			<td><button class="btn btn-primary" onclick="setSpeed({{speed}})">{{speed}}</a></td>
 		{% endfor %}
 	</tr>
 {% endfor %}

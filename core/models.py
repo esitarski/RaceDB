@@ -1190,10 +1190,19 @@ class Participant(models.Model):
 	note=models.TextField( blank=True, default='', verbose_name=_('Note') )
 	
 	est_kmh=models.FloatField( default=0.0, verbose_name=_('Est Kmh') )
+	seed_early=models.BooleanField( default=False, verbose_name=_('Seed Early') )
 	
 	@property
 	def est_speed_display( self ):
-		return u'{:g} {}'.format( self.competition.to_local_speed(self.est_kmh), self.competition.speed_unit_display )
+		return u'{:g} {}{}'.format(
+			self.competition.to_local_speed(self.est_kmh),
+			self.competition.speed_unit_display,
+			u' ({})'.format( _('seed early') ) if self.seed_early else u'',
+		)
+	
+	@property
+	def adjusted_est_kmh( self ):
+		return self.est_kmh - 100000.0 if self.seed_early else self.est_kmh
 	
 	def save( self, *args, **kwargs ):
 		competition = self.competition
@@ -1520,7 +1529,8 @@ class EventTT( Event ):
 			participants = sorted(
 				wave_tt.get_participants_unsorted(),
 				key = lambda p: (
-					p.est_kmh,
+					p.adjusted_est_kmh,
+					-p.bib if p.seed_early and p.bib else 0,
 					p.license_holder.get_tt_metric(self.date_time.date())
 				)
 			)

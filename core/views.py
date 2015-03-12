@@ -1562,6 +1562,7 @@ def UploadPrereg( request, competitionId ):
 #--------------------------------------------------------------------------------------------
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
+	seed_early = forms.BooleanField( required = False )
 	adjustment = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'adjustment'}) )
 	entry_tt_pk = forms.CharField( widget=forms.HiddenInput() )
 
@@ -1573,6 +1574,7 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 			super( AdjustmentFormSet, self ).__init__(
 				initial=[{
 					'est_speed':u'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
+					'seed_early': e.participant.seed_early,
 					'adjustment': '',
 					'entry_tt_pk': unicode(e.pk),
 				} for e in entry_tts]
@@ -1623,14 +1625,27 @@ def SeedingEdit( request, eventTTId ):
 					except EntryTT.DoesNotExist:
 						continue
 					
+					participant_changed = False
+					
 					try:
 						est_kmh = entry_tt.participant.competition.to_kmh(float(d['est_speed']))
 						if entry_tt.participant.est_kmh != est_kmh:
 							entry_tt.participant.est_kmh = est_kmh
-							entry_tt.participant.save()
+							participant_changed = True
 					except ValueError:
 						pass
-						
+					
+					try:
+						seed_early = d['seed_early']
+						if entry_tt.participant.seed_early != seed_early:
+							entry_tt.participant.seed_early = seed_early
+							participant_changed = True
+					except ValueError:
+						pass
+					
+					if participant_changed:
+						entry_tt.participant.save()
+					
 					adjustment = d['adjustment'].strip()
 					if not adjustment:
 						continue
@@ -2730,6 +2745,7 @@ def ParticipantOptionChange( request, participantId ):
 def GetParticipantEstSpeedForm( competition ):
 	class ParticipantEstSpeedForm( Form ):
 		est_speed = forms.FloatField( required = False, label=_('Estimated Speed for Time Trial') )
+		seed_early = forms.BooleanField( required = False, label=_('Seed Early'), help_text=_('Tells RaceDB to start this rider as early as possible in the Start Wave') )
 		
 		def __init__(self, *args, **kwargs):
 			super(ParticipantEstSpeedForm, self).__init__(*args, **kwargs)
@@ -2745,8 +2761,11 @@ def GetParticipantEstSpeedForm( competition ):
 			
 			self.helper.layout = Layout(
 				Row(
-					Field('est_speed', css_class = 'form-control', size = '20'),
-					HTML( competition.speed_unit_display ),
+					Col(Field('est_speed', css_class = 'form-control', size = '20'), 2),
+					Col(HTML( competition.speed_unit_display ), 2),
+				),
+				Row(
+					Field('seed_early'),
 				),
 				Row(
 					button_args[0],
@@ -2770,11 +2789,12 @@ def ParticipantEstSpeedChange( request, participantId ):
 		if form.is_valid():
 			est_speed = form.cleaned_data['est_speed']
 			participant.est_kmh = competition.to_kmh( est_speed or 0.0 )
+			participant.seed_early = form.cleaned_data['seed_early']
 			participant.save()
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = GetParticipantEstSpeedForm(competition)(
-			initial = dict( est_speed = competition.to_local_speed(participant.est_kmh) )
+			initial = dict( est_speed=competition.to_local_speed(participant.est_kmh), seed_early=participant.seed_early )
 		)
 	
 	speed_rc = {}
@@ -2794,17 +2814,7 @@ def ParticipantEstSpeedChange( request, participantId ):
 	speed_table.reverse()
 	
 	return render_to_response( 'participant_est_speed_change.html', RequestContext(request, locals()) )
-	
-@external_access
-def ParticipantEstSpeedSet( request, participantId, est_speed ):
-	participant = get_object_or_404( Participant, pk=participantId )
-	competition = participant.competition
-	
-	est_speed = float(est_speed)
-	participant.est_kmh = competition.to_kmh( est_speed or 0.0 )
-	participant.save()
-	
-	return HttpResponseRedirect(getContext(request,'pop3Url'))
+
 #--------------------------------------------------------------------------
 
 class ParticipantTagForm( Form ):
