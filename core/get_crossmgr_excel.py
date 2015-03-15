@@ -173,7 +173,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		
 		competition.ftp_host,
 		competition.ftp_user,
-		scramble.encode(competition.ftp_password),
+		scramble.encode(utils.removeDiacritic(competition.ftp_password)),
 		competition.ftp_path,
 	]
 	row = write_row_data( ws, row, row_data )
