@@ -107,14 +107,14 @@ def init_prereg(
 		try:
 			competition = Competition.objects.get( name=competition_name )
 		except Competition.DoesNotExist:
-			messsage_stream_write( u'Cannot find Competition: "{}"\n'.format(competition_name) )
+			messsage_stream_write( u'**** Cannot find Competition: "{}"\n'.format(competition_name) )
 			return
 		except Competition.MultipleObjectsReturned:
-			messsage_stream_write( u'Found multiple Competitions matching: "{}"\n'.format(competition_name) )
+			messsage_stream_write( u'**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
 			return
 	
 	if clear_existing:
-		Participant.objects.filter(competition=competition).delete()
+		Participant.objects.filter( competition=competition ).delete()
 		
 	def get_key( d, keys, default_value ):
 		for k in keys:

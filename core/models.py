@@ -316,6 +316,11 @@ class Competition(models.Model):
 	)
 	distance_unit = models.PositiveSmallIntegerField(choices=DISTANCE_UNIT_CHOICES, default = 0, verbose_name = _('Distance Unit') )
 	
+	ftp_host = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('FTP Host') )
+	ftp_user = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('FTP User') )
+	ftp_password = models.CharField( max_length = 64, default = '', blank = True, verbose_name=_('FTP Password') )
+	ftp_path = models.CharField( max_length = 256, default = '', blank = True, verbose_name=_('FTP Path') )
+	
 	@property
 	def speed_unit_display( self ):
 		return 'km/h' if self.distance_unit == 0 else 'mph'

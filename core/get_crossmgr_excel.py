@@ -6,6 +6,7 @@ import locale
 import datetime
 import StringIO
 import utils
+import scramble
 
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
@@ -49,6 +50,11 @@ property_headers = (
 	'Distance Unit',
 	'Time Trial',
 	'RFID Option',
+	
+	'FTP Host',
+	'FTP User',
+	'FTP Password',
+	'FTP Path',
 )
 	
 def get_number_range_str( numbers ):
@@ -164,6 +170,11 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		['km', 'miles'][competition.distance_unit],
 		True if event.event_type == 1 else False,		# Time Trial
 		event.rfid_option,
+		
+		competition.ftp_host,
+		competition.ftp_user,
+		scramble.encode(competition.ftp_password),
+		competition.ftp_path,
 	]
 	row = write_row_data( ws, row, row_data )
 

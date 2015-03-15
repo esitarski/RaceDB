@@ -42,6 +42,7 @@ from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from participant_key_filter import participant_key_filter
+from autostrip import autostrip
 
 from ReadWriteTag import ReadTag, WriteTag
 
@@ -123,6 +124,7 @@ def Row( *args ):
 def Col( field, cols=1 ):
 	return Div( field, css_class = 'col-md-{}'.format(cols) )
 
+@autostrip
 class SearchForm( Form ):
 	search_text = forms.CharField( required = False )
 	
@@ -186,6 +188,7 @@ def addFormButtons( form, button_mask = EDIT_BUTTONS, additional_buttons = None,
 
 	
 def GenericModelForm( ModelClass ):
+	@autostrip
 	class Form( ModelForm ):
 		class Meta:
 			model = ModelClass
@@ -285,6 +288,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	return render_to_response( template or 'generic_form.html', RequestContext(request, form_context) )
 
 #--------------------------------------------------------------------------------------------
+@autostrip
 class LicenseHolderTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna to Write Tag') )
@@ -463,6 +467,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 
 #--------------------------------------------------------------------------------------------
 
+@autostrip
 class LicenseHolderForm( ModelForm ):
 	class Meta:
 		model = LicenseHolder
@@ -581,6 +586,7 @@ def LicenseHolderDelete( request, licenseHolderId ):
 	)
 	
 #--------------------------------------------------------------------------------------------
+@autostrip
 class TeamForm( ModelForm ):
 	class Meta:
 		model = Team
@@ -677,6 +683,7 @@ def MoveSequence( Class, obj, toTop ):
 
 #--------------------------------------------------------------------------------------------
 
+@autostrip
 class RaceClassDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
@@ -689,6 +696,7 @@ class RaceClassDisplayForm( Form ):
 		btns = [('new-submit', _('New Race Class'), 'btn btn-success')]
 		addFormButtons( self, button_mask, btns )
 
+@autostrip
 class RaceClassForm( ModelForm ):
 	class Meta:
 		model = RaceClass
@@ -768,6 +776,7 @@ def RaceClassTop( request, raceClassId ):
 	
 #--------------------------------------------------------------------------------------------
 
+@autostrip
 class DisciplineDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
@@ -780,6 +789,7 @@ class DisciplineDisplayForm( Form ):
 		btns = [('new-submit', _('New Discipline'), 'btn btn-success')]
 		addFormButtons( self, button_mask, btns )
 
+@autostrip
 class DisciplineForm( ModelForm ):
 	class Meta:
 		model = Discipline
@@ -858,6 +868,7 @@ def DisciplineTop( request, disciplineId ):
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 #--------------------------------------------------------------------------------------------
+@autostrip
 class NumberSetDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
@@ -870,6 +881,7 @@ class NumberSetDisplayForm( Form ):
 		btns = [('new-submit', _('New NumberSet'), 'btn btn-success')]
 		addFormButtons( self, button_mask, btns )
 
+@autostrip
 class NumberSetForm( ModelForm ):
 	class Meta:
 		model = NumberSet
@@ -953,6 +965,7 @@ def NumberSetTop( request, numberSetId ):
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 #--------------------------------------------------------------------------------------------
+@autostrip
 class SeasonsPassDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
@@ -965,6 +978,7 @@ class SeasonsPassDisplayForm( Form ):
 		btns = [('new-submit', _("New Season's Pass"), 'btn btn-success')]
 		addFormButtons( self, button_mask, btns )
 
+@autostrip
 class SeasonsPassForm( ModelForm ):
 	class Meta:
 		model = SeasonsPass
@@ -1147,6 +1161,7 @@ def SeasonsPassHolderRemove( request, seasonsPassHolderId ):
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
 #--------------------------------------------------------------------------------------------
+@autostrip
 class CategoryFormatForm( ModelForm ):
 	class Meta:
 		model = CategoryFormat
@@ -1248,6 +1263,7 @@ def CategoryUp( request, categoryId ):
 	
 #--------------------------------------------------------------------------------------------
 
+@autostrip
 class CategoryForm( ModelForm ):
 	class Meta:
 		model = Category
@@ -1315,11 +1331,15 @@ def CategoryDelete( request, categoryId ):
 #--------------------------------------------------------------------------------------------
 
 def GetCompetitionForm( competition_cur = None ):
+	@autostrip
 	class CompetitionForm( ModelForm ):
 		class Meta:
 			model = Competition
 			fields = '__all__'
-		
+			widgets = {
+				'ftp_password': forms.PasswordInput(render_value=True),
+			}
+
 		def uploadPrereg( self, request, competition ):
 			return HttpResponseRedirect( pushUrl(request, 'UploadPrereg', competition.id) )
 		
@@ -1371,10 +1391,19 @@ def GetCompetitionForm( competition_cur = None ):
 					Col('number_set', 3),
 					Col('seasons_pass', 3),
 				),
+				Row( HTML('<hr/>') ),
 				Row(
 					Col('using_tags', 3),
 					Col('use_existing_tags', 3),
 				),
+				Row( HTML('<hr/>') ),
+				Row(
+					Col('ftp_host', 2),
+					Col('ftp_user', 2),
+					Col('ftp_password', 2),
+					Col(Field('ftp_path', size=80), 6),
+				),
+				Row( HTML('<hr/>') ),
 			)
 			
 			self.additional_buttons = []
@@ -1515,6 +1544,7 @@ def StartListTT( request, eventTTId ):
 	return render_to_response( 'tt_start_list.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------------------------
+@autostrip
 class UploadPreregForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
 	clear_existing = forms.BooleanField( required=False, label=_('Clear All Participants First'), help_text=_("Removes all existing Participants from the Competition before the Upload.  Use with Caution.") )
@@ -1565,6 +1595,7 @@ def UploadPrereg( request, competitionId ):
 	return render_to_response( 'upload_prereg.html', RequestContext(request, locals()) )
 
 #--------------------------------------------------------------------------------------------
+@autostrip
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
 	seed_early = forms.BooleanField( required = False )
@@ -1781,6 +1812,7 @@ def CategoryNumbersDelete( request, categoryNumbersId ):
 
 #--------------------------------------------------------------------------------------------
 
+@autostrip
 class EventMassStartForm( ModelForm ):
 	class Meta:
 		model = EventMassStart
@@ -1877,6 +1909,7 @@ def EventMassStartCrossMgr( request, eventId ):
 #--------------------------------------------------------------------------------------------
 
 def GetWaveForm( event_mass_start, wave = None ):
+	@autostrip
 	class WaveForm( ModelForm ):
 		class Meta:
 			model = Wave
@@ -1979,6 +2012,7 @@ def WaveDelete( request, waveId ):
 
 #--------------------------------------------------------------------------------------------
 
+@autostrip
 class EventTTForm( ModelForm ):
 	class Meta:
 		model = EventTT
@@ -2076,6 +2110,7 @@ def EventTTCrossMgr( request, eventTTId ):
 #--------------------------------------------------------------------------------------------
 
 def GetWaveTTForm( event_tt, wave_tt = None ):
+	@autostrip
 	class WaveTTForm( ModelForm ):
 		class Meta:
 			model = WaveTT
@@ -2206,6 +2241,7 @@ def WaveTTUp( request, waveTTId ):
 	
 #----------------------------------------------------------------------------
 
+@autostrip
 class ParticipantSearchForm( Form ):
 	scan = forms.CharField( required = False, label = _('Scan Search') )
 	name_text = forms.CharField( required = False, label = _('Name Text') )
@@ -2433,6 +2469,7 @@ def ParticipantDoDelete( request, participantId ):
 	participant.delete()
 	return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	
+@autostrip
 class ParticipantCategorySelectForm( Form ):
 	gender = forms.ChoiceField( choices = (
 									(-1, _('All')),
@@ -2644,6 +2681,7 @@ def ParticipantBibSelect( request, participantId, bib ):
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 		
 #--------------------------------------------------------------------------
+@autostrip
 class ParticipantNoteForm( Form ):
 	note = forms.CharField( widget = forms.Textarea, required = False, label = _('Note') )
 	
@@ -2695,6 +2733,7 @@ def GetParticipantOptionForm( participation_optional_events ):
 	choices = [(event.option_id, u'{} ({})'.format(event.name, event.get_event_type_display()))
 					for event, is_participating in participation_optional_events]
 	
+	@autostrip
 	class ParticipantOptionForm( Form ):
 		options = forms.MultipleChoiceField( required = False, label = _('Optional Events'), choices=choices )
 		
@@ -2748,6 +2787,7 @@ def ParticipantOptionChange( request, participantId ):
 	return render_to_response( 'participant_option_change.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
 def GetParticipantEstSpeedForm( competition ):
+	@autostrip
 	class ParticipantEstSpeedForm( Form ):
 		est_speed = forms.FloatField( required = False, label=_('Estimated Speed for Time Trial') )
 		seed_early = forms.BooleanField( required = False, label=_('Seed Early'), help_text=_('Tells RaceDB to start this rider as early as possible in the Start Wave') )
@@ -2822,6 +2862,7 @@ def ParticipantEstSpeedChange( request, participantId ):
 
 #--------------------------------------------------------------------------
 
+@autostrip
 class ParticipantTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
 	make_this_existing_tag = forms.BooleanField( required = False, label = _('Rider keeps tag for other races') )
@@ -2964,6 +3005,7 @@ def ParticipantTagChange( request, participantId ):
 	return render_to_response( 'participant_tag_change.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------
+@autostrip
 class ParticipantSignatureForm( Form ):
 	signature = forms.CharField( required = False, label = _('Signature') )
 	
@@ -3010,6 +3052,7 @@ def ParticipantSignatureChange( request, participantId ):
 	return render_to_response( 'participant_signature_change.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------
+@autostrip
 class ParticipantScanForm( Form ):
 	scan = forms.CharField( required = False, label = _('Barcode (License Code or RFID Tag)') )
 	
@@ -3071,6 +3114,7 @@ def ParticipantMultiFound( request, competitionId ):
 	return render_to_response( 'participant_multi_found.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------
+@autostrip
 class ParticipantRfidScanForm( Form ):
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label=_('RFID Antenna to Read Tag') )
 	
@@ -3193,6 +3237,7 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 		return license_holder, participants
 
 #--------------------------------------------------------------------------
+@autostrip
 class SystemInfoForm( ModelForm ):
 	class Meta:
 		model = SystemInfo
