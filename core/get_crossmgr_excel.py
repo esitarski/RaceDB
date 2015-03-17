@@ -157,7 +157,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 	ws = wb.add_worksheet('--CrossMgr-Properties')
 	row = write_row_data( ws, 0, property_headers, title_format )
 	row_data = [
-		competition.name,
+		u'-'.join( [competition.name, event.name] ),
 		competition.organizer,
 		competition.city,
 		competition.stateProv,
