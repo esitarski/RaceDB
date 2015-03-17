@@ -1527,10 +1527,12 @@ class EventTT( Event ):
 				ids = EntryTT.objects.filter(event=self).values_list('pk', flat=True)[:999]
 				EntryTT.objects.filter(pk__in=ids).delete()
 		
+		min_gap = datetime.timedelta( seconds=10 )
+		zero_gap = datetime.timedelta( seconds=0 )
+		
 		sequenceCur = 1
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
-			tCur += wave_tt.gap_before_wave
 			participants = sorted(
 				wave_tt.get_participants_unsorted(),
 				key = lambda p: (
@@ -1542,8 +1544,13 @@ class EventTT( Event ):
 			last_fastest = len(participants) - wave_tt.num_fastest_participants
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
-				if i != 0:
-					tCur += wave_tt.fastest_participants_start_gap if i >= last_fastest else wave_tt.regular_start_gap
+				rider_gap = max(
+					wave_tt.fastest_participants_start_gap if i >= last_fastest else zero_gap,
+					wave_tt.regular_start_gap,
+					min_gap
+				)
+				tCur += max( wave_tt.gap_before_wave if i == 0 else zero_gap, rider_gap )
+				
 				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
 				sequenceCur += 1
 				
