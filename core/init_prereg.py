@@ -163,6 +163,7 @@ def init_prereg(
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
 			#
+			license_holder = None
 			with transaction.atomic():
 				if license_code and license_code.upper() != u'TEMP':
 					try:
@@ -328,7 +329,8 @@ def init_prereg(
 			fields = [unicode(f.value).strip() for f in row]
 			messsage_stream_write( u'Header Row:\n' )
 			for f in fields:
-				messsage_stream_write( u'            {}\n'.format(f) )
+				optional_event_str = u' (Optional Event)' if f.lower() in optional_events else u''
+				messsage_stream_write( u'            {}{}\n'.format(f, optional_event_str) )
 			
 			fields_lower = [f.lower() for f in fields]
 			if not any( r.lower() in fields_lower for r in ('License','License Numbers','LicenseNumbers','License Code','LicenseCode') ):
