@@ -66,7 +66,7 @@ def to_int_str( v ):
 def to_str( v ):
 	if v is None:
 		return v
-	return toUnicode(v)
+	return toUnicode(v).strip()
 	
 def to_bool( v ):
 	if v is None:
@@ -81,7 +81,7 @@ def to_int( v ):
 		return int(v)
 	except:
 		return None
-		
+
 def to_tag( v ):
 	if v is None:
 		return None
@@ -114,7 +114,9 @@ def init_prereg(
 			return
 	
 	if clear_existing:
-		Participant.objects.filter( competition=competition ).delete()
+		large_delete_all( Participant, Q(competition=competition) )
+		
+	optional_events = { event.name.lower():event for event in competition.get_events() if event.optional }
 		
 	def get_key( d, keys, default_value ):
 		for k in keys:
@@ -127,14 +129,16 @@ def init_prereg(
 	times = defaultdict(float)
 	
 	# Process the records in large transactions for efficiency.
-	@transaction.atomic
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
 			license_code	= to_int_str(get_key(ur,('License','License Numbers','LicenseNumbers','License Code','LicenseCode'),u''))
-			last_name		= to_str(get_key(ur,('LastName','Last Name'),u'')).strip()
-			first_name		= to_str(get_key(ur,('FirstName','First Name'),u'')).strip()
+			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
+			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
+			name			= to_str(ur.get('name',u''))
+			if not name:
+				name = ' '.join( n for n in [first_name, last_name] if n)
 			
-			gender			= ur.get('Gender'.lower(),u'').strip()
+			gender			= to_str(ur.get('gender',u''))
 			gender			= gender_from_str(gender) if gender else None
 			
 			date_of_birth   = None
@@ -144,130 +148,152 @@ def init_prereg(
 					date_of_birth	= date_from_value(v)
 					break
 			
-			preregistered	= to_bool(ur.get('Preregistered'.lower(), True))
-			paid			= to_bool(ur.get('Paid'.lower(), None))
-			bib				= to_int(ur.get('Bib'.lower(), None))
-			tag			 	= to_tag(ur.get('Tag'.lower(), None))
-			note		 	= to_str(ur.get('Note'.lower(), None))
-			team_name		= to_str(ur.get('Team'.lower(), None))
-			category_code   = to_str(ur.get('Category'.lower(), None))
-
+			preregistered	= to_bool(ur.get('preregistered', True))
+			paid			= to_bool(ur.get('paid', None))
+			bib				= to_int(ur.get('bib', None))
+			tag			 	= to_tag(ur.get('tag', None))
+			note		 	= to_str(ur.get('note', None))
+			team_name		= to_str(ur.get('team', None))
+			category_code   = to_str(ur.get('category', None))
+			
+			participant_optional_events = {
+				optional_events[field]:to_bool(value) for field, value in ur.iteritems() if field in optional_events
+			}
+			
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
 			#
-			if license_code and license_code.upper() != u'TEMP':
-				try:
-					license_holder = LicenseHolder.objects.get( license_code=license_code )
-				except LicenseHolder.DoesNotExist:
-					messsage_stream_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}\n'.format(i, license_code) )
-					continue
-			else:
-				try:
-					# No license code.  Try to find the participant by last/first name.
-					# Case insensitive comparison.
-					license_holder = LicenseHolder.objects.get( last_name__iexact=last_name, first_name__iexact=first_name )
-				except LicenseHolder.DoesNotExist:
-					# No name match.
-					# Create a temporary license holder.
+			with transaction.atomic():
+				if license_code and license_code.upper() != u'TEMP':
 					try:
-						license_holder = LicenseHolder(
-							license_code='TEMP',
-							last_name=last_name,
-							first_name=first_name,
-							gender=gender,
-							date_of_birth=date_of_birth
-						)
-						license_holder.save()
-					except Exception as e:
-						messsage_stream_write( u'**** Row {}: New License Holder Exception: {}\n'.format(
-								i, e,
+						license_holder = LicenseHolder.objects.get( license_code=license_code )
+					except LicenseHolder.DoesNotExist:
+						messsage_stream_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
+							i, license_code, name) )
+						continue
+				else:
+					try:
+						# No license code.  Try to find the participant by last/first name.
+						# Case insensitive comparison.
+						license_holder = LicenseHolder.objects.get( last_name__iexact=last_name, first_name__iexact=first_name )
+					except LicenseHolder.DoesNotExist:
+						# No name match.
+						# Create a temporary license holder.
+						try:
+							license_holder = LicenseHolder(
+								license_code='TEMP',
+								last_name=last_name,
+								first_name=first_name,
+								gender=gender,
+								date_of_birth=date_of_birth
+							)
+							license_holder.save()
+						except Exception as e:
+							messsage_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+									i, e, name,
+								)
+							)
+							continue
+					except LicenseHolder.MultipleObjectsReturned:
+						messsage_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
+								i, name,
 							)
 						)
 						continue
-				except LicenseHolder.MultipleObjectsReturned:
-					messsage_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name: "{}, {}"\n'.format(
-							i, last_name, first_name,
-						)
-					)
-					continue
-			
-			#------------------------------------------------------------------------------
-			# Get Category.  Open categories will match either Gender.
-			#
-			category = None
-			if category_code:
-				for category_search in Category.objects.filter( format=competition.category_format, code=category_code ).order_by('gender'):
-					if category_search.gender == license_holder.gender or category_search.gender == 2:
-						category = category_search
-						break
-				if category is None:
-					messsage_stream_write( u'**** Row {}: cannot match Category (ignoring): "{}"\n'.format(
-						i, category_code,
-					) )
-			
-			#------------------------------------------------------------------------------
-			# Get Team
-			#
-			team = None
-			if team_name:
+				
+				#------------------------------------------------------------------------------
+				# Get Category.  Open categories will match either Gender.
+				#
+				category = None
+				if category_code:
+					for category_search in Category.objects.filter( format=competition.category_format, code=category_code ).order_by('gender'):
+						if category_search.gender == license_holder.gender or category_search.gender == 2:
+							category = category_search
+							break
+					if category is None:
+						messsage_stream_write( u'**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
+							i, category_code, name,
+						) )
+				
+				#------------------------------------------------------------------------------
+				# Get Team
+				#
+				team = None
+				if team_name:
+					try:
+						team = Team.objects.get(name=team_name)
+					except Team.DoesNotExist:
+						messsage_stream_write( u'**** Row {}: unrecognized Team name (ignoring): "{}" Name="{}"\n'.format(
+							i, team_name, name,
+						) )
+					except Team.MultipleObjectsReturned:
+						messsage_stream_write( u'**** Row {}: multiple Teams match name (ignoring): "{}" Name="{}"\n'.format(
+							i, team_name, name,
+						) )
+				
+				#------------------------------------------------------------------------------
+				participant_keys = { 'competition': competition, 'license_holder': license_holder, }
+				if category is not None:
+					participant_keys['category'] = category
+				
 				try:
-					team = Team.objects.get(name=team_name)
-				except Team.DoesNotExist:
-					messsage_stream_write( u'**** Row {}: unrecognized Team name (ignoring): "{}"\n'.format(
-						i, team_name,
+					participant = Participant.objects.get( **participant_keys )
+				except Participant.DoesNotExist:
+					participant = Participant( **participant_keys )
+				except Participant.MultipleObjectsReturned:
+					messsage_stream_write( u'**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
+						i, name,
 					) )
-				except Team.MultipleObjectsReturned:
-					messsage_stream_write( u'**** Row {}: multiple Teams match name (ignoring): "{}"\n'.format(
-						i, team_name,
+					continue
+				
+				for attr, value in (
+						('category',category), ('team',team),
+						('bib',bib), ('tag',tag), ('note',note),
+						('preregistered',preregistered), ('paid',paid), 
+					):
+					if value is not None:
+						setattr( participant, attr, value )
+				
+				participant.preregistered = True
+				
+				participant.init_default_values()
+				
+				try:
+					participant.save()
+				except IntegrityError as e:
+					messsage_stream_write( u'**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+						i, e,
+						bib, category_code, license_code, name,
 					) )
-			
-			#------------------------------------------------------------------------------
-			participant_keys = { 'competition': competition, 'license_holder': license_holder, }
-			if category is not None:
-				participant_keys['category'] = category
-			
-			try:
-				participant = Participant.objects.get( **participant_keys )
-			except Participant.DoesNotExist:
-				participant = Participant( **participant_keys )
-			except Participant.MultipleObjectsReturned:
-				messsage_stream_write( u'**** Row {}: found multiple Participants for this license_holder.\n'.format(i) )
-				continue
-			
-			for attr, value in (
-					('category',category), ('team',team),
-					('bib',bib), ('tag',tag), ('note',note),
-					('preregistered',preregistered), ('paid',paid), 
-				):
-				if value is not None:
-					setattr( participant, attr, value )
-			
-			participant.preregistered = True
-			
-			participant.init_default_values()
-			
-			try:
-				participant.save()
-			except IntegrityError as e:
-				messsage_stream_write( u'**** Row {}: Error={}\nBib={} Category={} License={} Name="{}, {}"\n'.format(
-					i, e,
-					bib, category_code, license_code, last_name, first_name,
-				) )
-				success, integrity_error_message, conflict_participant = participant.explain_integrity_error()
-				if success:
-					messsage_stream_write( u'{}\n'.format(integrity_error_message) )
-					messsage_stream_write( u'{}\n'.format(conflict_participant) )
-				continue
-			
-			participant.add_to_default_optonal_events()
-			
-			messsage_stream_write( u'Row {:>6}: {:>8} {:>10} {}, {}, {}, {}\n'.format(
-						i,
-						license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'), license_holder.uci_code,
-						license_holder.last_name, license_holder.first_name,
-						license_holder.city, license_holder.state_prov
+					success, integrity_error_message, conflict_participant = participant.explain_integrity_error()
+					if success:
+						messsage_stream_write( u'{}\n'.format(integrity_error_message) )
+						messsage_stream_write( u'{}\n'.format(conflict_participant) )
+					continue
+				
+				participant.add_to_default_optonal_events()
+				
+				if participant_optional_events:
+					participant_optional_events = {
+						event:(included and event.could_participant(participant))
+						for event, included in participant_optional_events.iteritems()
+					}
+					option_included = { event.option_id:included for event, included in participant_optional_events.iteritems() }
+					ParticipantOption.sync_option_ids( participant, option_included )
+					override_events_str = u' ' + u', '.join(
+						u'"{}"={}'.format(event.name, included) for event, included in sorted(participant_optional_events.iteritems())
+					)
+				else:
+					override_events_str = ''
+				
+				messsage_stream_write( u'Row {:>6}: {:>8} {:>10} {}, {}, {}, {}{}\n'.format(
+							i,
+							license_holder.license_code, license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.uci_code,
+							license_holder.last_name, license_holder.first_name,
+							license_holder.city, license_holder.state_prov,
+							override_events_str
+					)
 				)
-			)
 	
 	sheet_name = None
 	if worksheet_contents is not None:
@@ -310,7 +336,7 @@ def init_prereg(
 				return
 			continue
 			
-		ur = { f.lower(): row[c].value for c, f in enumerate(fields) }
+		ur = { f.strip().lower(): row[c].value for c, f in enumerate(fields) }
 		ur_records.append( (r+1, ur) )
 		if len(ur_records) == 1000:
 			process_ur_records( ur_records )

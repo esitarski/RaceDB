@@ -13,7 +13,7 @@
 <p>
 <h3>Import pre-registered riders into this Competition from an Excel spreadsheet.</h3>
 <p>
-Adds or Updates Participants for this Competition.
+Adds or Updates Participants for this Competition.  Also adds Participants to Optional Events.
 </p>
 <p>
 The Excel spreadsheet can be as simple as one column of the License numbers you want added to the Competition.
@@ -21,8 +21,11 @@ The Excel spreadsheet can be as simple as one column of the License numbers you 
 In this simplest case, License Holders will be matched by the License code and added to the Competition.  License Holders would be expected to be present in the database already, having been imported with init_usac, init_oca, etc.
 </p>
 <p>
-The additional fields in this sheet are only used if the License code <strong>does not match</strong> an existing License Holder.
+Additional fields in this sheet are used if the License code <strong>does not match</strong> an existing License Holder.
 The additional information is used to create a basic License Holder record - full information about the License Holder record can be updated in-person on site at race check-in.
+</p>
+<p>
+You can also include or exclude License Holders from optional events.
 </p>
 <p>
 The spreadsheet must have a specific format:
@@ -30,8 +33,9 @@ The spreadsheet must have a specific format:
 <li>The prereg data <strong>must</strong> be the first Sheet of the spreadsheet</li>
 <li>The first Row of the sheet must be a <strong>Header Row</strong>.</li>
 <li>The Header Row must contain a <strong>License</strong> column.</li>
-<li>The sheet can include some, or all, of addition information column headers (see below).</li>
-<li>Additional header columns are ignored.</li>
+<li>The sheet can include some, or all, of addition Participant information column headers (see below).</li>
+<li>The Header Row can also contain the names of Optional Events for the Competition.  True/False values in these columns specifies whether the Licence Holder is participating in this Event, and will override the Event's default.
+<li>Other header columns are ignored.</li>
 </ul>
 </p>
 <p>
@@ -63,13 +67,19 @@ The same prereg data sheet can be imported into the same Competition any number 
 <tr><td><strong>Category</strong></td><td>Optional data field.  Rider's Category for this race.  The field must match the Category Code of a Category in the Competition's Category Format.</td></tr>
 <tr><td><strong>Preregistered</strong></td><td>Optional.  Sets the rider's preregistered flag.  Default is True. **</td></tr>
 <tr><td><strong>Paid</strong></td><td>Optional.  Indicates that the rider has paid.  Default is False. **</td></tr>
-<tr><td><strong>Bib</strong></td><td>Optional.  Bib number for the rider.  Bib numbers can also be assigned from the RaceDB interface beforehand, or given out on race day on-the-fly.  Not required if using <strong>Number Sets</strong>.</td></tr>
+<tr><td><strong>Bib</strong></td><td>Optional.  Bib number for the rider.  Bib numbers can also be assigned from RaceDB beforehand, or given out on race day on-the-fly.  Not required if using <strong>Number Sets</strong>.</td></tr>
 <tr><td><strong>Tag</strong></td><td>Optional.  RFID tag for the rider.  Not required if auto-generated tags or if re-using existing tags.</td></tr>
 <tr><td><strong>Note</strong></td><td>Optional.  Sets the Participant Note field to this value.</td></tr>
+<tr><td><strong>Optional Event Name</strong></td><td>Optional.  Indicates whether the License Holder is participating in the Event, which must be an Optional Event of the Competition.  This overrides the opt-in/opt-out option of the Event.  **.</td></tr>
 </tbody>
 </table>
 </p>
 <p>
-** Read as True if the cell value's first character is any of 't', 'T', 'y', 'Y' or 1.  Otherwise False.
+** Read as True if the cell value's first character is any of 't', 'T', 'y', 'Y', 1 or TRUE.  Otherwise False.
 </p>
+<h3>Example Header Rows:</h3>
+<ul>
+<li><strong>License</strong></li>
+<li><strong>License, First Name, Last Name, Gender, DOB, Road Race, Time Trial, Sprint Challenge</strong> where Road Race, Time Trial and Sprint Challenge are optional Events.  Riders who do not have a License Holder record will have a TEMP one created.</li>
+</ul>
 {% endblock content %}

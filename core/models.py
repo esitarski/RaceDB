@@ -1771,6 +1771,19 @@ class ParticipantOption( models.Model ):
 			ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id ).save()
 	
 	@staticmethod
+	@transaction.atomic
+	def sync_option_ids( participant, option_id_included = {} ):
+		''' Expected option_id_included to be { option_id: True/False }. '''
+		ParticipantOption.objects.filter(
+			competition=participant.competition,
+			participant=participant,
+			option_id__in = option_id_included.keys()
+		).delete()
+		for option_id, included in option_id_included.iteritems():
+			if included:
+				ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id ).save()
+	
+	@staticmethod
 	def get_option_ids( competition, participant ):
 		return ParticipantOption.objects.filter(competition=competition, participant=participant).values_list('option_id', flat=True)
 	

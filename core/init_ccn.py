@@ -67,7 +67,7 @@ def to_int_str( v ):
 	return toUnicode(v)
 		
 def to_str( v ):
-	return toUnicode(v)
+	return toUnicode(v).strip()
 
 fnameDefault = r'EV\CyclingBC_28_Mar_2014_EV-Race-List.xls'
 def init_ccn( fname = fnameDefault ):
@@ -99,13 +99,13 @@ def init_ccn( fname = fnameDefault ):
 			
 			attributes = {
 				'license_code':	to_int_str(ur.get('License Numbers','')),
-				'last_name':	to_str(ur.get('Last Name','')).strip(),
-				'first_name':	to_str(ur.get('First Name','')).strip(),
+				'last_name':	to_str(ur.get('Last Name','')),
+				'first_name':	to_str(ur.get('First Name','')),
 				'gender':		gender_from_str(to_str(ur.get('Sex','m'))),
 				'date_of_birth':date_of_birth,
-				'city':			to_str(ur.get('Member City','')).strip(),
-				'state_prov':	to_str(ur.get('Member Province','')).strip(),
-				'nationality':  to_str(ur.get('Nationality','')).strip(),
+				'city':			to_str(ur.get('Member City','')),
+				'state_prov':	to_str(ur.get('Member Province','')),
+				'nationality':  to_str(ur.get('Nationality','')),
 			}
 			
 			if ur.get('Tag','').strip():
