@@ -2248,7 +2248,7 @@ class ParticipantSearchForm( Form ):
 	team_text = forms.CharField( required = False, label = _('Team Text') )
 	bib = forms.IntegerField( required = False, min_value = -1  )
 	gender = forms.ChoiceField( choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
-	role_type_text = forms.ChoiceField( label = _('Role') )
+	role_type = forms.ChoiceField( label = _('Role Type') )
 	category = forms.ChoiceField( required = False, label = _('Category') )
 	
 	city_text = forms.CharField( required = False, label = _('City') )
@@ -2267,7 +2267,7 @@ class ParticipantSearchForm( Form ):
 				[(-1, '----')] + [(category.id, category.code_gender) for category in competition.get_categories()]
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
-		self.fields['role_type_text'].choices = roleChoices
+		self.fields['role_type'].choices = roleChoices
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -2335,7 +2335,11 @@ def Participants( request, competitionId ):
 	if participant_filter.get('bib',0):
 		bib = participant_filter['bib']
 		q_list.append( Q(bib = (bib if bib > 0 else None)) )
-		
+	
+	role_type = int(participant_filter.get('role_type',0))
+	if role_type > 0:
+		q_list.append( Q(role__range=(100*role_type, 100*role_type+99)) )
+	
 	if 0 <= int(participant_filter.get('gender',-1)) <= 1:
 		q_list.append( Q(license_holder__gender = participant_filter['gender']) )
 		
