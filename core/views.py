@@ -55,7 +55,7 @@ def external_access(func):
    return logCall(login_required(func))
 
 # Maximum return for large queries.
-MaxReturn = 200
+MaxReturn = 500
 
 def pushUrl( request, name, *args, **kwargs ):
 	cancelUrl = kwargs.pop( 'cancelUrl', False )
@@ -2243,7 +2243,7 @@ def WaveTTUp( request, waveTTId ):
 
 @autostrip
 class ParticipantSearchForm( Form ):
-	scan = forms.CharField( required = False, label = _('Scan Search') )
+	scan = forms.CharField( required = False, label = _('Scan Search'), help_text=_('Including License and RFID Tag') )
 	name_text = forms.CharField( required = False, label = _('Name Text') )
 	team_text = forms.CharField( required = False, label = _('Team Text') )
 	bib = forms.IntegerField( required = False, min_value = -1  )
