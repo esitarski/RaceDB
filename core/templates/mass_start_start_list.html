@@ -95,7 +95,7 @@
 				<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
 				<td>{{p.license_holder.full_name}}</td>
 				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-				<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
+				<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
 				<td class="hidden-print">
 					<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
