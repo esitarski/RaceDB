@@ -2374,9 +2374,9 @@ def Participants( request, competitionId ):
 				field
 			)
 	
-	if participant_filter.get('team_text','').strip():
-		search_field_re = utils.matchSearchToRegEx( participant_filter['team_text'] )
-		participants = (p for p in participants if search_field_re.match(p.team.search_text if p.team else u'') )
+	team_search = participant_filter.get('team_text','').strip()
+	if team_search:
+		participants = (p for p in participants if p.team and utils.matchSearchFields(team_search, p.team.search_text) )
 	
 	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 
