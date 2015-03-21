@@ -5,7 +5,7 @@
 <h2>{{title}}</h2>
 <hr/>
 {% crispy form %}
-<hr/>
+{% include "show_count.html" %}
 {% if just_for_today %}
 	<h3>{% trans "Competitions shown only for today, " %} {% now "l F jS, Y" %}</h3>
 {% endif %}
@@ -41,6 +41,7 @@
 				<a class="btn btn-success" href="{{path}}CompetitionDashboard/{{c.id}}">{% trans "Dashboard" %}</a>
 			</td>
 		</tr>
+		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
 	{% endfor %}
 </tbody>
 </table>

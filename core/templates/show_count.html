@@ -1,0 +1,10 @@
+{% load i18n %}
+<div style="padding-bottom: 10px">
+<hr style="float:left;width:82%;margin: 9px 8px 9px 0px;">
+<span id='show-count'>___&nbsp;{% trans "records shown" %}</span>
+</div>
+<script>
+function set_show_count( count ) {
+	document.getElementById('show-count').innerHTML = count + '&nbsp;' + (count == 1 ? '{% trans "record shown" %}' : '{% trans "records shown" %}') + '.';
+}
+</script>

@@ -7,7 +7,7 @@
 <h2>{{title}}</h2>
 <hr class="hidden-print"/>
 {% crispy form %}
-<hr class="hidden-print"/>
+{% include "show_count.html" %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
 	<tr>
@@ -41,6 +41,7 @@
 				</div>
 			</td>
 		</tr>
+		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
 	{% endfor %}
 </tbody>
 </table>
