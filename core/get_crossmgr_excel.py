@@ -103,7 +103,9 @@ def add_categories_page( wb, title_format, event ):
 	
 	row = write_row_data( ws, 0, category_headers, title_format )
 	for wave in event.get_wave_set().all():
-		categories = set( c for c in wave.categories.all() if c in participant_categories )
+		#categories = set( c for c in wave.categories.all() if c in participant_categories )
+		categories = wave.categories.all()
+		
 		categories = sorted( categories, key = lambda c: c.sequence )
 		if not categories:
 			continue

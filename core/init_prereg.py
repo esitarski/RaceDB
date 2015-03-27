@@ -276,7 +276,7 @@ def init_prereg(
 				
 				if participant_optional_events:
 					participant_optional_events = {
-						event:(included and event.could_participant(participant))
+						event:(included and event.could_participate(participant))
 						for event, included in participant_optional_events.iteritems()
 					}
 					option_included = { event.option_id:included for event, included in participant_optional_events.iteritems() }
