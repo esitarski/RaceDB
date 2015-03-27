@@ -72,6 +72,9 @@ class SystemInfo(models.Model):
 	
 	reg_closure_minutes = models.IntegerField( default = -1, verbose_name = _('Reg Closure Minutes'), help_text=_('Minutes before race start to close registration for "reg" users.  Use -1 for None.') )
 	
+	exclude_empty_categories = models.BooleanField( default = True, verbose_name = _("Exclude Empty Categories from CrossMgr"),
+			 help_text=_('Exclude empty categories from CrossMgr Excel'))
+	
 	@classmethod
 	def get_tag_template_default( cls ):
 		tNow = datetime.datetime.now()
@@ -92,6 +95,10 @@ class SystemInfo(models.Model):
 	@classmethod
 	def get_reg_closure_minutes( cls ):
 		return cls.get_singleton().reg_closure_minutes
+	
+	@classmethod
+	def get_exclude_empty_categories( cls ):
+		return cls.get_singleton().exclude_empty_categories
 	
 	def save( self, *args, **kwargs ):
 		self.tag_template = getValidTagFormatStr( self.tag_template )

@@ -3267,6 +3267,9 @@ class SystemInfoForm( ModelForm ):
 			Row(
 				Col(Field('reg_closure_minutes', size=6), 6),
 			),
+			Row(
+				Col(Field('exclude_empty_categories', size=6), 6),
+			),
 			HTML( '<hr/' ),
 		)
 		addFormButtons( self, button_mask )
