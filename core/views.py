@@ -1426,24 +1426,29 @@ def GetCompetitionForm( competition_cur = None ):
 			
 @external_access
 def CompetitionsDisplay( request ):
+	form = None
 	search_text = request.session.get('competition_filter', '')
 	btns = [('new-submit', _('New Competition'), 'btn btn-success')] if request.user.is_superuser else []
 	if request.method == 'POST':
-	
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionNew') )
-			
-		form = SearchForm( btns, request.POST )
-		if form.is_valid():
-			search_text = form.cleaned_data['search_text']
-			request.session['competition_filter'] = search_text
-	else:
-		form = SearchForm( btns, initial = {'search_text': search_text} )
 		
-	competitions = applyFilter( search_text, Competition.objects.all(), Competition.get_search_text )
+		if request.user.is_superuser:
+			form = SearchForm( btns, request.POST )
+			if form.is_valid():
+				search_text = form.cleaned_data['search_text']
+				request.session['competition_filter'] = search_text
+	else:
+		if request.user.is_superuser:
+			form = SearchForm( btns, initial = {'search_text': search_text} )
+	
+	if form:
+		competitions = applyFilter( search_text, Competition.objects.all(), Competition.get_search_text )
+	else:
+		competitions = Competition.objects.all()
 	
 	# If not super user, only show the competitions for today.
 	just_for_today = (not request.user.is_superuser)
@@ -1522,7 +1527,13 @@ def CompetitionDashboard( request, competitionId ):
 	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
 	return render_to_response( 'competition_dashboard.html', RequestContext(request, locals()) )
-	
+
+#--------------------------------------------------------------------------------------------
+@external_access
+def CompetitionEventParticipationSummary( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+
+#--------------------------------------------------------------------------------------------
 @external_access
 def StartLists( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2383,6 +2394,35 @@ def Participants( request, competitionId ):
 		participants = (p for p in participants if p.team and utils.matchSearchFields(team_search, p.team.search_text) )
 	
 	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
+
+#--------------------------------------------------------------------------------------------
+
+@external_access
+def ParticipantsInEvents( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	participants = set()
+	competition_events = sorted( competition.get_events(), key=lambda e: e.date_time )
+	event_participants = {}
+	for event in competition_events:
+		p = event.get_participants()
+		event_participants[event] = p
+		participants |= p
+	
+	participants = sorted( participants, key=lambda p: p.license_holder.search_text )
+	
+	for participant in participants:
+		event_status = []
+		for event in competition_events:
+			if participant in event_participants[event]:
+				event_status.append( u"\u2611" if event.optional else u"\u2713" )
+			elif event.optional:
+				event_status.append( u"\u2610" )
+			else:
+				event_status.append( '' )
+		participant.event_status = event_status
+	
+	return render_to_response( 'participants_in_events.html', RequestContext(request, locals()) )
 
 #--------------------------------------------------------------------------------------------
 

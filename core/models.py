@@ -1212,6 +1212,10 @@ class Participant(models.Model):
 			u' ({})'.format( _('seed early') ) if self.seed_early else u'',
 		)
 	
+	def get_short_role_display( self ):
+		role = self.get_role_display()
+		
+	
 	@property
 	def adjusted_est_kmh( self ):
 		return self.est_kmh - 100000.0 if self.seed_early else self.est_kmh

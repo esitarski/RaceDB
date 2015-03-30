@@ -53,6 +53,7 @@ urlpatterns = patterns('',
 	url(r'^(?i).*WaveTTDown/(?P<waveTTId>\d+)/$', views.WaveTTDown),
 	
 	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', views.Participants),
+	url(r'^(?i).*ParticipantsInEvents/(?P<competitionId>\d+)/$', views.ParticipantsInEvents),
 	url(r'^(?i).*ParticipantAdd/(?P<competitionId>\d+)/$', views.ParticipantAdd),
 	url(r'^(?i).*ParticipantAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.ParticipantAddToCompetition),
 	url(r'^(?i).*ParticipantAddToCompetitionDifferentCategory/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$',

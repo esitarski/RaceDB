@@ -4,7 +4,11 @@
 {% load crispy_forms_tags %}
 <h2>{{title}}</h2>
 <hr/>
-{% crispy form %}
+{% if form %}
+	{% crispy form %}
+{% else %}
+	<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+{% endif %}
 {% include "show_count.html" %}
 {% if just_for_today %}
 	<h3>{% trans "Competitions shown only for today, " %} {% now "l F jS, Y" %}</h3>
