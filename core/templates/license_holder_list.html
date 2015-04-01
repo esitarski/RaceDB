@@ -11,8 +11,7 @@
 <thead>
 	<tr>
 		<th></th>
-		<th>{% trans "Last" %}</th>
-		<th>{% trans "First" %}</th>
+		<th>{% trans "Name" %}</th>
 		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Date of Birth" %}</th>
 		<th>{% trans "City" %}</th>
@@ -36,8 +35,7 @@
 		<tr>
 		{% endif %}
 			<td class="text-right">{{forloop.counter}}.</td>
-			<td>{{h.last_name}}</td>
-			<td>{{h.first_name}}</td>
+			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
 			<td>{{h.date_of_birth}}</td>
 			<td>{{h.city}}</td>

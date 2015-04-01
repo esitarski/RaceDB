@@ -1129,7 +1129,7 @@ def SeasonsPassHolderAdd( request, seasonsPassId ):
 			q &= Q( search_text__contains = n )
 		license_holders = LicenseHolder.objects.filter( q )[:MaxReturn]
 		break
-		
+
 	return render_to_response( 'license_holder_seasons_pass_list.html', RequestContext(request, locals()) )
 
 @external_access
@@ -2401,7 +2401,6 @@ def Participants( request, competitionId ):
 def ParticipantsInEvents( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	participants = set()
 	competition_events = sorted( competition.get_events(), key=lambda e: e.date_time )
 	event_participants = {}
 	for event in competition_events:
@@ -2409,17 +2408,23 @@ def ParticipantsInEvents( request, competitionId ):
 		event_participants[event] = p
 		participants |= p
 	
-	participants = sorted( participants, key=lambda p: p.license_holder.search_text )
+	participants = sorted( set.union(*[p for p in event_participants.iter_values()]), key=lambda p: p.license_holder.search_text )
 	
+	check_codes = {
+		'optional_selected':	u"\u2611",
+		'optional_deselected':	u"\u2610",
+		'default_selected':		u"\u2713",
+		'unavailable':			u"",
+	}
 	for participant in participants:
 		event_status = []
 		for event in competition_events:
 			if participant in event_participants[event]:
-				event_status.append( u"\u2611" if event.optional else u"\u2713" )
+				event_status.append( check_codes['optional_selected' if event.optional else 'default_selected'] )
 			elif event.optional:
-				event_status.append( u"\u2610" )
+				event_status.append( check_codes['optional_deselected'] )
 			else:
-				event_status.append( '' )
+				event_status.append( check_codes['unavailable'] )
 		participant.event_status = event_status
 	
 	return render_to_response( 'participants_in_events.html', RequestContext(request, locals()) )

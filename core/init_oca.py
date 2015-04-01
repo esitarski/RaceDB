@@ -1,11 +1,12 @@
 import csv
+import sys
 import datetime
 import HTMLParser
 from collections import namedtuple
 from models import *
 from django.db import transaction
 from django.db.models import Q
-from utils import gender_from_str
+from utils import gender_from_str, toUnicode, removeDiacritic
 import csv, codecs
 
 today = datetime.date.today()
@@ -21,7 +22,7 @@ fnameDefault = 'GFRR/April 17.csv'
 
 def date_from_str( s ):
 	# Assume month, day, year.
-	mm, dd, yy = [int(v.strip()) for v in s.split( '/' )]
+	yy, mm, dd = [int(v.strip()) for v in s.split( '/' )]
 	
 	# Correct for 2-digit year.
 	for century in [0, 1900, 2000, 2100]:
@@ -55,7 +56,15 @@ def large_delete_all( Object ):
 			ids = Object.objects.values_list('pk', flat=True)[:999]
 			Object.objects.filter(pk__in = ids).delete()
 
-def init_oca( fname = fnameDefault ):
+def init_oca( fname = fnameDefault, message_stream=sys.stdout ):
+	
+	if message_stream == sys.stdout or message_stream == sys.stderr:
+		def messsage_stream_write( s ):
+			message_stream.write( removeDiacritic(s) )
+	else:
+		def messsage_stream_write( s ):
+			message_stream.write( unicode(s) )
+			
 	#large_delete_all( LicenseHolder )
 	#large_delete_all( Team )
 	
@@ -81,7 +90,7 @@ def init_oca( fname = fnameDefault ):
 			try:
 				date_of_birth	= date_from_str( ur.dob )
 			except Exception as e:
-				print 'Line {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.dob, ur, e )
+				messsage_stream_write( u'Line {}: Invalid birthdate "{}" ({}) {}\n'.format( i, ur.dob, ur, e ) )
 				continue
 				
 			attributes = {
@@ -110,7 +119,10 @@ def init_oca( fname = fnameDefault ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			print u'{:>6}: {:>8} {:>10} {}, {}, ({})'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'), lh.last_name, lh.first_name, lh.city )
+			messsage_stream_write( u'{:>6}: {:>8} {:>9} {:>10} {}, {}, ({})\n'.format(
+					i, lh.license_code, lh.uci_code, lh.date_of_birth.strftime('%Y/%m/%d'), lh.last_name, lh.first_name, lh.city
+				)
+			)
 			
 			team_name = ur.club or ur.trade_team
 			TeamHint.objects.filter( license_holder=lh ).delete()
@@ -121,7 +133,7 @@ def init_oca( fname = fnameDefault ):
 					if count == len(team_names)-1:
 						for discipline_name, discipline in discipline_id.iteritems():
 							for col_name in discipline_cols[discipline_name]:
-								if getattr(ur, col_name):
+								if getattr(ur, col_name, None):
 									TeamHint( license_holder=lh, team=team, discipline=discipline, effective_date=effective_date ).save()
 									break
 
@@ -133,7 +145,7 @@ def init_oca( fname = fnameDefault ):
 				# Get the header fields from the first row.
 				fields = [html_parser.unescape(v.strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
 				fields = ['f{}'.format(i) if not f else f.strip() for i, f in enumerate(fields)]
-				print '\n'.join( fields )
+				messsage_stream_write( u'\n'.join( fields ) )
 				oca_record = namedtuple('oca_record', fields)
 				continue
 			
@@ -146,4 +158,4 @@ def init_oca( fname = fnameDefault ):
 			
 	process_ur_records( ur_records )
 	
-	print 'Initialization in: ', datetime.datetime.now() - tstart
+	messsage_stream_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
