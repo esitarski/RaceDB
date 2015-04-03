@@ -211,7 +211,7 @@ def init_riders():
 
 	tdf = tdf.strip()
 	lines = tdf.split( '\n' )
-	with transaction.commit_on_success():
+	with transaction.atomic():
 		for count, line in enumerate(lines):
 			if count % 20 != 0:	# Only add every 20 riders.
 				continue

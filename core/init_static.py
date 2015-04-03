@@ -41,7 +41,7 @@ def init_static():
 			(NumberSet, number_sets),
 		]:
 		large_delete_all( cls )
-		with transaction.commit_on_success():
+		with transaction.atomic():
 			for i, name in enumerate(values):
 				print i, name
 				cls( name = name, sequence = i ).save()

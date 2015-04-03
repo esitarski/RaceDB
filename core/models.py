@@ -4,7 +4,6 @@ from django.db.models import Max
 from django.db.models import Q
 
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
 
 from django.utils.timezone import get_default_timezone
 from django.core.exceptions import ObjectDoesNotExist

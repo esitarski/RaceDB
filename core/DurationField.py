@@ -3,7 +3,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 
 from django.forms.fields import CharField
-from django.forms.util import ValidationError as FormValidationError
+from django.forms.utils import ValidationError as FormValidationError
 
 import re
 import datetime

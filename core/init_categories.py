@@ -232,13 +232,13 @@ def init_categories():
 	large_delete_all( Category )
 	large_delete_all( CategoryFormat )
 
-	with transaction.commit_on_success():
-		for (name, description, catStr) in rfs:
-			print name, description
-			rf = CategoryFormat( name = name + ' - Reference', description = description )
-			rf.save()
-			
-			sequence = 0
+	for (name, description, catStr) in rfs:
+		print name, description
+		rf = CategoryFormat( name = name + ' - Reference', description = description )
+		rf.save()
+		
+		sequence = 0
+		with transaction.atomic():
 			for cat in catStr.split( '\n' ):
 				try:
 					code, gender, description = cat.split( '\t' )

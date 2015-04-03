@@ -3315,7 +3315,7 @@ class SystemInfoForm( ModelForm ):
 			Row(
 				Col(Field('exclude_empty_categories', size=6), 6),
 			),
-			HTML( '<hr/' ),
+			HTML( '<hr/>' ),
 		)
 		addFormButtons( self, button_mask )
 		
