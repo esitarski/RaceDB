@@ -244,6 +244,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 	title = _('Edit {}').format(ModelClass._meta.verbose_name.title())
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
+			print 'cancel-submit'
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
@@ -255,6 +256,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 			except Exception as e:
 				pass
 			if 'ok-submit' in request.POST:
+				print 'ok-submit'
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
 				
 			for ab in getattr(form, 'additional_buttons', []):
@@ -3296,11 +3298,6 @@ class SystemInfoForm( ModelForm ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		super(SystemInfoForm, self).__init__(*args, **kwargs)
 		
-		for field in ['rfid_server_host', 'rfid_server_port']:
-			self.fields[field].required = False
-			self.fields[field].widget.attrs['readonly'] = True
-			self.fields[field].widget.attrs['disabled'] = True
-	
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -3316,6 +3313,8 @@ class SystemInfoForm( ModelForm ):
 				Col(Field('exclude_empty_categories', size=6), 6),
 			),
 			HTML( '<hr/>' ),
+			Field( 'rfid_server_host', type='hidden' ),
+			Field( 'rfid_server_port', type='hidden' ),
 		)
 		addFormButtons( self, button_mask )
 		
