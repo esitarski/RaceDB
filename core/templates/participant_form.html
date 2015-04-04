@@ -281,16 +281,16 @@
 		<h3>{% trans "Additional Categories" %}:
 		{% if others %}
 			{% for o in others %}
-				{% if isEdit %}
-					<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{o.id}}">
-				{% else %}
-					<span class="label label-primary">
+				{% if isEdit %}<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{o.id}}">
+				{% else %}     <span class="label label-primary">
 				{% endif %}
 						{% if o.category %}{{o.category.code}}{% else %}{% trans "No Category" %}{% endif %}
 						-
 						{% if o.bib %} {% trans "Bib" %}: {{o.bib}} {% else %}{% trans "No Bib" %}{% endif %}
 					</a>
-				{% if isEdit %}</a>{% else %}</span>{% endif %}
+				{% if isEdit %}</a>
+				{% else %}     </span>
+				{% endif %}
 			{% endfor %}
 		{% else %}
 			{% trans "None" %}

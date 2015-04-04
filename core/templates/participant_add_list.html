@@ -45,8 +45,14 @@
 			{% if competition.using_tags %}<td>{{h.get_existing_tag_str}}</td>{% endif %}
 			<td class="hidden-print"><a class="btn btn-primary btn-sm" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a></td>
 			<td class="hidden-print">
-				{% if add_multiple_categories and h.id in license_holders_in_competition %}
-					<a class="btn btn-warning btn-sm" href="./ParticipantAddToCompetitionDifferentCategory/{{competitionId}}/{{h.id}}/">{% trans "Add in Additional Category" %}</a>
+				{% if h.id in license_holders_in_competition %}
+					{% if add_multiple_categories %}
+						<a class="btn btn-warning btn-sm" href="./ParticipantAddToCompetitionDifferentCategory/{{competitionId}}/{{h.id}}/">
+							{% trans "Add in Additional Category" %}
+						</a>
+					{% else %}
+						{% trans "Entered" %}
+					{% endif %}
 				{% else %}
 					<a class="btn btn-success btn-sm" href="./ParticipantAddToCompetition/{{competitionId}}/{{h.id}}/">{% trans "Add to Competition" %}</a>
 				{% endif %}
