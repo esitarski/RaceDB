@@ -2463,7 +2463,8 @@ def ParticipantAdd( request, competitionId ):
 	# Flag which license_holders are already entered in this competition.
 	license_holders_in_competition = set( p.license_holder.id
 		for p in Participant.objects.select_related('license_holder').filter(competition=competition) )
-		
+	
+	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	return render_to_response( 'participant_add_list.html', RequestContext(request, locals()) )
 
 @external_access
@@ -2502,6 +2503,8 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 @external_access
 def ParticipantEdit( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
+	system_info = SystemInfo.get_singleton()
+	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	isEdit = True
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
@@ -2510,6 +2513,7 @@ def ParticipantEdit( request, participantId ):
 @external_access
 def ParticipantDelete( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
+	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	isEdit = False
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
@@ -3311,6 +3315,9 @@ class SystemInfoForm( ModelForm ):
 			),
 			Row(
 				Col(Field('exclude_empty_categories', size=6), 6),
+			),
+			Row(
+				Col(Field('reg_allow_add_multiple_categories', size=6), 6),
 			),
 			HTML( '<hr/>' ),
 			Field( 'rfid_server_host', type='hidden' ),

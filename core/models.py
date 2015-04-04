@@ -74,6 +74,9 @@ class SystemInfo(models.Model):
 	exclude_empty_categories = models.BooleanField( default = True, verbose_name = _("Exclude Empty Categories from CrossMgr"),
 			 help_text=_('Exclude empty categories from CrossMgr Excel'))
 	
+	reg_allow_add_multiple_categories = models.BooleanField( default = True, verbose_name = _('Allow "reg" to Add Participants to Multiple Categories'),
+			 help_text=_('If True, reg staff can add participants to Multiple Categories (eg. race up a catgegory).  If False, only "super" can do so.'))
+	
 	@classmethod
 	def get_tag_template_default( cls ):
 		tNow = datetime.datetime.now()

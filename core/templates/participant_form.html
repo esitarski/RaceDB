@@ -281,16 +281,21 @@
 		<h3>{% trans "Additional Categories" %}:
 		{% if others %}
 			{% for o in others %}
-				<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{o.id}}">
-					{% if o.category %}{{o.category.code}}{% else %}{% trans "No Category" %}{% endif %}
-					-
-					{% if o.bib %} {% trans "Bib" %}: {{o.bib}} {% else %}{% trans "No Bib" %}{% endif %}
-				</a>
+				{% if isEdit %}
+					<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{o.id}}">
+				{% else %}
+					<span class="label label-primary">
+				{% endif %}
+						{% if o.category %}{{o.category.code}}{% else %}{% trans "No Category" %}{% endif %}
+						-
+						{% if o.bib %} {% trans "Bib" %}: {{o.bib}} {% else %}{% trans "No Bib" %}{% endif %}
+					</a>
+				{% if isEdit %}</a>{% else %}</span>{% endif %}
 			{% endfor %}
 		{% else %}
 			{% trans "None" %}
 		{% endif %}
-		{% if isEdit %}
+		{% if isEdit and add_multiple_categories %}
 			<a class="btn btn-success hidden-print" id="focus" href="{{popUrl}}ParticipantAddToCompetitionDifferentCategory/{{p.competition.id}}/{{p.license_holder.id}}">
 				{% trans "Add Additional Category" %}
 			</a>
