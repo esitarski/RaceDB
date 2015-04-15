@@ -15,7 +15,10 @@ document.forms[0].submit();
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load staticfiles %}
-<h1>{{title}}</h1>
+<h2>{{title}}
+<a class="btn btn-default" href="{{cancelUrl}}ParticipantScan/{{competition.id}}/">{% trans "Switch to Barcode Scan Screen" %}</a>
+</h2>
+<h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
 <hr/>
 {% crispy form %}
 

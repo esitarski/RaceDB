@@ -37,7 +37,7 @@ To determine whether you are running 32 or 64 bit Windows, see:
 ***********************************************************************
 Step 2:  Unzip RaceDB.zip
 
-In Windows, consider unzipping it into "C:".
+In Windows, consider unzipping it into "C:" to make a folder called "C:\RaceDB".
 This will make it easier later.
 
 On Linux/Mac, pick an easy location - you could pick your home directory.
@@ -47,6 +47,7 @@ Step 3:  Open a cmd window or terminal
 
 On Windows, type "cmd" into the "Search program and files" after
 clicking on the launch button in the lower left.
+
 On other platforms, launch a terminal.
 
 ***********************************************************************
@@ -174,10 +175,10 @@ In the RaceDB folder, run the follow command:
   Windows:    python dependencies.py --upgrade
   Linux/Mac:  sudo python dependencies.py --upgrade
 
-You will see a text scrolling up as any updated modules are installed.
+You will see a text scrolling as necessary as the modules are installed.
 
 By patient!
-This may take a few minutes as the modules are downloaded and configured.
+This may take a few minutes.
 
 In the RaceDB folder, run the follow command:
 
@@ -187,4 +188,4 @@ The "migrate" command will make changes to your existing database to support the
 Your existing data will be preserved.
   
 That's it!
-Now, follow Step 7 to launch RaceDB as usual.
+Now, follow Step 8 to launch RaceDB as usual.

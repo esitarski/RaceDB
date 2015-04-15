@@ -1404,11 +1404,12 @@ class Participant(models.Model):
 	def get_bib_conflicts( self ):
 		if not self.bib:
 			return []
-		q = Q( competition = self.competition ) & Q( bib = self.bib )
+		conflicts = Participant.objects.filter( competition=self.competition, bib=self.bib )
 		category_numbers = self.competition.get_category_numbers( self.category ) if self.category else None
 		if category_numbers:
-			q &= Q( category__in = category_numbers.categories.all() )
-		return list( p for p in Participant.objects.filter(q) if p != self )
+			conflicts = conflicts.filter( category__in=category_numbers.categories.all() )
+		conflicts.exclude( pk=self.pk )
+		return list(conflicts)
 	
 	def get_start_waves( self ):
 		if not self.category:

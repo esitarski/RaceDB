@@ -3,8 +3,13 @@
 
 {% load i18n %}
 {% load crispy_forms_tags %}
-<h2>{{title}}</h2>
-<h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
+<h2>{{title}}
+{% if competition.using_tags %}
+	<a class="btn btn-default" href="{{cancelUrl}}ParticipantRfidScan/{{competition.id}}/">{% trans "Switch to RFID Tag Scan Screen" %}</a>
+{% endif %}
+</h2><h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
+
 <hr/>
+<div>
 {% crispy form %}
 {% endblock content %}

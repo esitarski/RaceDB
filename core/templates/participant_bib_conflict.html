@@ -3,6 +3,7 @@
 
 {% load i18n %}
 {% load crispy_forms_tags %}
+<h1>{% trans "Bib Conflict" %}</h2>
 <h2>{{title}}</h2>
 <h3><strong>{{participant.license_holder.full_name}}</strong><br/>
 <br/>
@@ -33,6 +34,8 @@
 	{% endfor %}
 </tbody>
 </table>
+<hr/>
+{{error}}
 <hr/>
 <a class="btn btn-primary" href="{{pop2Url}}">{% trans "OK" %}</a>
 {% endblock content %}

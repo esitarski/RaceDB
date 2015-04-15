@@ -20,6 +20,7 @@ from models import *
 
 from django.db.models import Q
 from django.db import transaction, IntegrityError
+from django.utils.translation import string_concat
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import Template, Context, RequestContext
@@ -181,7 +182,13 @@ def addFormButtons( form, button_mask = EDIT_BUTTONS, additional_buttons = None,
 		
 	if print_button:
 		btns.append( HTML(u'&nbsp;' * 8) )
-		btns.append( HTML(u'<button class="btn btn-primary hidden-print" onClick="window.print()">{}</button>'.format(print_button)) )
+		btns.append( HTML(string_concat(
+					u'<button class="btn btn-primary hidden-print" onClick="window.print()">',
+					print_button,
+					'</button>'
+				)
+			)
+		)
 		
 	form.helper.layout.append( Div(*btns, css_class = 'row') )
 	#form.helper.layout.append( Div( HTML( '{{ form.errors }} {{ form.non_field_errors }}' ), css_class = 'row') )
@@ -208,7 +215,7 @@ def GenericModelForm( ModelClass ):
 	return Form
 
 def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
-	title = _('New {}').format(ModelClass._meta.verbose_name.title())
+	title = string_concat(_('New'), ' ', ModelClass._meta.verbose_name.title())
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
@@ -2547,9 +2554,9 @@ class ParticipantCategorySelectForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			HTML( _("Search") + ':&nbsp;&nbsp;&nbsp;&nbsp;' ),
+			HTML( u'{}:&nbsp;&nbsp;&nbsp;&nbsp;'.format( _("Search") ) ),
 			Div( Field('gender', css_class = 'form-control'), css_class = 'form-group' ),
-			HTML( '&nbsp;&nbsp;&nbsp;&nbsp;' ),
+			HTML( u'&nbsp;&nbsp;&nbsp;&nbsp;' ),
 			button_args[0],
 			button_args[1],
 		)
@@ -2679,17 +2686,18 @@ def ParticipantBibChange( request, participantId ):
 	competition = participant.competition
 	
 	# Find the available category numbers.
-	q = Q( competition = competition )
+	participants = Participant.objects.filter( competition=competition )
 	
 	category_numbers = competition.get_category_numbers( participant.category )
 	if category_numbers:
-		q &= Q( category__in = category_numbers.categories.all() )
-	allocated_numbers = dict( (p.bib, p.license_holder) for p in Participant.objects.select_related('license_holder').filter(q) )
+		participants.filter( category__in=category_numbers.categories.all() )
+	participants.select_related('license_holder')
+	allocated_numbers = { p.bib: p.license_holder for p in participants }
 	
 	# Exclude existing bib numbers of all license holders if using existing bibs.  We don't know whether the existing license holders will show up.
 	if competition.number_set:
-		allocated_numbers.update( dict( (nse.bib, nse.license_holder)
-			for nse in NumberSetEntry.objects.select_related('license_holder').filter( number_set=competition.number_set ) ) )
+		allocated_numbers.update( { nse.bib:nse.license_holder
+			for nse in NumberSetEntry.objects.select_related('license_holder').filter( number_set=competition.number_set ) } )
 	
 	if category_numbers:
 		available_numbers = sorted( category_numbers.get_numbers() )
@@ -2703,7 +2711,7 @@ def ParticipantBibChange( request, participantId ):
 	del allocated_numbers
 	
 	if participant.category:
-		bib_participants = { p.bib: p for p in Participant.objects.filter(competition=competition, category=participant.category) if p.bib }
+		bib_participants = { p.bib:p for p in Participant.objects.filter(competition=competition, category=participant.category) if p.bib }
 		for b in bibs:
 			try:
 				b.full_name = bib_participants[b.bib].full_name_team
@@ -2717,24 +2725,25 @@ def ParticipantBibSelect( request, participantId, bib ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
 	
+	bib_save = participant.bib
+	
 	bib = int(bib )
 	if participant.category and bib > 0:
 		participant.bib = bib
 		bib_conflicts = participant.get_bib_conflicts()
 		if bib_conflicts:
-			return render_to_response( 'participant_bib_conflict.html', RequestContext(request, locals()) )
+			participant.bib = bib_save
+			return HttpResponseRedirect(getContext(request,'popUrl'))		# Show the select screen again.
 	else:
 		participant.bib = None
 	
 	try:
 		participant.auto_confirm().save()
-	except IntegrityError:
-		bib_conflicts = participant.get_bib_conflicts()
-		if bib_conflicts:
-			return render_to_response( 'participant_bib_conflict.html', RequestContext(request, locals()) )
+	except IntegrityError as error:
+		return HttpResponseRedirect(getContext(request,'popUrl'))			# Show the select screen again.
 	
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
-		
+
 #--------------------------------------------------------------------------
 @autostrip
 class ParticipantNoteForm( Form ):
@@ -3007,7 +3016,7 @@ def ParticipantTagChange( request, participantId ):
 					# Report the error - probably a non-unique field.
 					status = False
 					status_entries.append(
-						(_('LicenseHolder') + u': ' + _('Existing Tag Save Exception:'), (
+						(string_concat(_('LicenseHolder'), u': ', _('Existing Tag Save Exception:')), (
 							unicode(e),
 						)),
 					)
