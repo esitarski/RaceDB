@@ -2301,8 +2301,6 @@ class ParticipantSearchForm( Form ):
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
 			Submit( 'clear-submit', _('Clear Search'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('OK'), css_class = 'btn btn-primary' ),
-			HTML( '&nbsp;' * 8 ),
-			Submit( 'add-participant-submit', _('Add Participant Manually'), css_class = 'btn btn-success' )
 		]
 		
 		self.helper.layout.extend( [
@@ -2325,9 +2323,6 @@ def Participants( request, competitionId ):
 		if 'clear-submit' in request.POST:
 			request.session[pfKey] = {}
 			return HttpResponseRedirect(getContext(request,'path'))
-			
-		if 'add-participant-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request, 'ParticipantAdd', competition.id) )
 			
 		form = ParticipantSearchForm( request.POST, competition=competition )
 		if form.is_valid():
