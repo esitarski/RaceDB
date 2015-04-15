@@ -2711,7 +2711,9 @@ def ParticipantBibChange( request, participantId ):
 	del allocated_numbers
 	
 	if participant.category:
-		bib_participants = { p.bib:p for p in Participant.objects.filter(competition=competition, category=participant.category) if p.bib }
+		bib_participants = { p.bib:p
+			for p in Participant.objects.filter(competition=competition, category=participant.category).exclude(bib__isnull=True)
+		}
 		for b in bibs:
 			try:
 				b.full_name = bib_participants[b.bib].full_name_team

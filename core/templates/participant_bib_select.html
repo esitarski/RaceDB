@@ -4,12 +4,14 @@
 {% load i18n %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-<h2>{{title}}</h2>
-<h3><strong>{{participant.license_holder.full_name}}</strong><br/>
+<h2>{{title}} <a class="btn btn-default" href=".">{% trans "Refresh" %}</a>
+</h2>
 <br/>
-{{participant.team.full_name}}<br/>
+<h3><strong>{{participant.license_holder.full_name}}</strong>
+<br/>
+{% if participant.team %}{{participant.team.full_name}}<br/>{% endif %}
 {{participant.category.full_name}}
-{% if participant.bib %}<br/><br/>Bib: <strong>{{participant.bib}}</strong>{% endif %}
+{% if participant.bib %}<br/><br/>{% trans "Current Bib" %}: <strong>{{participant.bib}}</strong>{% endif %}
 </h3>
 <hr/>
 <style>
