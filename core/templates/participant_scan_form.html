@@ -2,11 +2,17 @@
 {% block content %}
 
 {% load i18n %}
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 <h2>{{title}}
 {% if competition.using_tags %}
-	<a class="btn btn-default" href="{{cancelUrl}}ParticipantRfidScan/{{competition.id}}/">{% trans "Switch to RFID Tag Scan Screen" %}</a>
+	<a class="btn btn-info" href="{{cancelUrl}}ParticipantRfidScan/{{competition.id}}/">
+		<image src="{% static "images/glyphicons_065_tag.png" %}"/>&nbsp;&nbsp;{% trans "RFID Tag Entry" %}
+	</a>
 {% endif %}
+<a class="btn btn-info" href="{{cancelUrl}}ParticipantAdd/{{competition.id}}/">
+	<image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Entry" %}
+</a>
 </h2><h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
 
 <hr/>

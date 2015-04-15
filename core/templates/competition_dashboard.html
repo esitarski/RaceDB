@@ -69,12 +69,14 @@
 					<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{competition.id}}">{% trans "Edit" %}</a>
 				{% endif %}
 				&nbsp;&nbsp;
-				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><image src="{% static "images/glyphicons_043_group.png" %}">&nbsp;&nbsp;{% trans "Show Participants / Manual Entry" %}</a>
+				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><image src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
 				&nbsp;&nbsp;
-				<a class="btn btn-success" href="{{path}}ParticipantScan/{{competition.id}}"><image src="{% static "images/glyphicons_259_barcode.png" %}">&nbsp;&nbsp;{% trans "Barcode Entry" %}</a>
+				<a class="btn btn-success" href="{{path}}ParticipantAdd/{{competition.id}}"><image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Entry" %}</a>
+				&nbsp;&nbsp;
+				<a class="btn btn-success" href="{{path}}ParticipantScan/{{competition.id}}"><image src="{% static "images/glyphicons_259_barcode.png" %}">/&nbsp;&nbsp;{% trans "Barcode Entry" %}</a>
 				{% if competition.using_tags %}
 					&nbsp;&nbsp;
-					<a class="btn btn-success" href="{{path}}ParticipantRfidScan/{{competition.id}}"><image src="{% static "images/glyphicons_065_tag.png" %}">&nbsp;&nbsp;{% trans "RFID Entry" %}</a>
+					<a class="btn btn-success" href="{{path}}ParticipantRfidScan/{{competition.id}}"><image src="{% static "images/glyphicons_065_tag.png" %}"/>&nbsp;&nbsp;{% trans "RFID Entry" %}</a>
 				{% endif %}
 			</div>
 		</div>

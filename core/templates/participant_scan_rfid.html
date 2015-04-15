@@ -16,7 +16,12 @@ document.forms[0].submit();
 {% load crispy_forms_tags %}
 {% load staticfiles %}
 <h2>{{title}}
-<a class="btn btn-default" href="{{cancelUrl}}ParticipantScan/{{competition.id}}/">{% trans "Switch to Barcode Scan Screen" %}</a>
+<a class="btn btn-info" href="{{cancelUrl}}ParticipantScan/{{competition.id}}/">
+	<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Entry" %}
+</a>
+<a class="btn btn-info" href="{{cancelUrl}}ParticipantAdd/{{competition.id}}/">
+	<image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Entry" %}
+</a>
 </h2>
 <h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
 <hr/>
