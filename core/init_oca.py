@@ -18,11 +18,16 @@ def unicode_csv_reader(utf8_data, dialect=csv.excel, **kwargs):
     for row in csv_reader:
         yield [toUnicode(cell) for cell in row]
 
+fnameDefault = 'GFRR/14_Apr_2015_12_10_22_PM-oca-dougs-report-8fc93c.csv'
 fnameDefault = 'GFRR/April 17.csv'
 
 def date_from_str( s ):
-	# Assume month, day, year.
+	# Assume year, month, day
 	yy, mm, dd = [int(v.strip()) for v in s.split( '/' )]
+	
+	# Correct for day, month, year.
+	if dd > 1900:
+		dd, mm, yy = yy, mm, dd
 	
 	# Correct for 2-digit year.
 	for century in [0, 1900, 2000, 2100]:
@@ -56,7 +61,10 @@ def large_delete_all( Object ):
 			ids = Object.objects.values_list('pk', flat=True)[:999]
 			Object.objects.filter(pk__in = ids).delete()
 
-def init_oca( fname = fnameDefault, message_stream=sys.stdout ):
+def init_oca( fname, message_stream=sys.stdout ):
+	
+	if fname == '_':
+		fname = fnameDefault
 	
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def messsage_stream_write( s ):
@@ -143,9 +151,12 @@ def init_oca( fname = fnameDefault, message_stream=sys.stdout ):
 		for i, row in enumerate(oca_reader):
 			if i == 0:
 				# Get the header fields from the first row.
-				fields = [html_parser.unescape(v.strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
-				fields = ['f{}'.format(i) if not f else f.strip() for i, f in enumerate(fields)]
-				messsage_stream_write( u'\n'.join( fields ) )
+				fields = utils.getHeaderFields( [html_parser.unescape(v.strip()) for v in row] )
+				messsage_stream_write( u'Recognized Header Fields:\n' )
+				messsage_stream_write( u'----------------------------\n' )
+				messsage_stream_write( u'\n'.join(fields) + u'\n' )
+				messsage_stream_write( u'----------------------------\n' )
+				
 				oca_record = namedtuple('oca_record', fields)
 				continue
 			

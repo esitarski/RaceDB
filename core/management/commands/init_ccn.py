@@ -5,7 +5,7 @@ import core.init_ccn
 class Command(BaseCommand):
 
 	args = '<ccn_sheet.xls>'
-	help = 'Initialized the database with USAC CCN data'
+	help = 'Initialize the database with CCN data'
 
 	def handle(self, *args, **options):
 		core.init_ccn.init_ccn( *args )

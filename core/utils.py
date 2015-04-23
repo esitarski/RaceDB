@@ -47,6 +47,21 @@ def toUnicode( s ):
 			pass
 	raise e
 
+def getHeaderFields( fields ):
+	fields = [removeDiacritic(v) for v in fields]
+	fields_new = []
+	for i, f in enumerate(fields):
+		try:
+			f_new = f.encode('ascii')
+		except:
+			f_new = 'valid_field_name_created_in_col_{}'.format(i)
+		fields_new.append( f_new )
+	fields = fields_new
+	fields = [v.replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_') for v in fields]
+	fields = [v.strip().lower() for v in fields]
+	fields = ['valid_field_name_created_in_col_{}'.format(i) if not f else f for i, f in enumerate(fields)]
+	return fields
+
 reSep = re.compile( u'[:;,-/. \t]+' )
 def normalizeSeparators( s ):
 	return reSep.sub( u' ', s )

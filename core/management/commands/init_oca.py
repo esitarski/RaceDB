@@ -4,8 +4,8 @@ import core.init_oca
 
 class Command(BaseCommand):
 
-	args = '<oca_csv_file>'
-	help = 'Initialized the database with USAC rider data'
+	args = '<oca_format_data_file.csv>'
+	help = 'Initialize the database with OCA rider data'
 
 	def handle(self, *args, **options):
 		core.init_oca.init_oca( *args )
