@@ -279,13 +279,16 @@ class SeasonsPass(models.Model):
 
 class SeasonsPassHolder(models.Model):
 	seasons_pass = models.ForeignKey( 'SeasonsPass', db_index = True, verbose_name = _("Season's Pass") )
-	license_holder = models.ForeignKey( 'LicenseHolder', unique = True, db_index = True, verbose_name = _("LicenseHolder") )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name = _("LicenseHolder") )
 	
 	def __unicode__( self ):
 		return u''.join( [unicode(self.seasons_pass), u': ', unicode(self.license_holder)] )
 	
 	class Meta:
 		ordering = ['license_holder__search_text']
+		unique_together = (
+			('seasons_pass', 'license_holder'),
+		)
 		verbose_name = _("Season's Pass Holder")
 		verbose_name_plural = _("Season's Pass Holders")
 
