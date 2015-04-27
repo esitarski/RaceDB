@@ -8,6 +8,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import get_default_timezone
 from django.core.exceptions import ObjectDoesNotExist
 
+from django.utils.safestring import mark_safe
+
 import patch_sqlite_text_factory
 
 from DurationField import DurationField
@@ -180,10 +182,10 @@ class Category(models.Model):
 		return category_new
 	
 	def full_name( self ):
-		return ', '.join( [self.code, self.get_gender_display(), self.description] )
+		return u', '.join( [self.code, self.get_gender_display(), self.description] )
 		
 	def get_search_text( self ):
-		return utils.normalizeSearch(' '.join( u'"{}"'.format(f) for f in [self.code, self.get_gender_display(), self.description] ) )
+		return utils.normalizeSearch(u' '.join( u'"{}"'.format(f) for f in [self.code, self.get_gender_display(), self.description] ) )
 		
 	def __unicode__( self ):
 		return u'{} ({}) [{}]'.format(self.code, self.description, self.format.name)
@@ -487,7 +489,7 @@ class Competition(models.Model):
 			for participant in self.get_participants():
 				bib_last = participant.bib
 				try:
-					participant.bib = NumberSetEntry.objects.get( number_set=self.number_set, license_holder=participant.license_holder ).bib
+					participant.bib = NumberSetEntry.objects.get( number_set=self.number_set, license_holder=participant.license_holder, date_lost=None ).bib
 				except NumberSetEntry.DoesNotExist as e:
 					participant.bib = None
 				if bib_last != participant.bib:
@@ -659,6 +661,12 @@ class Event( models.Model ):
 		(2, _('Manual Start: Skip first tag read for all riders.  Required when start run-up passes the finish line.')),
 	)
 	rfid_option = models.PositiveIntegerField( choices=RFID_OPTION_CHOICES, default=1, verbose_name = _('RFID Option') )
+	
+	note = models.TextField( null=True, blank=True, verbose_name=_('Note') )
+	
+	@property
+	def note_html( self ):
+		return mark_safe( u'<br/>'.join( self.note.split(u'\n') ) ) if self.note else u''
 	
 	@property
 	def is_optional( self ):
@@ -1022,6 +1030,8 @@ class LicenseHolder(models.Model):
 
 	SearchTextLength = 256
 	search_text = models.CharField( max_length=SearchTextLength, blank=True, default='', db_index=True )
+	
+	note = models.TextField( null=True, blank=True, verbose_name=_('LicneseHolder Note') )
 
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or '').strip().upper()
@@ -1100,6 +1110,27 @@ class LicenseHolder(models.Model):
 			dy *= 4
 		return -(dy ** 2)
 	
+	@classmethod
+	def get_duplicates( cls ):
+		duplicates = defaultdict( list )
+		for last_name, first_name, gender, date_of_birth, pk in LicenseHolder.objects.values_list('last_name','first_name','gender','date_of_birth','pk'):
+			key = (
+				u'{}, {}'.format(utils.removeDiacritic(last_name).upper(), utils.removeDiacritic(first_name[:1]).upper()),
+				gender,
+				date_of_birth
+			)
+			duplicates[key].append( pk )
+		
+		duplicates = [{
+				'key': key,
+				'duplicateIds': u','.join(unicode(pk) for pk in pks),
+				'license_holders': LicenseHolder.objects.filter(pk__in=pks).order_by( 'search_text' ),
+				'license_holders_len': len(pks),
+			} for key, pks in duplicates.iteritems() if len(pks) > 1]
+			
+		duplicates.sort( key=lambda r: r['key'] )
+		return duplicates
+
 	class Meta:
 		verbose_name = _('LicenseHolder')
 		verbose_name_plural = _('LicenseHolders')
@@ -1135,6 +1166,9 @@ class NumberSetEntry(models.Model):
 	number_set = models.ForeignKey( 'NumberSet', db_index = True )
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
 	bib = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Bib') )
+	
+	# If date_lost will only have a value if the number is not lost.
+	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
 	
 	class Meta:
 		verbose_name = _('NumberSetEntry')
@@ -1239,14 +1273,14 @@ class Participant(models.Model):
 			if competition.number_set:
 				if self.bib:
 					try:
-						nse = NumberSetEntry.objects.get( number_set=competition.number_set, license_holder=license_holder )
+						nse = NumberSetEntry.objects.get( number_set=competition.number_set, license_holder=license_holder, date_lost=None )
 						if nse.bib != self.bib:
 							nse.bib = self.bib
 							nse.save()
 					except NumberSetEntry.DoesNotExist:
 						NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()
 				else:
-					NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder ).delete()
+					NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).delete()
 				
 			if license_holder.existing_tag != self.tag or license_holder.existing_tag2 != self.tag2:
 				license_holder.existing_tag = self.tag
@@ -1444,29 +1478,32 @@ class Participant(models.Model):
 		return any( entered and event.event_type == 1 for event, optional, entered in self.get_participant_events() )
 	
 	def explain_integrity_error( self ):
-		try:
-			participant = Participant.objects.get(competition=self.competition, category=self.category, license_holder=self.license_holder)
+		def get_first( q ):
+			for o in q:
+				return o
+			return None
+				
+		participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder) )
+		if participant:
 			return True, _('This LicenseHolder is already in this Category'), participant
-		except Participant.DoesNotExist:
-			pass
 			
-		try:
-			participant = Participant.objects.get(competition=self.competition, category=self.category, bib=self.bib)
+		participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder) )
+		if participant:
+			return True, _('This LicenseHolder is already in this Category'), participant
+			
+		participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, bib=self.bib) )
+		if participant:
 			return True, _('A Participant is already in this Category with the same Bib.  Assign "No Bib" first, then try again.'), participant
-		except Participant.DoesNotExist:
-			pass
+		
+		if self.tag:
+			participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, tag=self.tag) )
+			if participant:
+				return True, _('A Participant is already in this Category with the same Chip Tag.  Assign empty "Tag" first, and try again.'), participant
 			
-		try:
-			participant = Participant.objects.get(competition=self.competition, category=self.category, tag=self.tag)
-			return True, _('A Participant is already in this Category with the same Chip Tag.  Assign empty "Tag" first, and try again.'), participant
-		except Participant.DoesNotExist:
-			pass
-			
-		try:
-			participant = Participant.objects.get(competition=self.competition, category=self.category, tag2=self.tag2)
-			return True, _('A Participant is already in this Category with the same Chip Tag2.  Assign empty "Tag2" first, and try again.'), participant
-		except Participant.DoesNotExist:
-			pass
+		if self.tag2:
+			participant = get_first( Participant.objects.get(competition=self.competition, category=self.category, tag2=self.tag2) )
+			if participant:
+				return True, _('A Participant is already in this Category with the same Chip Tag2.  Assign empty "Tag2" first, and try again.'), participant
 		
 		return False, _('Unknown Integrity Error.'), None
 	
@@ -1836,6 +1873,70 @@ class ParticipantOption( models.Model ):
 		verbose_name_plural = _("Participant Options")
 
 #-------------------------------------------------------------------------------------
+
+def license_holder_merge_duplicates( license_holder_merge, duplicates ):
+	duplicates = list( set(list(duplicates) + [license_holder_merge]) )
+	pks = [lh.pk for lh in duplicates if lh != license_holder_merge]
+	if not pks:
+		return
+	
+	# Cache and delete the Participant Options.
+	participant_options = [(po.participant.pk, po) for po in ParticipantOption.objects.filter( participant__license_holder__pk__in=[lh.pk for lh in duplicates] ) ]
+	for participant_pk, po in participant_options:
+		po.delete()
+	
+	# Cache and delete the Participants.
+	participants = list(Participant.objects.filter(license_holder__pk__in=[lh.pk for lh in duplicates]))
+	for p in participants:
+		p.delete()
+		
+	# Add back Participants that point to the merged license_holder.
+	competition_participant = {}
+	participant_map = {}
+	for p in participants:
+		pk_old = p.pk
+		p.pk = None
+		p.license_holder = license_holder_merge
+		if p.explain_integrity_error()[0]:
+			continue
+		p.save()
+		competition_participant[p.competition] = p
+		participant_map[pk_old] = p
+	
+	# Add back ParticipantOptions that point to the corresponding new Participant.
+	for participant_pk, po in participant_options:
+		po.pk = None
+		try:
+			po.participant = participant_map[participant_pk]
+		except KeyError:
+			try:
+				po.participant = competition_participant[po.competition]
+			except KeyError:
+				continue
+		if ParticipantOption.objects.filter(competition=po.competition, participant=po.participant, option_id=po.option_id).exists():
+			continue
+		po.save()
+	
+	# Ensure the merged entry is added to every Season's Passes.
+	sph_duplicates = set( SeasonsPassHolder.objects.filter(license_holder__pk__in=pks) )
+	sph_merge = set( SeasonsPassHolder.objects.filter(license_holder=license_holder_merge) )
+	sph_missing = sph_duplicates.difference( sph_merge )
+	for sph in sph_missing:
+		sph.pk = None
+		sph.license_holder = license_holder_merge
+		sph.save()
+	
+	# Ensure the merged entry gets the same value as existing entries in all NumberSets.
+	nse_duplicates = set( NumberSetEntry.objects.filter(license_holder__pk__in=pks) )
+	nse_merge = set( NumberSetEntry.objects.filter(license_holder=license_holder_merge) )
+	nse_missing = nse_duplicates.difference( nse_merge )
+	for nse in nse_missing:
+		nse.pk = None
+		nse.license_holder = license_holder_merge
+		nse.save()
+	
+	# Final delete.  Cascade delete will clean up unnecessary SeasonsPass and NumberSet entries.
+	LicenseHolder.objects.filter( pk__in=pks ).delete()
 
 # Apply upgrades.
 # import migrate_data

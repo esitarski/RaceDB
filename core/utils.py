@@ -126,7 +126,7 @@ class Breadcrumb( object ):
 		self.name = reRFID.sub('RFID', name)
 		self.url = url
 
-reNum = re.compile( '^\d+$' )
+reNum = re.compile( '^[0123456789,]+$' )
 class Breadcrumbs( object ):
 	def __init__( self, pathIn ):
 		self.breadcrumbs = []

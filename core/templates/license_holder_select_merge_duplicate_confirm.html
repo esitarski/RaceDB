@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<style>
+.table>tbody>tr.highlight {
+    background: #98fb98;
+}
+</style>
+<h2>{{title}}</h2>
+<hr/>
+<h2>{% trans "Final Confirmation" %}:</h2><br/>
+<h2>{% trans "Duplicate License Holders will be Merged with the Highlighted Record" %}:</h2>
+<br/>
+{% spaceless %}
+<table class="table table-condensed">
+<thead>
+	<tr>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Date of Birth" %}</th>
+		<th>{% trans "City" %}</th>
+		<th>{% trans "State/Prov" %}</th>
+		<th>{% trans "Nationality" %}</th>
+		<th>{% trans "License" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for h in duplicates %}
+		<tr {% if h == license_holder_merge %}class="highlight"{% endif %}">
+			<td>{{h.last_name}},&nbsp;{{h.first_name}}</td>
+			<td>{{h.get_gender_display}}</td>
+			<td>{{h.date_of_birth}}</td>
+			<td>{{h.city}}</td>
+			<td>{{h.state_prov}}</td>
+			<td>{{h.nationality}}</td>
+			<td>{{h.license_code}}</td>
+			<td class="hidden-print">
+				<a class="btn btn-primary" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+
+<br/>
+{% trans "All references in Participants, ParticipantOptions, NumberSets and Seasons Passes will be merged." %}
+<hr/>
+<a class="btn btn-success" href="{{cancelUrl}}LicenseHoldersMergeDuplicatesOK/{{license_holder_merge.pk}}/{{duplicateIds}}/">{% trans "OK" %}</a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+{% endblock content %}

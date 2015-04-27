@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<hr/>
+{% trans "Use Ctrl+Click to deselect records that are not part of the duplicates." %}<br/>
+<div>
+{% crispy form %}
+</div>
+{% endblock content %}

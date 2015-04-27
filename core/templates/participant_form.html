@@ -198,10 +198,17 @@
 	</tr>
 {% endif %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantNoteChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Note" %}:</td>
-	<td>{{p.note}}</td>
+	<td class="text-right">{% trans "Competition Note" %}:</td>
+	<td>{% if p.note %}{{p.note}}{% endif %}</td>
 	{% if isEdit %}
 		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantNoteChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantGeneralNoteChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "General Note" %}:</td>
+	<td>{% if h.note %}{{h.note}}{% endif %}</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantGeneralNoteChange/{{p.id}}/">{% trans "Change" %}</a></td>
 	{% endif %}
 </tr>
 {% if p.has_optional_events %}

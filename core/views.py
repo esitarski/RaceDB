@@ -518,6 +518,9 @@ class LicenseHolderForm( ModelForm ):
 				Col('existing_tag2', 3),
 				Col('active', 3),
 			),
+			Row(
+				Field('note'),
+			),
 		)
 		
 		self.additional_buttons = []
@@ -530,7 +533,10 @@ reUCICode = re.compile( '^[A-Z]{3}[0-9]{8}$', re.IGNORECASE )
 @external_access
 def LicenseHoldersDisplay( request ):
 	search_text = request.session.get('license_holder_filter', '')
-	btns = [('new-submit', 'New', 'btn btn-success')]
+	btns = [
+		('new-submit', _('New'), 'btn btn-success'),
+		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
+	]
 	if request.method == 'POST':
 	
 		if 'cancel-submit' in request.POST:
@@ -538,6 +544,9 @@ def LicenseHoldersDisplay( request ):
 			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
+			
+		if 'manage-duplicates-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )
 			
 		form = SearchForm( btns, request.POST )
 		if form.is_valid():
@@ -572,6 +581,90 @@ def LicenseHoldersDisplay( request ):
 	isEdit = True
 	return render_to_response( 'license_holder_list.html', RequestContext(request, locals()) )
 
+#------------------------------------------------------------------------------------------------------
+@external_access
+def LicenseHoldersManageDuplicates( request ):
+	duplicates = LicenseHolder.get_duplicates()
+	return render_to_response( 'license_holder_duplicate_list.html', RequestContext(request, locals()) )
+
+def GetLicenseHolderSelectDuplicatesForm( duplicates ):
+	choices = [(lh.pk, u'{last_name}, {first_name} {gender} {date_of_birth} {city} {state_prov} {nationality} {license}'.format(
+		last_name=lh.last_name,
+		first_name=lh.first_name,
+		gender=lh.get_gender_display(),
+		date_of_birth=lh.date_of_birth,
+		state_prov=lh.state_prov,
+		city=lh.city,
+		nationality=lh.nationality,
+		license=lh.license_code, )) for lh in duplicates]
+	
+	@autostrip
+	class LicenseHolderSelectDuplicatesForm( Form ):
+		pks = forms.MultipleChoiceField( required = False, label = _('Potential Duplicates'), choices=choices )
+		
+		def __init__(self, *args, **kwargs):
+			super(LicenseHolderSelectDuplicatesForm, self).__init__(*args, **kwargs)
+			
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'navbar-form navbar-left'
+			
+			button_args = [
+				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			]
+			
+			self.helper.layout = Layout(
+				Row(
+					Field('pks', css_class = 'form-control', size = '10'),
+				),
+				Row(
+					button_args[0],
+					button_args[1],
+				)
+			)
+	
+	return LicenseHolderSelectDuplicatesForm
+	
+@external_access
+def LicenseHoldersSelectDuplicates( request, duplicateIds ):
+	pks = [int(pk) for pk in duplicateIds.split(',')]
+	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	if request.method == 'POST':
+	
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = GetLicenseHolderSelectDuplicatesForm( duplicates )( request.POST )
+		if form.is_valid():
+			pks = form.cleaned_data['pks']
+			return HttpResponseRedirect( '{}LicenseHoldersSelectMergeDuplicate/{}/'.format(getContext(request,'cancelUrl'), ','.join('{}'.format(pk) for pk in pks)) )
+	else:
+		form = GetLicenseHolderSelectDuplicatesForm( duplicates )( initial=dict(pks=pks) )
+	return render_to_response( 'license_holder_select_duplicates.html', RequestContext(request, locals()) )
+	
+@external_access
+def LicenseHoldersSelectMergeDuplicate( request, duplicateIds ):
+	pks = [int(pk) for pk in duplicateIds.split(',')]
+	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	return render_to_response( 'license_holder_select_merge_duplicate.html', RequestContext(request, locals()) )
+
+@external_access
+def LicenseHoldersMergeDuplicates( request, mergeId, duplicateIds ):
+	license_holder_merge = get_object_or_404( LicenseHolder, pk=mergeId )
+	pks = [int(pk) for pk in duplicateIds.split(',')]
+	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	return render_to_response( 'license_holder_select_merge_duplicate_confirm.html', RequestContext(request, locals()) )
+
+def LicenseHoldersMergeDuplicatesOK( request, mergeId, duplicateIds ):
+	license_holder_merge = get_object_or_404( LicenseHolder, pk=mergeId )
+	pks = [int(pk) for pk in duplicateIds.split(',')]
+	pks = [pk for pk in pks if pk != license_holder_merge.pk]
+	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	license_holder_merge_duplicates( license_holder_merge, duplicates )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+#------------------------------------------------------------------------------------------------------
 @external_access
 def LicenseHolderNew( request ):
 	return GenericNew( LicenseHolder, request, LicenseHolderForm,
@@ -940,7 +1033,7 @@ def NumberSetEdit( request, numberSetId ):
 	return GenericEdit(
 		NumberSet, request, numberSetId, NumberSetForm,
 		template='number_set_edit.html',
-		additional_context={'number_set_entries':NumberSetEntry.objects.filter(number_set=number_set).order_by('bib')}
+		additional_context={'number_set_entries':NumberSetEntry.objects.filter(number_set=number_set, date_lost=None).order_by('bib')}
 	)
 	
 @external_access
@@ -1862,6 +1955,7 @@ class EventMassStartForm( ModelForm ):
 				Col(Field('select_by_default'), 6),
 			),
 			Row( Field('rfid_option') ),
+			Row( Field('note', rows='4', cols='60') ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
@@ -2063,6 +2157,7 @@ class EventTTForm( ModelForm ):
 				Col(Field('optional'), 6),
 				Col(Field('select_by_default'), 6),
 			),
+			Row( Field('note', rows='4', cols='60') ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
@@ -2692,7 +2787,7 @@ def ParticipantBibChange( request, participantId ):
 	# Exclude existing bib numbers of all license holders if using existing bibs.  We don't know whether the existing license holders will show up.
 	if competition.number_set:
 		allocated_numbers.update( { nse.bib:nse.license_holder
-			for nse in NumberSetEntry.objects.select_related('license_holder').filter( number_set=competition.number_set ) } )
+			for nse in NumberSetEntry.objects.select_related('license_holder').filter( number_set=competition.number_set, date_lost=None ) } )
 	
 	if category_numbers:
 		available_numbers = sorted( category_numbers.get_numbers() )
@@ -2786,6 +2881,27 @@ def ParticipantNoteChange( request, participantId ):
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = ParticipantNoteForm( initial = dict(note = participant.note) )
+		
+	return render_to_response( 'participant_note_change.html', RequestContext(request, locals()) )
+
+@external_access
+def ParticipantGeneralNoteChange( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	competition = participant.competition
+	license_holder = participant.license_holder
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = ParticipantNoteForm( request.POST )
+		if form.is_valid():
+			note = form.cleaned_data['note']
+			license_holder.note = note
+			license_holder.save()
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = ParticipantNoteForm( initial = dict(note = license_holder.note) )
 		
 	return render_to_response( 'participant_note_change.html', RequestContext(request, locals()) )
 
@@ -2946,7 +3062,7 @@ class ParticipantTagForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Col( Field('tag', cols = '60'), 4 ),
+				Col( Field('tag', rows='2', cols='60'), 4 ),
 				Col( Field('make_this_existing_tag'), 4 ),
 				Col( Field('rfid_antenna'), 4 ),
 			),

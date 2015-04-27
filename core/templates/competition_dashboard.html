@@ -93,6 +93,7 @@
 	<tr>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Type" %}</th>
+		<th>{% trans "Note" %}</th>
 		<th>{% trans "Waves" %}</th>
 		<th>{% trans "Date" %}</th>
 		<th class="text-center">{% trans "Starters" %}</th>
@@ -103,12 +104,13 @@
 	{% for e in events_mass_start %}
 		<tr onclick="jump('{{path}}StartList/{{e.id}}/');">
 			<td>{{e.name}}</td>
-			<td><strong>{{e.get_event_type_display}}</strong>,
+			<td><strong>{{e.get_event_type_display}}</strong><br/>
 					{% if e.optional %}
 						{% trans "Optional" %}{% if e.select_by_default %}, {% trans "Select by Default" %}{% endif %}
 					{% else %}
 						{% trans "Included" %}
 					{% endif %}
+			<td>{% if e.note %}{{e.note_html}}{% endif %}</td>
 			</td>
 			<td>{{e.wave_text_html|safe}}</td>
 			<td>{{e.date_time}}</td>
@@ -138,6 +140,7 @@
 	<tr>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Type" %}</th>
+		<th>{% trans "Note" %}</th>
 		<th>{% trans "Waves" %}</th>
 		<th>{% trans "Date" %}</th>
 		<th class="text-center">{% trans "Starters" %}</th>
@@ -148,13 +151,14 @@
 	{% for e in events_tt %}
 		<tr onclick="jump('{{path}}StartListTT/{{e.id}}/');">
 			<td>{{e.name}}{% if e.has_unseeded %} <span class="label label-danger">{% trans "Warning: Unseeded Riders" %}</span>{% endif %}</td>
-			<td><strong>{{e.get_event_type_display}}</strong>,
+			<td><strong>{{e.get_event_type_display}}</strong><br/>
 					{% if e.optional %}
 						{% trans "Optional" %}{% if e.select_by_default %}, {% trans "Select by Default" %}{% endif %}
 					{% else %}
 						{% trans "Included" %}
 					{% endif %}
 			</td>
+			<td>{% if e.note %}{{e.note_html}}{% endif %}</td>
 			<td>{{e.wave_text_html|safe}}</td>
 			<td>{{e.date_time}}</td>
 			<td class="text-center">{{e.get_participant_count}}</td>
