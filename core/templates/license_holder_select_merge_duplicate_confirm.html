@@ -48,7 +48,9 @@
 <br/>
 {% trans "All references in Participants, ParticipantOptions, NumberSets and Seasons Passes will be merged." %}
 <hr/>
-<a class="btn btn-success" href="{{cancelUrl}}LicenseHoldersMergeDuplicatesOK/{{license_holder_merge.pk}}/{{duplicateIds}}/">{% trans "OK" %}</a>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-success" href="{{cancelUrl}}LicenseHoldersMergeDuplicatesOK/{{license_holder_merge.pk}}/{{duplicateIds}}/">{% trans "Merge Duplicates" %}</a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-primary" href="{{cancelUrl}}LicenseHoldersSelectMergeDuplicate/{{duplicateIds}}/">{% trans "Back" %}</a>
+&nbsp;
 <a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 {% endblock content %}

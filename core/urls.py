@@ -18,6 +18,8 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*StartListTT/(?P<eventTTId>\d+)/$', views.StartListTT),
 	
+	url(r'^(?i).*StartListExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.StartListExcelDownload),
+	
 	url(r'^(?i).*ParticipantScan/(?P<competitionId>\d+)/$', views.ParticipantScan),
 	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/$', views.ParticipantRfidScan),
 	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidScan),

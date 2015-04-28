@@ -10,6 +10,7 @@
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 <h2><strong>{{instance.competition.name}}</strong></h2>
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
+<br/><h4>{% trans "Total Starters" %}: {{instance.get_participant_count}}</h4>
 <div class="hidden-print">
 <hr/>
 <button class="btn btn-primary" id="focus" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
@@ -18,6 +19,7 @@
 	<a class="btn btn-success" href="./SeedingEdit/{{instance.id}}/">{% trans "Edit Seeding" %}</a>
 {% endif %}
 &nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-primary" href="{{path}}StartListExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export to Excel" %}</a>
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <hr/>
 </div>
@@ -39,7 +41,7 @@
 		<th></th>
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Categories" %}</th>
-		<th class="text-center">{% trans "Total Starters" %}</th>
+		<th class="text-center">{% trans "Starters" %}</th>
 		{% if late_reg_exists %}<th class="text-center">{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 	</tr>

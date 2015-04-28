@@ -10,11 +10,13 @@
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 <h2><strong>{{instance.competition.name}}</strong></h2>
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
+<br/><h4>{% trans "Total Starters" %}: {{instance.get_participant_count}}</h4>
 <div class="hidden-print">
 <hr/>
 <button class="btn btn-primary" id="focus" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+<a class="btn btn-primary" href="{{path}}StartListExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export to Excel" %}</a>
 <hr/>
 </div>
 <h2 class="visible-print">{% trans "Waves" %}</h2>
@@ -25,7 +27,7 @@
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Start Offset" %}</th>
 		<th>{% trans "Categories" %}</th>
-		<th class="text-center">{% trans "Total Starters" %}</th>
+		<th class="text-center">{% trans "Starters" %}</th>
 		{% if late_reg_exists %}<th class="text-center">{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 	</tr>
@@ -74,7 +76,7 @@
 <h2>{% trans "Start Lists" %}</h2>
 {% for w in instance.wave_set.all %}
 <hr/>
-<h4><strong>{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.category_count_text}} <strong>{% trans "Total Starters" %}: {{w.get_participants.count}}</strong></h4>
+<h4><strong>{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.category_count_text}} &nbsp;&nbsp;<strong>{% trans "Starters" %}: {{w.get_participants.count}}</strong></h4>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed participant_table">
 <thead>

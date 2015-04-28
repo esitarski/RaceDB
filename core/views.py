@@ -42,6 +42,10 @@ from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
+from get_seasons_pass_excel import get_seasons_pass_excel
+from get_number_set_excel import get_number_set_excel
+from get_start_list_excel import get_start_list_excel
+
 from participant_key_filter import participant_key_filter
 from autostrip import autostrip
 
@@ -534,7 +538,7 @@ reUCICode = re.compile( '^[A-Z]{3}[0-9]{8}$', re.IGNORECASE )
 def LicenseHoldersDisplay( request ):
 	search_text = request.session.get('license_holder_filter', '')
 	btns = [
-		('new-submit', _('New'), 'btn btn-success'),
+		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
 	]
 	if request.method == 'POST':
@@ -588,7 +592,7 @@ def LicenseHoldersManageDuplicates( request ):
 	return render_to_response( 'license_holder_duplicate_list.html', RequestContext(request, locals()) )
 
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
-	choices = [(lh.pk, u'{last_name}, {first_name} {gender} {date_of_birth} {city} {state_prov} {nationality} {license}'.format(
+	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city} - {state_prov} - {nationality} - {license}'.format(
 		last_name=lh.last_name,
 		first_name=lh.first_name,
 		gender=lh.get_gender_display(),
@@ -630,6 +634,9 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 def LicenseHoldersSelectDuplicates( request, duplicateIds ):
 	pks = [int(pk) for pk in duplicateIds.split(',')]
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	if duplicates.count() != len(pks):
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
 	if request.method == 'POST':
 	
 		if 'cancel-submit' in request.POST:
@@ -647,6 +654,8 @@ def LicenseHoldersSelectDuplicates( request, duplicateIds ):
 def LicenseHoldersSelectMergeDuplicate( request, duplicateIds ):
 	pks = [int(pk) for pk in duplicateIds.split(',')]
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	if duplicates.count() != len(pks):
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	return render_to_response( 'license_holder_select_merge_duplicate.html', RequestContext(request, locals()) )
 
 @external_access
@@ -654,6 +663,8 @@ def LicenseHoldersMergeDuplicates( request, mergeId, duplicateIds ):
 	license_holder_merge = get_object_or_404( LicenseHolder, pk=mergeId )
 	pks = [int(pk) for pk in duplicateIds.split(',')]
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	if duplicates.count() != len(pks):
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	return render_to_response( 'license_holder_select_merge_duplicate_confirm.html', RequestContext(request, locals()) )
 
 def LicenseHoldersMergeDuplicatesOK( request, mergeId, duplicateIds ):
@@ -661,6 +672,8 @@ def LicenseHoldersMergeDuplicatesOK( request, mergeId, duplicateIds ):
 	pks = [int(pk) for pk in duplicateIds.split(',')]
 	pks = [pk for pk in pks if pk != license_holder_merge.pk]
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
+	if duplicates.count() != len(pks):
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	license_holder_merge_duplicates( license_holder_merge, duplicates )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
@@ -989,6 +1002,15 @@ class NumberSetForm( ModelForm ):
 		model = NumberSet
 		fields = '__all__'
 		
+	def exportToExcelCB( self, request, numberSet ):
+		xl = get_number_set_excel( numberSet )
+		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		response['Content-Disposition'] = 'attachment; filename=RaceDB-NumberSet-{}-{}.xlsx'.format(
+			utils.removeDiacritic(numberSet.name),
+			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+		)
+		return response
+		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
@@ -1003,7 +1025,14 @@ class NumberSetForm( ModelForm ):
 			),
 			Field( 'sequence', type='hidden' ),
 		)
-		addFormButtons( self, button_mask )
+		
+		self.additional_buttons = []
+		if button_mask == EDIT_BUTTONS:
+			self.additional_buttons.extend( [
+					( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary', self.exportToExcelCB ),
+			])
+		
+		addFormButtons( self, button_mask, self.additional_buttons )
 
 @external_access
 def NumberSetsDisplay( request ):
@@ -1033,7 +1062,7 @@ def NumberSetEdit( request, numberSetId ):
 	return GenericEdit(
 		NumberSet, request, numberSetId, NumberSetForm,
 		template='number_set_edit.html',
-		additional_context={'number_set_entries':NumberSetEntry.objects.filter(number_set=number_set, date_lost=None).order_by('bib')}
+		additional_context={'number_set_entries':NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib')}
 	)
 	
 @external_access
@@ -1089,6 +1118,15 @@ class SeasonsPassForm( ModelForm ):
 	def addSeasonsPassHolderDB( self, request, seasonsPass ):
 		return HttpResponseRedirect( pushUrl(request, 'SeasonsPassHolderAdd', seasonsPass.id) )
 		
+	def exportToExcelCB( self, request, seasonsPass ):
+		xl = get_seasons_pass_excel( seasonsPass )
+		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		response['Content-Disposition'] = 'attachment; filename=RaceDB-SeasonsPassHolders-{}-{}.xlsx'.format(
+			utils.removeDiacritic(seasonsPass.name),
+			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+		)
+		return response
+		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
@@ -1108,6 +1146,7 @@ class SeasonsPassForm( ModelForm ):
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
 					( 'add-seasons-pass-holder-submit', _("Add Season's Pass Holders"), 'btn btn-success', self.addSeasonsPassHolderDB ),
+					( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary', self.exportToExcelCB ),
 			])
 		
 		addFormButtons( self, button_mask, self.additional_buttons )
@@ -1140,7 +1179,7 @@ def SeasonsPassEdit( request, seasonsPassId ):
 	return GenericEdit(
 		SeasonsPass, request, seasonsPassId, SeasonsPassForm,
 		template='seasons_pass_edit.html',
-		additional_context={'seasons_pass_entries':SeasonsPassHolder.objects.filter(seasons_pass=seasons_pass)}
+		additional_context={'seasons_pass_entries':SeasonsPassHolder.objects.select_related('license_holder').filter(seasons_pass=seasons_pass)}
 	)
 	
 @external_access
@@ -1655,7 +1694,26 @@ def StartListTT( request, eventTTId ):
 	time_stamp = datetime.datetime.now()
 	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
 	return render_to_response( 'tt_start_list.html', RequestContext(request, locals()) )
+
+def StartListExcelDownload( request, eventId, eventType ):
+	eventType = int(eventType)
+	if eventType == 0:
+		event = get_object_or_404( EventMassStart, pk=eventId )
+	elif eventType == 1:
+		event = get_object_or_404( EventTT, pk=eventId )
+	else:
+		assert False, 'unknown event type: {}'.format(eventType)
 	
+	xl = get_start_list_excel( event )
+	response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	response['Content-Disposition'] = 'attachment; filename=RaceDB-{}-{}_{}-{}.xlsx'.format(
+		utils.removeDiacritic(event.competition.name),	
+		utils.removeDiacritic(event.name),
+		event.date_time.strftime('%Y-%m-%d-%H%M%S'),
+		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+	)
+	return response
+
 #--------------------------------------------------------------------------------------------
 @autostrip
 class UploadPreregForm( Form ):
