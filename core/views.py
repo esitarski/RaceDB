@@ -45,6 +45,7 @@ from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
 from get_number_set_excel import get_number_set_excel
 from get_start_list_excel import get_start_list_excel
+from get_license_holder_excel import get_license_holder_excel
 
 from participant_key_filter import participant_key_filter
 from autostrip import autostrip
@@ -540,6 +541,7 @@ def LicenseHoldersDisplay( request ):
 	btns = [
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
+		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 	]
 	if request.method == 'POST':
 	
@@ -556,6 +558,17 @@ def LicenseHoldersDisplay( request ):
 		if form.is_valid():
 			search_text = form.cleaned_data['search_text']
 			request.session['license_holder_filter'] = search_text
+			
+			if 'export-excel-submit' in request.POST:
+				q = Q()
+				for n in search_text.split():
+					q &= Q( search_text__contains = n )
+				xl = get_license_holder_excel( q )
+				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+				response['Content-Disposition'] = 'attachment; filename=RaceDB-LicenseHolders-{}.xlsx'.format(
+					datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+				)
+				return response
 	else:
 		form = SearchForm( btns, initial = {'search_text': search_text} )
 	
