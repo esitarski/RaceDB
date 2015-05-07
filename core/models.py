@@ -782,7 +782,10 @@ class Event( models.Model ):
 	
 	@property
 	def wave_text_html( self ):
-		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}</strong>:&nbsp;&nbsp;{}'.format(w.name, w.category_text) for w in self.get_wave_set().all() ) + u'</li></ol>'
+		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}, {}</strong><br/>{}'.format(
+			w.name, w.get_details_html(True), 
+			w.category_count_html
+		) for w in self.get_wave_set().all() ) + u'</li></ol>'
 	
 	def get_participants( self ):
 		participants = set()
@@ -911,16 +914,38 @@ class WaveBase( models.Model ):
 	def category_text( self ):
 		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
 	
-	@property
-	def category_count_text( self ):
+	def get_category_count( self ):
 		category_count = defaultdict( int )
 		for p in self.get_participants_unsorted():
 			category_count[p.category] += 1
-		return u', '.join( u'{} {}'.format(category.code_gender, category_count[category]) for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+		return [(category, category_count[category]) for category in sorted(self.categories.all(), key=lambda c: c.sequence)]
+	
+	@property
+	def category_count_text( self ):
+		return u', '.join( u'{} {}'.format(category.code_gender, category_count) for category, category_count in self.get_category_count() )
+	
+	@property
+	def category_count_html( self ):
+		return u', '.join( u'{} {}'.format(category.code_gender, category_count).replace(u' ', u'&nbsp;') for category, category_count in self.get_category_count() )
 	
 	@property
 	def category_text_html( self ):
 		return u'<ol><li>' + u'</li><li>'.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) ) + u'</li></ol>'
+		
+	def get_details_html( self, include_starters=False ):
+		distance = None
+		if self.distance:
+			if self.laps:
+				distance = self.distance * self.laps
+			else:
+				distance = self.distance
+		return u', '.join( v for v in [
+			u'{}:&nbsp;{}'.format(_('Offset'), self.start_offset) if include_starters and hasattr(self,'start_offset') else None,
+			u'{:.2f}&nbsp;{}'.format(distance, self.distance_unit) if distance else None,
+			u'{}&nbsp;{}'.format(self.laps, _('laps') if self.laps != 1 else _('lap')) if self.laps else None,
+			u'{}&nbsp;{}'.format(self.minutes, _('min')) if getattr(self, 'minutes', None) else None,
+			u'{}:&nbsp;{}'.format(_('Strs'), self.get_participant_count()) if include_starters else None,
+		] if v )
 	
 	class Meta:
 		verbose_name = _('Wave Base')

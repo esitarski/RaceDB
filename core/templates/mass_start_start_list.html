@@ -13,9 +13,9 @@
 <br/><h4>{% trans "Total Starters" %}: {{instance.get_participant_count}}</h4>
 <div class="hidden-print">
 <hr/>
-<button class="btn btn-primary" id="focus" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
-&nbsp;&nbsp;&nbsp;&nbsp;
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<button class="btn btn-primary" id="focus" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
 <a class="btn btn-primary" href="{{path}}StartListExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export to Excel" %}</a>
 <hr/>
 </div>
@@ -25,10 +25,11 @@
 <thead>
 	<tr>
 		<th>{% trans "Wave" %}</th>
-		<th>{% trans "Start Offset" %}</th>
+		<th class="text-right">{% trans "Start Offset" %}</th>
+		<th>{% trans "Details" %}</th>
 		<th>{% trans "Categories" %}</th>
-		<th class="text-center">{% trans "Starters" %}</th>
-		{% if late_reg_exists %}<th class="text-center">{% trans "Late Reg" %}</th>{% endif %}
+		<th class="text-center">{% trans "Strs" %}</th>
+		{% if late_reg_exists %}<th class="text-center hidden-print">{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -36,10 +37,11 @@
 	{% for w in instance.wave_set.all %}
 		<tr onclick="jump('./WaveEdit/{{w.id}}/');">
 			<td>{{w.name}}</td>
-			<td>{{w.start_offset}}</td>
+			<td class="text-right">{{w.start_offset}}</td>
+			<td>{{w.get_details_html|safe}}</td>
 			<td>{{w.category_count_text}}</td>
 			<td class="text-center">{{w.get_participant_count}}</td>
-			{% if late_reg_exists %}<td class="text-center">{{w.get_late_reg.count}}</td>{% endif %}
+			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning btn-xs" href="./WaveDelete/{{w.id}}/">{% trans "Delete" %}</a>
@@ -73,10 +75,13 @@
 		font-size: 75%;
 	}
 </style>
-<h2>{% trans "Start Lists" %}</h2>
 {% for w in instance.wave_set.all %}
-<hr/>
-<h4><strong>{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.category_count_text}} &nbsp;&nbsp;<strong>{% trans "Starters" %}: {{w.get_participants.count}}</strong></h4>
+<hr class="page-break-before"/>
+<span class="visible-print">{{instance.competition.name}}, {{instance.name}}, {{instance.date_time}}</span>
+<h4>
+	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Strs" %}: {{w.get_participants.count}}<br/>
+</h4>
+<h5 style="margin-top: 8px">{% trans "Categories" %}: {{w.category_count_text}}</h5>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed participant_table">
 <thead>
@@ -85,7 +90,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Category" %}</th>
-		{% if late_reg_exists %}<th>{% trans "Late Reg" %}</th>{% endif %}
+		{% if late_reg_exists %}<th class="hidden-print">{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -98,7 +103,7 @@
 				<td>{{p.license_holder.full_name}}</td>
 				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 				<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
+				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
 				<td class="hidden-print">
 					<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
 					&nbsp;&nbsp;

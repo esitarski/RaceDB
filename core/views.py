@@ -633,7 +633,7 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 			
 			self.helper.layout = Layout(
 				Row(
-					Field('pks', css_class = 'form-control', size = '{}'.format(len(choices))),
+					Field('pks', css_class = 'form-control', size = '10'),
 				),
 				Row(
 					button_args[0],

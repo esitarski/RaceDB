@@ -16,14 +16,15 @@
 <div class="panel panel-default" id="dashboard">
 	<div class="panel-heading">
 		<div class="panel-title">
-			<h2><strong>{{competition.name}}:</strong> {% trans "Dashboard" %}</h2>
+			<h2><strong>{{competition.name}}</strong><strong class="hidden-print">:</strong> <span class="hidden-print">{% trans "Dashboard" %}</span></h2>
 		</div>
 	</div>
 	<div class="panel-body">
 		<div class="row">
 			<div class="col-md-12">
 				<strong>{{competition.name}}</strong>{% if competition.description %}, {{competition.description}}{% endif %},
-				{{competition.category_format.name}}</div>
+				{{competition.category_format.name}}
+			</div>
 		</div>
 		<div class="row">
 			<div class="col-md-4">{% trans "by" %}: <strong>{{competition.organizer}}</strong></div>
@@ -36,29 +37,29 @@
 		<div class="row">
 			<div class="col-md-12">{{competition.discipline}}, {{competition.race_class}}</div>
 		</div>
-		<div class="row">
-			<div class="col-md-4">
+		<div class="row hidden-print">
+			<div class="col-md-4 hidden-print">
 				<strong>{{competition.start_date}}</strong>
 			</div>
-			<div class="col-md-4">
-				{{competition|get_field_name:"number_of_days"}}: <strong>{{competition.number_of_days}}</strong>
+			<div class="col-md-4 hidden-print">
+				{{competition|get_field_name:"number_of_days"}}:&nbsp;<strong>{{competition.number_of_days}}</strong>
 			</div>
-			<div class="col-md-4">
-				{{competition|get_field_name:"distance_unit"}}: <strong>{{competition.get_distance_unit_display}}</strong>
+			<div class="col-md-4 hidden-print">
+				{{competition|get_field_name:"distance_unit"}}:&nbsp;<strong>{{competition.get_distance_unit_display}}</strong>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row hidden-print">
 			<div class="col-md-3">
-				{{competition|get_field_name:"using_tags"}}: <strong>{{competition.using_tags|yes_no}}</strong>
+				{{competition|get_field_name:"using_tags"}}:&nbsp;<strong>{{competition.using_tags|yes_no}}</strong>
 			</div>
 			<div class="col-md-3">
-				{{competition|get_field_name:"use_existing_tags"}}: <strong>{{competition.use_existing_tags|yes_no}}</strong>
+				{{competition|get_field_name:"use_existing_tags"}}:&nbsp;<strong>{{competition.use_existing_tags|yes_no}}</strong>
 			</div>
 			<div class="col-md-3">
-				{{competition|get_field_name:"number_set"}}: <strong>{{competition.number_set.name}}</strong>
+				{{competition|get_field_name:"number_set"}}:&nbsp;<strong>{{competition.number_set.name}}</strong>
 			</div>
 			<div class="col-md-3">
-				{{competition|get_field_name:"seasons_pass"}}: <strong>{{competition.seasons_pass.name}}</strong>
+				{{competition|get_field_name:"seasons_pass"}}:&nbsp;<strong>{% if competition.seasons_pass %}{{competition.seasons_pass.name}}{% else %}{% trans "No" %}{% endif %}</strong>
 			</div>
 		</div>
 		<div class="row hidden-print">
@@ -69,8 +70,10 @@
 					<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{competition.id}}">{% trans "Edit" %}</a>
 				{% endif %}
 				&nbsp;&nbsp;
+				<button class="btn btn-primary hidden-print" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print" %}</button>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><image src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
-				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				&nbsp;&nbsp;
 				<a class="btn btn-success" href="{{path}}ParticipantAdd/{{competition.id}}"><image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Entry" %}</a>
 				&nbsp;&nbsp;
 				<a class="btn btn-success" href="{{path}}ParticipantScan/{{competition.id}}"><image src="{% static "images/glyphicons_259_barcode.png" %}">/&nbsp;&nbsp;{% trans "Barcode Entry" %}</a>
@@ -82,6 +85,7 @@
 		</div>
 	</div>
 </div>
+{% if not events_mass_start.exists %}<div class="hidden-print">{% endif %}
 <h3>
 	{% trans "Mass Start Events" %}:
 	{% if request.user.is_superuser %}
@@ -93,10 +97,10 @@
 	<tr>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Type" %}</th>
-		<th>{% trans "Note" %}</th>
+		<th>{% trans "DateTime" %}</th>
+		<th class="text-center">{% trans "Strs" %}</th>
 		<th>{% trans "Waves" %}</th>
-		<th>{% trans "Date" %}</th>
-		<th class="text-center">{% trans "Starters" %}</th>
+		<th>{% trans "Note" %}</th>
 		<th></th>
 	</tr>
 </thead>
@@ -105,16 +109,18 @@
 		<tr onclick="jump('{{path}}StartList/{{e.id}}/');">
 			<td>{{e.name}}</td>
 			<td><strong>{{e.get_event_type_display}}</strong><br/>
+			<span class="hidden-print">
 					{% if e.optional %}
 						{% trans "Optional" %}{% if e.select_by_default %}, {% trans "Select by Default" %}{% endif %}
 					{% else %}
 						{% trans "Included" %}
 					{% endif %}
-			<td>{% if e.note %}{{e.note_html}}{% endif %}</td>
+			</span>
 			</td>
-			<td>{{e.wave_text_html|safe}}</td>
 			<td>{{e.date_time}}</td>
 			<td class="text-center">{{e.get_participant_count}}</td>
+			<td>{{e.wave_text_html|safe}}</td>
+			<td>{% if e.note %}{{e.note_html}}{% endif %}</td>
 			<td>
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning btn-sm hidden-print" href="{{path}}EventMassStartDelete/{{e.id}}/">{% trans "Delete" %}</a>
@@ -129,6 +135,8 @@
 	{% endfor %}
 </tbody>
 </table>
+{% if not events_mass_start.exists %}</div>{% endif %}
+{% if not events_tt.exists %}<div class="hidden-print">{% endif %}
 <h3>
 	{% trans "Time Trial Events" %}:
 	{% if request.user.is_superuser %}
@@ -140,10 +148,10 @@
 	<tr>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Type" %}</th>
-		<th>{% trans "Note" %}</th>
+		<th>{% trans "DateTime" %}</th>
+		<th class="text-center">{% trans "Strs" %}</th>
 		<th>{% trans "Waves" %}</th>
-		<th>{% trans "Date" %}</th>
-		<th class="text-center">{% trans "Starters" %}</th>
+		<th>{% trans "Note" %}</th>
 		<th></th>
 	</tr>
 </thead>
@@ -152,16 +160,18 @@
 		<tr onclick="jump('{{path}}StartListTT/{{e.id}}/');">
 			<td>{{e.name}}{% if e.has_unseeded %} <span class="label label-danger">{% trans "Warning: Unseeded Riders" %}</span>{% endif %}</td>
 			<td><strong>{{e.get_event_type_display}}</strong><br/>
+			<span class="hidden-print">
 					{% if e.optional %}
 						{% trans "Optional" %}{% if e.select_by_default %}, {% trans "Select by Default" %}{% endif %}
 					{% else %}
 						{% trans "Included" %}
 					{% endif %}
+			</span>
 			</td>
-			<td>{% if e.note %}{{e.note_html}}{% endif %}</td>
-			<td>{{e.wave_text_html|safe}}</td>
 			<td>{{e.date_time}}</td>
 			<td class="text-center">{{e.get_participant_count}}</td>
+			<td>{{e.wave_text_html|safe}}</td>
+			<td>{% if e.note %}{{e.note_html}}{% endif %}</td>
 			<td>
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning btn-sm hidden-print" href="{{path}}EventTTDelete/{{e.id}}/">{% trans "Delete" %}</a>
@@ -176,6 +186,16 @@
 	{% endfor %}
 </tbody>
 </table>
+{% if not events_tt.exists %}</div>{% endif %}
+
+<h3 class="visible-print page-break-before">
+	<strong>{{competition.name}}</strong>
+</h3>
+<h4 class="visible-print">
+	{% if competition.description %}{{competition.description}}, {% endif %}
+	{{competition.category_format.name}}
+</h4>
+<h4 class="visible-print">&nbsp;</h4>
 <h3>
 	{% trans "Category Numbers" %}:
 	{% if request.user.is_superuser %}
