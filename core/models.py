@@ -1259,6 +1259,10 @@ class Participant(models.Model):
 	tag2=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag2') )
 
 	signature=models.TextField( blank=True, default='', verbose_name=_('Signature') )
+	
+	@property
+	def is_jsignature( self ):
+		return self.signature and self.signature.startswith('image/svg+xml;base64')
 
 	paid=models.BooleanField( default=False, verbose_name=_('Paid') )
 	confirmed=models.BooleanField( default=False, verbose_name=_('Confirmed') )

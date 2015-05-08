@@ -19,6 +19,14 @@ h2, h3, h4, h5 { margin: 1px; }
 @media print {
     .page-break-before {page-break-before: always;}
 }
+.table-no-border>thead>tr>th, 
+.table-no-border>tbody>tr>th, 
+.table-no-border>tfoot>tr>th, 
+.table-no-border>thead>tr>td, 
+.table-no-border>tbody>tr>td, 
+.table-no-border>tfoot>tr>td {
+  border-top: none; 
+}
 </style>
 <script type="text/javascript">
 {% block javascript %}

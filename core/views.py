@@ -3258,6 +3258,7 @@ class ParticipantSignatureForm( Form ):
 	signature = forms.CharField( required = False, label = _('Signature') )
 	
 	def __init__(self, *args, **kwargs):
+		is_jsignature = kwargs.pop( 'is_jsignature', True )
 		super(ParticipantSignatureForm, self).__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
@@ -3265,15 +3266,14 @@ class ParticipantSignatureForm( Form ):
 		self.helper.form_id = 'id_signature_form'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
-		button_args = [
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
-		]
+		button_args = [Submit( 'ok-submit', _('OK'), css_class = 'btn btn-success' )] if is_jsignature else []
+		if button_args:
+			button_args += [HTML('&nbsp;'*12)]
+		button_args += [Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' )]
 		
 		self.helper.layout = Layout(
 			Field( 'signature' ),
-			Row(
-				button_args[0],
-			)
+			Row( *button_args ),
 		)
 
 @external_access
@@ -3297,7 +3297,7 @@ def ParticipantSignatureChange( request, participantId ):
 	else:
 		form = ParticipantSignatureForm()
 		
-	return render_to_response( 'participant_signature_change.html', RequestContext(request, locals()) )
+	return render_to_response( 'participant_jsignature_change.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------
 @autostrip

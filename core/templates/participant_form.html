@@ -4,11 +4,13 @@
 {% load staticfiles %}
 
 {% block srcjavascript %}
-<script type="text/javascript" src="{% static "js/scriptel-easyscript.js" %}"></script>
+	{% if participant.signature and not participant.is_jsignature %}
+		<script type="text/javascript" src="{% static "js/scriptel-easyscript.js" %}"></script>
+	{% endif %}
 {% endblock srcjavascript %}
 
 {% block onload %}
-	{% if participant.signature %}
+	{% if participant.signature and not participant.is_jsignature %}
 		var escript = new ScriptelEasyScript();
 		var canvas = document.getElementById("signature");
 		var ctx = canvas.getContext("2d");
@@ -131,7 +133,11 @@
 	<td class="text-right">{% trans "Signature" %}:</td>
 	<td>
 	{% if p.signature %}
-		<canvas width="240" height="64" id="signature"></canvas>
+		{% if p.is_jsignature %}
+			<image width="240" height="64" id="signature" src="data:{{p.signature|safe}}" style="background: #FFFF88"></image>
+		{% else %}
+			<canvas width="240" height="64" id="signature"></canvas>
+		{% endif %}
 	{% else %}
 		<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No signature" %}</span>
 	{% endif %}

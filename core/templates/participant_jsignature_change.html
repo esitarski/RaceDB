@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="{% static "js/jSignature.min.js" %}"></script>
+{% endblock srcjavascript %}
+
+{% block javascript %}
+function reset_signature() {
+	$('#id_signature_canvas').jSignature('reset');
+}
+{% endblock javascript %}
+
+{% block onload %}
+	$('#div_id_signature').hide();
+	
+	sigdiv = $('#id_signature_canvas');
+	sigdiv.jSignature();
+	sigdiv.jSignature('reset');
+	
+	$('#id_signature_form').on('submit', function () {
+		sigdiv = $('#id_signature_canvas');
+		if( sigdiv.jSignature('getData','native').length > 0 ) 
+			$('#id_signature').val( sigdiv.jSignature('getData','svgbase64').join(',') );
+		return true;
+	});
+
+{% endblock onload %}
+
+{% block content %}
+
+<style>
+#id_signature_canvas {
+  padding: 0 0 0 0; 
+  margin: 0 0 0 0;
+  border: 2px dotted #000;
+}
+</style>
+
+<h2>{{title}}</h2>
+<h2>{% trans "Participant"%}: <strong>{{participant.license_holder.full_name}}</strong></h2>
+{% if participant.team %}
+	<h2>{% trans "Team"%}: <strong>{{participant.team.name}}</strong>
+	</h2>
+{% endif %}
+{% if participant.category %}
+	<h2>{% trans "Category" %}: <strong>{{participant.category.code}}:</strong>
+	{{participant.category.get_gender_display}}, {{participant.category.description}}
+	</h2>
+{% endif %}
+<p>&nbsp;</p>
+<div id="id_signature_canvas"></div>
+<div class="row">
+	<div class="col-md-12 text-center"> 
+		<button class="btn btn-primary hidden-print" onClick="reset_signature()">{% trans "Reset" %}</button>
+	</div>
+</div>
+{% crispy form %}
+{% endblock content %}

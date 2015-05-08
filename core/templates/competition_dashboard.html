@@ -92,14 +92,14 @@
 		<a class="btn btn-primary hidden-print" href="{{path}}EventMassStartNew/{{competition.id}}/">{% trans "New" %}</a>
 	{% endif %}
 </h3>
-<table class="table table-hover">
+<table class="table table-compressed table-no-border table-hover">
 <tbody>
 	{% for e in events_mass_start %}
 		<tr onclick="jump('{{path}}StartList/{{e.id}}/');">
 			<td>
-				<div class="panel panel-primary">
+				<div class="panel panel-info">
 					<div class="panel-heading">
-						<strong>{{e.name}}</strong>, {{e.date_time}}, <strong>{% trans "Strs" %}:&nbsp;{{e.get_participant_count}}</strong>
+						<h3>{{e.name}}, <span style="font-size:75%">{{e.date_time}}, <strong>{% trans "Strs" %}:&nbsp;{{e.get_participant_count}}</strong></span></h3>
 					</div>
 					<div class="panel-body">
 						<div class="row hidden-print">
@@ -149,14 +149,14 @@
 		<a class="btn btn-primary hidden-print" href="{{path}}EventTTNew/{{competition.id}}/">{% trans "New" %}</a>
 	{% endif %}
 </h3>
-<table class="table table-hover">
+<table class="table table-compressed table-no-border table-hover">
 <tbody>
 	{% for e in events_tt %}
 		<tr onclick="jump('{{path}}StartListTT/{{e.id}}/');">
 			<td>
-				<div class="panel panel-primary">
+				<div class="panel panel-info">
 					<div class="panel-heading">
-						<strong>{{e.name}}</strong>, {% if e.has_unseeded %} <span class="label label-warning" style="font-size: 110%">{% trans "Warning: Unseeded Riders" %}</span>{% endif %} {{e.date_time}}, <strong>{% trans "Strs" %}:&nbsp;{{e.get_participant_count}}</strong>
+						<h3>{{e.name}}, <span style="font-size: 80%">{% if e.has_unseeded %} <span class="label label-warning" style="font-size: 110%">{% trans "Warning: Unseeded Riders" %}</span>{% endif %} {{e.date_time}}, <strong>{% trans "Strs" %}:&nbsp;{{e.get_participant_count}}</strong></span></h3>
 					</div>
 					<div class="panel-body">
 						<div class="row hidden-print">
