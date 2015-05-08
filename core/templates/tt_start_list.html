@@ -33,7 +33,7 @@
 		</div>
 	{% endif %}
 {% endwith %}
-<h2 class="visible-print">{% trans "Waves" %}</h2>
+<h3 class="visible-print">{% trans "Waves" %}</h3>
 {% spaceless %}
 <table class="table table-striped table-hover">
 <thead>
@@ -94,14 +94,14 @@
 </style>
 
 <h3 class="visible-print page-break-before">
-	<strong>{{instance.competition.name}}</strong>
+	<strong>{{instance.competition.name}}, {{instance.name}}</strong><br/><span style="font-size: 90%">{{instance.date_time}}</span>
 </h3>
 <h4 class="visible-print">
 	{% if instance.competition.description %}{{instance.competition.description}}, {% endif %}
 	{{instance.competition.category_format.name}}
 </h4>
 <h4 class="visible-print">&nbsp;</h4>
-<h2>{% trans "Start List" %}</h2>
+<h3>{% trans "Start List" %}</h3>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed participant_table">
 <thead>
