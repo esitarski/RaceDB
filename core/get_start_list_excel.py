@@ -53,7 +53,7 @@ def get_start_list_excel( event ):
 	
 	title_format = wb.add_format( dict(bold = True) )
 	
-	ws = wb.add_worksheet(utils.removeDiacritic(event.name))
+	ws = wb.add_worksheet(utils.cleanExcelSheetName(event.name))
 	
 	competition = event.competition
 	if competition.seasons_pass:

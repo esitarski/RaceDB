@@ -77,6 +77,7 @@ urlpatterns = patterns('',
 	url(r'^(?i).*ParticipantPaidChange/(?P<participantId>\d+)/$', views.ParticipantBooleanChange, {'field':'paid'}),
 	
 	url(r'^(?i).*ParticipantSignatureChange/(?P<participantId>\d+)/$', views.ParticipantSignatureChange ),
+	url(r'^(?i).*SetSignatureWithTouchScreen/(?P<use_touch_screen>\d+)/$', views.SetSignatureWithTouchScreen ),
 	
 	url(r'^(?i).*ParticipantTeamChange/(?P<participantId>\d+)/$', views.ParticipantTeamChange ),
 	url(r'^(?i).*ParticipantTeamSelect/(?P<participantId>\d+)/(?P<teamId>\d+)/$', views.ParticipantTeamSelect ),

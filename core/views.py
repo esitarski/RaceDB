@@ -3279,12 +3279,13 @@ class ParticipantSignatureForm( Form ):
 @external_access
 def ParticipantSignatureChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
+	signature_with_touch_screen = int(request.session.get('signature_with_touch_screen', True))
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
-		form = ParticipantSignatureForm( request.POST )
+		form = ParticipantSignatureForm( request.POST, is_jsignature=signature_with_touch_screen )
 		if form.is_valid():
 			signature = form.cleaned_data['signature']
 			signature = signature.strip()
@@ -3295,10 +3296,18 @@ def ParticipantSignatureChange( request, participantId ):
 			participant.auto_confirm().save()
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
-		form = ParticipantSignatureForm()
-		
-	return render_to_response( 'participant_jsignature_change.html', RequestContext(request, locals()) )
+		form = ParticipantSignatureForm( is_jsignature=signature_with_touch_screen )
 	
+	if signature_with_touch_screen:
+		return render_to_response( 'participant_jsignature_change.html', RequestContext(request, locals()) )
+	else:
+		return render_to_response( 'participant_signature_change.html', RequestContext(request, locals()) )
+	
+@external_access
+def SetSignatureWithTouchScreen( request, use_touch_screen ):
+	request.session['signature_with_touch_screen'] = bool(int(use_touch_screen))
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
 #--------------------------------------------------------------------------
 @autostrip
 class ParticipantScanForm( Form ):

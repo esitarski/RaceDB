@@ -29,6 +29,9 @@ def removeDiacritic( s ):
 	else:
 		return s
 
+def cleanExcelSheetName( s ):
+	return re.sub( '[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]
+
 def toUnicode( s ):
 	if isinstance( s, unicode ):
 		return s
