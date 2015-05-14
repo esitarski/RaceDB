@@ -1056,7 +1056,7 @@ class LicenseHolder(models.Model):
 	SearchTextLength = 256
 	search_text = models.CharField( max_length=SearchTextLength, blank=True, default='', db_index=True )
 	
-	note = models.TextField( null=True, blank=True, verbose_name=_('LicneseHolder Note') )
+	note = models.TextField( null=True, blank=True, verbose_name=_('LicenseHolder Note') )
 
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or '').strip().upper()
