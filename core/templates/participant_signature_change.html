@@ -34,8 +34,19 @@
 {% endif %} 
 <hr/>
 <h3>
-{% trans "Ask the participant to sign on the signature pad, then use the Pen to press OK." %}</br>
+{% trans "Ask the participant to sign on the signature pad, then use the Pen to press OK." %}
 </h3>
+<hr/>
+<br/>
+<br/>
+<h2>
+{% trans "I, the undersigned, confirm that I am" %}
+<strong>{{participant.license_holder.first_name}} {{participant.license_holder.last_name}}</strong>
+{% trans "and my date of birth is " %}
+<strong>{{participant.license_holder.date_of_birth}}</strong>.
+</h2>
+<br/>
+<br/>
 <hr/>
 {% crispy form %}
 <p/>
