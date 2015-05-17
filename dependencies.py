@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+import shutil
 import argparse
 import subprocess
 import compileall
@@ -42,6 +43,12 @@ def update_dependencies( upgrade ):
 			fname = os.path.join( root, f )
 			if os.path.splitext(fname)[1] == '.pyc':
 				os.remove( fname )
+	
+	# Remove the unecessary TagReadWriteServier directory.
+	try:
+		shutil.rmtree( 'TagReadWriteServer' )
+	except Error as e:
+		pass
 		
 	print( 'Pre-compiling source code...' )
 	compileall.compile_dir( '.', quiet=True )
