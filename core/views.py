@@ -51,6 +51,7 @@ from participant_key_filter import participant_key_filter
 from autostrip import autostrip
 
 from ReadWriteTag import ReadTag, WriteTag
+from FinishLynx import FinishLynxExport
 
 #---------------------------------------------------------------------
 from context_processors import getContext
@@ -1484,6 +1485,14 @@ def CategoryDelete( request, categoryId ):
 
 #--------------------------------------------------------------------------------------------
 
+def GetFinishLynxResponse( competition ):
+	zip = FinishLynxExport( competition )
+	response = HttpResponse(zip, content_type="application/zip")
+	response['Content-Disposition'] = 'attachment; filename={}-FinishLynx.zip'.format(
+		utils.removeDiacritic(competition.name),
+	)
+	return response	
+
 def GetCompetitionForm( competition_cur = None ):
 	@autostrip
 	class CompetitionForm( ModelForm ):
@@ -1681,6 +1690,11 @@ def CompetitionDashboard( request, competitionId ):
 	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
 	return render_to_response( 'competition_dashboard.html', RequestContext(request, locals()) )
+
+@external_access
+def FinishLynx( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	return GetFinishLynxResponse( competition )
 
 #--------------------------------------------------------------------------------------------
 @external_access

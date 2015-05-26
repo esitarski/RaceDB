@@ -66,12 +66,14 @@
 			<div class="col-md-12">
 				<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 				{% if request.user.is_superuser %}
-					&nbsp;&nbsp;
+					&nbsp;
 					<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{competition.id}}">{% trans "Edit" %}</a>
 				{% endif %}
-				&nbsp;&nbsp;
+				&nbsp;
 				<button class="btn btn-primary hidden-print" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print" %}</button>
-				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				&nbsp;
+				<a class="btn btn-primary hidden-print" href="{{path}}FinishLynx/{{competition.id}}""><image src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><image src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
 				&nbsp;&nbsp;
 				<a class="btn btn-success" href="{{path}}ParticipantAdd/{{competition.id}}"><image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Entry" %}</a>
