@@ -1566,6 +1566,9 @@ def GetCompetitionForm( competition_cur = None ):
 					Col('ftp_password', 2),
 					Col(Field('ftp_path', size=80), 6),
 				),
+				Row(
+					Col('ftp_upload_during_race', 4),
+				),
 				Row( HTML('<hr/>') ),
 			)
 			

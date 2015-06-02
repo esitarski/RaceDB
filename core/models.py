@@ -335,6 +335,8 @@ class Competition(models.Model):
 	ftp_password = models.CharField( max_length = 64, default = '', blank = True, verbose_name=_('FTP Password') )
 	ftp_path = models.CharField( max_length = 256, default = '', blank = True, verbose_name=_('FTP Path') )
 	
+	ftp_upload_during_race = models.BooleanField( default = False, verbose_name = _("Live FTP Update During Race") )
+	
 	@property
 	def speed_unit_display( self ):
 		return 'km/h' if self.distance_unit == 0 else 'mph'
