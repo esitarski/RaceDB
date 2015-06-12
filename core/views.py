@@ -316,7 +316,7 @@ class LicenseHolderTagForm( Form ):
 		self.helper.form_class = 'navbar-form navbar-left'
 		
 		button_args = [
-			Submit( 'ok-submit', _('Update Tag'), css_class = 'btn btn-primary' ),
+			Submit( 'ok-submit', _('Update Tag in Database'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
@@ -3141,7 +3141,7 @@ class ParticipantTagForm( Form ):
 		self.helper.form_class = 'navbar-form navbar-left'
 		
 		button_args = [
-			Submit( 'ok-submit', _('Update Tag'), css_class = 'btn btn-primary' ),
+			Submit( 'ok-submit', _('Update Tag in Database'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
@@ -3199,7 +3199,7 @@ def ParticipantTagChange( request, participantId ):
 				status = False
 				status_entries.append(
 					(_('Empty Tag'), (
-						_('Cannot write an empty Tag.'),
+						_('Cannot write an empty Tag to the Database.'),
 						_('Please specify a Tag or press Cancel.'),
 					)),
 				)
