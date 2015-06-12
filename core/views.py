@@ -316,7 +316,7 @@ class LicenseHolderTagForm( Form ):
 		self.helper.form_class = 'navbar-form navbar-left'
 		
 		button_args = [
-			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+			Submit( 'ok-submit', _('Update Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
@@ -403,7 +403,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 					status_entries.append(
 						(_('Empty Tag'), (
 							_('Cannot write/validate an empty Tag.'),
-							_('Please specify a Tag.'),
+							_('Please specify a Tag or press Cancel.'),
 						)),
 					)
 				
@@ -3141,7 +3141,7 @@ class ParticipantTagForm( Form ):
 		self.helper.form_class = 'navbar-form navbar-left'
 		
 		button_args = [
-			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+			Submit( 'ok-submit', _('Update Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
@@ -3194,6 +3194,25 @@ def ParticipantTagChange( request, participantId ):
 			
 			if 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
 				tag = license_holder.get_unique_tag()
+				
+			if not tag:
+				status = False
+				status_entries.append(
+					(_('Empty Tag'), (
+						_('Cannot write an empty Tag.'),
+						_('Please specify a Tag or press Cancel.'),
+					)),
+				)
+			elif not utils.allHex(tag):
+				status = False
+				status_entries.append(
+					(_('Non-Hex Characters in Tag'), (
+						_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
+						_('Please change the Tag to all hexadecimal.'),
+					)),
+				)
+			if not status:
+				return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
 			
 			participant.tag = tag
 			try:
@@ -3230,22 +3249,6 @@ def ParticipantTagChange( request, participantId ):
 						(_('RFID Antenna Configuration'), (
 							_('RFID Antenna for Tag Write must be specified.'),
 							_('Please specify the RFID Antenna.'),
-						)),
-					)
-				if not tag:
-					status = False
-					status_entries.append(
-						(_('Empty Tag'), (
-							_('Cannot write an empty Tag.'),
-							_('Please specify a Tag.'),
-						)),
-					)
-				elif not utils.allHex(tag):
-					status = False
-					status_entries.append(
-						(_('Non-Hex Characters in Tag'), (
-							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
-							_('Please change the Tag to all hexadecimal.'),
 						)),
 					)
 				
