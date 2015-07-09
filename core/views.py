@@ -1570,6 +1570,10 @@ def GetCompetitionForm( competition_cur = None ):
 					Col('ftp_upload_during_race', 4),
 				),
 				Row( HTML('<hr/>') ),
+				Row(
+					Col('ga_tracking_id', 4),
+				),
+				Row( HTML('<hr/>') ),
 			)
 			
 			self.additional_buttons = []

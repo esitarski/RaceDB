@@ -337,6 +337,8 @@ class Competition(models.Model):
 	
 	ftp_upload_during_race = models.BooleanField( default = False, verbose_name = _("Live FTP Update During Race") )
 	
+	ga_tracking_id = models.CharField( max_length = 20, default = '', blank = True, verbose_name=_('Google Analytics Tracking ID') )
+	
 	@property
 	def speed_unit_display( self ):
 		return 'km/h' if self.distance_unit == 0 else 'mph'

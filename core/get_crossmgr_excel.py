@@ -56,6 +56,8 @@ property_headers = (
 	'FTP Password',
 	'FTP Path',
 	'FTP Upload During Race',
+	
+	'GATrackingID',
 )
 	
 def get_number_range_str( numbers ):
@@ -180,6 +182,8 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		scramble.encode(utils.removeDiacritic(competition.ftp_password)),
 		competition.ftp_path,
 		competition.ftp_upload_during_race,
+		
+		competition.ga_tracking_id,
 	]
 	row = write_row_data( ws, row, row_data )
 
