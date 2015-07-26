@@ -43,7 +43,7 @@ def getTagFromLicense( license, tag_from_license_id=0 ):
 			num_count = num_count,
 			text_hex=''.join( '{:02X}'.format(ord(c)) for c in text ),
 			num=int(num),
-			byte_count=bytes_from_digits[num_count],
+			byte_count=bytes_from_digits[num_count]*2,
 		)
 	else:
 		return '{tag_from_license_id:02X}{text_count:X}0{text_hex}'.format(
@@ -62,23 +62,41 @@ def getLicenseFromTag( tag, tag_from_license_id=0 ):
 		return None
 
 	prefix_count = 2
-	text_count = int( tag[prefix_count], 16 )
-	num_count = int( tag[prefix_count+1], 16 )
+	try:
+		text_count = int( tag[prefix_count], 16 )
+		num_count = int( tag[prefix_count+1], 16 )
+	except ValueError:
+		return None
 	
 	prefix_count += 2
-	text = ''.join( chr(int(tag[i:i+2], 16)) for i in xrange(prefix_count, prefix_count+text_count*2, 2) )
+	try:
+		text = ''.join( chr(int(tag[i:i+2], 16)) for i in xrange(prefix_count, prefix_count+text_count*2, 2) )
+	except ValueError:
+		return None
+	
+	if len(text) != text_count:
+		return None
+	
 	if not num_count:
 		return text
 	
 	prefix_count += text_count*2
 	
 	byte_count = bytes_from_digits[num_count]
-	num = int( tag[prefix_count:prefix_count+byte_count*2], 16 )
+	hex_text = tag[prefix_count:prefix_count+byte_count*2]
+	if len(hex_text) != byte_count*2:
+		return None
+	
+	try:
+		num = int( hex_text, 16 )
+	except ValueError:
+		return None
+	
 	return text + str(num).rjust( num_count, '0' )
 
 if __name__ == '__main__':
-	for license in ('CAN19650922', 'ON0123', 'BC0567', 'SK9999', '123567', 'ALLTEXT', ''):
+	for license in ('CAN19650922', 'ON0123', 'BC0567', 'SK9999', '123567', 'ALLTEXT', '', '999999999999999', 'ABCDEFGHIJ', 'ABCD9999999999999'):
 		tag = getTagFromLicense( license )
 		license_new = getLicenseFromTag( tag )
-		print '"{}" {} "{}"'.format(license, tag, license_new)
+		print '"{}" {} ({}) "{}"'.format(license, tag, len(tag), license_new)
 		assert license == license_new
