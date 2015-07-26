@@ -24,11 +24,12 @@ def participant_key_filter( competition, key, auto_add_participant = True ):
 		return participants[0].license_holder, participants
 	
 	# Check for a license encoded in an rfid tag.
-	system_info = SystemInfo.get_singleton()
-	if system_info.tag_from_license:
-		license_from_tag = getLicenseFromTag( key, system_info.tag_from_license_id )
-		if license_from_tag is not None:
-			key = license_from_tag
+	if competition.using_tags and competition.use_existing_tags:
+		system_info = SystemInfo.get_singleton()
+		if system_info.tag_from_license:
+			license_from_tag = getLicenseFromTag( key, system_info.tag_from_license_id )
+			if license_from_tag is not None:
+				key = license_from_tag
 	
 	# Second, check for a license holder matching the key.
 	if competition.using_tags and competition.use_existing_tags:
