@@ -23,14 +23,14 @@ import utils
 import random
 import iso3166
 from collections import defaultdict
-from TagFormat import getValidTagFormatStr, getTagFormatStr
+from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
 
 def fixNullUpper( s ):
 	if not s:
 		return None
 	s = (s or u'').strip()
 	if s:
-		return s.upper()
+		return utils.removeDiacritic(s).upper()
 	else:
 		return None
 
@@ -63,7 +63,12 @@ def getCopyName( ModelClass, cur_name ):
 
 #----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
-	tag_template = models.CharField( max_length = 24, verbose_name = _('Tag Template'), help_text=_("Template for generating EPC RFID tags.") )
+	tag_template = models.CharField( max_length = 24, verbose_name = _('Tag Template'), help_text=_("Template for generating EPC RFID tags from Database ID.") )
+	
+	tag_from_license = models.BooleanField( default = False, verbose_name = _("RFID Tag from License"),
+			 help_text=_('Generate RFID tag from license (not database id)'))
+	ID_CHOICES = [(i, u'{}'.format(i)) for i in xrange(32)]
+	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'), help_text=_('Identifier incorporated into the tag for additional recognition.') )
 
 	RFID_SERVER_HOST_DEFAULT = 'localhost'
 	RFID_SERVER_PORT_DEFAULT = 50111
@@ -81,20 +86,17 @@ class SystemInfo(models.Model):
 	
 	@classmethod
 	def get_tag_template_default( cls ):
-		tNow = datetime.datetime.now()
 		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in xrange(4))
-		tt = '{}######{:02}'.format( rs, tNow.year % 100 )
+		tt = '{}######{:02}'.format( rs, datetime.datetime.now().year % 100 )
 		return tt
 	
 	@classmethod
 	def get_singleton( cls ):
-		if not cls.objects.exists():
+		system_info = cls.objects.all().first()
+		if system_info is None:
 			system_info = cls( tag_template = cls.get_tag_template_default() )
 			system_info.save()
-			return system_info
-		else:
-			for system_info in cls.objects.all():
-				return system_info
+		return system_info
 	
 	@classmethod
 	def get_reg_closure_minutes( cls ):
@@ -1122,7 +1124,10 @@ class LicenseHolder(models.Model):
 		
 	def get_unique_tag( self ):
 		system_info = SystemInfo.get_singleton()
-		return getTagFormatStr( system_info.tag_template ).format( n=self.id )
+		if system_info.tag_from_license and self.license_code:
+			return getTagFromLicense( self.license_code, system_info.tag_from_license_id )
+		else:
+			return getTagFormatStr( system_info.tag_template ).format( n=self.id )
 	
 	def get_existing_tag_str( self ):
 		return u', '.join( [t for t in [self.existing_tag, self.existing_tag2] if t] )

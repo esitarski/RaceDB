@@ -3536,6 +3536,12 @@ class SystemInfoForm( ModelForm ):
 			Row(
 				Col(Field('tag_template', size=24), 6),
 			),
+			HTML( '<hr/>' ),
+			Row(
+				Col(Field('tag_from_license'), 4),
+				Col(Field('tag_from_license_id'), 4),
+			),
+			HTML( '<hr/>' ),
 			Row(
 				Col(Field('reg_closure_minutes', size=6), 6),
 			),

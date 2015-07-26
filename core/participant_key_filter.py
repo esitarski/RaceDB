@@ -3,6 +3,9 @@ from models import *
 from django.db.models import Q
 from django.db import transaction, IntegrityError
 
+from TagFormat import getLicenseFromTag
+from models import SystemInfo
+
 def participant_key_filter( competition, key, auto_add_participant = True ):
 	# Convert the key to upper.
 	# The license_code, tag and tag2 are all stored in upper-case, so it is safe to do
@@ -19,7 +22,14 @@ def participant_key_filter( competition, key, auto_add_participant = True ):
 	if participants:
 		participants.sort( key = lambda p: p.category.sequence if p.category else p.bib )
 		return participants[0].license_holder, participants
-		
+	
+	# Check for a license encoded in an rfid tag.
+	system_info = SystemInfo.get_singleton()
+	if system_info.tag_from_license:
+		license_from_tag = getLicenseFromTag( key, system_info.tag_from_license_id )
+		if license_from_tag is not None:
+			key = license_from_tag
+	
 	# Second, check for a license holder matching the key.
 	if competition.using_tags and competition.use_existing_tags:
 		q = Q(license_code=key) | Q(existing_tag=key) | Q(existing_tag2=key)
