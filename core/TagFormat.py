@@ -20,7 +20,7 @@ def getTagFormatStr( template ):
 		template = template[:m.start(0)] + u'{{n:0{}d}}'.format(len(m.group(0))) + template[m.end(0):]
 	return template
 
-bytes_from_digits = { n: int(ceil(log(10**n, 256))) for n in xrange(1, 32) }
+bytes_from_digits = tuple( int(ceil(log(10**n, 256))) for n in xrange(0, 16) )
 reNumEnd = re.compile( '[0-9]+$' )
 def getTagFromLicense( license, tag_from_license_id=0 ):
 	license = utils.removeDiacritic(license.strip())
@@ -36,6 +36,9 @@ def getTagFromLicense( license, tag_from_license_id=0 ):
 		num = '0'
 		num_count = 0
 		
+	assert text_count <= 10, 'Maximum allowed text chars is 10'
+	assert num_count <= 15, 'Maximum allowed num chars is 15'
+	
 	if num_count:
 		return '{tag_from_license_id:02X}{text_count:X}{num_count:X}{text_hex}{num:0{byte_count}X}'.format(
 			tag_from_license_id=255-tag_from_license_id,
@@ -66,6 +69,9 @@ def getLicenseFromTag( tag, tag_from_license_id=0 ):
 		text_count = int( tag[prefix_count], 16 )
 		num_count = int( tag[prefix_count+1], 16 )
 	except ValueError:
+		return None
+		
+	if text_count > 10:
 		return None
 	
 	prefix_count += 2
@@ -100,3 +106,8 @@ if __name__ == '__main__':
 		license_new = getLicenseFromTag( tag )
 		print '"{}" {} ({}) "{}"'.format(license, tag, len(tag), license_new)
 		assert license == license_new
+	
+	assert getLicenseFromTag( 'FE00' ) == None
+	assert getLicenseFromTag( 'FF10' ) == None
+	assert getLicenseFromTag( 'FF01' ) == None
+	assert getLicenseFromTag( 'FF0601E2AF' ) == '123567'
