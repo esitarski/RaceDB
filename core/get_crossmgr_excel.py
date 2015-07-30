@@ -58,6 +58,7 @@ property_headers = (
 	'FTP Upload During Race',
 	
 	'GATrackingID',
+	'Road Race Finish Times',
 )
 	
 def get_number_range_str( numbers ):
@@ -184,6 +185,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.ftp_upload_during_race,
 		
 		competition.ga_tracking_id,
+		event.road_race_finish_times,
 	]
 	row = write_row_data( ws, row, row_data )
 

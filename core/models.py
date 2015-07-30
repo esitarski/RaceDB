@@ -68,7 +68,8 @@ class SystemInfo(models.Model):
 	tag_from_license = models.BooleanField( default = False, verbose_name = _("RFID Tag from License"),
 			 help_text=_('Generate RFID tag from license (not database id)'))
 	ID_CHOICES = [(i, u'{}'.format(i)) for i in xrange(32)]
-	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'), help_text=_('Identifier incorporated into the tag for additional recognition.') )
+	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'),
+		help_text=_('Identifier incorporated into the tag for additional recognition.') )
 
 	RFID_SERVER_HOST_DEFAULT = 'localhost'
 	RFID_SERVER_PORT_DEFAULT = 50111
@@ -667,6 +668,9 @@ class Event( models.Model ):
 		(2, _('Manual Start: Skip first tag read for all riders.  Required when start run-up passes the finish line.')),
 	)
 	rfid_option = models.PositiveIntegerField( choices=RFID_OPTION_CHOICES, default=1, verbose_name = _('RFID Option') )
+	
+	road_race_finish_times = models.BooleanField( default = False, verbose_name = _("Road Race Finish Times"),
+		help_text = _("Ignore decimals, groups get same time") )
 	
 	note = models.TextField( null=True, blank=True, verbose_name=_('Note') )
 	
