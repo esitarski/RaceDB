@@ -24,13 +24,17 @@ bytes_from_digits = tuple( int(ceil(log(10**n, 256))) for n in xrange(0, 16) )
 reNumEnd = re.compile( '[0-9]+$' )
 def getTagFromLicense( license, tag_from_license_id=0 ):
 	license = utils.removeDiacritic(license.strip())
+	
+	# Try to find a trailing decimal component of the license code.
 	result = reNumEnd.search( license )
 	if result:
+		# Get the text and number component of the license code.
 		text = license[:result.start()]
 		text_count = len(text)
 		num = license[result.start():result.end()]
 		num_count = len(num)
 	else:
+		# This license code has not numeric component.
 		text = license
 		text_count = len(text)
 		num = '0'
@@ -56,6 +60,7 @@ def getTagFromLicense( license, tag_from_license_id=0 ):
 		)
 
 def getLicenseFromTag( tag, tag_from_license_id=0 ):
+	# Get the tag id from the first 2 hex characters.
 	try:
 		tflid = int( tag[0:2], 16 )
 	except ValueError:
@@ -64,16 +69,19 @@ def getLicenseFromTag( tag, tag_from_license_id=0 ):
 	if tflid != 255-tag_from_license_id:
 		return None
 
+	# Now get the text_count and num_count from the next text chars.
 	prefix_count = 2
 	try:
 		text_count = int( tag[prefix_count], 16 )
 		num_count = int( tag[prefix_count+1], 16 )
 	except ValueError:
 		return None
-		
+	
+	# Check that this is an allowable text length.
 	if text_count > 10:
 		return None
 	
+	# Get the ascii characters.
 	prefix_count += 2
 	try:
 		text = ''.join( chr(int(tag[i:i+2], 16)) for i in xrange(prefix_count, prefix_count+text_count*2, 2) )
@@ -88,16 +96,21 @@ def getLicenseFromTag( tag, tag_from_license_id=0 ):
 	
 	prefix_count += text_count*2
 	
+	# Get the number of bytes required to represent a decimal number of num_count characters.
 	byte_count = bytes_from_digits[num_count]
+	
+	# Get the hex string based on the number of bytes.
 	hex_text = tag[prefix_count:prefix_count+byte_count*2]
 	if len(hex_text) != byte_count*2:
 		return None
 	
+	# Convert the hex string into a number.
 	try:
 		num = int( hex_text, 16 )
 	except ValueError:
 		return None
 	
+	# Return the ascii and number formatted to the correct length.
 	return text + str(num).rjust( num_count, '0' )
 
 if __name__ == '__main__':

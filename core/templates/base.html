@@ -48,7 +48,10 @@ function onLoad()
 	
 	// Set button background to black when pressed to give feedback.
 	$('.btn').click(function() {
-		$(this).css( {"background-color": '#000000'} );
+		var button = $(this);
+		var backgroundColorCur = button.css( "background-color" );
+		button.css( {"background-color": '#000000'} );
+		setTimeout( function(){ button.css( {"background-color": backgroundColorCur} ); }, 15000 );
 	});
 	
 	// Make click targets larger for touch devices.
