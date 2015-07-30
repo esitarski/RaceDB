@@ -2047,6 +2047,7 @@ class EventMassStartForm( ModelForm ):
 				Col(Field('select_by_default'), 6),
 			),
 			Row( Field('rfid_option') ),
+			Row( Field('road_race_finish_times') ),
 			Row( Field('note', rows='4', cols='60') ),
 		)
 		self.additional_buttons = []
@@ -2249,6 +2250,7 @@ class EventTTForm( ModelForm ):
 				Col(Field('optional'), 6),
 				Col(Field('select_by_default'), 6),
 			),
+			Row( Field('road_race_finish_times') ),
 			Row( Field('note', rows='4', cols='60') ),
 		)
 		self.additional_buttons = []
