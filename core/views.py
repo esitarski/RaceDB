@@ -2362,6 +2362,9 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 					Col(Field('num_fastest_participants'), 3),
 				),
 				Row(
+					Col(Field('sequence_option'), 6),
+				),
+				Row(
 					Col(Field('categories', size=12, css_class='hidden-print'), 6),
 				),
 			)

@@ -1142,7 +1142,7 @@ class LicenseHolder(models.Model):
 		).order_by( '-competition__start_date' )
 	
 	def get_tt_metric( self, ref_date ):
-		years = (self.date_of_birth - ref_date).days / 365.26
+		years = (ref_date - self.date_of_birth).days / 365.26
 		dy = years - 24.0	# Fastest estimated year.
 		if dy < 0:
 			dy *= 4
@@ -1635,14 +1635,7 @@ class EventTT( Event ):
 		sequenceCur = 1
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
-			participants = sorted(
-				wave_tt.get_participants_unsorted(),
-				key = lambda p: (
-					p.adjusted_est_kmh,
-					-p.bib if p.seed_early and p.bib else 0,
-					p.license_holder.get_tt_metric(self.date_time.date())
-				)
-			)
+			participants = sorted( wave_tt.get_participants_unsorted(), key=wave_tt.get_sequence_key() )
 			last_fastest = len(participants) - wave_tt.num_fastest_participants
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
@@ -1750,6 +1743,31 @@ class WaveTT( WaveBase ):
 						choices=[(i, '%d' % i) for i in xrange(0, 16)],
 						help_text = 'Participants to get the Fastest gap',
 						default = 5)
+						
+	# Sequence option.
+	est_speed_increasing = 0
+	age_increasing = 1
+	bib_increasing = 2
+	age_decreasing = 3
+	bib_decreasing = 4
+	SEQUENCE_CHOICES = (
+		(_('Increasing'), (
+				(est_speed_increasing, _('Est. Speed - Increasing')),
+				(age_increasing, _('Age - Increasing')),
+				(bib_increasing, _('Bib - Increasing')),
+			),
+		),
+		(_('Decreasing'), (
+				(age_decreasing, _('Age - Decreasing')),
+				(bib_decreasing, _('Bib - Decreasing')),
+			),
+		),
+	)
+	sequence_option = models.PositiveSmallIntegerField(
+		verbose_name=_('Sequence Option'),
+		choices = SEQUENCE_CHOICES,
+		help_text = 'Criteria used to order participants in the wave',
+		default=0 )
 	
 	def save( self, *args, **kwargs ):
 		init_sequence( WaveTT, self )
@@ -1765,6 +1783,45 @@ class WaveTT( WaveBase ):
 			return (distance / (entry_tt.finish_time - entry_tt.start_time).total_seconds()) * (60.0*60.0)
 		except Exception as e:
 			return None
+	
+	def get_sequence_key( self ):
+		if self.sequence_option == self.est_speed_increasing:
+			return lambda p: (
+				0 if p.seed_early else 1,
+				p.est_kmh,
+				-(p.bib or 0),
+				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.id,
+			)
+		elif self.sequence_option == self.age_increasing:
+			return lambda p: (
+				0 if p.seed_early else 1,
+				p.license_holder.date_of_birth,
+				-(p.bib or 0),
+				p.id,
+			)
+		elif self.sequence_option == self.bib_increasing:
+			return lambda p: (
+				0 if p.seed_early else 1,
+				p.bib or 0,
+				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.id,
+			)
+		elif self.sequence_option == self.age_decreasing:
+			return lambda p: (
+				0 if p.seed_early else 1,
+				datetime.date(3000,1,1) - p.license_holder.date_of_birth,
+				-(p.bib or 0),
+				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.id,
+			)
+		elif self.sequence_option == self.bib_decreasing:
+			return lambda p: (
+				0 if p.seed_early else 1,
+				-(p.bib or 0),
+				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.id,
+			)
 	
 	@property
 	def gap_rules_html( self ):
