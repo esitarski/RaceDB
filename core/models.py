@@ -1751,15 +1751,15 @@ class WaveTT( WaveBase ):
 	age_decreasing = 3
 	bib_decreasing = 4
 	SEQUENCE_CHOICES = (
-		(_('Increasing'), (
-				(est_speed_increasing, _('Est. Speed - Increasing')),
-				(age_increasing, _('Age - Increasing')),
-				(bib_increasing, _('Bib - Increasing')),
+		(_("Increasing"), (
+				(est_speed_increasing, _("Est. Speed - Increasing")),
+				(age_increasing, _("Youngest to Oldest")),
+				(bib_increasing, _("Bib - Increasing")),
 			),
 		),
-		(_('Decreasing'), (
-				(age_decreasing, _('Age - Decreasing')),
-				(bib_decreasing, _('Bib - Decreasing')),
+		(_("Decreasing"), (
+				(age_decreasing, _("Oldest to Youngest")),
+				(bib_decreasing, _("Bib - Decreasing")),
 			),
 		),
 	)
