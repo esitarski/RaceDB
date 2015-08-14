@@ -164,6 +164,7 @@ urlpatterns = patterns('',
 	url(r'^(?i).*DisciplineBottom/(?P<disciplineId>\d+)/$', views.DisciplineBottom),
 	
 	url(r'^(?i).*SystemInfoEdit/$', views.SystemInfoEdit),
+	url(r'^(?i).*ParticipantReport/$', views.ParticipantReport),
 	url(r'^(?i).*QRCode/$', views.QRCode),
 	
 	url(r'^(?i)login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}),

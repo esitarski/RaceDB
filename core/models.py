@@ -472,6 +472,12 @@ class Competition(models.Model):
 			participants |= set(event.get_participants())
 		return participants
 		
+	def has_participants( self ):
+		for event in self.get_events():
+			if len(set(event.get_participants())) > 0:
+				return True
+		return False
+	
 	@transaction.atomic
 	def auto_generate_missing_tags( self ):
 		participants_changed = []

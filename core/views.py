@@ -46,6 +46,7 @@ from get_seasons_pass_excel import get_seasons_pass_excel
 from get_number_set_excel import get_number_set_excel
 from get_start_list_excel import get_start_list_excel
 from get_license_holder_excel import get_license_holder_excel
+from participation_excel import participation_excel
 
 from participant_key_filter import participant_key_filter
 from autostrip import autostrip
@@ -3567,6 +3568,60 @@ class SystemInfoForm( ModelForm ):
 def SystemInfoEdit( request ):
 	return GenericEdit( SystemInfo, request, SystemInfo.get_singleton().id, SystemInfoForm )
 	
+#--------------------------------------------------------------------------
+def get_participant_report_form():
+	@autostrip
+	class ParticipantReportForm( Form ):
+		year = forms.ChoiceField( required = False,
+			choices = [
+				(y, u'{}'.format(y))
+					for y in sorted(
+					set(d.year for d in Competition.objects.all()
+						.order_by('-start_date')
+						.values_list('start_date', flat=True)), reverse=True
+					)
+			][:20] + [(-1, _('All'))]
+		)
+
+		def __init__( self, *args, **kwargs ):
+			super(ParticipantReportForm, self).__init__(*args, **kwargs)
+			
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'form-inline'
+			
+			self.helper.layout = Layout(
+				Row(
+					Col(Field('year'), 6),
+				),
+				HTML( '<hr/>' ),
+			)
+			addFormButtons( self, OK_BUTTON | CANCEL_BUTTON )
+	
+	return ParticipantReportForm
+
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def ParticipantReport( request ):
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = get_participant_report_form()( request.POST )
+		if form.is_valid():
+			year = int(form.cleaned_data['year'])
+			if year < 0:
+				year = None
+				
+		sheet_name, xl = participation_excel( year )
+		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		response['Content-Disposition'] = 'attachment; filename={}.xlsx'.format(sheet_name)
+		return response
+	else:
+		form = get_participant_report_form()()
+		
+	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )
+
 #--------------------------------------------------------------------------
 
 def QRCode( request ):
