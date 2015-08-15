@@ -19,18 +19,21 @@ def participation_excel( year ):
 		competitions = competitions.filter( start_date__year = year )
 	
 	p = {}
-	events = {}
-	license_holders = {}
+	events = []
+	license_holders = set()
 	for competition in competitions:
-		if competition.has_participants():
-			for event in competition.get_events():
-				for participant in event.get_participants():
-					events[event.id] = event
-					license_holders[participant.license_holder.id] = participant.license_holder
-					p[(participant.license_holder.id, event.id)] = participant
+		if not competition.has_participants():
+			continue
+		for event in competition.get_events():
+			if not event.has_participants():
+				continue
+			events.append( event )
+			for participant in event.get_participants():
+				license_holders.add( participant.license_holder )
+				p[(participant.license_holder.id, event.id)] = participant
 	
-	license_holders = sorted( license_holders.values(), key=lambda x: x.get_search_text() )
-	events = sorted( events.values(), key=lambda x: x.date_time )
+	license_holders = sorted( license_holders, key=lambda x: x.get_search_text() )
+	events.sort( key=lambda x: x.date_time )
 	
 	output = StringIO.StringIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )

@@ -473,10 +473,7 @@ class Competition(models.Model):
 		return participants
 		
 	def has_participants( self ):
-		for event in self.get_events():
-			if len(set(event.get_participants())) > 0:
-				return True
-		return False
+		return any( event.has_participants() for event in self.get_events() )
 	
 	@transaction.atomic
 	def auto_generate_missing_tags( self ):
@@ -808,6 +805,9 @@ class Event( models.Model ):
 		for w in self.get_wave_set().all():
 			participants |= set( w.get_participants_unsorted().select_related('competition','license_holder','team') )
 		return participants
+	
+	def has_participants( self ):
+		return any( w.get_participants_unsorted().exists() for w in self.get_wave_set().all() )
 	
 	def __unicode__( self ):
 		return u'%s, %s (%s)' % (self.date_time, self.name, self.competition.name)
