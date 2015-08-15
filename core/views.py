@@ -7,6 +7,7 @@ try:
 except Exception as e:
 	print 'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e)
 
+import json
 import datetime
 import string
 import pprint
@@ -47,6 +48,7 @@ from get_number_set_excel import get_number_set_excel
 from get_start_list_excel import get_start_list_excel
 from get_license_holder_excel import get_license_holder_excel
 from participation_excel import participation_excel
+from participation_data import participation_data
 
 from participant_key_filter import participant_key_filter
 from autostrip import autostrip
@@ -3569,19 +3571,21 @@ def SystemInfoEdit( request ):
 	return GenericEdit( SystemInfo, request, SystemInfo.get_singleton().id, SystemInfoForm )
 	
 #--------------------------------------------------------------------------
+def get_year_choices():
+	year_choices = [
+		(y, u'{}'.format(y))
+			for y in sorted(
+			set(d.year for d in Competition.objects.all()
+				.order_by('-start_date')
+				.values_list('start_date', flat=True)), reverse=True
+			)
+	][:20] + [(-1, _('All'))]
+	return year_choices
+
 def get_participant_report_form():
 	@autostrip
 	class ParticipantReportForm( Form ):
-		year = forms.ChoiceField( required = False,
-			choices = [
-				(y, u'{}'.format(y))
-					for y in sorted(
-					set(d.year for d in Competition.objects.all()
-						.order_by('-start_date')
-						.values_list('start_date', flat=True)), reverse=True
-					)
-			][:20] + [(-1, _('All'))]
-		)
+		year = forms.ChoiceField( required = False, choices = get_year_choices() )
 
 		def __init__( self, *args, **kwargs ):
 			super(ParticipantReportForm, self).__init__(*args, **kwargs)
@@ -3610,8 +3614,8 @@ def ParticipantReport( request ):
 		form = get_participant_report_form()( request.POST )
 		if form.is_valid():
 			year = int(form.cleaned_data['year'])
-			if year < 0:
-				year = None
+		if year < 0:
+			year = None
 				
 		sheet_name, xl = participation_excel( year )
 		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -3622,6 +3626,31 @@ def ParticipantReport( request ):
 		
 	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )
 
+#--------------------------------------------------------------------------
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def SystemAnalytics( request ):
+	year = get_year_choices()[0][0]
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = get_participant_report_form()( request.POST )
+		if form.is_valid():
+			year = int(form.cleaned_data['year'])
+			if year < 0:
+				year = None
+				
+			payload = participation_data( year )
+			payload_json = json.dumps(payload, separators=(',',':'))
+			return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
+	else:
+		payload = participation_data( year )
+		payload_json = json.dumps(payload, separators=(',',':'))
+		form = get_participant_report_form()()
+	
+	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
 
 def QRCode( request ):
