@@ -22,7 +22,7 @@ def participation_excel( year ):
 	events = {}
 	license_holders = {}
 	for competition in competitions:
-		if competition.has_participants:
+		if competition.has_participants():
 			for event in competition.get_events():
 				for participant in event.get_participants():
 					events[event.id] = event
