@@ -13,9 +13,9 @@ function drawCharts() {
 		['Men', {{p.participants_men_total}}],
 		['Women', {{p.participants_women_total}}],
 	]);
-	{% endwith %}
 	var entriesChart = new google.visualization.PieChart(document.getElementById('entriesDiv'));
-	entriesChart.draw( entriesTable, {title: 'Participation'} );
+	entriesChart.draw( entriesTable, {title: 'Participation: ' + {{p.participants_total}}} );
+	{% endwith %}
 
 	{% with p=payload %}
 	var licenseHoldersTable = google.visualization.arrayToDataTable( [
@@ -23,9 +23,9 @@ function drawCharts() {
 		['Men', {{p.license_holders_men_total}}],
 		['Women', {{p.license_holders_women_total}}],
 	]);
-	{% endwith %}
 	var licenseHoldersChart = new google.visualization.PieChart(document.getElementById('licenseHoldersDiv'));
-	licenseHoldersChart.draw( licenseHoldersTable, {title: 'License Holders'} );
+	licenseHoldersChart.draw( licenseHoldersTable, {title: 'License Holders: ' + {{p.license_holders_total}}} );
+	{% endwith %}
 
 	{% with p=payload %}
 	var aveEntriesTable = google.visualization.arrayToDataTable( [
