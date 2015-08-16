@@ -6,7 +6,12 @@ var payload = {{payload_json|safe}};
 google.load("visualization", "1", {packages:["corechart", "table"]});
 google.setOnLoadCallback(drawCharts);
 
+function formatFloat( num, precision ) {
+	return {v:num, f:num.toFixed(precision ? precision : 2)};
+}
+
 function drawCharts() {
+
 	{% with p=payload %}
 	var entriesTable = google.visualization.arrayToDataTable( [
 		['Gender', 'Participation'],
@@ -30,9 +35,9 @@ function drawCharts() {
 	{% with p=payload %}
 	var aveEntriesTable = google.visualization.arrayToDataTable( [
 		['Gender', 'Ave. Entries'],
-		['All', {{p.events_average}}],
-		['Men', {{p.events_men_average}}],
-		['Women', {{p.events_women_average}}],
+		['All', formatFloat({{p.events_average}})],
+		['Men', formatFloat({{p.events_men_average}})],
+		['Women', formatFloat({{p.events_women_average}})],
 	]);
 	{% endwith %}
 	var aveEntriesChart = new google.visualization.ColumnChart(document.getElementById('aveEntriesDiv'));
@@ -77,7 +82,7 @@ function drawCharts() {
 	rangeAveAllData.addColumn('number', 'Ave Entries');
 	var rows = [];
 	for( var i = 0; i < payload.age_range_average.length; ++i )
-		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), payload.age_range_average[i]] );
+		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(payload.age_range_average[i])] );
 	rangeAveAllData.addRows( rows );
 	var chartAveAll = new google.visualization.ColumnChart(document.getElementById('aveEventsAllDiv'));
 	var optionsAll = { title: 'All', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
@@ -88,7 +93,7 @@ function drawCharts() {
 	rangeAveMenData.addColumn('number', 'Ave Entries');
 	var rows = [];
 	for( var i = 0; i < payload.age_range_men_average.length; ++i )
-		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), payload.age_range_average[i]] );
+		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(payload.age_range_men_average[i])] );
 	rangeAveMenData.addRows( rows );
 	var chartAveMen = new google.visualization.ColumnChart(document.getElementById('aveEventsMenDiv'));
 	var optionsMen = { title: 'Men', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
@@ -99,7 +104,7 @@ function drawCharts() {
 	rangeAveWomenData.addColumn('number', 'Ave Entries');
 	var rows = [];
 	for( var i = 0; i < payload.age_range_women_average.length; ++i )
-		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), payload.age_range_average[i]] );
+		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(payload.age_range_women_average[i])] );
 	rangeAveWomenData.addRows( rows );
 	var chartAveWomen = new google.visualization.ColumnChart(document.getElementById('aveEventsWomenDiv'));
 	var optionsWomen = { title: 'Women', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
@@ -226,7 +231,7 @@ function drawCharts() {
 </p>
 
 <p>
-<h3>Average Events by Age<h3>
+<h3>Average Entries by Age<h3>
 <div class="container"/>
 	<div class="row">
 		<div class="col-md-4">
