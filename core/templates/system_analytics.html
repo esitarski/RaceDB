@@ -156,6 +156,11 @@ function drawCharts() {
 	{% endwith %}
 	
 	// ---------------------------------------------------------
+	var overallCategoriesChart = new google.visualization.ColumnChart(document.getElementById("overallCategoriesChartDiv"));
+	overallCategoriesChart.draw(google.visualization.arrayToDataTable(payload.category_count),
+		{title:'Participation by Category', bar: { groupWidth: '75%' }, legend: {position: 'none'}} );
+	
+	// ---------------------------------------------------------
 	var compChartData = new google.visualization.DataTable();
 	compChartData.addColumn('string', 'Competition');
 	compChartData.addColumn('number', 'Men');
@@ -168,7 +173,11 @@ function drawCharts() {
 	}
 	compChartData.addRows( rows );
 	var compChart = new google.visualization.ColumnChart(document.getElementById("compChartDiv"));
-	compChart.draw(compChartData, {title:'Participation by Competition', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}} );
+	compChart.draw(compChartData, {title:'Participation by Gender', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}} );
+	
+	var compCategoryChart = new google.visualization.ColumnChart(document.getElementById("compCategoryChartDiv"));
+	compCategoryChart.draw(google.visualization.arrayToDataTable(payload.category_competition_count),
+		{title:'Participation by Category', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}} );
 	
 	// ---------------------------------------------------------
 	var compData = new google.visualization.DataTable();
@@ -220,7 +229,8 @@ function drawCharts() {
 		</div>
 	</div>
 </div>
-<div id='statsTableDiv'></div>
+<div id='overallCategoriesChartDiv'style="width: 1000px; height: 500px;"></div>
+<div class="page-break-before" id='statsTableDiv'></div>
 </p>
 
 <p>
@@ -277,6 +287,7 @@ function drawCharts() {
 <p>
 <h2 class="page-break-before">Competitions</h2>
 <div id='compChartDiv'style="width: 1000px; height: 500px;"></div>
+<div id='compCategoryChartDiv'style="width: 1000px; height: 500px;"></div>
 <div id='compTableDiv' class="page-break-before"></div>
 </p>
 

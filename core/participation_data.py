@@ -21,6 +21,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	age_men_count = defaultdict( int )
 	age_women_count = defaultdict( int )
 	
+	category_count_overall = defaultdict( int )
+	category_competition_count = defaultdict( lambda: defaultdict(int) )
+	
 	age_increment = 5
 	age_range_license_holders = [set() for i in xrange(0, 120, age_increment)]
 	age_range_participant_count = [0 for i in xrange(0, 120, age_increment)]
@@ -61,6 +64,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 				
 				age_range_license_holders[age//5].add( participant.license_holder )
 				age_range_participant_count[age//5] += 1
+				
+				category_count_overall[participant.category.code_gender if participant.category else unicode(_('Unknown'))] += 1
+				category_competition_count[competition][participant.category.code_gender if participant.category else unicode(_('Unknown'))] += 1
 				
 				if participant.license_holder.gender == 0:
 					license_holders_men_count[participant.license_holder] += 1
@@ -119,6 +125,11 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		license_holder_women_profile = sorted(profile_year - lh.date_of_birth.year for lh in license_holders_set if lh.gender == 1)
 	else:
 		profile_year = datetime.date.today().year
+		
+	category_count = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_count_overall.iteritems()), key=lambda x: x[1], reverse=True )
+	ccc = [['Competition'] + [name for name, count in category_count[1:]]]
+	for competition in sorted( (category_competition_count.iterkeys()), key=lambda x: x.start_date ):
+		ccc.append( [competition.name] + [category_competition_count[competition].get(name, 0) for name, count in category_count[1:]] )
 	
 	def get_expected_age( ac ):
 		if not ac:
@@ -155,6 +166,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		'license_holder_profile':license_holder_profile,
 		'license_holder_men_profile':license_holder_men_profile,
 		'license_holder_women_profile':license_holder_women_profile,
+		
+		'category_count':category_count,
+		'category_competition_count':ccc,
 		
 		'competitions': data,
 	}
