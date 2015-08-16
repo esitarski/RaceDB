@@ -13,10 +13,14 @@ from models import *
 
 import xlsxwriter
 
-def participation_excel( year ):
+def participation_excel( year=None, discipline=None, race_class=None ):
 	competitions = Competition.objects.all()
 	if year is not None:
 		competitions = competitions.filter( start_date__year = year )
+	if discipline is not None:
+		competitions = competitions.filter( discipline = discipline )
+	if race_class is not None:
+		competitions = competitions.filter( race_class = race_class )
 	
 	p = {}
 	events = []

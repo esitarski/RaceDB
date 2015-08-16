@@ -4,10 +4,14 @@ import utils
 from collections import defaultdict
 from models import *
 
-def participation_data( year=None ):
+def participation_data( year=None, discipline=None, race_class=None ):
 	competitions = Competition.objects.all()
 	if year is not None:
 		competitions = competitions.filter( start_date__year = year )
+	if discipline is not None:
+		competitions = competitions.filter( discipline = discipline )
+	if race_class is not None:
+		competitions = competitions.filter( race_class = race_class )
 	
 	data = []
 	license_holders_count = defaultdict( int )
@@ -117,6 +121,8 @@ def participation_data( year=None ):
 		profile_year = datetime.date.today().year
 	
 	def get_expected_age( ac ):
+		if not ac:
+			return None
 		most_frequent = max( v for v in ac.itervalues() )
 		for a, c in ac.iteritems():
 			if c == most_frequent:
@@ -132,9 +138,9 @@ def participation_data( year=None ):
 		'license_holders_men_total': len(license_holders_men_count),
 		'license_holders_women_total': len(license_holders_women_count),
 		
-		'events_average': sum(v for v in license_holders_count.itervalues()) / float(len(license_holders_count)),
-		'events_men_average': sum(v for v in license_holders_men_count.itervalues()) / float(len(license_holders_men_count)),
-		'events_women_average': sum(v for v in license_holders_women_count.itervalues()) / float(len(license_holders_women_count)),
+		'events_average': sum(v for v in license_holders_count.itervalues()) / (float(len(license_holders_count)) or 1),
+		'events_men_average': sum(v for v in license_holders_men_count.itervalues()) / (float(len(license_holders_men_count)) or 1),
+		'events_women_average': sum(v for v in license_holders_women_count.itervalues()) / (float(len(license_holders_women_count)) or 1),
 		
 		'expected_age': get_expected_age(age_count),
 		'expected_men_age': get_expected_age(age_men_count),

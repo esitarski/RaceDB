@@ -3581,11 +3581,26 @@ def get_year_choices():
 			)
 	][:20] + [(-1, _('All'))]
 	return year_choices
+	
+def get_discipline_race_class_choices():
+	disciplines = set()
+	race_classes = set()
+	for c in Competition.objects.all():
+		disciplines.add( c.discipline )
+		race_classes.add( c.race_class )
+	return [(-1, _('All'))] + [
+			(d.id, d.name) for d in sorted( disciplines, key=lambda x: x.sequence )
+		], [(-1, _('All'))] + [
+			(r.id, r.name) for r in sorted( race_classes, key=lambda x: x.sequence )
+		]
 
 def get_participant_report_form():
 	@autostrip
 	class ParticipantReportForm( Form ):
-		year = forms.ChoiceField( required = False, choices = get_year_choices() )
+		year = forms.ChoiceField( required = False, label = _('Year'), choices = get_year_choices() )
+		discipline_choices, race_class_choices = get_discipline_race_class_choices()
+		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
+		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
 
 		def __init__( self, *args, **kwargs ):
 			super(ParticipantReportForm, self).__init__(*args, **kwargs)
@@ -3596,7 +3611,9 @@ def get_participant_report_form():
 			
 			self.helper.layout = Layout(
 				Row(
-					Col(Field('year'), 6),
+					Col(Field('year'), 4),
+					Col(Field('discipline'), 4),
+					Col(Field('race_class'), 4),
 				),
 				HTML( '<hr/>' ),
 			)
@@ -3612,12 +3629,15 @@ def ParticipantReport( request ):
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
 		form = get_participant_report_form()( request.POST )
+		year, discipline, race_class = None, None, None
 		if form.is_valid():
 			year = int(form.cleaned_data['year'])
-		if year < 0:
+			discipline = Discipline.objects.filter(id=int(form.cleaned_data['discipline'])).first()
+			race_class = RaceClass.objects.filter(id=int(form.cleaned_data['race_class'])).first()
+		if year and year < 0:
 			year = None
 				
-		sheet_name, xl = participation_excel( year )
+		sheet_name, xl = participation_excel( year, discipline, race_class )
 		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 		response['Content-Disposition'] = 'attachment; filename={}.xlsx'.format(sheet_name)
 		return response
@@ -3638,11 +3658,15 @@ def ParticipantAnalytics( request ):
 			
 		form = get_participant_report_form()( request.POST )
 		if form.is_valid():
-			year = int(form.cleaned_data['year'])
-			if year < 0:
+			year, discipline, race_class = None, None, None
+			if form.is_valid():
+				year = int(form.cleaned_data['year'])
+				discipline = Discipline.objects.filter(id=int(form.cleaned_data['discipline'])).first()
+				race_class = RaceClass.objects.filter(id=int(form.cleaned_data['race_class'])).first()
+			if year and year < 0:
 				year = None
 				
-			payload = participation_data( year )
+			payload = participation_data( year, discipline, race_class )
 			payload_json = json.dumps(payload, separators=(',',':'))
 			return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 	else:
