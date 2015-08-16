@@ -10,6 +10,11 @@ function formatFloat( num, precision ) {
 	return {v:num, f:num.toFixed(precision ? precision : 2)};
 }
 
+function formatIntPercent( num, total ) {
+	var percent = (100.0 * num) / (total ? total : 1);
+	return {v:num, f:num + ' (' + percent.toFixed(2) + '%)'};
+}
+
 function drawCharts() {
 
 	{% with p=payload %}
@@ -157,6 +162,8 @@ function drawCharts() {
 	
 	// ---------------------------------------------------------
 	var overallCategoriesChart = new google.visualization.ColumnChart(document.getElementById("overallCategoriesChartDiv"));
+	for( var i = 0; i < payload.category_count.length; ++i )
+		payload.category_count[i][1] = formatIntPercent(payload.category_count[i][1], payload.participants_total);
 	overallCategoriesChart.draw(google.visualization.arrayToDataTable(payload.category_count),
 		{title:'Participation by Category', bar: { groupWidth: '75%' }, legend: {position: 'none'}} );
 	
