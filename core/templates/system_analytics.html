@@ -16,6 +16,7 @@ function formatIntPercent( num, total ) {
 }
 
 function drawCharts() {
+	var animationOption = {duration: 1000, startup: true};
 
 	{% with p=payload %}
 	var entriesTable = google.visualization.arrayToDataTable( [
@@ -24,7 +25,7 @@ function drawCharts() {
 		['Women', {{p.participants_women_total}}],
 	]);
 	var entriesChart = new google.visualization.PieChart(document.getElementById('entriesDiv'));
-	entriesChart.draw( entriesTable, {title: 'Participation: ' + {{p.participants_total}}} );
+	entriesChart.draw( entriesTable, {title: 'Participation: ' + {{p.participants_total}}, animation: animationOption} );
 	{% endwith %}
 
 	{% with p=payload %}
@@ -34,7 +35,7 @@ function drawCharts() {
 		['Women', {{p.license_holders_women_total}}],
 	]);
 	var licenseHoldersChart = new google.visualization.PieChart(document.getElementById('licenseHoldersDiv'));
-	licenseHoldersChart.draw( licenseHoldersTable, {title: 'Participating License Holders: ' + {{p.license_holders_total}}} );
+	licenseHoldersChart.draw( licenseHoldersTable, {title: 'Participating License Holders: ' + {{p.license_holders_total}}, animation: animationOption} );
 	{% endwith %}
 
 	{% with p=payload %}
@@ -46,7 +47,7 @@ function drawCharts() {
 	]);
 	{% endwith %}
 	var aveEntriesChart = new google.visualization.ColumnChart(document.getElementById('aveEntriesDiv'));
-	aveEntriesChart.draw( aveEntriesTable, {title: 'Average Participation per License Holder', vAxis:{baseline:0}} );
+	aveEntriesChart.draw( aveEntriesTable, {title: 'Average Participation per License Holder', vAxis:{baseline:0}, animation: animationOption} );
 
 	var ageAll = [['Age']], ageMen = [['Age']], ageWomen = [['Age']];
 	var competitions = payload.competitions;
@@ -68,7 +69,7 @@ function drawCharts() {
 
 	// --------------------------------------------------------------------------------------------------
 	var chartAll = new google.visualization.Histogram(document.getElementById('histAllDiv'));
-	var options = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
+	var options = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 }, animation: animationOption };
 	chartAll.draw(google.visualization.arrayToDataTable( ageAll ), options);
 	
 	var chartMen = new google.visualization.Histogram(document.getElementById('histMenDiv'));
@@ -92,7 +93,7 @@ function drawCharts() {
 	}
 	
 	var chartAveAll = new google.visualization.ColumnChart(document.getElementById('aveEventsAllDiv'));
-	var options = { title: 'All', legend: { position: 'none' }, hAxis:{baseline:0}, bar:{groupWidth:'90%'} };
+	var options = { title: 'All', legend: { position: 'none' }, hAxis:{baseline:0}, bar:{groupWidth:'90%'}, animation: animationOption };
 	chartAveAll.draw(getAgeRangeAveEntriesTable( payload.age_range_average ), options);
 	
 	var chartAveMen = new google.visualization.ColumnChart(document.getElementById('aveEventsMenDiv'));
@@ -115,7 +116,7 @@ function drawCharts() {
 	}
 	
 	var chartAll = new google.visualization.Histogram(document.getElementById('histAgeAllDiv'));
-	var options = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
+	var options = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 }, animation: animationOption };
 	chartAll.draw(getAgeTable(payload.license_holder_profile), options);
 	
 	var chartMen = new google.visualization.Histogram(document.getElementById('histAgeMenDiv'));
@@ -167,7 +168,7 @@ function drawCharts() {
 		payload.category_count[i][1] = formatIntPercent(payload.category_count[i][1], payload.participants_total);
 	overallCategoriesChart.draw(
 		google.visualization.arrayToDataTable(payload.category_count),
-		{title:'Participation by Category', bar: { groupWidth: '75%' }, legend: {position: 'none'}}
+		{title:'Participation by Category', bar: { groupWidth: '75%' }, legend: {position: 'none'}, animation: animationOption}
 	);
 	
 	// ---------------------------------------------------------
@@ -190,11 +191,11 @@ function drawCharts() {
 	}
 	compChartData.addRows( rows );
 	var compChart = new google.visualization.ColumnChart(document.getElementById("compChartDiv"));
-	compChart.draw(compChartData, {title:'Participation by Gender', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}} );
+	compChart.draw(compChartData, {title:'Participation by Gender', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
 	
 	var compCategoryChart = new google.visualization.ColumnChart(document.getElementById("compCategoryChartDiv"));
 	compCategoryChart.draw(google.visualization.arrayToDataTable(payload.category_competition_count),
-		{title:'Participation by Category', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}} );
+		{title:'Participation by Category', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
 	
 	// ---------------------------------------------------------
 	var compData = new google.visualization.DataTable();
