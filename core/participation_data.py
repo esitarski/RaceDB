@@ -36,10 +36,12 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	personas = defaultdict( int )
 	
 	profile_year = 0
+	num_competitions, num_events = 0, 0
 	for competition in competitions.order_by( 'start_date' ):
 		if not competition.has_participants():
 			continue
 		
+		num_competitions += 1
 		profile_year = max( profile_year, competition.start_date.year )
 		
 		competition_data = {
@@ -53,6 +55,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		for event in competition.get_events():
 			if not event.has_participants():
 				continue
+				
+			num_events += 1
+			
 			participant_data = []
 			for participant in event.get_participants():
 				age = event.date_time.year - participant.license_holder.date_of_birth.year
@@ -160,6 +165,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		return None
 	
 	payload = {
+		'num_competitions': num_competitions,
+		'num_events': num_events,
+		
 		'participants_total': participants_total,
 		'participants_men_total': sum(c['men'] for c in data),
 		'participants_women_total': sum(c['women'] for c in data),
