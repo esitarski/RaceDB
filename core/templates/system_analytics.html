@@ -163,12 +163,26 @@ function drawCharts() {
 	{% endwith %}
 	
 	// ---------------------------------------------------------
-	var overallCategoriesChart = new google.visualization.ColumnChart(document.getElementById("overallCategoriesChartDiv"));
-	for( var i = 0; i < payload.category_count.length; ++i )
+	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById("overallCategoriesChartDiv"));
+	for( var i = 1; i < payload.category_count.length; ++i ) {
 		payload.category_count[i][1] = formatIntPercent(payload.category_count[i][1], payload.participants_total);
+		payload.category_count[i][2] = formatFloat(payload.category_count[i][2]);
+	}
 	overallCategoriesChart.draw(
 		google.visualization.arrayToDataTable(payload.category_count),
-		{title:'Participation by Category', bar: { groupWidth: '75%' }, legend: {position: 'none'}, animation: animationOption}
+		{
+			title:'Participation by Category',
+			bar: { groupWidth: '75%' },
+			legend: {position: 'none'},
+			animation: animationOption,
+			seriesType: 'bars',
+			series: {
+				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+				vAxes: {
+					1: { minValue:0, maxValue:100 }
+				},
+			},
+		}
 	);
 	
 	// ---------------------------------------------------------

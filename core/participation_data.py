@@ -127,12 +127,22 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	else:
 		profile_year = datetime.date.today().year
 		
+	participants_total = sum(c['total'] for c in data)
+	
 	category_count = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_count_overall.iteritems()), key=lambda x: x[1], reverse=True )
 	ccc = [['Competition'] + [name for name, count in category_count[1:]]]
 	for competition in sorted( (category_competition_count.iterkeys()), key=lambda x: x.start_date ):
 		ccc.append( [competition.name] + [category_competition_count[competition].get(name, 0) for name, count in category_count[1:]] )
+		
+	# Add cumulative percent.
+	category_count[0].append( 'Cumulative %' )
+	cumulativePercent = 0.0
+	for c in category_count[1:]:
+		cumulativePercent += 100.0*c[-1] / participants_total
+		c.append( cumulativePercent )
+		
+	print category_count
 	
-	participants_total = sum(c['total'] for c in data)
 	personas = sorted(
 		([cat, '{}-{}'.format(age,age+age_increment-1), count, (100.0*count)/float(participants_total)] for (cat, age), count in personas.iteritems()),
 		key=lambda x:x[-1],
