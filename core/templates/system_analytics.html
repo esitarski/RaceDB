@@ -29,7 +29,7 @@ function drawCharts() {
 		['Women', {{p.license_holders_women_total}}],
 	]);
 	var licenseHoldersChart = new google.visualization.PieChart(document.getElementById('licenseHoldersDiv'));
-	licenseHoldersChart.draw( licenseHoldersTable, {title: 'License Holders: ' + {{p.license_holders_total}}} );
+	licenseHoldersChart.draw( licenseHoldersTable, {title: 'Participating License Holders: ' + {{p.license_holders_total}}} );
 	{% endwith %}
 
 	{% with p=payload %}
@@ -62,54 +62,64 @@ function drawCharts() {
 
 	// --------------------------------------------------------------------------------------------------
 	var chartAll = new google.visualization.Histogram(document.getElementById('histAllDiv'));
-	var optionsAll = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
-	var histTableAll = google.visualization.arrayToDataTable( ageAll );
-	chartAll.draw(histTableAll, optionsAll);
+	var options = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
+	chartAll.draw(google.visualization.arrayToDataTable( ageAll ), options);
 	
 	var chartMen = new google.visualization.Histogram(document.getElementById('histMenDiv'));
-	var optionsMen = { title: 'Men', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
-	var histTableMen = google.visualization.arrayToDataTable( ageMen );
-	chartMen.draw(histTableMen, optionsMen);
+	options.title = 'Men';
+	chartMen.draw(google.visualization.arrayToDataTable( ageMen ), options);
 
 	var chartWomen = new google.visualization.Histogram(document.getElementById('histWomenDiv'));
-	var optionsWomen = { title: 'Women', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
-	var histTableWomen = google.visualization.arrayToDataTable( ageWomen );
-	chartWomen.draw(histTableWomen, optionsWomen);
+	options.title = 'Women';
+	chartWomen.draw(google.visualization.arrayToDataTable( ageWomen ), options);
 
 	// --------------------------------------------------------------------------------------------------
-	var rangeAveAllData = new google.visualization.DataTable();
-	rangeAveAllData.addColumn('string', 'Age Range');
-	rangeAveAllData.addColumn('number', 'Ave Entries');
-	var rows = [];
-	for( var i = 0; i < payload.age_range_average.length; ++i )
-		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(payload.age_range_average[i])] );
-	rangeAveAllData.addRows( rows );
+	function getAgeRangeAveEntriesTable( ar ) {
+		var rangeAveData = new google.visualization.DataTable();
+		rangeAveData.addColumn('string', 'Age Range');
+		rangeAveData.addColumn('number', 'Ave Entries');
+		var rows = [];
+		for( var i = 0; i < ar.length; ++i )
+			rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(ar[i])] );
+		rangeAveData.addRows( rows );
+		return rangeAveData;
+	}
+	
 	var chartAveAll = new google.visualization.ColumnChart(document.getElementById('aveEventsAllDiv'));
-	var optionsAll = { title: 'All', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
-	chartAveAll.draw(rangeAveAllData, optionsAll);
+	var options = { title: 'All', legend: { position: 'none' }, hAxis:{baseline:0}, bar:{groupWidth:'90%'} };
+	chartAveAll.draw(getAgeRangeAveEntriesTable( payload.age_range_average ), options);
 	
-	var rangeAveMenData = new google.visualization.DataTable();
-	rangeAveMenData.addColumn('string', 'Age Range');
-	rangeAveMenData.addColumn('number', 'Ave Entries');
-	var rows = [];
-	for( var i = 0; i < payload.age_range_men_average.length; ++i )
-		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(payload.age_range_men_average[i])] );
-	rangeAveMenData.addRows( rows );
 	var chartAveMen = new google.visualization.ColumnChart(document.getElementById('aveEventsMenDiv'));
-	var optionsMen = { title: 'Men', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
-	chartAveMen.draw(rangeAveMenData, optionsMen);
+	options.title = 'Men';
+	chartAveMen.draw(getAgeRangeAveEntriesTable( payload.age_range_men_average ), options);
 	
-	var rangeAveWomenData = new google.visualization.DataTable();
-	rangeAveWomenData.addColumn('string', 'Age Range');
-	rangeAveWomenData.addColumn('number', 'Ave Entries');
-	var rows = [];
-	for( var i = 0; i < payload.age_range_women_average.length; ++i )
-		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(payload.age_range_women_average[i])] );
-	rangeAveWomenData.addRows( rows );
 	var chartAveWomen = new google.visualization.ColumnChart(document.getElementById('aveEventsWomenDiv'));
-	var optionsWomen = { title: 'Women', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
-	chartAveWomen.draw(rangeAveWomenData, optionsWomen);
+	options.title = 'Women';
+	chartAveWomen.draw(getAgeRangeAveEntriesTable( payload.age_range_women_average ), options);
 	
+	// --------------------------------------------------------------------------------------------------
+	function getAgeTable( at ) {
+		var dt = new google.visualization.DataTable();
+		dt.addColumn('number', 'Age');
+		var rows = [];
+		for( var i = 0; i < at.length; ++i )
+			rows.push( [at[i]] );
+		dt.addRows( rows );
+		return dt;
+	}
+	
+	var chartAll = new google.visualization.Histogram(document.getElementById('histAgeAllDiv'));
+	var options = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
+	chartAll.draw(getAgeTable(payload.license_holder_profile), options);
+	
+	var chartMen = new google.visualization.Histogram(document.getElementById('histAgeMenDiv'));
+	options.title = 'Men';
+	chartMen.draw(getAgeTable(payload.license_holder_men_profile), options);
+
+	var chartWomen = new google.visualization.Histogram(document.getElementById('histAgeWomenDiv'));
+	options.title = 'Women';
+	chartWomen.draw(getAgeTable(payload.license_holder_women_profile), options);
+
 	// --------------------------------------------------------------------------------------------------
 	var statsData = new google.visualization.DataTable();
 	statsData.addColumn('string', 'Gender');
@@ -214,7 +224,7 @@ function drawCharts() {
 </p>
 
 <p>
-<h3>Participation by Age<h3>
+<h3>Event Participation by Age<h3>
 <div class="container"/>
 	<div class="row">
 		<div class="col-md-4">
@@ -242,6 +252,23 @@ function drawCharts() {
 		</div>
 		<div class="col-md-4">
 			<div id="aveEventsWomenDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+	</div>
+</div>
+</p>
+
+<p>
+<h3>Participating License Holder Age Profile (as of {{payload.profile_year}})<h3>
+<div class="container"/>
+	<div class="row">
+		<div class="col-md-4">
+			<div id="histAgeAllDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+		<div class="col-md-4">
+			<div id="histAgeMenDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+		<div class="col-md-4">
+			<div id="histAgeWomenDiv" style="width: 400px; height: 300px;"></div>
 		</div>
 	</div>
 </div>

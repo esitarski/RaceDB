@@ -1,4 +1,5 @@
 
+import datetime
 import utils
 from collections import defaultdict
 from models import *
@@ -23,10 +24,14 @@ def participation_data( year=None ):
 	age_range_men_participant_count = [0 for i in xrange(0, 120, age_increment)]
 	age_range_women_license_holders = [set() for i in xrange(0, 120, age_increment)]
 	age_range_women_participant_count = [0 for i in xrange(0, 120, age_increment)]
+	license_holders_set = set()
 	
+	profile_year = 0
 	for competition in competitions.order_by( 'start_date' ):
 		if not competition.has_participants():
 			continue
+		
+		profile_year = max( profile_year, competition.start_date.year )
 		
 		competition_data = {
 			'name': competition.name,
@@ -46,6 +51,7 @@ def participation_data( year=None ):
 					'gender':	participant.license_holder.gender,
 					'age':		age,
 				} )
+				license_holders_set.add( participant.license_holder )
 				license_holders_count[participant.license_holder] += 1
 				age_count[age] += 1
 				
@@ -100,6 +106,16 @@ def participation_data( year=None ):
 	trim_right_zeros( age_range_men_average )
 	trim_right_zeros( age_range_women_average )
 	
+	license_holder_profile = []
+	license_holder_men_profile = []
+	license_holder_women_profile = []
+	if profile_year:
+		license_holder_profile = sorted(profile_year - lh.date_of_birth.year for lh in license_holders_set)
+		license_holder_men_profile = sorted(profile_year - lh.date_of_birth.year for lh in license_holders_set if lh.gender == 0)
+		license_holder_women_profile = sorted(profile_year - lh.date_of_birth.year for lh in license_holders_set if lh.gender == 1)
+	else:
+		profile_year = datetime.date.today().year
+	
 	def get_expected_age( ac ):
 		most_frequent = max( v for v in ac.itervalues() )
 		for a, c in ac.iteritems():
@@ -128,6 +144,11 @@ def participation_data( year=None ):
 		'age_range_men_average':age_range_men_average,
 		'age_range_women_average':age_range_women_average,
 		'age_increment': age_increment,
+		
+		'profile_year':profile_year,
+		'license_holder_profile':license_holder_profile,
+		'license_holder_men_profile':license_holder_men_profile,
+		'license_holder_women_profile':license_holder_women_profile,
 		
 		'competitions': data,
 	}
