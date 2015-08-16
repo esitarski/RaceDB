@@ -133,21 +133,21 @@ function drawCharts() {
 			'All',
 			{{p.participants_total}},
 			{{p.license_holders_total}},
-			{v:{{p.events_average}}, f:'{{p.events_average|floatformat:3}}'},
+			formatFloat({{p.events_average}}),
 			{{p.expected_age}}
 		],
 		[
 			'Men',
 			{{p.participants_men_total}},
 			{{p.license_holders_men_total}},
-			{v:{{p.events_men_average}}, f:'{{p.events_men_average|floatformat:3}}'},
+			formatFloat({{p.events_men_average}}),
 			{{p.expected_men_age}}
 		],
 		[
 			'Women',
 			{{p.participants_women_total}},
 			{{p.license_holders_women_total}},
-			{v:{{p.events_women_average}}, f:'{{p.events_women_average|floatformat:3}}'},
+			formatFloat({{p.events_women_average}}),
 			{{p.expected_women_age}}
 		],
 	]);
