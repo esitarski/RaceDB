@@ -16,6 +16,14 @@ def participation_data( year=None ):
 	age_men_count = defaultdict( int )
 	age_women_count = defaultdict( int )
 	
+	age_increment = 5
+	age_range_license_holders = [set() for i in xrange(0, 120, age_increment)]
+	age_range_participant_count = [0 for i in xrange(0, 120, age_increment)]
+	age_range_men_license_holders = [set() for i in xrange(0, 120, age_increment)]
+	age_range_men_participant_count = [0 for i in xrange(0, 120, age_increment)]
+	age_range_women_license_holders = [set() for i in xrange(0, 120, age_increment)]
+	age_range_women_participant_count = [0 for i in xrange(0, 120, age_increment)]
+	
 	for competition in competitions.order_by( 'start_date' ):
 		if not competition.has_participants():
 			continue
@@ -40,12 +48,20 @@ def participation_data( year=None ):
 				} )
 				license_holders_count[participant.license_holder] += 1
 				age_count[age] += 1
+				
+				age_range_license_holders[age//5].add( participant.license_holder )
+				age_range_participant_count[age//5] += 1
+				
 				if participant.license_holder.gender == 0:
 					license_holders_men_count[participant.license_holder] += 1
 					age_men_count[age] += 1
+					age_range_men_license_holders[age//5].add( participant.license_holder )
+					age_range_men_participant_count[age//5] += 1
 				else:
 					license_holders_women_count[participant.license_holder] += 1
 					age_women_count[age] += 1
+					age_range_women_license_holders[age//5].add( participant.license_holder )
+					age_range_women_participant_count[age//5] += 1
 			
 			event_data = {
 				'name':event.name,
@@ -61,6 +77,29 @@ def participation_data( year=None ):
 		competition_data['total'] = competition_data['men'] + competition_data['women']
 		data.append( competition_data )
 	
+	age_range_average = [
+		0 if not age_range_license_holders[i] else age_range_participant_count[i] / float(len(age_range_license_holders[i]))
+		for i in xrange(len(age_range_participant_count))
+	]
+	age_range_men_average = [
+		0 if not age_range_men_license_holders[i] else age_range_men_participant_count[i] / float(len(age_range_men_license_holders[i]))
+		for i in xrange(len(age_range_men_participant_count))
+	]
+	age_range_women_average = [
+		0 if not age_range_women_license_holders[i] else age_range_women_participant_count[i] / float(len(age_range_women_license_holders[i]))
+		for i in xrange(len(age_range_women_participant_count))
+	]
+	
+	def trim_right_zeros( a ):
+		for i in xrange(len(a)-1, -1, -1):
+			if a[i]:
+				del a[i+1:]
+				break
+	
+	trim_right_zeros( age_range_average )
+	trim_right_zeros( age_range_men_average )
+	trim_right_zeros( age_range_women_average )
+	
 	def get_expected_age( ac ):
 		most_frequent = max( v for v in ac.itervalues() )
 		for a, c in ac.iteritems():
@@ -72,15 +111,24 @@ def participation_data( year=None ):
 		'participants_total': sum(c['total'] for c in data),
 		'participants_men_total': sum(c['men'] for c in data),
 		'participants_women_total': sum(c['women'] for c in data),
+		
 		'license_holders_total': len(license_holders_count),
 		'license_holders_men_total': len(license_holders_men_count),
 		'license_holders_women_total': len(license_holders_women_count),
+		
 		'events_average': sum(v for v in license_holders_count.itervalues()) / float(len(license_holders_count)),
 		'events_men_average': sum(v for v in license_holders_men_count.itervalues()) / float(len(license_holders_men_count)),
 		'events_women_average': sum(v for v in license_holders_women_count.itervalues()) / float(len(license_holders_women_count)),
+		
 		'expected_age': get_expected_age(age_count),
 		'expected_men_age': get_expected_age(age_men_count),
 		'expected_women_age': get_expected_age(age_women_count),
+		
+		'age_range_average':age_range_average,
+		'age_range_men_average':age_range_men_average,
+		'age_range_women_average':age_range_women_average,
+		'age_increment': age_increment,
+		
 		'competitions': data,
 	}
 	return payload

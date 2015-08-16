@@ -55,6 +55,7 @@ function drawCharts() {
 		}
 	}
 
+	// --------------------------------------------------------------------------------------------------
 	var chartAll = new google.visualization.Histogram(document.getElementById('histAllDiv'));
 	var optionsAll = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 } };
 	var histTableAll = google.visualization.arrayToDataTable( ageAll );
@@ -70,6 +71,41 @@ function drawCharts() {
 	var histTableWomen = google.visualization.arrayToDataTable( ageWomen );
 	chartWomen.draw(histTableWomen, optionsWomen);
 
+	// --------------------------------------------------------------------------------------------------
+	var rangeAveAllData = new google.visualization.DataTable();
+	rangeAveAllData.addColumn('string', 'Age Range');
+	rangeAveAllData.addColumn('number', 'Ave Entries');
+	var rows = [];
+	for( var i = 0; i < payload.age_range_average.length; ++i )
+		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), payload.age_range_average[i]] );
+	rangeAveAllData.addRows( rows );
+	var chartAveAll = new google.visualization.ColumnChart(document.getElementById('aveEventsAllDiv'));
+	var optionsAll = { title: 'All', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
+	chartAveAll.draw(rangeAveAllData, optionsAll);
+	
+	var rangeAveMenData = new google.visualization.DataTable();
+	rangeAveMenData.addColumn('string', 'Age Range');
+	rangeAveMenData.addColumn('number', 'Ave Entries');
+	var rows = [];
+	for( var i = 0; i < payload.age_range_men_average.length; ++i )
+		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), payload.age_range_average[i]] );
+	rangeAveMenData.addRows( rows );
+	var chartAveMen = new google.visualization.ColumnChart(document.getElementById('aveEventsMenDiv'));
+	var optionsMen = { title: 'Men', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
+	chartAveMen.draw(rangeAveMenData, optionsMen);
+	
+	var rangeAveWomenData = new google.visualization.DataTable();
+	rangeAveWomenData.addColumn('string', 'Age Range');
+	rangeAveWomenData.addColumn('number', 'Ave Entries');
+	var rows = [];
+	for( var i = 0; i < payload.age_range_women_average.length; ++i )
+		rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), payload.age_range_average[i]] );
+	rangeAveWomenData.addRows( rows );
+	var chartAveWomen = new google.visualization.ColumnChart(document.getElementById('aveEventsWomenDiv'));
+	var optionsWomen = { title: 'Women', vAxis:{baseline:0}, bar:{groupWidth:'95%'}, legend:{position:'none'} };
+	chartAveWomen.draw(rangeAveWomenData, optionsWomen);
+	
+	// --------------------------------------------------------------------------------------------------
 	var statsData = new google.visualization.DataTable();
 	statsData.addColumn('string', 'Gender');
 	statsData.addColumn('number', 'Total Entries');
@@ -184,6 +220,23 @@ function drawCharts() {
 		</div>
 		<div class="col-md-4">
 			<div id="histWomenDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+	</div>
+</div>
+</p>
+
+<p>
+<h3>Average Events by Age<h3>
+<div class="container"/>
+	<div class="row">
+		<div class="col-md-4">
+			<div id="aveEventsAllDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+		<div class="col-md-4">
+			<div id="aveEventsMenDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+		<div class="col-md-4">
+			<div id="aveEventsWomenDiv" style="width: 400px; height: 300px;"></div>
 		</div>
 	</div>
 </div>
