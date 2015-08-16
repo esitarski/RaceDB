@@ -3629,7 +3629,7 @@ def ParticipantReport( request ):
 #--------------------------------------------------------------------------
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
-def SystemAnalytics( request ):
+def ParticipantAnalytics( request ):
 	year = get_year_choices()[0][0]
 	
 	if request.method == 'POST':

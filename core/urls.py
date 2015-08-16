@@ -164,7 +164,7 @@ urlpatterns = patterns('',
 	url(r'^(?i).*DisciplineBottom/(?P<disciplineId>\d+)/$', views.DisciplineBottom),
 	
 	url(r'^(?i).*SystemInfoEdit/$', views.SystemInfoEdit),
-	url(r'^(?i).*SystemAnalytics/$', views.SystemAnalytics),
+	url(r'^(?i).*ParticipantAnalytics/$', views.ParticipantAnalytics),
 	url(r'^(?i).*ParticipantReport/$', views.ParticipantReport),
 	url(r'^(?i).*QRCode/$', views.QRCode),
 	
