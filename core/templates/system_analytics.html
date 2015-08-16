@@ -56,11 +56,12 @@ function drawCharts() {
 			var event = competition.events[iEvent];
 			for( var iParticipant = 0; iParticipant < event.participants.length; ++iParticipant ) {
 				var participant = event.participants[iParticipant];
-				ageAll.push( [participant.age] );
-				if( participant.gender === 0 )
-					ageMen.push( [participant.age] );
+				var gender = participant[0], age = participant[1];
+				ageAll.push( [age] );
+				if( gender === 0 )
+					ageMen.push( [age] );
 				else
-					ageWomen.push( [participant.age] );
+					ageWomen.push( [age] );
 			}
 		}
 	}
@@ -164,8 +165,17 @@ function drawCharts() {
 	var overallCategoriesChart = new google.visualization.ColumnChart(document.getElementById("overallCategoriesChartDiv"));
 	for( var i = 0; i < payload.category_count.length; ++i )
 		payload.category_count[i][1] = formatIntPercent(payload.category_count[i][1], payload.participants_total);
-	overallCategoriesChart.draw(google.visualization.arrayToDataTable(payload.category_count),
-		{title:'Participation by Category', bar: { groupWidth: '75%' }, legend: {position: 'none'}} );
+	overallCategoriesChart.draw(
+		google.visualization.arrayToDataTable(payload.category_count),
+		{title:'Participation by Category', bar: { groupWidth: '75%' }, legend: {position: 'none'}}
+	);
+	
+	// ---------------------------------------------------------
+	//var personaTable = new google.visualization.Table(document.getElementById('personasTableDiv'));
+	//personaTable.draw(
+	//	google.visualization.arrayToDataTable(payload.personas),
+	//	{showRowNumber: true}
+	//);
 	
 	// ---------------------------------------------------------
 	var compChartData = new google.visualization.DataTable();
@@ -236,8 +246,7 @@ function drawCharts() {
 		</div>
 	</div>
 </div>
-<div id='overallCategoriesChartDiv'style="width: 1000px; height: 500px;"></div>
-<div class="page-break-before" id='statsTableDiv'></div>
+<div id='overallCategoriesChartDiv' style="width: 1300px; height: 500px;"></div>
 </p>
 
 <p>
@@ -293,8 +302,11 @@ function drawCharts() {
 
 <p>
 <h2 class="page-break-before">Competitions</h2>
-<div id='compChartDiv'style="width: 1000px; height: 500px;"></div>
-<div id='compCategoryChartDiv'style="width: 1000px; height: 500px;"></div>
+<div id='compChartDiv'style="width: 1300px; height: 500px;"></div>
+<div id='compCategoryChartDiv'style="width: 1300px; height: 500px;"></div>
+<hr/>
+<div class="page-break-before" id='statsTableDiv'></div>
+<hr/>
 <div id='compTableDiv' class="page-break-before"></div>
 </p>
 

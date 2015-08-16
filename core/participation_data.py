@@ -33,6 +33,8 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	age_range_women_participant_count = [0 for i in xrange(0, 120, age_increment)]
 	license_holders_set = set()
 	
+	personas = defaultdict( int )
+	
 	profile_year = 0
 	for competition in competitions.order_by( 'start_date' ):
 		if not competition.has_participants():
@@ -54,36 +56,35 @@ def participation_data( year=None, discipline=None, race_class=None ):
 			participant_data = []
 			for participant in event.get_participants():
 				age = event.date_time.year - participant.license_holder.date_of_birth.year
-				participant_data.append( {
-					'gender':	participant.license_holder.gender,
-					'age':		age,
-				} )
+				participant_data.append( [participant.license_holder.gender, age] )
 				license_holders_set.add( participant.license_holder )
 				license_holders_count[participant.license_holder] += 1
 				age_count[age] += 1
 				
-				age_range_license_holders[age//5].add( participant.license_holder )
-				age_range_participant_count[age//5] += 1
+				age_range_license_holders[age//age_increment].add( participant.license_holder )
+				age_range_participant_count[age//age_increment] += 1
 				
 				category_count_overall[participant.category.code_gender if participant.category else unicode(_('Unknown'))] += 1
 				category_competition_count[competition][participant.category.code_gender if participant.category else unicode(_('Unknown'))] += 1
 				
+				personas[(participant.category.code_gender if participant.category else unicode(_('Unknown')), age - age%age_increment)] += 1
+				
 				if participant.license_holder.gender == 0:
 					license_holders_men_count[participant.license_holder] += 1
 					age_men_count[age] += 1
-					age_range_men_license_holders[age//5].add( participant.license_holder )
-					age_range_men_participant_count[age//5] += 1
+					age_range_men_license_holders[age//age_increment].add( participant.license_holder )
+					age_range_men_participant_count[age//age_increment] += 1
 				else:
 					license_holders_women_count[participant.license_holder] += 1
 					age_women_count[age] += 1
-					age_range_women_license_holders[age//5].add( participant.license_holder )
-					age_range_women_participant_count[age//5] += 1
+					age_range_women_license_holders[age//age_increment].add( participant.license_holder )
+					age_range_women_participant_count[age//age_increment] += 1
 			
 			event_data = {
 				'name':event.name,
 				'participants':participant_data,
-				'men': sum(1 for p in participant_data if p['gender'] == 0),
-				'women': sum(1 for p in participant_data if p['gender'] == 1),
+				'men': sum(1 for p in participant_data if p[0] == 0),
+				'women': sum(1 for p in participant_data if p[0] == 1),
 			}
 			event_data['total'] = event_data['men'] + event_data['women']
 			competition_data['men'] += event_data['men']
@@ -131,6 +132,16 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	for competition in sorted( (category_competition_count.iterkeys()), key=lambda x: x.start_date ):
 		ccc.append( [competition.name] + [category_competition_count[competition].get(name, 0) for name, count in category_count[1:]] )
 	
+	participants_total = sum(c['total'] for c in data)
+	personas = sorted(
+		([cat, '{}-{}'.format(age,age+age_increment-1), count, (100.0*count)/float(participants_total)] for (cat, age), count in personas.iteritems()),
+		key=lambda x:x[-1],
+		reverse=True,
+	)
+	for p in personas:
+		p[3] = {'v':p[3],'f':'{:.2f}'.format(p[3])}
+	personas = [['Category', 'Age', 'Count', 'Percent']] + personas
+	
 	def get_expected_age( ac ):
 		if not ac:
 			return None
@@ -141,7 +152,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		return None
 	
 	payload = {
-		'participants_total': sum(c['total'] for c in data),
+		'participants_total': participants_total,
 		'participants_men_total': sum(c['men'] for c in data),
 		'participants_women_total': sum(c['women'] for c in data),
 		
@@ -169,6 +180,8 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		
 		'category_count':category_count,
 		'category_competition_count':ccc,
+		
+		'personas':personas[:10],
 		
 		'competitions': data,
 	}
