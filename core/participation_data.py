@@ -141,8 +141,6 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		cumulativePercent += 100.0*c[-1] / participants_total
 		c.append( cumulativePercent )
 		
-	print category_count
-	
 	personas = sorted(
 		([cat, '{}-{}'.format(age,age+age_increment-1), count, (100.0*count)/float(participants_total)] for (cat, age), count in personas.iteritems()),
 		key=lambda x:x[-1],
