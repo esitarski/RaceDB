@@ -215,6 +215,10 @@ function drawCharts() {
 	compCategoryChart.draw(google.visualization.arrayToDataTable(payload.category_competition_count),
 		{title:'Participation by Category', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
 	
+	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventChartDiv"));
+	compEventChart.draw(google.visualization.arrayToDataTable(payload.event_competition_count),
+		{title:'Participation by Event', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
+	
 	// ---------------------------------------------------------
 	var compData = new google.visualization.DataTable();
 	compData.addColumn('string', 'Competition');
@@ -328,6 +332,7 @@ function drawCharts() {
 <h2 class="page-break-before">Competitions</h2>
 <div id='compChartDiv'style="width: 1300px; height: 500px;"></div>
 <div id='compCategoryChartDiv'style="width: 1300px; height: 500px;"></div>
+<div id='compEventChartDiv'style="width: 1300px; height: 500px;"></div>
 <hr/>
 <div class="page-break-before" id='statsTableDiv'></div>
 <hr/>

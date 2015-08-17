@@ -23,6 +23,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	
 	category_count_overall = defaultdict( int )
 	category_competition_count = defaultdict( lambda: defaultdict(int) )
+	event_competition_count = defaultdict( lambda: defaultdict(int) )
 	competition_count_total = defaultdict( int )
 	
 	competition_category_event = defaultdict( dict )
@@ -76,6 +77,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 				
 				category_count_overall[category_name] += 1
 				category_competition_count[competition][category_name] += 1
+				event_competition_count[competition][event] += 1
 				competition_count_total[competition] += 1
 				
 				personas[(category_name, age - age%age_increment)] += 1
@@ -163,7 +165,15 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	for c in category_count[1:]:
 		cumulativePercent += 100.0*c[-1] / participants_total
 		c.append( cumulativePercent )
-		
+	
+	event_max = max(len(events) for events in event_competition_count.itervalues()) if event_competition_count else 0
+	eee = [['Competition'] + ['{}'.format(i+1) for i in xrange(event_max)]]
+	for competition in sorted( (event_competition_count.iterkeys()), key=lambda x: x.start_date ):
+		events = sorted( ((event, count) for event, count in event_competition_count[competition].iteritems()), key=lambda x: x[0].date_time )
+		participant_max = sum( e[1] for e in events )
+		eee.append( [competition.name] + [format_int_percent_event(events[i][1], participant_max, events[i][0].name)
+			if i < len(events) else 0 for i in xrange(event_max)] )
+	
 	personas = sorted(
 		([cat, '{}-{}'.format(age,age+age_increment-1), count, (100.0*count)/float(participants_total)] for (cat, age), count in personas.iteritems()),
 		key=lambda x:x[-1],
@@ -214,6 +224,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		
 		'category_count':category_count,
 		'category_competition_count':ccc,
+		'event_competition_count':eee,
 		
 		'personas':personas[:10],
 		
