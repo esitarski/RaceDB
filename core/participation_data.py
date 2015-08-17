@@ -150,7 +150,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		return {'v':num, 'f':'{} / {} ({:.2f}%) - {}'.format(num, total, (100.0 * num) / (total or 1), event)}
 	
 	def format_event_int_percent( num, total, event ):
-		return {'v':num, 'f':'{} - {} / {} ({:.2f}%)'.format(event, num, total, (100.0 * num) / (total or 1))}
+		return {'v':num, 'f':'{}: {} / {} ({:.2f}%)'.format(event, num, total, (100.0 * num) / (total or 1))}
 	
 	category_count = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_count_overall.iteritems()), key=lambda x: x[1], reverse=True )
 	ccc = [['Competition'] + [name for name, count in category_count[1:]]]
