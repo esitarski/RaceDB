@@ -149,6 +149,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	def format_int_percent_event( num, total, event ):
 		return {'v':num, 'f':'{} / {} ({:.2f}%) - {}'.format(num, total, (100.0 * num) / (total or 1), event)}
 	
+	def format_event_int_percent( num, total, event ):
+		return {'v':num, 'f':'{} - {} / {} ({:.2f}%)'.format(event, num, total, (100.0 * num) / (total or 1))}
+	
 	category_count = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_count_overall.iteritems()), key=lambda x: x[1], reverse=True )
 	ccc = [['Competition'] + [name for name, count in category_count[1:]]]
 	for competition in sorted( (category_competition_count.iterkeys()), key=lambda x: x.start_date ):
@@ -171,7 +174,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	for competition in sorted( (event_competition_count.iterkeys()), key=lambda x: x.start_date ):
 		events = sorted( ((event, count) for event, count in event_competition_count[competition].iteritems()), key=lambda x: x[0].date_time )
 		participant_max = sum( e[1] for e in events )
-		eee.append( [competition.name] + [format_int_percent_event(events[i][1], participant_max, events[i][0].name)
+		eee.append( [competition.name] + [format_event_int_percent(events[i][1], participant_max, events[i][0].name)
 			if i < len(events) else 0 for i in xrange(event_max)] )
 	
 	personas = sorted(
