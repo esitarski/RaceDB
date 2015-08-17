@@ -23,6 +23,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	
 	category_count_overall = defaultdict( int )
 	category_competition_count = defaultdict( lambda: defaultdict(int) )
+	competition_count_total = defaultdict( int )
 	
 	age_increment = 5
 	age_range_license_holders = [set() for i in xrange(0, 120, age_increment)]
@@ -71,6 +72,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 				
 				category_count_overall[participant.category.code_gender if participant.category else unicode(_('Unknown'))] += 1
 				category_competition_count[competition][participant.category.code_gender if participant.category else unicode(_('Unknown'))] += 1
+				competition_count_total[competition] += 1
 				
 				personas[(participant.category.code_gender if participant.category else unicode(_('Unknown')), age - age%age_increment)] += 1
 				
@@ -134,10 +136,15 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		
 	participants_total = sum(c['total'] for c in data)
 	
+	def format_int_percent( num, total ):
+		return {'v':num, 'f':'{} / {} ({:.2f}%)'.format(num, total, (100.0 * num) / (total or 1))}
+	
 	category_count = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_count_overall.iteritems()), key=lambda x: x[1], reverse=True )
 	ccc = [['Competition'] + [name for name, count in category_count[1:]]]
 	for competition in sorted( (category_competition_count.iterkeys()), key=lambda x: x.start_date ):
-		ccc.append( [competition.name] + [category_competition_count[competition].get(name, 0) for name, count in category_count[1:]] )
+		ccc.append( [competition.name] +
+			[format_int_percent(category_competition_count[competition].get(name, 0), competition_count_total[competition])
+				for name, count in category_count[1:]] )
 		
 	# Add cumulative percent.
 	category_count[0].append( 'Cumulative %' )

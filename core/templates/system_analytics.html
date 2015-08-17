@@ -12,7 +12,7 @@ function formatFloat( num, precision ) {
 
 function formatIntPercent( num, total ) {
 	var percent = (100.0 * num) / (total ? total : 1);
-	return {v:num, f:num + ' (' + percent.toFixed(2) + '%)'};
+	return {v:num, f:num + ' / ' + total + ' (' + percent.toFixed(2) + '%)'};
 }
 
 function drawCharts() {
@@ -201,7 +201,11 @@ function drawCharts() {
 	var competitions = payload.competitions;
 	for( var iCompetition = 0; iCompetition < competitions.length; ++iCompetition ) {
 		var competition = competitions[iCompetition];
-		rows.push( [competition.name, competition.men, competition.women] );
+		rows.push( [
+			competition.name,
+			formatIntPercent(competition.men, competition.total),
+			formatIntPercent(competition.women, competition.total)
+		] );
 	}
 	compChartData.addRows( rows );
 	var compChart = new google.visualization.ColumnChart(document.getElementById("compChartDiv"));
