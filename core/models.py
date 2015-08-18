@@ -1107,6 +1107,10 @@ class LicenseHolder(models.Model):
 			self.search_text = self.get_search_text()[:self.SearchTextLength]
 			super(LicenseHolder, self).save( *args, **kwargs )
 
+	@property
+	def is_temp_license( self ):
+		return self.license_code.startswith(u'TEMP')
+	
 	def __unicode__( self ):
 		return '%s, %s (%s, %s, %s, %s)' % (
 			self.last_name.upper(), self.first_name,

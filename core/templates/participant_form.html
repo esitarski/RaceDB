@@ -48,11 +48,16 @@
 	<td>
 		<strong>{{h.full_name}}:</strong>
 		{{h.get_gender_display}},
-		{% if h.license_code %} {{h.license_code}}, {% endif %}
+		{% if h.license_code %}
+			{% if h.is_temp_license %}<span class="label label-warning">{% endif %}{{h.license_code}}{% if h.is_temp_license %}</span>{% endif %},
+		{% endif %}
 		{% if h.uci_code %} {{h.uci_code}}, {% endif %}
 		{% if h.city %} {{h.city}}, {% endif %}
 		{% if h.state_prov %} {{h.state_prov}}, {% endif %}
 		{% if h.nationality %} {{h.nationality}} {% endif %}
+		{% if not h.license_code or h.is_temp_license %}
+			<br/><span class="label label-warning">{% trans "Reminder: Ask for permanent License Code and edit entry" %}</span>
+		{% endif %}
 	</td>
 	<td>
 		{% if isEdit %}
