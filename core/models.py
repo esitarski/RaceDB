@@ -809,7 +809,8 @@ class Event( models.Model ):
 	'''
 	
 	def get_participants( self ):
-		categories = list( set.union( *[set(w.categories.all().values_list('pk', flat=True)) for w in self.get_wave_set().all()] ))
+		categories = []
+		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
 		if not self.option_id:
 			return Participant.objects.filter(
 				competition=self.competition,
@@ -829,7 +830,7 @@ class Event( models.Model ):
 		return self.get_participants().exists()
 		
 	def __unicode__( self ):
-		return u'%s, %s (%s)' % (self.date_time, self.name, self.competition.name)
+		return u'{}, {} ({})'.format(self.date_time, self.name, self.competition.name)
 	
 	@property
 	def short_name( self ):

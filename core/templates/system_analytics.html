@@ -22,13 +22,16 @@ function drawCharts() {
 	// Overall Attendance, License Holders and Average Entries.
 	//
 {% with p=payload %}
+	var options = { title: 'All', legend: { position: 'top' }, animation: animationOption };
+	
 	var entriesTable = google.visualization.arrayToDataTable( [
 		['Gender', 'Attendance'],
 		['Men', {{p.attendees_men_total}}],
 		['Women', {{p.attendees_women_total}}],
 	]);
 	var entriesChart = new google.visualization.PieChart(document.getElementById('entriesDiv'));
-	entriesChart.draw( entriesTable, {title: 'Attendees: {{p.attendees_total}}', animation: animationOption} );
+	options.title = 'Attendees: {{p.attendees_total}}';
+	entriesChart.draw( entriesTable, options );
 	
 	var licenseHoldersTable = google.visualization.arrayToDataTable( [
 		['Gender', 'License Holders'],
@@ -36,7 +39,8 @@ function drawCharts() {
 		['Women', {{p.license_holders_women_total}}],
 	]);
 	var licenseHoldersChart = new google.visualization.PieChart(document.getElementById('licenseHoldersDiv'));
-	licenseHoldersChart.draw( licenseHoldersTable, {title: 'License Holders: {{p.license_holders_attendance_total}}', animation: animationOption} );
+	options.title = 'License Holders: {{p.license_holders_attendance_total}}';
+	licenseHoldersChart.draw( licenseHoldersTable, options );
 	
 	var aveEntriesTable = google.visualization.arrayToDataTable( [
 		['Gender', 'Ave. Entries'],
@@ -45,10 +49,40 @@ function drawCharts() {
 		['Women', formatFloat({{p.attendance_women_average}})],
 	]);
 	var aveEntriesChart = new google.visualization.ColumnChart(document.getElementById('aveEntriesDiv'));
-	aveEntriesChart.draw( aveEntriesTable, {title: 'Average Attendance per License Holder', vAxis:{baseline:0}, animation: animationOption} );
+	aveEntriesChart.draw( aveEntriesTable, {
+			title: 'Average Attendance per License Holder',
+			legend: { position: 'none' },
+			vAxis:{baseline:0}, animation: animationOption
+		}
+	);
 	
 {% endwith %}
 	
+	// -----------------------------------------------------------------
+	// Participation by Category
+	//
+	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById("overallCategoriesChartDiv"));
+	for( var i = 1; i < payload.category_total.length; ++i ) {
+		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participants_total);
+		payload.category_total[i][2] = formatFloat(payload.category_total[i][2]);
+	}
+	overallCategoriesChart.draw(
+		google.visualization.arrayToDataTable(payload.category_total),
+		{
+			title:'Participation by Category (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			legend: {position: 'none'},
+			animation: animationOption,
+			seriesType: 'bars',
+			series: {
+				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+				vAxes: {
+					1: { minValue:0, maxValue:100 }
+				},
+			},
+		}
+	);
+		
 	// -----------------------------------------------------------------
 	// Attendance by Age
 	//
@@ -133,31 +167,6 @@ function drawCharts() {
 	options.title = 'Women';
 	chartWomen.draw(getAgeTable(payload.license_holder_women_profile), options);
 
-	// -----------------------------------------------------------------
-	// Participation by Category
-	//
-	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById("overallCategoriesChartDiv"));
-	for( var i = 1; i < payload.category_total.length; ++i ) {
-		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participants_total);
-		payload.category_total[i][2] = formatFloat(payload.category_total[i][2]);
-	}
-	overallCategoriesChart.draw(
-		google.visualization.arrayToDataTable(payload.category_total),
-		{
-			title:'Participation by Category (includes attendees competing in multiple categories)',
-			bar: { groupWidth: '75%' },
-			legend: {position: 'none'},
-			animation: animationOption,
-			seriesType: 'bars',
-			series: {
-				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
-				vAxes: {
-					1: { minValue:0, maxValue:100 }
-				},
-			},
-		}
-	);
-		
 	// -----------------------------------------------------------------
 	// Attendees by Gender
 	//
