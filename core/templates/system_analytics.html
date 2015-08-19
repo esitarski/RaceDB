@@ -125,7 +125,7 @@ function drawCharts() {
 		rangeAveData.addColumn('number', 'Ave Entries');
 		var rows = [];
 		for( var i = 0; i < ar.length; ++i )
-			rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment), formatFloat(ar[i])] );
+			rows.push( [(i*payload.age_increment) + '-' + ((i+1)*payload.age_increment-1), formatFloat(ar[i])] );
 		rangeAveData.addRows( rows );
 		return rangeAveData;
 	}
