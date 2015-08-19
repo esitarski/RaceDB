@@ -3649,8 +3649,10 @@ def ParticipantReport( request ):
 #--------------------------------------------------------------------------
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
-def ParticipantAnalytics( request ):
+def AttendanceAnalytics( request ):
 	year = get_year_choices()[0][0]
+	discipline = None
+	race_class = None
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -3674,6 +3676,15 @@ def ParticipantAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()()
 	
+	page_title = u'RaceDB: Analytics'
+	if year > 0:
+		page_title += u' {}'.format(year)
+	else:
+		page_title += unicode(_('All Years'))
+	if discipline:
+		page_title += u' {}'.format(discipline.name)
+	if race_class:
+		page_title += u' {}'.format(race_class.name)
 	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
 

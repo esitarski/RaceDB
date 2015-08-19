@@ -18,46 +18,49 @@ function formatIntPercent( num, total ) {
 function drawCharts() {
 	var animationOption = {duration: 1000, startup: true};
 
-	{% with p=payload %}
+	// -----------------------------------------------------------------
+	// Overall Attendance, License Holders and Average Entries.
+	//
+{% with p=payload %}
 	var entriesTable = google.visualization.arrayToDataTable( [
-		['Gender', 'Participation'],
-		['Men', {{p.participants_men_total}}],
-		['Women', {{p.participants_women_total}}],
+		['Gender', 'Attendance'],
+		['Men', {{p.attendees_men_total}}],
+		['Women', {{p.attendees_women_total}}],
 	]);
 	var entriesChart = new google.visualization.PieChart(document.getElementById('entriesDiv'));
-	entriesChart.draw( entriesTable, {title: 'Participation: ' + {{p.participants_total}}, animation: animationOption} );
-	{% endwith %}
-
-	{% with p=payload %}
+	entriesChart.draw( entriesTable, {title: 'Attendees: {{p.attendees_total}}', animation: animationOption} );
+	
 	var licenseHoldersTable = google.visualization.arrayToDataTable( [
-		['Gender', 'Licnese Holders'],
+		['Gender', 'License Holders'],
 		['Men', {{p.license_holders_men_total}}],
 		['Women', {{p.license_holders_women_total}}],
 	]);
 	var licenseHoldersChart = new google.visualization.PieChart(document.getElementById('licenseHoldersDiv'));
-	licenseHoldersChart.draw( licenseHoldersTable, {title: 'Participating License Holders: ' + {{p.license_holders_total}}, animation: animationOption} );
-	{% endwith %}
-
-	{% with p=payload %}
+	licenseHoldersChart.draw( licenseHoldersTable, {title: 'License Holders: {{p.license_holders_attendance_total}}', animation: animationOption} );
+	
 	var aveEntriesTable = google.visualization.arrayToDataTable( [
 		['Gender', 'Ave. Entries'],
-		['All', formatFloat({{p.events_average}})],
-		['Men', formatFloat({{p.events_men_average}})],
-		['Women', formatFloat({{p.events_women_average}})],
+		['All', formatFloat({{p.attendance_average}})],
+		['Men', formatFloat({{p.attendance_men_average}})],
+		['Women', formatFloat({{p.attendance_women_average}})],
 	]);
-	{% endwith %}
 	var aveEntriesChart = new google.visualization.ColumnChart(document.getElementById('aveEntriesDiv'));
-	aveEntriesChart.draw( aveEntriesTable, {title: 'Average Participation per License Holder', vAxis:{baseline:0}, animation: animationOption} );
-
+	aveEntriesChart.draw( aveEntriesTable, {title: 'Average Attendance per License Holder', vAxis:{baseline:0}, animation: animationOption} );
+	
+{% endwith %}
+	
+	// -----------------------------------------------------------------
+	// Attendance by Age
+	//
 	var ageAll = [['Age']], ageMen = [['Age']], ageWomen = [['Age']];
 	var competitions = payload.competitions;
 	for( var iCompetition = 0; iCompetition < competitions.length; ++iCompetition ) {
 		var competition = competitions[iCompetition];
 		for( var iEvent = 0; iEvent < competition.events.length; ++iEvent ) {
 			var event = competition.events[iEvent];
-			for( var iParticipant = 0; iParticipant < event.participants.length; ++iParticipant ) {
-				var participant = event.participants[iParticipant];
-				var gender = participant[0], age = participant[1];
+			for( var iAttendee = 0; iAttendee < event.attendees.length; ++iAttendee ) {
+				var attendee = event.attendees[iAttendee];
+				var gender = attendee[0], age = attendee[1];
 				ageAll.push( [age] );
 				if( gender === 0 )
 					ageMen.push( [age] );
@@ -67,7 +70,6 @@ function drawCharts() {
 		}
 	}
 
-	// --------------------------------------------------------------------------------------------------
 	var chartAll = new google.visualization.Histogram(document.getElementById('histAllDiv'));
 	var options = { title: 'All', legend: { position: 'none' }, histogram: { bucketSize: 5 }, animation: animationOption };
 	chartAll.draw(google.visualization.arrayToDataTable( ageAll ), options);
@@ -80,7 +82,9 @@ function drawCharts() {
 	options.title = 'Women';
 	chartWomen.draw(google.visualization.arrayToDataTable( ageWomen ), options);
 
-	// --------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------
+	// Attendance Rate by Age
+	//
 	function getAgeRangeAveEntriesTable( ar ) {
 		var rangeAveData = new google.visualization.DataTable();
 		rangeAveData.addColumn('string', 'Age Range');
@@ -104,7 +108,9 @@ function drawCharts() {
 	options.title = 'Women';
 	chartAveWomen.draw(getAgeRangeAveEntriesTable( payload.age_range_women_average ), options);
 	
-	// --------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------
+	// Age Histograms
+	//
 	function getAgeTable( at ) {
 		var dt = new google.visualization.DataTable();
 		dt.addColumn('number', 'Age');
@@ -127,51 +133,18 @@ function drawCharts() {
 	options.title = 'Women';
 	chartWomen.draw(getAgeTable(payload.license_holder_women_profile), options);
 
-	// --------------------------------------------------------------------------------------------------
-	var statsData = new google.visualization.DataTable();
-	statsData.addColumn('string', 'Gender');
-	statsData.addColumn('number', 'Total Entries');
-	statsData.addColumn('number', 'LicenseHolders');
-	statsData.addColumn('number', 'Ave. Entries per LicenseHolder');
-	statsData.addColumn('number', 'Expected Age');
-	{% with p=payload %}
-	statsData.addRows([
-		[
-			'All',
-			{{p.participants_total}},
-			{{p.license_holders_total}},
-			formatFloat({{p.events_average}}),
-			{{p.expected_age}}
-		],
-		[
-			'Men',
-			{{p.participants_men_total}},
-			{{p.license_holders_men_total}},
-			formatFloat({{p.events_men_average}}),
-			{{p.expected_men_age}}
-		],
-		[
-			'Women',
-			{{p.participants_women_total}},
-			{{p.license_holders_women_total}},
-			formatFloat({{p.events_women_average}}),
-			{{p.expected_women_age}}
-		],
-	]);
-	var statsTable = new google.visualization.Table(document.getElementById('statsTableDiv'));
-	statsTable.draw(statsData, {showRowNumber: false, sort:'disable'});
-	{% endwith %}
-	
-	// ---------------------------------------------------------
+	// -----------------------------------------------------------------
+	// Participation by Category
+	//
 	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById("overallCategoriesChartDiv"));
-	for( var i = 1; i < payload.category_count.length; ++i ) {
-		payload.category_count[i][1] = formatIntPercent(payload.category_count[i][1], payload.participants_total);
-		payload.category_count[i][2] = formatFloat(payload.category_count[i][2]);
+	for( var i = 1; i < payload.category_total.length; ++i ) {
+		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participants_total);
+		payload.category_total[i][2] = formatFloat(payload.category_total[i][2]);
 	}
 	overallCategoriesChart.draw(
-		google.visualization.arrayToDataTable(payload.category_count),
+		google.visualization.arrayToDataTable(payload.category_total),
 		{
-			title:'Participation by Category',
+			title:'Participation by Category (includes attendees competing in multiple categories)',
 			bar: { groupWidth: '75%' },
 			legend: {position: 'none'},
 			animation: animationOption,
@@ -184,15 +157,10 @@ function drawCharts() {
 			},
 		}
 	);
-	
-	// ---------------------------------------------------------
-	//var personaTable = new google.visualization.Table(document.getElementById('personasTableDiv'));
-	//personaTable.draw(
-	//	google.visualization.arrayToDataTable(payload.personas),
-	//	{showRowNumber: true}
-	//);
-	
-	// ---------------------------------------------------------
+		
+	// -----------------------------------------------------------------
+	// Attendees by Gender
+	//
 	var compChartData = new google.visualization.DataTable();
 	compChartData.addColumn('string', 'Competition');
 	compChartData.addColumn('number', 'Men');
@@ -203,23 +171,64 @@ function drawCharts() {
 		var competition = competitions[iCompetition];
 		rows.push( [
 			competition.name,
-			formatIntPercent(competition.men, competition.total),
-			formatIntPercent(competition.women, competition.total)
+			formatIntPercent(competition.attendees_men, competition.attendees_total),
+			formatIntPercent(competition.attendees_women, competition.attendees_total)
 		] );
 	}
 	compChartData.addRows( rows );
 	var compChart = new google.visualization.ColumnChart(document.getElementById("compChartDiv"));
-	compChart.draw(compChartData, {title:'Participation by Gender', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
+	compChart.draw(compChartData, {title:'Attendees by Gender', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
 	
+	// -----------------------------------------------------------------
+	// Category Participation
+	//
 	var compCategoryChart = new google.visualization.ColumnChart(document.getElementById("compCategoryChartDiv"));
 	compCategoryChart.draw(google.visualization.arrayToDataTable(payload.category_competition_count),
-		{title:'Participation by Category', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
+		{title:'Category Participation (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
 	
+	// -----------------------------------------------------------------
+	// Event Participation
+	//
 	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventChartDiv"));
 	compEventChart.draw(google.visualization.arrayToDataTable(payload.event_competition_count),
-		{title:'Participation by Event', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
+		{title:'Event Participation (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
 	
-	// ---------------------------------------------------------
+	// -----------------------------------------------------------------
+	// Overall Raw Data Table
+	//
+	var statsData = new google.visualization.DataTable();
+	statsData.addColumn('string', 'Gender');
+	statsData.addColumn('number', 'Attendees');
+	statsData.addColumn('number', 'LicenseHolders');
+	statsData.addColumn('number', 'Ave. Attendance per LicenseHolder');
+{% with p=payload %}
+	statsData.addRows([
+		[
+			'All',
+			{{p.attendees_total}},
+			{{p.license_holders_attendance_total}},
+			formatFloat({{p.attendance_average}})
+		],
+		[
+			'Men',
+			{{p.attendees_men_total}},
+			{{p.license_holders_men_total}},
+			formatFloat({{p.attendance_men_average}})
+		],
+		[
+			'Women',
+			{{p.attendees_women_total}},
+			{{p.license_holders_women_total}},
+			formatFloat({{p.attendance_women_average}})
+		],
+	]);
+	var statsTable = new google.visualization.Table(document.getElementById('statsTableDiv'));
+	statsTable.draw(statsData, {showRowNumber: false, sort:'disable'});
+{% endwith %}
+	
+	// -----------------------------------------------------------------
+	// Competition Raw data table.
+	//
 	var compData = new google.visualization.DataTable();
 	compData.addColumn('string', 'Competition');
 	compData.addColumn('string', 'Start Date');
@@ -236,11 +245,11 @@ function drawCharts() {
 		rows.push( [competition.name, competition.start_date, '', blankNum, blankNum, blankNum, blankNum] );
 		for( var iEvent = 0; iEvent < competition.events.length; ++iEvent ) {
 			var event = competition.events[iEvent];
-			rows.push( ['', '', event.name, event.men, event.women, event.total, blankNum] );
+			rows.push( ['', '', event.name, event.attendees_men, event.attendees_women, event.attendees_total, blankNum] );
 		}
-		rows.push( ['', '', '', competition.men, competition.women, blankNum, competition.total] );
+		rows.push( ['', '', '', competition.attendees_men, competition.attendees_women, blankNum, competition.attendees_total] );
 	}
-	rows.push( ['', '', '', blankNum, blankNum, blankNum, {{payload.participants_total}}] );
+	rows.push( ['', '', '', {{payload.attendees_men}}, {{payload.attendees_women}}, blankNum, {{payload.attendees_total}}] );
 	compData.addRows( rows );
 	var compTable = new google.visualization.Table(document.getElementById('compTableDiv'));
 	compTable.draw(compData, {showRowNumber: false, alternatingRowStyle:false, sort:'disable'});
@@ -256,10 +265,10 @@ function drawCharts() {
 <hr/>
 <p>
 <h2>
-	{{payload.num_competitions}} Competitions,
-	{{payload.num_events}} Events,
-	{{payload.participants_total}} Participants,
-	{{payload.license_holders_total}} License Holders
+	{{payload.competitions_total}} Competitions,
+	{{payload.events_total}} Events,
+	{{payload.attendees_total}} Attendees,
+	{{payload.license_holders_attendance_total}} License Holders
 </h2>
 <div class="container"/>
 	<div class="row">
@@ -278,7 +287,7 @@ function drawCharts() {
 </p>
 
 <p>
-<h3>Event Participation by Age Profile<h3>
+<h3>Attendance by Age Profile<h3>
 <div class="container"/>
 	<div class="row">
 		<div class="col-md-4">
@@ -295,7 +304,7 @@ function drawCharts() {
 </p>
 
 <p>
-<h3>Average Entries by Age<h3>
+<h3>Average Attendance by Age<h3>
 <div class="container"/>
 	<div class="row">
 		<div class="col-md-4">

@@ -467,13 +467,10 @@ class Competition(models.Model):
 		return participant_events
 	
 	def get_participants( self ):
-		participants = set()
-		for event in self.get_events():
-			participants |= set(event.get_participants())
-		return participants
+		return Participant.objects.filter( competition = self )
 		
 	def has_participants( self ):
-		return any( event.has_participants() for event in self.get_events() )
+		return self.get_participants().exists()
 	
 	@transaction.atomic
 	def auto_generate_missing_tags( self ):
@@ -800,15 +797,37 @@ class Event( models.Model ):
 			w.category_count_html
 		) for w in self.get_wave_set().all() ) + u'</li></ol>'
 	
+	'''
 	def get_participants( self ):
 		participants = set()
 		for w in self.get_wave_set().all():
-			participants |= set( w.get_participants_unsorted().select_related('competition','license_holder','team') )
+			participants |= set( w.get_participants_unsorted().select_related('license_holder','team') )
 		return participants
-	
+		
 	def has_participants( self ):
 		return any( w.get_participants_unsorted().exists() for w in self.get_wave_set().all() )
+	'''
 	
+	def get_participants( self ):
+		categories = list( set.union( *[set(w.categories.all().values_list('pk', flat=True)) for w in self.get_wave_set().all()] ))
+		if not self.option_id:
+			return Participant.objects.filter(
+				competition=self.competition,
+				category__in=categories,
+			).select_related('license_holder','team')
+		else:
+			return Participant.objects.filter(
+				pk__in=ParticipantOption.objects.filter(
+					competition=self.competition,
+					option_id=self.option_id,
+					participant__competition=self.competition,
+					participant__category__in=categories,
+				).values_list('participant__pk', flat=True)
+			).select_related('license_holder','team')
+
+	def has_participants( self ):
+		return self.get_participants().exists()
+		
 	def __unicode__( self ):
 		return u'%s, %s (%s)' % (self.date_time, self.name, self.competition.name)
 	
@@ -889,16 +908,16 @@ class WaveBase( models.Model ):
 			)
 		else:
 			return Participant.objects.filter(
-				competition=self.event.competition,
-				category__in=self.categories.all(),
 				pk__in=ParticipantOption.objects.filter(
-							competition=self.event.competition,
-							option_id=self.event.option_id,
-						).values_list('participant__pk', flat=True)
+					competition=self.event.competition,
+					option_id=self.event.option_id,
+					participant__competition=self.event.competition,
+					participant__category__in=self.categories.all(),
+				).values_list('participant__pk', flat=True)
 			)
 	
 	def get_participants( self ):
-		return self.get_participants_unsorted().select_related('competition','license_holder','team').order_by('bib')
+		return self.get_participants_unsorted().select_related('license_holder','team').order_by('bib')
 	
 	def get_participant_count( self ):
 		return self.get_participants_unsorted().count()
