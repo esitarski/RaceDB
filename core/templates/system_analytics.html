@@ -63,7 +63,7 @@ function drawCharts() {
 	//
 	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById("overallCategoriesChartDiv"));
 	for( var i = 1; i < payload.category_total.length; ++i ) {
-		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participants_total);
+		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participant_total);
 		payload.category_total[i][2] = formatFloat(payload.category_total[i][2]);
 	}
 	overallCategoriesChart.draw(

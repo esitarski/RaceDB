@@ -37,7 +37,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	license_holders_set = set()
 	
 	profile_year = 0
-	participants_total = 0
+	participant_total = 0
 	competitions_total, events_total = 0, 0
 	
 	for competition in competitions:
@@ -56,7 +56,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 			'attendees_total': 0,
 			'participants_men': 0,
 			'participants_women': 0,
-			'participants_total': 0,
+			'participant_total': 0,
 		}
 		for event in competition.get_events():
 			if not event.has_participants():
@@ -79,7 +79,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 				category_competition_total[competition][category_name] += 1
 				competition_category_event[competition][category_name] = event.name
 				competition_participant_total[competition] += 1
-				participants_total += 1
+				participant_total += 1
 				participant_data.append( [license_holder.gender, age] )
 				
 				if license_holder in event_license_holders:
@@ -117,7 +117,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 				'participants_women': sum(1 for p in participant_data if p[0] == 1),
 			}
 			event_data['attendees_total'] = event_data['attendees_men'] + event_data['attendees_women']
-			event_data['participants_total'] = event_data['participants_men'] + event_data['participants_women']
+			event_data['participant_total'] = event_data['participants_men'] + event_data['participants_women']
 			
 			competition_data['attendees_men'] += event_data['attendees_men']
 			competition_data['attendees_women'] += event_data['attendees_women']
@@ -174,7 +174,10 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	def format_event_int_percent( num, total, event ):
 		return {'v':num, 'f':'{}: {} / {} ({:.2f}%)'.format(event, num, total, (100.0 * num) / (total or 1))}
 	
+	# Initialize the category total.
 	category_total = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_total_overall.iteritems()), key=lambda x: x[1], reverse=True )
+	
+	#--------------
 	ccc = [['Competition'] + [name for name, count in category_total[1:]]]
 	for competition in sorted( (category_competition_total.iterkeys()), key=lambda x: x.start_date ):
 		ccc.append( [competition.name] +
@@ -184,11 +187,11 @@ def participation_data( year=None, discipline=None, race_class=None ):
 					competition_category_event.get(competition,{}).get(name,''),
 				) if category_competition_total[competition].get(name, 0) != 0 else 0 for name, count in category_total[1:]] )
 	
-	# Add cumulative percent to the data.
+	# Add cumulative percent to the category total.
 	category_total[0].append( 'Cumulative %' )
 	cumulativePercent = 0.0
 	for c in category_total[1:]:
-		cumulativePercent += 100.0*c[-1] / attendees_total
+		cumulativePercent += 100.0*c[-1] / participant_total
 		c.append( cumulativePercent )
 	
 	event_max = max(len(events) for events in event_competition_participant_total.itervalues()) if event_competition_participant_total else 0
@@ -219,7 +222,7 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		'attendees_men_total': sum(c['attendees_men'] for c in data),
 		'attendees_women_total': sum(c['attendees_women'] for c in data),
 		
-		'participants_total' : participants_total,
+		'participant_total' : participant_total,
 		
 		'license_holders_attendance_total': len(license_holders_attendance_total),
 		'license_holders_men_total': len(license_holders_men_total),
