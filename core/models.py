@@ -1093,6 +1093,9 @@ class LicenseHolder(models.Model):
 	search_text = models.CharField( max_length=SearchTextLength, blank=True, default='', db_index=True )
 	
 	note = models.TextField( null=True, blank=True, verbose_name=_('LicenseHolder Note') )
+	
+	emergency_contact_name = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact') )
+	emergency_contact_phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
 
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or '').strip().upper()

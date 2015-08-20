@@ -528,7 +528,11 @@ class LicenseHolderForm( ModelForm ):
 				Col('active', 3),
 			),
 			Row(
-				Field('note'),
+				Col(Field('emergency_contact_name', size=50), 4),
+				Col(Field('emergency_contact_phone'), 4),
+			),
+			Row(
+				Field('note', cols=80, rows=4),
 			),
 		)
 		
