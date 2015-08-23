@@ -47,7 +47,7 @@ def update_dependencies( upgrade ):
 	# Remove the unecessary TagReadWriteServier directory.
 	try:
 		shutil.rmtree( 'TagReadWriteServer' )
-	except Error as e:
+	except:
 		pass
 		
 	print( 'Pre-compiling source code...' )

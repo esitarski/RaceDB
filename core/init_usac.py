@@ -6,6 +6,7 @@ from models import *
 from utils import toUnicode, removeDiacritic
 from django.db import transaction
 from django.db.models import Q
+from django.db.utils import IntegrityError
 import csv, codecs
 
 today = datetime.date.today()
@@ -83,7 +84,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 				continue
 			
 			attributes = {
-				'license_code':	ur.license,
+				'license_code':	ur.license.lstrip('0'),
 				'last_name':	ur.last_name,
 				'first_name':	ur.first_name,
 				'gender':		gender_from_str( ur.gender ),
@@ -95,13 +96,17 @@ def init_usac( fname = fnameDefault, states = '' ):
 			}
 			
 			try:
-				lh = LicenseHolder.objects.get( license_code=ur.license )
+				lh = LicenseHolder.objects.get( license_code=ur.license.lstrip('0') )
 				if set_attributes(lh, attributes):
 					lh.save()
 			
 			except LicenseHolder.DoesNotExist:
 				lh = LicenseHolder( **attributes )
-				lh.save()
+				try:
+					lh.save()
+				except IntegrityError:
+					print 'IntegrityError:', attributes
+					continue
 			
 			print u'{:>6}: {:>8} {:>10} {}, {} {}'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'),
 				removeDiacritic(lh.last_name), removeDiacritic(lh.first_name), removeDiacritic(lh.state_prov) )
