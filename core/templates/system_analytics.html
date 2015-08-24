@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load staticfiles %}
 {% block srcjavascript %}
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
@@ -268,6 +267,7 @@ function drawCharts() {
 {% endblock srcjavascript %}
 {% block content %}
 {% load i18n %}
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 <h2><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img> {{page_title}}</h2>
 <div class='hidden-print'>
@@ -294,7 +294,7 @@ function drawCharts() {
 		</div>
 	</div>
 </div>
-<div id='overallCategoriesChartDiv' style="width: 1300px; height: 500px;"></div>
+<div id='overallCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
 </p>
 
 <p>
@@ -350,9 +350,9 @@ function drawCharts() {
 
 <p>
 <h2 class="page-break-before">Competitions</h2>
-<div id='compChartDiv'style="width: 1300px; height: 500px;"></div>
-<div id='compCategoryChartDiv'style="width: 1300px; height: 500px;"></div>
-<div id='compEventChartDiv'style="width: 1300px; height: 500px;"></div>
+<div id='compChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='compCategoryChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
 <hr/>
 <div class="page-break-before" id='statsTableDiv'></div>
 <hr/>
