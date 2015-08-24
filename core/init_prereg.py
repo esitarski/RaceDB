@@ -127,10 +127,12 @@ def init_prereg(
 		
 	times = defaultdict(float)
 	
+	license_col_names = ('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode')
+	
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-			license_code	= to_int_str(get_key(ur,('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode'),u''))
+			license_code	= to_int_str(get_key(ur, license_col_names, u''))
 			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
 			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
 			name			= to_str(ur.get('name',u''))
@@ -365,7 +367,7 @@ def init_prereg(
 				messsage_stream_write( u'            {}{}\n'.format(f, optional_event_str) )
 			
 			fields_lower = [f.lower() for f in fields]
-			if not any( r.lower() in fields_lower for r in ('License','License Numbers','LicenseNumbers','License Code','LicenseCode') ):
+			if not any( r.lower() in fields_lower for r in license_col_names ):
 				messsage_stream_write( u'License column not found in Header Row.  Aborting.\n' )
 				return
 			continue
