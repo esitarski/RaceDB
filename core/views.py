@@ -3613,9 +3613,9 @@ def get_participant_report_form():
 			
 			self.helper.layout = Layout(
 				Row(
-					Col(Field('year'), 4),
-					Col(Field('discipline'), 4),
-					Col(Field('race_class'), 4),
+					Field('year'),
+					Field('discipline'),
+					Field('race_class'),
 				),
 				HTML( '<hr/>' ),
 			)
