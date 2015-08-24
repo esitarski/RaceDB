@@ -2492,19 +2492,17 @@ class ParticipantSearchForm( Form ):
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
 		
-		self.helper['scan'].wrap( Field, autofocus=True )
-		self.helper['scan'].wrap( Row )
-		self.helper['bib'].wrap( Field, size=4 )
-		
 		button_args = [
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
 			Submit( 'clear-submit', _('Clear Search'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('OK'), css_class = 'btn btn-primary' ),
 		]
 		
-		self.helper.layout.extend( [
-				Row( *button_args ),
-			]
+		self.helper.layout = Layout(
+			Row( Field('scan', size=4, autofocus=True ), ),
+			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('category'), ),
+			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), ),
+			Row( *button_args ),
 		)
 
 		
