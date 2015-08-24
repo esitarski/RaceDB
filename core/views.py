@@ -3678,9 +3678,9 @@ def AttendanceAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()()
 	
-	page_title = u'Analytics'
+	page_title = u'Analytics for '
 	if year > 0:
-		page_title += u' {}'.format(year)
+		page_title += u'{}'.format(year)
 	else:
 		page_title += unicode(_('All Years'))
 	if discipline:
