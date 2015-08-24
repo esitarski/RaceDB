@@ -3678,7 +3678,7 @@ def AttendanceAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()()
 	
-	page_title = u'RaceDB: Analytics'
+	page_title = u'Analytics'
 	if year > 0:
 		page_title += u' {}'.format(year)
 	else:

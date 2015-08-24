@@ -9,8 +9,8 @@ import compileall
 pyllrp = 'pip-install-pyllrp-0.1.3.zip'
 
 dependencies = [
-	'django==1.7.7',
-	'django-crispy-forms',
+	'django==1.8.4',
+	'django-crispy-forms==1.5.1',
 	'django-extensions',
 	'dj_static',
 	'waitress',

@@ -120,12 +120,24 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			paid			= to_bool(ur.get('paid', None))
 			category_code   = to_str(ur.get('category', None))
 
+			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
+			emergency_contact_phone = to_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
+			
 			try:
 				license_holder = LicenseHolder.objects.get( license_code=license_code )
 			except LicenseHolder.DoesNotExist:
 				print( u'Row {}: cannot find LicenceHolder from LicenseCode: {}'.format(i, license_code) )
 				continue
 			
+			do_save = False
+			for fname, fvalue in (  ('emergency_contact_name',emergency_contact_name),
+									('emergency_contact_phone',emergency_contact_name) ):
+				if fvalue and getattr(license_holder, fname) != fvalue:
+					setattr( license_holder, fname, fvalue )
+					do_save = True
+			if do_save:
+				license_holder.save()
+					
 			try:
 				participant = Participant.objects.get( competition=competition, license_holder=license_holder )
 			except Participant.DoesNotExist:

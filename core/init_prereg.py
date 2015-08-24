@@ -71,7 +71,7 @@ def to_str( v ):
 def to_bool( v ):
 	if v is None:
 		return None
-	s = unicode(v)
+	s = unicode(v).strip()
 	return s[:1] in u'YyTt1'
 
 def to_int( v ):
@@ -120,10 +120,9 @@ def init_prereg(
 		
 	def get_key( d, keys, default_value ):
 		for k in keys:
-			try:
-				return d[k.lower()]
-			except KeyError:
-				pass
+			k = k.lower()
+			if k in d:
+				return d[k]
 		return default_value
 		
 	times = defaultdict(float)
@@ -131,30 +130,37 @@ def init_prereg(
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-			license_code	= to_int_str(get_key(ur,('License','License Numbers','LicenseNumbers','License Code','LicenseCode'),u''))
+			license_code	= to_int_str(get_key(ur,('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode'),u''))
 			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
 			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
 			name			= to_str(ur.get('name',u''))
 			if not name:
-				name = ' '.join( n for n in [first_name, last_name] if n)
+				name = ' '.join( n for n in [first_name, last_name] if n )
 			
-			gender			= to_str(ur.get('gender',u''))
+			gender			= to_str(get_key(ur,('gender','rider gender'),u''))
 			gender			= gender_from_str(gender) if gender else None
 			
-			date_of_birth   = None
-			for alias in ['Date of Birth', 'DOB']:
-				v = ur.get(alias.lower(),u'').strip()
-				if v:
-					date_of_birth	= date_from_value(v)
-					break
+			date_of_birth   = get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
+			if date_of_birth is not None:
+				date_of_birth = date_from_value(date_of_birth)
 			
+			email			= to_str(ur.get('email', None))
+			city			= to_str(ur.get('city', None))
+			state_prov		= to_str(get_key(ur,('state','prov','province','stateprov','state prov'), None))
 			preregistered	= to_bool(ur.get('preregistered', True))
 			paid			= to_bool(ur.get('paid', None))
 			bib				= to_int(ur.get('bib', None))
 			tag			 	= to_tag(ur.get('tag', None))
 			note		 	= to_str(ur.get('note', None))
 			team_name		= to_str(ur.get('team', None))
+			club_name		= to_str(ur.get('club', None))
+			if not team_name:
+				team_name = club_name
 			category_code   = to_str(ur.get('category', None))
+			
+			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
+			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
+			uci_code = to_str(get_key(ur,('UCI Code','UCICode', 'UCI'), None))
 			
 			participant_optional_events = {
 				optional_events[field]:to_bool(value) for field, value in ur.iteritems() if field in optional_events
@@ -182,11 +188,20 @@ def init_prereg(
 						# Create a temporary license holder.
 						try:
 							license_holder = LicenseHolder(
-								license_code='TEMP',
-								last_name=last_name,
-								first_name=first_name,
-								gender=gender,
-								date_of_birth=date_of_birth
+								**{ attr:value for attr, value in (
+										('license_code','TEMP'),
+										('last_name',last_name),
+										('first_name',first_name),
+										('gender',gender),
+										('date_of_birth',date_of_birth),
+										('uci_code',uci_code),
+										('emergency_contact_name',emergency_contact_name),
+										('emergency_contact_phone',emergency_contact_name),
+										('email',email),
+										('city',city),
+										('state_prov',state_prov),
+									) if value
+								}
 							)
 							license_holder.save()
 						except Exception as e:
@@ -201,6 +216,23 @@ def init_prereg(
 							)
 						)
 						continue
+				
+				# Update the license_holder record with all new information.
+				do_save = False
+				for attr, value in (
+					('emergency_contact_name',emergency_contact_name),
+					('emergency_contact_phone',emergency_contact_name),
+					('date_of_birth',date_of_birth),
+					('uci_code',uci_code),
+					('email',email),
+					('city',city),
+					('state_prov',state_prov),
+				):
+					if value and getattr(license_holder, attr) != value:
+						setattr( license_holder, attr, value )
+						do_save = True
+				if do_save:
+					license_holder.save()
 				
 				#------------------------------------------------------------------------------
 				# Get Category.  Open categories will match either Gender.
@@ -224,7 +256,7 @@ def init_prereg(
 					try:
 						team = Team.objects.get(name=team_name)
 					except Team.DoesNotExist:
-						messsage_stream_write( u'**** Row {}: unrecognized Team name (ignoring): "{}" Name="{}"\n'.format(
+						messsage_stream_write( u'**** Row {}: no Team matches name (ignoring): "{}" Name="{}"\n'.format(
 							i, team_name, name,
 						) )
 					except Team.MultipleObjectsReturned:
