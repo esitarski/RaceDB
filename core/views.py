@@ -2462,20 +2462,20 @@ def WaveTTUp( request, waveTTId ):
 
 @autostrip
 class ParticipantSearchForm( Form ):
-	scan = forms.CharField( required = False, label = _('Scan Search'), help_text=_('Including License and RFID Tag') )
-	name_text = forms.CharField( required = False, label = _('Name Text') )
-	team_text = forms.CharField( required = False, label = _('Team Text') )
-	bib = forms.IntegerField( required = False, min_value = -1  )
-	gender = forms.ChoiceField( choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
-	role_type = forms.ChoiceField( label = _('Role Type') )
-	category = forms.ChoiceField( required = False, label = _('Category') )
+	scan = forms.CharField( required=False, label = _('Scan Search'), help_text=_('Including License and RFID Tag') )
+	name_text = forms.CharField( required=False, label = _('Name Text') )
+	team_text = forms.CharField( required=False, label = _('Team Text') )
+	bib = forms.IntegerField( required=False, min_value = -1  )
+	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2, )
+	role_type = forms.ChoiceField( required=False, label = _('Role Type'),  )
+	category = forms.ChoiceField( required=False, label = _('Category') )
 	
-	city_text = forms.CharField( required = False, label = _('City') )
-	state_prov_text = forms.CharField( required = False, label = _('State/Prov') )
-	nationality_text = forms.CharField( required = False, label = _('Nationality') )
+	city_text = forms.CharField( required=False, label = _('City') )
+	state_prov_text = forms.CharField( required=False, label = _('State/Prov') )
+	nationality_text = forms.CharField( required=False, label = _('Nationality') )
 	
-	confirmed = forms.ChoiceField( choices = ((2, '----'), (0, _('No')), (1, _('Yes'))) )
-	paid = forms.ChoiceField( choices = ((2, '----'), (0, _('No')), (1, _('Yes'))) )
+	confirmed = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))) )
+	paid = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))) )
 	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
@@ -2499,8 +2499,8 @@ class ParticipantSearchForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			Row( Field('scan', size=4, autofocus=True ), ),
-			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('category'), ),
+			Row( Field('scan', size=20, autofocus=True ), ),
+			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
 			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), ),
 			Row( *button_args ),
 		)
@@ -2523,7 +2523,9 @@ def Participants( request, competitionId ):
 			
 		form = ParticipantSearchForm( request.POST, competition=competition )
 		if form.is_valid():
-			participant_filter = request.session[pfKey] = form.cleaned_data
+			participant_filter = form.cleaned_data
+			request.session[pfKey] = participant_filter
+			
 			participant_filter_no_scan = participant_filter.copy()
 			participant_filter_no_scan.pop( 'scan' )
 			request.session[pfKey] = participant_filter_no_scan
@@ -2564,7 +2566,8 @@ def Participants( request, competitionId ):
 	if 0 <= int(participant_filter.get('paid',-1)) <= 1:
 		q_list.append( Q(paid = bool(int(participant_filter['paid']))) )
 	
-	participants = Participant.objects.select_related('team', 'license_holder').filter( *q_list )
+	participants = Participant.objects.filter( *q_list )
+	participants = participants.select_related('team', 'license_holder')
 	
 	if participant_filter.get('name_text','').strip():
 		name_text = utils.normalizeSearch( participant_filter['name_text'] )
