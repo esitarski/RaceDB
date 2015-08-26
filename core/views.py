@@ -3673,11 +3673,11 @@ def AttendanceAnalytics( request ):
 			if year and year < 0:
 				year = None
 				
-			payload = participation_data( year, discipline, race_class )
+			payload, license_holders_event_errors = participation_data( year, discipline, race_class )
 			payload_json = json.dumps(payload, separators=(',',':'))
 			return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 	else:
-		payload = participation_data( year )
+		payload, license_holders_event_errors = participation_data( year )
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()()
 	

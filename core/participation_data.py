@@ -14,6 +14,8 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		competitions = competitions.filter( race_class = race_class )
 	competitions = competitions.order_by( 'start_date' )
 	
+	license_holders_event_errors = set()
+	
 	data = []
 	license_holders_attendance_total = defaultdict( int )
 	license_holders_men_total = defaultdict( int )
@@ -39,6 +41,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	profile_year = 0
 	participant_total = 0
 	competitions_total, events_total = 0, 0
+	
+	def fix_age( age ):
+		return max(min(age, 119), 0)
 	
 	for competition in competitions:
 		if not competition.has_participants():
@@ -72,7 +77,10 @@ def participation_data( year=None, discipline=None, race_class=None ):
 				# Participation.
 				license_holder = participant.license_holder
 				age = event.date_time.year - license_holder.date_of_birth.year
-								
+				if not (7 < age < 100):
+					license_holders_event_errors.add( (license_holder, event) )
+				age = fix_age( age )
+				
 				event_competition_participant_total[competition][event] += 1
 				category_name = participant.category.code_gender if participant.category else unicode(_('Unknown'))
 				category_total_overall[category_name] += 1
@@ -157,9 +165,9 @@ def participation_data( year=None, discipline=None, race_class=None ):
 	license_holder_men_profile = []
 	license_holder_women_profile = []
 	if profile_year:
-		license_holder_profile = sorted(profile_year - lh.date_of_birth.year for lh in license_holders_set)
-		license_holder_men_profile = sorted(profile_year - lh.date_of_birth.year for lh in license_holders_set if lh.gender == 0)
-		license_holder_women_profile = sorted(profile_year - lh.date_of_birth.year for lh in license_holders_set if lh.gender == 1)
+		license_holder_profile = sorted(fix_age(profile_year - lh.date_of_birth.year) for lh in license_holders_set)
+		license_holder_men_profile = sorted(fix_age(profile_year - lh.date_of_birth.year) for lh in license_holders_set if lh.gender == 0)
+		license_holder_women_profile = sorted(fix_age(profile_year - lh.date_of_birth.year) for lh in license_holders_set if lh.gender == 1)
 	else:
 		profile_year = datetime.date.today().year
 		
@@ -248,4 +256,4 @@ def participation_data( year=None, discipline=None, race_class=None ):
 		
 		'competitions': data,
 	}
-	return payload
+	return payload, sorted( license_holders_event_errors, key=lambda x: (x[1].date_time, x[0].date_of_birth) )

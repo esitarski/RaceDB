@@ -656,6 +656,10 @@ class Event( models.Model ):
 	)
 	event_type = models.PositiveSmallIntegerField( choices=EVENT_TYPE_CHOICES, default = 0, verbose_name = ('Event Type') )
 	
+	@property
+	def edit_link( self ):
+		return '{}/{}'.format( ['EventMassStart', 'EventTT', 'EventSprint'][self.event_type], self.pk )
+	
 	optional = models.BooleanField( default=False, verbose_name=_('Optional'),
 		help_text=_('Allows Participants to choose to enter the Event.  Otherwise the Event is included for all participants.') )
 	option_id = models.PositiveIntegerField( default=0, verbose_name = _('Option Id') )
