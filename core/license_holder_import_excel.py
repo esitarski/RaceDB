@@ -39,15 +39,15 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			gender			= to_str(get_key(ur,('gender','rider gender'),u''))
 			gender			= gender_from_str(gender) if gender else None
 			
-			date_of_birth   = get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
+			date_of_birth   = get_key(ur, ('DOB', 'Date of Birth', 'Birthdate'), None)
 			if date_of_birth is not None:
 				date_of_birth = date_from_value(date_of_birth)
 			uci_code = to_str(get_key(ur,('UCI Code','UCICode', 'UCI'), None))
 			
 			email			= to_str(ur.get('email', None))
 			city			= to_str(ur.get('city', None))
-			state_prov		= to_str(get_key(ur,('state','prov','province','stateprov','state prov'), None))
-			nationality		= to_str(get_key(ur,('nat','nat.','nationality'), None))
+			state_prov		= to_str(get_key(ur,('stateprov','state','prov','province','state prov'), None))
+			nationality		= to_str(get_key(ur,('nationality','nat','nat.'), None))
 			
 			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
 			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))

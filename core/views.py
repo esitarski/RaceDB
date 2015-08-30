@@ -2179,7 +2179,8 @@ def GetWaveForm( event_mass_start, wave = None ):
 	class WaveForm( ModelForm ):
 		class Meta:
 			model = Wave
-		
+			fields = '__all__'
+			
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
