@@ -1,4 +1,10 @@
 {% extends "base.html" %}
+{% load staticfiles %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
 {% block content %}
 {% load i18n %}
 {% load crispy_forms_tags %}
@@ -10,6 +16,12 @@
 <hr/>
 {% crispy form %}
 <hr/>
+<p class="text-center">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+{% if results_str %}
+<pre>{{results_str}}</pre>
+{% endif %}
 <p>
 <h3>Import pre-registered riders into this Competition from an Excel spreadsheet.</h3>
 <p>

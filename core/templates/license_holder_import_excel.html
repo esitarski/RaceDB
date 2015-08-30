@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<style>
+#id_excel_file { width: 600px; }
+</style>
+<h2>{{title}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+</p>
+<p class="text-center">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+{% if results_str %}
+<pre>{{results_str}}</pre>
+{% endif %}
+{% endblock content %}

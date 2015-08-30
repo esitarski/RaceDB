@@ -7,7 +7,7 @@
 <hr/>
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <hr/>
-<pre>
-{{results_str}}
-</pre>
+{% if results_str %}
+<pre>{{results_str}}</pre>
+{% endif %}
 {% endblock content %}

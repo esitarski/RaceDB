@@ -49,6 +49,7 @@ from get_start_list_excel import get_start_list_excel
 from get_license_holder_excel import get_license_holder_excel
 from participation_excel import participation_excel
 from participation_data import participation_data
+from license_holder_import_excel import license_holder_import_excel
 
 from participant_key_filter import participant_key_filter
 from autostrip import autostrip
@@ -174,14 +175,14 @@ NEW_BUTTONS		= OK_BUTTON | SAVE_BUTTON | CANCEL_BUTTON
 DELETE_BUTTONS	= OK_BUTTON | CANCEL_BUTTON
 EDIT_BUTTONS	= 0xFFFF
 
-def addFormButtons( form, button_mask = EDIT_BUTTONS, additional_buttons = None, print_button = None ):
+def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, print_button=None, cancel_alias=None ):
 	btns = []
 	if button_mask & SAVE_BUTTON != 0:
 		btns.append( Submit('save-submit', _('Save'), css_class='btn btn-primary hidden-print') )
 	if button_mask & OK_BUTTON:
 		btns.append( Submit('ok-submit', _('OK'), css_class='btn btn-primary hidden-print') )
 	if button_mask & CANCEL_BUTTON:
-		btns.append( Submit('cancel-submit', _('Cancel'), css_class='btn btn-warning hidden-print') )
+		btns.append( Submit('cancel-submit', (cancel_alias or _('Cancel')), css_class='btn btn-warning hidden-print') )
 	
 	if additional_buttons:
 		btns.append( HTML(u'&nbsp;' * 8) )
@@ -550,6 +551,7 @@ def LicenseHoldersDisplay( request ):
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
+		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
 	]
 	if request.method == 'POST':
 	
@@ -561,6 +563,9 @@ def LicenseHoldersDisplay( request ):
 			
 		if 'manage-duplicates-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )
+			
+		if 'import-excel-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersImportExcel') )
 			
 		form = SearchForm( btns, request.POST )
 		if form.is_valid():
@@ -1769,11 +1774,12 @@ class UploadPreregForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Col( Field('excel_file',  accept=".xls,.xlsx"), 8),
+				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
 				Col( Field('clear_existing'), 4 ),
 			),
 		)
-		addFormButtons( self, button_mask = OK_BUTTON | CANCEL_BUTTON )
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
 def handle_upload_prereg( competitionId, excel_contents, clear_existing ):
 	worksheet_contents = excel_contents.read()
@@ -1786,7 +1792,7 @@ def handle_upload_prereg( competitionId, excel_contents, clear_existing ):
 	)
 	results_str = message_stream.getvalue()
 	return results_str
-		
+
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
 def UploadPrereg( request, competitionId ):
@@ -1800,11 +1806,57 @@ def UploadPrereg( request, competitionId ):
 		if form.is_valid():
 			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )
 			del request.FILES['excel_file']
-			return render_to_response( 'upload_results.html', RequestContext(request, locals()) )
+			return render_to_response( 'upload_prereg.html', RequestContext(request, locals()) )
 	else:
 		form = UploadPreregForm()
 	
 	return render_to_response( 'upload_prereg.html', RequestContext(request, locals()) )
+
+#--------------------------------------------------------------------------------------------
+@autostrip
+class ImportExcelForm( Form ):
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	
+	def __init__( self, *args, **kwargs ):
+		super( ImportExcelForm, self ).__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Field('excel_file', accept=".xls,.xlsx"),
+			),
+		)
+
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+
+def handle_license_holder_import_excel( excel_contents ):
+	worksheet_contents = excel_contents.read()
+	message_stream = StringIO.StringIO()
+	license_holder_import_excel(
+		worksheet_contents=worksheet_contents,
+		message_stream=message_stream,
+	)
+	results_str = message_stream.getvalue()
+	return results_str
+		
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def LicenseHoldersImportExcel( request ):
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = ImportExcelForm(request.POST, request.FILES)
+		if form.is_valid():
+			results_str = handle_license_holder_import_excel( request.FILES['excel_file'] )
+			del request.FILES['excel_file']
+			return render_to_response( 'license_holder_import_excel.html', RequestContext(request, locals()) )
+	else:
+		form = ImportExcelForm()
+	
+	return render_to_response( 'license_holder_import_excel.html', RequestContext(request, locals()) )
 
 #--------------------------------------------------------------------------------------------
 @autostrip
@@ -3706,3 +3758,6 @@ def Logout( request ):
 	logout( request )
 	next = getContext(request, 'cancelUrl')
 	return HttpResponseRedirect('/RaceDB/login?next=' + next)
+
+from django.conf import settings
+settings.DATABASES['default']['NAME'] = settings.DATABASES['default']['NAME']

@@ -18,6 +18,7 @@ data_headers = (
 	'City', 'StateProv', 'Nationality',
 	'Email',
 	'License', 'UCICode',
+	'Emergency Contact', 'Emergency Phone',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -63,6 +64,8 @@ def get_license_holder_excel( q = None ):
 			lh.email,
 			lh.license_code,
 			lh.uci_code,
+			lh.emergency_contact_name,
+			lh.emergency_contact_phone,
 		]
 		row = write_row_data( ws, row, data )
 			

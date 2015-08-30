@@ -114,10 +114,10 @@ def init_usac( fname = fnameDefault, states = '' ):
 			teams = dict( ((th.discipline, th.team.team_type), th) for th in TeamHint.objects.select_related('team').filter(license_holder=lh) )
 			th_used = set()
 			for code, discipline in [('rd', 'Road'), ('track', 'Track'), ('cx', 'Cyclocross'), ('mtn', 'MTB')]:
-				if getattr(ur, code + 'team'):
+				if getattr(ur, code + 'team', None):
 					tname = getattr(ur, code + 'team')
 					ttype = 1
-				elif getattr(ur, code + 'club'):
+				elif getattr(ur, code + 'club', None):
 					tname = getattr(ur, code + 'club')
 					ttype = 0
 				else:
