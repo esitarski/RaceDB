@@ -2521,9 +2521,9 @@ class ParticipantSearchForm( Form ):
 	scan = forms.CharField( required=False, label = _('Scan Search'), help_text=_('Including License and RFID Tag') )
 	name_text = forms.CharField( required=False, label = _('Name Text') )
 	team_text = forms.CharField( required=False, label = _('Team Text') )
-	bib = forms.IntegerField( required=False, min_value = -1  )
-	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2, )
-	role_type = forms.ChoiceField( required=False, label = _('Role Type'),  )
+	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib: (-1 to find NoBib)') )
+	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
+	role_type = forms.ChoiceField( required=False, label = _('Role Type')  )
 	category = forms.ChoiceField( required=False, label = _('Category') )
 	
 	city_text = forms.CharField( required=False, label = _('City') )
