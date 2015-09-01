@@ -23,6 +23,8 @@ def init_prereg(
 		def messsage_stream_write( s ):
 			message_stream.write( unicode(s) )
 	
+	fix_bad_license_codes()
+	
 	if competitionId is not None:
 		competition = Competition.objects.get( pk=competitionId )
 	else:
@@ -47,7 +49,7 @@ def init_prereg(
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-			license_code	= to_int_str(get_key(ur, license_col_names, u''))
+			license_code	= to_int_str(get_key(ur, license_col_names, u'').upper().strip())
 			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
 			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
 			name			= to_str(ur.get('name',u''))

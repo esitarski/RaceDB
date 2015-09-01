@@ -546,6 +546,9 @@ class LicenseHolderForm( ModelForm ):
 reUCICode = re.compile( '^[A-Z]{3}[0-9]{8}$', re.IGNORECASE )
 @external_access
 def LicenseHoldersDisplay( request ):
+
+	fix_bad_license_codes()
+
 	search_text = request.session.get('license_holder_filter', '')
 	btns = [
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
@@ -2845,6 +2848,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 	
 	category_changed = (participant.category != category)
 	participant.category = category
+	participant.update_bib_new_category()
 	
 	try:
 		participant.auto_confirm().save()

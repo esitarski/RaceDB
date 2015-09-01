@@ -78,6 +78,8 @@ def init_oca( fname, message_stream=sys.stdout ):
 	
 	tstart = datetime.datetime.now()
 	
+	fix_bad_license_codes()
+	
 	discipline_id = dict( (discipline, Discipline.objects.get(name=discipline)) for discipline in ['Road', 'Track', 'Cyclocross', 'MTB', 'Para'] )
 	discipline_cols = {
 		'Road':				['national_road', 'provincial_road'],

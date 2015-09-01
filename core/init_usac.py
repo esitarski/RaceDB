@@ -54,7 +54,7 @@ def set_attributes( obj, attributes ):
 	return changed
 	
 def large_delete_all( Object ):
-	while Object.objects.count():
+	while Object.objects.exists():
 		with transaction.atomic():
 			ids = Object.objects.values_list('pk', flat=True)[:999]
 			Object.objects.filter(pk__in = ids).delete()
@@ -64,6 +64,8 @@ def init_usac( fname = fnameDefault, states = '' ):
 	#large_delete_all( Team )
 	
 	tstart = datetime.datetime.now()
+	
+	fix_bad_license_codes()
 	
 	state_set = set( states.split(',') ) if states else None
 
@@ -84,7 +86,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 				continue
 			
 			attributes = {
-				'license_code':	ur.license.lstrip('0'),
+				'license_code':	ur.license.strip().upper().lstrip('0'),
 				'last_name':	ur.last_name,
 				'first_name':	ur.first_name,
 				'gender':		gender_from_str( ur.gender ),

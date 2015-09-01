@@ -78,6 +78,8 @@ def init_ccn( fname = fnameDefault ):
 	
 	tstart = datetime.datetime.now()
 	
+	fix_bad_license_codes()
+	
 	discipline_id = dict( (discipline, Discipline.objects.get(name=discipline)) for discipline in ['Road', 'Track', 'Cyclocross', 'MTB'] )
 
 	effective_date = datetime.date.today()

@@ -1117,7 +1117,7 @@ class LicenseHolder(models.Model):
 				pass
 		
 		try:
-			self.license_code = self.license_code.lstrip('0')
+			self.license_code = self.license_code.strip().lstrip('0')
 		except Exception as e:
 			pass
 		
@@ -1353,18 +1353,17 @@ class Participant(models.Model):
 		
 		if self.role == self.Competitor:
 			
-			if competition.number_set:
-				if number_set_update:
-					if self.bib:
-						try:
-							nse = NumberSetEntry.objects.get( number_set=competition.number_set, license_holder=license_holder, date_lost=None )
-							if nse.bib != self.bib:
-								nse.bib = self.bib
-								nse.save()
-						except NumberSetEntry.DoesNotExist:
-							NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()
-					else:
-						NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).delete()
+			if number_set_update and competition.number_set:
+				if self.bib:
+					try:
+						nse = NumberSetEntry.objects.get( number_set=competition.number_set, license_holder=license_holder, date_lost=None )
+						if nse.bib != self.bib:
+							nse.bib = self.bib
+							nse.save()
+					except NumberSetEntry.DoesNotExist:
+						NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()
+				else:
+					NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).delete()
 				
 			if license_holder_update:
 				if license_holder.existing_tag != self.tag or license_holder.existing_tag2 != self.tag2:
@@ -1372,6 +1371,7 @@ class Participant(models.Model):
 					license_holder.existing_tag2 = self.tag2
 					license_holder.save()
 				
+		self.propagate_bib_tag()
 		return super(Participant, self).save( *args, **kwargs )
 	
 	@property
@@ -1513,6 +1513,35 @@ class Participant(models.Model):
 		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:
 			self.confirmed = True
 		return self
+	
+	def propagate_bib_tag( self ):
+		category_numbers = CategoryNumbers.objects.filter( competition=self.competition, categories=self.category ).first()
+		if not category_numbers:
+			return
+		Participant.objects.filter(
+			competition=self.competition,
+			license_holder=self.license_holder,
+			category__in=category_numbers.categories.all()
+		).exclude(
+			id=self.id
+		).update(
+			bib=self.bib,
+			tag=self.tag,
+			tag2=self.tag2
+		)
+		
+	def update_bib_new_category( self ):
+		category_numbers = CategoryNumbers.objects.filter( competition=self.competition, categories=self.category ).first()
+		if not category_numbers:
+			return
+		example_participant = Participant.objects.filter(
+			competition=self.competition,
+			license_holder=self.license_holder,
+			category__in=category_numbers.categories.all()
+		).exclude(
+			id=self.id
+		).first()
+		self.bib = example_participant.bib if example_participant else None
 	
 	def get_other_category_participants( self ):
 		return list(
@@ -2082,4 +2111,13 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	LicenseHolder.objects.filter( pk__in=pks ).delete()
 
 # Apply upgrades.
-# import migrate_data
+def fix_bad_license_codes():
+	success = True
+	while success:
+		success = False
+		with transaction.atomic():
+			for lh in LicenseHolder.objects.filter(license_code__startswith='0')[:999]:
+				lh.save()		# performs field validation.
+				success = True
+
+
