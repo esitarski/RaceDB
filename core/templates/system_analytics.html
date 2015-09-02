@@ -275,11 +275,11 @@ function drawCharts() {
 {% load i18n %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-<img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
-<h2>{{page_title}}</h2>
 <div class='hidden-print'>
 {% crispy form %}
 <hr/>
+<img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
+<h2>{{page_title}}</h2>
 <p class="text-center hidden-print">
 &nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
 </p>
