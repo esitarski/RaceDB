@@ -62,14 +62,16 @@ function onLoad()
 		});
 	}
 	
-	// Give the first visible form field the keyboard focus.
-	$(document).ready(function() {
-		$('form:first *:input[type!=hidden]:first').focus();
-	});
 	
 	// Check for keyboard focus exception.
 	if( document.getElementById("focus") )
 		document.getElementById("focus").focus();
+	else {
+		// Give the first visible form field the keyboard focus.
+		$(document).ready(function() {
+			$('form:first *:input[type!=hidden]:first').focus();
+		});
+	}
 
 {% block onload %}
 {% endblock onload %}

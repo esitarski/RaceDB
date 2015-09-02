@@ -4,14 +4,19 @@ import utils
 from collections import defaultdict
 from models import *
 
-def participation_data( year=None, discipline=None, race_class=None ):
+def participation_data( start_date=None, end_date=None, discipline=None, race_class=None ):
+	discipline = int(discipline or -1)
+	race_class = int(race_class or -1)
+
 	competitions = Competition.objects.all()
-	if year is not None:
-		competitions = competitions.filter( start_date__year = year )
-	if discipline is not None:
-		competitions = competitions.filter( discipline = discipline )
-	if race_class is not None:
-		competitions = competitions.filter( race_class = race_class )
+	if start_date is not None:
+		competitions = competitions.filter( start_date__gte = start_date )
+	if end_date is not None:
+		competitions = competitions.filter( start_date__lte = end_date )
+	if discipline > 0:
+		competitions = competitions.filter( discipline__pk = discipline )
+	if race_class > 0:
+		competitions = competitions.filter( race_class__pk = race_class )
 	competitions = competitions.order_by( 'start_date' )
 	
 	license_holders_event_errors = set()

@@ -3644,6 +3644,14 @@ def get_year_choices():
 	][:20] + [(-1, _('All'))]
 	return year_choices
 	
+def get_search_start_date():
+	last_competition = Competition.objects.all().order_by('-start_date').first()
+	return datetime.date( last_competition.start_date.year, 1, 1 ) if last_competition else None
+	
+def get_search_end_date():
+	last_competition = Competition.objects.all().order_by('-start_date').first()
+	return datetime.date( last_competition.start_date.year, 12, 31 ) if last_competition else None
+	
 def get_discipline_race_class_choices():
 	disciplines = set()
 	race_classes = set()
@@ -3659,7 +3667,8 @@ def get_discipline_race_class_choices():
 def get_participant_report_form():
 	@autostrip
 	class ParticipantReportForm( Form ):
-		year = forms.ChoiceField( required = False, label = _('Year'), choices = get_year_choices() )
+		start_date = forms.DateField( required = False, label = _('Start Date') )
+		end_date = forms.DateField( required = False, label = _('End Date')  )
 		discipline_choices, race_class_choices = get_discipline_race_class_choices()
 		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
 		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
@@ -3673,8 +3682,9 @@ def get_participant_report_form():
 			
 			self.helper.layout = Layout(
 				Row(
-					Field('year'),
-					Field('discipline'),
+					Field('start_date'),
+					Field('end_date'),
+					Field('discipline', id='focus'),
 					Field('race_class'),
 				),
 				HTML( '<hr/>' ),
@@ -3686,25 +3696,25 @@ def get_participant_report_form():
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
 def ParticipantReport( request ):
+	start_date, end_date, discipline, race_class = get_search_start_date(), get_search_end_date(), None, None
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
 		form = get_participant_report_form()( request.POST )
-		year, discipline, race_class = None, None, None
+		start_date, end_date, discipline, race_class = None, None, None, None
 		if form.is_valid():
-			year = int(form.cleaned_data['year'])
-			discipline = Discipline.objects.filter(id=int(form.cleaned_data['discipline'])).first()
-			race_class = RaceClass.objects.filter(id=int(form.cleaned_data['race_class'])).first()
-		if year and year < 0:
-			year = None
-				
-		sheet_name, xl = participation_excel( year, discipline, race_class )
+			start_date = form.cleaned_data['start_date']
+			end_date = form.cleaned_data['end_date']
+			discipline = form.cleaned_data['discipline']
+			race_class = form.cleaned_data['race_class']
+			
+		sheet_name, xl = participation_excel( start_date, end_date, discipline, race_class )
 		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 		response['Content-Disposition'] = 'attachment; filename={}.xlsx'.format(sheet_name)
 		return response
 	else:
-		form = get_participant_report_form()()
+		form = get_participant_report_form()( initial={'start_date':start_date, 'end_date':end_date} )
 		
 	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )
 
@@ -3712,9 +3722,13 @@ def ParticipantReport( request ):
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
 def AttendanceAnalytics( request ):
-	year = get_year_choices()[0][0]
-	discipline = None
-	race_class = None
+	initial = request.session.get( 'attendance_analytics', {
+			'start_date':get_search_start_date(),
+			'end_date':get_search_end_date(),
+			'discipline':-1,
+			'race_class':-1
+		}
+	)
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -3722,31 +3736,37 @@ def AttendanceAnalytics( request ):
 			
 		form = get_participant_report_form()( request.POST )
 		if form.is_valid():
-			year, discipline, race_class = None, None, None
-			if form.is_valid():
-				year = int(form.cleaned_data['year'])
-				discipline = Discipline.objects.filter(id=int(form.cleaned_data['discipline'])).first()
-				race_class = RaceClass.objects.filter(id=int(form.cleaned_data['race_class'])).first()
-			if year and year < 0:
-				year = None
-				
-			payload, license_holders_event_errors = participation_data( year, discipline, race_class )
+			initial = {
+				'start_date':form.cleaned_data['start_date'],
+				'end_date':form.cleaned_data['end_date'],
+				'discipline':int(form.cleaned_data['discipline']),
+				'race_class':int(form.cleaned_data['race_class']),
+			}
+			
+			payload, license_holders_event_errors = participation_data( **initial )
 			payload_json = json.dumps(payload, separators=(',',':'))
-			return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 	else:
-		payload, license_holders_event_errors = participation_data( year )
+		payload, license_holders_event_errors = participation_data( **initial )
 		payload_json = json.dumps(payload, separators=(',',':'))
-		form = get_participant_report_form()()
+		form = get_participant_report_form()( initial=initial )
 	
-	page_title = u'Analytics for '
-	if year > 0:
-		page_title += u'{}'.format(year)
-	else:
-		page_title += unicode(_('All Years'))
-	if discipline:
-		page_title += u' {}'.format(discipline.name)
-	if race_class:
-		page_title += u' {}'.format(race_class.name)
+	page_title = u'Analytics'
+	if initial['start_date'] is not None:
+		page_title += u' from {}'.format( initial['start_date'] .strftime('%Y-%d-%m') )
+	if initial['end_date'] is not None:
+		page_title += u' to {}'.format( initial['end_date'].strftime('%Y-%d-%m') )
+		
+	def get_name( cls, id ):
+		obj = cls.objects.filter(id=id).first()
+		return obj.name if obj else ''
+	
+	if initial['discipline'] > 0:
+		page_title += u' {}'.format(get_name(Discipline, initial['discipline']))
+	if initial['race_class'] > 0:
+		page_title += u' {}'.format(get_name(RaceClass, initial['race_class']))
+		
+	print page_title
+		
 	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
 
