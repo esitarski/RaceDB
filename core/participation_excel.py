@@ -26,6 +26,8 @@ def participation_excel( start_date=None, end_date=None, discipline=None, race_c
 		competitions = competitions.filter( discipline__pk = discipline )
 	if race_class > 0:
 		competitions = competitions.filter( race_class__pk = race_class )
+	if organizers:
+		competitions = competitions.filter( organizer__in = organizers )
 	
 	p = {}
 	events = []

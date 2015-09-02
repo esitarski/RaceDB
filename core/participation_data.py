@@ -4,7 +4,7 @@ import utils
 from collections import defaultdict
 from models import *
 
-def participation_data( start_date=None, end_date=None, discipline=None, race_class=None ):
+def participation_data( start_date=None, end_date=None, discipline=None, race_class=None, organizers=None ):
 	discipline = int(discipline or -1)
 	race_class = int(race_class or -1)
 
@@ -17,6 +17,9 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		competitions = competitions.filter( discipline__pk = discipline )
 	if race_class > 0:
 		competitions = competitions.filter( race_class__pk = race_class )
+	if organizers:
+		competitions = competitions.filter( organizer__in = organizers )
+	
 	competitions = competitions.order_by( 'start_date' )
 	
 	license_holders_event_errors = set()

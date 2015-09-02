@@ -3664,6 +3664,9 @@ def get_discipline_race_class_choices():
 			(r.id, r.name) for r in sorted( race_classes, key=lambda x: x.sequence )
 		]
 
+def get_organizer_choices():
+	return [(v, v) for v in sorted( set(Competition.objects.all().values_list( 'organizer', flat=True ) ) )]
+		
 def get_participant_report_form():
 	@autostrip
 	class ParticipantReportForm( Form ):
@@ -3672,6 +3675,7 @@ def get_participant_report_form():
 		discipline_choices, race_class_choices = get_discipline_race_class_choices()
 		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
 		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
+		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices(), help_text=_('Multi-select with Ctrl-Click') )
 
 		def __init__( self, *args, **kwargs ):
 			super(ParticipantReportForm, self).__init__(*args, **kwargs)
@@ -3686,6 +3690,7 @@ def get_participant_report_form():
 					Field('end_date'),
 					Field('discipline', id='focus'),
 					Field('race_class'),
+					Field('organizers'),
 				),
 				HTML( '<hr/>' ),
 			)
@@ -3717,8 +3722,9 @@ def ParticipantReport( request ):
 			end_date = form.cleaned_data['end_date']
 			discipline = form.cleaned_data['discipline']
 			race_class = form.cleaned_data['race_class']
+			organizers = form.cleaned_data['organizers']
 			
-		sheet_name, xl = participation_excel( start_date, end_date, discipline, race_class )
+		sheet_name, xl = participation_excel( start_date, end_date, discipline, race_class, organizers )
 		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 		response['Content-Disposition'] = 'attachment; filename={}.xlsx'.format(sheet_name)
 		return response
@@ -3735,7 +3741,8 @@ def AttendanceAnalytics( request ):
 			'start_date':get_search_start_date(),
 			'end_date':get_search_end_date(),
 			'discipline':-1,
-			'race_class':-1
+			'race_class':-1,
+			'organizers':[]
 		}
 	)
 	
@@ -3750,6 +3757,7 @@ def AttendanceAnalytics( request ):
 				'end_date':form.cleaned_data['end_date'],
 				'discipline':int(form.cleaned_data['discipline']),
 				'race_class':int(form.cleaned_data['race_class']),
+				'organizers':form.cleaned_data['organizers'],
 			}
 			
 			payload, license_holders_event_errors = participation_data( **initial )
@@ -3764,6 +3772,8 @@ def AttendanceAnalytics( request ):
 		page_title += u' from {}'.format( initial['start_date'] .strftime('%Y-%d-%m') )
 	if initial['end_date'] is not None:
 		page_title += u' to {}'.format( initial['end_date'].strftime('%Y-%d-%m') )
+	if initial['organizers']:
+		page_title += u' for {}'.format( u', '.join(initial['organizers']) )
 		
 	def get_name( cls, id ):
 		obj = cls.objects.filter(id=id).first()

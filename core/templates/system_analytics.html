@@ -275,7 +275,8 @@ function drawCharts() {
 {% load i18n %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-<h2><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img> {{page_title}}</h2>
+<img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
+<h2>{{page_title}}</h2>
 <div class='hidden-print'>
 {% crispy form %}
 <hr/>
