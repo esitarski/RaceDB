@@ -3691,6 +3691,15 @@ def get_participant_report_form():
 			)
 			addFormButtons( self, OK_BUTTON | CANCEL_BUTTON )
 	
+		def clean(self):
+			cleaned_data = super(ParticipantReportForm, self).clean()
+			start_date = cleaned_data.get("start_date")
+			end_date = cleaned_data.get("end_date")
+
+			if start_date and end_date:
+				if start_date >= end_date:
+					raise forms.ValidationError( _("Start Date must be less than End Date") )
+	
 	return ParticipantReportForm
 
 @external_access

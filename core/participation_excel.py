@@ -19,9 +19,9 @@ def participation_excel( start_date=None, end_date=None, discipline=None, race_c
 
 	competitions = Competition.objects.all()
 	if start_date is not None:
-		competitions = competitions.filter( start_date__ge = start_date )
+		competitions = competitions.filter( start_date__gte = start_date )
 	if end_date is not None:
-		competitions = competitions.filter( start_date__le = end_date )
+		competitions = competitions.filter( start_date__lte = end_date )
 	if discipline > 0:
 		competitions = competitions.filter( discipline__pk = discipline )
 	if race_class > 0:
@@ -48,7 +48,7 @@ def participation_excel( start_date=None, end_date=None, discipline=None, race_c
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	title_format = wb.add_format( dict(bold=True, text_wrap= True) )
 	
-	sheet_name = 'RaceDB-Participation-{}'.format( year ) if year is not None else 'RaceDB-Participation'
+	sheet_name = 'RaceDB-Participation'
 	ws = wb.add_worksheet(sheet_name)
 	
 	row = col = 0

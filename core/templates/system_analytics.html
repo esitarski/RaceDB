@@ -265,6 +265,12 @@ function drawCharts() {
 }
  </script>
 {% endblock srcjavascript %}
+{% load staticfiles %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
 {% block content %}
 {% load i18n %}
 {% load staticfiles %}
@@ -273,6 +279,9 @@ function drawCharts() {
 <div class='hidden-print'>
 {% crispy form %}
 <hr/>
+<p class="text-center hidden-print">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
 </div>
 <p>
 <h2>
