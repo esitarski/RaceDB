@@ -3665,8 +3665,8 @@ def get_discipline_race_class_choices():
 		]
 
 def get_organizer_choices():
-	return [(v, v) for v in sorted( set(Competition.objects.all().values_list( 'organizer', flat=True ) ) )]
-		
+	return [(v, v) for v in sorted( set(Competition.objects.all().values_list('organizer', flat=True) ) )]
+
 def get_participant_report_form():
 	@autostrip
 	class ParticipantReportForm( Form ):
@@ -3675,7 +3675,7 @@ def get_participant_report_form():
 		discipline_choices, race_class_choices = get_discipline_race_class_choices()
 		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
 		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
-		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices(), help_text=_('Multi-select with Ctrl-Click') )
+		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices(), help_text=_('Ctrl-Click to Multi-Select') )
 
 		def __init__( self, *args, **kwargs ):
 			super(ParticipantReportForm, self).__init__(*args, **kwargs)
@@ -3690,7 +3690,7 @@ def get_participant_report_form():
 					Field('end_date'),
 					Field('discipline', id='focus'),
 					Field('race_class'),
-					Field('organizers'),
+					Field('organizers', size=8),
 				),
 				HTML( '<hr/>' ),
 			)
@@ -3767,13 +3767,14 @@ def AttendanceAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()( initial=initial )
 	
-	page_title = u'Analytics'
+	page_title = [u'Analytics']
 	if initial['start_date'] is not None:
-		page_title += u' from {}'.format( initial['start_date'] .strftime('%Y-%d-%m') )
+		page_title.append( u'from {}'.format( initial['start_date'] .strftime('%Y-%d-%m') ) )
 	if initial['end_date'] is not None:
-		page_title += u' to {}'.format( initial['end_date'].strftime('%Y-%d-%m') )
+		page_title.append( u'to {}'.format( initial['end_date'].strftime('%Y-%d-%m') ) )
 	if initial['organizers']:
-		page_title += u' for {}'.format( u', '.join(initial['organizers']) )
+		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
+	page_title = u' '.join( page_title )
 		
 	def get_name( cls, id ):
 		obj = cls.objects.filter(id=id).first()
