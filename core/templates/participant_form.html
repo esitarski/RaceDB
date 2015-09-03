@@ -47,16 +47,25 @@
 	<td class="text-right">{% trans "Participant" %}:</td>
 	<td>
 		<strong>{{h.full_name}}:</strong>
-		{{h.get_gender_display}},
+		{{h.get_gender_display}}
 		{% if h.license_code %}
-			{% if h.is_temp_license %}<span class="label label-warning">{% endif %}{{h.license_code}}{% if h.is_temp_license %}</span>{% endif %},
+			{% if isEdit and h.is_temp_license %}<a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% endif %}
+				{{h.license_code}}
+			{% if isEdit and h.is_temp_license %}</a>{% endif %}
 		{% endif %}
-		{% if h.uci_code %} {{h.uci_code}}, {% endif %}
+		{% if h.uci_code %}
+			{% if isEdit and h.uci_code_error %}<a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% endif %}
+				{{h.uci_code}}
+			{% if isEdit and h.uci_code_error %}</a>{% endif %}
+		{% endif %}
 		{% if h.city %} {{h.city}}, {% endif %}
 		{% if h.state_prov %} {{h.state_prov}}, {% endif %}
 		{% if h.nationality %} {{h.nationality}} {% endif %}
-		{% if not h.license_code or h.is_temp_license %}
-			<br/><span class="label label-warning">{% trans "Reminder: Ask for permanent License Code and edit License Holder" %}</span>
+		{% if isEdit and h.license_code and h.is_temp_license %}
+			<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Click here to fix License Code" %}</a>
+		{% endif %}
+		{% if isEdit and h.uci_code and h.uci_code_error %}
+			<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Click here to fix UCI Code" %}: {{h.uci_code_error}}</a>
 		{% endif %}
 	</td>
 	<td>
@@ -70,9 +79,12 @@
 	<td>
 		<strong>{{p.get_role_display}}</strong>
 		{% if p.is_competitor %}
-			&nbsp;&nbsp;&nbsp;&nbsp;{% if is_suspicious_age %}<span class="label label-warning">{% endif %}{% trans "Competition Age" %}: <strong>{{competition_age}}{% if is_suspicious_age %}</span>{% endif %}</strong>
-			{% if is_suspicious_age %}
-				<br/><span class="label label-warning">{% trans "Reminder: Check Date of Birth and edit License Holder" %}</span>
+			&nbsp;&nbsp;&nbsp;&nbsp;
+			{% if is_suspicious_age and isEdit %}<a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% endif %}
+				{% trans "Competition Age" %}: <strong>{{competition_age}}
+			{% if is_suspicious_age and isEdit %}</a>{% endif %}</strong>
+			{% if is_suspicious_age and isEdit %}
+				<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Click here to fix Date of Birth" %}</span>
 			{% endif %}
 		{% endif %}
 	</td>

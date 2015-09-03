@@ -25,6 +25,7 @@ import random
 import iso3166
 from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
+from CountryIOC import uci_country_codes_set
 
 def fixNullUpper( s ):
 	if not s:
@@ -1068,7 +1069,7 @@ rePostalCode = re.compile('^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$')
 def validate_postal_code( postal ):
 	postal = (postal or '').replace(' ', '').upper()
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
-		
+
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
 	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), db_index=True )
@@ -1146,9 +1147,44 @@ class LicenseHolder(models.Model):
 	@property
 	def is_temp_license( self ):
 		return self.license_code.startswith(u'TEMP')
-	
+
+	@property
+	def uci_code_error( self ):
+		if not self.uci_code:
+			return _(u'missing')
+			
+		self.uci_code = unicode(self.uci_code).upper().replace(u' ', u'')
+		if len(self.uci_code) != 11:
+			return _(u'invalid length')
+
+		if self.uci_code[:3] not in uci_country_codes_set:
+			return _(u'invalid nation code')
+			
+		try:
+			year = int(self.uci_code[3:7])
+		except ValueError:
+			return _(u'year is not a number')
+		try:
+			month = int(self.uci_code[7:9])
+		except ValueError:
+			return _(u'month is not a number')
+		try:
+			day = int(self.uci_code[9:])
+		except ValueError:
+			return _(u'day is not a number')
+		
+		try:
+			d = datetime.date(year, month, day)
+		except ValueError as e:
+			return unicode(e)
+		
+		if d != self.date_of_birth:
+			return _(u'inconsistent with date of birth')
+		
+		return None
+
 	def __unicode__( self ):
-		return '%s, %s (%s, %s, %s, %s)' % (
+		return '{}, {} ({}, {}, {}, {})'.format(
 			self.last_name.upper(), self.first_name,
 			self.date_of_birth.isoformat(), self.get_gender_display(),
 			self.uci_code, self.license_code
