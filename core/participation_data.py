@@ -229,6 +229,12 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 			if c == most_frequent:
 				return a
 		return None
+		
+	# Create a postal code hierarchy.
+	postal_codes = defaultdict( int )
+	for lh in license_holders_attendance_total.iterkeys():
+		postal_codes['Unknown' if not lh.zip_postal else lp.zip_postal.replace(' ','')[:4]] += 1
+	postal_code_data = [['Unknown' if p == 'Unknown' else '/'.join( p[:i] for i in xrange(1, len(p)+1)), total] for p, total in postal_codes.iteritems()]
 	
 	payload = {
 		'competitions_total': competitions_total,
@@ -261,6 +267,8 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		'category_total':category_total,
 		'category_competition_count':ccc,
 		'event_competition_count':eee,
+		
+		'postal_code_data':postal_code_data,
 		
 		'competitions': data,
 	}

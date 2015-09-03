@@ -15,6 +15,7 @@ import patch_sqlite_text_factory
 from DurationField import DurationField
 from get_abbrev import get_abbrev
 
+import re
 import math
 import datetime
 import base64
@@ -1063,6 +1064,11 @@ class Team(models.Model):
 		verbose_name_plural = _('Teams')
 		ordering = ['search_text']
 
+rePostalCode = re.compile('^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$')
+def validate_postal_code( postal ):
+	postal = (postal or '').replace(' ', '').upper()
+	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
+		
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
 	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), db_index=True )
@@ -1078,6 +1084,7 @@ class LicenseHolder(models.Model):
 	city = models.CharField( max_length=64, blank=True, default='', verbose_name=_('City') )
 	state_prov = models.CharField( max_length=64, blank=True, default='', verbose_name=_('State/Prov') )
 	nationality = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Nationality') )
+	zip_postal = models.CharField( max_length=12, blank=True, default='', verbose_name=_('Zip/Postal') )
 	
 	email = models.EmailField( blank=True )
 	
@@ -1125,6 +1132,8 @@ class LicenseHolder(models.Model):
 			setattr( self, f, fixNullUpper(getattr(self, f)) )
 			
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
+		
+		self.zip_postal = validate_postal_code( self.zip_postal )
 		
 		super(LicenseHolder, self).save( *args, **kwargs )
 		

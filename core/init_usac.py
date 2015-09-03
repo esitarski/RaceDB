@@ -86,7 +86,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 				continue
 			
 			attributes = {
-				'license_code':	ur.license.strip().upper().lstrip('0'),
+				'license_code':	ur.license.upper().lstrip('0'),
 				'last_name':	ur.last_name,
 				'first_name':	ur.first_name,
 				'gender':		gender_from_str( ur.gender ),
@@ -94,7 +94,8 @@ def init_usac( fname = fnameDefault, states = '' ):
 				'city':			ur.city,
 				'state_prov':	ur.state,
 				'nationality': 'USA',
-				'uci_code':		ur.uci_code if ur.uci_code else None,
+				'uci_code':		ur.uci_code or None,
+				'zip_postal':	ur.zip,
 			}
 			
 			try:

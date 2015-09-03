@@ -56,7 +56,7 @@
 		{% if h.state_prov %} {{h.state_prov}}, {% endif %}
 		{% if h.nationality %} {{h.nationality}} {% endif %}
 		{% if not h.license_code or h.is_temp_license %}
-			<br/><span class="label label-warning">{% trans "Reminder: Ask for permanent License Code and edit entry" %}</span>
+			<br/><span class="label label-warning">{% trans "Reminder: Ask for permanent License Code and edit License Holder" %}</span>
 		{% endif %}
 	</td>
 	<td>
@@ -70,7 +70,10 @@
 	<td>
 		<strong>{{p.get_role_display}}</strong>
 		{% if p.is_competitor %}
-			&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Competition Age" %}: <strong>{{competition_age}}</strong>
+			&nbsp;&nbsp;&nbsp;&nbsp;{% if is_suspicious_age %}<span class="label label-warning">{% endif %}{% trans "Competition Age" %}: <strong>{{competition_age}}{% if is_suspicious_age %}</span>{% endif %}</strong>
+			{% if is_suspicious_age %}
+				<br/><span class="label label-warning">{% trans "Reminder: Check Date of Birth and edit License Holder" %}</span>
+			{% endif %}
 		{% endif %}
 	</td>
 	<td>

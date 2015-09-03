@@ -8,6 +8,7 @@ from utils import toUnicode, removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 from fix_utf8 import fix_utf8
+from import_utils import get_key
 
 datemode = None
 
@@ -108,7 +109,9 @@ def init_ccn( fname = fnameDefault ):
 				'city':			to_str(ur.get('Member City','')),
 				'state_prov':	to_str(ur.get('Member Province','')),
 				'nationality':  to_str(ur.get('Nationality','')),
+				'zip_postal':	to_str(get_key(ur,('ZipPostal','Zip''Postal','ZipCode','PostalCode','Zip Code','Postal Code',), None))
 			}
+			attributes = { a:v for a, v in license_holder_attr_value.iteritems() if v is not None }
 			
 			if ur.get('Tag','').strip():
 				attributes['existing_tag'] = to_int_str(ur.get('Tag','')).strip()

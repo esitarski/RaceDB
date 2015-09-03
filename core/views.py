@@ -512,9 +512,10 @@ class LicenseHolderForm( ModelForm ):
 				Col(Field('date_of_birth', size=10), 2),
 			),
 			Row(
-				Col(Field('city', size=40), 4),
-				Col(Field('state_prov', size=40), 4),
-				Col(Field('nationality', size=40), 4),
+				Col(Field('city', size=40), 3),
+				Col(Field('state_prov', size=40), 3),
+				Col(Field('nationality', size=40), 3),
+				Col(Field('zip_postal', size=10), 3),
 			),
 			Row(
 				Col(Field('email', size=50), 4),
@@ -2764,6 +2765,7 @@ def ParticipantEdit( request, participantId ):
 	system_info = SystemInfo.get_singleton()
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
+	is_suspicious_age = not (8 <= competition_age <= 90)
 	isEdit = True
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
@@ -2773,6 +2775,7 @@ def ParticipantDelete( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
+	is_suspicious_age = not (8 <= competition_age <= 90)
 	isEdit = False
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
 	

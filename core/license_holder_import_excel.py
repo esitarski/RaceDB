@@ -52,6 +52,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
 			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
 			
+			zip_postal		= to_str(get_key(ur,('ZipPostal','Zip', 'Postal', 'Zip Code', 'Postal Code', 'ZipCode', 'PostalCode',), None))
+			
 			license_holder_attr_value = {
 				'license_code':license_code,
 				'last_name':last_name,
@@ -65,6 +67,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				'city':city,
 				'state_prov':state_prov,
 				'nationality':nationality,
+				'zip_postal':zip_postal,
 			}
 			license_holder_attr_value = { a:v for a, v in license_holder_attr_value.iteritems() if v }
 			

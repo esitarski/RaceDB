@@ -3,8 +3,128 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
 var payload = {{payload_json|safe}};
-google.load("visualization", "1", {packages:["corechart", "table"]});
+google.load("visualization", "1", {packages:["corechart", "table", "treemap"]});
 google.setOnLoadCallback(drawCharts);
+
+function array_to_treemap( data, size_column_label, color_column_label, separator )
+{
+	/* Creates a Google DataTable suitable for passing to a Treemap chart from the given data.
+		Data is an array of entries where each element consists of an array containing the following data:
+	
+			 - name is a path in the tree (see below).
+			 - size is the area of the node.
+			 - color (optional) displayed as the color scale.
+			 
+			For example:
+			data = [
+				[ 'North America/Software/Licenses', 55 ],
+				[ 'North America/Software/Consulting', 106 ],
+				[ 'Europe/Software/Licenses', 31 ],
+				[ 'Europe/Software/Consulting', 72 ],
+			];
+			
+		returs a google.visualization.DataTable suitable to pass to the treemap.
+	*/
+	
+	var cols = [
+		{id: 'path',	type:'string',	label: 'Path' },
+		{id: 'parent',	type:'string',	label: 'Parent' },
+		{id: 'size',	type:'number',	label: size_column_label ? size_column_label : 'Size' }
+	];
+	if( data.length <= 1 )
+		return new google.visualization.DataTable( {'cols': cols, 'rows': []} );
+
+	var has_color = (data[0].length == 3)
+	if( has_color )
+		cols.push(  {id: 'color', type:'number', label: color_column_label ? color_column_label : 'Color'} );
+	
+	if( !separator )
+		separator = '/';
+	
+	// Check if all the entries share a common root.  If not, create one called 'top'.
+	var root_name = null;
+	var common_root = true;
+	for( var i = 0; i < data.length; ++i ) {
+		var rname = data[i][0].split( separator, 1 )[0];
+		if( root_name == rname )
+			continue;
+		if( !root_name ) {
+			root_name = rname;
+			continue;
+		}
+		root_name = 'top';
+		common_root = false;
+		break;
+	}
+	
+	var ids = {};
+	var lastId = 0;
+	function get_id( path ) {
+		id = ids[path];
+		if( id == undefined )
+			id = ids[path] = lastId++;
+		return id;
+	}
+	var rows = [];
+	
+	// Add the root of the tree.
+	var cells = [{v:get_id(root_name), f:root_name}, {v:null}, {v:0}];
+	if( has_color )
+		cells.push( {v:0} );
+	rows.push( {'c': cells} );
+	
+	for( var i = 0; i < data.length; ++i )
+	{
+		var path_name = data[i][0], size = data[i][1], color = has_color ? data[i][2] : 0;
+		//
+		// Consider the following name data:
+		//
+		// aaa/bbb/ccc
+		// aaa/bbb/ddd
+		// aaa/bbb/eee
+		// aaa/ccc/bbb
+		//
+		// From this data we construct a tree where each node is uniquely identified by its path to the root:
+		//
+		//                                          aaa
+		//                                         /   \
+		//                                   aaa/bbb   aaa/ccc
+		//                                  /  |  \           \
+		//                         aaa/bbb/ccc |  aaa/bbb/ddd  aaa/ccc/bbb
+		//                              aaa/bbb/eee
+		//
+		// To create this tree, we start with the full path name, then connect it to its parent by removing the right-most leaf.
+		// We repeat the process to follow the connections back to the root.
+		// We stop if we encounter a node we already have.  As this represents the complete path back the root, we can stop.
+		// For efficiency, we assign a unique number as the node id rather than using the full path string.
+		//
+		while( 1 ) {
+			var lastSep = path_name.lastIndexOf(separator);
+			if( lastSep < 0 ) {
+				if( !common_root ) {
+					var cells = [{v:get_id(path_name), f:path_name}, {v:get_id(root_name)}, {v:0}];
+					if( has_color )
+						cells.push( {v:0} );
+					rows.push( {'c': cells} );
+				}
+				break;
+			}
+			var parent_name = path_name.substring(0, lastSep);
+			var leaf_name = path_name.substring(lastSep+separator.length);
+			var parent_exists = (ids[parent_name] != undefined);
+			var cells = [{v:get_id(path_name), f:leaf_name}, {v:get_id(parent_name)}, {v:size}];
+			if( has_color )
+				cells.push( {v:color} );
+			rows.push( {'c': cells} );
+			if( parent_exists )
+				break;
+			size = 0; color = 0;
+			path_name = parent_name;
+		}
+	}
+	
+	return new google.visualization.DataTable( {'cols': cols, 'rows': rows} );
+}
 
 function formatFloat( num, precision ) {
 	return {v:num, f:num.toFixed(precision ? precision : 2)};
@@ -203,6 +323,13 @@ function drawCharts() {
 		{title:'Event Participation (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
 	
 	// -----------------------------------------------------------------
+	// Postal Codes
+	//
+	var postalCodeChart = new google.visualization.TreeMap(document.getElementById("postalCodeChartDiv"));
+	postalCodeChart.draw(array_to_treemap(payload.postal_code_data, 'Count'),
+		{title:'License Holders Zip/Postal',} );
+	
+	// -----------------------------------------------------------------
 	// Overall Raw Data Table
 	//
 	var statsData = new google.visualization.DataTable();
@@ -363,6 +490,7 @@ function drawCharts() {
 <div id='compChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compCategoryChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div>
 <hr/>
 
 {% if license_holders_event_errors %}
