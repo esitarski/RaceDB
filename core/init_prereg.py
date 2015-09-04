@@ -6,13 +6,13 @@ from collections import namedtuple, defaultdict
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from large_delete_all import large_delete_all
+import import_utils
 from import_utils import *
 from models import *
 
 def init_prereg(
 		competition_name='', worksheet_name='', clear_existing=False,
 		competitionId=None, worksheet_contents=None, message_stream=sys.stdout ):
-	global datemode
 	
 	tstart = datetime.datetime.now()
 
@@ -253,7 +253,7 @@ def init_prereg(
 		wb = open_workbook( fname )
 	
 	ur_records = []
-	datemode = wb.datemode
+	import_utils.datemode = wb.datemode
 	
 	ws = None
 	for cur_sheet_name in wb.sheet_names():

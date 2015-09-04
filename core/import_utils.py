@@ -1,5 +1,6 @@
 import datetime
 import time
+from xlrd import xldate_as_tuple
 from utils import toUnicode, removeDiacritic, gender_from_str
 
 datemode = None
