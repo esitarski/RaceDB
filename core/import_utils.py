@@ -9,17 +9,26 @@ today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
 
+invalid_date_of_birth = datetime.date(1900, 1, 1)
 def date_from_value( s ):
 	if isinstance(s, datetime.date):
 		return s
+	if isinstance(s, datetime.datetime):
+		return s.date()
+	
 	if isinstance(s, (float, int)):
 		return datetime.date( *(xldate_as_tuple(s, datemode)[:3]) )
+		
+	try:
+		s = s.replace('-', '/')
+	except:
+		pass
 	
 	# Assume month, day, year format.
 	try:
-		mm, dd, yy = [int(v.strip()) for v in s.split( '/' )]
+		mm, dd, yy = [int(v.strip()) for v in s.split('/')]
 	except:
-		return datetime.date( 1900, 1, 1 )		# Default date.
+		return invalid_date_of_birth
 	
 	# Correct for 2-digit year.
 	for century in [0, 1900, 2000, 2100]:

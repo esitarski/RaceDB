@@ -7,12 +7,11 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q
 
 from xlrd import open_workbook, xldate_as_tuple
+import import_utils
 from import_utils import *
 from models import *
 
-def license_holder_import_excel( worksheet_name='', worksheet_contents=None, message_stream=sys.stdout ):
-	global datemode
-	
+def license_holder_import_excel( worksheet_name='', worksheet_contents=None, message_stream=sys.stdout, update_license_codes=False ):
 	tstart = datetime.datetime.now()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
@@ -21,6 +20,23 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 	else:
 		def messsage_stream_write( s ):
 			message_stream.write( unicode(s) )
+	
+	# Replace all the current license codes with unique a temp codes.
+	existing_to_temp, temp_to_existing = {}, {}
+	i = 0
+	if update_license_codes:
+		success = True
+		while success:
+			success = False
+			with transaction.atomic():
+				for lh in LicenseHolder.objects.all().exclude( license_code__startswith='_' )[:999]:
+					i += 1
+					temp = '{}'.format(i).rjust(32, '_')
+					existing_to_temp[lh.license_code] = temp
+					temp_to_existing[temp] = h.license_code
+					lh.license_code = temp
+					lh.save()
+					success = True
 	
 	license_col_names = ('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode')
 	
@@ -39,9 +55,16 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			gender			= to_str(get_key(ur,('gender','rider gender'),u''))
 			gender			= gender_from_str(gender) if gender else None
 			
-			date_of_birth   = get_key(ur, ('DOB', 'Date of Birth', 'Birthdate'), None)
-			if date_of_birth is not None:
-				date_of_birth = date_from_value(date_of_birth)
+			date_of_birth   = get_key(ur, ('DOB', 'Date of Birth', 'DateofBirth', 'Birthdate'), None)
+			if date_of_birth:
+				try:
+					date_of_birth = date_from_value(date_of_birth)
+				except:
+					date_of_birth = None
+				if date_of_birth == import_utils.invalid_date_of_birth:
+					date_of_birth = None
+			else:
+				date_of_birth = None
 			uci_code = to_str(get_key(ur,('UCI Code','UCICode', 'UCI'), None))
 			
 			email			= to_str(ur.get('email', None))
@@ -76,20 +99,31 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			#
 			license_holder = None
 			with transaction.atomic():
-				if not license_code:
-					messsage_stream_write( u'**** Row {}: Missing License Code, Name="{}"\n'.format(
-						i, name) )
-					continue
-					
-				if license_code.upper().startswith(u'TEMP'):
-					messsage_stream_write( u'**** Row {}: Ignoring TEMP LicenseCode: {}, Name="{}"\n'.format(
-						i, license_code, name) )
-					continue
-				
 				status = "Unchanged"
-				license_holder = LicenseHolder.objects.filter( license_code=license_code ).first()
+				
+				if update_license_codes:
+					license_holder = LicenseHolder.objects.filter( last_name=last_name, first_name=first_name )
+					if date_of_birth:
+						license_holder = license_holder.filter( date_of_birth=date_of_birth )
+					license_holder = license_holder.first()
+				else:
+					if not license_code:
+						messsage_stream_write( u'**** Row {}: Missing License Code, Name="{}"\n'.format(
+							i, name) )
+						continue
+						
+					if license_code.upper().startswith(u'TEMP'):
+						messsage_stream_write( u'**** Row {}: Ignoring TEMP LicenseCode: {}, Name="{}"\n'.format(
+							i, license_code, name) )
+						continue
+					
+					license_holder = LicenseHolder.objects.filter( license_code=license_code ).first()
+					
 				if license_holder:
 					# Update with any new information.
+					if update_license_codes and license_holder_attr_value.get('license_code', None) is not None:
+						temp_to_existing[lh.license_code] = license_holder_attr_value['license_code']
+						del license_holder_attr_value['license_code']
 					if set_attributes( license_holder, license_holder_attr_value, False ):
 						license_holder.save()
 						status = "Changed"
@@ -127,7 +161,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 		wb = open_workbook( fname )
 	
 	ur_records = []
-	datemode = wb.datemode
+	import_utils.datemode = wb.datemode
 	
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
@@ -164,6 +198,17 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			ur_records = []
 			
 	process_ur_records( ur_records )
+	
+	# Fix all the license codes.
+	if update_license_codes:
+		success = True
+		while success:
+			success = False
+			with transaction.atomic():
+				for lh in LicenseHolder.objects.filter( license_code__startswith='_' )[:999]:
+					lh.license_code = temp_to_existing[lh.license_code]
+					lh.save()
+					success = True
 	
 	messsage_stream_write( u'\n' )
 	messsage_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )

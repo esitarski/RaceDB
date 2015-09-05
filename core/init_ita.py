@@ -6,43 +6,9 @@ from collections import namedtuple
 from models import *
 from django.db import transaction
 from django.db.models import Q
-from utils import toUnicode, removeDiacritic
-
-datemode = None
-
-today = datetime.date.today()
-earliest_year = (today - datetime.timedelta( days=106*365 )).year
-latest_year = (today - datetime.timedelta( days=7*365 )).year
-
-def date_from_value( s ):
-	if isinstance(s, datetime.date):
-		return s
-	if isinstance(s, (float, int)):
-		return datetime.date( *(xldate_as_tuple(s, datemode)[:3]) )
-	
-	# Assume month, day, year format.
-	mm, dd, yy = [int(v.strip()) for v in s.split( '/' )]
-	
-	# Correct for 2-digit year.
-	for century in [0, 1900, 2000, 2100]:
-		if earliest_year <= yy + century <= latest_year:
-			yy += century
-			break
-	
-	# Check if day and month are reversed.
-	if mm > 12:
-		dd, mm = mm, dd
-		
-	assert 1900 <= yy
-		
-	try:
-		return datetime.date( year = yy, month = mm, day = dd )
-	except Exception as e:
-		print yy, mm, dd
-		raise e
-		
-def gender_from_str( s ):
-	return 0 if s.strip().lower()[:1] in 'muh' else 1
+from utils import toUnicode, removeDiacritic. gender_from_str
+import import_utils
+from import_utils import *
 
 def set_attributes( obj, attributes ):
 	changed = False
@@ -69,7 +35,6 @@ def to_str( v ):
 	return toUnicode(v)
 
 def init_ccn( fname ):
-	global datemode
 	
 	#large_delete_all( LicenseHolder )
 	#large_delete_all( Team )
@@ -81,6 +46,8 @@ def init_ccn( fname ):
 	effective_date = datetime.date.today()
 	
 	# Process the records in large transactions for efficiency.
+	invalid_date_of_birth = datetime.date(1900, 1, 1)
+
 	@transaction.atomic
 	def process_ur_records( ur_records ):
 		
@@ -100,7 +67,7 @@ def init_ccn( fname ):
 				'last_name':	to_str(ur.get('Name','')).strip(),
 				'first_name':	to_str(ur.get('Firstname','')).strip(),
 				'gender':		gender_from_str(to_str(ur.get('Sex','m'))),
-				'date_of_birth':date_of_birth,
+				'date_of_birth':date_of_birth if date_of_birth and date_of_birth != invalid_date else None,
 				'uci_code':		to_str(ur.get('Ucicode','')).strip(),
 				'city':			to_str(ur.get('City','')).strip(),
 				'state_prov':	to_str(ur.get('Province','')).strip(),
@@ -135,7 +102,7 @@ def init_ccn( fname ):
 				
 	ur_records = []
 	wb = open_workbook( fname )
-	datemode = wb.datemode
+	import_utils.datemode = wb.datemode
 	
 	ws = None
 	for sheet_name in wb.sheet_names():

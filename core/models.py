@@ -1387,6 +1387,13 @@ class Participant(models.Model):
 		license_holder_update = kwargs.pop('license_holder_update', True)
 		number_set_update = kwargs.pop('number_set_update', True)
 		
+		try:
+			self.bib = int(self.bib)
+		except (TypeError, ValueError):
+			self.bib = None
+		if not self.bib or self.bib < 0:
+			self.bib = None
+		
 		competition = self.competition
 		license_holder = self.license_holder
 		
@@ -1637,30 +1644,25 @@ class Participant(models.Model):
 		return any( entered and event.event_type == 1 for event, optional, entered in self.get_participant_events() )
 	
 	def explain_integrity_error( self ):
-		def get_first( q ):
-			for o in q:
-				return o
-			return None
-				
-		participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder) )
+		participant = Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder).first()
 		if participant:
 			return True, _('This LicenseHolder is already in this Category'), participant
 			
-		participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder) )
+		participant = Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder).first()
 		if participant:
 			return True, _('This LicenseHolder is already in this Category'), participant
 			
-		participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, bib=self.bib) )
+		participant = Participant.objects.filter(competition=self.competition, category=self.category, bib=self.bib).first()
 		if participant:
 			return True, _('A Participant is already in this Category with the same Bib.  Assign "No Bib" first, then try again.'), participant
 		
 		if self.tag:
-			participant = get_first( Participant.objects.filter(competition=self.competition, category=self.category, tag=self.tag) )
+			participant = Participant.objects.filter(competition=self.competition, category=self.category, tag=self.tag).first()
 			if participant:
 				return True, _('A Participant is already in this Category with the same Chip Tag.  Assign empty "Tag" first, and try again.'), participant
 			
 		if self.tag2:
-			participant = get_first( Participant.objects.get(competition=self.competition, category=self.category, tag2=self.tag2) )
+			participant = Participant.objects.get(competition=self.competition, category=self.category, tag2=self.tag2).first()
 			if participant:
 				return True, _('A Participant is already in this Category with the same Chip Tag2.  Assign empty "Tag2" first, and try again.'), participant
 		

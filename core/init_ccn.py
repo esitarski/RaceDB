@@ -8,9 +8,8 @@ from utils import toUnicode, removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 from fix_utf8 import fix_utf8
+import import_utils
 from import_utils import get_key
-
-datemode = None
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
@@ -20,7 +19,7 @@ def date_from_value( s ):
 	if isinstance(s, datetime.date):
 		return s
 	if isinstance(s, (float, int)):
-		return datetime.date( *(xldate_as_tuple(s, datemode)[:3]) )
+		return datetime.date( *(xldate_as_tuple(s, import_utils.datemode)[:3]) )
 	
 	# Assume month, day, year format.
 	mm, dd, yy = [int(v.strip()) for v in s.split( '/' )]
@@ -72,7 +71,6 @@ def to_str( v ):
 
 fnameDefault = r'EV\CyclingBC_28_Mar_2014_EV-Race-List.xls'
 def init_ccn( fname = fnameDefault ):
-	global datemode
 	
 	#large_delete_all( LicenseHolder )
 	#large_delete_all( Team )
@@ -149,7 +147,7 @@ def init_ccn( fname = fnameDefault ):
 	suffix = 'CCN'
 	ur_records = []
 	wb = open_workbook( fname )
-	datemode = wb.datemode
+	import_utils.datemode = wb.datemode
 	
 	ws = None
 	for sheet_name in wb.sheet_names():

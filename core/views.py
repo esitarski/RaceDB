@@ -1820,6 +1820,8 @@ def UploadPrereg( request, competitionId ):
 @autostrip
 class ImportExcelForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	update_license_codes = forms.BooleanField( required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth match'),
+			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  Be Careful!') )
 	
 	def __init__( self, *args, **kwargs ):
 		super( ImportExcelForm, self ).__init__( *args, **kwargs )
@@ -1831,16 +1833,20 @@ class ImportExcelForm( Form ):
 			Row(
 				Field('excel_file', accept=".xls,.xlsx"),
 			),
+			Row(
+				Field('update_license_codes'),
+			),
 		)
 
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_license_holder_import_excel( excel_contents ):
+def handle_license_holder_import_excel( excel_contents, update_license_codes ):
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO.StringIO()
 	license_holder_import_excel(
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
+		update_license_codes=update_license_codes,
 	)
 	results_str = message_stream.getvalue()
 	return results_str
@@ -1854,7 +1860,7 @@ def LicenseHoldersImportExcel( request ):
 	
 		form = ImportExcelForm(request.POST, request.FILES)
 		if form.is_valid():
-			results_str = handle_license_holder_import_excel( request.FILES['excel_file'] )
+			results_str = handle_license_holder_import_excel( request.FILES['excel_file'], form.cleaned_data['update_license_codes'] )
 			del request.FILES['excel_file']
 			return render_to_response( 'license_holder_import_excel.html', RequestContext(request, locals()) )
 	else:

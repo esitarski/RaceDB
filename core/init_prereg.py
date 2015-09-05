@@ -49,6 +49,14 @@ def init_prereg(
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
+			date_of_birth	= get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
+			try:
+				date_of_birth = date_from_value(date_of_birth)
+			except:
+				print 'Row {}: Invalid birthdate (ignoring) "{}" ({}) {}'.format( i, date_of_birth, ur, e )
+				date_of_birth = None
+			date_of_birth 	= date_of_birth if date_of_birth != import_utils.invalid_date_of_birth else None
+			
 			license_code	= to_int_str(get_key(ur, license_col_names, u'')).upper().strip()
 			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
 			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
@@ -59,16 +67,12 @@ def init_prereg(
 			gender			= to_str(get_key(ur,('gender','rider gender'),u''))
 			gender			= gender_from_str(gender) if gender else None
 			
-			date_of_birth   = get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
-			if date_of_birth is not None:
-				date_of_birth = date_from_value(date_of_birth)
-			
 			email			= to_str(ur.get('email', None))
 			city			= to_str(ur.get('city', None))
 			state_prov		= to_str(get_key(ur,('state','prov','province','stateprov','state prov'), None))
 			preregistered	= to_bool(ur.get('preregistered', True))
 			paid			= to_bool(ur.get('paid', None))
-			bib				= to_int(ur.get('bib', None))
+			bib				= (to_int(ur.get('bib', None)) or None)
 			tag			 	= to_tag(ur.get('tag', None))
 			note		 	= to_str(ur.get('note', None))
 			team_name		= to_str(ur.get('team', None))
