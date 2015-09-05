@@ -13,7 +13,7 @@ from models import *
 
 import xlsxwriter
 
-def participation_excel( start_date=None, end_date=None, discipline=None, race_class=None ):
+def participation_excel( start_date=None, end_date=None, discipline=None, race_class=None, organizers=None ):
 	discipline = int(discipline or -1)
 	race_class = int(race_class or -1)
 

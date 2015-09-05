@@ -70,6 +70,8 @@ def init_prereg(
 			email			= to_str(ur.get('email', None))
 			city			= to_str(ur.get('city', None))
 			state_prov		= to_str(get_key(ur,('state','prov','province','stateprov','state prov'), None))
+			zip_postal		= to_str(get_key(ur,('ZipPostal','Zip', 'Postal', 'Zip Code', 'Postal Code', 'ZipCode', 'PostalCode',), None))
+			
 			preregistered	= to_bool(ur.get('preregistered', True))
 			paid			= to_bool(ur.get('paid', None))
 			bib				= (to_int(ur.get('bib', None)) or None)
@@ -111,19 +113,20 @@ def init_prereg(
 						# Create a temporary license holder.
 						try:
 							license_holder = LicenseHolder(
-								**{ attr:value for attr, value in (
-										('license_code','TEMP'),
-										('last_name',last_name),
-										('first_name',first_name),
-										('gender',gender),
-										('date_of_birth',date_of_birth),
-										('uci_code',uci_code),
-										('emergency_contact_name',emergency_contact_name),
-										('emergency_contact_phone',emergency_contact_name),
-										('email',email),
-										('city',city),
-										('state_prov',state_prov),
-									) if value
+								**{ attr:value for attr, value in {
+										'license_code':'TEMP',
+										'last_name':last_name,
+										'first_name':first_name,
+										'gender':gender,
+										'date_of_birth':date_of_birth,
+										'uci_code':uci_code,
+										'email':email,
+										'city':city,
+										'state_prov':state_prov,
+										'zip_postal':zip_postal,
+										'emergency_contact_name':emergency_contact_name,
+										'emergency_contact_phone':emergency_contact_name,
+									}.iteritems() if value
 								}
 							)
 							license_holder.save()
@@ -142,13 +145,14 @@ def init_prereg(
 				
 				# Update the license_holder record with all new information.
 				if set_attributes( license_holder, {
-						'emergency_contact_name':emergency_contact_name,
-						'emergency_contact_phone':emergency_contact_name,
 						'date_of_birth':date_of_birth,
 						'uci_code':uci_code,
 						'email':email,
 						'city':city,
 						'state_prov':state_prov,
+						'zip_postal':zip_postal,
+						'emergency_contact_name':emergency_contact_name,
+						'emergency_contact_phone':emergency_contact_name,
 					} ):
 					license_holder.save()
 				

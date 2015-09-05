@@ -325,9 +325,14 @@ function drawCharts() {
 	// -----------------------------------------------------------------
 	// Postal Codes
 	//
+	var postal_code_table = array_to_treemap(payload.postal_code_data, 'Count');
+	function showFullTooltip(row, size, value) {
+		return '<div style="background:#fd9; padding:10px; border-style:solid">' +
+					postal_code_table.getFormattedValue(row, 0) + ': ' + size +
+				'</div>';
+	}
 	var postalCodeChart = new google.visualization.TreeMap(document.getElementById("postalCodeChartDiv"));
-	postalCodeChart.draw(array_to_treemap(payload.postal_code_data, 'Count'),
-		{title:'License Holders Zip/Postal',} );
+	postalCodeChart.draw(postal_code_table, {title:'License Holders Zip/Postal',generateTooltip: showFullTooltip} );
 	
 	// -----------------------------------------------------------------
 	// Overall Raw Data Table

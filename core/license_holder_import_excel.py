@@ -102,7 +102,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				status = "Unchanged"
 				
 				if update_license_codes:
-					license_holder = LicenseHolder.objects.filter( last_name=last_name, first_name=first_name )
+					license_holder = LicenseHolder.objects.filter( last_name__iexact=last_name, first_name__iexact=first_name )
 					if date_of_birth:
 						license_holder = license_holder.filter( date_of_birth=date_of_birth )
 					license_holder = license_holder.first()
