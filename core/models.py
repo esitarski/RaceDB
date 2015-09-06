@@ -1070,6 +1070,11 @@ def validate_postal_code( postal ):
 	postal = (postal or '').replace(' ', '').upper()
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
 
+def random_temp_license():
+	chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+	chars_max = len(chars)-1
+	return u'TEMP_{}'.format( ''.join(chars[random.randint(0,chars_max)] for i in xrange(32-5)) )
+
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
 	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), db_index=True )
@@ -1132,18 +1137,17 @@ class LicenseHolder(models.Model):
 		for f in ['license_code', 'existing_tag', 'existing_tag2']:
 			setattr( self, f, fixNullUpper(getattr(self, f)) )
 			
-		self.search_text = self.get_search_text()[:self.SearchTextLength]
-		
 		self.zip_postal = validate_postal_code( self.zip_postal )
+		
+		# If the license_code is TEMP or empty, make a unique temporary code.
+		# This is required by Django.
+		if self.license_code == u'TEMP' or not self.license_code:
+			self.license_code = random_temp_license()
+
+		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		
 		super(LicenseHolder, self).save( *args, **kwargs )
 		
-		# If the license_code is TEMP, add the record id to make it a unique temporary code.
-		if self.license_code == u'TEMP':
-			self.license_code = u'TEMP{}'.format( self.id )
-			self.search_text = self.get_search_text()[:self.SearchTextLength]
-			super(LicenseHolder, self).save( *args, **kwargs )
-
 	@property
 	def is_temp_license( self ):
 		return self.license_code.startswith(u'TEMP')

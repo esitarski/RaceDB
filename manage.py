@@ -6,7 +6,7 @@ import __builtin__
 __builtin__.__dict__['RaceDBVersion'] = version
 
 if __name__ == "__main__":
-    print( 'RaceDBVersion={}'.format(RaceDBVersion) )
+    sys.stderr.write( 'RaceDBVersion={}\n'.format(RaceDBVersion) )
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "RaceDB.settings")
 

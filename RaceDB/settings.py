@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import sys
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
@@ -74,7 +75,7 @@ DATABASES = {
 }
 
 try:
-	print 'databaseFile="{}"'.format( DATABASES['default']['NAME'] )
+	sys.stderr.write( 'databaseFile="{}"\n'.format( DATABASES['default']['NAME'] ) )
 except Exception as e:
 	pass
 
