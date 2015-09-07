@@ -75,7 +75,7 @@ def init_prereg(
 			preregistered	= to_bool(ur.get('preregistered', True))
 			paid			= to_bool(ur.get('paid', None))
 			bib				= (to_int(ur.get('bib', None)) or None)
-			tag			 	= to_tag(ur.get('tag', None))
+			tag				= to_int_str(get_key(ur,('Tag','Chip'), None))
 			note		 	= to_str(ur.get('note', None))
 			team_name		= to_str(ur.get('team', None))
 			club_name		= to_str(ur.get('club', None))
@@ -126,6 +126,7 @@ def init_prereg(
 										'zip_postal':zip_postal,
 										'emergency_contact_name':emergency_contact_name,
 										'emergency_contact_phone':emergency_contact_phone,
+										'tag':tag if competition.use_existing_tags else None,
 									}.iteritems() if value
 								}
 							)
@@ -153,6 +154,7 @@ def init_prereg(
 						'zip_postal':zip_postal,
 						'emergency_contact_name':emergency_contact_name,
 						'emergency_contact_phone':emergency_contact_phone,
+						'tag':tag if competition.use_existing_tags else None,
 					} ):
 					license_holder.save()
 				

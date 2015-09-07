@@ -140,7 +140,7 @@ def add_categories_page( wb, title_format, event ):
 				wave.laps if wave.laps else u'',
 				wave.distance if wave.distance else u'',
 				getattr(wave, 'minutes', None) or u'',
-			]			
+			]
 			row = write_row_data( ws, row, row_data )
 			
 			for category in categories:

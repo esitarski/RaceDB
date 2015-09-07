@@ -83,9 +83,7 @@ def to_int( v ):
 		return None
 
 def to_tag( v ):
-	if v is None:
-		return None
-	return unicode(v).split(u'.')[0]
+	return None if v is None else to_int_str(v).upper()
 
 def get_key( d, keys, default_value ):
 	for k in keys:
