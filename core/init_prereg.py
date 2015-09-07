@@ -125,7 +125,7 @@ def init_prereg(
 										'state_prov':state_prov,
 										'zip_postal':zip_postal,
 										'emergency_contact_name':emergency_contact_name,
-										'emergency_contact_phone':emergency_contact_name,
+										'emergency_contact_phone':emergency_contact_phone,
 									}.iteritems() if value
 								}
 							)
@@ -152,7 +152,7 @@ def init_prereg(
 						'state_prov':state_prov,
 						'zip_postal':zip_postal,
 						'emergency_contact_name':emergency_contact_name,
-						'emergency_contact_phone':emergency_contact_name,
+						'emergency_contact_phone':emergency_contact_phone,
 					} ):
 					license_holder.save()
 				

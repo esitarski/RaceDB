@@ -3711,7 +3711,7 @@ def get_participant_report_form():
 			end_date = cleaned_data.get("end_date")
 
 			if start_date and end_date:
-				if start_date >= end_date:
+				if start_date > end_date:
 					raise forms.ValidationError( _("Start Date must be less than End Date") )
 	
 	return ParticipantReportForm
