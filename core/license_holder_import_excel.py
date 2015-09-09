@@ -122,9 +122,10 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				if license_holder:
 					# Update with any new information.
 					if update_license_codes and license_holder_attr_value.get('license_code', None) is not None:
-						temp_to_existing[license_holder.license_code] = license_holder_attr_value['license_code']
+						if temp_to_existing[license_holder.license_code] != license_holder_attr_value['license_code']:
+							temp_to_existing[license_holder.license_code] = license_holder_attr_value['license_code']
+							status = "LicenseCode Changed"
 						del license_holder_attr_value['license_code']
-						status = "LicenseCode Changed"
 					if set_attributes( license_holder, license_holder_attr_value, False ):
 						license_holder.save()
 						status = "Changed"

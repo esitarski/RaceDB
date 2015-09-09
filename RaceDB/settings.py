@@ -67,10 +67,30 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
+import sys
+import os.path
+database_name = None
+def get_database_from_args():
+	global database_name
+	if database_name:
+		return database_name
+	
+	if sys.argv[1] in ('launch','migrate','runserver','dbshell','shell','loaddata','inspectdb','showmigrations',):
+		for i, a in enumerate(sys.argv):
+			if a == '--database':
+				try:
+					database_name = sys.argv[i+1]
+				except:
+					raise ValueError, 'Missing database name'
+				del sys.argv[i:i+2]
+				assert os.path.isfile(database_name), 'Cannot access database file "{}"'.format(database_name)
+	
+	return database_name
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'RaceDB.sqlite3'),
+        'NAME': get_database_from_args() or os.path.join(BASE_DIR, 'RaceDB.sqlite3'),
     }
 }
 
