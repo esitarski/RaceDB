@@ -24,11 +24,15 @@ def date_from_value( s ):
 	except:
 		pass
 	
-	# Assume month, day, year format.
+	# Start with month, day, year format.
 	try:
 		mm, dd, yy = [int(v.strip()) for v in s.split('/')]
 	except:
 		return invalid_date_of_birth
+	
+	if mm > 1900:
+		# Switch to yy, mm, dd format.
+		yy, mm, dd = mm, dd, yy
 	
 	# Correct for 2-digit year.
 	for century in [0, 1900, 2000, 2100]:
@@ -43,7 +47,7 @@ def date_from_value( s ):
 	assert 1900 <= yy
 		
 	try:
-		return datetime.date( year = yy, month = mm, day = dd )
+		return datetime.date( year=yy, month=mm, day=dd )
 	except Exception as e:
 		print yy, mm, dd
 		raise e

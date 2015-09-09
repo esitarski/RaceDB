@@ -92,6 +92,11 @@ class Command(BaseCommand):
 			action='store_true',
 			default=False,
 			help='Do not launch a browser'),
+		make_option('--database',
+			dest='database',
+			type='string',
+			default='',
+			help='Database file to access'),
 	)
 
 	args = '[host default: 0.0.0.0] [port default: 8000]'
