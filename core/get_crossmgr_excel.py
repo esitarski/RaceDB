@@ -7,6 +7,7 @@ import datetime
 import StringIO
 import utils
 import scramble
+import minimal_intervals
 
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
@@ -107,6 +108,25 @@ def add_categories_page( wb, title_format, event ):
 	
 	exclude_empty_categories = SystemInfo.get_exclude_empty_categories()
 	
+	# Get some more reasonable number ranges for the categories.
+	def get_category_intervals():
+		numbers = []
+		cat_sequence = []
+		for wave in event.get_wave_set().all():
+			categories = set( c for c in wave.categories.all() if c in participant_categories ) if exclude_empty_categories else wave.categories.all()
+			categories = sorted( categories, key = lambda c: c.sequence )
+			if not categories:
+				continue
+			participants = list( wave.get_participants_unsorted() )
+			for category in categories:
+				numbers.append( set(p.bib for p in participants if p.category == category and p.bib) )
+				cat_sequence.append( category )
+		
+		intervals = [minimal_intervals.interval_to_str(i) for i in minimal_intervals.minimal_intervals(numbers)]
+		return {c:i for c, i in zip(cat_sequence,intervals)}
+	
+	category_intervals = get_category_intervals()
+	
 	row = write_row_data( ws, 0, category_headers, title_format )
 	for wave in event.get_wave_set().all():
 	
@@ -122,7 +142,8 @@ def add_categories_page( wb, title_format, event ):
 					u'Wave',
 					category.code,
 					get_gender_str(category.gender),
-					get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
+					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
+					category_intervals[category],
 					unicode(getattr(wave,'start_offset',u'')),
 					wave.laps if wave.laps else u'',
 					wave.distance if wave.distance else u'',
@@ -148,7 +169,8 @@ def add_categories_page( wb, title_format, event ):
 					u'Component',
 					category.code,
 					get_gender_str(category.gender),
-					get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
+					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
+					category_intervals[category],
 					unicode(getattr(wave,'start_offset',u'')),
 					u'',
 					u'',
