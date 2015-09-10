@@ -111,7 +111,6 @@ def add_categories_page( wb, title_format, event ):
 	# Get some more reasonable number ranges for the categories.
 	def get_category_intervals():
 		numbers = []
-		cat_sequence = []
 		for wave in event.get_wave_set().all():
 			categories = set( c for c in wave.categories.all() if c in participant_categories ) if exclude_empty_categories else wave.categories.all()
 			categories = sorted( categories, key = lambda c: c.sequence )
@@ -143,7 +142,7 @@ def add_categories_page( wb, title_format, event ):
 					category.code,
 					get_gender_str(category.gender),
 					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
-					category_intervals[category],
+					category_intervals.get(category,''),
 					unicode(getattr(wave,'start_offset',u'')),
 					wave.laps if wave.laps else u'',
 					wave.distance if wave.distance else u'',
@@ -170,7 +169,7 @@ def add_categories_page( wb, title_format, event ):
 					category.code,
 					get_gender_str(category.gender),
 					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
-					category_intervals[category],
+					category_intervals.get(category,''),
 					unicode(getattr(wave,'start_offset',u'')),
 					u'',
 					u'',
