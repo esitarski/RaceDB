@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 {% load i18n %}
+{% load static %}
 {% load crispy_forms_tags %}
 <h2>{{title}}</h2>
 <hr/>
@@ -42,7 +43,7 @@
 			<td>{{h.state_prov}}</td>
 			<td>{{h.nationality}}</td>
 			<td>{{h.license_code}}</td>
-			<td>{{h.uci_code}}</td>
+			<td>{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}</td>
 			<td>{% if h.existing_tag %}{{h.existing_tag}}{% endif %}{% if h.existing_tag2 %}, {{h.existing_tag2}}{% endif %}</td>
 			{% if isEdit %}
 			<td class="hidden-print">

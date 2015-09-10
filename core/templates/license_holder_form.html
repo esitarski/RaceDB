@@ -2,10 +2,17 @@
 {% block content %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load static %}
 {% load staticfiles %}
 <h1>{{title}}</h1>
 <hr/>
 {% crispy form %}
+<div style="text-align:center">
+<h4>
+{% if instance.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{instance.uci_country}}.png" ></img>{% endif %}{{instance.uci_code}}
+{% if instance.uci_code_error %}<br/>{{instance.uci_code_error}}{% endif %}
+</h4>
+</div>
 {% with participation=instance.get_participation_as_competitor %}
 {% if participation %}
 <hr/>

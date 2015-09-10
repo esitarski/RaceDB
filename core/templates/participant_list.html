@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% load static %}
 {% load staticfiles %}
 {% load i18n %}
 {% load crispy_forms_tags %}
@@ -48,7 +49,7 @@
 			<td>{{p.get_role_display}}</td>
 			<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
 			<td>{{h.license_code}}</td>
-			<td>{{h.uci_code}}</td>
+			<td>{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}</td>
 			<td class="text-center">
 				{% if p.role == 110 %}
 					{% if p.confirmed %}

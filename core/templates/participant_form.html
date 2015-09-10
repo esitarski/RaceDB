@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load static %}
 {% load staticfiles %}
 
 {% block srcjavascript %}
@@ -54,6 +55,7 @@
 			{% if isEdit and h.is_temp_license %}</a>{% endif %}
 		{% endif %}
 		{% if h.uci_code %}
+			{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}
 			{% if isEdit and h.uci_code_error %}<a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% endif %}
 				{{h.uci_code}}
 			{% if isEdit and h.uci_code_error %}</a>{% endif %}
