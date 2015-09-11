@@ -1150,7 +1150,7 @@ class LicenseHolder(models.Model):
 		
 	@property
 	def is_temp_license( self ):
-		return self.license_code.startswith(u'TEMP')
+		return self.license_code.startswith(u'TEMP') or self.license_code.startswith(u'_')
 
 	@property
 	def uci_country( self ):

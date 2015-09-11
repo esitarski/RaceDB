@@ -47,6 +47,7 @@ from get_seasons_pass_excel import get_seasons_pass_excel
 from get_number_set_excel import get_number_set_excel
 from get_start_list_excel import get_start_list_excel
 from get_license_holder_excel import get_license_holder_excel
+from get_participant_excel import get_participant_excel
 from participation_excel import participation_excel
 from participation_data import participation_data
 from license_holder_import_excel import license_holder_import_excel
@@ -2559,13 +2560,14 @@ class ParticipantSearchForm( Form ):
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
 			Submit( 'clear-submit', _('Clear Search'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('OK'), css_class = 'btn btn-primary' ),
+			Submit( 'export-excel-submit', _('Export to Excel'), css_class = 'btn btn-primary' ),
 		]
 		
 		self.helper.layout = Layout(
 			Row( Field('scan', size=20, autofocus=True ), ),
 			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
 			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), ),
-			Row( *button_args ),
+			Row( *(button_args[:-1] + [HTML('&nbsp;'*8)] + button_args[-1:]) ),
 		)
 
 		
@@ -2659,6 +2661,14 @@ def Participants( request, competitionId ):
 	team_search = participant_filter.get('team_text','').strip()
 	if team_search:
 		participants = (p for p in participants if p.team and utils.matchSearchFields(team_search, p.team.search_text) )
+	
+	if request.method == 'POST' and 'export-excel-submit' in request.POST:
+		xl = get_participant_excel( Q(pk__in=[p.pk for p in participants]) )
+		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		response['Content-Disposition'] = 'attachment; filename=RaceDB-Participants-{}.xlsx'.format(
+			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+		)
+		return response
 	
 	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 
