@@ -110,6 +110,7 @@ def add_categories_page( wb, title_format, event ):
 	
 	# Get some more reasonable number ranges for the categories.
 	def get_category_intervals():
+		cat_sequence = []
 		numbers = []
 		for wave in event.get_wave_set().all():
 			categories = set( c for c in wave.categories.all() if c in participant_categories ) if exclude_empty_categories else wave.categories.all()
