@@ -92,6 +92,10 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			state_prov		= to_str(get_key(ur,('stateprov','state','prov','province','state prov'), None))
 			nationality		= to_str(get_key(ur,('nationality','nat','nat.'), None))
 			
+			bib				= (to_int(ur.get('bib', None)) or None)
+			tag				= to_int_str(get_key(ur,('Tag','Chip'), None))
+			note		 	= to_str(ur.get('note', None))
+			
 			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
 			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
 			
@@ -111,6 +115,10 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				'state_prov':state_prov,
 				'nationality':nationality,
 				'zip_postal':zip_postal,
+				
+				'existing_tag':tag,
+				'existing_bib':bib,
+				'note':note,
 			}
 			license_holder_attr_value = { a:v for a, v in license_holder_attr_value.iteritems() if v }
 			
