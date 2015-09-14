@@ -14,7 +14,6 @@ def minimal_intervals( numbers ):
 			left, right = 0, len(nums)
 			while right - left > 1:
 				mid = left + (right - left) // 2
-				print left, mid, right
 				if testIntersection( xrange(nums[0], nums[mid]+1), n ):
 					left = mid
 				else:
