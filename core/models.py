@@ -1153,6 +1153,10 @@ class LicenseHolder(models.Model):
 		return self.license_code.startswith(u'TEMP') or self.license_code.startswith(u'_')
 
 	@property
+	def license_code_export( self ):
+		return u'TEMP' if not self.license_code or self.is_temp_license else self.license_code
+		
+	@property
 	def uci_country( self ):
 		return self.uci_code[:3] if self.uci_code and not self.uci_code[:3].isdigit() else None
 		

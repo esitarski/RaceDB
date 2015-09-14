@@ -234,7 +234,7 @@ def get_crossmgr_excel( event_mass_start ):
 			p.team.name if p.team else '',
 			p.license_holder.nationality, p.license_holder.state_prov, p.license_holder.city,
 			p.category.code, competition.competition_age(p.license_holder), get_gender_str(p.license_holder.gender),
-			p.license_holder.license_code, p.license_holder.uci_code,
+			p.license_holder.license_code_export, p.license_holder.uci_code,
 		]
 		if competition.using_tags:
 			row_data.extend( [p.tag, p.tag2] )
