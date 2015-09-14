@@ -109,7 +109,7 @@ def init_ccn( fname = fnameDefault ):
 				'nationality':  to_str(ur.get('Nationality','')),
 				'zip_postal':	to_str(get_key(ur,('ZipPostal','Zip''Postal','ZipCode','PostalCode','Zip Code','Postal Code',), None))
 			}
-			attributes = { a:v for a, v in license_holder_attr_value.iteritems() if v is not None }
+			attributes = { a:v for a, v in attributes.iteritems() if v is not None }
 			
 			if ur.get('Tag','').strip():
 				attributes['existing_tag'] = to_int_str(ur.get('Tag','')).strip()
