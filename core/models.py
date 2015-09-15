@@ -1070,10 +1070,10 @@ def validate_postal_code( postal ):
 	postal = (postal or '').replace(' ', '').upper()
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
 
-def random_temp_license():
-	chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-	chars_max = len(chars)-1
-	return u'TEMP_{}'.format( ''.join(chars[random.randint(0,chars_max)] for i in xrange(32-5)) )
+def random_temp_license( prefix = u'TEMP_'):
+	numbers = '0123456789'
+	numbers_max = len(numbers)-1
+	return u''.join( [prefix, ''.join(numbers[random.randint(0,numbers_max)] for i in xrange(15))] )
 
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )

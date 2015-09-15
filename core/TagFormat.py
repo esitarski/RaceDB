@@ -23,18 +23,18 @@ def getTagFormatStr( template ):
 bytes_from_digits = tuple( int(ceil(log(10**n, 256))) for n in xrange(0, 16) )
 reNumEnd = re.compile( '[0-9]+$' )
 def getTagFromLicense( license, tag_from_license_id=0 ):
-	license = utils.removeDiacritic(license.strip())
+	license = utils.removeDiacritic(license.strip().upper())
 	
 	# Try to find a trailing decimal component of the license code.
 	result = reNumEnd.search( license )
 	if result:
 		# Get the text and number component of the license code.
-		text = license[:result.start()]
-		text_count = len(text)
 		num = license[result.start():result.end()]
 		num_count = len(num)
+		text = license[:result.start()] if num_count < 15 else ''
+		text_count = len(text)
 	else:
-		# This license code has not numeric component.
+		# This license code has no numeric component.
 		text = license
 		text_count = len(text)
 		num = '0'

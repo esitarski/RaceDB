@@ -1,6 +1,5 @@
 
 import sys
-import random
 import datetime
 from collections import namedtuple, defaultdict
 
@@ -52,7 +51,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			success = False
 			with transaction.atomic():
 				for lh in LicenseHolder.objects.all().exclude( license_code__startswith=cpy_prefix )[:999]:
-					temp = '{}{}'.format(cpy_prefix,''.join('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'[random.randint(0,35)] for i in xrange(32-len(cpy_prefix))))
+					temp = random_temp_license(cpy_prefix)
 					temp_to_existing[temp] = lh.license_code
 					lh.license_code = temp
 					lh.save()
