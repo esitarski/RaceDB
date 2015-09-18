@@ -299,6 +299,18 @@ class SeasonsPassHolder(models.Model):
 		verbose_name = _("Season's Pass Holder")
 		verbose_name_plural = _("Season's Pass Holders")
 
+class ReportLabel( models.Model ):
+	name = models.CharField( max_length = 32, verbose_name = _('Report Label'), help_text=_("Label used for reporting.") )
+	sequence = models.PositiveSmallIntegerField( default = 0, verbose_name = _('Sequence') )
+	
+	def __unicode__( self ):
+		return self.name
+	
+	class Meta:
+		ordering = ['sequence']
+		verbose_name = _("Report Label")
+		verbose_name_plural = _("Report Labels")
+
 #-------------------------------------------------------------------
 class Competition(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
@@ -344,10 +356,16 @@ class Competition(models.Model):
 	
 	ga_tracking_id = models.CharField( max_length = 20, default = '', blank = True, verbose_name=_('Google Analytics Tracking ID') )
 	
+	report_labels = models.ManyToManyField( ReportLabel, blank=True, verbose_name = _('Report Labels') )
+	
 	@property
 	def speed_unit_display( self ):
 		return 'km/h' if self.distance_unit == 0 else 'mph'
-		
+	
+	@property
+	def report_labels_text( self ):
+		return u', '.join( r.name for r in self.report_labels.all() )
+	
 	def to_local_speed( self, kmh ):
 		return kmh if self.distance_unit == 0 else kmh * 0.621371
 		

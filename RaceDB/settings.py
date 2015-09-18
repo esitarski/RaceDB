@@ -75,7 +75,7 @@ def get_database_from_args():
 	if database_name:
 		return database_name
 	
-	if sys.argv[1] in ('launch','migrate','runserver','dbshell','shell','loaddata','inspectdb','showmigrations',):
+	if sys.argv[:1][0] in ('launch','migrate','runserver','dbshell','shell','loaddata','inspectdb','showmigrations',):
 		for i, a in enumerate(sys.argv):
 			if a == '--database':
 				try:

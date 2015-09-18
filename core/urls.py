@@ -169,6 +169,15 @@ urlpatterns = patterns('',
 	url(r'^(?i).*ParticipantReport/$', views.ParticipantReport),
 	url(r'^(?i).*QRCode/$', views.QRCode),
 	
+	url(r'^(?i).*ReportLabels/$', views.ReportLabelsDisplay),
+	url(r'^(?i).*ReportLabelNew/$', views.ReportLabelNew),
+	url(r'^(?i).*ReportLabelEdit/(?P<reportLabelId>\d+)/$', views.ReportLabelEdit),
+	url(r'^(?i).*ReportLabelDelete/(?P<reportLabelId>\d+)/$', views.ReportLabelDelete),
+	url(r'^(?i).*ReportLabelUp/(?P<reportLabelId>\d+)/$', views.ReportLabelUp),
+	url(r'^(?i).*ReportLabelDown/(?P<reportLabelId>\d+)/$', views.ReportLabelDown),
+	url(r'^(?i).*ReportLabelTop/(?P<reportLabelId>\d+)/$', views.ReportLabelTop),
+	url(r'^(?i).*ReportLabelBottom/(?P<reportLabelId>\d+)/$', views.ReportLabelBottom),
+	
 	url(r'^(?i)login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}),
 	url(r'^(?i).*logout/$', views.Logout),
 )

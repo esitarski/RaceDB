@@ -126,7 +126,7 @@ def init_prereg(
 										'zip_postal':zip_postal,
 										'emergency_contact_name':emergency_contact_name,
 										'emergency_contact_phone':emergency_contact_phone,
-										'tag':tag if competition.use_existing_tags else None,
+										'existing_tag':tag if competition.use_existing_tags else None,
 									}.iteritems() if value
 								}
 							)
@@ -154,7 +154,7 @@ def init_prereg(
 						'zip_postal':zip_postal,
 						'emergency_contact_name':emergency_contact_name,
 						'emergency_contact_phone':emergency_contact_phone,
-						'tag':tag if competition.use_existing_tags else None,
+						'existing_tag':tag if competition.use_existing_tags else None,
 					} ):
 					license_holder.save()
 				

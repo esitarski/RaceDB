@@ -13,7 +13,7 @@ from models import *
 
 import xlsxwriter
 
-def participation_excel( start_date=None, end_date=None, discipline=None, race_class=None, organizers=None ):
+def participation_excel( start_date=None, end_date=None, discipline=None, race_class=None, organizers=None, include_labels=None, exclude_labels=None  ):
 	discipline = int(discipline or -1)
 	race_class = int(race_class or -1)
 
@@ -28,6 +28,10 @@ def participation_excel( start_date=None, end_date=None, discipline=None, race_c
 		competitions = competitions.filter( race_class__pk = race_class )
 	if organizers:
 		competitions = competitions.filter( organizer__in = organizers )
+	if include_labels:
+		competitions = competitions.filter( report_labels__in = include_labels )
+	if exclude_labels:
+		competitions = competitions.exclude( report_labels__in = exclude_labels )
 	
 	p = {}
 	events = []

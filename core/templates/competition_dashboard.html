@@ -23,7 +23,7 @@
 		<div class="row">
 			<div class="col-md-12">
 				<strong>{{competition.name}}</strong>{% if competition.description %}, {{competition.description}}{% endif %},
-				{{competition.category_format.name}}
+				{{competition.category_format.name}}{% if competition.report_labels_text %}, {{competition.report_labels_text}}{% endif %}
 			</div>
 		</div>
 		<div class="row">

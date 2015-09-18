@@ -1128,6 +1128,104 @@ def NumberSetTop( request, numberSetId ):
 	
 #--------------------------------------------------------------------------------------------
 @autostrip
+class ReportLabelDisplayForm( Form ):
+	def __init__( self, *args, **kwargs ):
+		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
+		
+		super(ReportLabelDisplayForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		btns = [('new-submit', _('New ReportLabel'), 'btn btn-success')]
+		addFormButtons( self, button_mask, btns )
+
+@autostrip
+class ReportLabelForm( ModelForm ):
+	class Meta:
+		model = ReportLabel
+		fields = '__all__'
+		
+	def __init__( self, *args, **kwargs ):
+		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
+		
+		super(ReportLabelForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col(Field('name', size=50), 4),
+			),
+			Field( 'sequence', type='hidden' ),
+		)
+		
+		self.additional_buttons = []
+		
+		addFormButtons( self, button_mask, self.additional_buttons )
+
+@external_access
+def ReportLabelsDisplay( request ):
+	NormalizeSequence( ReportLabel.objects.all() )
+	if request.method == 'POST':
+	
+		if 'ok-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		if 'new-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'ReportLabelNew') )
+			
+		form = ReportLabelDisplayForm( request.POST )
+	else:
+		form = ReportLabelDisplayForm()
+		
+	report_labels = ReportLabel.objects.all()
+	return render_to_response( 'report_label_list.html', RequestContext(request, locals()) )
+
+@external_access
+def ReportLabelNew( request ):
+	return GenericNew( ReportLabel, request, ReportLabelForm )
+
+@external_access
+def ReportLabelEdit( request, reportLabelId ):
+	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
+	return GenericEdit(
+		ReportLabel, request, reportLabelId, ReportLabelForm,
+	)
+	
+@external_access
+def ReportLabelDelete( request, reportLabelId ):
+	return GenericDelete( ReportLabel, request, reportLabelId, ReportLabelForm )
+
+@external_access
+def ReportLabelDown( request, reportLabelId ):
+	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
+	SwapAdjacentSequence( ReportLabel, report_label, False )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+@external_access
+def ReportLabelUp( request, reportLabelId ):
+	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
+	SwapAdjacentSequence( ReportLabel, report_label, True )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+@external_access
+def ReportLabelBottom( request, reportLabelId ):
+	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
+	NormalizeSequence( ReportLabel.objects.all() )
+	MoveSequence( ReportLabel, report_label, False )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+@external_access
+def ReportLabelTop( request, reportLabelId ):
+	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
+	NormalizeSequence( ReportLabel.objects.all() )
+	MoveSequence( ReportLabel, report_label, True )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+#--------------------------------------------------------------------------------------------
+@autostrip
 class SeasonsPassDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
@@ -1588,6 +1686,7 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
+					Col(Field('report_labels',size=8), 4),
 					Col('ga_tracking_id', 4),
 				),
 				Row( HTML('<hr/>') ),
@@ -3695,7 +3794,9 @@ def get_participant_report_form():
 		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
 		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
 		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices(), help_text=_('Ctrl-Click to Multi-Select') )
-
+		include_labels = forms.MultipleChoiceField( required = False, label = _('Include Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
+		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
+		
 		def __init__( self, *args, **kwargs ):
 			super(ParticipantReportForm, self).__init__(*args, **kwargs)
 			
@@ -3705,11 +3806,14 @@ def get_participant_report_form():
 			
 			self.helper.layout = Layout(
 				Row(
-					Field('start_date'),
-					Field('end_date'),
-					Field('discipline', id='focus'),
-					Field('race_class'),
+					Div(
+						Row( Field('start_date'), Field('end_date')),
+						Row( Field('discipline', id='focus'), Field('race_class')),
+						css_class = 'col-md-5'
+					),
 					Field('organizers', size=8),
+					Field('include_labels', size=8),
+					Field('exclude_labels', size=8),
 				),
 				HTML( '<hr/>' ),
 			)
@@ -3742,8 +3846,10 @@ def ParticipantReport( request ):
 			discipline = form.cleaned_data['discipline']
 			race_class = form.cleaned_data['race_class']
 			organizers = form.cleaned_data['organizers']
+			include_labels = form.cleaned_data['include_labels']
+			exclude_labels = form.cleaned_data['exclude_labels']
 			
-		sheet_name, xl = participation_excel( start_date, end_date, discipline, race_class, organizers )
+		sheet_name, xl = participation_excel( start_date, end_date, discipline, race_class, organizers, include_labels, exclude_labels )
 		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 		response['Content-Disposition'] = 'attachment; filename={}.xlsx'.format(sheet_name)
 		return response
@@ -3761,7 +3867,7 @@ def AttendanceAnalytics( request ):
 			'end_date':get_search_end_date(),
 			'discipline':-1,
 			'race_class':-1,
-			'organizers':[]
+			'organizers':[],
 		}
 	)
 	
@@ -3777,6 +3883,8 @@ def AttendanceAnalytics( request ):
 				'discipline':int(form.cleaned_data['discipline']),
 				'race_class':int(form.cleaned_data['race_class']),
 				'organizers':form.cleaned_data['organizers'],
+				'include_labels':form.cleaned_data['include_labels'],
+				'exclude_labels':form.cleaned_data['exclude_labels'],
 			}
 			
 			payload, license_holders_event_errors = participation_data( **initial )
@@ -3787,11 +3895,11 @@ def AttendanceAnalytics( request ):
 		form = get_participant_report_form()( initial=initial )
 	
 	page_title = [u'Analytics']
-	if initial['start_date'] is not None:
+	if initial.get('start_date',None) is not None:
 		page_title.append( u'from {}'.format( initial['start_date'] .strftime('%Y-%d-%m') ) )
-	if initial['end_date'] is not None:
+	if initial.get('end_date', None) is not None:
 		page_title.append( u'to {}'.format( initial['end_date'].strftime('%Y-%d-%m') ) )
-	if initial['organizers']:
+	if initial.get('organizers',None):
 		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
 	page_title = u' '.join( page_title )
 		
@@ -3799,12 +3907,14 @@ def AttendanceAnalytics( request ):
 		obj = cls.objects.filter(id=id).first()
 		return obj.name if obj else ''
 	
-	if initial['discipline'] > 0:
+	if initial.get('discipline',0) > 0:
 		page_title += u' {}'.format(get_name(Discipline, initial['discipline']))
-	if initial['race_class'] > 0:
+	if initial.get('race_class',0) > 0:
 		page_title += u' {}'.format(get_name(RaceClass, initial['race_class']))
-		
-	print page_title
+	if initial.get('include_labels', None):
+		page_title += u', +({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
+	if initial.get('exclude_labels',None):
+		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
 	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
