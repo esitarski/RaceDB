@@ -1633,6 +1633,9 @@ def GetCompetitionForm( competition_cur = None ):
 			title = _('Bib Numbers Updated')
 			return render_to_response( 'participants_changed.html', RequestContext(request, locals()) )
 			
+		def editReportTags( self, request, competition ):
+			return HttpResponseRedirect( pushUrl(request,'ReportLabels') )
+		
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
@@ -1686,7 +1689,7 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col(Field('report_labels',size=8), 4),
+					Col(Field('report_labels',size=8), 2),
 					Col('ga_tracking_id', 4),
 				),
 				Row( HTML('<hr/>') ),
@@ -1696,6 +1699,9 @@ def GetCompetitionForm( competition_cur = None ):
 			if button_mask == EDIT_BUTTONS:
 				self.additional_buttons.append(
 					('upload-prereg-list-submit', _('Upload Prereg List'), 'btn btn-success', self.uploadPrereg),
+				)
+				self.additional_buttons.append(
+					('edit-report-labels-submit', _('Edit Report Labels'), 'btn btn-primary', self.editReportTags),
 				)
 				if competition_cur and competition_cur.using_tags:
 					self.additional_buttons.append(
