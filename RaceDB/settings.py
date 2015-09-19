@@ -69,23 +69,32 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 
 import sys
 import os.path
-database_name = None
 def get_database_from_args():
-	global database_name
-	if database_name:
-		return database_name
+	try:
+		return sys.racedb_database_name
+	except AttributeError:
+		pass
 	
-	if sys.argv[:1][0] in ('launch','migrate','runserver','dbshell','shell','loaddata','inspectdb','showmigrations',):
-		for i, a in enumerate(sys.argv):
-			if a == '--database':
-				try:
-					database_name = sys.argv[i+1]
-				except:
-					raise ValueError, 'Missing database name'
-				del sys.argv[i:i+2]
-				assert os.path.isfile(database_name), 'Cannot access database file "{}"'.format(database_name)
+	try:
+		if sys.argv[1] not in ('launch','migrate','runserver','dbshell','shell','loaddata','inspectdb','showmigrations',):
+			return None
+	except IndexError:
+		return None
 	
-	return database_name
+	try:
+		i = sys.argv.index( '--database' )
+	except ValueError:
+		return None
+		
+	try:
+		sys.racedb_database_name = sys.argv[i+1]
+	except IndexError:
+		raise ValueError('Missing database name')
+	
+	del sys.argv[i:i+2]
+	assert os.path.isfile(sys.racedb_database_name), 'Cannot access database file "{}"'.format(sys.racedb_database_name)
+	
+	return sys.racedb_database_name
 
 DATABASES = {
     'default': {
