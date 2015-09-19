@@ -83,13 +83,14 @@ def get_database_from_args():
 		i = sys.argv.index( '--database' )
 	except ValueError:
 		return None
-		
+	
+	# Set the database filename as an environment variable so it works with auto-reload.
 	try:
 		os.environ['sqlite3_database_name'] = sys.argv[i+1]
 	except IndexError:
 		raise ValueError('Missing database name')
 	
-	del sys.argv[i:i+2]
+	del sys.argv[i:i+2]		# Remove the --database argument so we don't upset the regular commands.
 	assert os.path.isfile(os.environ['sqlite3_database_name']), 'Cannot access database file "{}"'.format(os.environ['sqlite3_database_name'])
 	
 	return os.environ['sqlite3_database_name']
