@@ -61,6 +61,8 @@ def set_attributes( obj, attributes, accept_empty_values=False ):
 	return changed
 	
 def to_int_str( v ):
+	if v is None:
+		return None
 	try:
 		return unicode(long(v))
 	except:

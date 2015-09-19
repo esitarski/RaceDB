@@ -278,7 +278,7 @@ uci_country_codes['USA'] = 'USA'
 uci_country_codes['United States of America'.upper()] = 'USA'
 
 def ioc_from_country( country ):
-	return uci_country_code.get(removeDiacritic(country.strip()).upper(), None)
+	return uci_country_codes.get(removeDiacritic(country.strip()).upper(), None)
 
 uci_country_codes_set = set( n.upper() for n in uci_country_codes.itervalues() )
 

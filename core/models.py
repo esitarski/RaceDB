@@ -24,7 +24,7 @@ import utils
 import random
 from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
-from CountryIOC import uci_country_codes_set, uci_country_codes
+from CountryIOC import uci_country_codes_set, ioc_from_country
 
 def fixNullUpper( s ):
 	if not s:
@@ -1139,8 +1139,8 @@ class LicenseHolder(models.Model):
 		for f in ['last_name', 'first_name', 'city', 'state_prov', 'nationality', 'uci_code']:
 			setattr( self, f, (getattr(self, f) or '').strip() )
 		
-		if not self.uci_code and ioc_country_code(self.nationality):
-			self.uci_code = '{}{}'.format( ioc_country_code(self.nationality), self.date_of_birth.strftime('%Y%m%d') )
+		if not self.uci_code and ioc_from_country(self.nationality):
+			self.uci_code = '{}{}'.format( ioc_from_country(self.nationality), self.date_of_birth.strftime('%Y%m%d') )
 		
 		try:
 			self.license_code = self.license_code.strip().lstrip('0')
