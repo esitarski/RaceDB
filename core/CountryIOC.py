@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from utils import removeDiacritic
+
 country_ioc = """
 Country	Country	IOC	FIFA	ISO	*
 Afghanistan	Afghanistan	AFG	AFG	AFG	3OFI
@@ -271,7 +273,13 @@ for line in country_ioc.split('\n'):
 	if not fields[2]:
 		continue
 	uci_country_codes[fields[0].upper()] = fields[2]
-	
+
+uci_country_codes['USA'] = 'USA'
+uci_country_codes['United States of America'.upper()] = 'USA'
+
+def ioc_from_country( country ):
+	return uci_country_code.get(removeDiacritic(country.strip()).upper(), None)
+
 uci_country_codes_set = set( n.upper() for n in uci_country_codes.itervalues() )
 
 country_ioc = None

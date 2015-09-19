@@ -156,7 +156,14 @@ def init_prereg(
 						'emergency_contact_phone':emergency_contact_phone,
 						'existing_tag':tag if competition.use_existing_tags else None,
 					} ):
-					license_holder.save()
+					try:
+						license_holder.save()
+					except Exception as e:
+						messsage_stream_write( u'**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
+								i, e, name,
+							)
+						)
+						continue
 				
 				#------------------------------------------------------------------------------
 				# Get Category.  Open categories will match either Gender.

@@ -15,7 +15,6 @@ dependencies = [
 	'dj_static',
 	'waitress',
 	'xlsxwriter',
-	'iso3166',
 	'xlrd',
 	'pytz',
 	pyllrp,
