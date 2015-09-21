@@ -68,11 +68,13 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
 def get_database_from_args():
+	# Check if we already have the database name from the calling process.
 	try:
-		return os.environ['sqlite3_database_name']
+		return os.environ['sqlite3_database_fname']
 	except KeyError:
 		pass
 	
+	# Put all commands here where the "--database" parameter is meaningful.
 	try:
 		if sys.argv[1] not in ('launch','migrate','runserver','dbshell','shell','loaddata','inspectdb','showmigrations',):
 			return None
@@ -84,16 +86,16 @@ def get_database_from_args():
 	except ValueError:
 		return None
 	
-	# Set the database filename as an environment variable so it works with auto-reload.
+	# Set the database filename as an environment variable so it works with Django reload.
 	try:
-		os.environ['sqlite3_database_name'] = sys.argv[i+1]
+		os.environ['sqlite3_database_fname'] = sys.argv[i+1]
 	except IndexError:
 		raise ValueError('Missing database name')
 	
-	del sys.argv[i:i+2]		# Remove the --database argument so we don't upset the regular commands.
-	assert os.path.isfile(os.environ['sqlite3_database_name']), 'Cannot access database file "{}"'.format(os.environ['sqlite3_database_name'])
+	del sys.argv[i:i+2]		# Remove the --database argument so we don't upset the regular command parameter checks.
+	assert os.path.isfile(os.environ['sqlite3_database_fname']), 'Cannot access database file "{}"'.format(os.environ['sqlite3_database_fname'])
 	
-	return os.environ['sqlite3_database_name']
+	return os.environ['sqlite3_database_fname']
 
 DATABASES = {
     'default': {

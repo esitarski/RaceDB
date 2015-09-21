@@ -50,6 +50,7 @@ from get_license_holder_excel import get_license_holder_excel
 from get_participant_excel import get_participant_excel
 from participation_excel import participation_excel
 from participation_data import participation_data
+from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
 
 from participant_key_filter import participant_key_filter
@@ -3924,6 +3925,89 @@ def AttendanceAnalytics( request ):
 		
 	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
+
+def get_year_on_year_form():
+	@autostrip
+	class YearOnYearReportForm( Form ):
+		discipline_choices, race_class_choices = get_discipline_race_class_choices()
+		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
+		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
+		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices(), help_text=_('Ctrl-Click to Multi-Select') )
+		include_labels = forms.MultipleChoiceField( required = False, label = _('Include Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
+		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
+		
+		def __init__( self, *args, **kwargs ):
+			super(YearOnYearReportForm, self).__init__(*args, **kwargs)
+			
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'form-inline'
+			
+			self.helper.layout = Layout(
+				Row(
+					Field('discipline', id='focus'), Field('race_class'),
+					Field('organizers', size=8),
+					Field('include_labels', size=8),
+					Field('exclude_labels', size=8),
+				),
+				HTML( '<hr/>' ),
+			)
+			addFormButtons( self, OK_BUTTON | CANCEL_BUTTON )
+	
+	return YearOnYearReportForm
+
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def YearOnYearAnalytics( request ):
+	initial = request.session.get( 'attendance_analytics', {
+			'discipline':-1,
+			'race_class':-1,
+			'organizers':[],
+		}
+	)
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = get_participant_report_form()( request.POST )
+		if form.is_valid():
+			initial = {
+				'discipline':int(form.cleaned_data['discipline']),
+				'race_class':int(form.cleaned_data['race_class']),
+				'organizers':form.cleaned_data['organizers'],
+				'include_labels':form.cleaned_data['include_labels'],
+				'exclude_labels':form.cleaned_data['exclude_labels'],
+			}
+			
+			payload = year_on_year_data( **initial )
+			payload_json = json.dumps(payload, separators=(',',':'))
+	else:
+		payload = year_on_year_data( **initial )
+		payload_json = json.dumps(payload, separators=(',',':'))
+		form = get_participant_report_form()( initial=initial )
+	
+	page_title = [u'Year on Year Analytics']
+	if initial.get('organizers',None):
+		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
+	page_title = u' '.join( page_title )
+		
+	def get_name( cls, id ):
+		obj = cls.objects.filter(id=id).first()
+		return obj.name if obj else ''
+	
+	if initial.get('discipline',0) > 0:
+		page_title += u' {}'.format(get_name(Discipline, initial['discipline']))
+	if initial.get('race_class',0) > 0:
+		page_title += u' {}'.format(get_name(RaceClass, initial['race_class']))
+	if initial.get('include_labels', None):
+		page_title += u', +({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
+	if initial.get('exclude_labels',None):
+		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
+		
+	return render_to_response( 'year_on_year_analytics.html', RequestContext(request, locals()) )
+
+#-----------------------------------------------------------------------------------------
 
 def QRCode( request ):
 	exclude_breadcrumbs = True
