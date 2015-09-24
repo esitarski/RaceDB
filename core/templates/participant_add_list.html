@@ -35,10 +35,10 @@
 </thead>
 <tbody>
 	{% for h in license_holders %}
-		{% if not h.id in license_holders_in_competition %}
-			<tr onclick="jump('./ParticipantAddToCompetition/{{competitionId}}/{{h.id}}/');">
+		{% if h.id in license_holders_in_competition %}
+			<tr onclick="jump('./ParticipantEditFromLicenseHolder/{{competitionId}}/{{h.id}}/');">
 		{% else %}
-		<tr>
+			<tr onclick="jump('./ParticipantAddToCompetition/{{competitionId}}/{{h.id}}/');">
 		{% endif %}
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
@@ -53,13 +53,7 @@
 			<td class="hidden-print"><a class="btn btn-primary btn-sm" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a></td>
 			<td class="hidden-print">
 				{% if h.id in license_holders_in_competition %}
-					{% if add_multiple_categories %}
-						<a class="btn btn-warning btn-sm" href="./ParticipantAddToCompetitionDifferentCategory/{{competitionId}}/{{h.id}}/">
-							{% trans "Add in Additional Category" %}
-						</a>
-					{% else %}
-						{% trans "Entered" %}
-					{% endif %}
+					<a class="btn btn-success btn-sm" href="./ParticipantEditFromLicenseHolder/{{competitionId}}/{{h.id}}/">{% trans "Edit Participant" %}</a>
 				{% else %}
 					<a class="btn btn-success btn-sm" href="./ParticipantAddToCompetition/{{competitionId}}/{{h.id}}/">{% trans "Add to Competition" %}</a>
 				{% endif %}

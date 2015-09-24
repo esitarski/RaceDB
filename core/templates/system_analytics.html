@@ -332,7 +332,14 @@ function drawCharts() {
 				'</div>';
 	}
 	var postalCodeChart = new google.visualization.TreeMap(document.getElementById("postalCodeChartDiv"));
-	postalCodeChart.draw(postal_code_table, {title:'License Holders Zip/Postal',generateTooltip: showFullTooltip} );
+	postalCodeChart.draw(postal_code_table, {
+			title:'License Holders Zip/Postal',
+			generateTooltip: showFullTooltip,
+			minColor: '#e7711c',
+			midColor: '#fff',
+			maxColor: '#4374e0',
+			showScale: true,
+		} );
 	
 	// -----------------------------------------------------------------
 	// Overall Raw Data Table

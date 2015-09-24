@@ -208,7 +208,7 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 	
 def GenericModelForm( ModelClass ):
 	@autostrip
-	class Form( ModelForm ):
+	class GMForm( ModelForm ):
 		class Meta:
 			model = ModelClass
 			fields = '__all__'
@@ -216,7 +216,7 @@ def GenericModelForm( ModelClass ):
 		def __init__( self, *args, **kwargs ):
 			self.button_mask = kwargs.pop( 'button_mask', [] )
 			
-			super(Form, self).__init__(*args, **kwargs)
+			super(GMForm, self).__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
@@ -260,7 +260,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = True
 	
-	title = _('Edit {}').format(ModelClass._meta.verbose_name.title())
+	title = unicode(_('Edit {}')).format(ModelClass._meta.verbose_name.title())
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			print 'cancel-submit'
@@ -295,7 +295,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
 	
-	title = _('Delete {}').format(ModelClass._meta.verbose_name.title())
+	title = unicode(_('Delete {}')).format(ModelClass._meta.verbose_name.title())
 	if request.method == 'POST':
 		if 'cancel-submit' not in request.POST:
 			instance.delete()
@@ -1565,7 +1565,7 @@ class CategoryForm( ModelForm ):
 def CategoryNew( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
 
-	title = _('New {}').format(Category._meta.verbose_name.title())
+	title = unicode(_('New {}')).format(Category._meta.verbose_name.title())
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -2789,9 +2789,8 @@ def ParticipantsInEvents( request, competitionId ):
 	for event in competition_events:
 		p = event.get_participants()
 		event_participants[event] = p
-		participants |= p
 	
-	participants = sorted( set.union(*[p for p in event_participants.iter_values()]), key=lambda p: p.license_holder.search_text )
+	participants = sorted( set.union(*[p for p in event_participants.itervalues()]), key=lambda p: p.license_holder.search_text )
 	
 	check_codes = {
 		'optional_selected':	u"\u2611",
@@ -2891,6 +2890,15 @@ def ParticipantEdit( request, participantId ):
 	isEdit = True
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
+	
+@external_access
+def ParticipantEditFromLicenseHolder( request, competitionId, licenseHolderId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
+	if not participant:
+		return ParticipantAddToCompetition( request, competitionId, licenseHolderId )
+	return ParticipantEdit( request, participant.id )
 	
 @external_access
 def ParticipantDelete( request, participantId ):
@@ -3970,7 +3978,7 @@ def YearOnYearAnalytics( request ):
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
-		form = get_participant_report_form()( request.POST )
+		form = get_year_on_year_form()( request.POST )
 		if form.is_valid():
 			initial = {
 				'discipline':int(form.cleaned_data['discipline']),
@@ -3985,7 +3993,7 @@ def YearOnYearAnalytics( request ):
 	else:
 		payload = year_on_year_data( **initial )
 		payload_json = json.dumps(payload, separators=(',',':'))
-		form = get_participant_report_form()( initial=initial )
+		form = get_year_on_year_form()( initial=initial )
 	
 	page_title = [u'Year on Year Analytics']
 	if initial.get('organizers',None):

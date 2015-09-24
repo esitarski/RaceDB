@@ -191,7 +191,13 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			
 			participant.add_to_default_optonal_events()
 			
-			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format( i, license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'), license_holder.uci_code, license_holder.last_name, license_holder.first_name, license_holder.city, license_holder.state_prov )
+			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}, {}'.format(
+				i,
+				license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'),
+				license_holder.uci_code,
+				license_holder.last_name, license_holder.first_name,
+				license_holder.city, license_holder.state_prov
+			)
 	
 	try:
 		fname, sheet_name = worksheet_name.split('$')

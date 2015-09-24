@@ -84,6 +84,7 @@ class LLRPServer( threading.Thread ):
 		self.receiverSensitivity = receiverSensitivity
 		self.messageQ = messageQ
 		self.exception_termination = False
+		self.llrp_host = None
 		super(LLRPServer, self).__init__( name='LLRPServer' )
 		self.daemon = True
 
@@ -114,7 +115,8 @@ class LLRPServer( threading.Thread ):
 		self.logMessage( 'shutdown complete' )
 	
 	def connectTagWriter( self ):
-		self.tagWriter = TagWriter( self.LLRPHostFunc(), transmitPower=self.transmitPower, receiverSensitivity=self.receiverSensitivity )
+		self.llrp_host = self.LLRPHostFunc()
+		self.tagWriter = TagWriter( self.llrp_host, transmitPower=self.transmitPower, receiverSensitivity=self.receiverSensitivity )
 		self.tagWriter.Connect()
 	
 	def connect( self ):
@@ -384,10 +386,10 @@ def runServer( host='localhost', llrp_host=None, transmitPower=None, receiverSen
 	
 		try:
 			server.connect()
-			writeLog( 'runServer: Successfully connected!' )
+			writeLog( 'runServer: Successfully connected to ({}:5084)!'.format(server.llrp_host) )
 		except Exception as e:
 			writeLog( 'runServer: {}'.format(e) )
-			writeLog( 'runServer: Connection fails.' )
+			writeLog( 'runServer: Connection to ({}:5084) fails.'.format(server.llrp_host) )
 			continue
 		
 		# Inner loop - process messages from the reader.
