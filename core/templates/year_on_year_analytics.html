@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block srcjavascript %}
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+var payload = {{payload_json|safe}};
+google.load("visualization", "1", {packages:["corechart"]});
+google.setOnLoadCallback(drawCharts);
+
+function formatFloat( num, precision ) {
+	return {v:num, f:num.toFixed(precision ? precision : 2)};
+}
+
+function formatIntPercent( num, total ) {
+	var percent = (100.0 * num) / (total ? total : 1);
+	return {v:num, f:num + ' / ' + total + ' (' + percent.toFixed(2) + '%)'};
+}
+
+function drawCharts() {
+	var animationOption = {duration: 1000, startup: true};
+
+	var participantsTotalChart = new google.visualization.ColumnChart(document.getElementById('participantsTotalChartDiv'));
+	var options = { title: 'Total Participation by Year (includes participation in multiple events and categories)', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
+	participantsTotalChart.draw(google.visualization.arrayToDataTable(payload.participants_total), options);
+	
+	var licenseHoldersProfileChart = new google.visualization.ColumnChart(document.getElementById('licenseHoldersProfileChartDiv'));
+	var options = { title: 'License Holder Attendance by Year Profile', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
+	licenseHoldersProfileChart.draw(google.visualization.arrayToDataTable(payload.license_holders_profile), options);
+	
+	var lastYearButNotThisYearChart = new google.visualization.ColumnChart(document.getElementById('lastYearButNotThisYearChartDiv'));
+	var options = { title: 'License Holders Who Attended Last Year but not This Year', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
+	lastYearButNotThisYearChart.draw(google.visualization.arrayToDataTable(payload.last_year_but_not_this_year), options);
+	
+	var someYearButNotThisYearChart = new google.visualization.ColumnChart(document.getElementById('someYearButNotThisYearChartDiv'));
+	var options = { title: 'License Holders Who Attended Some Year but not This Year', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
+	someYearButNotThisYearChart.draw(google.visualization.arrayToDataTable(payload.some_year_but_not_this_year), options);
+}
+ </script>
+{% endblock srcjavascript %}
+{% load staticfiles %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
+{% block content %}
+{% load i18n %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+<div class='hidden-print'>
+{% crispy form %}
+<hr/>
+<img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
+<h2>{{page_title}}</h2>
+<p class="text-center hidden-print">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+</div>
+<h2>
+	{{payload.competitions_total}} Competitions,
+	{{payload.events_total}} Events,
+	{{payload.attendees_total}} Attendees,
+	{{payload.license_holders_attendance_total}} License Holders
+</h2>
+<div id='participantsTotalChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='licenseHoldersProfileChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='lastYearButNotThisYearChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='someYearButNotThisYearChartDiv'style="width: 1200px; height: 500px;"></div>
+<hr/>
+{% endblock content %}
