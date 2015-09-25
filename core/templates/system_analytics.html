@@ -6,6 +6,182 @@ var payload = {{payload_json|safe}};
 google.load("visualization", "1", {packages:["corechart", "table", "treemap"]});
 google.setOnLoadCallback(drawCharts);
 
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+var seed = 12;
+function random() {
+    var x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+function getColor(){
+    var r = (Math.round(random()* 127) + 127).toString(16);
+    var g = (Math.round(random()* 127) + 127).toString(16);
+    var b = (Math.round(random()* 55) + 200).toString(16);
+    return rgbToHex(r, g, b);
+}
+
+function sortedChildren( children ) {
+	var aChildren = [];
+	for( c in children )
+		aChildren.push( children[c] );
+	aChildren.sort( function(a, b) { if( a.weight !== b.weight ) return b.weight - a.weight; return a.name<b.name?-1:b.name<a.name?1:0; } );
+	return aChildren;
+}	
+
+function PostalStarburst() {
+	this.init = function( data, canvasId, heightCap ) {
+		this.canvas = document.getElementById(canvasId);
+		
+		this.heightCap = (heightCap || 1000);
+		
+		// Data is of the form:
+		// [[postal, count],[postal, count],[postal, count], ...]
+		this.tree = {'name':'root', 'children':{}, 'weight':0, 'aBegin':-Math.PI/2, 'aEnd':Math.PI*1.5 };
+		for( var i = 0; i < data.length; ++i ) {
+			var name = data[i][0], weight = data[i][1];
+			this.tree.weight += weight;
+			
+			var node = this.tree;
+			for( var j = 0; j < name.length; ++j ) {
+				var c = name.charAt(j);
+				if( !(c in node.children) )
+					node.children[c] = {
+						'name': c,
+						'children': {},
+						'weight': 0
+					};
+				node = node.children[c];
+				node.weight += weight;
+			}
+		}
+		
+		function setSortedChildren( parent ) {
+			parent.sortedChildren = sortedChildren( parent.children );
+			for( c in parent.children )
+				setSortedChildren( parent.children[c] );
+		}
+		setSortedChildren( this.tree );
+		
+		function fixSingleChildren( parent ) {
+			// Combine only children into one node.
+			while( parent.sortedChildren.length == 1 ) {
+				var child = parent.sortedChildren[0];
+				parent.name += child.name;
+				parent.sortedChildren = child.sortedChildren;
+				parent.children = child.children;
+			}
+			for( var c in parent.children )
+				fixSingleChildren( parent.children[c] );
+		}
+		fixSingleChildren( this.tree );
+		
+		var maxHeight = 0;
+		function setHeight( parent ) {
+			maxHeight = Math.max( maxHeight, parent.height );
+			if( parent.height == this.heightCap ) {
+				parent.children = {};
+				parent.sortedChildren = [];
+			}
+			else {
+				for( var c in parent.children ) {
+					parent.children[c].height = parent.height + 1;
+					setHeight( parent.children[c] );
+				}
+			}
+		}
+		this.tree.height = 0;
+		setHeight( this.tree );
+		this.maxHeight = maxHeight;
+		return this;
+	}
+	
+	this.draw = function() {
+		var width = this.canvas.width;
+		var height = this.canvas.height;
+		var border = Math.min(width, height) * 0.05;
+		var root = this.tree;
+		var ctx = this.canvas.getContext('2d');
+		var self = this;
+		
+		ctx.clearRect(0, 0, width, height);
+		
+		var radiusMax = Math.min( (width - border*2)/2, (height - border*2)/2 );
+		var xCenter = width/2, yCenter = height/2;
+		var ringLength = radiusMax / this.maxHeight;
+		
+		var fontHeight = radiusMax * 0.06;
+		ctx.font = fontHeight + 'px Arial';
+
+		function drawSegment( parent, node, ring, prevWeight, parentName ) {
+			var aRange = parent.aEnd - parent.aBegin;
+			var aBegin = parent.aBegin + (prevWeight / parent.weight) * aRange;
+			var aEnd = aBegin + (node.weight / parent.weight) * aRange;
+			var aMid = (aBegin+aEnd)/2;
+			
+			node.aBegin = aBegin;
+			node.aEnd = aEnd;
+			
+			var nodeName = parentName + node.name;
+			/*
+			var x1 = (ring+1) * ringLength * Math.cos(aBegin);
+			var x2 = (ring) * ringLength * Math.cos(aMid);
+			var x3 = (ring+1) * ringLength * Math.cos(aEnd);
+			var d = Math.min( Math.abs(x2-x1), Math.abs(x3-x2) );
+			var showLabel = (d >= ctx.measureText(nodeName).width);
+			*/
+			//var showLabel = true;
+			var showLabel = (node.weight / self.tree.weight > 0.02);
+			
+			ctx.beginPath();
+			ctx.moveTo( xCenter + ring * ringLength * Math.cos(aBegin), yCenter + ring * ringLength * Math.sin(aBegin) );
+			ctx.arc( xCenter, yCenter, ring * ringLength, aBegin, aEnd );
+			ctx.lineTo( xCenter + (ring+1) * ringLength * Math.cos(aEnd), yCenter + (ring+1) * ringLength * Math.sin(aEnd) );
+			ctx.arc( xCenter, yCenter, (ring+1) * ringLength, aEnd, aBegin, true );
+			ctx.closePath();
+			
+			ctx.strokeStyle = '#AAAAAA';
+			ctx.lineWidth = 1;
+			ctx.fillStyle = getColor();
+			
+			ctx.fill();
+			ctx.stroke();
+			
+			if( showLabel ) {
+				ctx.save();
+				ctx.translate( xCenter + (ring+.5) * ringLength * Math.cos(aMid), yCenter + (ring+.5) * ringLength * Math.sin(aMid) );
+				//ctx.rotate( aMid + (Math.PI*1.0/2.0 < aMid && aMid < 2*Math.PI*3.0/4.0 ? Math.PI : 0) );
+				ctx.fillStyle = '#000000';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = "middle";
+				ctx.fillText( nodeName, 0, -fontHeight/2.5 );
+				ctx.font = (fontHeight*.75) + 'px Arial';
+				ctx.fillText( node.weight + ':' + (node.weight*100/root.weight).toFixed(0) + '%', 0, fontHeight/2.5 );
+				ctx.restore();
+			}
+			
+			var childPrevWeight = 0;
+			for( var i = 0; i < node.sortedChildren.length; ++i ) {
+				drawSegment( node, node.sortedChildren[i], ring+1, childPrevWeight, nodeName );
+				childPrevWeight += node.sortedChildren[i].weight;
+			}
+		}
+
+		var prevWeight = 0;
+		for( var i = 0; i < this.tree.sortedChildren.length; ++i ) {
+			drawSegment( this.tree, this.tree.sortedChildren[i], 0, prevWeight, '' );
+			prevWeight += this.tree.sortedChildren[i].weight;
+		}
+		return this;
+	}
+}
+
 function array_to_treemap( data, size_column_label, color_column_label, separator )
 {
 	/* Creates a Google DataTable suitable for passing to a Treemap chart from the given data.
@@ -340,6 +516,8 @@ function drawCharts() {
 			maxColor: '#4374e0',
 			showScale: true,
 		} );
+		
+	var postalStarburst = (new PostalStarburst()).init(payload.postal_codes, "postalCodeCanvas", 3).draw();
 	
 	// -----------------------------------------------------------------
 	// Overall Raw Data Table
@@ -503,6 +681,7 @@ function drawCharts() {
 <div id='compCategoryChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div>
+<canvas width=1200 height=600 id="postalCodeCanvas"></canvas>
 <hr/>
 
 {% if license_holders_event_errors %}

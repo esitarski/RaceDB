@@ -224,7 +224,7 @@ def GenericModelForm( ModelClass ):
 			self.additional_buttons = []
 			addFormButtons( self, self.button_mask, self.additional_buttons )
 			
-	return Form
+	return GMForm
 
 def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
 	title = string_concat(_('New'), ' ', ModelClass._meta.verbose_name.title())

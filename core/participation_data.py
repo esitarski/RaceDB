@@ -273,6 +273,7 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		'event_competition_count':eee,
 		
 		'postal_code_data':postal_code_data,
+		'postal_codes':[[k,v] for k, v in postal_codes.iteritems() if k != 'Unknown'],
 		
 		'competitions': data,
 	}
