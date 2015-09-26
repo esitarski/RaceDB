@@ -172,6 +172,11 @@ class SearchForm( Form ):
 				if len(ab) == 3:
 					button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
 		
+		Layout(
+			Row(
+				Col( Field('search_text', cols='60'), 6 ),
+			)
+		)
 		self.helper.layout.append(  HTML( '{{ form.errors }} {{ form.non_field_errors }}' ) )
 		
 		self.helper.layout.extend( [
@@ -558,6 +563,51 @@ class LicenseHolderForm( ModelForm ):
 		addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
 
 reUCICode = re.compile( '^[A-Z]{3}[0-9]{8}$', re.IGNORECASE )
+def license_holders_from_search_text( search_text ):
+	search_text = utils.normalizeSearch(search_text)
+	license_holders = []
+	while True:
+		if search_text.startswith( 'rfid=' ):
+			try:
+				arg = search_text.split('=',1)[1].strip().upper()
+				license_holders = [LicenseHolder.objects.get(Q(existing_tag=arg) | Q(existing_tag2=arg))]
+				break
+			except (IndexError, LicenseHolder.DoesNotExist):
+				break
+			except LicenseHolder.MultipleObjectsReturned:
+				pass
+			
+		if search_text.startswith( 'scan=' ):
+			try:
+				arg = search_text.split('=',1)[1].strip().upper()
+				license_holders = [LicenseHolder.objects.get(Q(license_code=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))]
+				break
+			except (IndexError, LicenseHolder.DoesNotExist):
+				break
+			except LicenseHolder.MultipleObjectsReturned:
+				pass
+	
+		if reUCICode.match(search_text):
+			try:
+				license_holders = [LicenseHolder.objects.get(uci_code = search_text.upper())]
+				break
+			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
+				pass
+		
+		if search_text[-3:].isdigit():
+			try:
+				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper())]
+				break
+			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
+				pass
+		
+		q = Q()
+		for n in search_text.split():
+			q &= Q( search_text__contains = n )
+		license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
+		break
+	return license_holders
+	
 @external_access
 def LicenseHoldersDisplay( request ):
 
@@ -567,6 +617,7 @@ def LicenseHoldersDisplay( request ):
 	btns = [
 		('search-by-barcode-submit', _('Barcode Search'), 'btn btn-primary', True),
 		('search-by-tag-submit', _('RFID Search'), 'btn btn-primary', True),
+		('reset-search-submit', _('Reset'), 'btn btn-primary', True),
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
@@ -582,6 +633,10 @@ def LicenseHoldersDisplay( request ):
 			
 		if 'search-by-tag-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHolderRfidScan') )
+			
+		if 'reset-search-submit' in request.POST:
+			request.session['license_holder_filter'] = ''
+			return HttpResponseRedirect( '.' )
 			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
@@ -610,29 +665,7 @@ def LicenseHoldersDisplay( request ):
 	else:
 		form = SearchForm( btns, initial = {'search_text': search_text} )
 	
-	# Analyse the search_text to try to use an indexed field.
-	search_text = utils.normalizeSearch(search_text)
-	while True:
-		if reUCICode.match(search_text):
-			try:
-				license_holders = [LicenseHolder.objects.get(uci_code = search_text.upper())]
-				break
-			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-				pass
-		
-		if search_text[-3:].isdigit():
-			try:
-				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper())]
-				break
-			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-				pass
-		
-		q = Q()
-		for n in search_text.split():
-			q &= Q( search_text__contains = n )
-		license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
-		break
-	
+	license_holders = license_holders_from_search_text( search_text )
 	isEdit = True
 	return render_to_response( 'license_holder_list.html', RequestContext(request, locals()) )
 
@@ -676,7 +709,7 @@ def LicenseHolderBarcodeScan( request ):
 			if not scan:
 				return HttpResponseRedirect(getContext(request,'path'))
 				
-			request.session['license_holder_filter'] = u'"{}"'.format(scan)
+			request.session['license_holder_filter'] = u'scan={}'.format(scan)
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = BarcodeScanForm()
@@ -766,7 +799,7 @@ def LicenseHolderRfidScan( request ):
 			if not status:
 				return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
 			
-			request.session['license_holder_filter'] = u'"{}"'.format(tag)
+			request.session['license_holder_filter'] = u'rfid={}'.format(tag)
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
@@ -1534,29 +1567,7 @@ def SeasonsPassHolderAdd( request, seasonsPassId ):
 	
 	# Analyse the search_text to try to use an indexed field.
 	search_text = utils.normalizeSearch(search_text)
-	while True:
-		if reUCICode.match(search_text):
-			try:
-				license_holders = [LicenseHolder.objects.get(uci_code = search_text.upper())]
-				license_holders = [lh for lh in license_holders if lh.id not in existing_seasons_pass_holders]
-				break
-			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-				pass
-		
-		if search_text[-3:].isdigit():
-			try:
-				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper())]
-				license_holders = [lh for lh in license_holders if lh.id not in existing_seasons_pass_holders]
-				break
-			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-				pass
-		
-		q = Q()
-		for n in search_text.split():
-			q &= Q( search_text__contains = n )
-		license_holders = LicenseHolder.objects.filter( q )[:MaxReturn]
-		break
-
+	license_holders = license_holders_from_search_text( search_text )
 	return render_to_response( 'license_holder_seasons_pass_list.html', RequestContext(request, locals()) )
 
 @external_access

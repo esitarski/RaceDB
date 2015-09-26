@@ -1228,8 +1228,8 @@ class LicenseHolder(models.Model):
 		return utils.get_search_text( [
 				self.last_name, self.first_name,
 				self.license_code, self.uci_code,
-				self.existing_tag, self.existing_tag2,
 				self.nationality, self.state_prov, self.city,
+				self.existing_tag, self.existing_tag2
 			]
 		)
 		
