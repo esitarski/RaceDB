@@ -74,7 +74,7 @@ function PostalStarburst() {
 			clearTimeout( self.selectTimer );
 		var rect = self.canvas.getBoundingClientRect();
 		var x = evt.clientX - rect.left, y = evt.clientY - rect.top;
-		self.selectTimer = setTimeout( function() {self.findSelectNode(x, y); self.selectTimer = null;}, 25 );
+		self.selectTimer = setTimeout( function() {self.findSelectNode(x, y); self.selectTimer = null;}, 10 );
 	}
 
 	this.init = function( data, canvasId ) {
@@ -216,7 +216,7 @@ function PostalStarburst() {
 			}
 			if( node == self.selectedNode && labelsOnly ) {
 				ctx.save();
-				ctx.font = 'bold ' + fontHeight + 'px Arial';
+				ctx.font = 'bold ' + (fontHeight*3/2) + 'px Arial';
 				ctx.textAlign = 'center';
 				ctx.textBaseline = "bottom";
 				ctx.fillStyle = '#000000';
