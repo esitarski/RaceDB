@@ -156,7 +156,7 @@ function PostalStarburst() {
 		self.xCenter = width/2, self.yCenter = height/2;
 		self.ringLength = self.radiusMax / self.maxHeight;
 		
-		var fontHeight = self.radiusMax * 0.06;
+		var fontHeight = self.radiusMax * 0.04;
 		ctx.font = fontHeight + 'px Arial';
 
 		var maxWeight = self.tree.weight;
@@ -174,7 +174,7 @@ function PostalStarburst() {
 			
 			var nodeName = parentName + node.name;
 			var showLabel = false;
-			if( node.weight / maxWeight > 0.04 )
+			if( node.weight / maxWeight > 0.04*2/3 )
 				showLabel = true;
 			if( node == self.selectedNode )
 				showLabel = true;
