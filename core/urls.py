@@ -95,6 +95,8 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*LicenseHolders/$', views.LicenseHoldersDisplay),
 	url(r'^(?i).*LicenseHolderNew/$', views.LicenseHolderNew),
+	url(r'^(?i).*LicenseHolderBarcodeScan/$', views.LicenseHolderBarcodeScan),
+	url(r'^(?i).*LicenseHolderRfidScan/$', views.LicenseHolderRfidScan),
 	url(r'^(?i).*LicenseHolderTagChange/(?P<licenseHolderId>\d+)/$', views.LicenseHolderTagChange),
 	url(r'^(?i).*LicenseHolderEdit/(?P<licenseHolderId>\d+)/$', views.LicenseHolderEdit),
 	url(r'^(?i).*LicenseHolderDelete/(?P<licenseHolderId>\d+)/$', views.LicenseHolderDelete),

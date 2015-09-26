@@ -153,13 +153,24 @@ class SearchForm( Form ):
 		button_args = [
 			Submit( 'search-submit', 'Search', css_class = 'btn btn-primary hidden-print' ),
 		]
+		
+		# Add additional search buttons.
+		for ab in additional_buttons:
+			name, value, cls = ab[:3]
+			if len(ab) == 4:
+				button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
+				
+		# Add cancel button.
 		if not hide_cancel_button:
 			button_args.append( Submit( 'cancel-submit', 'Cancel', css_class = 'btn btn-warning hidden-print' ) )
 			
+		# Add non-search buttons.
 		if additional_buttons:
 			button_args.append( HTML('&nbsp;' * 8) )
-			for name, value, cls in additional_buttons:
-				button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
+			for ab in additional_buttons:
+				name, value, cls = ab[:3]
+				if len(ab) == 3:
+					button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
 		
 		self.helper.layout.append(  HTML( '{{ form.errors }} {{ form.non_field_errors }}' ) )
 		
@@ -554,6 +565,8 @@ def LicenseHoldersDisplay( request ):
 
 	search_text = request.session.get('license_holder_filter', '')
 	btns = [
+		('search-by-barcode-submit', _('Barcode Search'), 'btn btn-primary', True),
+		('search-by-tag-submit', _('RFID Search'), 'btn btn-primary', True),
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
@@ -563,6 +576,12 @@ def LicenseHoldersDisplay( request ):
 	
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		if 'search-by-barcode-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LicenseHolderBarcodeScan') )
+			
+		if 'search-by-tag-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LicenseHolderRfidScan') )
 			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
@@ -616,6 +635,143 @@ def LicenseHoldersDisplay( request ):
 	
 	isEdit = True
 	return render_to_response( 'license_holder_list.html', RequestContext(request, locals()) )
+
+#--------------------------------------------------------------------------
+@autostrip
+class BarcodeScanForm( Form ):
+	scan = forms.CharField( required = False, label = _('Barcode (License Code or RFID Tag)') )
+	
+	def __init__(self, *args, **kwargs):
+		super(BarcodeScanForm, self).__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
+			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+		]
+		
+		self.helper.layout = Layout(
+			Row(
+				Field('scan', size=40),
+			),
+			Row(
+				button_args[0],
+				button_args[1],
+			),
+		)
+
+@external_access
+def LicenseHolderBarcodeScan( request ):
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = BarcodeScanForm( request.POST )
+		if form.is_valid():
+			scan = form.cleaned_data['scan'].strip()
+			if not scan:
+				return HttpResponseRedirect(getContext(request,'path'))
+				
+			request.session['license_holder_filter'] = scan
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = BarcodeScanForm()
+		
+	return render_to_response( 'license_holder_scan_form.html', RequestContext(request, locals()) )
+
+#--------------------------------------------------------------------------
+
+@autostrip
+class RfidScanForm( Form ):
+	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label=_('RFID Antenna to Read Tag') )
+	
+	def __init__(self, *args, **kwargs):
+		super(RfidScanForm, self).__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary', id='focus' ),
+			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+		]
+		
+		self.helper.layout = Layout(
+			Row(
+				button_args[0],
+				button_args[1],
+			),
+			HTML('<br/>' * 12),
+			Row(
+				Col(Field('rfid_antenna'), 6 ),
+			),
+		)
+
+#--------------------------------------------------------------------------
+@external_access
+def LicenseHolderRfidScan( request ):
+	rfid_antenna = int(request.session.get('rfid_antenna', 0))
+	
+	status = True
+	status_entries = []
+	tag = None
+	tags = []
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+		form = RfidScanForm( request.POST )
+		if form.is_valid():
+		
+			request.session['rfid_antenna'] = rfid_antenna = int(form.cleaned_data['rfid_antenna'])
+			
+			if not rfid_antenna:
+				status = False
+				status_entries.append(
+					(_('RFID Antenna Configuration'), (
+						_('RFID Antenna for Tag Read must be specified.'),
+						_('Please specify the RFID Antenna.'),
+					)),
+				)
+			else:
+				status, response = ReadTag(rfid_antenna)
+				# DEBUG DEBUG
+				#status, response = True, {'tags': ['A7A2102303']}
+				if not status:
+					status_entries.append(
+						(_('Tag Read Failure'), response.get('errors',[]) ),
+					)
+				else:
+					tags = response.get('tags', [])
+					try:
+						tag = tags[0]
+					except (AttributeError, IndexError) as e:
+						status = False
+						status_entries.append(
+							(_('Tag Read Failure'), [e] ),
+						)
+				
+				if tag and len(tags) > 1:
+					status = False
+					status_entries.append(
+						(_('Multiple Tags Read'), tags ),
+					)
+			
+			if not status:
+				return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
+			
+			request.session['license_holder_filter'] = tag
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
+		
+	return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
 
 #------------------------------------------------------------------------------------------------------
 @external_access
@@ -3536,32 +3692,6 @@ def SetSignatureWithTouchScreen( request, use_touch_screen ):
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
 #--------------------------------------------------------------------------
-@autostrip
-class ParticipantScanForm( Form ):
-	scan = forms.CharField( required = False, label = _('Barcode (License Code or RFID Tag)') )
-	
-	def __init__(self, *args, **kwargs):
-		super(ParticipantScanForm, self).__init__(*args, **kwargs)
-		
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'navbar-form navbar-left'
-		
-		button_args = [
-			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
-		]
-		
-		self.helper.layout = Layout(
-			Row(
-				Field('scan', size=40),
-			),
-			Row(
-				button_args[0],
-				button_args[1],
-			),
-		)
-
 @external_access
 def ParticipantScan( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -3570,7 +3700,7 @@ def ParticipantScan( request, competitionId ):
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
-		form = ParticipantScanForm( request.POST )
+		form = BarcodeScanForm( request.POST )
 		if form.is_valid():
 			scan = form.cleaned_data['scan'].strip()
 			if not scan:
@@ -3583,7 +3713,7 @@ def ParticipantScan( request, competitionId ):
 			else:
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
 	else:
-		form = ParticipantScanForm()
+		form = BarcodeScanForm()
 		
 	return render_to_response( 'participant_scan_form.html', RequestContext(request, locals()) )
 	
@@ -3598,33 +3728,6 @@ def ParticipantMultiFound( request, competitionId ):
 	return render_to_response( 'participant_multi_found.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------
-@autostrip
-class ParticipantRfidScanForm( Form ):
-	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label=_('RFID Antenna to Read Tag') )
-	
-	def __init__(self, *args, **kwargs):
-		super(ParticipantRfidScanForm, self).__init__(*args, **kwargs)
-		
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'navbar-form navbar-left'
-		
-		button_args = [
-			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary', id='focus' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
-		]
-		
-		self.helper.layout = Layout(
-			Row(
-				button_args[0],
-				button_args[1],
-			),
-			HTML('<br/>' * 12),
-			Row(
-				Col(Field('rfid_antenna'), 6 ),
-			),
-		)
-
 @external_access
 def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -3639,7 +3742,7 @@ def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
-		form = ParticipantRfidScanForm( request.POST )
+		form = RfidScanForm( request.POST )
 		if form.is_valid():
 		
 			request.session['rfid_antenna'] = rfid_antenna = int(form.cleaned_data['rfid_antenna'])
@@ -3690,7 +3793,7 @@ def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
 			
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
-		form = ParticipantRfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
+		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
 		
 	return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
 
