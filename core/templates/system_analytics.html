@@ -36,19 +36,63 @@ function sortedChildren( children ) {
 }	
 
 function PostalStarburst() {
-	this.init = function( data, canvasId, heightCap ) {
-		this.canvas = document.getElementById(canvasId);
+	this.findSelectNode = function( x, y ) {
+		var self = this;
 		
-		this.heightCap = (heightCap || 1000);
+		var nodeSave = self.selectedNode;
+		self.xSelect = x;
+		self.ySelect = y;
+		
+		var a = Math.atan2( y-self.yCenter, x-self.xCenter );
+		if( a < 0 )
+			a += 2*Math.PI;
+		var ring = parseInt(Math.sqrt( Math.pow(x-self.xCenter,2) + Math.pow(y-self.yCenter,2) ) / self.ringLength);
+		
+		var node = self.tree;
+		for( var r = 0; r <= ring; ++r ) {
+			var child = null;
+			for( var c in node.children ) {
+				if( node.children[c].aBegin <= a && a < node.children[c].aEnd ) {
+					child = node.children[c];
+					break;
+				}
+			}
+			if( !child ) {
+				node = null;
+				break;
+			}
+			node = child;
+		}
+		self.selectedNode = node;
+		
+		if( self.selectedNode != nodeSave )
+			self.draw();
+	}
+	this.onMouseMove = function( evt ) {
+		var self = this;
+		if( self.selectTimer )
+			clearTimeout( self.selectTimer );
+		var rect = self.canvas.getBoundingClientRect();
+		var x = evt.clientX - rect.left, y = evt.clientY - rect.top;
+		self.selectTimer = setTimeout( function() {self.findSelectNode(x, y); self.selectTimer = null;}, 25 );
+	}
+
+	this.init = function( data, canvasId ) {
+		var self = this;
+		self.canvas = document.getElementById(canvasId);
+
+		self.canvas.addEventListener( 'mousemove', function(evt) { self.onMouseMove(evt); } );
+		self.selectedNode = null;
+		self.selectTimer = null;
 		
 		// Data is of the form:
 		// [[postal, count],[postal, count],[postal, count], ...]
-		this.tree = {'name':'root', 'children':{}, 'weight':0, 'aBegin':-Math.PI/2, 'aEnd':Math.PI*1.5 };
+		self.tree = {'name':'root', 'children':{}, 'weight':0, 'aBegin':0, 'aEnd':Math.PI*2 };
 		for( var i = 0; i < data.length; ++i ) {
 			var name = data[i][0], weight = data[i][1];
-			this.tree.weight += weight;
+			self.tree.weight += weight;
 			
-			var node = this.tree;
+			var node = self.tree;
 			for( var j = 0; j < name.length; ++j ) {
 				var c = name.charAt(j);
 				if( !(c in node.children) )
@@ -67,7 +111,7 @@ function PostalStarburst() {
 			for( c in parent.children )
 				setSortedChildren( parent.children[c] );
 		}
-		setSortedChildren( this.tree );
+		setSortedChildren( self.tree );
 		
 		function fixSingleChildren( parent ) {
 			// Combine only children into one node.
@@ -80,46 +124,46 @@ function PostalStarburst() {
 			for( var c in parent.children )
 				fixSingleChildren( parent.children[c] );
 		}
-		fixSingleChildren( this.tree );
+		fixSingleChildren( self.tree );
 		
 		var maxHeight = 0;
 		function setHeight( parent ) {
 			maxHeight = Math.max( maxHeight, parent.height );
-			if( parent.height == this.heightCap ) {
-				parent.children = {};
-				parent.sortedChildren = [];
-			}
-			else {
-				for( var c in parent.children ) {
-					parent.children[c].height = parent.height + 1;
-					setHeight( parent.children[c] );
-				}
+			for( var c in parent.children ) {
+				parent.children[c].height = parent.height + 1;
+				setHeight( parent.children[c] );
 			}
 		}
-		this.tree.height = 0;
-		setHeight( this.tree );
-		this.maxHeight = maxHeight;
-		return this;
+		self.tree.height = 0;
+		setHeight( self.tree );
+		self.maxHeight = maxHeight;
+		return self;
 	}
 	
 	this.draw = function() {
-		var width = this.canvas.width;
-		var height = this.canvas.height;
-		var border = Math.min(width, height) * 0.05;
-		var root = this.tree;
-		var ctx = this.canvas.getContext('2d');
 		var self = this;
+		seed = 12;
+	
+		var width = self.canvas.width;
+		var height = self.canvas.height;
+		var border = Math.min(width, height) * 0.05;
+		var root = self.tree;
+		var ctx = self.canvas.getContext('2d');
 		
 		ctx.clearRect(0, 0, width, height);
 		
-		var radiusMax = Math.min( (width - border*2)/2, (height - border*2)/2 );
-		var xCenter = width/2, yCenter = height/2;
-		var ringLength = radiusMax / this.maxHeight;
+		self.radiusMax = Math.min( (width - border*2)/2, (height - border*2)/2 );
+		self.xCenter = width/2, self.yCenter = height/2;
+		self.ringLength = self.radiusMax / self.maxHeight;
 		
-		var fontHeight = radiusMax * 0.06;
+		var fontHeight = self.radiusMax * 0.06;
 		ctx.font = fontHeight + 'px Arial';
 
-		function drawSegment( parent, node, ring, prevWeight, parentName ) {
+		var maxWeight = self.tree.weight;
+		
+		var percentSep = '|';
+		
+		function drawSegment( parent, node, ring, prevWeight, parentName, labelsOnly ) {
 			var aRange = parent.aEnd - parent.aBegin;
 			var aBegin = parent.aBegin + (prevWeight / parent.weight) * aRange;
 			var aEnd = aBegin + (node.weight / parent.weight) * aRange;
@@ -129,56 +173,72 @@ function PostalStarburst() {
 			node.aEnd = aEnd;
 			
 			var nodeName = parentName + node.name;
-			/*
-			var x1 = (ring+1) * ringLength * Math.cos(aBegin);
-			var x2 = (ring) * ringLength * Math.cos(aMid);
-			var x3 = (ring+1) * ringLength * Math.cos(aEnd);
-			var d = Math.min( Math.abs(x2-x1), Math.abs(x3-x2) );
-			var showLabel = (d >= ctx.measureText(nodeName).width);
-			*/
-			//var showLabel = true;
-			var showLabel = (node.weight / self.tree.weight > 0.02);
+			var showLabel = false;
+			if( node.weight / maxWeight > 0.04 )
+				showLabel = true;
+			if( node == self.selectedNode )
+				showLabel = true;
 			
-			ctx.beginPath();
-			ctx.moveTo( xCenter + ring * ringLength * Math.cos(aBegin), yCenter + ring * ringLength * Math.sin(aBegin) );
-			ctx.arc( xCenter, yCenter, ring * ringLength, aBegin, aEnd );
-			ctx.lineTo( xCenter + (ring+1) * ringLength * Math.cos(aEnd), yCenter + (ring+1) * ringLength * Math.sin(aEnd) );
-			ctx.arc( xCenter, yCenter, (ring+1) * ringLength, aEnd, aBegin, true );
-			ctx.closePath();
+			if( !labelsOnly ) {
+				ctx.beginPath();
+				ctx.moveTo( self.xCenter + ring * self.ringLength * Math.cos(aBegin), self.yCenter + ring * self.ringLength * Math.sin(aBegin) );
+				ctx.arc( self.xCenter, self.yCenter, ring * self.ringLength, aBegin, aEnd );
+				ctx.lineTo( self.xCenter + (ring+1) * self.ringLength * Math.cos(aEnd), self.yCenter + (ring+1) * self.ringLength * Math.sin(aEnd) );
+				ctx.arc( self.xCenter, self.yCenter, (ring+1) * self.ringLength, aEnd, aBegin, true );
+				ctx.closePath();
+				
+				ctx.strokeStyle = '#AAAAAA';
+				ctx.lineWidth = 1;
+				ctx.fillStyle = getColor();
+				if( node == self.selectedNode )
+					ctx.fillStyle = '#FFFF00';
+				
+				ctx.fill();
+				ctx.stroke();
+			}
 			
-			ctx.strokeStyle = '#AAAAAA';
-			ctx.lineWidth = 1;
-			ctx.fillStyle = getColor();
-			
-			ctx.fill();
-			ctx.stroke();
-			
-			if( showLabel ) {
+			if( (showLabel && labelsOnly) ) {
 				ctx.save();
-				ctx.translate( xCenter + (ring+.5) * ringLength * Math.cos(aMid), yCenter + (ring+.5) * ringLength * Math.sin(aMid) );
+				ctx.translate( self.xCenter + (ring+.5) * self.ringLength * Math.cos(aMid), self.yCenter + (ring+.5) * self.ringLength * Math.sin(aMid) );
 				//ctx.rotate( aMid + (Math.PI*1.0/2.0 < aMid && aMid < 2*Math.PI*3.0/4.0 ? Math.PI : 0) );
 				ctx.fillStyle = '#000000';
 				ctx.textAlign = 'center';
+				if( node == self.selectedNode )
+					ctx.font = 'bold ' + (fontHeight*1.12) + 'px Arial';
 				ctx.textBaseline = "middle";
 				ctx.fillText( nodeName, 0, -fontHeight/2.5 );
-				ctx.font = (fontHeight*.75) + 'px Arial';
-				ctx.fillText( node.weight + ':' + (node.weight*100/root.weight).toFixed(0) + '%', 0, fontHeight/2.5 );
+				if( node == self.selectedNode )
+					ctx.font = 'bold ' + (fontHeight*.75*1.12) + 'px Arial';
+				else
+					ctx.font = (fontHeight*.75) + 'px Arial';
+				ctx.fillText( node.weight + percentSep + (node.weight*100/root.weight).toFixed(0) + '%', 0, fontHeight/2.5 );
+				ctx.restore();
+			}
+			if( node == self.selectedNode && labelsOnly ) {
+				ctx.save();
+				ctx.font = 'bold ' + fontHeight + 'px Arial';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = "bottom";
+				ctx.fillStyle = '#000000';
+				ctx.fillText( nodeName + ' ' + node.weight + percentSep + (node.weight*100/root.weight).toFixed(0) + '%', width/2, height );
 				ctx.restore();
 			}
 			
 			var childPrevWeight = 0;
 			for( var i = 0; i < node.sortedChildren.length; ++i ) {
-				drawSegment( node, node.sortedChildren[i], ring+1, childPrevWeight, nodeName );
+				drawSegment( node, node.sortedChildren[i], ring+1, childPrevWeight, nodeName, labelsOnly );
 				childPrevWeight += node.sortedChildren[i].weight;
 			}
 		}
 
-		var prevWeight = 0;
-		for( var i = 0; i < this.tree.sortedChildren.length; ++i ) {
-			drawSegment( this.tree, this.tree.sortedChildren[i], 0, prevWeight, '' );
-			prevWeight += this.tree.sortedChildren[i].weight;
+		for( var k = 0; k < 2; ++k ) {
+			var prevWeight = 0;
+			for( var i = 0; i < self.tree.sortedChildren.length; ++i ) {
+				drawSegment( self.tree, self.tree.sortedChildren[i], 0, prevWeight, '', k==1 );
+				prevWeight += self.tree.sortedChildren[i].weight;
+			}
 		}
-		return this;
+		return self;
 	}
 }
 
@@ -507,6 +567,7 @@ function drawCharts() {
 					postal_code_table.getFormattedValue(row, 0) + ': ' + size +
 				'</div>';
 	}
+	/*
 	var postalCodeChart = new google.visualization.TreeMap(document.getElementById("postalCodeChartDiv"));
 	postalCodeChart.draw(postal_code_table, {
 			title:'License Holders Zip/Postal',
@@ -516,7 +577,7 @@ function drawCharts() {
 			maxColor: '#4374e0',
 			showScale: true,
 		} );
-		
+	*/
 	var postalStarburst = (new PostalStarburst()).init(payload.postal_codes, "postalCodeCanvas", 3).draw();
 	
 	// -----------------------------------------------------------------
@@ -680,8 +741,10 @@ function drawCharts() {
 <div id='compChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compCategoryChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
-<div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div>
-<canvas width=1200 height=600 id="postalCodeCanvas"></canvas>
+<!-- <div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div> -->
+<br/>
+<h3 class="page-break-before">Postal Chart</h3>
+<canvas width=600 height=600 id="postalCodeCanvas"></canvas>
 <hr/>
 
 {% if license_holders_event_errors %}
