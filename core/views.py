@@ -594,7 +594,7 @@ def license_holders_from_search_text( search_text ):
 			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
 				pass
 		
-		if search_text[-3:].isdigit():
+		if search_text[-4:].isdigit():
 			try:
 				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper())]
 				break
@@ -3717,12 +3717,16 @@ def ParticipantScan( request, competitionId ):
 			if not scan:
 				return HttpResponseRedirect(getContext(request,'path'))
 				
-			# ON74600
-			license_holder, participants = participant_key_filter( competition, scan )
-			if len(participants) != 1:
+			license_holder, participants = participant_key_filter( competition, scan, False )
+			if not license_holder:
 				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
-			else:
+			
+			if len(participants) == 1:
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
+			if len(participants) > 1:
+				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
+			
+			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
 		form = BarcodeScanForm()
 		
