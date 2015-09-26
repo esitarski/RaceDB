@@ -676,7 +676,7 @@ def LicenseHolderBarcodeScan( request ):
 			if not scan:
 				return HttpResponseRedirect(getContext(request,'path'))
 				
-			request.session['license_holder_filter'] = scan
+			request.session['license_holder_filter'] = u'"{}"'.format(scan)
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = BarcodeScanForm()
@@ -766,7 +766,7 @@ def LicenseHolderRfidScan( request ):
 			if not status:
 				return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
 			
-			request.session['license_holder_filter'] = tag
+			request.session['license_holder_filter'] = u'"{}"'.format(tag)
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
