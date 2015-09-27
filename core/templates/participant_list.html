@@ -6,6 +6,9 @@
 {% load crispy_forms_tags %}
 <h2>{{title}}: <strong>{{competition.name}}</strong></h2>
 {% crispy form %}
+{% if missing_category_count %}
+	<br/><h3>{{missing_category_count}} {% trans "Participants have no Category (Search Category: *** Missing ***)" %}</h3>
+{% endif %}
 <style>
 .table tbody>tr>td {
     vertical-align: middle;

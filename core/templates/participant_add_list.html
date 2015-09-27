@@ -38,7 +38,7 @@
 		{% if h.id in license_holders_in_competition %}
 			<tr onclick="jump('./ParticipantEditFromLicenseHolder/{{competitionId}}/{{h.id}}/');">
 		{% else %}
-			<tr onclick="jump('./ParticipantAddToCompetition/{{competitionId}}/{{h.id}}/');">
+			<tr onclick="jump('./LicenseHolderAddConfirm/{{competitionId}}/{{h.id}}/');">
 		{% endif %}
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
@@ -55,7 +55,7 @@
 				{% if h.id in license_holders_in_competition %}
 					<a class="btn btn-success btn-sm" href="./ParticipantEditFromLicenseHolder/{{competitionId}}/{{h.id}}/">{% trans "Edit Participant" %}</a>
 				{% else %}
-					<a class="btn btn-success btn-sm" href="./ParticipantAddToCompetition/{{competitionId}}/{{h.id}}/">{% trans "Add to Competition" %}</a>
+					<a class="btn btn-success btn-sm" href="./LicenseHolderAddConfirm/{{competitionId}}/{{h.id}}/">{% trans "Add to Competition" %}</a>
 				{% endif %}
 			</td>
 		</tr>

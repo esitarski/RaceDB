@@ -617,7 +617,7 @@ def LicenseHoldersDisplay( request ):
 	btns = [
 		('search-by-barcode-submit', _('Barcode Search'), 'btn btn-primary', True),
 		('search-by-tag-submit', _('RFID Search'), 'btn btn-primary', True),
-		('reset-search-submit', _('Reset'), 'btn btn-primary', True),
+		('clear-search-submit', _('Clear Search'), 'btn btn-primary', True),
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
@@ -634,7 +634,7 @@ def LicenseHoldersDisplay( request ):
 		if 'search-by-tag-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHolderRfidScan') )
 			
-		if 'reset-search-submit' in request.POST:
+		if 'clear-search-submit' in request.POST:
 			request.session['license_holder_filter'] = ''
 			return HttpResponseRedirect( '.' )
 			
@@ -2820,7 +2820,7 @@ class ParticipantSearchForm( Form ):
 		
 		if competition:
 			self.fields['category'].choices = \
-				[(-1, '----')] + [(category.id, category.code_gender) for category in competition.get_categories()]
+				[(-1, '----')] + [(-2, _('*** Missing ***'))] + [(category.id, category.code_gender) for category in competition.get_categories()]
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
 		self.fields['role_type'].choices = roleChoices
@@ -2872,7 +2872,9 @@ def Participants( request, competitionId ):
 	
 	#-----------------------------------------------------------------------------------------------
 	
-	q_list = [Q(competition=competition)]
+	participants = Participant.objects.filter( competition=competition )
+	missing_category_count = Participant.objects.filter( competition=competition, category__isnull=True ).count()
+	
 	if participant_filter.get('scan',0):
 		name_text = utils.normalizeSearch( participant_filter['scan'] )
 		names = name_text.split()
@@ -2880,31 +2882,35 @@ def Participants( request, competitionId ):
 			q = Q()
 			for n in names:
 				q |= Q(license_holder__search_text__contains = n)
-			q_list.append( q )
-			participants = Participant.objects.select_related('team', 'license_holder').filter( *q_list )
+			participants = participants.filter( q ).select_related('team', 'license_holder')
 			return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
-			
-	if participant_filter.get('bib',0):
+	
+	if participant_filter.get('bib',None) is not None:
 		bib = participant_filter['bib']
-		q_list.append( Q(bib = (bib if bib > 0 else None)) )
+		if bib <= 0:
+			participants = participants.filter( bib__isnull=True )
+		else:
+			participants = participants.filter( bib=bib )
 	
 	role_type = int(participant_filter.get('role_type',0))
 	if role_type > 0:
-		q_list.append( Q(role__range=(100*role_type, 100*role_type+99)) )
+		participants = participants.filter( role__range=(100*role_type, 100*role_type+99) )
 	
 	if 0 <= int(participant_filter.get('gender',-1)) <= 1:
-		q_list.append( Q(license_holder__gender = participant_filter['gender']) )
-		
-	if int(participant_filter.get('category',-1)) > 0:
-		q_list.append( Q(category_id = int(participant_filter['category'])) )
+		participants = participants.filter( license_holder__gender=participant_filter['gender'])
+	
+	category_id = int(participant_filter.get('category',-1))
+	if category_id > 0:
+		participants = participants.filter( category__id=category_id )
+	elif category_id == -2:
+		participants = participants.filter( category__isnull=True )
 		
 	if 0 <= int(participant_filter.get('confirmed',-1)) <= 1:
-		q_list.append( Q(paid = bool(int(participant_filter['confirmed']))) )
+		participants = participants.filter( confirmed=bool(int(participant_filter['confirmed'])) )
 	
 	if 0 <= int(participant_filter.get('paid',-1)) <= 1:
-		q_list.append( Q(paid = bool(int(participant_filter['paid']))) )
+		participants = participants.filter( paid=bool(int(participant_filter['paid'])) )
 	
-	participants = Participant.objects.filter( *q_list )
 	participants = participants.select_related('team', 'license_holder')
 	
 	if participant_filter.get('name_text','').strip():
@@ -3026,9 +3032,8 @@ def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 		participant.save()
 		participant.add_to_default_optonal_events()
 	except IntegrityError as e:
-		# Recover silently by going directly to edit screen with existing participant.
-		for participant in Participant.objects.filter( competition=competition, license_holder=license_holder ):
-			break
+		# Recover silently by going directly to edit screen with the existing participant.
+		participant = Participant.objects.filter( competition=competition, license_holder=license_holder ).first()
 		
 	return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
 
@@ -3832,11 +3837,8 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
 	except IntegrityError as e:
 		# If this participant exists already, recover silently by going directly to the existing participant.
-		participants = list(Participant.objects.filter(competition=competition, license_holder=license_holder))
-		if participants:
-			participant = participants[0]
-			return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
-		return license_holder, participants
+		participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
+		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
 
 #--------------------------------------------------------------------------
 @autostrip
