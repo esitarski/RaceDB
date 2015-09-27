@@ -2987,7 +2987,7 @@ def ParticipantsInEvents( request, competitionId ):
 #--------------------------------------------------------------------------------------------
 
 @external_access
-def ParticipantAdd( request, competitionId ):
+def ParticipantManualAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	search_text = request.session.get('participant_new_filter', '')
@@ -3709,7 +3709,7 @@ def SetSignatureWithTouchScreen( request, use_touch_screen ):
 
 #--------------------------------------------------------------------------
 @external_access
-def ParticipantScan( request, competitionId ):
+def ParticipantBarcodeAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	if request.method == 'POST':
@@ -3749,7 +3749,7 @@ def ParticipantMultiFound( request, competitionId ):
 	
 #--------------------------------------------------------------------------
 @external_access
-def ParticipantRfidScan( request, competitionId, autoSubmit=False ):
+def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	

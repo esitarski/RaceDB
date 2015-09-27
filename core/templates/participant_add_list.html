@@ -4,12 +4,12 @@
 {% load staticfiles %}
 {% load crispy_forms_tags %}
 <h2>{{title}}{% if competition.using_tags %}
-	<a class="btn btn-info" href="{{cancelUrl}}ParticipantRfidScan/{{competition.id}}/">
-		<image src="{% static "images/glyphicons_065_tag.png" %}"/>&nbsp;&nbsp;{% trans "RFID Tag Entry" %}
+	<a class="btn btn-info" href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
+		<image src="{% static "images/glyphicons_065_tag.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
 	</a>
 {% endif %}
-<a class="btn btn-info" href="{{cancelUrl}}ParticipantScan/{{competition.id}}/">
-	<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Entry" %}
+<a class="btn btn-info" href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
+	<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
 </a>
 </h2>
 <hr class="hidden-print"/>

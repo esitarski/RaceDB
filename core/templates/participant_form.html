@@ -339,12 +339,12 @@
 	{% endwith %}
 <hr/>
 	{% if isEdit %}
-		{% if "ParticipantRfidScan" in path %}
-			<a class="btn btn-success hidden-print" id="focus" href="{{pop2Url}}ParticipantRfidScan/{{c.id}}/1/">
+		{% if "ParticipantRfidAdd" in path %}
+			<a class="btn btn-success hidden-print" id="focus" href="{{pop2Url}}ParticipantRfidAdd/{{c.id}}/1/">
 				{% trans "Confirm and Scan Next RFID Tag" %}
 			</a>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-			<a class="btn btn-success hidden-print" href="{{pop2Url}}ParticipantRfidScan/{{c.id}}/">{% trans "OK" %}</a>
+			<a class="btn btn-success hidden-print" href="{{pop2Url}}ParticipantRfidAdd/{{c.id}}/">{% trans "OK" %}</a>
 		{% else %}
 			<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "OK" %}</a>
 		{% endif %}

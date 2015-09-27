@@ -21,9 +21,9 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*StartListExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.StartListExcelDownload),
 	
-	url(r'^(?i).*ParticipantScan/(?P<competitionId>\d+)/$', views.ParticipantScan),
-	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/$', views.ParticipantRfidScan),
-	url(r'^(?i).*ParticipantRfidScan/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidScan),
+	url(r'^(?i).*ParticipantBarcodeAdd/(?P<competitionId>\d+)/$', views.ParticipantBarcodeAdd),
+	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/$', views.ParticipantRfidAdd),
+	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidAdd),
 	
 	url(r'^(?i).*CategoryNumbers/(?P<competitionId>\d+)/$', views.CategoryNumbersDisplay),
 	url(r'^(?i).*CategoryNumbersNew/(?P<competitionId>\d+)/$', views.CategoryNumbersNew),
@@ -57,7 +57,7 @@ urlpatterns = patterns('',
 	
 	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', views.Participants),
 	url(r'^(?i).*ParticipantsInEvents/(?P<competitionId>\d+)/$', views.ParticipantsInEvents),
-	url(r'^(?i).*ParticipantAdd/(?P<competitionId>\d+)/$', views.ParticipantAdd),
+	url(r'^(?i).*ParticipantManualAdd/(?P<competitionId>\d+)/$', views.ParticipantManualAdd),
 	url(r'^(?i).*ParticipantAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.ParticipantAddToCompetition),
 	url(r'^(?i).*ParticipantAddToCompetitionDifferentCategory/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$',
 				views.ParticipantAddToCompetitionDifferentCategory),
