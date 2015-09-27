@@ -569,7 +569,7 @@ def license_holders_from_search_text( search_text ):
 	while True:
 		if search_text.startswith( 'rfid=' ):
 			try:
-				arg = search_text.split('=',1)[1].strip().upper()
+				arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
 				license_holders = [LicenseHolder.objects.get(Q(existing_tag=arg) | Q(existing_tag2=arg))]
 				break
 			except (IndexError, LicenseHolder.DoesNotExist):
@@ -579,7 +579,7 @@ def license_holders_from_search_text( search_text ):
 			
 		if search_text.startswith( 'scan=' ):
 			try:
-				arg = search_text.split('=',1)[1].strip().upper()
+				arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
 				license_holders = [LicenseHolder.objects.get(Q(license_code=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))]
 				break
 			except (IndexError, LicenseHolder.DoesNotExist):
@@ -596,7 +596,7 @@ def license_holders_from_search_text( search_text ):
 		
 		if search_text[-4:].isdigit():
 			try:
-				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper())]
+				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper().lstrip('0'))]
 				break
 			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
 				pass

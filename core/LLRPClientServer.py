@@ -261,7 +261,7 @@ class LLRPServer( threading.Thread ):
 			errors.append( 'Read Tag Failure: {}'.format(e) )
 			errors.append( traceback.format_exc() )
 			
-		return list(tagInventory), errors
+		return [tag.lstrip('0') for tag in tagInventory], errors
 	
 	def run( self ):
 		size = 1024
