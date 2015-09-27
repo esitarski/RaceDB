@@ -35,18 +35,20 @@ document.forms[0].submit();
 <br/>
 <br/>
 <br/>
-<div class="row">
-	<h3>{% trans "Status" %}: {% trans "Failure" %}</h3>
-	<dl>
-	{% for se in status_entries %}
-		<dt>{{se.0}}</dt>
-		{% for line in se.1 %}
-			<dd>{{line|linebreaks}}</dd>
+<div class="container">
+	<div class="row">
+		<h3>{% trans "Status" %}: {% trans "Failure" %}</h3>
+		<dl>
+		{% for se in status_entries %}
+			<dt>{{se.0}}</dt>
+			{% for line in se.1 %}
+				<dd>{{line|linebreaks}}</dd>
+			{% endfor %}
+			<br/>
 		{% endfor %}
-		<br/>
-	{% endfor %}
-	</dl>
-	<h4>{% trans "Fix the problem(s) and try again." %}</h4>
+		</dl>
+		<h4>{% trans "Fix the problem(s) and try again." %}</h4>
+	</div>
 </div>
 {% endif %}
 
