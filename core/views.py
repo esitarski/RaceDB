@@ -174,7 +174,7 @@ class SearchForm( Form ):
 		
 		Layout(
 			Row(
-				Col( Field('search_text', cols='60'), 6 ),
+				Col( Field('search_text', size=80), 6 ),
 			)
 		)
 		self.helper.layout.append(  HTML( '{{ form.errors }} {{ form.non_field_errors }}' ) )
