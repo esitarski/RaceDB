@@ -38,7 +38,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
+from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row
 from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
