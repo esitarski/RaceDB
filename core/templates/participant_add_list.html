@@ -11,6 +11,8 @@
 <a class="btn btn-info" href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
 	<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
 </a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-warning" href="{{cancelUrl}}/">{% trans "Cancel" %}</a>
 </h2>
 <hr class="hidden-print"/>
 {% crispy form %}

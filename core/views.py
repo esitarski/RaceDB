@@ -696,6 +696,7 @@ class BarcodeScanForm( Form ):
 	scan = forms.CharField( required = False, label = _('Barcode (License Code or RFID Tag)') )
 	
 	def __init__(self, *args, **kwargs):
+		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
 		super(BarcodeScanForm, self).__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
@@ -706,15 +707,14 @@ class BarcodeScanForm( Form ):
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 		]
+		if hide_cancel_button:
+			button_args = button_args[:-1]
 		
 		self.helper.layout = Layout(
 			Row(
 				Field('scan', size=40),
 			),
-			Row(
-				button_args[0],
-				button_args[1],
-			),
+			Row( *button_args ),
 		)
 
 @external_access
@@ -744,6 +744,7 @@ class RfidScanForm( Form ):
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label=_('RFID Antenna to Read Tag') )
 	
 	def __init__(self, *args, **kwargs):
+		hide_cancel_button = kwargs.pop( 'hide_cancel_button', None )
 		super(RfidScanForm, self).__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
@@ -754,12 +755,11 @@ class RfidScanForm( Form ):
 			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary', id='focus' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 		]
+		if hide_cancel_button:
+			button_args = button_args[:-1]
 		
 		self.helper.layout = Layout(
-			Row(
-				button_args[0],
-				button_args[1],
-			),
+			Row( *button_args ),
 			HTML('<br/>' * 12),
 			Row(
 				Col(Field('rfid_antenna'), 6 ),
@@ -3021,12 +3021,12 @@ def ParticipantManualAdd( request, competitionId ):
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
 			
-		form = SearchForm( btns, request.POST )
+		form = SearchForm( btns, request.POST, hide_cancel_button=True )
 		if form.is_valid():
 			search_text = form.cleaned_data['search_text']
 			request.session['participant_new_filter'] = search_text
 	else:
-		form = SearchForm( btns, initial = {'search_text': search_text} )
+		form = SearchForm( btns, initial = {'search_text': search_text}, hide_cancel_button=True )
 	
 	search_text = utils.normalizeSearch( search_text )
 	q = Q( active = True )
@@ -3774,7 +3774,7 @@ def ParticipantBarcodeAdd( request, competitionId ):
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
-		form = BarcodeScanForm( request.POST )
+		form = BarcodeScanForm( request.POST, hide_cancel_button=True )
 		if form.is_valid():
 			scan = form.cleaned_data['scan'].strip()
 			if not scan:
@@ -3791,7 +3791,7 @@ def ParticipantBarcodeAdd( request, competitionId ):
 			
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
-		form = BarcodeScanForm()
+		form = BarcodeScanForm( hide_cancel_button=True )
 		
 	return render_to_response( 'participant_scan_form.html', RequestContext(request, locals()) )
 	
@@ -3820,7 +3820,7 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
-		form = RfidScanForm( request.POST )
+		form = RfidScanForm( request.POST, hide_cancel_button=True )
 		if form.is_valid():
 		
 			request.session['rfid_antenna'] = rfid_antenna = int(form.cleaned_data['rfid_antenna'])
@@ -3871,7 +3871,7 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 			
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
-		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
+		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna), hide_cancel_button=True )
 		
 	return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
 
