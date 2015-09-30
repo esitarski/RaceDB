@@ -3,18 +3,28 @@
 {% load i18n %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-<h2>{{title}}{% if competition.using_tags %}
-	<a class="btn btn-info" href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
-		<image src="{% static "images/glyphicons_065_tag.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
-	</a>
+<ul class="nav nav-pills">
+	<li role="presentation" class="active">
+		<a href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
+		</a>
+	</li>
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
+		</a>
+	</li>
+{% if competition.using_tags %}
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
+		</a>
+	</li>
 {% endif %}
-<a class="btn btn-info" href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
-	<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
-</a>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a class="btn btn-warning" href="{{cancelUrl}}/">{% trans "Cancel" %}</a>
-</h2>
-<hr class="hidden-print"/>
+</ul>
+<br/>
+<h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
+<br/>
 {% crispy form %}
 {% include "show_count.html" %}
 {% spaceless %}
@@ -52,14 +62,14 @@
 			<td>{{h.state_prov}}</td>
 			<td>{{h.nationality}}</td>
 			{% if competition.using_tags %}<td>{{h.get_existing_tag_str}}</td>{% endif %}
-			<td class="hidden-print"><a class="btn btn-primary btn-sm" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a></td>
 			<td class="hidden-print">
 				{% if h.id in license_holders_in_competition %}
-					<a class="btn btn-success btn-sm" href="./ParticipantEditFromLicenseHolder/{{competitionId}}/{{h.id}}/">{% trans "Edit Participant" %}</a>
+					<a class="btn btn-success btn-sm" href="./ParticipantEditFromLicenseHolder/{{competitionId}}/{{h.id}}/">{% trans "Edit" %}</a>
 				{% else %}
-					<a class="btn btn-success btn-sm" href="./LicenseHolderAddConfirm/{{competitionId}}/{{h.id}}/">{% trans "Add to Competition" %}</a>
+					<a class="btn btn-success btn-sm" href="./LicenseHolderAddConfirm/{{competitionId}}/{{h.id}}/">{% trans "Add" %}</a>
 				{% endif %}
 			</td>
+			<td class="hidden-print"><a class="btn btn-primary btn-sm" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "License Holder" %}</a></td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
 	{% endfor %}

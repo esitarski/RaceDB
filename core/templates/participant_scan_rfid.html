@@ -15,18 +15,26 @@ document.forms[0].submit();
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load staticfiles %}
-<h2>{{title}}
-<a class="btn btn-info" href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
-	<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
-</a>
-<a class="btn btn-info" href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
-	<image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
-</a>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a class="btn btn-warning" href="{{cancelUrl}}/">{% trans "Cancel" %}</a>
-</h2>
+<ul class="nav nav-pills">
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
+		</a>
+	</li>
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
+		</a>
+	</li>
+	<li role="presentation" class="active">
+		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_065_tag.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
+		</a>
+	</li>
+</ul>
+<br/>
 <h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
-<hr/>
+<br/>
 {% crispy form %}
 
 {% if not status %}

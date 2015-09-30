@@ -4,20 +4,29 @@
 {% load i18n %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-<h2>{{title}}
+<ul class="nav nav-pills">
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
+		</a>
+	</li>
+	<li role="presentation" class="active">
+		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
+		</a>
+	</li>
 {% if competition.using_tags %}
-	<a class="btn btn-info" href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
-		<image src="{% static "images/glyphicons_065_tag.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
-	</a>
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
+			<image src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
+		</a>
+	</li>
 {% endif %}
-<a class="btn btn-info" href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
-	<image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
-</a>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a class="btn btn-warning" href="{{cancelUrl}}/">{% trans "Cancel" %}</a>
-</h2><h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
+</ul>
+<br/>
+<h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
 
-<hr/>
 <div>
 {% crispy form %}
+</div>
 {% endblock content %}
