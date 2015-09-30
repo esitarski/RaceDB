@@ -64,8 +64,26 @@ from context_processors import getContext
 
 import create_users
 
-def external_access(func):
-   return logCall(login_required(func))
+from django.views.decorators.cache import patch_cache_control
+from functools import wraps
+def external_access(decorated_func):
+	decorated_func = logCall(login_required(decorated_func))
+	
+	@wraps( decorated_func )
+	def wrap( *args, **kwargs ):
+		response = decorated_func( *args, **kwargs )
+		patch_cache_control(
+			response,
+			no_cache=True,
+			no_store=True,
+			must_revalidate=True,
+			proxy_revalidate=True,
+			max_age=0,
+		)
+		response['Pragma'] = 'no-cache'
+		return response
+		
+	return wrap
 
 # Maximum return for large queries.
 MaxReturn = 500
@@ -131,6 +149,9 @@ def home( request, rfid_antenna=None ):
 	return render_to_response( 'home.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------------------------
+def Container( *args ):
+	return Div( *args, css_class = 'container' )
+
 def Row( *args ):
 	return Div( *args, css_class = 'row' )
 
@@ -217,7 +238,7 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 				)
 			)
 		)
-		
+	
 	form.helper.layout.append( Div(*btns, css_class = 'row') )
 	#form.helper.layout.append( Div( HTML( '{{ form.errors }} {{ form.non_field_errors }}' ), css_class = 'row') )
 
@@ -3042,7 +3063,12 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	
-	for participant in Participant.objects.filter( competition=competition, license_holder=license_holder ):
+	participant = Participant.objects.filter( competition=competition, license_holder=license_holder, category__isnull=True ).first()
+	if participant:
+		return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
+	
+	participant = Participant.objects.filter( competition=competition, license_holder=license_holder ).first()
+	if participant:
 		participant.id = None
 		participant.category = None
 		participant.role = Participant.Competitor
@@ -3051,6 +3077,17 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 		return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
 	
 	return ParticipantAddToCompetition( request, competitionId, licenseHolderId )
+
+@external_access
+def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId, licenseHolderId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	
+	participant = Participant.objects.filter( competition=competition, license_holder=license_holder, category__isnull=True ).first()
+	if participant:
+		return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
+	
+	return render_to_response( 'participant_add_to_category_confirm.html', RequestContext(request, locals()) )
 
 @external_access
 def ParticipantEdit( request, participantId ):
@@ -3665,15 +3702,36 @@ class ParticipantSignatureForm( Form ):
 		self.helper.form_id = 'id_signature_form'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
-		button_args = [Submit( 'ok-submit', _('OK'), css_class = 'btn btn-success' )] if is_jsignature else []
-		if button_args:
-			button_args += [HTML('&nbsp;'*12)]
-		button_args += [Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' )]
+		if is_jsignature:
+			button_args = [
+				Submit( 'ok-submit', ('&nbsp;'*10) + unicode(_('OK')) + ('&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
+				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning hidden-print', style='font-size:200%' ),
+				HTML(u'<button class="btn btn-warning hidden-print" onClick="reset_signature()">{}</button>'.format(_('Reset'))),
+			]
+		else:
+			button_args = [
+				HTML('&nbsp;'*24),
+				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning hidden-print', style='font-size:150%' )
+			]
 		
-		self.helper.layout = Layout(
-			Field( 'signature' ),
-			Row( *button_args ),
-		)
+		if is_jsignature:
+			self.helper.layout = Layout(
+				Container(
+					Row( Col(Field('signature'), 12) ),
+					Row(
+						Col(button_args[0],4),
+						Col(button_args[1],4),
+						Col(button_args[2],4),
+					),
+				)
+			)
+		else:
+			self.helper.layout = Layout(
+				Container(
+					Row( Col( Field( 'signature' ), 12) ),
+					Row( Div( Div(*button_args, css_class='row'), css_class='col-md-12 text-center' ) ),
+				)
+			)
 
 @external_access
 def ParticipantSignatureChange( request, participantId ):

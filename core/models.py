@@ -1622,12 +1622,28 @@ class Participant(models.Model):
 	
 	def get_other_category_participants( self ):
 		return list(
-					Participant.objects.filter(
-						competition = self.competition,
-						license_holder = self.license_holder,
-						role = self.Competitor,
-					).exclude( id=self.id )
-				)
+			Participant.objects.filter(
+				competition = self.competition,
+				license_holder = self.license_holder,
+				role = self.Competitor,
+			).exclude( id=self.id )
+		)
+	
+	def get_category_participants( self ):
+		print list(
+			Participant.objects.filter(
+				competition = self.competition,
+				license_holder = self.license_holder,
+				role = self.Competitor,
+			)
+		)
+		return list(
+			Participant.objects.filter(
+				competition = self.competition,
+				license_holder = self.license_holder,
+				role = self.Competitor,
+			)
+		)
 	
 	def get_bib_conflicts( self ):
 		if not self.bib:

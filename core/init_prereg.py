@@ -41,6 +41,16 @@ def init_prereg(
 		large_delete_all( Participant, Q(competition=competition) )
 		
 	optional_events = { event.name.lower():event for event in competition.get_events() if event.optional }
+	
+	# Construct a cache to find categories quicker.
+	cat_gender = defaultdict( [] )
+	for category in Category.objects.filter( format=competition.category_format, code=category_code ).order_by('gender', 'category_code'):
+		cat_gender[category.category_code].append( (category, category.gender) )
+	def get_category( category_code_search, gender_search ):
+		for category, gender in cat_gender.get(category_code_search, []):
+			if gender_search == gender or gender == 2:
+				return category
+		return None
 		
 	times = defaultdict(float)
 	
@@ -170,10 +180,7 @@ def init_prereg(
 				#
 				category = None
 				if category_code:
-					for category_search in Category.objects.filter( format=competition.category_format, code=category_code ).order_by('gender'):
-						if category_search.gender == license_holder.gender or category_search.gender == 2:
-							category = category_search
-							break
+					category = get_category( category_code, license_holder.gender )
 					if category is None:
 						messsage_stream_write( u'**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
 							i, category_code, name,

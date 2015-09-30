@@ -63,18 +63,15 @@ function reset_signature() {
 <br/>
 <br/>
 <div id="id_signature_canvas"></div>
-<div class="row">
-	<div class="col-md-12 text-center"> 
-		<button class="btn btn-primary hidden-print" onClick="reset_signature()">{% trans "Reset" %}</button>
-	</div>
-</div>
 {% crispy form %}
 <p/>
 <p/>
 <p/>
-<div class="row hidden-print">
-	<div class="col-md-12 text-right">
-		<a class="btn btn-primary" href="{{path}}SetSignatureWithTouchScreen/0/">{% trans "Get Signature with Scriptel" %}</a>
+<div class="container">
+	<div class="row hidden-print">
+		<div class="col-md-12 text-right">
+			<a class="btn btn-primary" href="{{path}}SetSignatureWithTouchScreen/0/">{% trans "Get Signature with Scriptel" %}</a>
+		</div>
 	</div>
 </div>
 {% endblock content %}

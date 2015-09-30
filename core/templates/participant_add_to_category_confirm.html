@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load staticfiles %}
+{% load i18n %}
+<h2>{{title}}</h2>
+<h2><strong>{{competition.name}}</strong></h2>
+<hr/>
+{% spaceless %}
+<style>
+#confirmationenter {
+	font-size: 180%;
+}
+.table>tbody>tr>th, .table>tbody>tr>td {
+    border-top: none;
+}
+</style>
+
+<table class="table" id="confirmationenter">
+	<tbody>
+		<tr>
+			<td class="text-right">{% trans "Name" %}:</td>
+			<td><strong>{{license_holder.last_name}}, {{license_holder.first_name}}</strong></td>
+		</tr>
+		<tr><td class="text-right">{% trans "Gender" %}:</td>			<td><strong>{{license_holder.get_gender_display}}</strong></td></tr>
+		<tr>
+			<td class="text-right">{% trans "Date of Birth" %}:</td>
+			<td><strong>{{license_holder.date_of_birth}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Competition Age" %}: <strong>{{competition_age}}</strong></td>
+		</tr>
+		<tr><td class="text-right">{% trans "From" %}:</td>				<td><strong>{{license_holder.city}}, {{license_holder.state_prov}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "Nationality" %}:</td>		<td><strong>{{license_holder.nationality}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "License" %}:</td>			<td><strong>{{license_holder.license_code}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "UCI Code" %}:</td>			<td><strong>{{license_holder.uci_code}}</strong></td></tr>
+	</tbody>
+</table>
+{% endspaceless %}
+<hr/>
+<a class="btn btn-success" id="focus" href="{{popUrl}}/ParticipantAddToCompetitionDifferentCategory/{{competition.id}}/{{license_holder.id}}">
+	{% trans "Add to Additional Category" %}
+</a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+{% endblock content %}
