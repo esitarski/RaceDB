@@ -1168,7 +1168,11 @@ class LicenseHolder(models.Model):
 	@property
 	def license_code_export( self ):
 		return u'TEMP' if not self.license_code or self.is_temp_license else self.license_code
-		
+	
+	@property
+	def license_code_trunc( self ):
+		return self.license_code if len(self.license_code) <= 11 else u'{}...'.format(self.license_code[:11])
+	
 	@property
 	def uci_country( self ):
 		return self.uci_code[:3] if self.uci_code and not self.uci_code[:3].isdigit() else None

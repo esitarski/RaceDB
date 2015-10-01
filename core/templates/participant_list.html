@@ -51,7 +51,7 @@
 			<td>{{h.get_gender_display}}</td>
 			<td>{{p.get_role_display}}</td>
 			<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
-			<td>{{h.license_code}}</td>
+			<td>{{h.license_code_trunc}}</td>
 			<td class="text-nowrap">
 				<span style="white-space: nowrap;">
 					{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
