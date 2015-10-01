@@ -45,8 +45,6 @@
 			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
-					<a class="btn btn-warning btn-xs" href="./WaveDelete/{{w.id}}/">{% trans "Delete" %}</a>
-					&nbsp;&nbsp;
 					<a class="btn btn-success btn-xs" href="./WaveEdit/{{w.id}}/">{% trans "Edit" %}</a>
 				{% endif %}
 			</td>
@@ -80,7 +78,9 @@
 <hr class="page-break-before"/>
 <span class="visible-print">{{instance.competition.name}}, {{instance.name}}, {{instance.date_time}}</span>
 <h4>
-	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Strs" %}: {{w.get_participants.count}}<br/>
+	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Strs" %}: {{w.get_participants.count}}
+	{% if request.user.is_superuser %}<a class="btn btn-success btn-xs hidden-print" href="./WaveEdit/{{w.id}}/">{% trans "Edit" %}</a>{% endif %}
+<br/>
 </h4>
 <h5 style="margin-top: 8px">{% trans "Categories" %}: {{w.category_count_text}}</h5>
 {% spaceless %}
@@ -113,7 +113,7 @@
 				</span></td>
 				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
 				<td class="hidden-print">
-					<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
+					<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
 					&nbsp;&nbsp;
 					<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
 				</td>

@@ -59,8 +59,6 @@
 			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
-					<a class="btn btn-warning btn-xs" href="./WaveTTDelete/{{w.id}}/">{% trans "Delete" %}</a>
-					&nbsp;&nbsp;
 					<a class="btn btn-success btn-xs" href="./WaveTTEdit/{{w.id}}/">{% trans "Edit" %}</a>
 				{% endif %}
 			</td>
@@ -123,8 +121,8 @@
 	{% with h=p.license_holder %}
 	<tr onclick="jump('./ParticipantEdit/{{p.id}}/');" {% if p.gap_change %}class="gap-change"{% endif %}>
 		<td class="text-right">{{forloop.counter}}.</td>
-		<td class="text-right">{% if p.clock_time %}{{p.clock_time | time:"h:i:s a"}}{% endif %}</td>				
-		<td class="text-right">{{p.start_time}}</td>				
+		<td class="text-right">{% if p.clock_time %}{{p.clock_time | time:"h:i:s a"}}{% endif %}</td>
+		<td class="text-right">{{p.start_time}}</td>
 		<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
 		<td>{{p.license_holder.full_name}}</td>
 		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
@@ -136,7 +134,7 @@
 			{% endif %}
 		</span></td>
 		<td class="hidden-print">
-			<a class="btn btn-warning btn-xs" href="./ParticipantDelete/{{p.id}}/">{% trans "Delete" %}</a>
+			<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
 			&nbsp;&nbsp;
 			<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
 		</td>

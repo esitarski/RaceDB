@@ -3110,7 +3110,7 @@ def ParticipantEditFromLicenseHolder( request, competitionId, licenseHolderId ):
 	return ParticipantEdit( request, participant.id )
 	
 @external_access
-def ParticipantDelete( request, participantId ):
+def ParticipantRemove( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
