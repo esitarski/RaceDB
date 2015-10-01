@@ -86,7 +86,7 @@ def external_access(decorated_func):
 	return wrap
 
 # Maximum return for large queries.
-MaxReturn = 500
+MaxReturn = 200
 
 def pushUrl( request, name, *args, **kwargs ):
 	cancelUrl = kwargs.pop( 'cancelUrl', False )
