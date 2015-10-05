@@ -353,6 +353,8 @@ class Competition(models.Model):
 	
 	ftp_upload_during_race = models.BooleanField( default = False, verbose_name = _("Live FTP Update During Race") )
 	
+	show_signature = models.BooleanField( default = True, verbose_name = _("Show Signature in Participant Edit Screen") )
+	
 	ga_tracking_id = models.CharField( max_length = 20, default = '', blank = True, verbose_name=_('Google Analytics Tracking ID') )
 	
 	report_labels = models.ManyToManyField( ReportLabel, blank=True, verbose_name = _('Report Labels') )

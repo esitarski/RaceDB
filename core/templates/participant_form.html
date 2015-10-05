@@ -5,13 +5,13 @@
 {% load staticfiles %}
 
 {% block srcjavascript %}
-	{% if participant.signature and not participant.is_jsignature %}
+	{% if participant.competition.show_signature and participant.signature and not participant.is_jsignature %}
 		<script type="text/javascript" src="{% static "js/scriptel-easyscript.js" %}"></script>
 	{% endif %}
 {% endblock srcjavascript %}
 
 {% block onload %}
-	{% if participant.signature and not participant.is_jsignature %}
+	{% if participant.competition.show_signature and participant.signature and not participant.is_jsignature %}
 		var escript = new ScriptelEasyScript();
 		var canvas = document.getElementById("signature");
 		var ctx = canvas.getContext("2d");
@@ -152,7 +152,7 @@
 	{% endif %}
 </tr>
 {% endif %}
-{% if p.role == 110 and p.category %}
+{% if c.show_signature and p.role == 110 and p.category %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantSignatureChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Signature" %}:</td>
 	<td>
@@ -172,7 +172,7 @@
 </tr>
 {% endif %}
 {% if p.role == 110 and p.category %}
-<tr onclick="jump({% if isEdit %}'{{path}}ParticipantPreregisteredChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+<tr {% if request.user.is_superuser and isEdit %}onclick="jump('{{path}}ParticipantPreregisteredChange/{{p.id}}/');"{% endif %}>
 	<td class="text-right">{% trans "Preregistered" %}:</td>
 	<td>
 		{% if p.preregistered %}
@@ -181,7 +181,7 @@
 			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 	</td>
-	{% if isEdit %}
+	{% if request.user.is_superuser and isEdit %}
 		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantPreregisteredChange/{{p.id}}/">{% trans "Change" %}</a></td>
 	{% endif %}
 </tr>
