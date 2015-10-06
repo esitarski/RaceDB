@@ -1880,6 +1880,7 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col(Field('report_labels',size=8), 2),
 					Col('ga_tracking_id', 4),
+					Col(Field('show_signature'),4),
 				),
 				Row( HTML('<hr/>') ),
 			)
