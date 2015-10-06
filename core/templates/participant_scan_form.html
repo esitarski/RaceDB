@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-<ul class="nav nav-pills">
+<ul class="nav nav-tabs">
 	<li role="presentation">
 		<a href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
 			<image src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
@@ -12,7 +12,7 @@
 	</li>
 	<li role="presentation" class="active">
 		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
-			<image src="{% static "images/glyphicons_259_barcode.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
+			<image src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
 		</a>
 	</li>
 {% if competition.using_tags %}
