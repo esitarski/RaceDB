@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load staticfiles %}
+
+<h1>{% trans "Are you sure?" %}</h1>
+<h2>{{page_title}}</h2>
+
+<p>
+<br/>&nbsp;
+<br/>&nbsp;
+</p>
+<h3>{{message|safe}}<h3>
+<p>
+<br/>&nbsp;
+<br/>&nbsp;
+</p>
+<h1>{% trans "Be Careful - there is no undo." %}</h1>
+<hr/>
+
+<a class='btn btn-success' href=".">{% trans "Cancel" %}</a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class='btn btn-warning' href="{{target}}">{% trans "OK" %}</a>
+{% endblock content %}

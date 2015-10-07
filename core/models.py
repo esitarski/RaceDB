@@ -25,6 +25,7 @@ import random
 from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
 from CountryIOC import uci_country_codes_set, ioc_from_country
+from large_delete_all import large_delete_all
 
 def fixNullUpper( s ):
 	if not s:
@@ -526,6 +527,16 @@ class Competition(models.Model):
 		
 		participants_changed.sort( key=lambda p: (p.bib or 99999999, p.license_holder.search_text) ) 
 		return participants_changed
+	
+	@transaction.atomic
+	def initialize_number_set( self ):
+		if self.number_set:
+			large_delete_all( NumberSetEntry, Q(number_set=self.number_set) )
+			NumberSetEntry.objects.bulk_create( [
+					NumberSetEntry(number_set=self.number_set, license_holder=participant.license_holder, bib=participant.bib, date_lost=None)
+						for participant in self.get_participants() if participant.bib
+				]
+			)
 	
 	class Meta:
 		verbose_name = _('Competition')

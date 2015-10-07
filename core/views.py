@@ -1797,6 +1797,16 @@ def GetFinishLynxResponse( competition ):
 	)
 	return response	
 
+def ApplyNumberSet( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	participants_changed = competition.apply_number_set()
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+def InitializeNumberSet( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	competition.initialize_number_set()
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
 def GetCompetitionForm( competition_cur = None ):
 	@autostrip
 	class CompetitionForm( ModelForm ):
@@ -1817,10 +1827,16 @@ def GetCompetitionForm( competition_cur = None ):
 			return render_to_response( 'participants_changed.html', RequestContext(request, locals()) )
 			
 		def applyNumberSet( self, request, competition ):
-			participants_changed = competition.apply_number_set()
-			participants_changed_count = len(participants_changed)
-			title = _('Bib Numbers Updated')
-			return render_to_response( 'participants_changed.html', RequestContext(request, locals()) )
+			page_title = _('Apply Number Set')
+			message = _('This will overwrite participant bibs from the NumberSet.')
+			target = pushUrl(request, 'ApplyNumberSet', competition.id)
+			return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+			
+		def initializeNumberSet( self, request, competition ):
+			page_title = _('Initialize Number Set')
+			message = _('This will initialize and replace the NumberSet using the Participant Bib Numbers from this Competition.')
+			target = pushUrl(request, 'InitializeNumberSet', competition.id)
+			return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
 			
 		def editReportTags( self, request, competition ):
 			return HttpResponseRedirect( pushUrl(request,'ReportLabels') )
@@ -1899,7 +1915,10 @@ def GetCompetitionForm( competition_cur = None ):
 					)
 				if competition_cur and competition_cur.number_set:
 					self.additional_buttons.append(
-						('apply-number-set-submit', _('Reapply Number Set to Existing Participants'), 'btn btn-primary', self.applyNumberSet),
+						('apply-number-set-submit', _('Reapply NumberSet to Existing Participants'), 'btn btn-primary', self.applyNumberSet),
+					)
+					self.additional_buttons.append(
+						('initialize-number-set-submit', _('Initialize NumberSet from Existing Participants'), 'btn btn-primary', self.initializeNumberSet),
 					)
 			
 			addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )

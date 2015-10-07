@@ -17,6 +17,9 @@ urlpatterns = patterns('',
 	url(r'^(?i).*StartLists/(?P<competitionId>\d+)/$', views.StartLists),
 	url(r'^(?i).*StartList/(?P<eventId>\d+)/$', views.StartList),
 	
+	url(r'^(?i).*ApplyNumberSet/(?P<competitionId>\d+)/$', views.ApplyNumberSet),
+	url(r'^(?i).*InitializeNumberSet/(?P<competitionId>\d+)/$', views.InitializeNumberSet),
+	
 	url(r'^(?i).*StartListTT/(?P<eventTTId>\d+)/$', views.StartListTT),
 	
 	url(r'^(?i).*StartListExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.StartListExcelDownload),
