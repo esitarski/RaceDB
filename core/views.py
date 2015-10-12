@@ -2915,6 +2915,7 @@ def Participants( request, competitionId ):
 	
 	participants = Participant.objects.filter( competition=competition )
 	missing_category_count = Participant.objects.filter( competition=competition, category__isnull=True ).count()
+	missing_bib_count = Participant.objects.filter( competition=competition, bib__isnull=True ).count()
 	
 	if participant_filter.get('scan',0):
 		name_text = utils.normalizeSearch( participant_filter['scan'] )
@@ -3199,7 +3200,7 @@ def ParticipantCategoryChange( request, participantId ):
 		gender = license_holder.gender
 	if gender != -1:
 		categories = categories.filter( Q(gender=2) | Q(gender=gender) )
-	available_categories = set( competition.get_available_categories(license_holder, gender) )
+	available_categories = set( competition.get_available_categories(license_holder, gender=gender, participant_exclude=participant) )
 	return render_to_response( 'participant_category_select.html', RequestContext(request, locals()) )	
 
 @external_access
@@ -3210,6 +3211,14 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 		category = get_object_or_404( Category, pk=categoryId )
 	else:
 		category = None
+	
+	categories = set()
+	for p in Participant.objects.filter(competition=competition, license_holder=participant.license_holder):
+		if p != participant and participant.category:
+			catgegories.add( participant.category )
+	if competition.is_category_conflict(categories):
+		has_error, conflict_explanation, conflict_participant = True, _('Cannot assign to another Category that already exists in an Event.'), None
+		return render_to_response( 'participant_integrity_error.html', RequestContext(request, locals()) )
 	
 	category_changed = (participant.category != category)
 	participant.category = category

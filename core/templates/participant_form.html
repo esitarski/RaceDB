@@ -78,7 +78,7 @@
 		{% endif %}
 	</td>
 </tr>
-<tr onclick="jump({% if isEdit %}'{{path}}ParticipantRoleChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+<tr onclick="jump({% if request.user.is_superuser and isEdit %}'{{path}}ParticipantRoleChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Role" %}:</td>
 	<td>
 		<strong>{{p.get_role_display}}</strong>
@@ -93,7 +93,7 @@
 		{% endif %}
 	</td>
 	<td>
-		{% if isEdit %}
+		{% if request.user.is_superuser and isEdit %}
 			<a class="btn btn-success hidden-print" href="{{path}}ParticipantRoleChange/{{p.id}}/">{% trans "Change" %}</a>
 		{% endif %}
 	</td>
@@ -288,7 +288,7 @@
 					{{w.event_type_display_name}}
 					{{w.event.date_time|date}}
 					{% if w.is_late %}
-						<span class="label label-warning">{% trans "Late Reg.  No Placing.  Alert Timing Immediately." %}</span>
+						<span class="label label-warning">{% trans "Late Reg.  Alert Timing Immediately." %}</span>
 					{% endif %}
 					</h3>
 				{% endfor %}
@@ -306,7 +306,7 @@
 					{{w.event_type_display_name}}
 					{{w.event.date_time|date}}
 					{% if w.is_late %}
-						<span class="label label-warning">{% trans "Late Reg.  No Seeding.  Alert Timing Immediately." %}</span>
+						<span class="label label-warning">{% trans "Late Reg.  Alert Timing Immediately." %}</span>
 					{% endif %}
 					</h3>
 				{% endfor %}

@@ -494,7 +494,7 @@ class Competition(models.Model):
 	def has_participants( self ):
 		return self.get_participants().exists()
 		
-	def get_available_categories( self, license_holder, gender=None ):
+	def get_available_categories( self, license_holder, gender=None, participant_exclude=None ):
 		categories_remaining = Category.objects.filter( format=self.category_format )
 		if gender is None:
 			gender = license_holder.gender
@@ -507,11 +507,27 @@ class Competition(models.Model):
 		
 		# Only return categories that are not in the same event.
 		categories_remaining = set( categories_remaining )
+		
+		if participant_exclude:
+			categories_remaining.discard( participant_exclude.category )
+		
 		for e in self.get_events():
 			for p in participants:
-				if e.is_participating(p):
+				if p != participant_exclude and e.is_participating(p):
 					categories_remaining -= set( e.get_categories_with_wave() )
 		return sorted( set(categories_remaining), key=lambda c: c.sequence )
+		
+	def is_category_conflict( self, categories ):
+		if len(categories) <= 1:
+			return False
+		for e in self.get_events():
+			event_categories = set( e.get_categories_with_wave() )
+			for a in categories:
+				if a in event_categories:
+					for b in categories:
+						if a != b and b in event_categories:
+							return True
+		return False
 	
 	@transaction.atomic
 	def auto_generate_missing_tags( self ):

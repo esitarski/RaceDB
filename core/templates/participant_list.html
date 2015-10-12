@@ -7,7 +7,10 @@
 <h2>{{title}}: <strong>{{competition.name}}</strong></h2>
 {% crispy form %}
 {% if missing_category_count %}
-	<br/><h3>{{missing_category_count}} {% trans "Participants have no Category (Search Category: *** Missing ***)" %}</h3>
+	<br/><h3>{{missing_category_count}} {% trans "Participant(s) have no Category (Search Category: *** Missing ***)" %}</h3>
+{% endif %}
+{% if missing_bib_count %}
+	<br/><h3>{{missing_bib_count}} {% trans "Participant(s) have no Bib (Search Bib: -1)" %}</h3>
 {% endif %}
 <style>
 .table tbody>tr>td {
