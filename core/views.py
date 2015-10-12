@@ -3102,6 +3102,7 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	competition_age = competition.competition_age( license_holder )
 	
 	participant = Participant.objects.filter( competition=competition, license_holder=license_holder, category__isnull=True ).first()
 	if participant:
@@ -3192,11 +3193,13 @@ def ParticipantCategoryChange( request, participantId ):
 	else:
 		gender = license_holder.gender
 		form = ParticipantCategorySelectForm( initial = dict(gender=gender) )
-		
+	
 	categories = Category.objects.filter( format=competition.category_format )
-	if gender is not None and gender >= 0:
-		categories = categories.filter( Q(gender=gender) | Q(gender=2) )
-	existing_categories = { o.category for o in participant.get_other_category_participants() if o.category }
+	if gender == None:
+		gender = license_holder.gender
+	if gender != -1:
+		categories = categories.filter( Q(gender=2) | Q(gender=gender) )
+	available_categories = set( competition.get_available_categories(license_holder, gender) )
 	return render_to_response( 'participant_category_select.html', RequestContext(request, locals()) )	
 
 @external_access

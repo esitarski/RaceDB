@@ -20,7 +20,7 @@
 </thead>
 <tbody>
 	<tr onclick="jump('{{path}}ParticipantCategorySelect/{{participant.id}}/0/');">
-		<td>----</td>
+		<td>--{% trans "none" %}--</td>
 		<td>----</td>
 		<td>----</td>
 		<td>
@@ -28,12 +28,12 @@
 		</td>
 	</tr>
 	{% for c in categories %}
-		<tr {% if c not in existing_categories %}onclick="jump('{{path}}ParticipantCategorySelect/{{participant.id}}/{{c.id}}/');" {% endif %}>
+		<tr {% if c in available_categories %}onclick="jump('{{path}}ParticipantCategorySelect/{{participant.id}}/{{c.id}}/');" {% endif %}>
 			<td>{{c.code}}</td>
 			<td>{{c.get_gender_display}}</td>
 			<td>{{c.description}}</td>
 			<td>
-				{% if c not in existing_categories %}
+				{% if c in available_categories %}
 					<a class="btn btn-success" href="{{path}}ParticipantCategorySelect/{{participant.id}}/{{c.id}}/">{% trans "Select" %}</a>
 				{% endif %}
 			</td>

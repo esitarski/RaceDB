@@ -447,7 +447,7 @@ class Competition(models.Model):
 		return list(self.get_events_mass_start()) + list(self.get_events_tt())
 		
 	def get_categories( self ):
-		return Category.objects.filter( format = self.category_format )
+		return Category.objects.filter( format=self.category_format )
 	
 	#----------------------------------------------------------------------------------------------------
 
@@ -493,6 +493,25 @@ class Competition(models.Model):
 		
 	def has_participants( self ):
 		return self.get_participants().exists()
+		
+	def get_available_categories( self, license_holder, gender=None ):
+		categories_remaining = Category.objects.filter( format=self.category_format )
+		if gender is None:
+			gender = license_holder.gender
+		if gender != -1:
+			categories_remaining = categories_remaining.filter( Q(gender=2) | Q(gender=gender) )
+		
+		participants = list( Participant.objects.filter(competition=self, license_holder=license_holder) )
+		if not participants:
+			return list(categories_remaining)
+		
+		# Only return categories that are not in the same event.
+		categories_remaining = set( categories_remaining )
+		for e in self.get_events():
+			for p in participants:
+				if e.is_participating(p):
+					categories_remaining -= set( e.get_categories_with_wave() )
+		return sorted( set(categories_remaining), key=lambda c: c.sequence )
 	
 	@transaction.atomic
 	def auto_generate_missing_tags( self ):
@@ -794,14 +813,14 @@ class Event( models.Model ):
 		return potential_duplicates
 
 	def get_categories_with_wave( self ):
-		category_lookup = set( c.id for c in Category.objects.filter(format = self.competition.category_format) )
+		category_lookup = set( Category.objects.filter(format = self.competition.category_format).values_list('pk', flat=True) )
 		categories = []
 		for wave in self.get_wave_set().all():
-			categories.extend( list(c for c in wave.categories.all() if c.id in category_lookup) )
+			categories.extend( list(c for c in wave.categories.all() if c.pk in category_lookup) )
 		return sorted( set(categories), key = lambda c: c.sequence )
 	
 	def get_categories_without_wave( self ):
-		categories_all = set( c for c in Category.objects.filter(format = self.competition.category_format) )
+		categories_all = set( Category.objects.filter(format = self.competition.category_format) )
 		categories_with_wave = set( self.get_categories_with_wave() )
 		categories_without_wave = categories_all - categories_with_wave
 		return sorted( categories_without_wave, key = lambda c: c.sequence )
