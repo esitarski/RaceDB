@@ -5,6 +5,8 @@ import datetime
 import platform
 import traceback
 import threading
+import random
+import time
 from utils import removeDiacritic
 from os.path import expanduser
 import threading, Queue
@@ -16,24 +18,29 @@ print 'logFileName="{}"'.format( logFileName )
 logThread = None
 messageQ = None
 def messageWriter():
+	time.sleep( random.random() * 10.0 )
+	output = []
 	while 1:
-		# Collect all the available log messages.
-		output = []
-		message = messageQ.get()
+		# Collect all available log messages.
 		while 1:
-			output.append( message )
-			messageQ.task_done()
 			try:
 				message = messageQ.get( False )
 			except Queue.Empty:
 				break
+			output.append( message )
+			messageQ.task_done()
 		
-		# Write all the log messages in one call to minimize IO.
-		try:
-			with open(logFileName, 'a') as fp:
-				fp.write( ''.join(output) )
-		except Exception as e:
-			print e
+		# Write all log messages in one call to minimize IO.
+		if output:
+			try:
+				with open(logFileName, 'a') as fp:
+					fp.write( ''.join(output) )
+				output = []
+			except Exception as e:
+				print e
+		
+		# Sleep a random duration to minimize file write collisions between multiple RaceDB instances.
+		time.sleep( 60.0 + random.random() * 60.0 * 4.0 )
 
 PlatformName = platform.system()
 def writeLog( message ):
