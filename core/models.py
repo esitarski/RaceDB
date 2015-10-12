@@ -452,15 +452,15 @@ class Competition(models.Model):
 	#----------------------------------------------------------------------------------------------------
 
 	def get_categories_with_numbers( self ):
-		category_lookup = set( c.id for c in Category.objects.filter(format = self.category_format) )
+		category_lookup = set( Category.objects.filter(format = self.category_format).values_list('pk', flat=True) )
 		categories = []
 		for cn in self.categorynumbers_set.all():
-			categories.extend( list(c for c in cn.categories.all() if c.id in category_lookup) )
+			categories.extend( list(c for c in cn.categories.all() if c.pk in category_lookup) )
 		return sorted( set(categories), key = lambda c: c.sequence )
 		return categories
 	
 	def get_categories_without_numbers( self ):
-		categories_all = set( c for c in Category.objects.filter(format = self.category_format) )
+		categories_all = set( Category.objects.filter(format = self.category_format) )
 		categories_with_numbers = set( self.get_categories_with_numbers() )
 		categories_without_numbers = categories_all - categories_with_numbers
 		return sorted( categories_without_numbers, key = lambda c: c.sequence )
