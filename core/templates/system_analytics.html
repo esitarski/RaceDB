@@ -3,7 +3,7 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
 var payload = {{payload_json|safe}};
-google.load("visualization", "1", {packages:["corechart", "table", "treemap"]});
+google.load("visualization", "1.1", {packages:["corechart", "table" /*, "treemap" */]});
 google.setOnLoadCallback(drawCharts);
 
 function componentToHex(c) {
@@ -371,6 +371,11 @@ function formatIntPercent( num, total ) {
 	return {v:num, f:num + ' / ' + total + ' (' + percent.toFixed(2) + '%)'};
 }
 
+function formatPercentInt( num, total ) {
+	var percent = (100.0 * num) / (total ? total : 1);
+	return {v:percent, f:percent.toFixed(2) + '% (' + num + ' / ' + total + ')'};
+}
+
 function drawCharts() {
 	var animationOption = {duration: 1000, startup: true};
 
@@ -419,7 +424,7 @@ function drawCharts() {
 	//
 	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById("overallCategoriesChartDiv"));
 	for( var i = 1; i < payload.category_total.length; ++i ) {
-		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participant_total);
+		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participants_total);
 		payload.category_total[i][2] = formatFloat(payload.category_total[i][2]);
 	}
 	overallCategoriesChart.draw(
@@ -557,6 +562,38 @@ function drawCharts() {
 	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventChartDiv"));
 	compEventChart.draw(google.visualization.arrayToDataTable(payload.event_competition_count),
 		{title:'Event Participation (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
+	
+	// -----------------------------------------------------------------
+	// Prereg Percent
+	//
+	var preregChartData = new google.visualization.DataTable();
+	preregChartData.addColumn('string', 'Competition');
+	preregChartData.addColumn('number', 'Men');
+	preregChartData.addColumn('number', 'Women');
+	preregChartData.addColumn('number', 'All');
+	var rows = [];
+	var competitions = payload.competitions;
+	for( var iCompetition = 0; iCompetition < competitions.length; ++iCompetition ) {
+		var competition = competitions[iCompetition];
+		rows.push( [
+			competition.name,
+			formatPercentInt(competition.prereg_participants_men, competition.participants_men),
+			formatPercentInt(competition.prereg_participants_women, competition.participants_women),
+			formatPercentInt(competition.prereg_participants_total, competition.participants_total)
+		] );
+	}
+	preregChartData.addRows( rows );
+	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventPreRegChartDiv"));
+	compEventChart.draw(preregChartData, {
+			title:'Event PreReg: Overall: ' +
+				formatPercentInt(payload.prereg_participants_total, payload.participants_total).f +
+				' (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			isStacked: false,
+			legend: {position: 'top'},
+			animation: animationOption
+		}
+	);
 	
 	// -----------------------------------------------------------------
 	// Postal Codes
@@ -741,6 +778,7 @@ function drawCharts() {
 <div id='compChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compCategoryChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='compEventPreRegChartDiv'style="width: 1200px; height: 500px;"></div>
 <!-- <div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div> -->
 <br/>
 <h3 class="page-break-before">Postal Chart</h3>

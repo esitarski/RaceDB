@@ -35,9 +35,9 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 	
 	category_total_overall = defaultdict( int )
 	category_competition_total = defaultdict( lambda: defaultdict(int) )
-	event_competition_participant_total = defaultdict( lambda: defaultdict(int) )
+	event_competition_participants_total = defaultdict( lambda: defaultdict(int) )
 	competition_attendee_total = defaultdict( int )
-	competition_participant_total = defaultdict( int )
+	competition_participants_total = defaultdict( int )
 	
 	competition_category_event = defaultdict( dict )
 	
@@ -51,7 +51,8 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 	license_holders_set = set()
 	
 	profile_year = 0
-	participant_total = 0
+	participants_total = 0
+	prereg_participants_total = 0
 	competitions_total, events_total = 0, 0
 	
 	def fix_age( age ):
@@ -73,7 +74,9 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 			'attendees_total': 0,
 			'participants_men': 0,
 			'participants_women': 0,
-			'participant_total': 0,
+			'participants_total': 0,
+			'prereg_participants_men': 0,
+			'prereg_participants_women': 0,
 		}
 		for event in competition.get_events():
 			if not event.has_participants():
@@ -83,6 +86,7 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 			
 			attendee_data = []
 			participant_data = []
+			prereg_participant_data = []
 			event_license_holders = set()
 			for participant in event.get_participants():
 				
@@ -93,14 +97,17 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 					license_holders_event_errors.add( (license_holder, event) )
 				age = fix_age( age )
 				
-				event_competition_participant_total[competition][event] += 1
+				event_competition_participants_total[competition][event] += 1
 				category_name = participant.category.code_gender if participant.category else unicode(_('Unknown'))
 				category_total_overall[category_name] += 1
 				category_competition_total[competition][category_name] += 1
 				competition_category_event[competition][category_name] = event.name
-				competition_participant_total[competition] += 1
-				participant_total += 1
+				competition_participants_total[competition] += 1
+				participants_total += 1
 				participant_data.append( [license_holder.gender, age] )
+				if participant.preregistered:
+					prereg_participants_total += 1
+					prereg_participant_data.append( [license_holder.gender, age] )
 				
 				if license_holder in event_license_holders:
 					continue
@@ -135,9 +142,12 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 				'attendees_women': sum(1 for p in attendee_data if p[0] == 1),
 				'participants_men': sum(1 for p in participant_data if p[0] == 0),
 				'participants_women': sum(1 for p in participant_data if p[0] == 1),
+				'prereg_participants_men': sum(1 for p in prereg_participant_data if p[0] == 0),
+				'prereg_participants_women': sum(1 for p in prereg_participant_data if p[0] == 1),
 			}
 			event_data['attendees_total'] = event_data['attendees_men'] + event_data['attendees_women']
-			event_data['participant_total'] = event_data['participants_men'] + event_data['participants_women']
+			event_data['participants_total'] = event_data['participants_men'] + event_data['participants_women']
+			event_data['prereg_participants_total'] = event_data['prereg_participants_men'] + event_data['prereg_participants_women']
 			
 			competition_data['attendees_men'] += event_data['attendees_men']
 			competition_data['attendees_women'] += event_data['attendees_women']
@@ -145,9 +155,14 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 			competition_data['participants_men'] += event_data['participants_men']
 			competition_data['participants_women'] += event_data['participants_women']
 			
+			competition_data['prereg_participants_men'] += event_data['prereg_participants_men']
+			competition_data['prereg_participants_women'] += event_data['prereg_participants_women']
+			
 			competition_data['events'].append( event_data )
 		
 		competition_data['attendees_total'] = competition_data['attendees_men'] + competition_data['attendees_women']
+		competition_data['participants_total'] = competition_data['participants_men'] + competition_data['participants_women']
+		competition_data['prereg_participants_total'] = competition_data['prereg_participants_men'] + competition_data['prereg_participants_women']
 		data.append( competition_data )
 	
 	age_range_average = [
@@ -203,7 +218,7 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		ccc.append( [competition.name] +
 			[format_int_percent_event(
 					category_competition_total[competition].get(name, 0),
-					competition_participant_total[competition],
+					competition_participants_total[competition],
 					competition_category_event.get(competition,{}).get(name,''),
 				) if category_competition_total[competition].get(name, 0) != 0 else 0 for name, count in category_total[1:]] )
 	
@@ -211,17 +226,17 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 	category_total[0].append( 'Cumulative %' )
 	cumulativePercent = 0.0
 	for c in category_total[1:]:
-		cumulativePercent += 100.0*c[-1] / participant_total
+		cumulativePercent += 100.0*c[-1] / participants_total
 		c.append( cumulativePercent )
 	
-	event_max = max(len(events) for events in event_competition_participant_total.itervalues()) if event_competition_participant_total else 0
+	event_max = max(len(events) for events in event_competition_participants_total.itervalues()) if event_competition_participants_total else 0
 	eee = [['Competition'] + ['{}'.format(i+1) for i in xrange(event_max)]]
-	for competition in sorted( (event_competition_participant_total.iterkeys()), key=lambda x: x.start_date ):
-		events = sorted( ((event, count) for event, count in event_competition_participant_total[competition].iteritems()), key=lambda x: x[0].date_time )
+	for competition in sorted( (event_competition_participants_total.iterkeys()), key=lambda x: x.start_date ):
+		events = sorted( ((event, count) for event, count in event_competition_participants_total[competition].iteritems()), key=lambda x: x[0].date_time )
 		eee.append( [competition.name] +
 			[format_event_int_percent(
 					events[i][1],
-					competition_participant_total[competition],
+					competition_participants_total[competition],
 					events[i][0].name,
 				) if i < len(events) else 0 for i in xrange(event_max)] )
 	
@@ -248,7 +263,8 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		'attendees_men_total': sum(c['attendees_men'] for c in data),
 		'attendees_women_total': sum(c['attendees_women'] for c in data),
 		
-		'participant_total' : participant_total,
+		'participants_total' : participants_total,
+		'prereg_participants_total': prereg_participants_total,
 		
 		'license_holders_attendance_total': len(license_holders_attendance_total),
 		'license_holders_men_total': len(license_holders_men_total),

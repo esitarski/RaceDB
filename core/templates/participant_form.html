@@ -347,7 +347,11 @@
 	{% endif %}
 <hr/>
 	{% if isEdit %}
-		<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate. Process Next Entry" %}</a>
+		{% if participant.is_done %}
+			<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate. Process Next Entry" %}</a>
+		{% else %}
+			<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Incomplete. Process Next Entry Anyway" %}</a>
+		{% endif %}
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
 	{% else %}
 		<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Cancel" %}</a>

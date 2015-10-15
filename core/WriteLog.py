@@ -12,7 +12,7 @@ from os.path import expanduser
 import threading, Queue
 
 logFileName = '{}/RaceDBLog.txt'.format(expanduser("~"))
-print 'logFileName="{}"'.format( logFileName )
+sys.stderr.write( 'logFileName="{}"\n'.format(logFileName) )
 
 # Use a singleton thread to write the log to avoid clobbering log writes.
 logThread = None
@@ -71,7 +71,7 @@ def logCall( f ):
 					'REMOTE_ADDR',
 					'REMOTE_USER',
 					] if x.META.get(n, '')
-			] + ['path="{}"'.format(x.path)]
+			] + ['username="{}"'.format(x.user.username)] + ['path="{}"'.format(x.path)]
 			return u', '.join( fields )
 		elif isinstance(x, models.Model):
 			return u'<<{}>>'.format(x.__class__.__name__)

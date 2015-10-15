@@ -1637,7 +1637,11 @@ class Participant(models.Model):
 				self.category and \
 				self.paid and \
 				not self.needs_tag
-		
+				
+	@property
+	def is_done( self ):
+		return self.show_confirm and (not self.competition.show_signature or self.signature)
+	
 	def auto_confirm( self ):
 		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:
 			self.confirmed = True
