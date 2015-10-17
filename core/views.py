@@ -2094,10 +2094,19 @@ def TeamsShow( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	team_info = [ {
 			'team':team,
+			'team_name':team.name,
 			'staff':Participant.objects.filter(competition=competition, team=team).exclude(role=Participant.Competitor).order_by('role'),
 			'competitor_count':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).count(),
 			'competitors':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).order_by('bib'),
 		} for team in competition.get_teams() ]
+	team_info.append(
+		{
+			'team_name':unicode(_('<<No Team>>')),
+			'staff':[],
+			'competitor_count':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).count(),
+			'competitors':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).order_by('bib'),
+		}
+	)
 	num_teams = len(team_info)
 	return render_to_response( 'teams_show.html', RequestContext(request, locals()) )
 

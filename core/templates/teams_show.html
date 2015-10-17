@@ -34,7 +34,7 @@ function hideShowTeam( i ) {
 	<ul class="nav nav-pills">
 		<li role="presentation" class="active" id="idSelect0"><a href="#" onclick="hideShowTeam(0)">{% trans "All" %}</a></li>
 		{% for ti in team_info %}
-			<li role="presentation" id="idSelect{{forloop.counter}}" href="#" onclick="hideShowTeam({{forloop.counter}})"><a>{{ti.team.name}}<sub>&nbsp;{{ti.competitor_count}}</sub></a></li>
+			<li role="presentation" id="idSelect{{forloop.counter}}" href="#" onclick="hideShowTeam({{forloop.counter}})"><a>{{ti.team_name}}<sub>&nbsp;{{ti.competitor_count}}</sub></a></li>
 		{% endfor %}
 	</ul>
 	<hr/>
@@ -43,7 +43,7 @@ function hideShowTeam( i ) {
 {% for ti in team_info %}
 	<div class="panel panel-info" id="idTeam{{forloop.counter}}">
 		<div class="panel-heading">
-			<h3>{{ti.team.name}}, <span style="font-size:75%">{{ti.team.get_team_type_display}}, {{ti.team.team_code}}, , {{ti.team.nation_code}}<strong> {% trans "Strs" %}:&nbsp;{{ti.competitor_count}}</strong></span></h3>
+			<h3>{{ti.team_name}}, <span style="font-size:75%">{{ti.team.get_team_type_display}}, {{ti.team.team_code}}, , {{ti.team.nation_code}}<strong> {% trans "Strs" %}:&nbsp;{{ti.competitor_count}}</strong></span></h3>
 		</div>
 		<div class="panel-body">
 			<ul>
