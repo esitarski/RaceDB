@@ -50,7 +50,7 @@ function drawCharts() {
 	var participantTransactionCountChart = new google.visualization.ComboChart(document.getElementById("participantTransactionCountDiv"));
 	participantTransactionCountChart.draw(
 		participantTransactionCountTable, {
-				title:'Transactions Required per Participant',
+				title:'Edit Transactions Required per Participant',
 				bar: { groupWidth: '85%' },
 				legend: {position: 'none'},
 				seriesType: 'bars',
@@ -98,7 +98,7 @@ function drawCharts() {
 	var transactionRateOverTimeChart = new google.visualization.ColumnChart(document.getElementById("transactionRateOverTimeDiv"));
 	transactionRateOverTimeChart.draw(
 		transactionRateOverTimeTable, {
-			title:'Overall Transactions/Min',
+			title:'Overall Edit Transactions/Min',
 			bar: { groupWidth: '100%' },
 			legend: {position: 'none'},
 			animation: animationOption
@@ -123,7 +123,7 @@ function drawCharts() {
 		var transactionRateOverTimeChart = new google.visualization.ColumnChart(div);
 		transactionRateOverTimeChart.draw(
 			transactionRateOverTimeTable, {
-				title:payload.transactionClientRateOverTime[c][0] + ' Transactions/Min',
+				title:payload.transactionClientRateOverTime[c][0] + ' Edit Transactions/Min',
 				bar: { groupWidth: '100%' },
 				legend: {position: 'none'},
 				animation: animationOption
@@ -161,8 +161,8 @@ function drawCharts() {
 <div class="container"/>
 	<div class="row">
 		<div class="col-xs-2">
-			<h4>Average Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4><p/>
-			<h4>Peak Transaction Rate:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.transactionPeak.1}}/min</span><br/>@{{payload.transactionPeak.0}}</h4>
+			<h4>Average Edit Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4><p/>
+			<h4>Peak Edit Transaction Rate:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.transactionPeak.1}}/min</span><br/>@{{payload.transactionPeak.0}}</h4>
 		</div>
 		<div class="col-xs-5">
 			<div id="participantTransactionCountDiv" style="width: 500px; height: 250px;"></div>

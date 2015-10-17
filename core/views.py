@@ -2080,7 +2080,10 @@ def CompetitionRegAnalytics( request, competitionId ):
 	payload['participant_total'] = Participant.objects.filter(competition=competition).count()
 	payload['participant_prereg_total'] = Participant.objects.filter(competition=competition, preregistered=True).count()
 	payload['license_holder_total'] = len( set(Participant.objects.filter(competition=competition).values_list('license_holder__pk', flat=True)) )
-	payload['transactionPeak'][0] = payload['transactionPeak'][0].strftime('%H:%M').lstrip('0')
+	try:
+		payload['transactionPeak'][0] = payload['transactionPeak'][0].strftime('%H:%M').lstrip('0')
+	except:
+		pass
 	payload_json = json.dumps(payload, separators=(',',':'))
 	return render_to_response( 'reg_analytics.html', RequestContext(request, locals()) )
 

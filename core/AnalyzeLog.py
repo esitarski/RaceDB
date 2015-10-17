@@ -69,10 +69,14 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 				continue
 			fields = line.split(None, 2)
 			
-			timestamp = datetime.datetime( *[int(v) for v in reNonDigits.sub(' ', fields[0]).split()] )
+			try:
+				timestamp = datetime.datetime( *[int(v) for v in reNonDigits.sub(' ', fields[0]).split()] )
+			except:
+				continue
+			
 			if (start and timestamp < start) or (end and end < timestamp):
 				continue
-				
+			
 			funcName, remoteAddr, participantId, userName = parseParameters( fields[2] )
 
 			if userName == 'super' and not include_superuser:
