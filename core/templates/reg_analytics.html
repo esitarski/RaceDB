@@ -156,7 +156,7 @@ function drawCharts() {
 </p>
 </div>
 <h2>{{competition.name}}: {{start|date:"Y-m-d"}}</h2>
-<h3>License Holders: {{payload.license_holder_total}}&nbsp;&nbsp;&nbsp;&nbsp;Prereg: {{payload.participant_prereg_total}}&nbsp;&nbsp;Participants: {{payload.participant_total}} (includes attendees in multiple categories)</h3>
+<h3>{% trans "License Holders" %}: {{payload.license_holder_total}}&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Prereg" %}: {{payload.participant_prereg_total}}&nbsp;&nbsp;{% trans "Participants" %}: {{payload.participant_total}} ({% trans "includes attendees in multiple categories" %})</h3>
 <p>
 {% if not payload.valid %}
 	<h2>{% trans "No log data.  Nothing to analyze." %}</h2>
@@ -164,10 +164,12 @@ function drawCharts() {
 <div class="container"/>
 	<div class="row">
 		<div class="col-xs-2">
-			<h4>Average Edit Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4>
-			<p/>
-			<h4>Peak Edit Transaction Rate:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.transactionPeak.1}}/min</span><br/>@{{payload.transactionPeak.0}}</h4>
-			<p/>
+			{% if payload.valid %}
+				<h4>{% trans "Average Edit Transactions per Participant" %}:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4>
+				<p/>
+				<h4>{% trans "Peak Edit Transaction Rate" %}:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.transactionPeak.1}}/min</span><br/>@{{payload.transactionPeak.0}}</h4>
+				<p/>
+			{% endif %}
 		</div>
 		<div class="col-xs-5">
 			<div id="participantTransactionCountDiv" style="width: 500px; height: 250px;"></div>
@@ -177,7 +179,7 @@ function drawCharts() {
 		</div>
 	</div>
 </div>
-<h4>Stations: <span style="font-size: 200%; font-weight: bold;">{{payload.stations}}</span></h4>
+{% if payload.valid %}<h4>{% trans "Stations" %}: <span style="font-size: 200%; font-weight: bold;">{{payload.stations}}</span></h4>{% endif %}
 <div id="transactionRateOverTimeDiv" style="width: 1200px; height: 250px;"></div>
 <div id="transactionRateClientsDiv"></div>
 {% endblock content %}
