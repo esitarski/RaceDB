@@ -161,8 +161,10 @@ function drawCharts() {
 <div class="container"/>
 	<div class="row">
 		<div class="col-xs-2">
-			<h4>Average Edit Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4><p/>
+			<h4>Average Edit Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4>
+			<p/>
 			<h4>Peak Edit Transaction Rate:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.transactionPeak.1}}/min</span><br/>@{{payload.transactionPeak.0}}</h4>
+			<p/>
 		</div>
 		<div class="col-xs-5">
 			<div id="participantTransactionCountDiv" style="width: 500px; height: 250px;"></div>
@@ -172,6 +174,7 @@ function drawCharts() {
 		</div>
 	</div>
 </div>
+<h4>Stations: <span style="font-size: 200%; font-weight: bold;">{{payload.stations}}</span></h4>
 <div id="transactionRateOverTimeDiv" style="width: 1200px; height: 250px;"></div>
 <div id="transactionRateClientsDiv"></div>
 {% endblock content %}
