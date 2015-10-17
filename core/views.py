@@ -2095,7 +2095,8 @@ def TeamsShow( request, competitionId ):
 	team_info = [ {
 			'team':team,
 			'staff':Participant.objects.filter(competition=competition, team=team).exclude(role=Participant.Competitor).order_by('role'),
-			'participant_count':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).count(),
+			'competitor_count':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).count(),
+			'competitors':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).order_by('bib'),
 		} for team in competition.get_teams() ]
 	return render_to_response( 'teams_show.html', RequestContext(request, locals()) )
 
