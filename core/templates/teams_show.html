@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+{% load staticfiles %}
+{% load i18n %}
+<style>
+.borderless tbody tr td, .borderless tbody tr th, .borderless thead tr th {
+    border: none;
+}
+</style>
+<h2>{% trans "Teams"%}: {{competition.name}}: {{competition.start_date}}</h2>
+<hr class="hidden-print"/>
+{% spaceless %}
+{% for ti in team_info %}
+	<div class="panel panel-info">
+		<div class="panel-heading">
+			<h3>{{ti.team.name}}, <span style="font-size:75%">{{ti.team.get_team_type_display}}, {{ti.team.team_code}}, , {{ti.team.nation_code}}<strong>{% trans "Strs" %}:&nbsp;{{ti.competitor_count}}</strong></span></h3>
+		</div>
+		<div class="panel-body">
+			<ul>
+			{% for p in ti.staff %}
+				{% with h=p.license_holder %}
+					<li>{{p.get_role_display}}: <span style="font-size: 120%; font-weight: bold;">{{h.first_name}} {{h.last_name}}</span>, {{h.email}}, {{h.phone}}</li>
+				{% endwith %}
+			{% empty %}
+					<li style="font-size: 120%; font-weight: bold;">&lt;&lt;{% trans "No staff." %}&gt;&gt;</li>
+			{% endfor %}
+			</ul>
+			<table class="table table-condensed borderless">
+				{% for p in ti.competitors %}
+					<tr>
+					<td>{% if p.bib %}{{p.bib}}{% else %}{% trans 'NoBib' %}{% endif %}</td>
+					{% with h=p.license_holder %}
+						<td><span style="font-size: 120%; font-weight: bold;">{{h.first_name}} {{h.last_name}}</span></td>
+						<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
+						<td>
+							<span style="white-space: nowrap;">
+								{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
+							</span>
+						</td>
+						<td>
+							{{h.license_code}}
+						</td>
+					{% endwith %}
+					</tr>
+				{% endfor %}
+			</table>
+		</div>
+	</div>
+{% endfor %}
+{% endspaceless %}
+{% endblock content %}
