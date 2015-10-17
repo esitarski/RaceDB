@@ -1,8 +1,28 @@
 {% extends "base.html" %}
-{% block content %}
 {% load static %}
 {% load staticfiles %}
 {% load i18n %}
+{% block content %}
+
+<script>
+function hideShowTeam( i ) {
+	for( var j = 1; ; ++j ) {
+		var div = document.getElementById( 'idTeam' + j );
+		if( !div )
+			break;
+		if( i == 0 )
+			div.classList.remove( 'hidden' );
+		else if( i == j )
+			div.classList.remove( 'hidden' );
+		else
+			div.classList.add( 'hidden' );
+		document.getElementById( 'idSelect' + j ).classList.remove( 'active' );
+	}
+	document.getElementById( 'idSelect0' ).classList.remove( 'active' );
+	document.getElementById( 'idSelect' + i ).classList.add( 'active' );
+}
+</script>
+
 <style>
 .borderless tbody tr td, .borderless tbody tr th, .borderless thead tr th {
     border: none;
@@ -11,10 +31,16 @@
 <h2>{% trans "Teams"%}: {{competition.name}}: {{competition.start_date}}</h2>
 <hr class="hidden-print"/>
 {% spaceless %}
+<ul class="nav nav-pills">
+	<li role="presentation" class="active" id="idSelect0"><a href="#" onclick="hideShowTeam(0)">{% trans "All" %}</a></li>
+	{% for ti in team_info %}
+		<li role="presentation" id="idSelect{{forloop.counter}}" href="#" onclick="hideShowTeam({{forloop.counter}})"><a>{{ti.team.name}}<sub>&nbsp;{{ti.competitor_count}}</sub></a></li>
+	{% endfor %}
+</ul>
 {% for ti in team_info %}
-	<div class="panel panel-info">
+	<div class="panel panel-info" id="idTeam{{forloop.counter}}">
 		<div class="panel-heading">
-			<h3>{{ti.team.name}}, <span style="font-size:75%">{{ti.team.get_team_type_display}}, {{ti.team.team_code}}, , {{ti.team.nation_code}}<strong>{% trans "Strs" %}:&nbsp;{{ti.competitor_count}}</strong></span></h3>
+			<h3>{{ti.team.name}}, <span style="font-size:75%">{{ti.team.get_team_type_display}}, {{ti.team.team_code}}, , {{ti.team.nation_code}}<strong> {% trans "Strs" %}:&nbsp;{{ti.competitor_count}}</strong></span></h3>
 		</div>
 		<div class="panel-body">
 			<ul>
@@ -26,7 +52,7 @@
 					<li style="font-size: 120%; font-weight: bold;">&lt;&lt;{% trans "No staff." %}&gt;&gt;</li>
 			{% endfor %}
 			</ul>
-			<table class="table table-condensed borderless">
+			<table class="table table-condensed table-hover borderless">
 				{% for p in ti.competitors %}
 					<tr>
 					<td>{% if p.bib %}{{p.bib}}{% else %}{% trans 'NoBib' %}{% endif %}</td>
@@ -35,11 +61,11 @@
 						<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 						<td>
 							<span style="white-space: nowrap;">
-								{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
+								{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}<span>{{h.uci_code}}</span>
 							</span>
 						</td>
 						<td>
-							{{h.license_code}}
+							<span>{{h.license_code}}</span>
 						</td>
 					{% endwith %}
 					</tr>

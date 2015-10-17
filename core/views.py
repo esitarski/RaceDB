@@ -2098,6 +2098,7 @@ def TeamsShow( request, competitionId ):
 			'competitor_count':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).count(),
 			'competitors':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).order_by('bib'),
 		} for team in competition.get_teams() ]
+	num_teams = len(team_info)
 	return render_to_response( 'teams_show.html', RequestContext(request, locals()) )
 
 @external_access
