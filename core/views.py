@@ -58,6 +58,7 @@ from autostrip import autostrip
 
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
+from AnalyzeLog import AnalyzeLog
 
 #---------------------------------------------------------------------
 from context_processors import getContext
@@ -2028,6 +2029,17 @@ def CompetitionDashboard( request, competitionId ):
 	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
 	return render_to_response( 'competition_dashboard.html', RequestContext(request, locals()) )
+
+@external_access
+@user_passes_test( lambda u: u.is_superuser )
+def CompetitionRegAnalytics( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	payload = AnalyzeLog(
+		start=competition.start_date + datetime.timedelta(seconds=0),
+		end=competition.start_date + datetime.timedelta(hours=24)
+	)
+	payload_json = json.dumps(payload, separators=(',',':'))
+	return render_to_response( 'reg_analytics.html', RequestContext(request, locals()) )
 
 @external_access
 def FinishLynx( request, competitionId ):

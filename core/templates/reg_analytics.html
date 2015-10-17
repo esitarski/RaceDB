@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block srcjavascript %}
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+var payload = {{payload_json|safe}};
+google.load("visualization", "1.1", {packages:["corechart", "table" /*, "treemap" */]});
+google.setOnLoadCallback(drawCharts);
+
+function formatFloat( num, precision ) {
+	return {v:num, f:num.toFixed(precision ? precision : 2)};
+}
+
+function formatIntPercent( num, total ) {
+	var percent = (100.0 * num) / (total ? total : 1);
+	return {v:num, f:num + ' / ' + total + ' (' + percent.toFixed(2) + '%)'};
+}
+
+function formatTPM( tpm ) {
+	if( tpm == 0 )
+		return tpm;
+	return {v:tpm, f:tpm + ' (one every ' + (60.0 / tpm).toFixed(1) + ' seconds)'};
+}
+
+function formatPercentInt( num, total ) {
+	var percent = (100.0 * num) / (total ? total : 1);
+	return {v:percent, f:percent.toFixed(2) + '% (' + num + ' / ' + total + ')'};
+}
+
+function drawCharts() {
+	var animationOption = {};
+
+	// -----------------------------------------------------------------
+	// Transactions per Participant
+	//
+	var participantTransactionCountTable = new google.visualization.DataTable();
+	participantTransactionCountTable.addColumn('string', 'Transactions');
+	participantTransactionCountTable.addColumn('number', 'Count');
+	var rows = [];
+	for( var i = 1; i < payload.participantTransactionCount.length; ++i ) {
+		rows.push( [i+'', formatIntPercent(payload.participantTransactionCount[i], payload.transactionTotal)] );
+	}
+	participantTransactionCountTable.addRows( rows );
+	var participantTransactionCountChart = new google.visualization.ColumnChart(document.getElementById("participantTransactionCountDiv"));
+	participantTransactionCountChart.draw(
+		participantTransactionCountTable, {
+				title:'Transactions Required per Participant',
+				bar: { groupWidth: '85%' },
+				legend: {position: 'none'},
+				animation: animationOption
+			}
+		);
+
+	// -----------------------------------------------------------------
+	// Secondary function count.
+	//
+	var functionCountTable = new google.visualization.DataTable();
+	functionCountTable.addColumn('string', 'Field');
+	functionCountTable.addColumn('number', 'Count');
+	var rows = [];
+	for( var i = 0; i < payload.functionCount.length; ++i ) {
+		rows.push( [payload.functionCount[i][0], formatIntPercent(payload.functionCount[i][1], payload.functionCountTotal)] );
+	}
+	functionCountTable.addRows( rows );
+	var functionCountChart = new google.visualization.ColumnChart(document.getElementById("functionCountDiv"));
+	functionCountChart.draw(
+		functionCountTable, {
+			title:'Additional Field Changed',
+			bar: { groupWidth: '85%' },
+			legend: {position: 'none'},
+			animation: animationOption
+		}
+	);
+
+	// -----------------------------------------------------------------
+	// Overall Transaction Rate
+	//
+	var transactionRateOverTimeTable = new google.visualization.DataTable();
+	transactionRateOverTimeTable.addColumn('string', 'Time');
+	transactionRateOverTimeTable.addColumn('number', 'Transactions/Min');
+	var rows = [];
+	for( var i = 0; i < payload.buckets.length; ++i ) {
+		rows.push( [payload.buckets[i], formatTPM(payload.transactionRateOverTime[i])] );
+	}
+	transactionRateOverTimeTable.addRows( rows );
+	var transactionRateOverTimeChart = new google.visualization.ColumnChart(document.getElementById("transactionRateOverTimeDiv"));
+	transactionRateOverTimeChart.draw(
+		transactionRateOverTimeTable, {
+			title:'Overall Transaction Rate',
+			bar: { groupWidth: '100%' },
+			legend: {position: 'top'},
+			animation: animationOption
+		}
+	);
+	
+	var transactionRateClientsDiv = document.getElementById("transactionRateClientsDiv");
+	for( var c = 0; c < payload.transactionClientRateOverTime.length; ++c ) {
+		var div = document.createElement("div");
+		div.style.width = '1200px';
+		div.style.height = '250px';
+		transactionRateClientsDiv.appendChild( div );
+		
+		var transactionRateOverTimeTable = new google.visualization.DataTable();
+		transactionRateOverTimeTable.addColumn('string', 'Time');
+		transactionRateOverTimeTable.addColumn('number', 'Transactions/Min');
+		var rows = [];
+		for( var i = 0; i < payload.buckets.length; ++i ) {
+			rows.push( [payload.buckets[i], formatTPM(payload.transactionClientRateOverTime[c][1][i])] );
+		}
+		transactionRateOverTimeTable.addRows( rows );
+		var transactionRateOverTimeChart = new google.visualization.ColumnChart(div);
+		transactionRateOverTimeChart.draw(
+			transactionRateOverTimeTable, {
+				title:payload.transactionClientRateOverTime[c][0] + ' Transaction Rate',
+				bar: { groupWidth: '100%' },
+				legend: {position: 'top'},
+				animation: animationOption
+			}
+		);
+	}
+}
+ </script>
+{% endblock srcjavascript %}
+{% load staticfiles %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 2500 );
+	});
+{% endblock onload %}
+{% block content %}
+
+{% load i18n %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+<div class='hidden-print'>
+<img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
+<h2>{{page_title}}</h2>
+<p class="text-center hidden-print">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+</div>
+<p>
+<div class="container"/>
+	<div class="row">
+		<div class="col-xs-2">
+			<h4>Average Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4>
+		</div>
+		<div class="col-xs-5">
+			<div id="participantTransactionCountDiv" style="width: 500px; height: 250px;"></div>
+		</div>
+		<div class="col-xs-5">
+			<div id="functionCountDiv" style="width: 500px; height: 250px;"></div>
+		</div>
+	</div>
+</div>
+<div id="transactionRateOverTimeDiv" style="width: 1200px; height: 250px;"></div>
+<div id="transactionRateClientsDiv"></div>
+<hr/>
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+{% endblock content %}

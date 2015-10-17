@@ -1,49 +1,64 @@
-
 import re
 import datetime
 from collections import defaultdict
+import WriteLog
 
 reNonDigits = re.compile('[^0-9]+')
+reDigits = re.compile( '[0-9]+' )
 
 epoch = datetime.datetime.utcfromtimestamp(0)
 bucketSize = 1*60
 def getBucket(dt):
-	return int( (dt - epoch).total_seconds() + 0.5 ) // bucketSize
+	return int( (dt - epoch).total_seconds() ) // bucketSize
 
 reRemoteAddr = re.compile('remote_addr="([^"]*)"')
 rePath = re.compile('path="([^"]*)"')
 reUserName = re.compile('username="([^"]*)"')
+
 def parseParameters( s ):
-	remoteAddr, participantId, userName = None, None, None
-	
-	m = reRemoteAddr.search( s )
-	if m:
-		remoteAddr = m.group(1)
-		
+	funcName = None
+	participantId = None
 	m = rePath.search( s )
 	if m:
+		pathComponents = m.group(1).split('/')
 		try:
-			participantId = int( m.group(1).split('/')[-2] )
+			participantId = int( pathComponents[-2] )
 		except Exception as e:
-			pass
+			participantId = None
+			
+		for p in reversed(pathComponents):
+			if p and not reDigits.match(p):
+				funcName = p
+				break
 	
-	m = reUserName.search( s )
-	if m:
-		userName = m.group(1)
+	try:
+		remoteAddr = reRemoteAddr.search(s).group(1)
+	except Exception as e:
+		remoteAddr = None
 		
-	return remoteAddr, participantId, userName
+	try:
+		userName = reUserName.search(s).group(1)
+	except Exception as e:
+		userName = None
+		
+	return funcName, remoteAddr, participantId, userName
 
-def AnalyzeLog( logfile, start=None, end=None, include_superuser=False ):
+def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
+	if not logfile:
+		logfile = WriteLog.logFileName
+		
+	# Debug.
+	logfile, start, end = 'core/RaceDBLog.txt', datetime.datetime(2015, 10, 10), datetime.datetime(2015, 10, 11)
+	
 	errors = []
 	
 	participantCount = defaultdict( int )
-	transactionProfile = defaultdict( int )
-	transactionClientProfile = defaultdict( lambda: defaultdict(int) )
+	transactionRateOverTime = defaultdict( int )
+	transactionClientRateOverTime = defaultdict( lambda: defaultdict(int) )
 	
 	functionCount = { fname:0 for fname in [
 			'ParticipantCategorySelect', 'ParticipantBibSelect', 'ParticipantTeamSelect',
-			'LicenseHolderConfirmAddToCompetition', 'ParticipantPaidChange',
-			'LicenseHolderNew', 'ParticipantTagChange'
+			'ParticipantPaidChange', 'ParticipantTagChange', 'ParticipantSignatureChange',
 		]
 	}
 	
@@ -58,73 +73,68 @@ def AnalyzeLog( logfile, start=None, end=None, include_superuser=False ):
 			if (start and timestamp < start) or (end and end < timestamp):
 				continue
 				
-			func = fields[2]
-			remoteAddr, participantId, userName = parseParameters( func )
-			print timestamp, remoteAddr, participantId, userName
+			funcName, remoteAddr, participantId, userName = parseParameters( fields[2] )
 
-			if not include_superuser and userName == 'super':
+			if userName == 'super' and not include_superuser:
 				continue
 			
-			funcName = func.split( '(', 1 )[0]
 			if funcName in functionCount:
 				functionCount[funcName] += 1
 			
-			if func.startswith( 'ParticipantEdit(' ):			
+			if funcName == 'ParticipantEdit':
 				bucket = getBucket( timestamp )
 				
 				participantCount[participantId] += 1
-				transactionProfile[bucket] += 1
-				transactionClientProfile[remoteAddr][bucket] += 1
+				transactionRateOverTime[bucket] += 1
+				transactionClientRateOverTime[remoteAddr][bucket] += 1
 				
-	if not transactionProfile:
+	if not transactionRateOverTime:
 		return None
 	
-	bMin = min( b for b in transactionProfile.iterkeys() )
-	bMax = max( b for b in transactionProfile.iterkeys() ) + 1
-	print bMin, bMax
+	bMin = min( b for b in transactionRateOverTime.iterkeys() )
+	bMax = max( b for b in transactionRateOverTime.iterkeys() ) + 1
 	buckets = [epoch + datetime.timedelta(seconds=b*bucketSize) for b in xrange(bMin, bMax)]
 	
-	transactionProfile = [transactionProfile[b] for b in xrange(bMin, bMax)]
-	tpc = []
-	for remote_addr, cp in transactionClientProfile.iteritems():
-		tpc.append( (remote_addr, [cp[b] for b in xrange(bMin, bMax)] ) )
-	tpc.sort()
+	transactionRateOverTime = [transactionRateOverTime[b] for b in xrange(bMin, bMax)]
+	tcr = []
+	for remote_addr, cp in transactionClientRateOverTime.iteritems():
+		tcr.append( (remote_addr, [cp[b] for b in xrange(bMin, bMax)] ) )
+	tcr.sort( key=lambda x: (sum(x[1]), x[0]), reverse=True )
 
-	transactionFrequency = []
+	participantTransactionCount = []
 	for v in participantCount.itervalues():
-		if v >= len(transactionFrequency):
-			transactionFrequency.extend( [0 for i in xrange(len(transactionFrequency), v+1)] )
-		transactionFrequency[v] += 1
-	total = sum(transactionFrequency)
-	transactionFrequencyPercentage = [(100.0*t) / total for t in transactionFrequency]
+		if v >= len(participantTransactionCount):
+			participantTransactionCount.extend( [0 for i in xrange(len(participantTransactionCount), v+1)] )
+		participantTransactionCount[v] += 1
+	total = sum(participantTransactionCount)
+	participantTransactionCountPercentage = [(100.0*t) / total for t in participantTransactionCount]
 
 	transactionPeak = (0, 0)
-	for b, p in enumerate(transactionProfile):
+	for b, p in enumerate(transactionRateOverTime):
 		if p > transactionPeak[1]:
 			transactionPeak = (b, p)
 			
-	averageTransationRate = sum(transactionProfile) / float(bMax - bMin)
-	
-	functionCount = sorted( ((fname, count) for fname, count in functionCount.iteritems()), key=lambda fc: fc[1], reverse=True )
+	functionCount = sorted( ([re.sub('Participant|Select|Change', '', fname), count]
+		for fname, count in functionCount.iteritems() if count), key=lambda fc: fc[1], reverse=True )
 
 	return {
-		'buckets': buckets,
-		'functionCount': functionCount,
-		'transactionPeak': transactionPeak,
-		'averageTransationRate': averageTransationRate,
-		'transactionProfile': transactionProfile,
-		'transactionClientProfile': tpc,
-		'participantCount': participantCount,
+		'transactionTotal': total,
 		'averageTransactionsPerParticipant': float(sum(participantCount.itervalues())) / float(len(participantCount)),
-		'transactionFrequency': transactionFrequency,
-		'transactionFrequencyPercentage': transactionFrequencyPercentage,
-		'workstations': len(tpc),
+		'transactionPeak': transactionPeak,
+		'transactionRateOverTime': transactionRateOverTime,
+		'transactionClientRateOverTime': tcr,
+		'participantTransactionCount': participantTransactionCount,
+		'participantTransactionCountPercentage': participantTransactionCountPercentage,
+		'functionCount': functionCount,
+		'functionCountTotal': sum( count for name, count in functionCount ),
+		'stations': len(tcr),
+		'buckets': [b.strftime('%H:%M').lstrip('0') for b in buckets],
 	}
 		
 if __name__ == '__main__':
 	r = AnalyzeLog( 'RaceDBLog.txt', datetime.datetime(2015, 10, 10), datetime.datetime(2015, 10, 11) )
-	for k in (	'averageTransactionsPerParticipant', 'transactionFrequency', 'transactionFrequencyPercentage',
-				'workstations', 'averageTransationRate', 'functionCount'):
+	for k in (	'averageTransactionsPerParticipant', 'participantTransactionCount', 'participantTransactionCountPercentage',
+				'stations', 'functionCount'):
 		print '{}={}'.format(k, r[k])
 	t = r['buckets'][r['transactionPeak'][0]]
 	print 'transactionPeak={} at {}-{}'.format(r['transactionPeak'][0], t, t + datetime.timedelta(seconds=bucketSize))

@@ -68,6 +68,8 @@
 				{% if request.user.is_superuser %}
 					&nbsp;
 					<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{competition.id}}">{% trans "Edit" %}</a>
+					&nbsp;
+					<a class="btn btn-primary" href="{{path}}CompetitionRegAnalytics/{{competition.id}}">{% trans "Reg Analytics" %}</a>
 				{% endif %}
 				&nbsp;
 				<button class="btn btn-primary hidden-print" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print" %}</button>
