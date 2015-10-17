@@ -2030,14 +2030,57 @@ def CompetitionDashboard( request, competitionId ):
 	category_numbers=competition.categorynumbers_set.all()
 	return render_to_response( 'competition_dashboard.html', RequestContext(request, locals()) )
 
+def GetRegAnalyticsForm( competition ):
+	class RegAnalyticsForm( Form ):
+		dates = [d.strftime('%Y-%m-%d') for d in sorted( set(e.date_time.date() for e in competition.get_events()) )]
+		
+		day = forms.ChoiceField( required = True, choices=((d, d) for d in dates) )
+		
+		def __init__(self, *args, **kwargs):
+			super(RegAnalyticsForm, self).__init__(*args, **kwargs)
+			
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'navbar-form navbar-left'
+			
+			button_args = [
+				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			]
+			
+			self.helper.layout = Layout(
+				Row(
+					Field('day', cols = '60'),
+				),
+				Row(
+					button_args[0],
+					HTML( '&nbsp;' * 5 ),
+					button_args[1],
+				),
+			)
+	return RegAnalyticsForm
+	
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionRegAnalytics( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	payload = AnalyzeLog(
-		start=competition.start_date + datetime.timedelta(seconds=0),
-		end=competition.start_date + datetime.timedelta(hours=24)
-	)
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = GetRegAnalyticsForm(competition)(request.POST)
+		if form.is_valid():
+			start = datetime.datetime( *[int(v) for v in form.cleaned_data['day'].replace('-', ' ').split()] )
+	else:
+		form = GetRegAnalyticsForm(competition)()
+		start = datetime.datetime( *[int(v) for v in form.dates[0].replace('-', ' ').split()] )
+	
+	payload = AnalyzeLog( start=start, end=start + datetime.timedelta(hours=24) ) or {}
+	payload['participant_total'] = Participant.objects.filter(competition=competition).count()
+	payload['participant_prereg_total'] = Participant.objects.filter(competition=competition, preregistered=True).count()
+	payload['license_holder_total'] = len( set(Participant.objects.filter(competition=competition).values_list('license_holder__pk', flat=True)) )
+	payload['transactionPeak'][0] = payload['transactionPeak'][0].strftime('%H:%M').lstrip('0')
 	payload_json = json.dumps(payload, separators=(',',':'))
 	return render_to_response( 'reg_analytics.html', RequestContext(request, locals()) )
 

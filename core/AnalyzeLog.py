@@ -48,7 +48,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 		logfile = WriteLog.logFileName
 		
 	# Debug.
-	logfile, start, end = 'core/RaceDBLog.txt', datetime.datetime(2015, 10, 10), datetime.datetime(2015, 10, 11)
+	# logfile, start, end = 'core/RaceDBLog.txt', datetime.datetime(2015, 10, 10), datetime.datetime(2015, 10, 11)
 	
 	errors = []
 	
@@ -109,10 +109,10 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	total = sum(participantTransactionCount)
 	participantTransactionCountPercentage = [(100.0*t) / total for t in participantTransactionCount]
 
-	transactionPeak = (0, 0)
+	transactionPeak = [buckets[0], 0]
 	for b, p in enumerate(transactionRateOverTime):
 		if p > transactionPeak[1]:
-			transactionPeak = (b, p)
+			transactionPeak = [buckets[b], p]
 			
 	functionCount = sorted( ([re.sub('Participant|Select|Change', '', fname), count]
 		for fname, count in functionCount.iteritems() if count), key=lambda fc: fc[1], reverse=True )

@@ -26,6 +26,10 @@ function formatPercentInt( num, total ) {
 	return {v:percent, f:percent.toFixed(2) + '% (' + num + ' / ' + total + ')'};
 }
 
+function formatPercent( p ) {
+	return {v:p, f:p.toFixed(2)};
+}
+
 function drawCharts() {
 	var animationOption = {};
 
@@ -35,18 +39,27 @@ function drawCharts() {
 	var participantTransactionCountTable = new google.visualization.DataTable();
 	participantTransactionCountTable.addColumn('string', 'Transactions');
 	participantTransactionCountTable.addColumn('number', 'Count');
+	participantTransactionCountTable.addColumn('number', 'Cumulative %');
 	var rows = [];
+	var percentCur = 0;
 	for( var i = 1; i < payload.participantTransactionCount.length; ++i ) {
-		rows.push( [i+'', formatIntPercent(payload.participantTransactionCount[i], payload.transactionTotal)] );
+		percentCur += 100.0 * payload.participantTransactionCount[i] / payload.transactionTotal;
+		rows.push( [i+'', formatIntPercent(payload.participantTransactionCount[i], payload.transactionTotal), formatPercent(percentCur)] );
 	}
 	participantTransactionCountTable.addRows( rows );
-	var participantTransactionCountChart = new google.visualization.ColumnChart(document.getElementById("participantTransactionCountDiv"));
+	var participantTransactionCountChart = new google.visualization.ComboChart(document.getElementById("participantTransactionCountDiv"));
 	participantTransactionCountChart.draw(
 		participantTransactionCountTable, {
 				title:'Transactions Required per Participant',
 				bar: { groupWidth: '85%' },
 				legend: {position: 'none'},
-				animation: animationOption
+				seriesType: 'bars',
+				series: {
+					1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+					vAxes: {
+						1: { minValue:0, maxValue:100 }
+					},
+				},
 			}
 		);
 
@@ -64,7 +77,7 @@ function drawCharts() {
 	var functionCountChart = new google.visualization.ColumnChart(document.getElementById("functionCountDiv"));
 	functionCountChart.draw(
 		functionCountTable, {
-			title:'Additional Field Changed',
+			title:'Fields Changed in Additional Edits',
 			bar: { groupWidth: '85%' },
 			legend: {position: 'none'},
 			animation: animationOption
@@ -76,7 +89,7 @@ function drawCharts() {
 	//
 	var transactionRateOverTimeTable = new google.visualization.DataTable();
 	transactionRateOverTimeTable.addColumn('string', 'Time');
-	transactionRateOverTimeTable.addColumn('number', 'Transactions/Min');
+	transactionRateOverTimeTable.addColumn('number', 'transactions/min');
 	var rows = [];
 	for( var i = 0; i < payload.buckets.length; ++i ) {
 		rows.push( [payload.buckets[i], formatTPM(payload.transactionRateOverTime[i])] );
@@ -85,9 +98,9 @@ function drawCharts() {
 	var transactionRateOverTimeChart = new google.visualization.ColumnChart(document.getElementById("transactionRateOverTimeDiv"));
 	transactionRateOverTimeChart.draw(
 		transactionRateOverTimeTable, {
-			title:'Overall Transaction Rate',
+			title:'Overall Transactions/Min',
 			bar: { groupWidth: '100%' },
-			legend: {position: 'top'},
+			legend: {position: 'none'},
 			animation: animationOption
 		}
 	);
@@ -101,7 +114,7 @@ function drawCharts() {
 		
 		var transactionRateOverTimeTable = new google.visualization.DataTable();
 		transactionRateOverTimeTable.addColumn('string', 'Time');
-		transactionRateOverTimeTable.addColumn('number', 'Transactions/Min');
+		transactionRateOverTimeTable.addColumn('number', 'transactions/min');
 		var rows = [];
 		for( var i = 0; i < payload.buckets.length; ++i ) {
 			rows.push( [payload.buckets[i], formatTPM(payload.transactionClientRateOverTime[c][1][i])] );
@@ -110,9 +123,9 @@ function drawCharts() {
 		var transactionRateOverTimeChart = new google.visualization.ColumnChart(div);
 		transactionRateOverTimeChart.draw(
 			transactionRateOverTimeTable, {
-				title:payload.transactionClientRateOverTime[c][0] + ' Transaction Rate',
+				title:payload.transactionClientRateOverTime[c][0] + ' Transactions/Min',
 				bar: { groupWidth: '100%' },
-				legend: {position: 'top'},
+				legend: {position: 'none'},
 				animation: animationOption
 			}
 		);
@@ -134,15 +147,22 @@ function drawCharts() {
 <div class='hidden-print'>
 <img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
 <h2>{{page_title}}</h2>
+<div class="hidden-print">
+{% crispy form %}
+<hr style="clear: both"/>
+</div>
 <p class="text-center hidden-print">
 &nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
 </p>
 </div>
+<h2>{{competition.name}}: {{start|date:"Y-m-d"}}</h2>
+<h3>License Holders: {{payload.license_holder_total}}&nbsp;&nbsp;&nbsp;&nbsp;Prereg: {{payload.participant_prereg_total}}&nbsp;&nbsp;Participants: {{payload.participant_total}} (includes attendees in multiple categories)</h3>
 <p>
 <div class="container"/>
 	<div class="row">
 		<div class="col-xs-2">
-			<h4>Average Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4>
+			<h4>Average Transactions per Participant:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.averageTransactionsPerParticipant|floatformat:-2}}</span></h4><p/>
+			<h4>Peak Transaction Rate:<br/><span style="font-size: 200%; font-weight: bold;">{{payload.transactionPeak.1}}/min</span><br/>@{{payload.transactionPeak.0}}</h4>
 		</div>
 		<div class="col-xs-5">
 			<div id="participantTransactionCountDiv" style="width: 500px; height: 250px;"></div>
@@ -154,6 +174,4 @@ function drawCharts() {
 </div>
 <div id="transactionRateOverTimeDiv" style="width: 1200px; height: 250px;"></div>
 <div id="transactionRateClientsDiv"></div>
-<hr/>
-<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 {% endblock content %}
