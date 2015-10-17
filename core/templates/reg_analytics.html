@@ -43,14 +43,14 @@ function drawCharts() {
 	var rows = [];
 	var percentCur = 0;
 	for( var i = 1; i < payload.participantTransactionCount.length; ++i ) {
-		percentCur += 100.0 * payload.participantTransactionCount[i] / payload.transactionTotal;
-		rows.push( [i+'', formatIntPercent(payload.participantTransactionCount[i], payload.transactionTotal), formatPercent(percentCur)] );
+		percentCur += payload.participantTransactionCountPercentage[i];
+		rows.push( [i+'', formatIntPercent(payload.participantTransactionCount[i], payload.participant_total), formatPercent(percentCur)] );
 	}
 	participantTransactionCountTable.addRows( rows );
 	var participantTransactionCountChart = new google.visualization.ComboChart(document.getElementById("participantTransactionCountDiv"));
 	participantTransactionCountChart.draw(
 		participantTransactionCountTable, {
-				title:'Edit Transactions Required per Participant',
+				title:'Edits Required per Participant (one required for validation)',
 				bar: { groupWidth: '85%' },
 				legend: {position: 'none'},
 				seriesType: 'bars',
@@ -70,14 +70,16 @@ function drawCharts() {
 	functionCountTable.addColumn('string', 'Field');
 	functionCountTable.addColumn('number', 'Count');
 	var rows = [];
+	var functionCountTotal = 0;
 	for( var i = 0; i < payload.functionCount.length; ++i ) {
+		functionCountTotal += payload.functionCount[i][1];
 		rows.push( [payload.functionCount[i][0], formatIntPercent(payload.functionCount[i][1], payload.functionCountTotal)] );
 	}
 	functionCountTable.addRows( rows );
 	var functionCountChart = new google.visualization.ColumnChart(document.getElementById("functionCountDiv"));
 	functionCountChart.draw(
 		functionCountTable, {
-			title:'Fields Changed in Additional Edits',
+			title:'Fields Changed in Additional Edits (' + functionCountTotal + ' changes total)',
 			bar: { groupWidth: '85%' },
 			legend: {position: 'none'},
 			animation: animationOption
@@ -98,7 +100,7 @@ function drawCharts() {
 	var transactionRateOverTimeChart = new google.visualization.ColumnChart(document.getElementById("transactionRateOverTimeDiv"));
 	transactionRateOverTimeChart.draw(
 		transactionRateOverTimeTable, {
-			title:'Overall Edit Transactions/Min',
+			title:'Overall - Edits/Min' + ' (' + payload.transactionTotal + ' transactions total)',
 			bar: { groupWidth: '100%' },
 			legend: {position: 'none'},
 			animation: animationOption
@@ -117,13 +119,13 @@ function drawCharts() {
 		transactionRateOverTimeTable.addColumn('number', 'transactions/min');
 		var rows = [];
 		for( var i = 0; i < payload.buckets.length; ++i ) {
-			rows.push( [payload.buckets[i], formatTPM(payload.transactionClientRateOverTime[c][1][i])] );
+			rows.push( [payload.buckets[i], formatTPM(payload.transactionClientRateOverTime[c].rate[i])] );
 		}
 		transactionRateOverTimeTable.addRows( rows );
 		var transactionRateOverTimeChart = new google.visualization.ColumnChart(div);
 		transactionRateOverTimeChart.draw(
 			transactionRateOverTimeTable, {
-				title:payload.transactionClientRateOverTime[c][0] + ' Edit Transactions/Min',
+				title:'Station: ' + payload.transactionClientRateOverTime[c].remote_addr + ' - Edits/Min' + ' (' + payload.transactionClientRateOverTime[c].total + ' transactions total)',
 				bar: { groupWidth: '100%' },
 				legend: {position: 'none'},
 				animation: animationOption

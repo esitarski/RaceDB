@@ -55,6 +55,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	participantCount = defaultdict( int )
 	transactionRateOverTime = defaultdict( int )
 	transactionClientRateOverTime = defaultdict( lambda: defaultdict(int) )
+	transactionTotal = 0
 	
 	functionCount = { fname:0 for fname in [
 			'ParticipantCategorySelect', 'ParticipantBibSelect', 'ParticipantTeamSelect',
@@ -91,6 +92,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 				participantCount[participantId] += 1
 				transactionRateOverTime[bucket] += 1
 				transactionClientRateOverTime[remoteAddr][bucket] += 1
+				transactionTotal += 1
 				
 	if not transactionRateOverTime:
 		return None
@@ -102,8 +104,8 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	transactionRateOverTime = [transactionRateOverTime[b] for b in xrange(bMin, bMax)]
 	tcr = []
 	for remote_addr, cp in transactionClientRateOverTime.iteritems():
-		tcr.append( (remote_addr, [cp[b] for b in xrange(bMin, bMax)] ) )
-	tcr.sort( key=lambda x: (sum(x[1]), x[0]), reverse=True )
+		tcr.append( {'remote_addr': remote_addr, 'rate': [cp[b] for b in xrange(bMin, bMax)], 'total': sum(cp[b] for b in xrange(bMin, bMax))} )
+	tcr.sort( key=lambda x: (x['total'], x['remote_addr']), reverse=True )
 
 	participantTransactionCount = []
 	for v in participantCount.itervalues():
@@ -122,8 +124,8 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 		for fname, count in functionCount.iteritems() if count), key=lambda fc: fc[1], reverse=True )
 
 	return {
-		'transactionTotal': total,
-		'averageTransactionsPerParticipant': float(sum(participantCount.itervalues())) / float(len(participantCount)),
+		'transactionTotal': transactionTotal,
+		'averageTransactionsPerParticipant': float(transactionTotal) / float(len(participantCount)),
 		'transactionPeak': transactionPeak,
 		'transactionRateOverTime': transactionRateOverTime,
 		'transactionClientRateOverTime': tcr,
