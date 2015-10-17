@@ -2077,6 +2077,7 @@ def CompetitionRegAnalytics( request, competitionId ):
 		start = datetime.datetime( *[int(v) for v in form.dates[0].replace('-', ' ').split()] )
 	
 	payload = AnalyzeLog( start=start, end=start + datetime.timedelta(hours=24) ) or {}
+	payload['valid'] = bool(payload)
 	payload['participant_total'] = Participant.objects.filter(competition=competition).count()
 	payload['participant_prereg_total'] = Participant.objects.filter(competition=competition, preregistered=True).count()
 	payload['license_holder_total'] = len( set(Participant.objects.filter(competition=competition).values_list('license_holder__pk', flat=True)) )
