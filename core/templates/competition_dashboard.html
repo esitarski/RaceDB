@@ -76,6 +76,9 @@
 				&nbsp;
 				<a class="btn btn-primary hidden-print" href="{{path}}FinishLynx/{{competition.id}}""><image src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<a class="btn btn-success" href="{{path}}TeamsShow/{{competition.id}}"><image src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
+				&nbsp;&nbsp;
+				
 				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><image src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
 				&nbsp;&nbsp;
 				{% if competition.using_tags %}

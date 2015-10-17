@@ -448,6 +448,12 @@ class Competition(models.Model):
 		
 	def get_categories( self ):
 		return Category.objects.filter( format=self.category_format )
+		
+	def get_teams( self ):
+		return Team.objects.filter( pk__in=set(
+				Participant.objects.filter(competition=self).exclude(team__isnull=True).values_list('team', flat=True)
+			)
+		)
 	
 	#----------------------------------------------------------------------------------------------------
 
@@ -1158,6 +1164,7 @@ class LicenseHolder(models.Model):
 	zip_postal = models.CharField( max_length=12, blank=True, default='', verbose_name=_('Zip/Postal') )
 	
 	email = models.EmailField( blank=True )
+	phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Phone') )
 	
 	uci_code = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI Code') )
 	

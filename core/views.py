@@ -559,6 +559,7 @@ class LicenseHolderForm( ModelForm ):
 			),
 			Row(
 				Col(Field('email', size=50), 4),
+				Col(Field('phone', size=50), 4),
 			),
 			Row(
 				Col(Field('license_code'), 3),
@@ -2087,6 +2088,16 @@ def CompetitionRegAnalytics( request, competitionId ):
 		pass
 	payload_json = json.dumps(payload, separators=(',',':'))
 	return render_to_response( 'reg_analytics.html', RequestContext(request, locals()) )
+
+@external_access
+def TeamsShow( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	team_info = [ {
+			'team':team,
+			'staff':Participant.objects.filter(competition=competition, team=team).exclude(role=Participant.Competitor).order_by('role'),
+			'participant_count':Participant.objects.filter(competition=competition, team=team, role=Participant.Competitor).count(),
+		} for team in competition.get_teams() ]
+	return render_to_response( 'teams_show.html', RequestContext(request, locals()) )
 
 @external_access
 def FinishLynx( request, competitionId ):
