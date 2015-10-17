@@ -29,14 +29,17 @@ function hideShowTeam( i ) {
 }
 </style>
 <h2>{% trans "Teams"%}: {{competition.name}}: {{competition.start_date}}</h2>
-<hr class="hidden-print"/>
+<div class="hidden-print">
+	<hr/>
+	<ul class="nav nav-pills">
+		<li role="presentation" class="active" id="idSelect0"><a href="#" onclick="hideShowTeam(0)">{% trans "All" %}</a></li>
+		{% for ti in team_info %}
+			<li role="presentation" id="idSelect{{forloop.counter}}" href="#" onclick="hideShowTeam({{forloop.counter}})"><a>{{ti.team.name}}<sub>&nbsp;{{ti.competitor_count}}</sub></a></li>
+		{% endfor %}
+	</ul>
+	<hr/>
+</div>
 {% spaceless %}
-<ul class="nav nav-pills">
-	<li role="presentation" class="active" id="idSelect0"><a href="#" onclick="hideShowTeam(0)">{% trans "All" %}</a></li>
-	{% for ti in team_info %}
-		<li role="presentation" id="idSelect{{forloop.counter}}" href="#" onclick="hideShowTeam({{forloop.counter}})"><a>{{ti.team.name}}<sub>&nbsp;{{ti.competitor_count}}</sub></a></li>
-	{% endfor %}
-</ul>
 {% for ti in team_info %}
 	<div class="panel panel-info" id="idTeam{{forloop.counter}}">
 		<div class="panel-heading">
