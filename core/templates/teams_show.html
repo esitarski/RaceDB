@@ -57,10 +57,13 @@ function hideShowTeam( i ) {
 			</ul>
 			<table class="table table-condensed table-hover borderless">
 				{% for p in ti.competitors %}
-					<tr>
+					{% if p.different_category %}
+						<tr><td>&nbsp;</td></tr>
+					{% endif %}
+					<tr onclick="jump('{{path}}ParticipantEdit/{{p.id}}/')");>
 					<td>{% if p.bib %}{{p.bib}}{% else %}{% trans 'NoBib' %}{% endif %}</td>
 					{% with h=p.license_holder %}
-						<td><span style="font-size: 120%; font-weight: bold;">{{h.first_name}} {{h.last_name}}</span></td>
+						<td><span style="font-size: 120%; font-weight: bold;">{{h.last_name}}, {{h.first_name}}</span></td>
 						<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 						<td>
 							<span style="white-space: nowrap;">
@@ -68,7 +71,10 @@ function hideShowTeam( i ) {
 							</span>
 						</td>
 						<td>
-							<span>{{h.license_code}}</span>
+							<span>{{h.license_code_trunc}}</span>
+						</td>
+						<td class="hidden-print">
+							<a class="btn btn-success btn-sm" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
 						</td>
 					{% endwith %}
 					</tr>

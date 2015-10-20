@@ -1647,7 +1647,12 @@ class Participant(models.Model):
 				
 	@property
 	def is_done( self ):
-		return self.show_confirm and (not self.competition.show_signature or self.signature)
+		return (
+			self.show_confirm and
+			self.license_holder.uci_code_error is None and
+			not self.license_holder.is_temp_license and
+			not (self.competition.show_signature or self.signature)
+		)
 	
 	def auto_confirm( self ):
 		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:

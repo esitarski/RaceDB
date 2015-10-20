@@ -55,6 +55,11 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 	prereg_participants_total = 0
 	competitions_total, events_total = 0, 0
 	
+	discipline_overall = defaultdict( set )
+	discipline_men = defaultdict( set )
+	discipline_women = defaultdict( set )
+	discipline_bucket = defaultdict( lambda: defaultdict(set) )
+	
 	def fix_age( age ):
 		return max(min(age, 119), 0)
 	
@@ -62,6 +67,8 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		if not competition.has_participants():
 			continue
 		
+		discipline_name = competition.discipline.name
+
 		competitions_total += 1
 		profile_year = max( profile_year, competition.start_date.year )
 		
@@ -126,14 +133,19 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 				
 				competition_attendee_total[competition] += 1
 				
+				discipline_overall[discipline_name].add( license_holder )
+				discipline_bucket[discipline_name][bucket].add( license_holder )
+				
 				if license_holder.gender == 0:
 					license_holders_men_total[license_holder] += 1
 					age_range_men_license_holders[bucket].add( license_holder )
 					age_range_men_attendee_count[bucket] += 1
+					discipline_men[discipline_name].add( license_holder )
 				else:
 					license_holders_women_total[license_holder] += 1
 					age_range_women_license_holders[bucket].add( license_holder )
 					age_range_women_attendee_count[bucket] += 1
+					discipline_women[discipline_name].add( license_holder )
 			
 			event_data = {
 				'name':event.name,
@@ -208,6 +220,10 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 	
 	def format_event_int_percent( num, total, event ):
 		return {'v':num, 'f':'{}: {} / {} ({:.2f}%)'.format(event, num, total, (100.0 * num) / (total or 1))}
+		
+	def format_percent( num, total ):
+		percent = 100.0 * float(num) / float(total if total else 1.0)
+		return {'v':percent, 'f':'{:.2f}%'.format(percent)}
 	
 	# Initialize the category total.
 	category_total = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_total_overall.iteritems()), key=lambda x: x[1], reverse=True )
@@ -255,6 +271,35 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		postal_codes['Unknown' if not lh.zip_postal else lh.zip_postal.replace(' ','')[:4]] += 1
 	postal_code_data = [['/All/' + ('Unknown' if p == 'Unknown' else '/'.join( p[:i] for i in xrange(1, len(p)+1))), total] for p, total in postal_codes.iteritems()]
 	
+	#-----------------------------------------------
+	# Discipline data.
+	#
+	discipline_total = len( set.union( *[v for v in discipline_overall.itervalues() ] ) )
+	discipline_men_total = len( set.union( *[v for v in discipline_men.itervalues() ] ) )
+	discipline_women_total = len( set.union( *[v for v in discipline_women.itervalues() ] ) )
+	
+	discipline_used = list(discipline_overall.iterkeys())
+	discipline_used.sort( key=lambda d: len(discipline_overall[d]), reverse=True )
+	
+	discipline_overall = [[d, format_percent(len(discipline_overall[d]), discipline_total)] for d in discipline_used]
+	discipline_overall.insert( 0, ['Discipline', 'All License Holders'] )
+	discipline_gender = [
+		[
+			d,
+			format_percent(len(discipline_men.get(d, set())), discipline_men_total),
+			format_percent(len(discipline_women.get(d, set())), discipline_women_total)
+		] for d in discipline_used]
+	discipline_gender.insert( 0, ['Discipline', 'Men', 'Women'] )
+	
+	buckets_used = set( b for b in discipline_bucket[d].iterkeys() for d in discipline_used )
+	bucket_min = min( buckets_used ) if discipline_bucket else 0
+	bucket_max = max( buckets_used ) + 1 if discipline_bucket else 0
+	discipline_bucket_total = {b: len( set.union(*[discipline_bucket[d].get(b,set()) for d in discipline_used])) for b in xrange(bucket_min, bucket_max)}
+	
+	discipline_age = [[d] + [format_percent(len(discipline_bucket[d].get(b, set())), discipline_bucket_total.get(b, 0)) for b in xrange(bucket_min, bucket_max)]
+		for d in discipline_used]
+	discipline_age.insert( 0, ['Discipline'] + ['{}-{}'.format(b*age_increment, (b+1)*age_increment-1) for b in xrange(bucket_min, bucket_max)] )
+	
 	payload = {
 		'competitions_total': competitions_total,
 		'events_total': events_total,
@@ -292,5 +337,10 @@ def participation_data( start_date=None, end_date=None, discipline=None, race_cl
 		'postal_codes':[[k,v] for k, v in postal_codes.iteritems() if k != 'Unknown'],
 		
 		'competitions': data,
+		
+		'discipline_total': discipline_total,
+		'discipline_overall': discipline_overall,
+		'discipline_gender': discipline_gender,
+		'discipline_age': discipline_age,
 	}
 	return payload, sorted( license_holders_event_errors, key=lambda x: (x[1].date_time, x[0].date_of_birth) )

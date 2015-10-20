@@ -618,6 +618,24 @@ function drawCharts() {
 	var postalStarburst = (new PostalStarburst()).init(payload.postal_codes, "postalCodeCanvas", 3).draw();
 	
 	// -----------------------------------------------------------------
+	// Disciplines
+	//
+{% if payload.discipline_total > 1 %}
+	var disciplineOverallChart = new google.visualization.ColumnChart(document.getElementById("disciplineOverallChartDiv"));
+	disciplineOverallChart.draw(google.visualization.arrayToDataTable(payload.discipline_overall),
+		{title:'Discipline Participation: All License Holders', bar: { groupWidth: '75%' }, isStacked: false, legend: {position: 'none'}, animation: animationOption} );
+	
+	var disciplineGenderChart = new google.visualization.ColumnChart(document.getElementById("disciplineGenderChartDiv"));
+	disciplineGenderChart.draw(google.visualization.arrayToDataTable(payload.discipline_gender),
+		{title:'Discipline Participation by Gender', bar: { groupWidth: '75%' }, isStacked: false, legend: {position: 'none'}, animation: animationOption} );
+	
+	var disciplineAgeChart = new google.visualization.ColumnChart(document.getElementById("disciplineAgeChartDiv"));
+	disciplineAgeChart.draw(google.visualization.arrayToDataTable(payload.discipline_age),
+		{title:'Discipline Participation by Age', bar: { groupWidth: '75%' }, isStacked: false, legend: {position: 'top', maxLines: 3}, animation: animationOption} );
+{% endif %}
+	
+	
+	// -----------------------------------------------------------------
 	// Overall Raw Data Table
 	//
 	var statsData = new google.visualization.DataTable();
@@ -783,7 +801,14 @@ function drawCharts() {
 <br/>
 <h3 class="page-break-before">Postal Chart</h3>
 <canvas width=600 height=600 id="postalCodeCanvas"></canvas>
+
+{% if payload.discipline_total > 1 %}
+<h3 class="page-break-before">Discipline Analysis</h3>
+<div id='disciplineOverallChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='disciplineGenderChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='disciplineAgeChartDiv'style="width: 1200px; height: 500px;"></div>
 <hr/>
+{% endif %}
 
 {% if license_holders_event_errors %}
 <div class="hidden-print">

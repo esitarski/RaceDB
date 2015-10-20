@@ -2107,6 +2107,19 @@ def TeamsShow( request, competitionId ):
 			'competitors':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).order_by('bib'),
 		}
 	)
+	
+	def getCategorySeq( p ):
+		return p.category.sequence if p.category else -1
+	
+	for ti in team_info:
+		ti['competitors'] = competitors = sorted(
+			list(ti['competitors']),
+			key=lambda p: (getCategorySeq(p), p.license_holder.search_text),
+		)
+		for i in xrange( 1, len(competitors) ):
+			if getCategorySeq(competitors[i-1]) != getCategorySeq(competitors[i]):
+				competitors[i].different_category = True
+	
 	num_teams = len(team_info)
 	return render_to_response( 'teams_show.html', RequestContext(request, locals()) )
 
