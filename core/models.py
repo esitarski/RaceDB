@@ -1347,7 +1347,7 @@ class TeamHint(models.Model):
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def unicode( self ):
-		return unicode(license_holder) + ' ' + unicode(discipline) + ' ' + unicode(team) + ' ' + unicode(effective_date)
+		return unicode(self.license_holder) + ' ' + unicode(self.discipline) + ' ' + unicode(self.team) + ' ' + unicode(self.effective_date)
 	
 	class Meta:
 		verbose_name = _('TeamHint')
@@ -1545,7 +1545,7 @@ class Participant(models.Model):
 
 	@property
 	def role_full_name( self ):
-		return u'{} {}'.format( self.ROLE_NAMES[self.roleCode()], get_role_display() )
+		return u'{} {}'.format( self.ROLE_NAMES[self.roleCode], get_role_display() )
 	
 	@property
 	def needs_bib( self ):
