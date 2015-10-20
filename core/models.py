@@ -1498,6 +1498,15 @@ class Participant(models.Model):
 							nse.save()
 					except NumberSetEntry.DoesNotExist:
 						NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()
+					except NumberSetEntry.MultipleObjectsReturned:
+						NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).exclude( bib=self.bib ).delete()
+						nse = NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).first()
+						if nse:
+							if nse.bib != self.bib:
+								nse.bib = self.bib
+								nse.save()
+						else:
+							NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()
 				else:
 					NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).delete()
 				
@@ -1575,6 +1584,9 @@ class Participant(models.Model):
 				self.bib = NumberSetEntry.objects.get( number_set=self.competition.number_set, license_holder=self.license_holder ).bib
 			except NumberSetEntry.DoesNotExist as e:
 				pass
+			except NumberSetEntry.MultipleObjectsReturned as e:
+				self.bib = NumberSetEntry.objects.filter( number_set=self.competition.number_set, license_holder=self.license_holder ).first().bib
+				NumberSetEntry.objects.filter(number_set=self.competition.number_set, license_holder=self.license_holder).exclude(bib=self.bib).delete()
 		
 		if self.competition.use_existing_tags:
 			self.tag  = self.license_holder.existing_tag

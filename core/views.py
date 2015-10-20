@@ -3309,7 +3309,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 	categories = set()
 	for p in Participant.objects.filter(competition=competition, license_holder=participant.license_holder):
 		if p != participant and participant.category:
-			catgegories.add( participant.category )
+			categories.add( participant.category )
 	if competition.is_category_conflict(categories):
 		has_error, conflict_explanation, conflict_participant = True, _('Cannot assign to another Category that already exists in an Event.'), None
 		return render_to_response( 'participant_integrity_error.html', RequestContext(request, locals()) )
