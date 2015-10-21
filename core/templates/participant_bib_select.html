@@ -8,10 +8,19 @@
 </h2>
 <br/>
 <h3><strong>{{participant.license_holder.full_name}}</strong>
+{% if participant.competition.number_set %}
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size: 65%">{% trans "Number Set Bibs:" %}{% for b in participant.allocated_bibs %} {{b}}{% endfor %}</span>
+{% endif %}
 <br/>
 {% if participant.team %}{{participant.team.full_name}}<br/>{% endif %}
 {{participant.category.full_name}}
-{% if participant.bib %}<br/><br/>{% trans "Current Bib" %}: <strong>{{participant.bib}}</strong>{% endif %}
+{% if participant.bib %}
+	<br/><br/>
+	{% trans "Category Bib" %}: <strong>{{participant.bib}}</strong>
+	{% if has_existing_number_set_bib %}
+		<span class="label label-warning">{% trans "Assigning a new Bib will set this Bib to Lost" %}</span>
+	{% endif %}
+{% endif %}
 </h3>
 <hr/>
 <style>

@@ -1306,7 +1306,10 @@ def NumberSetEdit( request, numberSetId ):
 	return GenericEdit(
 		NumberSet, request, numberSetId, NumberSetForm,
 		template='number_set_edit.html',
-		additional_context={'number_set_entries':NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib')}
+		additional_context={
+			'number_set_lost':NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).order_by('bib'),
+			'number_set_entries':NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib'),
+		}
 	)
 	
 @external_access
@@ -1337,6 +1340,12 @@ def NumberSetTop( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	NormalizeSequence( NumberSet.objects.all() )
 	MoveSequence( NumberSet, number_set, True )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+@external_access
+def BibFound( request, numberSetEntryId ):
+	nse = get_object_or_404( NumberSetEntry, pk=numberSetEntryId )
+	nse.number_set.return_to_pool( nse.bib )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 #--------------------------------------------------------------------------------------------
@@ -3439,7 +3448,11 @@ def ParticipantBibChange( request, participantId ):
 				b.full_name = bib_participants[b.bib].full_name_team
 			except:
 				pass
-		
+	
+	has_existing_number_set_bib = (
+		competition.number_set and
+		participant.bib == competition.number_set.get_bib( competition, participant.license_holder, participant.category )
+	)
 	return render_to_response( 'participant_bib_select.html', RequestContext(request, locals()) )
 	
 @external_access
@@ -3456,8 +3469,13 @@ def ParticipantBibSelect( request, participantId, bib ):
 		if bib_conflicts:
 			participant.bib = bib_save
 			return HttpResponseRedirect(getContext(request,'popUrl'))		# Show the select screen again.
+		else:
+			if competition.number_set and bib_save is not None and bib_save != bib:
+				competition.number_set.set_lost( bib_save )
 	else:
-		participant.bib = None
+		if competition.number_set and bib_save is not None:
+			competition.number_set.return_to_pool( bib_save )
+			participant.bib = None
 	
 	try:
 		participant.auto_confirm().save()

@@ -245,6 +245,32 @@ class NumberSet(models.Model):
 	def save( self, *args, **kwargs ):
 		init_sequence( NumberSet, self )
 		return super( NumberSet, self ).save( *args, **kwargs )
+		
+	def get_bib( self, competition, license_holder, category ):
+		category_numbers = competition.get_category_numbers( category )
+		if category_numbers:
+			numbers = category_numbers.get_numbers()
+			for bib in self.numbersetentry_set.filter( license_holder=license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True):
+				if bib in numbers:
+					return bib
+		return None
+		
+	def remove_license_holder_duplicates( self, license_holder ):
+		current_bibs = { bib:pk for bib, pk in NumberSetEntry.objects.filter( number_set=self, license_holder=license_holder ).values_list('bib', 'pk') }
+		self.numbersetentry_set.filter( license_holder=license_holder ).exclude( pk__in=current_bibs.itervalues ).delete()
+	
+	def assign_bib( self, license_holder, bib ):
+		self.remove_license_holder_duplicates( license_holder )
+		if self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).exists():
+			return
+		self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
+		NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
+	
+	def set_lost( self, bib ):
+		self.numbersetentry_set.filter(bib=bib, date_lost=None).update( date_lost=datetime.date.today() )
+	
+	def return_to_pool( self, bib ):
+		self.numbersetentry_set.filter(bib=bib).delete()
 	
 	def __unicode__( self ):
 		return self.name
@@ -472,9 +498,7 @@ class Competition(models.Model):
 		return sorted( categories_without_numbers, key = lambda c: c.sequence )
 	
 	def get_category_numbers( self, category ):
-		for cn in CategoryNumbers.objects.filter( competition = self, categories__in = [category] ):
-			return cn
-		return None
+		return CategoryNumbers.objects.filter( competition=self, categories__in=[category] ).first()
 	
 	#----------------------------------------------------------------------------------------------------
 
@@ -677,13 +701,14 @@ class CategoryNumbers( models.Model ):
 				
 			pair = p.split( '-' )
 			if len(pair) == 1:
-				n = int(pair[0])
+				n = max(1, int(pair[0]))
 				if exclude:
 					include.discard( n )
 				else:
 					include.add( n )
 			else:
 				nBegin, nEnd = [int(v) for v in pair[:2]]
+				nBegin = max( nBegin, 1 )
 				nEnd = min( nEnd, 10000 )
 				if exclude:
 					include.difference_update( xrange(nBegin, nEnd+1) )
@@ -1490,25 +1515,8 @@ class Participant(models.Model):
 		if self.role == self.Competitor:
 			
 			if number_set_update and competition.number_set:
-				if self.bib:
-					try:
-						nse = NumberSetEntry.objects.get( number_set=competition.number_set, license_holder=license_holder, date_lost=None )
-						if nse.bib != self.bib:
-							nse.bib = self.bib
-							nse.save()
-					except NumberSetEntry.DoesNotExist:
-						NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()
-					except NumberSetEntry.MultipleObjectsReturned:
-						NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).exclude( bib=self.bib ).delete()
-						nse = NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).first()
-						if nse:
-							if nse.bib != self.bib:
-								nse.bib = self.bib
-								nse.save()
-						else:
-							NumberSetEntry( number_set=competition.number_set, license_holder=license_holder, bib=self.bib ).save()
-				else:
-					NumberSetEntry.objects.filter( number_set=competition.number_set, license_holder=license_holder, date_lost=None ).delete()
+				if self.bib and self.category:
+					competition.number_set.assign_bib( license_holder, self.bib )
 				
 			if license_holder_update:
 				if license_holder.existing_tag != self.tag or license_holder.existing_tag2 != self.tag2:
@@ -1580,13 +1588,7 @@ class Participant(models.Model):
 	
 	def init_default_values( self ):
 		if not self.bib and self.competition.number_set:
-			try:
-				self.bib = NumberSetEntry.objects.get( number_set=self.competition.number_set, license_holder=self.license_holder ).bib
-			except NumberSetEntry.DoesNotExist as e:
-				pass
-			except NumberSetEntry.MultipleObjectsReturned as e:
-				self.bib = NumberSetEntry.objects.filter( number_set=self.competition.number_set, license_holder=self.license_holder ).first().bib
-				NumberSetEntry.objects.filter(number_set=self.competition.number_set, license_holder=self.license_holder).exclude(bib=self.bib).delete()
+			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
 		
 		if self.competition.use_existing_tags:
 			self.tag  = self.license_holder.existing_tag
@@ -1763,6 +1765,11 @@ class Participant(models.Model):
 		
 	def has_tt_events( self ):
 		return any( entered and event.event_type == 1 for event, optional, entered in self.get_participant_events() )
+		
+	@property
+	def allocated_bibs( self ):
+		return self.competition.number_set.numbersetentry_set.filter( license_holder=self.license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True) \
+			if self.competition.number_set else []
 	
 	def explain_integrity_error( self ):
 		participant = Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder).first()
