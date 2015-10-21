@@ -13,19 +13,16 @@ from models import *
 
 import xlsxwriter
 
-def participation_excel( start_date=None, end_date=None, discipline=None, race_class=None, organizers=None, include_labels=None, exclude_labels=None  ):
-	discipline = int(discipline or -1)
-	race_class = int(race_class or -1)
-
+def participation_excel( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None  ):
 	competitions = Competition.objects.all()
 	if start_date is not None:
 		competitions = competitions.filter( start_date__gte = start_date )
 	if end_date is not None:
 		competitions = competitions.filter( start_date__lte = end_date )
-	if discipline > 0:
-		competitions = competitions.filter( discipline__pk = discipline )
-	if race_class > 0:
-		competitions = competitions.filter( race_class__pk = race_class )
+	if disciplines > 0:
+		competitions = competitions.filter( discipline__pk__in = disciplines )
+	if race_classes:
+		competitions = competitions.filter( race_class__pk__in = race_classes )
 	if organizers:
 		competitions = competitions.filter( organizer__in = organizers )
 	if include_labels:

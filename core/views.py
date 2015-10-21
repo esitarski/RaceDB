@@ -4107,32 +4107,29 @@ def get_search_end_date():
 	last_competition = Competition.objects.all().order_by('-start_date').first()
 	return datetime.date( last_competition.start_date.year, 12, 31 ) if last_competition else None
 	
-def get_discipline_race_class_choices():
-	disciplines = set()
-	race_classes = set()
-	for c in Competition.objects.all():
-		disciplines.add( c.discipline )
-		race_classes.add( c.race_class )
-	return [(-1, _('All'))] + [
-			(d.id, d.name) for d in sorted( disciplines, key=lambda x: x.sequence )
-		], [(-1, _('All'))] + [
-			(r.id, r.name) for r in sorted( race_classes, key=lambda x: x.sequence )
-		]
-
 def get_organizer_choices():
 	return [(v, v) for v in sorted( set(Competition.objects.all().values_list('organizer', flat=True) ) )]
+
+def get_discipline_choices():
+	return [(id, name) for seq, id, name in sorted( set(Competition.objects.all().values_list(
+		'discipline__sequence','discipline__id', 'discipline__name')
+	) )]
+
+def get_race_class_choices():
+	return [(id, name) for seq, id, name in sorted( set(Competition.objects.all().values_list(
+		'race_class__sequence','race_class__id', 'race_class__name')
+	) )]
 
 def get_participant_report_form():
 	@autostrip
 	class ParticipantReportForm( Form ):
 		start_date = forms.DateField( required = False, label = _('Start Date') )
 		end_date = forms.DateField( required = False, label = _('End Date')  )
-		discipline_choices, race_class_choices = get_discipline_race_class_choices()
-		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
-		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
-		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices(), help_text=_('Ctrl-Click to Multi-Select') )
-		include_labels = forms.MultipleChoiceField( required = False, label = _('Include Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
-		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
+		race_classes = forms.MultipleChoiceField( required = False, label = _('Race Classes'), choices = get_race_class_choices() )
+		disciplines = forms.MultipleChoiceField( required = False, label = _('Disciplines'), choices = get_discipline_choices() )
+		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices() )
+		include_labels = forms.MultipleChoiceField( required = False, label = _('Include Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()] )
+		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()] )
 		
 		def __init__( self, *args, **kwargs ):
 			super(ParticipantReportForm, self).__init__(*args, **kwargs)
@@ -4144,13 +4141,21 @@ def get_participant_report_form():
 			self.helper.layout = Layout(
 				Row(
 					Div(
-						Row( Field('start_date'), Field('end_date')),
-						Row( Field('discipline', id='focus'), Field('race_class')),
-						css_class = 'col-md-5'
+						Row( Field('start_date') ),
+						Row( Field('end_date') ),
+						css_class = 'col-md-3'
 					),
-					Field('organizers', size=8),
-					Field('include_labels', size=8),
-					Field('exclude_labels', size=8),
+					Div(
+						Row(
+							Field('race_classes', id='focus', size=10),
+							Field('disciplines', size=10),
+							Field('organizers', size=10),
+							Field('include_labels', size=10),
+							Field('exclude_labels', size=10),
+						),
+						Row( HTML( _('Ctrl-Click to Multi-Select') ) ),
+						css_class = 'col-md-9',
+					)
 				),
 				HTML( '<hr/>' ),
 			)
@@ -4170,23 +4175,23 @@ def get_participant_report_form():
 @external_access
 @user_passes_test( lambda u: u.is_superuser )
 def ParticipantReport( request ):
-	start_date, end_date, discipline, race_class = get_search_start_date(), get_search_end_date(), None, None
+	start_date, end_date, discipline, race_classes = get_search_start_date(), get_search_end_date(), None, None
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
 		form = get_participant_report_form()( request.POST )
-		start_date, end_date, discipline, race_class = None, None, None, None
+		start_date, end_date, discipline, race_classes = None, None, None, None
 		if form.is_valid():
 			start_date = form.cleaned_data['start_date']
 			end_date = form.cleaned_data['end_date']
-			discipline = form.cleaned_data['discipline']
-			race_class = form.cleaned_data['race_class']
+			disciplines = form.cleaned_data['disciplines']
+			race_classes = form.cleaned_data['race_classes']
 			organizers = form.cleaned_data['organizers']
 			include_labels = form.cleaned_data['include_labels']
 			exclude_labels = form.cleaned_data['exclude_labels']
 			
-		sheet_name, xl = participation_excel( start_date, end_date, discipline, race_class, organizers, include_labels, exclude_labels )
+		sheet_name, xl = participation_excel( start_date, end_date, disciplines, race_classes, organizers, include_labels, exclude_labels )
 		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 		response['Content-Disposition'] = 'attachment; filename={}.xlsx'.format(sheet_name)
 		return response
@@ -4202,8 +4207,8 @@ def AttendanceAnalytics( request ):
 	initial = request.session.get( 'attendance_analytics', {
 			'start_date':get_search_start_date(),
 			'end_date':get_search_end_date(),
-			'discipline':-1,
-			'race_class':-1,
+			'disciplines':[],
+			'race_classes':[],
 			'organizers':[],
 		}
 	)
@@ -4217,8 +4222,8 @@ def AttendanceAnalytics( request ):
 			initial = {
 				'start_date':form.cleaned_data['start_date'],
 				'end_date':form.cleaned_data['end_date'],
-				'discipline':int(form.cleaned_data['discipline']),
-				'race_class':int(form.cleaned_data['race_class']),
+				'disciplines':form.cleaned_data['disciplines'],
+				'race_classes':form.cleaned_data['race_classes'],
 				'organizers':form.cleaned_data['organizers'],
 				'include_labels':form.cleaned_data['include_labels'],
 				'exclude_labels':form.cleaned_data['exclude_labels'],
@@ -4244,10 +4249,10 @@ def AttendanceAnalytics( request ):
 		obj = cls.objects.filter(id=id).first()
 		return obj.name if obj else ''
 	
-	if initial.get('discipline',0) > 0:
-		page_title += u' {}'.format(get_name(Discipline, initial['discipline']))
-	if initial.get('race_class',0) > 0:
-		page_title += u' {}'.format(get_name(RaceClass, initial['race_class']))
+	if initial.get('disciplines',None):
+		page_title += u' ({})'.format( u','.join( d.name for d in Discipline.objects.filter(pk__in=initial['disciplines'])) )
+	if initial.get('race_classes',None):
+		page_title += u' ({})'.format(u','.join( d.name for d in RaceClass.objects.filter(pk__in=initial['race_classes'])) )
 	if initial.get('include_labels', None):
 		page_title += u', +({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
 	if initial.get('exclude_labels',None):

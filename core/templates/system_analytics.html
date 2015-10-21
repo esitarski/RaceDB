@@ -591,47 +591,54 @@ function drawCharts() {
 			bar: { groupWidth: '75%' },
 			isStacked: false,
 			legend: {position: 'top'},
-			animation: animationOption
+			animation: animationOption,
+			vAxis: {viewWindow: {min: 0, max:100}}
 		}
 	);
 	
 	// -----------------------------------------------------------------
 	// Postal Codes
 	//
-	var postal_code_table = array_to_treemap(payload.postal_code_data, 'Count');
-	function showFullTooltip(row, size, value) {
-		return '<div style="background:#fd9; padding:10px; border-style:solid">' +
-					postal_code_table.getFormattedValue(row, 0) + ': ' + size +
-				'</div>';
-	}
-	/*
-	var postalCodeChart = new google.visualization.TreeMap(document.getElementById("postalCodeChartDiv"));
-	postalCodeChart.draw(postal_code_table, {
-			title:'License Holders Zip/Postal',
-			generateTooltip: showFullTooltip,
-			minColor: '#e7711c',
-			midColor: '#fff',
-			maxColor: '#4374e0',
-			showScale: true,
-		} );
-	*/
+{% if payload.postal_codes %}
 	var postalStarburst = (new PostalStarburst()).init(payload.postal_codes, "postalCodeCanvas", 3).draw();
+{% endif %}
 	
 	// -----------------------------------------------------------------
 	// Disciplines
 	//
-{% if payload.discipline_total > 1 %}
+{% if payload.discipline_used_len > 1 %}
 	var disciplineOverallChart = new google.visualization.ColumnChart(document.getElementById("disciplineOverallChartDiv"));
-	disciplineOverallChart.draw(google.visualization.arrayToDataTable(payload.discipline_overall),
-		{title:'Discipline Participation: All License Holders', bar: { groupWidth: '75%' }, isStacked: false, legend: {position: 'none'}, animation: animationOption} );
+	disciplineOverallChart.draw(google.visualization.arrayToDataTable(payload.discipline_overall), {
+			title:'Discipline Participation: All License Holders',
+			bar: { groupWidth: '75%' },
+			isStacked: false,
+			legend: {position: 'none'},
+			animation: animationOption,
+			vAxis: {viewWindow: {max: 100}}
+		}
+	);
 	
 	var disciplineGenderChart = new google.visualization.ColumnChart(document.getElementById("disciplineGenderChartDiv"));
-	disciplineGenderChart.draw(google.visualization.arrayToDataTable(payload.discipline_gender),
-		{title:'Discipline Participation by Gender', bar: { groupWidth: '75%' }, isStacked: false, legend: {position: 'none'}, animation: animationOption} );
+	disciplineGenderChart.draw(google.visualization.arrayToDataTable(payload.discipline_gender), {
+			title:'Discipline Participation by Gender',
+			bar: { groupWidth: '75%' },
+			isStacked:false,
+			legend: {position: 'none'},
+			animation: animationOption,
+			vAxis: {viewWindow: {max: 100}}
+		}
+	);
 	
 	var disciplineAgeChart = new google.visualization.ColumnChart(document.getElementById("disciplineAgeChartDiv"));
-	disciplineAgeChart.draw(google.visualization.arrayToDataTable(payload.discipline_age),
-		{title:'Discipline Participation by Age', bar: { groupWidth: '75%' }, isStacked: false, legend: {position: 'top', maxLines: 3}, animation: animationOption} );
+	disciplineAgeChart.draw(google.visualization.arrayToDataTable(payload.discipline_age), {
+			title:'Discipline Participation by Age',
+			bar: { groupWidth: '75%' },
+			isStacked: false,
+			legend: {position: 'top', maxLines: 3},
+			animation: animationOption,
+			vAxis: {viewWindow: {max: 100}}
+		}
+	);
 {% endif %}
 	
 	
@@ -798,11 +805,13 @@ function drawCharts() {
 <div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventPreRegChartDiv'style="width: 1200px; height: 500px;"></div>
 <!-- <div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div> -->
-<br/>
-<h3 class="page-break-before">Postal Chart</h3>
-<canvas width=600 height=600 id="postalCodeCanvas"></canvas>
+{% if payload.postal_codes %}
+	<br/>
+	<h3 class="page-break-before">Postal Chart</h3>
+	<canvas width=600 height=600 id="postalCodeCanvas"></canvas>
+{% endif %}
 
-{% if payload.discipline_total > 1 %}
+{% if payload.discipline_used_len > 1 %}
 <h3 class="page-break-before">Discipline Analysis</h3>
 <div id='disciplineOverallChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='disciplineGenderChartDiv'style="width: 1200px; height: 500px;"></div>

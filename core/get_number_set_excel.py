@@ -45,7 +45,7 @@ def get_number_set_excel( number_set ):
 	
 	title_format = wb.add_format( dict(bold = True) )
 	
-	ws = wb.add_worksheet('Numbers')
+	ws = wb.add_worksheet('Allocated Bibs')
 	
 	row = write_row_data( ws, 0, data_headers, title_format )
 	for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib'):
@@ -62,6 +62,25 @@ def get_number_set_excel( number_set ):
 			lh.uci_code,
 		]
 		row = write_row_data( ws, row, data )
-			
+	
+	ws = wb.add_worksheet('Lost Bibs')
+	
+	row = write_row_data( ws, 0, list(data_headers) + ['Lost'], title_format )
+	for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).order_by('bib'):
+		lh = nse.license_holder
+		data = [
+			nse.bib,
+			lh.last_name,
+			lh.first_name,
+			lh.get_gender_display(),
+			lh.date_of_birth.strftime('%Y-%m-%d'),
+			lh.city,
+			lh.state_prov,
+			lh.license_code,
+			lh.uci_code,
+			nse.date_lost.strftime('%Y-%m-%d'),
+		]
+		row = write_row_data( ws, row, data )	
+	
 	wb.close()
 	return output.getvalue()
