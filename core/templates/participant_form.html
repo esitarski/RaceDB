@@ -53,7 +53,7 @@
 		{{h.get_gender_display}}
 		{% if h.license_code %}
 			{% if isEdit and h.is_temp_license %}<a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% endif %}
-				{{h.license_code}}
+				{{h.license_code_trunc}}
 			{% if isEdit and h.is_temp_license %}</a>{% endif %}
 		{% endif %}
 		{% if h.uci_code %}

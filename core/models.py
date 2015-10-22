@@ -247,7 +247,11 @@ class NumberSet(models.Model):
 		return super( NumberSet, self ).save( *args, **kwargs )
 		
 	def get_bib( self, competition, license_holder, category ):
+		print 'competition', competition
+		print 'license_holder', license_holder
+		print 'category', category
 		category_numbers = competition.get_category_numbers( category )
+		print category_numbers
 		if category_numbers:
 			numbers = category_numbers.get_numbers()
 			for bib in self.numbersetentry_set.filter( license_holder=license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True):
@@ -1587,9 +1591,6 @@ class Participant(models.Model):
 					pass
 	
 	def init_default_values( self ):
-		if not self.bib and self.competition.number_set:
-			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
-		
 		if self.competition.use_existing_tags:
 			self.tag  = self.license_holder.existing_tag
 			self.tag2 = self.license_holder.existing_tag2
@@ -1620,6 +1621,10 @@ class Participant(models.Model):
 				init_date = pp.competition.start_date
 				break
 
+		# After we found a default category, try to get the bib number.
+		if not self.bib and self.competition.number_set:
+			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
+		
 		#if not self.role:
 		#	self.role = Participant._meta.get_field_by_name('role')[0].default
 
