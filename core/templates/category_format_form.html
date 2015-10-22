@@ -14,8 +14,7 @@
 <table class="table table-striped table-hover">
 <thead>
 	<tr>
-		<th>{% trans "Code" %}</th>
-		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Code (Gender)" %}</th>
 		<th>{% trans "Description" %}</th>
 		{% if isEdit %}
 		<th class="hidden-print"></th>
@@ -26,8 +25,7 @@
 <tbody>
 	{% for c in instance.category_set.all %}
 		<tr onclick="jump('{{path}}CategoryEdit/{{c.id}}/')">
-			<td>{{c.code}}</td>
-			<td>{{c.get_gender_display}}</td>
+			<td>{{c.code_gender}}</td>
 			<td>{{c.description}}</td>
 			{% if isEdit %}
 			<td class="hidden-print">

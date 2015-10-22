@@ -1303,12 +1303,19 @@ def NumberSetNew( request ):
 @external_access
 def NumberSetEdit( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
+	license_holders = defaultdict( list )
+	for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib'):
+		license_holders[nse.license_holder].append( nse )
+	for lh, nses in license_holders.iteritems():
+		lh.nses = nses
+	license_holders = sorted( (license_holders.iterkeys()), key = lambda lh: lh.search_text )
 	return GenericEdit(
 		NumberSet, request, numberSetId, NumberSetForm,
 		template='number_set_edit.html',
 		additional_context={
+			'number_set':number_set,
+			'license_holders':license_holders,
 			'number_set_lost':NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).order_by('bib'),
-			'number_set_entries':NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib'),
 		}
 	)
 	
@@ -1343,10 +1350,17 @@ def NumberSetTop( request, numberSetId ):
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 @external_access
-def BibFound( request, numberSetEntryId ):
+def BibReturn( request, numberSetEntryId, confirmed=False ):
 	nse = get_object_or_404( NumberSetEntry, pk=numberSetEntryId )
-	nse.number_set.return_to_pool( nse.bib )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	if confirmed:
+		nse.number_set.return_to_pool( nse.bib )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	page_title = _('Return Bib to NumberSet')
+	message = string_concat('<strong>', unicode(nse.bib), u'</strong>: ', nse.license_holder.full_name(), u'<br/><br/>',
+		_('Return Bib to the NumberSet so it can be used again.'))
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'BibReturn/{}/{}/'.format(numberSetEntryId,1)
+	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------------------------
 @autostrip
@@ -3469,8 +3483,9 @@ def ParticipantBibSelect( request, participantId, bib ):
 		if bib_conflicts:
 			participant.bib = bib_save
 			return HttpResponseRedirect(getContext(request,'popUrl'))		# Show the select screen again.
-		else:
-			if competition.number_set and bib_save is not None and bib_save != bib:
+		
+		if competition.number_set:
+			if bib_save is not None and bib_save != bib:
 				competition.number_set.set_lost( bib_save )
 	else:
 		if competition.number_set and bib_save is not None:

@@ -247,14 +247,11 @@ class NumberSet(models.Model):
 		return super( NumberSet, self ).save( *args, **kwargs )
 		
 	def get_bib( self, competition, license_holder, category ):
-		print 'competition', competition
-		print 'license_holder', license_holder
-		print 'category', category
 		category_numbers = competition.get_category_numbers( category )
-		print category_numbers
 		if category_numbers:
 			numbers = category_numbers.get_numbers()
 			for bib in self.numbersetentry_set.filter( license_holder=license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True):
+				print 'bib=', bib
 				if bib in numbers:
 					return bib
 		return None
@@ -623,7 +620,7 @@ class CategoryNumbers( models.Model ):
 	
 	@property
 	def category_list( self ):
-		return u', '.join( c.code for c in self.get_category_list() )
+		return u', '.join( c.code_gender for c in self.get_category_list() )
 	
 	def get_category_list( self ):
 		return sorted( self.categories.all(), key = lambda c: c.sequence )
@@ -1616,7 +1613,7 @@ class Participant(models.Model):
 		self.role = 0
 		init_date = None
 		
-		for pp in Participant.objects.filter(license_holder=self.license_holder).order_by('-competition__start_date')[:4]:
+		for pp in Participant.objects.filter(license_holder=self.license_holder).exclude(category__isnull=True).order_by('-competition__start_date', 'category__sequence')[:8]:
 			if init_values(pp):
 				init_date = pp.competition.start_date
 				break
@@ -1695,17 +1692,24 @@ class Participant(models.Model):
 		)
 		
 	def update_bib_new_category( self ):
+		if self.competition.number_set:
+			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
+			return
+		
 		category_numbers = CategoryNumbers.objects.filter( competition=self.competition, categories=self.category ).first()
 		if not category_numbers:
+			self.bib = None
 			return
-		example_participant = Participant.objects.filter(
+		
+		compatible_participant = Participant.objects.filter(
 			competition=self.competition,
 			license_holder=self.license_holder,
 			category__in=category_numbers.categories.all()
 		).exclude(
 			id=self.id
 		).first()
-		self.bib = example_participant.bib if example_participant else None
+		
+		self.bib = compatible_participant.bib if compatible_participant else None
 	
 	def get_other_category_participants( self ):
 		return list(
