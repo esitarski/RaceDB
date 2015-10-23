@@ -1246,14 +1246,8 @@ class NumberSetForm( ModelForm ):
 		model = NumberSet
 		fields = '__all__'
 		
-	def exportToExcelCB( self, request, numberSet ):
-		xl = get_number_set_excel( numberSet )
-		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-		response['Content-Disposition'] = 'attachment; filename=RaceDB-NumberSet-{}-{}.xlsx'.format(
-			utils.removeDiacritic(numberSet.name),
-			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
-		)
-		return response
+	def manageCB( self, request, numberSet ):
+		return HttpResponseRedirect( pushUrl(request,'NumberSetManage', numberSet.id) )
 		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
@@ -1273,7 +1267,7 @@ class NumberSetForm( ModelForm ):
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
-					( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary', self.exportToExcelCB ),
+					( 'manage-submit', _("Manage"), 'btn btn-primary', self.manageCB ),
 			])
 		
 		addFormButtons( self, button_mask, self.additional_buttons )
@@ -1300,25 +1294,6 @@ def NumberSetsDisplay( request ):
 def NumberSetNew( request ):
 	return GenericNew( NumberSet, request, NumberSetForm )
 
-@external_access
-def NumberSetEdit( request, numberSetId ):
-	number_set = get_object_or_404( NumberSet, pk=numberSetId )
-	license_holders = defaultdict( list )
-	for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib'):
-		license_holders[nse.license_holder].append( nse )
-	for lh, nses in license_holders.iteritems():
-		lh.nses = nses
-	license_holders = sorted( (license_holders.iterkeys()), key = lambda lh: lh.search_text )
-	return GenericEdit(
-		NumberSet, request, numberSetId, NumberSetForm,
-		template='number_set_edit.html',
-		additional_context={
-			'number_set':number_set,
-			'license_holders':license_holders,
-			'number_set_lost':NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).order_by('bib'),
-		}
-	)
-	
 @external_access
 def NumberSetDelete( request, numberSetId ):
 	return GenericDelete( NumberSet, request, numberSetId, NumberSetForm )
@@ -1361,7 +1336,92 @@ def BibReturn( request, numberSetEntryId, confirmed=False ):
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'BibReturn/{}/{}/'.format(numberSetEntryId,1)
 	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+
+@external_access
+def NumberSetEdit( request, numberSetId ):
+	number_set = get_object_or_404( NumberSet, pk=numberSetId )
+	return GenericEdit( NumberSet, request, numberSetId, NumberSetForm )
+
+@autostrip
+class NumberSetManageForm( Form ):
+	search_text = forms.CharField( required=False, label=_("Search Text") )
+	search_bib = forms.IntegerField( required=False, label=_("Search Bib"), min_value=1, max_value=999999 )
 	
+	def __init__( self, *args, **kwargs ):
+		super(NumberSetManageForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col(Field('search_text', size=50), 4),
+				Col(Field('search_bib', size=50), 4),
+			),
+		)
+		
+		self.additional_buttons = [
+				( 'search-submit', _("Search"), 'btn btn-success' ),
+				( 'ok-submit', _("OK"), 'btn btn-primary' ),
+				( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary' ),
+		]
+		
+		addFormButtons( self, 0, self.additional_buttons )
+
+@external_access
+def NumberSetManage( request, numberSetId ):
+	number_set = get_object_or_404( NumberSet, pk=numberSetId )
+	search_fields = request.session.get('number_set_manage_filter', {})
+	
+	def getData( search_fields ):
+		q = Q()
+		
+		search_text = utils.normalizeSearch( search_fields.get('search_text', '') )
+		for n in search_text.split():
+			q &= Q( license_holder__search_text__contains = n )
+			
+		search_bib = search_fields.get('search_bib', 0)
+		if search_bib:
+			q &= Q( bib=search_bib )
+		
+		license_holders = defaultdict( list )
+		
+		for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).filter(q).order_by('bib'):
+			license_holders[nse.license_holder].append( nse )
+		for lh, nses in license_holders.iteritems():
+			lh.nses = nses
+		license_holders = sorted( (license_holders.iterkeys()), key = lambda lh: lh.search_text )
+		number_set_lost = NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).filter(q).order_by('bib')
+		
+		return license_holders, number_set_lost
+	
+	if request.method == 'POST':
+		if 'ok-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+				
+		form = NumberSetManageForm( request.POST )
+		if form.is_valid():
+			search_fields = {
+				'search_text': form.cleaned_data['search_text'],
+				'search_bib': form.cleaned_data['search_bib'],
+			}
+			request.session['number_set_manage_filter'] = search_fields
+		
+			if 'excel-export-submit' in request.POST:
+				xl = get_number_set_excel( *getData(search_fields) )
+				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+				response['Content-Disposition'] = 'attachment; filename=RaceDB-NumberSet-{}-{}.xlsx'.format(
+					utils.removeDiacritic(numberSet.name),
+					datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+				)
+				return response
+	else:
+		form = NumberSetManageForm( initial = search_fields )
+	
+	license_holders, number_set_lost = getData( search_fields )
+	allocated_bibs_count = sum( len(lh.nses) for lh in license_holders )
+	return render_to_response( 'number_set_manage.html', RequestContext(request, locals()) )	
+
 #--------------------------------------------------------------------------------------------
 @autostrip
 class ReportLabelDisplayForm( Form ):

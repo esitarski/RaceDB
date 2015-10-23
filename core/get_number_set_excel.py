@@ -39,7 +39,7 @@ def write_row_data( ws, row, row_data, format = None ):
 				ws.write( row, col, d )
 	return row + 1
 
-def get_number_set_excel( number_set ):
+def get_number_set_excel( license_holders, number_set_lost ):
 	output = StringIO.StringIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
@@ -48,25 +48,25 @@ def get_number_set_excel( number_set ):
 	ws = wb.add_worksheet('Allocated Bibs')
 	
 	row = write_row_data( ws, 0, data_headers, title_format )
-	for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).order_by('bib'):
-		lh = nse.license_holder
-		data = [
-			nse.bib,
-			lh.last_name,
-			lh.first_name,
-			lh.get_gender_display(),
-			lh.date_of_birth.strftime('%Y-%m-%d'),
-			lh.city,
-			lh.state_prov,
-			lh.license_code,
-			lh.uci_code,
-		]
-		row = write_row_data( ws, row, data )
+	for lh in license_holders:
+		for nse in lh.nses:
+			data = [
+				nse.bib,
+				lh.last_name,
+				lh.first_name,
+				lh.get_gender_display(),
+				lh.date_of_birth.strftime('%Y-%m-%d'),
+				lh.city,
+				lh.state_prov,
+				lh.license_code,
+				lh.uci_code,
+			]
+			row = write_row_data( ws, row, data )
 	
 	ws = wb.add_worksheet('Lost Bibs')
 	
 	row = write_row_data( ws, 0, list(data_headers) + ['Lost'], title_format )
-	for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).order_by('bib'):
+	for nse in number_set_lost:
 		lh = nse.license_holder
 		data = [
 			nse.bib,

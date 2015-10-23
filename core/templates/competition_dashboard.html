@@ -56,7 +56,11 @@
 				{{competition|get_field_name:"use_existing_tags"}}:&nbsp;<strong>{{competition.use_existing_tags|yes_no}}</strong>
 			</div>
 			<div class="col-md-3">
-				{{competition|get_field_name:"number_set"}}:&nbsp;<strong>{{competition.number_set.name}}</strong>
+				{% if request.user.is_superuser %}
+					{{competition|get_field_name:"number_set"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}NumberSetManage/{{competition.number_set.id}}">{{competition.number_set.name}}</a>
+				{% else %}
+					{{competition|get_field_name:"number_set"}}:&nbsp;<strong>{{competition.number_set.name}}</strong>
+				{% endif %}
 			</div>
 			<div class="col-md-3">
 				{{competition|get_field_name:"seasons_pass"}}:&nbsp;<strong>{% if competition.seasons_pass %}{{competition.seasons_pass.name}}{% else %}{% trans "No" %}{% endif %}</strong>

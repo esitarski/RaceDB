@@ -19,12 +19,13 @@
 </thead>
 <tbody>
 	{% for r in number_sets %}
-		<tr onclick="jump('{{path}}NumberSetEdit/{{r.id}}/');">
+		<tr onclick="jump('{{path}}NumberSetManage/{{r.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{r.name}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}NumberSetDelete/{{r.id}}/">Delete</a>
-				<a class="btn btn-success" href="{{path}}NumberSetEdit/{{r.id}}/">Edit</a>
+				<a class="btn btn-warning" href="{{path}}NumberSetDelete/{{r.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-primary" href="{{path}}NumberSetEdit/{{r.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-success" href="{{path}}NumberSetManage/{{r.id}}/">{% trans "Manage" %}</a>
 			</td>
 			<td class="hidden-print">
 				<div class="btn-group">
