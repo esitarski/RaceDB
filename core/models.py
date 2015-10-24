@@ -16,6 +16,7 @@ from DurationField import DurationField
 from get_abbrev import get_abbrev
 
 import re
+import os
 import math
 import datetime
 import base64
@@ -1008,10 +1009,12 @@ class WaveBase( models.Model ):
 		if not self.event.option_id:
 			return Participant.objects.filter(
 				competition=self.event.competition,
+				role=Participant.Competitor,
 				category__in=self.categories.all(),
 			)
 		else:
 			return Participant.objects.filter(
+				role=Participant.Competitor,
 				pk__in=ParticipantOption.objects.filter(
 					competition=self.event.competition,
 					option_id=self.event.option_id,
@@ -1613,7 +1616,9 @@ class Participant(models.Model):
 		self.role = 0
 		init_date = None
 		
-		for pp in Participant.objects.filter(license_holder=self.license_holder).exclude(category__isnull=True).order_by('-competition__start_date', 'category__sequence')[:8]:
+		for pp in Participant.objects.filter(
+				role=Participant.Competitor,
+				license_holder=self.license_holder).exclude(category__isnull=True).order_by('-competition__start_date', 'category__sequence')[:8]:
 			if init_values(pp):
 				init_date = pp.competition.start_date
 				break
@@ -1649,7 +1654,14 @@ class Participant(models.Model):
 		if self.is_seasons_pass_holder:
 			self.paid = True
 		
-		self.role = Participant._meta.get_field_by_name('role')[0].default
+		if not self.role:
+			self.role = Participant._meta.get_field_by_name('role')[0].default
+		
+		if self.role != self.Competitor:
+			self.bib = None
+			self.category = None
+			if self.role >= 200:			# Remove team for non-team roles.
+				self.team = None
 		
 		return self
 	

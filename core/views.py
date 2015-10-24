@@ -1411,7 +1411,7 @@ def NumberSetManage( request, numberSetId ):
 				xl = get_number_set_excel( *getData(search_fields) )
 				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 				response['Content-Disposition'] = 'attachment; filename=RaceDB-NumberSet-{}-{}.xlsx'.format(
-					utils.removeDiacritic(numberSet.name),
+					utils.removeDiacritic(number_set.name),
 					datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 				)
 				return response
@@ -2162,8 +2162,8 @@ def CompetitionRegAnalytics( request, competitionId ):
 	
 	payload = AnalyzeLog( start=start, end=start + datetime.timedelta(hours=24) ) or {}
 	payload['valid'] = bool(payload)
-	payload['participant_total'] = Participant.objects.filter(competition=competition).count()
-	payload['participant_prereg_total'] = Participant.objects.filter(competition=competition, preregistered=True).count()
+	payload['participant_total'] = Participant.objects.filter(competition=competition, role=Participant.Competitor,).count()
+	payload['participant_prereg_total'] = Participant.objects.filter(competition=competition, role=Participant.Competitor, preregistered=True).count()
 	payload['license_holder_total'] = len( set(Participant.objects.filter(competition=competition).values_list('license_holder__pk', flat=True)) )
 	try:
 		payload['transactionPeak'][0] = payload['transactionPeak'][0].strftime('%H:%M').lstrip('0')
@@ -3091,8 +3091,8 @@ def Participants( request, competitionId ):
 	#-----------------------------------------------------------------------------------------------
 	
 	participants = Participant.objects.filter( competition=competition )
-	missing_category_count = Participant.objects.filter( competition=competition, category__isnull=True ).count()
-	missing_bib_count = Participant.objects.filter( competition=competition, bib__isnull=True ).count()
+	missing_category_count = Participant.objects.filter( competition=competition, role=Participant.Competitor, category__isnull=True ).count()
+	missing_bib_count = Participant.objects.filter( competition=competition, role=Participant.Competitor, bib__isnull=True ).count()
 	
 	if participant_filter.get('scan',0):
 		name_text = utils.normalizeSearch( participant_filter['scan'] )
@@ -3399,6 +3399,9 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 	
 	category_changed = (participant.category != category)
 	participant.category = category
+	if category and participant.role != Participant.Competitor:
+		participant.role = Participant.Competitor
+	
 	participant.update_bib_new_category()
 	
 	try:
@@ -3421,6 +3424,13 @@ def ParticipantRoleChange( request, participantId ):
 def ParticipantRoleSelect( request, participantId, role ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	participant.role = int(role)
+	if participant.role != Participant.Competitor:
+		participant.bib = None
+		participant.category = None
+		if participant.role >= 200:			# Remove team for non-team roles.
+			participant.team = None
+	else:
+		participant.init_default_values()
 	participant.auto_confirm().save()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 	
@@ -4335,6 +4345,15 @@ def AttendanceAnalytics( request ):
 		
 	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
 #--------------------------------------------------------------------------
+
+def get_discipline_race_class_choices():
+	discipline_used, race_class_used = set(), set()
+	for competition in Competition.objects.all():
+		discipline_used.add( competition.discipline )
+		race_class_used.add( competition.race_class )
+	discipline_choices = [(0,_('All'))] + [(d.id, d.name) for d in sorted(discipline_used, key=lambda x: x.sequence)]
+	race_class_choices = [(0,_('All'))] + [(d.id, d.name) for d in sorted(race_class_used, key=lambda x: x.sequence)]
+	return discipline_choices, race_class_choices
 
 def get_year_on_year_form():
 	@autostrip
