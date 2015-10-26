@@ -25,7 +25,7 @@ import utils
 import random
 from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
-from CountryIOC import uci_country_codes_set, ioc_from_country
+from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes
 from large_delete_all import large_delete_all
 
 def fixNullUpper( s ):
@@ -1215,16 +1215,32 @@ class LicenseHolder(models.Model):
 	emergency_contact_name = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact') )
 	emergency_contact_phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
 
+	def correct_uci_county_code( self ):
+		uci_code_save = self.uci_code
+		country_code = self.uci_code[:3].upper()
+		if country_code and county_code.isalpha() and country_code != iso_uci_country_codes.get(country_code, country_code):
+			country_code = iso_uci_country_codes.get(country_code, country_code)
+			
+		dob = self.date_of_birth.strftime('%Y%m%d')
+		self.uci_code = country_code + dob
+		if self.uci_code != uci_code_save:
+			self.save()
+	
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or '').strip().upper()
 		if len(self.uci_code) == 3:
 			self.uci_code += self.date_of_birth.strftime( '%Y%m%d' )
 			
-		for f in ['last_name', 'first_name', 'city', 'state_prov', 'nationality', 'uci_code']:
-			setattr( self, f, (getattr(self, f) or '').strip() )
-		
 		if not self.uci_code and ioc_from_country(self.nationality):
 			self.uci_code = '{}{}'.format( ioc_from_country(self.nationality), self.date_of_birth.strftime('%Y%m%d') )
+		
+		if len(self.uci_code) == 11:
+			country_code = self.uci_code[:3]
+			if country_code != iso_uci_country_codes.get(country_code, country_code):
+				self.uci_code = '{}{}'.format( iso_uci_country_codes.get(country_code, country_code), self.uci_code[3:] )
+		
+		for f in ['last_name', 'first_name', 'city', 'state_prov', 'nationality', 'uci_code']:
+			setattr( self, f, (getattr(self, f) or '').strip() )
 		
 		try:
 			self.license_code = self.license_code.strip().lstrip('0')
@@ -1267,6 +1283,7 @@ class LicenseHolder(models.Model):
 			return _(u'missing')
 			
 		self.uci_code = unicode(self.uci_code).upper().replace(u' ', u'')
+		
 		if len(self.uci_code) != 11:
 			return _(u'invalid length')
 

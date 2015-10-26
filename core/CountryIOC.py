@@ -262,6 +262,7 @@ Zimbabwe	Zimbabwe	ZIM	ZIM	ZWE	3OFï
 """
 
 uci_country_codes = {}
+iso_uci_country_codes = {}
 
 for line in country_ioc.split('\n'):
 	line = line.strip()
@@ -273,6 +274,13 @@ for line in country_ioc.split('\n'):
 	if not fields[2]:
 		continue
 	uci_country_codes[fields[0].upper()] = fields[2]
+	
+	try:
+		if not fields[4]:
+			continue
+		iso_uci_country_codes[fields[4]] = fields[2]
+	except IndexError:
+		pass
 
 uci_country_codes['USA'] = 'USA'
 uci_country_codes['United States of America'.upper()] = 'USA'

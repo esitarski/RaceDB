@@ -445,6 +445,24 @@ function drawCharts() {
 	);
 	
 	// -----------------------------------------------------------------
+	// Average and Max by Category
+	//
+	var aveMaxCategoriesChart = new google.visualization.CandlestickChart(document.getElementById("aveMaxCategoriesChartDiv"));
+	for( var i = 0; i < payload.category_average_max.length; ++i ) {
+		var r = payload.category_average_max[i];
+		payload.category_average_max[i] = [r[0], {v:r[1], f:'Avg: ' + r[1].toFixed(2) + ' --> Max: ' + r[2]}, {v:r[1],f:''}, {v:r[2],f:''}, {v:r[2], f:''}];
+	}
+	aveMaxCategoriesChart.draw(
+		google.visualization.arrayToDataTable(payload.category_average_max, true),
+		{
+			title:'Ave --> Max Participation by Category by Competition (includes attendees competing in multiple categories)',
+			legend: { position: 'none' },
+			animation: animationOption
+		}
+	);
+	
+	
+	// -----------------------------------------------------------------
 	// Attendance by Age
 	//
 	var ageAll = [['Age']], ageMen = [['Age']], ageWomen = [['Age']];
@@ -745,6 +763,7 @@ function drawCharts() {
 	</div>
 </div>
 <div id='overallCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
+<div id='aveMaxCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
 </p>
 
 <p>

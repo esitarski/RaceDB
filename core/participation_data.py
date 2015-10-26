@@ -36,6 +36,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	event_competition_participants_total = defaultdict( lambda: defaultdict(int) )
 	competition_attendee_total = defaultdict( int )
 	competition_participants_total = defaultdict( int )
+	category_max_overall = defaultdict( int )
 	
 	competition_category_event = defaultdict( dict )
 	
@@ -298,6 +299,26 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		for d in discipline_used]
 	discipline_age.insert( 0, ['Discipline'] + ['{}-{}'.format(b*age_increment, (b+1)*age_increment-1) for b in xrange(bucket_min, bucket_max)] )
 	
+	#-----------------------------------------------
+	# Average/Max Category
+	#
+	def getCategoryAverageMax():
+		cct = defaultdict( lambda: defaultdict(int) )
+		for competition, category_name_total in category_competition_total.iteritems():
+			for category_name, total in category_name_total.iteritems():
+				cct[category_name][competition] = total
+		category_average_max = [
+			[
+				category_name,
+				sum(competition_total.itervalues()) / float(len(competition_total)),
+				max(competition_total.itervalues()),
+			] for category_name, competition_total in cct.iteritems()
+		]
+		category_average_max.sort( key=lambda x: x[2], reverse=True )
+		#category_average_max.insert( 0, ['Category', 'Ave', 'Max'] )
+		return category_average_max
+	category_average_max = getCategoryAverageMax()
+	
 	payload = {
 		'competitions_total': competitions_total,
 		'events_total': events_total,
@@ -342,5 +363,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		'discipline_age': discipline_age,
 		
 		'discipline_used_len': len(discipline_used),
+		
+		'category_average_max': category_average_max,
 	}
 	return payload, sorted( license_holders_event_errors, key=lambda x: (x[1].date_time, x[0].date_of_birth) )

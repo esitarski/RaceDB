@@ -57,7 +57,7 @@ def get_start_list_excel( event ):
 	
 	competition = event.competition
 	if competition.seasons_pass:
-		seasons_pass = set( SeasonsPassEntry.objects.filter(seasons_pass=competition.seasons_pass).values_list('license_holder__pk') )
+		seasons_pass = set( SeasonsPassHolder.objects.filter(seasons_pass=competition.seasons_pass).values_list('license_holder__pk') )
 	else:
 		seasons_pass = set()
 	

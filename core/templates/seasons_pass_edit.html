@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 {% load i18n %}
+{% load static %}
+{% load staticfiles %}
 {% load crispy_forms_tags %}
 <h1>{{title}}</h1>
 <hr/>
@@ -17,8 +19,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Date of Birth" %}</th>
-		<th>{% trans "City" %}</th>
-		<th>{% trans "State/Prov" %}</th>
+		<th>{% trans "City, State/Prov" %}</th>
 		<th>{% trans "Nationality" %}</th>
 		<th>{% trans "License" %}</th>
 		<th>{% trans "UCI Code" %}</th>
@@ -33,11 +34,15 @@
 				<td>{{lh.full_name}}</td>
 				<td>{{lh.get_gender_display}}</td>
 				<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
-				<td>{{lh.city}}</td>
-				<td>{{lh.state_prov}}</td>
+				<td>{{lh.city}}, {{lh.state_prov}}</td>
 				<td>{{lh.nationality}}</td>
 				<td>{{lh.license_code_trunc}}</td>
-				<td>{{lh.uci_code}}</td>
+				<td><span style="white-space: nowrap;">
+					{% if lh.uci_code %}
+						{% if lh.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{lh.uci_country}}.png" ></img>{% endif %}
+						<span>{{lh.uci_code}}</span>
+					{% endif %}
+				</span></td>
 				<td class="hidden-print">
 					<a class="btn btn-warning" href="./SeasonsPassHolderRemove/{{spe.id}}/">{% trans "Remove" %}</a>
 					&nbsp;&nbsp;
