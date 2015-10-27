@@ -89,7 +89,7 @@ def get_start_list_excel( event ):
 		for p in event.get_participants_seeded():
 			lh = p.license_holder
 			data = [
-				p.clock_time.strftime('%H:%M:%S') if p.clock_time else p.clock_time,
+				timezone.localtime(p.clock_time).strftime('%H:%M:%S') if p.clock_time else p.clock_time,
 				p.start_time,
 				p.category.code if p.category else u'None',
 				p.bib if p.bib else 'None',
