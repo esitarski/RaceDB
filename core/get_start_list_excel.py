@@ -52,21 +52,45 @@ def get_start_list_excel( event ):
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
+	time_format = wb.add_format({'num_format': 'HH.MM.SS'})
 	
 	ws = wb.add_worksheet(utils.cleanExcelSheetName(event.name))
 	
 	competition = event.competition
 	if competition.seasons_pass:
-		seasons_pass = set( SeasonsPassHolder.objects.filter(seasons_pass=competition.seasons_pass).values_list('license_holder__pk') )
+		seasons_pass = set( SeasonsPassHolder.objects.filter( seasons_pass=competition.seasons_pass ).values_list('license_holder__pk', flat=True) )
 	else:
 		seasons_pass = set()
 	
-	row = write_row_data( ws, 0, data_headers, title_format )
-	for w in event.get_wave_set().all():
-		for p in sorted( w.get_participants(), key=lambda p: (p.bib if p.bib else 999999999, p.license_holder.search_text) ):
+	if event.event_type == 0:
+		row = write_row_data( ws, 0, data_headers, title_format )
+		for w in event.get_wave_set().all():
+			for p in sorted( w.get_participants(), key=lambda p: (p.bib if p.bib else 999999999, p.license_holder.search_text) ):
+				lh = p.license_holder
+				data = [
+					w.name,
+					p.category.code if p.category else u'None',
+					p.bib if p.bib else 'None',
+					lh.last_name, lh.first_name,
+					lh.get_gender_display(),
+					lh.date_of_birth.strftime('%Y-%m-%d'),
+					lh.city, lh.state_prov,
+					lh.license_code, lh.uci_code,
+					p.preregistered,
+					p.paid,
+					lh.pk in seasons_pass,
+					p.confirmed,
+					p.note if p.note else u'',
+				]
+				row = write_row_data( ws, row, data )
+	elif event.event_type == 1:
+		row = write_row_data( ws, 0, ['Clock', 'Stopwatch'] + list(data_headers)[1:], title_format )
+		format_list = [time_format] * 2
+		for p in event.get_participants_seeded():
 			lh = p.license_holder
 			data = [
-				w.name,
+				p.clock_time.strftime('%H:%M:%S') if p.clock_time else p.clock_time,
+				p.start_time,
 				p.category.code if p.category else u'None',
 				p.bib if p.bib else 'None',
 				lh.last_name, lh.first_name,
@@ -80,7 +104,8 @@ def get_start_list_excel( event ):
 				p.confirmed,
 				p.note if p.note else u'',
 			]
-			row = write_row_data( ws, row, data )
+			row = write_row_data( ws, row, data, format_list )
+		
 			
 	wb.close()
 	return output.getvalue()
