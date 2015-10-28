@@ -27,6 +27,7 @@ from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
 from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes
 from large_delete_all import large_delete_all
+from WriteLog import writeLog
 
 def fixNullUpper( s ):
 	if not s:
@@ -1599,13 +1600,14 @@ class Participant(models.Model):
 		return self.name
 	
 	@transaction.atomic
-	def add_to_default_optonal_events( self ):
+	def add_to_default_optional_events( self ):
+		ParticipantOption.objects.filter( competition=self.competition, participant=self ).delete()
 		if self.category:
 			for e in [event for event in self.competition.get_events() if event.select_by_default and event.could_participate(self)]:
 				try:
 					ParticipantOption( competition=e.competition, participant=self, option_id=e.option_id ).save()
 				except Exception as e:
-					pass
+					writeLog( 'add_to_default_optional_events: {}: {}'.format(self.full_name_team, e) )
 	
 	def init_default_values( self ):
 		if self.competition.use_existing_tags:
@@ -1691,13 +1693,21 @@ class Participant(models.Model):
 				
 	@property
 	def is_done( self ):
-		return (
-			self.show_confirm and
-			self.license_holder.uci_code_error is None and
-			not self.license_holder.is_temp_license and
-			(not self.competition.show_signature or self.signature) and
-			(not self.has_tt_events or self.est_kmh)
-		)
+		if self.role == self.Competitor:
+			return (
+				self.show_confirm and
+				self.license_holder.uci_code_error is None and
+				not self.license_holder.is_temp_license and
+				(not self.competition.show_signature or self.signature) and
+				(not self.has_tt_events or self.est_kmh)
+			)
+		elif self.role < 200:
+			return (
+				self.team and
+				self.license_holder.uci_code_error is None
+			)
+		else:
+			return self.license_holder.uci_code_error is None
 	
 	def auto_confirm( self ):
 		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:

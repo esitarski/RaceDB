@@ -242,7 +242,7 @@ def init_prereg(
 						messsage_stream_write( u'{}\n'.format(conflict_participant) )
 					continue
 				
-				participant.add_to_default_optonal_events()
+				participant.add_to_default_optional_events()
 				
 				if participant_optional_events:
 					participant_optional_events = {

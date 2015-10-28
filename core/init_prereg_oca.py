@@ -189,7 +189,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 				) )
 				continue
 			
-			participant.add_to_default_optonal_events()
+			participant.add_to_default_optional_events()
 			
 			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}, {}'.format(
 				i,

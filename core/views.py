@@ -3248,7 +3248,7 @@ def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 	try:
 		# Fails if the license_holder is non-unique.
 		participant.save()
-		participant.add_to_default_optonal_events()
+		participant.add_to_default_optional_events()
 	except IntegrityError as e:
 		# Recover silently by going directly to edit screen with the existing participant.
 		participant = Participant.objects.filter( competition=competition, license_holder=license_holder ).first()
@@ -3410,7 +3410,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 		return render_to_response( 'participant_integrity_error.html', RequestContext(request, locals()) )
 
 	if category_changed:
-		participant.add_to_default_optonal_events()
+		participant.add_to_default_optional_events()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 
 #--------------------------------------------------------------------------
@@ -4119,7 +4119,7 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
 	try:
 		participant.auto_confirm().save()
-		participant.add_to_default_optonal_events()
+		participant.add_to_default_optional_events()
 		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
 	except IntegrityError as e:
 		# If this participant exists already, recover silently by going directly to the existing participant.
