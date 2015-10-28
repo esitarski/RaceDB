@@ -1644,9 +1644,6 @@ class Participant(models.Model):
 		if not self.bib and self.competition.number_set:
 			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
 		
-		#if not self.role:
-		#	self.role = Participant._meta.get_field_by_name('role')[0].default
-
 		# If we still don't have an est_kmh, try to get one from a previous competition of the same discipline.
 		if not self.est_kmh:
 			for est_kmh in Participant.objects.filter(
@@ -1684,11 +1681,13 @@ class Participant(models.Model):
 	
 	@property
 	def show_confirm( self ):
-		return	self.is_competitor and \
-				self.bib and \
-				self.category and \
-				self.paid and \
-				not self.needs_tag
+		return (
+			self.is_competitor and
+			self.bib and
+			self.category and
+			self.paid and
+			not self.needs_tag
+		)
 				
 	@property
 	def is_done( self ):
@@ -1696,7 +1695,8 @@ class Participant(models.Model):
 			self.show_confirm and
 			self.license_holder.uci_code_error is None and
 			not self.license_holder.is_temp_license and
-			not (self.competition.show_signature or self.signature)
+			(not self.competition.show_signature or self.signature) and
+			(not self.has_tt_events or self.est_kmh)
 		)
 	
 	def auto_confirm( self ):
@@ -2142,7 +2142,7 @@ class WaveTT( WaveBase ):
 			participants.sort( key=lambda p: p.bib or 0 )
 			for p in participants:
 				p.start_time = None
-				p.clock_time = None				
+				p.clock_time = None
 			return participants
 		
 		start_times = {

@@ -137,40 +137,6 @@
 		{% endif %}
 	</td>
 </tr>
-{% if p.show_confirm %}
-<tr onclick="jump({% if isEdit %}'{{path}}ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Confirmed" %}:</td>
-	<td>
-		{% if p.confirmed %}
-			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
-		{% else %}
-			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
-		{% endif %}
-	</td>
-	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantConfirmedChange/{{p.id}}/">{% trans "Change" %}</a></td>
-	{% endif %}
-</tr>
-{% endif %}
-{% if c.show_signature and p.role == 110 and p.category %}
-<tr onclick="jump({% if isEdit %}'{{path}}ParticipantSignatureChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Signature" %}:</td>
-	<td>
-	{% if p.signature %}
-		{% if p.is_jsignature %}
-			<image width="240" height="64" id="signature" src="data:{{p.signature|safe}}" style="background: #FFFF88"></image>
-		{% else %}
-			<canvas width="240" height="64" id="signature"></canvas>
-		{% endif %}
-	{% else %}
-		<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No signature" %}</span>
-	{% endif %}
-	</td>
-	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantSignatureChange/{{p.id}}/">{% trans "Change" %}</a></td>
-	{% endif %}
-</tr>
-{% endif %}
 {% if p.role == 110 and p.category %}
 <tr {% if request.user.is_superuser and isEdit %}onclick="jump('{{path}}ParticipantPreregisteredChange/{{p.id}}/');"{% endif %}>
 	<td class="text-right">{% trans "Preregistered" %}:</td>
@@ -227,6 +193,54 @@
 		{% endif %}
 	</tr>
 {% endif %}
+{% if p.has_tt_events %}
+	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantEstSpeedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+		<td class="text-right">{% trans "Est. TT Speed" %}:</td>
+		<td>
+		{% if p.est_kmh > 0.0 %}
+			<strong>{{p.est_speed_display}}</strong>
+		{% else %}
+			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+		{% endif %}</td>
+		{% if isEdit %}
+			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantEstSpeedChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		{% endif %}
+	</tr>
+{% endif %}
+{% if p.show_confirm %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Confirmed" %}:</td>
+	<td>
+		{% if p.confirmed %}
+			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
+		{% else %}
+			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+		{% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantConfirmedChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
+{% if c.show_signature and p.role == 110 and p.category %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantSignatureChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Signature" %}:</td>
+	<td>
+	{% if p.signature %}
+		{% if p.is_jsignature %}
+			<image width="240" height="64" id="signature" src="data:{{p.signature|safe}}" style="background: #FFFF88"></image>
+		{% else %}
+			<canvas width="240" height="64" id="signature"></canvas>
+		{% endif %}
+	{% else %}
+		<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No signature" %}</span>
+	{% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantSignatureChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantNoteChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Competition Note" %}:</td>
 	<td>{% if p.note %}{{p.note}}{% endif %}</td>
@@ -255,20 +269,6 @@
 		</td>
 		{% if isEdit %}
 			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantOptionChange/{{p.id}}/">{% trans "Change" %}</a></td>
-		{% endif %}
-	</tr>
-{% endif %}
-{% if p.has_tt_events %}
-	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantEstSpeedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% trans "Est. TT Speed" %}:</td>
-		<td>
-		{% if p.est_kmh > 0.0 %}
-			<strong>{{p.est_speed_display}}</strong>
-		{% else %}
-			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
-		{% endif %}</td>
-		{% if isEdit %}
-			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantEstSpeedChange/{{p.id}}/">{% trans "Change" %}</a></td>
 		{% endif %}
 	</tr>
 {% endif %}

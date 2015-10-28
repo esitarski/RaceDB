@@ -721,7 +721,6 @@ class BarcodeScanForm( Form ):
 
 @external_access
 def LicenseHolderBarcodeScan( request ):
-	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -754,12 +753,12 @@ class RfidScanForm( Form ):
 		self.helper.form_class = 'navbar-form navbar-left'
 		
 		button_args = [
-			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary', id='focus' ),
+			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary  btn-lg', id='focus' ),
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 		]
 		if hide_cancel_button:
 			button_args = button_args[:-1]
-		
+			
 		self.helper.layout = Layout(
 			Row( *button_args ),
 			HTML('<br/>' * 12),
