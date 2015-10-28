@@ -8,9 +8,12 @@
 <hr/>
 {% for role_category, roles in participant.COMPETITION_ROLE_CHOICES %}
 	<h3>{{role_category}}:</h3>
+	<br/>
 	{% for role_code, role_name in roles %}
 		&nbsp;&nbsp;&nbsp;<a class="btn btn-success" href="{{path}}ParticipantRoleSelect/{{participant.id}}/{{role_code}}/">{{role_name}}</a>
 	{% endfor %}
+	<p/>&nbsp;
+	<p/>
 {% endfor %}
 <hr/>
 <a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>

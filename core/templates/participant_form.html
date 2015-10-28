@@ -126,9 +126,9 @@
 			<strong>{{p.category.code}}:</strong>
 			{{p.category.description}}, {{p.category.get_gender_display}}
 		{% else %}
-			{% if p.role == 110 %}<span class="label label-danger">{% endif %}
+			{% if p.is_competitor %}<span class="label label-danger">{% endif %}
 				{% trans "No category" %}
-			{% if p.role == 110 %}</span>{% endif %}
+			{% if p.is_competitor %}</span>{% endif %}
 		{% endif %} 
 	</td>
 	<td>
@@ -137,7 +137,7 @@
 		{% endif %}
 	</td>
 </tr>
-{% if p.role == 110 and p.category %}
+{% if p.is_competitor and p.category %}
 <tr {% if request.user.is_superuser and isEdit %}onclick="jump('{{path}}ParticipantPreregisteredChange/{{p.id}}/');"{% endif %}>
 	<td class="text-right">{% trans "Preregistered" %}:</td>
 	<td>
@@ -167,7 +167,7 @@
 	{% endif %}
 </tr>
 {% endif %}
-{% if p.category %}
+{% if p.category and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantBibChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 		<td class="text-right">{% trans "Bib" %}:</td>
 		<td>
@@ -178,7 +178,7 @@
 		{% endif %}
 	</tr>
 {% endif %}
-{% if c.using_tags %}
+{% if c.using_tags and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantTagChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 		<td class="text-right">{% if p.tag and p.tag2 %}{% trans "Chip Tags" %}{% else %}{% trans "Chip Tag" %}{% endif %}:</td>
 		<td>
@@ -193,7 +193,7 @@
 		{% endif %}
 	</tr>
 {% endif %}
-{% if p.has_tt_events %}
+{% if p.has_tt_events and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantEstSpeedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 		<td class="text-right">{% trans "Est. TT Speed" %}:</td>
 		<td>
@@ -207,7 +207,7 @@
 		{% endif %}
 	</tr>
 {% endif %}
-{% if p.show_confirm %}
+{% if p.show_confirm and p.is_competitor %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Confirmed" %}:</td>
 	<td>
@@ -222,7 +222,7 @@
 	{% endif %}
 </tr>
 {% endif %}
-{% if c.show_signature and p.role == 110 and p.category %}
+{% if c.show_signature and p.is_competitor and p.category %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantSignatureChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Signature" %}:</td>
 	<td>
@@ -255,7 +255,7 @@
 		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantGeneralNoteChange/{{p.id}}/">{% trans "Change" %}</a></td>
 	{% endif %}
 </tr>
-{% if p.has_optional_events %}
+{% if p.has_optional_events and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantOptionChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 		<td class="text-right">{% trans "Optional Events" %}:</td>
 		<td>
@@ -313,7 +313,7 @@
 		{% endif %}
 	{% endwith %}
 {% endif %}
-	{% if isEdit %}
+	{% if isEdit and p.is_competitor %}
 	{% with cat_part=p.get_category_participants %}
 		<hr/>
 		<h3>{% if cat_part|length <= 1 %}{% trans "Category" %}{% else %}{% trans "Categories" %}{% endif %}:

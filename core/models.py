@@ -1693,13 +1693,13 @@ class Participant(models.Model):
 				
 	@property
 	def is_done( self ):
-		if self.role == self.Competitor:
+		if self.is_competitor:
 			return (
 				self.show_confirm and
-				self.license_holder.uci_code_error is None and
-				not self.license_holder.is_temp_license and
+				(self.license_holder.uci_code_error is None) and
+				(not self.license_holder.is_temp_license) and
 				(not self.competition.show_signature or self.signature) and
-				(not self.has_tt_events or self.est_kmh)
+				(not self.has_tt_events() or self.est_kmh)
 			)
 		elif self.role < 200:
 			return (
@@ -1810,7 +1810,7 @@ class Participant(models.Model):
 		
 	def has_optional_events( self ):
 		return any( optional for event, optional, entered in self.get_participant_events() )
-		
+	
 	def has_tt_events( self ):
 		return any( entered and event.event_type == 1 for event, optional, entered in self.get_participant_events() )
 		
