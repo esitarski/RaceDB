@@ -727,7 +727,7 @@ class CategoryNumbers( models.Model ):
 		return self.numCache
 	
 	def __contains__( self, n ):
-		return n in self.getNumbers()
+		return n in self.get_numbers()
 		
 	def add_bib( self, n ):
 		if n not in self:
@@ -1579,11 +1579,11 @@ class Participant(models.Model):
 	
 	@property
 	def needs_bib( self ):
-		return self.role == 1 and not self.bib
+		return self.is_competitor and not self.bib
 	
 	@property
 	def needs_tag( self ):
-		return self.competition.using_tags and not self.tag and not self.tag2
+		return self.is_competitor and self.competition.using_tags and not self.tag and not self.tag2
 	
 	@property
 	def name( self ):
@@ -1691,6 +1691,11 @@ class Participant(models.Model):
 			not self.needs_tag
 		)
 	
+	def good_bib( self ):			return self.is_competitor and self.bib
+	def good_category( self ):		return self.is_competitor and self.category
+	def good_team( self ):			return self.is_competitor and self.team
+	def good_paid( self ):			return self.is_competitor and self.paid
+	def good_tag( self ):			return not self.needs_tag
 	def good_uci_code( self ):		return self.license_holder.uci_code_error is None
 	def good_license( self ):		return not self.license_holder.is_temp_license
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
