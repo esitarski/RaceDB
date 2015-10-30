@@ -1690,24 +1690,29 @@ class Participant(models.Model):
 			self.paid and
 			not self.needs_tag
 		)
-				
+	
+	def good_uci_code( self ):		return self.license_holder.uci_code_error is None
+	def good_license( self ):		return not self.license_holder.is_temp_license
+	def good_signature( self ):		return (not self.competition.show_signature) or self.signature
+	def good_est_kmh( self ):		return (not self.has_tt_events()) or self.est_kmh
+	
 	@property
 	def is_done( self ):
 		if self.is_competitor:
 			return (
 				self.show_confirm and
-				(self.license_holder.uci_code_error is None) and
-				(not self.license_holder.is_temp_license) and
-				(not self.competition.show_signature or self.signature) and
-				(not self.has_tt_events() or self.est_kmh)
+				self.good_uci_code() and
+				self.good_license() and
+				self.good_signature() and
+				self.good_est_kmh()
 			)
 		elif self.role < 200:
 			return (
 				self.team and
-				self.license_holder.uci_code_error is None
+				self.good_uci_code()
 			)
 		else:
-			return self.license_holder.uci_code_error is None
+			return self.good_uci_code()
 	
 	def auto_confirm( self ):
 		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:
