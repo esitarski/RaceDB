@@ -3559,7 +3559,7 @@ def ParticipantBibSelect( request, participantId, bib ):
 	else:
 		if competition.number_set and bib_save is not None:
 			competition.number_set.return_to_pool( bib_save )
-			participant.bib = None
+		participant.bib = None
 	
 	try:
 		participant.auto_confirm().save()
