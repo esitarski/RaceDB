@@ -1693,8 +1693,8 @@ class Participant(models.Model):
 	
 	def good_uci_code( self ):		return self.license_holder.uci_code_error is None
 	def good_license( self ):		return not self.license_holder.is_temp_license
-	def good_signature( self ):		return (not self.competition.show_signature) or self.signature
-	def good_est_kmh( self ):		return (not self.has_tt_events()) or self.est_kmh
+	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
+	def good_est_kmh( self ):		return self.est_kmh or (not self.has_tt_events())
 	
 	@property
 	def is_done( self ):
