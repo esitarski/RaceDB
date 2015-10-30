@@ -695,6 +695,8 @@ class CategoryNumbers( models.Model ):
 		include = set()
 		for p in self.range_str.split( ',' ):
 			p = p.strip()
+			if not p:
+				continue
 			
 			if p.startswith( '-' ):
 				exclude = True
