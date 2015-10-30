@@ -721,7 +721,7 @@ class CategoryNumbers( models.Model ):
 		return include
 	
 	def get_numbers( self ):
-		if self.numCache is None or self.range_str_cache != self.range_str:
+		if self.numCache is None or getattr(self, 'range_str_cache', None) != self.range_str:
 			self.numCache = self.getNumbersWorker()
 			self.range_str_cache = self.range_str
 		return self.numCache
@@ -1407,7 +1407,7 @@ class CategoryHint(models.Model):
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def unicode( self ):
-		return unicode(license_holder) + ' ' + unicode(discipline) + ' ' + unicode(category) + ' ' + unicode(effective_date)
+		return unicode(self.license_holder) + ' ' + unicode(self.discipline) + ' ' + unicode(self.category) + ' ' + unicode(self.effective_date)
 	
 	class Meta:
 		verbose_name = _('CategoryHint')
