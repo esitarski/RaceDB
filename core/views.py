@@ -147,6 +147,7 @@ def home( request, rfid_antenna=None ):
 			request.session['rfid_antenna'] = int(rfid_antenna)
 		except Exception as e:
 			pass
+	version = RaceDBVersion
 	return render_to_response( 'home.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------------------------
@@ -1371,6 +1372,8 @@ class NumberSetManageForm( Form ):
 def NumberSetManage( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	search_fields = request.session.get('number_set_manage_filter', {})
+	
+	number_set.normalize()
 	
 	def getData( search_fields ):
 		q = Q()

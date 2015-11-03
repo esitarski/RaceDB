@@ -252,8 +252,8 @@ class NumberSet(models.Model):
 		category_numbers = competition.get_category_numbers( category )
 		if category_numbers:
 			numbers = category_numbers.get_numbers()
-			for bib in self.numbersetentry_set.filter( license_holder=license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True):
-				print 'bib=', bib
+			for bib in self.numbersetentry_set.filter(
+					license_holder=license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True):
 				if bib in numbers:
 					return bib
 		return None
@@ -277,6 +277,14 @@ class NumberSet(models.Model):
 	
 	def __unicode__( self ):
 		return self.name
+	
+	def normalize( self ):
+		duplicates = defaultdict( list )
+		for nse in NumberSetEntry.objects.filter(number_set=self).order_by('date_lost'):
+			duplicates[ (nse.license_holder.pk, nse.bib) ].append( nse.pk )
+		for pks in duplicates.itervalues():
+			if len(pks) > 1:
+				NumberSetEntry.objects.filter( pk__in=pks[:-1] ).delete()
 	
 	class Meta:
 		verbose_name = _('Number Set')
@@ -583,11 +591,14 @@ class Competition(models.Model):
 	def apply_number_set( self ):
 		participants_changed = []
 		if self.number_set:
+			self.number_set.normalize()
 			for participant in self.get_participants():
 				bib_last = participant.bib
-				try:
-					participant.bib = NumberSetEntry.objects.get( number_set=self.number_set, license_holder=participant.license_holder, date_lost=None ).bib
-				except NumberSetEntry.DoesNotExist as e:
+				
+				nse = NumberSetEntry.objects.filter( number_set=self.number_set, license_holder=participant.license_holder, date_lost=None ).first()
+				if nse:
+					participant.bib = nse.bib
+				else:
 					participant.bib = None
 				if bib_last != participant.bib:
 					participant.save()
@@ -605,6 +616,7 @@ class Competition(models.Model):
 						for participant in self.get_participants() if participant.bib
 				]
 			)
+			self.number_set.normalize()
 	
 	class Meta:
 		verbose_name = _('Competition')

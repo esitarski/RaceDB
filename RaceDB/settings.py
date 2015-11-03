@@ -22,8 +22,6 @@ SECRET_KEY = '+m^ehjjzj=%rk+9)%zc@y2x%cfwno-$nb+4o(5ttez6kw)9)8w'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-TEMPLATE_DEBUG = True
-
 ALLOWED_HOSTS = []
 
 LOGIN_URL='/RaceDB/Login/'
@@ -49,11 +47,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
-
-from django.conf import global_settings
-TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-    'core.context_processors.standard',
 )
 
 ROOT_URLCONF = 'RaceDB.urls'
@@ -131,4 +124,45 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join( BASE_DIR, 'RaceDB', 'static_root' )
 
-TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
+if os.path.exists(r'c:\Projects\RaceDBDeploy'):
+	TEMPLATES = [{
+		'BACKEND': 'django.template.backends.django.DjangoTemplates',
+		'APP_DIRS': True,
+		'OPTIONS': {
+			'debug': True,
+			'context_processors': [
+				'core.context_processors.standard',
+				'django.contrib.auth.context_processors.auth',
+				'django.template.context_processors.debug',
+				'django.template.context_processors.i18n',
+				'django.template.context_processors.media',
+				'django.template.context_processors.static',
+				'django.template.context_processors.tz',
+				'django.contrib.messages.context_processors.messages',
+			],
+		},
+	}]
+else:
+	TEMPLATES = [{
+		'BACKEND': 'django.template.backends.django.DjangoTemplates',
+		'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'core', 'templates')],
+		'OPTIONS': {
+			'debug': True,
+			'context_processors': [
+				'core.context_processors.standard',
+				'django.contrib.auth.context_processors.auth',
+				'django.template.context_processors.debug',
+				'django.template.context_processors.i18n',
+				'django.template.context_processors.media',
+				'django.template.context_processors.static',
+				'django.template.context_processors.tz',
+				'django.contrib.messages.context_processors.messages',
+			],
+			'loaders': [
+				('django.template.loaders.cached.Loader', [
+					'django.template.loaders.filesystem.Loader',
+					'django.template.loaders.app_directories.Loader',
+				]),
+			],
+		},
+	}]
