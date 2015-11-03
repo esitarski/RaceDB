@@ -280,8 +280,10 @@ class NumberSet(models.Model):
 	
 	def normalize( self ):
 		duplicates = defaultdict( list )
-		for nse in NumberSetEntry.objects.filter(number_set=self).order_by('date_lost'):
-			duplicates[ (nse.license_holder.pk, nse.bib) ].append( nse.pk )
+		# Nulls sort to the beginning.  If we have a lost bib it will have a date_lost.
+		# We want to keep lost entries, so we delete everything but the last one.
+		for nse in NumberSetEntry.objects.filter(number_set=self).order_by('bib', 'date_lost'):
+			duplicates[nse.bib].append( nse.pk )
 		for pks in duplicates.itervalues():
 			if len(pks) > 1:
 				NumberSetEntry.objects.filter( pk__in=pks[:-1] ).delete()
