@@ -258,12 +258,8 @@ class NumberSet(models.Model):
 					return bib
 		return None
 		
-	def remove_license_holder_duplicates( self, license_holder ):
-		current_bibs = { bib:pk for bib, pk in NumberSetEntry.objects.filter( number_set=self, license_holder=license_holder ).values_list('bib', 'pk') }
-		self.numbersetentry_set.filter( license_holder=license_holder ).exclude( pk__in=current_bibs.itervalues ).delete()
-	
 	def assign_bib( self, license_holder, bib ):
-		self.remove_license_holder_duplicates( license_holder )
+		self.normalize( license_holder )
 		if self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).exists():
 			return
 		self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
@@ -273,16 +269,19 @@ class NumberSet(models.Model):
 		self.numbersetentry_set.filter(bib=bib, date_lost=None).update( date_lost=datetime.date.today() )
 	
 	def return_to_pool( self, bib ):
-		self.numbersetentry_set.filter(bib=bib).delete()
+		self.numbersetentry_set.filter( bib=bib ).delete()
 	
 	def __unicode__( self ):
 		return self.name
 	
-	def normalize( self ):
+	def normalize( self, license_holder=None ):
 		duplicates = defaultdict( list )
 		# Nulls sort to the beginning.  If we have a lost bib it will have a date_lost.
 		# We want to keep lost entries, so we delete everything but the last one.
-		for nse in NumberSetEntry.objects.filter(number_set=self).order_by('bib', 'date_lost'):
+		number_set_entries = self.numbersetentry_set
+		if license_holder:
+			number_set_entries = number_set_entries.filter( license_holder=license_holder )
+		for nse in number_set_entries.order_by('bib', 'date_lost'):
 			duplicates[nse.bib].append( nse.pk )
 		for pks in duplicates.itervalues():
 			if len(pks) > 1:
