@@ -259,7 +259,6 @@ class NumberSet(models.Model):
 		return None
 		
 	def assign_bib( self, license_holder, bib ):
-		self.normalize( license_holder )
 		if self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).exists():
 			return
 		self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
@@ -274,14 +273,11 @@ class NumberSet(models.Model):
 	def __unicode__( self ):
 		return self.name
 	
-	def normalize( self, license_holder=None ):
-		duplicates = defaultdict( list )
+	def normalize( self ):
 		# Nulls sort to the beginning.  If we have a lost bib it will have a date_lost.
 		# We want to keep lost entries, so we delete everything but the last one.
-		number_set_entries = self.numbersetentry_set
-		if license_holder:
-			number_set_entries = number_set_entries.filter( license_holder=license_holder )
-		for nse in number_set_entries.order_by('bib', 'date_lost'):
+		duplicates = defaultdict( list )
+		for nse in self.numbersetentry_set.order_by('bib', 'date_lost'):
 			duplicates[nse.bib].append( nse.pk )
 		for pks in duplicates.itervalues():
 			if len(pks) > 1:
@@ -1437,6 +1433,10 @@ class NumberSetEntry(models.Model):
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
 	
 	class Meta:
+		unique_together = (
+			('number_set', 'bib'),
+		)
+
 		verbose_name = _('NumberSetEntry')
 		verbose_name_plural = _('NumberSetEntries')
 		
@@ -2358,7 +2358,9 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	# Final delete.  Cascade delete will clean up unnecessary SeasonsPass and NumberSet entries.
 	LicenseHolder.objects.filter( pk__in=pks ).delete()
 
+#-----------------------------------------------------------------------------------------------
 # Apply upgrades.
+#
 def fix_bad_license_codes():
 	success = True
 	while success:
@@ -2367,5 +2369,10 @@ def fix_bad_license_codes():
 			for lh in LicenseHolder.objects.filter(license_code__startswith='0')[:999]:
 				lh.save()		# performs field validation.
 				success = True
+
+def fix_non_unique_number_set_entries():
+	for ns in NumberSet.objects.all():
+		ns.normalize()
+
 
 

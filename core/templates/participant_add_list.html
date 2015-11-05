@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 {% load i18n %}
+{% load static %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
 <ul class="nav nav-tabs">
@@ -56,7 +57,11 @@
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
 			<td>{{h.license_code_trunc}}</td>
-			<td>{{h.uci_code}}</td>
+			<td class="text-nowrap">
+				<span style="white-space: nowrap;">
+					{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
+				</span>
+			</td>
 			<td>{{h.date_of_birth}}</td>
 			<td>{{h.city}}</td>
 			<td>{{h.state_prov}}</td>

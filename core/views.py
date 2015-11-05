@@ -4456,3 +4456,6 @@ def Logout( request ):
 
 from django.conf import settings
 settings.DATABASES['default']['NAME'] = settings.DATABASES['default']['NAME']
+
+#----------------------------------------------------------------------------
+fix_non_unique_number_set_entries()
