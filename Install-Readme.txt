@@ -165,6 +165,8 @@ These instructions assume that you are running RaceDB 0.2.50 or later.
 The upgrade will *not* replace your existing database or time zone.
 But, make a backup of your database file, just in case.
 
+If you are running RaceDB, stop it by closing the cmd window or pressing Ctrl-C in the window.
+
 Unzip RaceDB.zip into the folder you unzipped it in before.
 
 Now, make sure that all the dependencies are up-to-date:
