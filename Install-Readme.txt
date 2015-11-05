@@ -155,7 +155,7 @@ To start RaceDB and connect to the rfid reader, use the following command:
    
 The options starting at '--host" are of particular interest.  They allow you to choose the host and port of the RaceDB web server, connect to a particular rfid reader on the network, suppress automatically opening a browser and other capabilities.
  
- After logging in to RaceDB, click on the "Tutorial" link at the bottom of the page to get started.
+ After logging in to RaceDB, click on the "Tutorial" and "Help" link at the bottom right of the page to get started.
  
  The system also comes with another login username="reg" password="reg".
  This is what the registration staff should use.  It disables access to configuration data and makes the system easier to use.

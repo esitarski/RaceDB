@@ -47,13 +47,19 @@ The Season's Pass is a list of rider who have purchased a particular Season's Pa
 
 ### Using Tags/Chip Reader
 
-Tells RaceDB to enable Tags/Chips features.  To use the chip reader, make sure it is connected to the computer and start RaceDB with the command:
+Tells RaceDB to enable Tags/Chips features, however, RaceDB must be connected to a chip reader for this to work.
+
+To enable the chip reader, make sure it is connected to the computer and start RaceDB with the command:
 
     python manage.py launch --rfid_reader
 
+To see all __launch__ command options, do:
+
+    python manage.py launch --help
+
 ### Use Competitor's Existing Tags
 
-Tell's RaceDB to use the competitors existing tag codes.
+Tell's RaceDB to use the competitors existing tag codes.  Otherwise, codes will be generated for this competition only.
 
 ### Show Participants / Manual Entry
 
@@ -93,3 +99,7 @@ You can also create an Excel configuration file for CrossMgr by pressing the Cro
 ## Category Numbers
 
 Defines the number ranges to be used for each Category.  Choose the Categories on the left, the enter a number range on the right.
+
+This tells RaceDB what numbers are available for each Category.
+
+If you don't care about number ranges by Category and just want everyone to get a unique number, create one __Category Numbers__ and put all your categories in it.

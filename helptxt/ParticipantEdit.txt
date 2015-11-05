@@ -54,11 +54,28 @@ In order for this to work, RaceDB must be started with the __python launch --rfi
 * For more info on how to launch RaceDB, see [Tutorial][].
 * For more info on the hardware required to write tags, see [Hardware and Devices][].
 
-### Note
-Anything you want to write about the rider.
+### Competition Note
+A note that applies to this competition only.  For example, "Permissiong given to race up a category".
+
+### General Note
+A note that stays with the rider from competition to competition.  For example, "We have your lost driver's license".
+
+### Optional Events
+Events for which this rider can choose.
 
 ## Starts
 A list of the Mass Start Events and Waves for this rider.
+
+## Category
+A list of the categories this rider is participating in at the Competition.
+
+Each Category entry is treated as a separate "Participant".  This is to allow tracking separate payment, bib number (if required by the Category Number ranges) and different team (for example, a rider may compete in his/her Elite category with a trade team, but in the SingleSpeed category as an individual).
+
+## "Incomplete.  Prcess Next Entry Anyway" or "Complete and Accurate.  Process Next Entry" Button
+
+Shows the state entry, but allows moving on if required.  Fields that require attention are shown with a caution symbol next to them.  When all required fields are filled in, the button will turn green and "Complete and Accurate.  Process Next Entry" will be enabled.
+
+This changing status helps the registration staff to get complete information about the rider, but to move on if that information is not available.
 
 ## Print Race Voucher
 

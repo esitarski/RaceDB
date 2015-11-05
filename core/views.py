@@ -4240,7 +4240,7 @@ def get_participant_report_form():
 							Field('include_labels', size=10),
 							Field('exclude_labels', size=10),
 						),
-						Row( HTML( _('Ctrl-Click to Multi-Select') ) ),
+						Row( HTML( _('Use Ctrl-Click to Multi-Select and Ctrl-Click to Deselect') ) ),
 						css_class = 'col-md-9',
 					)
 				),

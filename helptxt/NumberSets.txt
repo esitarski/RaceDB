@@ -3,9 +3,14 @@
 # Number Sets
 
 __Number Sets__ allow you to track existing Bib numbers handed out to riders from Competition to Competition.
-The __Number Set__ can be configured in the Competition edit screen.
+__Number Sets__ track lost numbers (and are no longer available to be handed out) and recovered numbers.
 
-For example, say you are running an MTB series and a Road series.
+Riders can have multiple numbers for different categories from the same __Number Set__, or just one number.
+Whether this is required depends on how you have organized your Category Numbers.
+
+The __Number Set__ can be selected in the Competition edit screen.
+
+For a more complicated, say you are running an MTB series and a Road series.
 Let's pick a particular rider name Pat.
 
 Pat rides in one category in MTB and a different category in Road.
