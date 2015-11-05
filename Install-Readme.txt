@@ -149,7 +149,13 @@ To start RaceDB and connect to the rfid reader, use the following command:
  When RaceDB comes up, login with username="super", password="super".
  This will log you into the system with superuser capabilities, which you will need to configure races.
  
- After logging in, click on the "Tutorial" link at the bottom of the page to get started.
+ To see all possible "launch" command options, do:
+ 
+  python manage.py launch --help
+   
+The options starting at '--host" are of particular interest.  They allow you to choose the host and port of the RaceDB web server, connect to a particular rfid reader on the network, suppress automatically opening a browser and other capabilities.
+ 
+ After logging in to RaceDB, click on the "Tutorial" link at the bottom of the page to get started.
  
  The system also comes with another login username="reg" password="reg".
  This is what the registration staff should use.  It disables access to configuration data and makes the system easier to use.
@@ -162,10 +168,10 @@ Upgrading:
 
 These instructions assume that you are running RaceDB 0.2.50 or later.
 
-The upgrade will *not* replace your existing database or time zone.
-But, make a backup of your database file, just in case.
+The upgrade will preserve your existing database and keep all your information.
+(But, make a backup of your database file, just in case).
 
-If you are running RaceDB, stop it by closing the cmd window or pressing Ctrl-C in the window.
+If RaceDB is running, stop it by closing the cmd window or pressing Ctrl-C in the window.
 
 Unzip RaceDB.zip into the folder you unzipped it in before.
 
@@ -190,4 +196,6 @@ The "migrate" command will make changes to your existing database to support the
 Your existing data will be preserved.
   
 That's it!
-Now, follow Step 8 to launch RaceDB as usual.
+Now, follow Step 8 to launch RaceDB as usual with:
+
+  python manage.py launch <your_usual_launch_options_if_you_have_any>
