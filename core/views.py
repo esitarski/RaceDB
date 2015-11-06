@@ -3031,8 +3031,10 @@ class ParticipantSearchForm( Form ):
 	state_prov_text = forms.CharField( required=False, label = _('State/Prov') )
 	nationality_text = forms.CharField( required=False, label = _('Nationality') )
 	
-	confirmed = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))) )
-	paid = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))) )
+	confirmed = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Confirmed') )
+	paid = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Paid') )
+	
+	complete = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Complete') )
 	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
@@ -3059,7 +3061,7 @@ class ParticipantSearchForm( Form ):
 		self.helper.layout = Layout(
 			Row( Field('scan', size=20, autofocus=True ), ),
 			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
-			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), ),
+			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), Field('complete'), ),
 			Row( *(button_args[:-1] + [HTML('&nbsp;'*8)] + button_args[-1:]) ),
 		)
 
@@ -3161,6 +3163,10 @@ def Participants( request, competitionId ):
 	team_search = participant_filter.get('team_text','').strip()
 	if team_search:
 		participants = (p for p in participants if p.team and utils.matchSearchFields(team_search, p.team.search_text) )
+		
+	if 0 <= int(participant_filter.get('complete',-1) or 0) <= 1:
+		complete = bool(int(participant_filter['complete']))
+		participants = (p for p in participants if bool(p.is_done) == complete)
 	
 	if request.method == 'POST' and 'export-excel-submit' in request.POST:
 		xl = get_participant_excel( Q(pk__in=[p.pk for p in participants]) )
