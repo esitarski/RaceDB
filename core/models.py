@@ -811,6 +811,12 @@ class Event( models.Model ):
 			return self.wave_set
 		except AttributeError:
 			return self.wavett_set
+			
+	def get_categories( self ):
+		categories = set()
+		for w in self.get_wave_set().all(): 
+			categories |= set( w.categories.all() )
+		return sorted( categories, key = lambda c: c.sequence )
 
 	def reg_is_late( self, reg_closure_minutes, registration_timestamp ):
 		if reg_closure_minutes < 0:

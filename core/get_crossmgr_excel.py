@@ -227,8 +227,6 @@ def get_crossmgr_excel( event_mass_start ):
 	ws = wb.add_worksheet('Registration')
 	
 	table = [list(data_headers)] if competition.using_tags else [list(data_headers[:-2])]
-	
-	categories = sorted( set.union( *[set(w.categories.all()) for w in event_mass_start.get_wave_set().all()] ), key = lambda c: c.sequence )
 	for p in event_mass_start.get_participants():
 		row_data = [
 			p.bib if p.bib else '',
@@ -285,8 +283,6 @@ def get_crossmgr_excel_tt( event_tt ):
 	ws = wb.add_worksheet('Registration')
 	
 	table = [['StartTime'] + list(data_headers)] if competition.using_tags else [['StartTime'] + list(data_headers[:-2])]
-	
-	categories = sorted( set.union( *[set(w.categories.all()) for w in event_tt.get_wave_set().all()] ), key = lambda c: c.sequence )
 	
 	participants = list( event_tt.get_participants() )
 	start_times = { p: event_tt.get_start_time(p) for p in participants } if event_tt.create_seeded_startlist else {}
