@@ -2357,7 +2357,7 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 		nse_existing = list( NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=pks).values_list('bib', 'date_lost') )
 		NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=pks).delete()
 		for bib, date_lost in nse_existing:
-			if not NumberSetEntry( number_set=ns, bib=bib, license_holder=license_holder_merge ).exists():
+			if not NumberSetEntry( number_set=ns, bib=bib ).exists():
 				NumberSetEntry( number_set=ns, bib=bib, license_holder=license_holder_merge, date_lost=date_lost ).save()
 	
 	# Final delete.  Cascade delete will clean up unnecessary SeasonsPass entries.
