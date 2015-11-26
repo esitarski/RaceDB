@@ -2352,16 +2352,15 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 		sph.license_holder = license_holder_merge
 		sph.save()
 	
-	# Ensure the merged entry gets the same value as existing entries in all NumberSets.
-	nse_duplicates = set( NumberSetEntry.objects.filter(license_holder__pk__in=pks) )
-	nse_merge = set( NumberSetEntry.objects.filter(license_holder=license_holder_merge) )
-	nse_missing = nse_duplicates.difference( nse_merge )
-	for nse in nse_missing:
-		nse.pk = None
-		nse.license_holder = license_holder_merge
-		nse.save()
+	# Ensure that numbers in the number set are owned by the remaining license_holder.
+	for ns in NumberSet.objects.all():
+		nse_existing = list( NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=pks).values_list('bib', 'date_lost') )
+		NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=pks).delete()
+		for bib, date_lost in nse_existing:
+			if not NumberSetEntry( number_set=ns, bib=bib, license_holder=license_holder_merge ).exists():
+				NumberSetEntry( number_set=ns, bib=bib, license_holder=license_holder_merge, date_lost=date_lost ).save()
 	
-	# Final delete.  Cascade delete will clean up unnecessary SeasonsPass and NumberSet entries.
+	# Final delete.  Cascade delete will clean up unnecessary SeasonsPass entries.
 	LicenseHolder.objects.filter( pk__in=pks ).delete()
 
 #-----------------------------------------------------------------------------------------------
