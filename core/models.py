@@ -1303,7 +1303,7 @@ class LicenseHolder(models.Model):
 		self.uci_code = unicode(self.uci_code).upper().replace(u' ', u'')
 		
 		if len(self.uci_code) != 11:
-			return _(u'invalid length')
+			return _(u'invalid length for uci code')
 
 		if self.uci_code[:3] not in uci_country_codes_set:
 			return _(u'invalid nation code')
@@ -1331,19 +1331,23 @@ class LicenseHolder(models.Model):
 		
 		age = datetime.date.today().year - d.year
 		if age < 6:
-			return _(u'year too recent')
+			return _(u'date too recent')
 		if age > 100:
-			return _(u'year too old')
+			return _(u'date too early')
 		return None
 
 	@property
 	def date_of_birth_error( self ):
 		age = datetime.date.today().year - self.date_of_birth.year
-		return not (6 <= age <= 100)
+		if age < 6:
+			return _(u'age too young')
+		if age > 100:
+			return _(u'age too old')
+		return None
 	
 	@property
 	def license_code_error( self ):
-		return self.is_temp_license
+		return _(u'temp license') if self.is_temp_license else None
 	
 	@property
 	def has_error( self ):
@@ -1417,6 +1421,14 @@ class LicenseHolder(models.Model):
 		duplicates.sort( key=lambda r: r['key'] )
 		return duplicates
 
+	@classmethod
+	def get_errors( cls ):
+		license_holders = sorted(
+			set(p.license_holder for p in Participant.objects.all().select_related('license_holder')),
+			key=lambda x:x.search_text
+		)
+		return (lh for lh in license_holders if lh.has_error)
+		
 	class Meta:
 		verbose_name = _('LicenseHolder')
 		verbose_name_plural = _('LicenseHolders')

@@ -551,13 +551,20 @@ class LicenseHolderForm( ModelForm ):
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
 		
+		def error_html( error ):
+			return u'<span class="help-block"><strong>{}{}</strong>'.format(u'&nbsp;'*8,error) if error else ''
+		
 		self.helper.layout = Layout(
 			#Field( 'id', type='hidden' ),
 			Row(
 				Col(Field('last_name', size=40), 4),
 				Col(Field('first_name', size=40), 4),
 				Col('gender', 2),
-				ColKey(HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.date_of_birth_error else '')), Field('date_of_birth', size=10), cols=2),
+				ColKey(
+					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.date_of_birth_error else '')),
+					Field('date_of_birth', size=10),
+					HTML(error_html(lh.date_of_birth_error)),
+					cols=2),
 			),
 			Row(
 				Col(Field('city', size=40), 3),
@@ -570,8 +577,16 @@ class LicenseHolderForm( ModelForm ):
 				Col(Field('phone', size=50), 4),
 			),
 			Row(
-				ColKey(HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.license_code_error else '')), Field('license_code'), cols=3),
-				ColKey(HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.uci_code_error else '')), Field('uci_code'), cols=9),
+				ColKey(
+					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.license_code_error else '')),
+					Field('license_code'),
+					HTML(error_html(lh.license_code_error)),
+					cols=3),
+				ColKey(
+					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.uci_code_error else '')),
+					Field('uci_code'),
+					HTML(error_html(lh.uci_code_error)),
+					cols=9),
 			),
 			Row(
 				Col('existing_tag', 3),
@@ -650,6 +665,7 @@ def LicenseHoldersDisplay( request ):
 		('search-by-tag-submit', _('RFID Search'), 'btn btn-primary', True),
 		('clear-search-submit', _('Clear Search'), 'btn btn-primary', True),
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
+		('correct-errors-submit', _('Correct Errors'), 'btn btn-primary'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
@@ -671,6 +687,9 @@ def LicenseHoldersDisplay( request ):
 			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
+			
+		if 'correct-errors-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersCorrectErrors') )
 			
 		if 'manage-duplicates-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )
@@ -835,6 +854,13 @@ def LicenseHolderRfidScan( request ):
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
 		
 	return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
+
+#------------------------------------------------------------------------------------------------------
+@external_access
+def LicenseHoldersCorrectErrors( request ):
+	license_holders = LicenseHolder.get_errors()
+	isEdit = True
+	return render_to_response( 'license_holder_correct_errors_list.html', RequestContext(request, locals()) )
 
 #------------------------------------------------------------------------------------------------------
 @external_access
