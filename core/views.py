@@ -37,6 +37,8 @@ from django.forms.formsets import formset_factory
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from django.contrib.staticfiles.templatetags.staticfiles import static
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row
 from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
@@ -159,6 +161,9 @@ def Row( *args ):
 
 def Col( field, cols=1 ):
 	return Div( field, css_class = 'col-md-{}'.format(cols) )
+
+def ColKey( *args, **kwargs ):
+	return Div( *args, css_class = 'col-md-{}'.format(kwargs.get('cols',1)) )
 
 @autostrip
 class SearchForm( Form ):
@@ -538,6 +543,8 @@ class LicenseHolderForm( ModelForm ):
 		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
+		
+		lh = kwargs.get( 'instance', None )
 	
 		super(LicenseHolderForm, self).__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
@@ -550,7 +557,7 @@ class LicenseHolderForm( ModelForm ):
 				Col(Field('last_name', size=40), 4),
 				Col(Field('first_name', size=40), 4),
 				Col('gender', 2),
-				Col(Field('date_of_birth', size=10), 2),
+				ColKey(HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.date_of_birth_error else '')), Field('date_of_birth', size=10), cols=2),
 			),
 			Row(
 				Col(Field('city', size=40), 3),
@@ -563,8 +570,8 @@ class LicenseHolderForm( ModelForm ):
 				Col(Field('phone', size=50), 4),
 			),
 			Row(
-				Col(Field('license_code'), 3),
-				Col(Field('uci_code'), 9),
+				ColKey(HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.license_code_error else '')), Field('license_code'), cols=3),
+				ColKey(HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.uci_code_error else '')), Field('uci_code'), cols=9),
 			),
 			Row(
 				Col('existing_tag', 3),

@@ -38,12 +38,12 @@
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{{h.date_of_birth}}</td>
+			<td>{% if h.date_of_birth_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{{h.date_of_birth}}</td>
 			<td>{{h.city}}</td>
 			<td>{{h.state_prov}}</td>
 			<td>{{h.nationality}}</td>
-			<td>{{h.license_code_trunc}}</td>
-			<td><span style="white-space: nowrap;">{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}</span></td>
+			<td><span style="white-space: nowrap;">{% if h.license_code_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{{h.license_code_trunc}}</span></td>
+			<td><span style="white-space: nowrap;">{% if h.uci_code_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}</span></td>
 			<td>{% if h.existing_tag %}{{h.existing_tag}}{% endif %}{% if h.existing_tag2 %}, {{h.existing_tag2}}{% endif %}</td>
 			{% if isEdit %}
 			<td class="hidden-print">

@@ -1329,8 +1329,26 @@ class LicenseHolder(models.Model):
 		if d != self.date_of_birth:
 			return _(u'inconsistent with date of birth')
 		
+		age = datetime.date.today().year - d.year
+		if age < 6:
+			return _(u'year too recent')
+		if age > 100:
+			return _(u'year too old')
 		return None
 
+	@property
+	def date_of_birth_error( self ):
+		age = datetime.date.today().year - self.date_of_birth.year
+		return not (6 <= age <= 100)
+	
+	@property
+	def license_code_error( self ):
+		return self.is_temp_license
+	
+	@property
+	def has_error( self ):
+		return self.uci_code_error or self.license_code_error
+		
 	def __unicode__( self ):
 		return '{}, {} ({}, {}, {}, {})'.format(
 			self.last_name.upper(), self.first_name,
