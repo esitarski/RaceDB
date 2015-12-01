@@ -25,9 +25,11 @@ reNumEnd = re.compile( '[0-9]+$' )
 def getTagFromLicense( license, tag_from_license_id=0 ):
 	license = utils.removeDiacritic(license.strip().upper())
 	
-	if license.startswith('_XXX_') or license.startswith('TEMP_'):
-		license = license[5:]
-		license = license[:10]
+	for prefix in ('_XXX_', '_TEMP_', '_DUP_', '_CPY_'):
+		if license.startswith(prefix):
+			license = license[len(prefix):]
+			license = license[:10]
+			break
 	
 	# Try to find a trailing decimal component of the license code.
 	result = reNumEnd.search( license )
@@ -122,7 +124,7 @@ if __name__ == '__main__':
 		tag = getTagFromLicense( license )
 		license_new = getLicenseFromTag( tag )
 		print '"{}" {} ({}) "{}"'.format(license, tag, len(tag), license_new)
-		assert license == license_new
+		assert license.startswith('_') or license == license_new
 	
 	assert getLicenseFromTag( 'FE00' ) == None
 	assert getLicenseFromTag( 'FF10' ) == None
