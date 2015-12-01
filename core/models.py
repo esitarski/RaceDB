@@ -1203,6 +1203,8 @@ class LicenseHolder(models.Model):
 	)
 	gender = models.PositiveSmallIntegerField( choices=GENDER_CHOICES, default=0 )
 	
+	MinAge = 3
+	MaxAge = 100
 	date_of_birth = models.DateField()
 	
 	city = models.CharField( max_length=64, blank=True, default='', verbose_name=_('City') )
@@ -1330,18 +1332,18 @@ class LicenseHolder(models.Model):
 			return _(u'inconsistent with date of birth')
 		
 		age = datetime.date.today().year - d.year
-		if age < 6:
+		if age < self.MinAge:
 			return _(u'date too recent')
-		if age > 100:
+		if age > self.MaxAge:
 			return _(u'date too early')
 		return None
 
 	@property
 	def date_of_birth_error( self ):
 		age = datetime.date.today().year - self.date_of_birth.year
-		if age < 6:
+		if age < self.MinAge:
 			return _(u'age too young')
-		if age > 100:
+		if age > self.MaxAge:
 			return _(u'age too old')
 		return None
 	

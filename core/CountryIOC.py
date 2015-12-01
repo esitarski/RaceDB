@@ -282,8 +282,18 @@ for line in country_ioc.split('\n'):
 	except IndexError:
 		pass
 
-uci_country_codes['USA'] = 'USA'
+uci_country_codes['USA'.upper()] = 'USA'
+uci_country_codes['US'.upper()] = 'USA'
 uci_country_codes['United States of America'.upper()] = 'USA'
+uci_country_codes['American'.upper()] = 'USA'
+
+uci_country_codes['Canadian'.upper()] = 'CAN'
+uci_country_codes['Cdn'.upper()] = 'CAN'
+
+uci_country_codes['The Netherlands'.upper()] = 'NED'
+uci_country_codes['Dutch'.upper()] = 'NED'
+
+uci_country_codes['Deutschland'.upper()] = 'GER'
 
 def ioc_from_country( country ):
 	return uci_country_codes.get(removeDiacritic(country.strip()).upper(), None)
