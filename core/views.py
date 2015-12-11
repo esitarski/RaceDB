@@ -552,7 +552,7 @@ class LicenseHolderForm( ModelForm ):
 		self.helper.form_class = 'form-inline'
 		
 		def error_html( error ):
-			return u'<span class="help-block"><strong>{}{}</strong>'.format(u'&nbsp;'*8,error) if error else ''
+			return u'<span class="help-block"><strong>{}{}</strong>'.format(u'&nbsp;'*8,error) if error else u''
 		
 		self.helper.layout = Layout(
 			#Field( 'id', type='hidden' ),
@@ -563,7 +563,7 @@ class LicenseHolderForm( ModelForm ):
 				ColKey(
 					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.date_of_birth_error else '')),
 					Field('date_of_birth', size=10),
-					HTML(u'' if not lh else error_html(lh.date_of_birth_error)),
+					HTML(error_html(lh and lh.date_of_birth_error)),
 					cols=2),
 			),
 			Row(
@@ -580,12 +580,12 @@ class LicenseHolderForm( ModelForm ):
 				ColKey(
 					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.license_code_error else '')),
 					Field('license_code'),
-					HTML(u'' if not lh else error_html(lh.license_code_error)),
+					HTML(error_html(lh and lh.license_code_error)),
 					cols=3),
 				ColKey(
 					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.uci_code_error else '')),
 					Field('uci_code'),
-					HTML(u'' if not lh else error_html(lh.uci_code_error)),
+					HTML(error_html(lh and lh.uci_code_error)),
 					cols=9),
 			),
 			Row(
