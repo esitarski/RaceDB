@@ -1299,6 +1299,8 @@ class LicenseHolder(models.Model):
 		
 	@property
 	def uci_code_error( self ):
+		if not self:
+			return None
 		if not self.uci_code:
 			return _(u'missing')
 			
@@ -1340,6 +1342,8 @@ class LicenseHolder(models.Model):
 
 	@property
 	def date_of_birth_error( self ):
+		if not self or not self.date_of_birth:
+			return None
 		age = datetime.date.today().year - self.date_of_birth.year
 		if age < self.MinAge:
 			return _(u'age too young')

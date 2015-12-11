@@ -563,7 +563,7 @@ class LicenseHolderForm( ModelForm ):
 				ColKey(
 					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.date_of_birth_error else '')),
 					Field('date_of_birth', size=10),
-					HTML(error_html(lh.date_of_birth_error)),
+					HTML(u'' if not lh else error_html(lh.date_of_birth_error)),
 					cols=2),
 			),
 			Row(
@@ -580,12 +580,12 @@ class LicenseHolderForm( ModelForm ):
 				ColKey(
 					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.license_code_error else '')),
 					Field('license_code'),
-					HTML(error_html(lh.license_code_error)),
+					HTML(u'' if not lh else error_html(lh.license_code_error)),
 					cols=3),
 				ColKey(
 					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.uci_code_error else '')),
 					Field('uci_code'),
-					HTML(error_html(lh.uci_code_error)),
+					HTML(u'' if not lh else error_html(lh.uci_code_error)),
 					cols=9),
 			),
 			Row(
