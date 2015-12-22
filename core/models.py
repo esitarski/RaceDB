@@ -7,12 +7,13 @@ from django.contrib.contenttypes.models import ContentType
 
 from django.utils.timezone import get_default_timezone
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
 from django.utils.safestring import mark_safe
 
 import patch_sqlite_text_factory
 
-from DurationField import DurationField
+import DurationField
 from get_abbrev import get_abbrev
 
 import re
@@ -907,11 +908,12 @@ class Event( models.Model ):
 		return participant.category and any( w.is_participating(participant) for w in self.get_wave_set().all() )
 		
 	def get_json( self ):
+		server_date_time = timezone.localtime(self.date_time)
 		return {
 			'name':	self.name,
 			'pk': self.pk,
 			'competition_name': self.competition.name,
-			'date_time': self.date_time,
+			'date_time': unicode(server_date_time),
 			'event_type': self.event_type,
 			'optional':	self.optional,
 			'select_by_default': self.select_by_default,
@@ -1086,10 +1088,11 @@ class WaveBase( models.Model ):
 		return self.get_late_reg().count()
 		
 	def get_json( self ):
+		category_count = self.get_category_count()
 		return {
 			'name': self.name,
-			'categories': [{'name':c.full_name()} for c in self.categories.all()],
-			'participant_count': self.get_participant_count(),
+			'categories': [{'name':c.full_name(), 'participant_count':cc} for c, cc in category_count],
+			'participant_count': sum(cc[1] for cc in category_count),
 		}
 	
 	@property
@@ -1136,9 +1139,14 @@ class WaveBase( models.Model ):
 
 class Wave( WaveBase ):
 	event = models.ForeignKey( EventMassStart, db_index = True )
-	start_offset = DurationField( default = 0, verbose_name = _('Start Offset') )
+	start_offset = DurationField.DurationField( default = 0, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
+	
+	def get_json( self ):
+		js = super(Wave, self).get_json()
+		js['start_offset'] = DurationField.format_seconds( self.start_offset.total_seconds() )
+		return js
 	
 	def get_start_time( self ):
 		return self.event.date_time + self.start_offset
@@ -1958,10 +1966,10 @@ class EntryTT( models.Model ):
 	
 	start_sequence = models.PositiveIntegerField( default = 0, db_index = True, verbose_name = _('Start Sequence') )
 	
-	start_time = DurationField( null = True, blank = True, verbose_name=_('Start Time') )
+	start_time = DurationField.DurationField( null = True, blank = True, verbose_name=_('Start Time') )
 	
-	finish_time = DurationField( null = True, blank = True, verbose_name=_('Finish Time') )
-	adjustment_time = DurationField( null = True, blank = True, verbose_name=_('Adjustment Time') )
+	finish_time = DurationField.DurationField( null = True, blank = True, verbose_name=_('Finish Time') )
+	adjustment_time = DurationField.DurationField( null = True, blank = True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length = 128, default = '', verbose_name=_('Adjustment Note') )
 	
 	@transaction.atomic
@@ -2112,9 +2120,9 @@ class WaveTT( WaveBase ):
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
 	
 	# Fields for assigning start times.	
-	gap_before_wave = DurationField( verbose_name=_('Gap Before Wave'), default = 5*60 )
-	regular_start_gap = DurationField( verbose_name=_('Regular Start Gap'), default = 1*60 )
-	fastest_participants_start_gap = DurationField( verbose_name=_('Fastest Participants Start Gap'), default = 2*60 )
+	gap_before_wave = DurationField.DurationField( verbose_name=_('Gap Before Wave'), default = 5*60 )
+	regular_start_gap = DurationField.DurationField( verbose_name=_('Regular Start Gap'), default = 1*60 )
+	fastest_participants_start_gap = DurationField.DurationField( verbose_name=_('Fastest Participants Start Gap'), default = 2*60 )
 	num_fastest_participants = models.PositiveSmallIntegerField(
 						verbose_name=_('Number of Fastest Participants'),
 						choices=[(i, '%d' % i) for i in xrange(0, 16)],
