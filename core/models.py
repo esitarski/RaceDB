@@ -430,17 +430,18 @@ class Competition(models.Model):
 		event_mass_starts = self.eventmassstart_set.all()
 		event_tts = self.eventtt_set.all()
 	
+		start_date_old, start_date_new = self.start_date, datetime.date.today()
 		competition_new = self
 		competition_new.pk = None
-		competition_new.start_date = datetime.date.today()
+		competition_new.start_date = start_date_new
 		competition_new.save()
 		
 		for cn in category_numbers:
 			cn.make_copy( competition_new )
 		for e in event_mass_starts:
-			e.make_copy( competition_new )
+			e.make_copy( competition_new, start_date_old, start_date_new )
 		for e in event_tts:
-			e.make_copy( competition_new )
+			e.make_copy( competition_new, start_date_old, start_date_new )
 		
 		return competition_new
 		
@@ -824,14 +825,15 @@ class Event( models.Model ):
 		delta = self.date_time - registration_timestamp
 		return delta.total_seconds()/60.0 < reg_closure_minutes
 	
-	def make_copy( self, competition_new ):
-		time_diff = self.date_time - datetime.datetime.combine(self.competition.start_date, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone())
+	def make_copy( self, competition_new, start_date_old, start_date_new ):
+		time_diff = self.date_time - datetime.datetime.combine(
+			start_date_old, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone())
 		waves = self.get_wave_set().all()
 		
 		event_mass_start_new = self
 		event_mass_start_new.pk = None
 		event_mass_start_new.competition = competition_new
-		event_mass_start_new.date_time = datetime.datetime.combine(competition_new.start_date, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone()) + time_diff
+		event_mass_start_new.date_time = datetime.datetime.combine(start_date_new, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone()) + time_diff
 		event_mass_start_new.save()
 		for w in waves:
 			w.make_copy( event_mass_start_new )
@@ -903,6 +905,19 @@ class Event( models.Model ):
 		
 	def is_participating( self, participant ):
 		return participant.category and any( w.is_participating(participant) for w in self.get_wave_set().all() )
+		
+	def get_json( self ):
+		return {
+			'name':	self.name,
+			'pk': self.pk,
+			'competition_name': self.competition.name,
+			'date_time': self.date_time,
+			'event_type': self.event_type,
+			'optional':	self.optional,
+			'select_by_default': self.select_by_default,
+			'participant_count': self.get_participant_count(),
+			'waves': [w.get_json() for w in self.get_wave_set().all()],
+		}
 		
 	@property
 	def wave_text( self ):
@@ -1069,6 +1084,13 @@ class WaveBase( models.Model ):
 	
 	def get_late_reg_count( self ):
 		return self.get_late_reg().count()
+		
+	def get_json( self ):
+		return {
+			'name': self.name,
+			'categories': [{'name':c.full_name()} for c in self.categories.all()],
+			'participant_count': self.get_participant_count(),
+		}
 	
 	@property
 	def category_text( self ):
@@ -2076,7 +2098,6 @@ class EventTT( Event ):
 		)
 		participants_with_start_times = participants & start_times
 		return len(participants_with_start_times) < len(participants)
-		
 
 	# Time Trial fields
 	class Meta:

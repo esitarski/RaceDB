@@ -28,6 +28,7 @@ from django.template import Template, Context, RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import JsonResponse
 
 from django import forms
 from django.forms import ModelForm, Form
@@ -2696,7 +2697,6 @@ def EventMassStartDelete( request, eventId ):
 		template = 'event_mass_start_form.html',
 	)
 
-@external_access
 def EventMassStartCrossMgr( request, eventId ):
 	eventMassStart = get_object_or_404( EventMassStart, pk=eventId )
 	competition = eventMassStart.competition
@@ -2900,7 +2900,6 @@ def EventTTDelete( request, eventTTId ):
 		template = 'event_tt_form.html',
 	)
 
-@external_access
 def EventTTCrossMgr( request, eventTTId ):
 	eventTT = get_object_or_404( EventTT, pk=eventTTId )
 	competition = eventTT.competition
@@ -4476,6 +4475,26 @@ def YearOnYearAnalytics( request ):
 		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
 	return render_to_response( 'year_on_year_analytics.html', RequestContext(request, locals()) )
+
+#-----------------------------------------------------------------------------------------
+
+def GetEvents( request, date=None ):
+	if date is None:
+		date = datetime.date.today()
+	else:
+		date = datetime.date( *[int(d) for d in date.split('-')] )
+	
+	events = list( EventMassStart.objects.filter(
+		date_time__year = date.year, date_time__month = date.month, date_time__day = date.day,
+	)) + list( EventTT.objects.filter(
+		date_time__year = date.year, date_time__month = date.month, date_time__day = date.day,
+	))
+	events.sort( key=lambda e:e.date_time )
+	response = {
+		'date': date.strftime('%Y-%m-%d'),
+		'events': [e.get_json() for e in events],
+	}
+	return JsonResponse( response )
 
 #-----------------------------------------------------------------------------------------
 

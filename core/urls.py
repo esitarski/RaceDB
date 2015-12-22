@@ -193,6 +193,9 @@ urlpatterns = patterns('',
 	url(r'^(?i).*ReportLabelTop/(?P<reportLabelId>\d+)/$', views.ReportLabelTop),
 	url(r'^(?i).*ReportLabelBottom/(?P<reportLabelId>\d+)/$', views.ReportLabelBottom),
 	
+	url(r'^(?i).*GetEvents/$', views.GetEvents),
+	url(r'^(?i).*GetEvents/(?P<date>\d\d\d\d-\d\d-\d\d)/$', views.GetEvents),
+	
 	url(r'^(?i)login/$', 'django.contrib.auth.views.login', {'template_name': 'login.html'}),
 	url(r'^(?i).*logout/$', views.Logout),
 )
