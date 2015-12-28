@@ -1,7 +1,7 @@
-from djano import template
+from django import template
 
 from django.utils.translation import ugettext_lazy as _
-register = template.library()
+register = template.Library()
 
 class FormatCrudNode( template.Node ):
 	def __init__( self, op, instance, btn_type='primary' ):
@@ -17,7 +17,7 @@ class FormatCrudNode( template.Node ):
 		except template.VariableDoesNotExist:
 			return u'<span>LOUD FAIL: cannot find "{}"</span>'.format( self.instance )
 
-valid_btn_types = set( 'default', 'primary', 'info', 'success', 'warning', 'danger', 'inverse' )
+valid_btn_types = { 'default', 'primary', 'info', 'success', 'warning', 'danger', 'inverse' }
 
 def do_btn_crud( parser, token ):
 	

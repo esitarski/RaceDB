@@ -59,8 +59,6 @@ class DurationField( FloatField ):
 
 	description = "Floating point representation of timedelta."
 
-	__metaclass__ = models.SubfieldBase
-	
 	def __init__( self, *args, **kwargs ):
 		super( DurationField, self ).__init__( *args, **kwargs )
 	
