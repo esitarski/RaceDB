@@ -62,7 +62,7 @@ class DurationField( FloatField ):
 	def __init__( self, *args, **kwargs ):
 		super( DurationField, self ).__init__( *args, **kwargs )
 	
-	def to_python(self, value):
+	def to_python( self, value ):
 		if value is None:
 			return None
 			
@@ -100,20 +100,25 @@ class DurationField( FloatField ):
 		except Exception as e:
 			raise ValidationError('Unable to convert {} to time ({}).'.format(value, e) )
 		return value
-		
+	
+	def from_db_value( self, value, expression, connection, context ):
+			if value is None:
+				return value
+			return formatted_timedelta( seconds = value )
+	
 	def get_db_prep_value(self, value, connection, prepared=False):
 		try:
 			return value.total_seconds()
 		except AttributeError:
 			return None
 		
-	def value_to_string(self, instance):
+	def value_to_string( self, instance ):
 		td = getattr(instance, self.name)
 		if td:
 			return format_seconds( td.total_seconds() )
 		return None
 		
-	def formfield(self, form_class=DurationFormField, **kwargs):
+	def formfield( self, form_class=DurationFormField, **kwargs ):
 		defaults = {"help_text": "[-]HH:MM:SS.ddd"}
 		defaults.update(kwargs)
 		return form_class(**defaults)

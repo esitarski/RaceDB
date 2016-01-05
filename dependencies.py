@@ -49,6 +49,11 @@ def update_dependencies( upgrade ):
 	except:
 		pass
 		
+	try:
+		os.path.remove( os.path.join( 'core', 'migrations', '0002_auto_20150201_1649.py' ) )
+	except:
+		pass
+		
 	print( 'Pre-compiling source code...' )
 	compileall.compile_dir( '.', quiet=True )
 
