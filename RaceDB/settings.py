@@ -90,12 +90,18 @@ def get_database_from_args():
 	
 	return os.environ['sqlite3_database_fname']
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': get_database_from_args() or os.path.join(BASE_DIR, 'RaceDB.sqlite3'),
-    }
-}
+try:
+	# Pull in a user-defined database if it defined.
+	from DatabaseConfig import DatabaseConfig
+	DATABASES = { 'default': DatabaseConfig, }
+except ImportError:
+	# Otherwise, use the default sqlite3 database.
+	DATABASES = {
+		'default': {
+			'ENGINE': 'django.db.backends.sqlite3',
+			'NAME': get_database_from_args() or os.path.join(BASE_DIR, 'RaceDB.sqlite3'),
+		}
+	}
 
 try:
 	sys.stderr.write( 'databaseFile="{}"\n'.format( DATABASES['default']['NAME'] ) )
