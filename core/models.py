@@ -985,6 +985,8 @@ class Event( models.Model ):
 
 class EventMassStart( Event ):
 	
+	win_and_out = models.BooleanField( default = False, verbose_name = _("Win and Out") )
+
 	class Meta:
 		verbose_name = _('Mass Start Event')
 		verbose_name_plural = _('Mass Starts Event')
