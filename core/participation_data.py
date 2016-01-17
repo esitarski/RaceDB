@@ -273,9 +273,13 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	#-----------------------------------------------
 	# Discipline data.
 	#
-	discipline_total = len( set.union( *[v for v in discipline_overall.itervalues() ] ) )
-	discipline_men_total = len( set.union( *[v for v in discipline_men.itervalues() ] ) )
-	discipline_women_total = len( set.union( *[v for v in discipline_women.itervalues() ] ) )
+	def safe_union( *args ):
+		return set.union( *args ) if args else set()
+
+	
+	discipline_total = len( safe_union( *[v for v in discipline_overall.itervalues() ] ) )
+	discipline_men_total = len( safe_union( *[v for v in discipline_men.itervalues() ] ) )
+	discipline_women_total = len( safe_union( *[v for v in discipline_women.itervalues() ] ) )
 	
 	discipline_used = list(discipline_overall.iterkeys())
 	discipline_used.sort( key=lambda d: len(discipline_overall[d]), reverse=True )
@@ -293,7 +297,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	buckets_used = set( b for b in discipline_bucket[d].iterkeys() for d in discipline_used )
 	bucket_min = min( buckets_used ) if discipline_bucket else 0
 	bucket_max = max( buckets_used ) + 1 if discipline_bucket else 0
-	discipline_bucket_total = {b: len( set.union(*[discipline_bucket[d].get(b,set()) for d in discipline_used])) for b in xrange(bucket_min, bucket_max)}
+	discipline_bucket_total = {b: len( safe_union(*[discipline_bucket[d].get(b,set()) for d in discipline_used])) for b in xrange(bucket_min, bucket_max)}
 	
 	discipline_age = [[d] + [format_percent(len(discipline_bucket[d].get(b, set())), discipline_bucket_total.get(b, 0)) for b in xrange(bucket_min, bucket_max)]
 		for d in discipline_used]
