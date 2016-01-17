@@ -2434,11 +2434,21 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 # Apply upgrades.
 #
 def fix_bad_license_codes():
+	q = Q(license_code__startswith='0') or Q(existing_tag__startswith='0') or Q(existing_tag2__startswith='0')
 	success = True
 	while success:
 		success = False
 		with transaction.atomic():
-			for lh in LicenseHolder.objects.filter(license_code__startswith='0')[:999]:
+			for lh in LicenseHolder.objects.filter(q)[:999]:
+				lh.save()		# performs field validation.
+				success = True
+	
+	q = Q(tag__startswith='0') or Q(tag2__startswith='0')
+	success = True
+	while success:
+		success = False
+		with transaction.atomic():
+			for lh in Participant.objects.filter(q)[:999]:
 				lh.save()		# performs field validation.
 				success = True
 
