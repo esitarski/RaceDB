@@ -166,7 +166,8 @@ The options starting at '--host" are of particular interest.  They allow you to 
 ***********************************************************************
 Upgrading:
 
-These instructions assume that you are running RaceDB 0.2.50 or later.
+These instructions assume that you are running RaceDB 0.3.145 or later.
+Change: it is no longer necessary to do a "migrate" command - it is now done automatically.
 
 The upgrade will preserve your existing database and keep all your information.
 (But, make a backup of your database file, just in case).
@@ -188,13 +189,6 @@ You will see a text scrolling as necessary as the modules are installed.
 By patient!
 This may take a few minutes.
 
-In the RaceDB folder, run the follow command:
-
-  python manage.py migrate
-
-The "migrate" command will make changes to your existing database to support the latest functionality.
-Your existing data will be preserved.
-  
 That's it!
 Now, follow Step 8 to launch RaceDB as usual with:
 

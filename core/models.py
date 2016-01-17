@@ -828,14 +828,18 @@ class Event( models.Model ):
 	
 	def make_copy( self, competition_new, start_date_old, start_date_new ):
 		time_diff = self.date_time - datetime.datetime.combine(
-			start_date_old, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone())
+			start_date_old, datetime.time(0,0,0)
+		).replace(tzinfo = get_default_timezone())
 		waves = self.get_wave_set().all()
 		
 		event_mass_start_new = self
 		event_mass_start_new.pk = None
 		event_mass_start_new.competition = competition_new
-		event_mass_start_new.date_time = datetime.datetime.combine(start_date_new, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone()) + time_diff
+		event_mass_start_new.date_time = datetime.datetime.combine(
+			start_date_new, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone()) + time_diff
+		event_mass_start_new.option_id = 0		# Ensure the option_id gets reset if necessary.
 		event_mass_start_new.save()
+		
 		for w in waves:
 			w.make_copy( event_mass_start_new )
 		return event_mass_start_new
@@ -1683,20 +1687,20 @@ class Participant(models.Model):
 	
 	@property
 	def full_name_team( self ):
-		return u':  '.join( n for n in [self.license_holder.full_name(), self.team.name if self.team else None] if n )
+		full_name = self.license_holder.full_name()
+		if self.team:
+			full_name = u'{}:  {}'.format( full_name, self.team.name )
+		return full_name
 	
 	def __unicode__( self ):
 		return self.name
 	
-	@transaction.atomic
 	def add_to_default_optional_events( self ):
-		ParticipantOption.objects.filter( competition=self.competition, participant=self ).delete()
-		if self.category:
-			for e in [event for event in self.competition.get_events() if event.select_by_default and event.could_participate(self)]:
-				try:
-					ParticipantOption( competition=e.competition, participant=self, option_id=e.option_id ).save()
-				except Exception as e:
-					writeLog( 'add_to_default_optional_events: {}: {}'.format(self.full_name_team, e) )
+		ParticipantOption.set_option_ids(
+			self,
+			set( event.option_id for event in self.competition.get_events() if event.select_by_default and event.could_participate(self) )
+				if self.category else []
+		)
 	
 	def init_default_values( self ):
 		if self.competition.use_existing_tags:
@@ -2448,8 +2452,8 @@ def fix_bad_license_codes():
 	while success:
 		success = False
 		with transaction.atomic():
-			for lh in Participant.objects.filter(q)[:999]:
-				lh.save()		# performs field validation.
+			for p in Participant.objects.filter(q)[:999]:
+				p.save()		# performs field validation.
 				success = True
 
 def fix_non_unique_number_set_entries():

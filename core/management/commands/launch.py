@@ -2,6 +2,7 @@ from waitress import serve
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+from django.core import management
 #from whitenoise.django import DjangoWhiteNoise
 
 from dj_static import Cling
@@ -18,6 +19,10 @@ from core.models import SystemInfo
 from optparse import make_option
 
 def launch_server( **options ):
+
+	# Migrate the database automatically.
+	print 'Performing database migration if necessary...'
+	management.call_command('migrate', '--noinput', verbosity=0)
 
 	# Start the rfid server.
 	if any([options['rfid_reader'], options['rfid_reader_host'], options['rfid_transmit_power'] > 0, options['rfid_receiver_sensitivity'] > 0]):
