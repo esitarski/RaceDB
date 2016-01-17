@@ -658,8 +658,6 @@ def license_holders_from_search_text( search_text ):
 @external_access
 def LicenseHoldersDisplay( request ):
 
-	fix_bad_license_codes()
-
 	search_text = request.session.get('license_holder_filter', '')
 	btns = [
 		('search-by-barcode-submit', _('Barcode Search'), 'btn btn-primary', True),
@@ -4511,9 +4509,3 @@ def Logout( request ):
 	logout( request )
 	next = getContext(request, 'cancelUrl')
 	return HttpResponseRedirect('/RaceDB/login?next=' + next)
-
-from django.conf import settings
-settings.DATABASES['default']['NAME'] = settings.DATABASES['default']['NAME']
-
-#----------------------------------------------------------------------------
-fix_non_unique_number_set_entries()

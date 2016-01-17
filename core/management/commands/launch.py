@@ -15,14 +15,16 @@ import webbrowser
 import RaceDB.wsgi
 import RaceDB.urls
 from core.LLRPClientServer import runServer
-from core.models import SystemInfo
+from core.models import SystemInfo, models_fix_data
 from optparse import make_option
 
 def launch_server( **options ):
 
 	# Migrate the database automatically.
-	print 'Performing database migration if necessary...'
+	print 'Performing database migration (if necessary)...'
 	management.call_command('migrate', '--noinput', verbosity=0)
+	
+	models_fix_data()
 
 	# Start the rfid server.
 	if any([options['rfid_reader'], options['rfid_reader_host'], options['rfid_transmit_power'] > 0, options['rfid_receiver_sensitivity'] > 0]):

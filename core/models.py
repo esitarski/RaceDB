@@ -2437,6 +2437,26 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 #-----------------------------------------------------------------------------------------------
 # Apply upgrades.
 #
+'''
+def bad_data_test():
+	fields = dict(
+		last_name = '00-TEST-LAST-NAME',
+		first_name = '00-TEST-FIRST-NAME',
+		date_of_birth = datetime.datetime.today(),
+	
+		license_code = '0000{}'.format( random.randint(0,10000) ),
+	
+		existing_tag = '0000{}'.format( random.randint(0,10000) ),
+		existing_tag2 = '0000{}'.format( random.randint(0,10000) ),
+	)
+	
+	# Use bulk create to avoid calling the save method (otherwise data validation would take place)
+	LicenseHolder.objects.bulk_create([
+		LicenseHolder( **fields ),
+	] )
+	print list(LicenseHolder.objects.filter(last_name='00-TEST-LAST-NAME'))
+'''
+
 def fix_bad_license_codes():
 	q = Q(license_code__startswith='0') or Q(existing_tag__startswith='0') or Q(existing_tag2__startswith='0')
 	success = True
@@ -2459,6 +2479,11 @@ def fix_bad_license_codes():
 def fix_non_unique_number_set_entries():
 	for ns in NumberSet.objects.all():
 		ns.normalize()
+
+def models_fix_data():
+	print 'Removing leading zeroes in license codes and chip tags...'
+	fix_bad_license_codes()
+	fix_non_unique_number_set_entries()
 
 
 
