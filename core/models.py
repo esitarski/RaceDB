@@ -35,7 +35,7 @@ def fixNullUpper( s ):
 		return None
 	s = (s or u'').strip()
 	if s:
-		return utils.removeDiacritic(s).upper()
+		return utils.removeDiacritic(s).upper().lstrip('0')
 	else:
 		return None
 
