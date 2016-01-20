@@ -792,6 +792,8 @@ class Event( models.Model ):
 	
 	note = models.TextField( null=True, blank=True, verbose_name=_('Note') )
 	
+	dnsNoData = models.BooleanField( default=True, verbose_name = _("Show Participants with no race data as DNS"), )
+	
 	@property
 	def note_html( self ):
 		return mark_safe( u'<br/>'.join( self.note.split(u'\n') ) ) if self.note else u''

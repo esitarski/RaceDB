@@ -6,7 +6,7 @@ if( document.getElementById("submit-id-auto-generate-and-write-tag-submit") )
 	document.getElementById("submit-id-auto-generate-and-write-tag-submit").focus();
 
 $("form").submit(function(event) {
-	$('#id_license_code, #id_existing_tag, #id_existing_tag2, #tag, #tag2').each(function() { $(this).val( $(this).val().replace(/^0+/, '') );
+	$('#id_license_code, #id_existing_tag, #id_existing_tag2, #tag, #tag2').each(function() { $(this).val( $(this).val().trim().replace(/^0+/, '') );
 });
 });
 {% endblock onload %}
