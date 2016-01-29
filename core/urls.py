@@ -103,6 +103,7 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantGeneralNoteChange/(?P<participantId>\d+)/$', views.ParticipantGeneralNoteChange ),
 	url(r'^(?i).*ParticipantOptionChange/(?P<participantId>\d+)/$', views.ParticipantOptionChange ),
 	url(r'^(?i).*ParticipantEstSpeedChange/(?P<participantId>\d+)/$', views.ParticipantEstSpeedChange ),
+	url(r'^(?i).*ParticipantWaiverChange/(?P<participantId>\d+)/$', views.ParticipantWaiverChange ),
 	
 	url(r'^(?i).*LicenseHolders/$', views.LicenseHoldersDisplay),
 	url(r'^(?i).*LicenseHolderNew/$', views.LicenseHolderNew),
@@ -123,6 +124,11 @@ urlpatterns = [
 	url(r'^(?i).*TeamNew/$', views.TeamNew),
 	url(r'^(?i).*TeamEdit/(?P<teamId>\d+)/$', views.TeamEdit),
 	url(r'^(?i).*TeamDelete/(?P<teamId>\d+)/$', views.TeamDelete),
+	
+	url(r'^(?i).*LegalEntities/$', views.LegalEntitiesDisplay),
+	url(r'^(?i).*LegalEntityNew/$', views.LegalEntityNew),
+	url(r'^(?i).*LegalEntityEdit/(?P<legalEntityId>\d+)/$', views.LegalEntityEdit),
+	url(r'^(?i).*LegalEntityDelete/(?P<legalEntityId>\d+)/$', views.LegalEntityDelete),
 	
 	url(r'^(?i).*CategoryFormats/$', views.CategoryFormatsDisplay),
 	url(r'^(?i).*CategoryFormatNew/$', views.CategoryFormatNew),

@@ -1039,6 +1039,77 @@ def TeamDelete( request, teamId ):
 	return GenericDelete( Team, request, teamId, TeamForm )
 
 #--------------------------------------------------------------------------------------------
+@autostrip
+class LegalEntityForm( ModelForm ):
+	class Meta:
+		model = LegalEntity
+		fields = '__all__'
+		
+	def __init__( self, *args, **kwargs ):
+		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
+		
+		super(LegalEntityForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col(Field('name', size=50), 4),
+			),
+			Row(
+				Col(Field('contact', size=50), 4),
+				Col(Field('email', size=50), 4),
+				Col(Field('phone', size=50), 4),
+			),
+			Row(
+				Col(Field('website', size=80),12),
+			),
+			Row(
+				Col('waiver_expiry_date',4),
+			),
+			Row( HTML('<hr/>') ),
+		)
+		addFormButtons( self, button_mask )
+		
+@external_access
+def LegalEntitiesDisplay( request ):
+	search_text = request.session.get('legal_entities_filter', '')
+	btns = [('new-submit', _('New LegalEntity'), 'btn btn-success')]
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		if 'new-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LegalEntityNew') )
+			
+		form = SearchForm( btns, request.POST )
+		if form.is_valid():
+			search_text = form.cleaned_data['search_text']
+			request.session['legal_entities_filter'] = search_text
+	else:
+		form = SearchForm( btns, initial = {'search_text': search_text} )
+		
+	search_text = utils.normalizeSearch(search_text)
+	q = Q()
+	for n in search_text.split():
+		q &= Q( name__icontains = n )
+	legal_entities = LegalEntity.objects.filter(q)[:MaxReturn]
+	return render_to_response( 'legal_entity_list.html', RequestContext(request, locals()) )
+	
+@external_access
+def LegalEntityNew( request ):
+	return GenericNew( LegalEntity, request, LegalEntityForm )
+	
+@external_access
+def LegalEntityEdit( request, legalEntityId ):
+	return GenericEdit( LegalEntity, request, legalEntityId, LegalEntityForm )
+	
+@external_access
+def LegalEntityDelete( request, legalEntityId ):
+	return GenericDelete( LegalEntity, request, legalEntityId, LegalEntityForm )
+
+#--------------------------------------------------------------------------------------------
 
 @transaction.atomic
 def NormalizeSequence( objs ):
@@ -1988,6 +2059,7 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col('discipline', 2),
 					Col('race_class', 2),
+					Col('legal_entity', 4),
 				),
 				Row(
 					Col('start_date', 2),
@@ -3807,6 +3879,45 @@ def ParticipantEstSpeedChange( request, participantId ):
 	speed_table.reverse()
 	
 	return render_to_response( 'participant_est_speed_change.html', RequestContext(request, locals()) )
+
+#--------------------------------------------------------------------------
+@autostrip
+class ParticipantWaiverForm( Form ):
+	def __init__(self, *args, **kwargs):
+		super(ParticipantWaiverForm, self).__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'ok-submit', _('Waiver Correct and Signed'), css_class = 'btn btn-success' ),
+			Submit( 'not-ok-submit', _('Waiver Incorrect or Unsigned'), css_class = 'btn btn-danger' ),
+			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+		]
+		
+		self.helper.layout = Layout(
+			Row(button_args[0]),
+			Row(HTML('&nbsp')),
+			Row(button_args[1]),
+			Row(HTML('&nbsp')),
+			Row(button_args[2]),
+		)
+		
+@external_access
+def ParticipantWaiverChange( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	
+	if request.method == 'POST':
+		if 'ok-submit' in request.POST:
+			participant.sign_waiver_now()
+		elif 'not-ok-submit' in request.POST:
+			participant.unsign_waiver_now()
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = ParticipantWaiverForm()
+		
+	return render_to_response( 'participant_waiver_change.html', RequestContext(request, locals()) )
 
 #--------------------------------------------------------------------------
 

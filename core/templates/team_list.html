@@ -27,9 +27,9 @@
 			<td>{{t.get_team_type_display}}</td>
 			<td>{{t.nation_code}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">Delete</a>
+				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>
 				&nbsp;
-				<a class="btn btn-success" href="./TeamEdit/{{t.id}}/">Edit</a>
+				<a class="btn btn-success" href="./TeamEdit/{{t.id}}/">{% trans "Edit" %}</a>
 			</td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}

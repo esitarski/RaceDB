@@ -346,6 +346,23 @@ class ReportLabel( models.Model ):
 		verbose_name = _("Report Label")
 		verbose_name_plural = _("Report Labels")
 
+class LegalEntity(models.Model):
+	name = models.CharField( max_length=64, verbose_name=_('Name') )
+	contact = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Contact') )
+	email = models.EmailField( blank=True, verbose_name=_('Email') )
+	phone = models.CharField( max_length=22, blank=True, default='', verbose_name=_('Phone') )
+	website = models.CharField( max_length=255, blank=True, default='', verbose_name=_('Website') )
+	
+	waiver_expiry_date = models.DateField( default=datetime.date(1970,1,1), db_index=True, verbose_name=_('Waiver Expiry Date') )
+	
+	def __unicode__( self ):
+		return self.name
+	
+	class Meta:
+		ordering = ['name']
+		verbose_name = _('LegalEntity')
+		verbose_name_plural = _('LegalEntities')
+
 #-------------------------------------------------------------------
 class Competition(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
@@ -394,6 +411,8 @@ class Competition(models.Model):
 	ga_tracking_id = models.CharField( max_length = 20, default = '', blank = True, verbose_name=_('Google Analytics Tracking ID') )
 	
 	report_labels = models.ManyToManyField( ReportLabel, blank=True, verbose_name = _('Report Labels') )
+	
+	legal_entity = models.ForeignKey( LegalEntity, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Legal Entity') )
 	
 	@property
 	def speed_unit_display( self ):
@@ -450,6 +469,10 @@ class Competition(models.Model):
 		for e in self.eventmassstart_set.all():
 			e.date_time += time_delta
 			e.save()
+	
+	@property
+	def has_waiver( self ):
+		return self.legal_entity and self.legal_entity.waiver_expiry_date > datetime.date(1970,1,1)
 	
 	@property
 	def finish_date( self ):
@@ -1478,6 +1501,21 @@ class LicenseHolder(models.Model):
 		verbose_name_plural = _('LicenseHolders')
 		ordering = ['search_text']
 
+#---------------------------------------------------------------
+class Waiver(models.Model):
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True )
+	legal_entity = models.ForeignKey( 'LegalEntity', db_index=True )
+	date_signed = models.DateField( null=True, default=None, db_index=True, verbose_name=_('Waiver Signed on') )
+	
+	class Meta:
+		unique_together = (
+			('license_holder', 'legal_entity'),
+		)
+		verbose_name = _('Waiver')
+		verbose_name_plural = _('Waivers')
+
+#---------------------------------------------------------------
+
 class TeamHint(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
 	discipline = models.ForeignKey( 'Discipline', db_index = True )
@@ -1693,6 +1731,33 @@ class Participant(models.Model):
 		if self.team:
 			full_name = u'{}:  {}'.format( full_name, self.team.name )
 		return full_name
+		
+	@property
+	def has_unsigned_waiver( self ):
+		legal_entity = self.competition.legal_entity
+		if not legal_entity or legal_entity.waiver_expiry_date == datetime.date(1970,1,1):
+			return False
+		waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
+		return not waiver or waiver.date_signed < legal_entity.waiver_expiry_date
+	
+	def sign_waiver_now( self ):
+		legal_entity = self.competition.legal_entity
+		if legal_entity:
+			waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
+			if waiver:
+				waiver.date_signed = datetime.date.today()
+				waiver.save()
+			else:
+				Waiver(
+					license_holder=self.license_holder,
+					legal_entity=legal_entity,
+					date_signed=datetime.date.today()
+				).save()
+	
+	def unsign_waiver_now( self ):
+		legal_entity = self.competition.legal_entity
+		if legal_entity:
+			Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).delete()
 	
 	def __unicode__( self ):
 		return self.name
@@ -1795,6 +1860,7 @@ class Participant(models.Model):
 	def good_license( self ):		return not self.license_holder.is_temp_license
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
 	def good_est_kmh( self ):		return self.est_kmh or (not self.has_tt_events())
+	def good_waiver( self ):		return not self.has_unsigned_waiver
 	
 	@property
 	def is_done( self ):
@@ -1804,7 +1870,8 @@ class Participant(models.Model):
 				self.good_uci_code() and
 				self.good_license() and
 				self.good_signature() and
-				self.good_est_kmh()
+				self.good_est_kmh() and
+				self.good_waiver()
 			)
 		elif self.role < 200:
 			return (

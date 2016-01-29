@@ -78,6 +78,21 @@
 		{% endif %}
 	</td>
 </tr>
+
+{% if c.has_waiver %}
+<tr onclick="jump({% if isEdit %}'{{path}}ParticipantWaiverChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Waiver" %}{% if p.has_unsigned_waiver %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td>
+		<strong>{% if p.has_unsigned_waiver %}{% trans "Required" %}{% else %}{% trans "Correct" %}{% endif %}</strong>
+	</td>
+	<td>
+		{% if isEdit %}
+			<a class="btn btn-success hidden-print" href="{{path}}ParticipantWaiverChange/{{p.id}}/">{% trans "Change" %}</a>
+		{% endif %}
+	</td>
+</tr>
+{% endif %}
+
 <tr onclick="jump({% if request.user.is_superuser and isEdit %}'{{path}}ParticipantRoleChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Role" %}:</td>
 	<td>
@@ -98,6 +113,7 @@
 		{% endif %}
 	</td>
 </tr>
+
 {% if p.is_with_team %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantTeamChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Team" %}:</td>
