@@ -83,7 +83,12 @@
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantWaiverChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Waiver" %}{% if p.has_unsigned_waiver %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 	<td>
-		<strong>{% if p.has_unsigned_waiver %}{% trans "Required" %}{% else %}{% trans "Correct" %}{% endif %}</strong>
+		<strong>
+			{% if not p.has_unsigned_waiver %}{% trans "Correct" %}
+			{% elif p.non_existant_waiver %}{% trans "Missing" %}
+			{% else %}{% trans "Expired" %}
+			{% endif %}
+		</strong>
 	</td>
 	<td>
 		{% if isEdit %}

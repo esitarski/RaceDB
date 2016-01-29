@@ -1731,7 +1731,22 @@ class Participant(models.Model):
 		if self.team:
 			full_name = u'{}:  {}'.format( full_name, self.team.name )
 		return full_name
-		
+	
+	@property
+	def non_existant_waiver( self ):
+		legal_entity = self.competition.legal_entity
+		if not legal_entity or legal_entity.waiver_expiry_date == datetime.date(1970,1,1):
+			return False
+		return not Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
+	
+	@property
+	def expired_waiver( self ):
+		legal_entity = self.competition.legal_entity
+		if not legal_entity or legal_entity.waiver_expiry_date == datetime.date(1970,1,1):
+			return False
+		waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
+		return waiver and waiver.date_signed < legal_entity.waiver_expiry_date
+	
 	@property
 	def has_unsigned_waiver( self ):
 		legal_entity = self.competition.legal_entity
