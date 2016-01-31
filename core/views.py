@@ -1055,18 +1055,21 @@ class LegalEntityForm( ModelForm ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Col(Field('name', size=50), 4),
+				Col(Field('name', size=40), 4),
 			),
 			Row(
-				Col(Field('contact', size=50), 4),
-				Col(Field('email', size=50), 4),
-				Col(Field('phone', size=50), 4),
+				Col(Field('contact', size=40), 4),
+				Col(Field('email', size=40), 4),
+				Col(Field('phone', size=40), 4),
 			),
 			Row(
-				Col(Field('website', size=80),12),
+				Col(Field('website', size=60),12),
 			),
 			Row(
-				Col('waiver_expiry_date',4),
+				Field('waiver_expiry_date'),
+				HTML('<strong><span style="font-size: 130%">'),
+				HTML(_('All waivers signed <span style="text-decoration: underline;">before</span> this date will be flagged as expired.')),
+				HTML('</span></strong>'),
 			),
 			Row( HTML('<hr/>') ),
 		)
