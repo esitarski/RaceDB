@@ -2,7 +2,7 @@
 
 # Competitions
 
-In a nutshell, a Competition is a set of Mass Start events or Time Trial events with some extra overall information.
+In a nutshell, a Competition contains a set of Mass Start events or Time Trial events with some extra overall information.
 
 A Mass Start event is a set of uniquely numbered riders on course at the same time, and can have a number of Start Waves within it.
 Each Start Wave consists of one or more Categories starting together.
@@ -48,3 +48,5 @@ Use this feature if:
 1. Or, you add pre-reg Participants to two future races.  In one, you assign bib numbers, but you want the same bib numbers to show up in the other.
 
 Other than that, you don't need to worry about it.
+
+Another interesting field is the __Legal Entity__.  This allociates this competition with a Legal Entity, which allows you to specify an Expiry dates for rider's waivers (see [Legal Entity][]).

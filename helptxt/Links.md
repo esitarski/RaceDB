@@ -4,6 +4,7 @@
 [Competition Dashboard]: CompetitionDashboard.html
 [License Holders]:	LicenseHolders.html
 [Teams]: 			Teams.html
+[Legal Entities]:	LegalEntities.html
 
 [Category Formats]:	CategoryFormats.html
 [Number Sets]:		NumberSets.html

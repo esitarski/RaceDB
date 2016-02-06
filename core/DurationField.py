@@ -60,6 +60,8 @@ class DurationField( FloatField ):
 	description = "Floating point representation of timedelta."
 
 	def __init__( self, *args, **kwargs ):
+		if isinstance(kwargs.get('default',None), (int, long, float)):
+			kwargs['default'] = formatted_timedelta( seconds=kwargs['default'] )
 		super( DurationField, self ).__init__( *args, **kwargs )
 	
 	def to_python( self, value ):
@@ -113,7 +115,7 @@ class DurationField( FloatField ):
 			return None
 		
 	def value_to_string( self, instance ):
-		td = getattr(instance, self.name)
+		td = getattr(instance, self.attname)
 		if td:
 			return format_seconds( td.total_seconds() )
 		return None

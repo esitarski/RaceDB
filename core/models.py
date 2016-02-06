@@ -2146,7 +2146,7 @@ class EventTT( Event ):
 		
 		if self.create_seeded_startlist:
 			start_times = {
-				pk: datetime.timedelta(seconds=start_time)
+				pk: datetime.timedelta(seconds=start_time.total_seconds())
 				for pk, start_time in EntryTT.objects.filter(
 						participant__competition=self.competition,
 						event=self,
