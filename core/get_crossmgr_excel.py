@@ -211,7 +211,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.ga_tracking_id,
 		event.road_race_finish_times,
 		event.dnsNoData,
-		getattr('win_and_out', False),
+		getattr(event, 'win_and_out', False),
 	]
 	row = write_row_data( ws, row, row_data )
 
