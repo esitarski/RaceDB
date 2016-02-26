@@ -8,6 +8,7 @@ from django.db.models import Q
 
 from xlrd import open_workbook, xldate_as_tuple
 import import_utils
+from CountryIOC import ioc_from_country
 from import_utils import *
 from models import *
 
@@ -100,6 +101,9 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			
 			zip_postal		= to_str(get_key(ur,('ZipPostal','Zip', 'Postal', 'Zip Code', 'Postal Code', 'ZipCode', 'PostalCode',), None))
 			
+			if not uci_code and (nationality and date_of_birth and ioc_from_country(nationality)):
+				uci_code = '{}{}'.format( ioc_from_country(nationality), date_of_birth.strftime('%Y%m%d') )
+
 			license_holder_attr_value = {
 				'license_code':license_code,
 				'last_name':last_name,
