@@ -38,6 +38,8 @@ def pypi():
 	zf.close()
 	
 	googleDrive = r"c:\GoogleDrive\Downloads\All Platforms\RaceDB"
+	if not os.path.exists(googleDrive):
+		googleDrive = r"C:\Users\Edward Sitarski\Google Drive\Downloads\All Platforms\RaceDB"
 	
 	# Delete any existing unofficial releases.
 	officialRelease = '1.1.0'
