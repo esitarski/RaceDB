@@ -1176,11 +1176,18 @@ class Wave( WaveBase ):
 	
 	def get_json( self ):
 		js = super(Wave, self).get_json()
-		js['start_offset'] = DurationField.format_seconds( self.start_offset.total_seconds() )
+		try:
+			seconds = self.start_offset.total_seconds()
+		except:
+			seconds = self.start_offset
+		js['start_offset'] = DurationField.format_seconds( seconds )
 		return js
 	
 	def get_start_time( self ):
-		return self.event.date_time + self.start_offset
+		try:
+			return self.event.date_time + self.start_offset
+		except TypeError:
+			return self.event.date_time + datetime.timedelta(self.start_offset)
 	
 	class Meta:
 		verbose_name = _('Wave')
