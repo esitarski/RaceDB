@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<br/>
+<h2><strong>{{participant.license_holder.full_name}}</strong></h2>
+{% if participant.team %}
+	<br/>
+	<h2>{% trans "Team"%}: <strong>{{participant.team.name}}</strong>
+	</h2>
+{% endif %}
+{% if participant.category %}
+	<h2>{% trans "Category" %}: <strong>{{participant.category.code}}:</strong>
+	{{participant.category.get_gender_display}}, {{participant.category.description}}
+	</h2>
+{% endif %} 
+<hr/>
+{% crispy form %}
+{% endblock content %}
