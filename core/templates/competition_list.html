@@ -18,9 +18,9 @@
 <thead>
 	<tr>
 		<th>{% trans "Name" %}</th>
+		<th style="text-align:center">{% trans "#" %}</th>
 		<th>{% trans "Organizer" %}</th>
-		<th>{% trans "Start" %}</th>
-		<th>{% trans "Finish" %}</th>
+		<th>{% trans "Dates" %}</th>
 		<th>{% trans "Discipline" %}</th>
 		<th>{% trans "Class" %}</th>
 		<th>{% trans "Labels" %}</th>
@@ -31,9 +31,9 @@
 	{% for c in competitions %}
 		<tr onclick="jump('{{path}}CompetitionDashboard/{{c.id}}');">
 			<td>{{c.name}}</td>
+			<td style="text-align:right">{{c.get_participants.count}}</td>
 			<td>{{c.organizer}}</td>
-			<td>{{c.start_date}}</td>
-			<td>{{c.finish_date}}</td>
+			<td>{{c.date_range_str}}</td>
 			<td>{{c.discipline.name}}</td>
 			<td>{{c.race_class.name}}</td>
 			<td>{{c.report_labels_text}}</td>

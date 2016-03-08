@@ -39,7 +39,7 @@ class formatted_timedelta(datetime.timedelta):
 		return unicode(self.__repr__())
 		
 	def __str__( self ):
-		return self.__repr__( self )
+		return self.__repr__()
 
 class DurationFormField( CharField ):
 	def __init__(self, *args, **kwargs):

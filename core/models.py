@@ -477,7 +477,7 @@ class Competition(models.Model):
 	@property
 	def finish_date( self ):
 		return self.start_date + datetime.timedelta( days = self.number_of_days - 1 )
-	
+		
 	@property
 	def date_range_str( self ):
 		sd = self.start_date
@@ -2349,13 +2349,13 @@ class WaveTT( WaveBase ):
 			return participants
 		
 		start_times = {
-			pk: datetime.timedelta(seconds=start_time)
+			pk: start_time
 			for pk, start_time in EntryTT.objects.filter(
 					participant__competition=self.event.competition,
 					event=self.event
 				).values_list(
 					'participant__pk',
-					'start_time'
+					'start_time',
 				)
 		}
 		for p in participants:
