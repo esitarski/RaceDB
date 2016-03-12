@@ -37,9 +37,15 @@ def pypi():
 	zf.write( '../../CrossMgr/CrossMgrImpinj/pyllrp/pypi/dist/' + pyllrp, os.path.join(installDir, pyllrp) )
 	zf.close()
 	
-	googleDrive = r"c:\GoogleDrive\Downloads\All Platforms\RaceDB"
-	if not os.path.exists(googleDrive):
-		googleDrive = r"C:\Users\Edward Sitarski\Google Drive\Downloads\All Platforms\RaceDB"
+	gds = [
+		r"c:\GoogleDrive\Downloads\All Platforms",
+		r"C:\Users\edwar\Google Drive\Downloads\All Platforms",
+		r"C:\Users\Edward Sitarski\Google Drive\Downloads\All Platforms",
+	]
+	for googleDrive in gds:
+		if os.path.exists(googleDrive):
+			break
+	googleDrive = os.path.join( googleDrive, 'RaceDB' )
 	
 	# Delete any existing unofficial releases.
 	officialRelease = '1.3.0'
