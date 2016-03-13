@@ -70,25 +70,32 @@ import create_users
 
 from django.views.decorators.cache import patch_cache_control
 from functools import wraps
-def external_access(decorated_func):
-	decorated_func = logCall(login_required(decorated_func))
-	
-	@wraps( decorated_func )
-	def wrap( *args, **kwargs ):
-		response = decorated_func( *args, **kwargs )
-		patch_cache_control(
-			response,
-			no_cache=True,
-			no_store=True,
-			must_revalidate=True,
-			proxy_revalidate=True,
-			max_age=0,
-		)
-		response['Pragma'] = 'no-cache'
-		return response
-		
-	return wrap
 
+def access_validation( selfserve_ok=False ):
+	def decorator( decorated_func ):
+		decorated_func = logCall(login_required(decorated_func))
+		
+		@wraps( decorated_func )
+		def wrap( request, *args, **kwargs ):
+			if request.user.username == 'serve' and not selfserve_ok:
+				response = HttpResponseRedirect('/RaceDB/SelfServe')
+			else:
+				response = decorated_func( request, *args, **kwargs )
+			
+			patch_cache_control(
+				response,
+				no_cache=True,
+				no_store=True,
+				must_revalidate=True,
+				proxy_revalidate=True,
+				max_age=0,
+			)
+			response['Pragma'] = 'no-cache'
+			return response
+			
+		return wrap
+	return decorator
+	
 # Maximum return for large queries.
 MaxReturn = 200
 
@@ -142,8 +149,7 @@ def formChangedObject( obj_original, obj, form ):
 			return True
 	return False
 
-@logCall
-@external_access
+@access_validation()
 def home( request, rfid_antenna=None ):
 	if rfid_antenna is not None:
 		try:
@@ -402,7 +408,7 @@ class LicenseHolderTagForm( Form ):
 		)
 
 
-@external_access
+@access_validation()
 def LicenseHolderTagChange( request, licenseHolderId ):
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
@@ -655,7 +661,7 @@ def license_holders_from_search_text( search_text ):
 		break
 	return license_holders
 	
-@external_access
+@access_validation()
 def LicenseHoldersDisplay( request ):
 
 	search_text = request.session.get('license_holder_filter', '')
@@ -745,7 +751,7 @@ class BarcodeScanForm( Form ):
 			Row( *button_args ),
 		)
 
-@external_access
+@access_validation()
 def LicenseHolderBarcodeScan( request ):
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -794,7 +800,7 @@ class RfidScanForm( Form ):
 		)
 
 #--------------------------------------------------------------------------
-@external_access
+@access_validation()
 def LicenseHolderRfidScan( request ):
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	
@@ -855,14 +861,14 @@ def LicenseHolderRfidScan( request ):
 	return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
 
 #------------------------------------------------------------------------------------------------------
-@external_access
+@access_validation()
 def LicenseHoldersCorrectErrors( request ):
 	license_holders = LicenseHolder.get_errors()
 	isEdit = True
 	return render_to_response( 'license_holder_correct_errors_list.html', RequestContext(request, locals()) )
 
 #------------------------------------------------------------------------------------------------------
-@external_access
+@access_validation()
 def LicenseHoldersManageDuplicates( request ):
 	duplicates = LicenseHolder.get_duplicates()
 	return render_to_response( 'license_holder_duplicate_list.html', RequestContext(request, locals()) )
@@ -906,7 +912,7 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 	
 	return LicenseHolderSelectDuplicatesForm
 	
-@external_access
+@access_validation()
 def LicenseHoldersSelectDuplicates( request, duplicateIds ):
 	pks = [int(pk) for pk in duplicateIds.split(',')]
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
@@ -926,7 +932,7 @@ def LicenseHoldersSelectDuplicates( request, duplicateIds ):
 		form = GetLicenseHolderSelectDuplicatesForm( duplicates )( initial=dict(pks=pks) )
 	return render_to_response( 'license_holder_select_duplicates.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def LicenseHoldersSelectMergeDuplicate( request, duplicateIds ):
 	pks = [int(pk) for pk in duplicateIds.split(',')]
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
@@ -934,7 +940,7 @@ def LicenseHoldersSelectMergeDuplicate( request, duplicateIds ):
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	return render_to_response( 'license_holder_select_merge_duplicate.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def LicenseHoldersMergeDuplicates( request, mergeId, duplicateIds ):
 	license_holder_merge = get_object_or_404( LicenseHolder, pk=mergeId )
 	pks = [int(pk) for pk in duplicateIds.split(',')]
@@ -954,13 +960,13 @@ def LicenseHoldersMergeDuplicatesOK( request, mergeId, duplicateIds ):
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 #------------------------------------------------------------------------------------------------------
-@external_access
+@access_validation()
 def LicenseHolderNew( request ):
 	return GenericNew( LicenseHolder, request, LicenseHolderForm,
 		instance_fields={'license_code': 'TEMP'}
 	)
 	
-@external_access
+@access_validation()
 def LicenseHolderEdit( request, licenseHolderId ):
 	return GenericEdit( LicenseHolder, request,
 		licenseHolderId,
@@ -968,7 +974,7 @@ def LicenseHolderEdit( request, licenseHolderId ):
 		template='license_holder_form.html',
 	)
 	
-@external_access
+@access_validation()
 def LicenseHolderDelete( request, licenseHolderId ):
 	return GenericDelete( LicenseHolder, request,
 		licenseHolderId,
@@ -1001,7 +1007,7 @@ class TeamForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
-@external_access
+@access_validation()
 def TeamsDisplay( request ):
 	search_text = request.session.get('teams_filter', '')
 	btns = [('new-submit', _('New Team'), 'btn btn-success')]
@@ -1026,15 +1032,15 @@ def TeamsDisplay( request ):
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render_to_response( 'team_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def TeamNew( request ):
 	return GenericNew( Team, request, TeamForm )
 	
-@external_access
+@access_validation()
 def TeamEdit( request, teamId ):
 	return GenericEdit( Team, request, teamId, TeamForm )
 	
-@external_access
+@access_validation()
 def TeamDelete( request, teamId ):
 	return GenericDelete( Team, request, teamId, TeamForm )
 
@@ -1075,7 +1081,7 @@ class LegalEntityForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
-@external_access
+@access_validation()
 def LegalEntitiesDisplay( request ):
 	search_text = request.session.get('legal_entities_filter', '')
 	btns = [('new-submit', _('New LegalEntity'), 'btn btn-success')]
@@ -1100,15 +1106,15 @@ def LegalEntitiesDisplay( request ):
 	legal_entities = LegalEntity.objects.filter(q)[:MaxReturn]
 	return render_to_response( 'legal_entity_list.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def LegalEntityNew( request ):
 	return GenericNew( LegalEntity, request, LegalEntityForm )
 	
-@external_access
+@access_validation()
 def LegalEntityEdit( request, legalEntityId ):
 	return GenericEdit( LegalEntity, request, legalEntityId, LegalEntityForm )
 	
-@external_access
+@access_validation()
 def LegalEntityDelete( request, legalEntityId ):
 	return GenericDelete( LegalEntity, request, legalEntityId, LegalEntityForm )
 
@@ -1183,7 +1189,7 @@ class RaceClassForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
-@external_access
+@access_validation()
 def RaceClassesDisplay( request ):
 	NormalizeSequence( RaceClass.objects.all() )
 	if request.method == 'POST':
@@ -1201,38 +1207,38 @@ def RaceClassesDisplay( request ):
 	race_classes = RaceClass.objects.all()
 	return render_to_response( 'race_class_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def RaceClassNew( request ):
 	return GenericNew( RaceClass, request, RaceClassForm )
 
-@external_access
+@access_validation()
 def RaceClassEdit( request, raceClassId ):
 	return GenericEdit( RaceClass, request, raceClassId, RaceClassForm )
 	
-@external_access
+@access_validation()
 def RaceClassDelete( request, raceClassId ):
 	return GenericDelete( RaceClass, request, raceClassId, RaceClassForm )
 
-@external_access
+@access_validation()
 def RaceClassDown( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	SwapAdjacentSequence( RaceClass, raceClass, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def RaceClassUp( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	SwapAdjacentSequence( RaceClass, raceClass, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def RaceClassBottom( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	NormalizeSequence( RaceClass.objects.all() )
 	MoveSequence( RaceClass, raceClass, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def RaceClassTop( request, raceClassId ):
 	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
 	NormalizeSequence( RaceClass.objects.all() )
@@ -1276,7 +1282,7 @@ class DisciplineForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
-@external_access
+@access_validation()
 def DisciplinesDisplay( request ):
 	NormalizeSequence( Discipline.objects.all() )
 	if request.method == 'POST':
@@ -1294,38 +1300,38 @@ def DisciplinesDisplay( request ):
 	disciplines = Discipline.objects.all()
 	return render_to_response( 'discipline_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def DisciplineNew( request ):
 	return GenericNew( Discipline, request, DisciplineForm )
 
-@external_access
+@access_validation()
 def DisciplineEdit( request, disciplineId ):
 	return GenericEdit( Discipline, request, disciplineId, DisciplineForm )
 	
-@external_access
+@access_validation()
 def DisciplineDelete( request, disciplineId ):
 	return GenericDelete( Discipline, request, disciplineId, DisciplineForm )
 
-@external_access
+@access_validation()
 def DisciplineDown( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	SwapAdjacentSequence( Discipline, discipline, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def DisciplineUp( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	SwapAdjacentSequence( Discipline, discipline, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def DisciplineBottom( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	NormalizeSequence( Discipline.objects.all() )
 	MoveSequence( Discipline, discipline, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def DisciplineTop( request, disciplineId ):
 	discipline = get_object_or_404( Discipline, pk=disciplineId )
 	NormalizeSequence( Discipline.objects.all() )
@@ -1378,7 +1384,7 @@ class NumberSetForm( ModelForm ):
 		
 		addFormButtons( self, button_mask, self.additional_buttons )
 
-@external_access
+@access_validation()
 def NumberSetsDisplay( request ):
 	NormalizeSequence( NumberSet.objects.all() )
 	if request.method == 'POST':
@@ -1396,41 +1402,41 @@ def NumberSetsDisplay( request ):
 	number_sets = NumberSet.objects.all()
 	return render_to_response( 'number_set_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def NumberSetNew( request ):
 	return GenericNew( NumberSet, request, NumberSetForm )
 
-@external_access
+@access_validation()
 def NumberSetDelete( request, numberSetId ):
 	return GenericDelete( NumberSet, request, numberSetId, NumberSetForm )
 
-@external_access
+@access_validation()
 def NumberSetDown( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	SwapAdjacentSequence( NumberSet, number_set, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def NumberSetUp( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	SwapAdjacentSequence( NumberSet, number_set, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def NumberSetBottom( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	NormalizeSequence( NumberSet.objects.all() )
 	MoveSequence( NumberSet, number_set, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def NumberSetTop( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	NormalizeSequence( NumberSet.objects.all() )
 	MoveSequence( NumberSet, number_set, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def BibReturn( request, numberSetEntryId, confirmed=False ):
 	nse = get_object_or_404( NumberSetEntry, pk=numberSetEntryId )
 	if confirmed:
@@ -1443,7 +1449,7 @@ def BibReturn( request, numberSetEntryId, confirmed=False ):
 	target = getContext(request,'popUrl') + 'BibReturn/{}/{}/'.format(numberSetEntryId,1)
 	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def NumberSetEdit( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	return GenericEdit( NumberSet, request, numberSetId, NumberSetForm )
@@ -1474,7 +1480,7 @@ class NumberSetManageForm( Form ):
 		
 		addFormButtons( self, 0, self.additional_buttons )
 
-@external_access
+@access_validation()
 def NumberSetManage( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	search_fields = request.session.get('number_set_manage_filter', {})
@@ -1569,7 +1575,7 @@ class ReportLabelForm( ModelForm ):
 		
 		addFormButtons( self, button_mask, self.additional_buttons )
 
-@external_access
+@access_validation()
 def ReportLabelsDisplay( request ):
 	NormalizeSequence( ReportLabel.objects.all() )
 	if request.method == 'POST':
@@ -1587,41 +1593,41 @@ def ReportLabelsDisplay( request ):
 	report_labels = ReportLabel.objects.all()
 	return render_to_response( 'report_label_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def ReportLabelNew( request ):
 	return GenericNew( ReportLabel, request, ReportLabelForm )
 
-@external_access
+@access_validation()
 def ReportLabelEdit( request, reportLabelId ):
 	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
 	return GenericEdit(
 		ReportLabel, request, reportLabelId, ReportLabelForm,
 	)
 	
-@external_access
+@access_validation()
 def ReportLabelDelete( request, reportLabelId ):
 	return GenericDelete( ReportLabel, request, reportLabelId, ReportLabelForm )
 
-@external_access
+@access_validation()
 def ReportLabelDown( request, reportLabelId ):
 	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
 	SwapAdjacentSequence( ReportLabel, report_label, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def ReportLabelUp( request, reportLabelId ):
 	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
 	SwapAdjacentSequence( ReportLabel, report_label, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def ReportLabelBottom( request, reportLabelId ):
 	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
 	NormalizeSequence( ReportLabel.objects.all() )
 	MoveSequence( ReportLabel, report_label, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def ReportLabelTop( request, reportLabelId ):
 	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
 	NormalizeSequence( ReportLabel.objects.all() )
@@ -1684,7 +1690,7 @@ class SeasonsPassForm( ModelForm ):
 		
 		addFormButtons( self, button_mask, self.additional_buttons )
 
-@external_access
+@access_validation()
 def SeasonsPassesDisplay( request ):
 	NormalizeSequence( SeasonsPass.objects.all() )
 	if request.method == 'POST':
@@ -1702,11 +1708,11 @@ def SeasonsPassesDisplay( request ):
 	seasons_passes = SeasonsPass.objects.all()
 	return render_to_response( 'seasons_pass_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def SeasonsPassNew( request ):
 	return GenericNew( SeasonsPass, request, SeasonsPassForm )
 
-@external_access
+@access_validation()
 def SeasonsPassEdit( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	return GenericEdit(
@@ -1715,36 +1721,36 @@ def SeasonsPassEdit( request, seasonsPassId ):
 		additional_context={'seasons_pass_entries':SeasonsPassHolder.objects.select_related('license_holder').filter(seasons_pass=seasons_pass)}
 	)
 	
-@external_access
+@access_validation()
 def SeasonsPassDelete( request, seasonsPassId ):
 	return GenericDelete( SeasonsPass, request, seasonsPassId, SeasonsPassForm )
 
-@external_access
+@access_validation()
 def SeasonsPassCopy( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	seasons_pass.clone()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def SeasonsPassDown( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	SwapAdjacentSequence( SeasonsPass, seasons_pass, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def SeasonsPassUp( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	SwapAdjacentSequence( SeasonsPass, seasons_pass, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def SeasonsPassBottom( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	NormalizeSequence( SeasonsPass.objects.all() )
 	MoveSequence( SeasonsPass, seasons_pass, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def SeasonsPassTop( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	NormalizeSequence( SeasonsPass.objects.all() )
@@ -1753,7 +1759,7 @@ def SeasonsPassTop( request, seasonsPassId ):
 
 #--------------------------------------------------------------------------------------------
 
-@external_access
+@access_validation()
 def SeasonsPassHolderAdd( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	
@@ -1784,7 +1790,7 @@ def SeasonsPassHolderAdd( request, seasonsPassId ):
 	license_holders = license_holders_from_search_text( search_text )
 	return render_to_response( 'license_holder_seasons_pass_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def SeasonsPassLicenseHolderAdd( request, seasonsPassId, licenseHolderId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -1795,7 +1801,7 @@ def SeasonsPassLicenseHolderAdd( request, seasonsPassId, licenseHolderId ):
 		pass
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def SeasonsPassLicenseHolderRemove( request, seasonsPassId, licenseHolderId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -1806,7 +1812,7 @@ def SeasonsPassLicenseHolderRemove( request, seasonsPassId, licenseHolderId ):
 		pass
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-@external_access
+@access_validation()
 def SeasonsPassHolderRemove( request, seasonsPassHolderId ):
 	seasons_pass_holder = get_object_or_404( SeasonsPassHolder, pk=seasonsPassHolderId )
 	seasons_pass_holder.delete()
@@ -1866,15 +1872,15 @@ def CategoryFormatsDisplay( request ):
 	category_formats = applyFilter( search_text, CategoryFormat.objects.all(), CategoryFormat.get_search_text )
 	return render_to_response( 'category_format_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def CategoryFormatNew( request ):
 	return GenericNew( CategoryFormat, request, CategoryFormatForm, template = 'category_format_form.html' )
 
-@external_access
+@access_validation()
 def CategoryFormatEdit( request, categoryFormatId ):
 	return GenericEdit( CategoryFormat, request, categoryFormatId, CategoryFormatForm, template = 'category_format_form.html' )
 	
-@external_access
+@access_validation()
 def CategoryFormatCopy( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
 	category_format_new = category_format.make_copy()
@@ -1882,7 +1888,7 @@ def CategoryFormatCopy( request, categoryFormatId ):
 	category_format.save()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryFormatDelete( request, categoryFormatId ):
 	return GenericDelete( CategoryFormat, request, categoryFormatId, template = 'category_format_form.html' )
@@ -1899,14 +1905,14 @@ def CategorySwapAdjacent( category, swapBefore ):
 	categoryAdjacent.save()
 	category.save()
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryDown( request, categoryId ):
 	category = get_object_or_404( Category, pk=categoryId )
 	CategorySwapAdjacent( category, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryUp( request, categoryId ):
 	category = get_object_or_404( Category, pk=categoryId )
@@ -1941,7 +1947,7 @@ class CategoryForm( ModelForm ):
 		addFormButtons( self, button_mask )
 
 		
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryNew( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
@@ -1970,12 +1976,12 @@ def CategoryNew( request, categoryFormatId ):
 	
 	return render_to_response( 'category_form.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryEdit( request, categoryId ):
 	return GenericEdit( Category, request, categoryId, CategoryForm, template = 'category_form.html' )
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryDelete( request, categoryId ):
 	return GenericDelete( Category, request, categoryId, CategoryForm )
@@ -2119,7 +2125,7 @@ def GetCompetitionForm( competition_cur = None ):
 	
 	return CompetitionForm
 			
-@external_access
+@access_validation()
 def CompetitionsDisplay( request ):
 	form = None
 	search_text = request.session.get('competition_filter', '')
@@ -2154,7 +2160,7 @@ def CompetitionsDisplay( request ):
 	competitions = sorted( competitions, key = lambda x: x.start_date, reverse = True )
 	return render_to_response( 'competition_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionNew( request ):
 	missing = []
@@ -2186,7 +2192,7 @@ def CompetitionNew( request ):
 	
 	return render_to_response( 'competition_form.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionEdit( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2196,7 +2202,7 @@ def CompetitionEdit( request, competitionId ):
 		additional_context = dict(events=competition.get_events(), category_numbers=competition.categorynumbers_set.all()),
 	)
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionCopy( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2205,7 +2211,7 @@ def CompetitionCopy( request, competitionId ):
 	competition_new.save()
 	return HttpResponseRedirect(getContext(request, 'cancelUrl'))
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionDelete( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2215,7 +2221,7 @@ def CompetitionDelete( request, competitionId ):
 		additional_context = dict(events=competition.get_events()),
 	)
 
-@external_access
+@access_validation()
 def CompetitionDashboard( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	events_mass_start = competition.get_events_mass_start()
@@ -2253,7 +2259,7 @@ def GetRegAnalyticsForm( competition ):
 			)
 	return RegAnalyticsForm
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionRegAnalytics( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2281,7 +2287,7 @@ def CompetitionRegAnalytics( request, competitionId ):
 	payload_json = json.dumps(payload, separators=(',',':'))
 	return render_to_response( 'reg_analytics.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def TeamsShow( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	team_info = [ {
@@ -2315,31 +2321,31 @@ def TeamsShow( request, competitionId ):
 	num_teams = len(team_info)
 	return render_to_response( 'teams_show.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def FinishLynx( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return GetFinishLynxResponse( competition )
 
 #--------------------------------------------------------------------------------------------
-@external_access
+@access_validation()
 def CompetitionEventParticipationSummary( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 
 #--------------------------------------------------------------------------------------------
-@external_access
+@access_validation()
 def StartLists( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	events = competition.get_events()
 	return render_to_response( 'start_lists.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def StartList( request, eventId ):
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
 	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
 	return render_to_response( 'mass_start_start_list.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def StartListTT( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	time_stamp = datetime.datetime.now()
@@ -2398,7 +2404,7 @@ def handle_upload_prereg( competitionId, excel_contents, clear_existing ):
 	results_str = message_stream.getvalue()
 	return results_str
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def UploadPrereg( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2452,7 +2458,7 @@ def handle_license_holder_import_excel( excel_contents, update_license_codes ):
 	results_str = message_stream.getvalue()
 	return results_str
 		
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def LicenseHoldersImportExcel( request ):
 	if request.method == 'POST':
@@ -2622,13 +2628,13 @@ def GetCategoryNumbersForm( competition, category_numbers = None ):
 			self.helper['competition'].wrap( Field, type='hidden' )
 	return CategoryNumbersForm
 		
-@external_access
+@access_validation()
 def CategoryNumbersDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	category_numbers_list = sorted( CategoryNumbers.objects.filter(competition = competition), key = CategoryNumbers.get_key )
 	return render_to_response( 'category_numbers_list.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryNumbersNew( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2654,7 +2660,7 @@ def CategoryNumbersNew( request, competitionId ):
 	
 	return render_to_response( 'category_numbers_form.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryNumbersEdit( request, categoryNumbersId ):
 	category_numbers = get_object_or_404( CategoryNumbers, pk=categoryNumbersId )
@@ -2669,7 +2675,7 @@ def CategoryNumbersEdit( request, categoryNumbersId ):
 		),
 	)
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CategoryNumbersDelete( request, categoryNumbersId ):
 	category_numbers = get_object_or_404( CategoryNumbers, pk=categoryNumbersId )
@@ -2727,12 +2733,12 @@ class EventMassStartForm( ModelForm ):
 			] )
 		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Waves') if button_mask == EDIT_BUTTONS else None )
 
-@external_access
+@access_validation()
 def EventMassStartDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'event_mass_start_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def EventMassStartNew( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2756,14 +2762,14 @@ def EventMassStartNew( request, competitionId ):
 	
 	return render_to_response( 'event_mass_start_form.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def EventMassStartEdit( request, eventId ):
 	return GenericEdit( EventMassStart, request, eventId, EventMassStartForm,
 		template = 'event_mass_start_form.html'
 	)
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def EventMassStartDelete( request, eventId ):
 	return GenericDelete( EventMassStart, request, eventId, EventMassStartForm,
@@ -2830,7 +2836,7 @@ def GetWaveForm( event_mass_start, wave = None ):
 			
 	return WaveForm
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveNew( request, eventMassStartId ):
 	event_mass_start = get_object_or_404( EventMassStart, pk=eventMassStartId )
@@ -2871,7 +2877,7 @@ def WaveNew( request, eventMassStartId ):
 	
 	return render_to_response( 'wave_form.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveEdit( request, waveId ):
 	wave = get_object_or_404( Wave, pk=waveId )
@@ -2879,7 +2885,7 @@ def WaveEdit( request, waveId ):
 		template = 'wave_form.html'
 	)
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveDelete( request, waveId ):
 	wave = get_object_or_404( Wave, pk=waveId )
@@ -2930,12 +2936,12 @@ class EventTTForm( ModelForm ):
 			] )
 		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Waves') if button_mask == EDIT_BUTTONS else None )
 
-@external_access
+@access_validation()
 def EventTTDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'event_tt_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def EventTTNew( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2959,14 +2965,14 @@ def EventTTNew( request, competitionId ):
 	
 	return render_to_response( 'event_tt_form.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def EventTTEdit( request, eventTTId ):
 	return GenericEdit( EventTT, request, eventTTId, EventTTForm,
 		template = 'event_tt_form.html'
 	)
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def EventTTDelete( request, eventTTId ):
 	return GenericDelete( EventTT, request, eventTTId, EventTTForm,
@@ -3041,7 +3047,7 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 			
 	return WaveTTForm
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveTTNew( request, eventTTId ):
 	event_tt = get_object_or_404( EventTT, pk=eventTTId )
@@ -3080,7 +3086,7 @@ def WaveTTNew( request, eventTTId ):
 	
 	return render_to_response( 'wave_tt_form.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveTTEdit( request, waveTTId ):
 	wave_tt = get_object_or_404( WaveTT, pk=waveTTId )
@@ -3088,7 +3094,7 @@ def WaveTTEdit( request, waveTTId ):
 		template = 'wave_tt_form.html'
 	)
 	
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveTTDelete( request, waveTTId ):
 	wave_tt = get_object_or_404( WaveTT, pk=waveTTId )
@@ -3108,13 +3114,13 @@ def WaveTTSwapAdjacent( waveTT, swapBefore ):
 	waveTTAdjacent.save()
 	waveTT.save()
 
-@external_access
+@access_validation()
 def WaveTTDown( request, waveTTId ):
 	waveTT = get_object_or_404( WaveTT, pk=waveTTId )
 	WaveTTSwapAdjacent( waveTT, False )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-@external_access
+@access_validation()
 def WaveTTUp( request, waveTTId ):
 	waveTT = get_object_or_404( WaveTT, pk=waveTTId )
 	WaveTTSwapAdjacent( waveTT, True )
@@ -3171,7 +3177,7 @@ class ParticipantSearchForm( Form ):
 		)
 
 		
-@external_access
+@access_validation()
 def Participants( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -3285,7 +3291,7 @@ def Participants( request, competitionId ):
 
 #--------------------------------------------------------------------------------------------
 
-@external_access
+@access_validation()
 def ParticipantsInEvents( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -3318,7 +3324,7 @@ def ParticipantsInEvents( request, competitionId ):
 
 #--------------------------------------------------------------------------------------------
 
-@external_access
+@access_validation()
 def ParticipantManualAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -3352,7 +3358,7 @@ def ParticipantManualAdd( request, competitionId ):
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	return render_to_response( 'participant_add_list.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -3369,7 +3375,7 @@ def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
 		
 	return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
 
-@external_access
+@access_validation()
 def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -3389,7 +3395,7 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 	
 	return ParticipantAddToCompetition( request, competitionId, licenseHolderId )
 
-@external_access
+@access_validation()
 def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -3401,7 +3407,7 @@ def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId,
 	
 	return render_to_response( 'participant_add_to_category_confirm.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def ParticipantEdit( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	system_info = SystemInfo.get_singleton()
@@ -3412,7 +3418,7 @@ def ParticipantEdit( request, participantId ):
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def ParticipantEditFromLicenseHolder( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -3421,7 +3427,7 @@ def ParticipantEditFromLicenseHolder( request, competitionId, licenseHolderId ):
 		return ParticipantAddToCompetition( request, competitionId, licenseHolderId )
 	return ParticipantEdit( request, participant.id )
 	
-@external_access
+@access_validation()
 def ParticipantRemove( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
@@ -3430,7 +3436,7 @@ def ParticipantRemove( request, participantId ):
 	isEdit = False
 	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def ParticipantDoDelete( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	participant.delete()
@@ -3466,7 +3472,7 @@ class ParticipantCategorySelectForm( Form ):
 			button_args[1],
 		)
 
-@external_access
+@access_validation()
 def ParticipantCategoryChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -3493,7 +3499,7 @@ def ParticipantCategoryChange( request, participantId ):
 	available_categories = set( competition.get_available_categories(license_holder, gender=gender, participant_exclude=participant) )
 	return render_to_response( 'participant_category_select.html', RequestContext(request, locals()) )	
 
-@external_access
+@access_validation()
 def ParticipantCategorySelect( request, participantId, categoryId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -3528,12 +3534,12 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 
 #--------------------------------------------------------------------------
-@external_access
+@access_validation()
 def ParticipantRoleChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	return render_to_response( 'participant_role_select.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def ParticipantRoleSelect( request, participantId, role ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	participant.role = int(role)
@@ -3548,7 +3554,7 @@ def ParticipantRoleSelect( request, participantId, role ):
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 	
 #--------------------------------------------------------------------------
-@external_access
+@access_validation()
 def ParticipantBooleanChange( request, participantId, field ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	setattr( participant, field, not getattr(participant, field) )
@@ -3559,7 +3565,7 @@ def ParticipantBooleanChange( request, participantId, field ):
 	
 #--------------------------------------------------------------------------
 
-@external_access
+@access_validation()
 def ParticipantTeamChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	search_text = request.session.get('teams_filter', '')
@@ -3586,7 +3592,7 @@ def ParticipantTeamChange( request, participantId ):
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render_to_response( 'participant_team_select.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def ParticipantTeamSelect( request, participantId, teamId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	if int(teamId):
@@ -3604,7 +3610,7 @@ class Bib( object ):
 		self.license_holder = license_holder
 		self.full_name = license_holder.full_name() if license_holder else ''
 
-@external_access
+@access_validation()
 def ParticipantBibChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	if not participant.category:
@@ -3652,7 +3658,7 @@ def ParticipantBibChange( request, participantId ):
 	)
 	return render_to_response( 'participant_bib_select.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def ParticipantBibSelect( request, participantId, bib ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -3709,7 +3715,7 @@ class ParticipantNoteForm( Form ):
 			)
 		)
 		
-@external_access
+@access_validation()
 def ParticipantNoteChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -3730,7 +3736,7 @@ def ParticipantNoteChange( request, participantId ):
 		
 	return render_to_response( 'participant_note_change.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def ParticipantGeneralNoteChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -3784,7 +3790,7 @@ def GetParticipantOptionForm( participation_optional_events ):
 	
 	return ParticipantOptionForm
 		
-@external_access
+@access_validation()
 def ParticipantOptionChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -3843,7 +3849,7 @@ def GetParticipantEstSpeedForm( competition ):
 	
 	return ParticipantEstSpeedForm
 		
-@external_access
+@access_validation()
 def ParticipantEstSpeedChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -3907,7 +3913,7 @@ class ParticipantWaiverForm( Form ):
 			Row(button_args[2]),
 		)
 		
-@external_access
+@access_validation()
 def ParticipantWaiverChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	
@@ -3969,7 +3975,7 @@ class ParticipantTagForm( Form ):
 			),
 		)
 
-@external_access
+@access_validation()
 def ParticipantTagChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
@@ -4114,7 +4120,7 @@ class ParticipantSignatureForm( Form ):
 				)
 			)
 
-@external_access
+@access_validation()
 def ParticipantSignatureChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	signature_with_touch_screen = int(request.session.get('signature_with_touch_screen', True))
@@ -4141,13 +4147,13 @@ def ParticipantSignatureChange( request, participantId ):
 	else:
 		return render_to_response( 'participant_signature_change.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def SetSignatureWithTouchScreen( request, use_touch_screen ):
 	request.session['signature_with_touch_screen'] = bool(int(use_touch_screen))
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
 #--------------------------------------------------------------------------
-@external_access
+@access_validation()
 def ParticipantBarcodeAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -4176,18 +4182,18 @@ def ParticipantBarcodeAdd( request, competitionId ):
 		
 	return render_to_response( 'participant_scan_form.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def ParticipantNotFound( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'participant_not_found.html', RequestContext(request, locals()) )
 	
-@external_access
+@access_validation()
 def ParticipantMultiFound( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'participant_multi_found.html', RequestContext(request, locals()) )
 	
 #--------------------------------------------------------------------------
-@external_access
+@access_validation()
 def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
@@ -4256,14 +4262,14 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 		
 	return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def LicenseHolderAddConfirm( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	competition_age = competition.competition_age( license_holder )
 	return render_to_response( 'license_holder_add_confirm.html', RequestContext(request, locals()) )
 
-@external_access
+@access_validation()
 def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
@@ -4319,7 +4325,7 @@ class SystemInfoForm( ModelForm ):
 		)
 		addFormButtons( self, button_mask )
 		
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def SystemInfoEdit( request ):
 	return GenericEdit( SystemInfo, request, SystemInfo.get_singleton().id, SystemInfoForm )
@@ -4409,7 +4415,7 @@ def get_participant_report_form():
 	
 	return ParticipantReportForm
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def ParticipantReport( request ):
 	start_date, end_date, discipline, race_classes = get_search_start_date(), get_search_end_date(), None, None
@@ -4438,7 +4444,7 @@ def ParticipantReport( request ):
 	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )
 
 #--------------------------------------------------------------------------
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def AttendanceAnalytics( request ):
 	initial = request.session.get( 'attendance_analytics', {
@@ -4537,7 +4543,7 @@ def get_year_on_year_form():
 	
 	return YearOnYearReportForm
 
-@external_access
+@access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def YearOnYearAnalytics( request ):
 	initial = request.session.get( 'attendance_analytics', {
@@ -4623,3 +4629,140 @@ def Logout( request ):
 	logout( request )
 	next = getContext(request, 'cancelUrl')
 	return HttpResponseRedirect('/RaceDB/login?next=' + next)
+
+#--------------------------------------------------------------------------
+@autostrip
+class SelfServeAntennaForm( Form ):
+	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('Configure the RFID Antenna to Read Tags') )
+	
+	def __init__(self, *args, **kwargs):
+		super(SelfServeAntennaForm, self).__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+		]
+		
+		self.helper.layout = Layout(
+			Row( Field('rfid_antenna'), ),
+			Row( button_args[0], ),
+		)
+		
+@access_validation( True )
+def SelfServe( request, do_scan=0 ):
+	# Prevent non-serve users from coming here.
+	if request.user.username != 'serve':
+		return HttpResponseRedirect( '/RaceDB' )
+	
+	do_scan = int(do_scan)
+	
+	exclude_breadcrumbs = True
+	
+	form = None
+	status_entries = []
+	errors = []
+	license_holder = None
+	participants = []
+	confirm_logout = False
+	
+	path_noargs = getContext(request, 'cancelUrl') + 'SelfServe/'
+	
+	if do_scan == 2:
+		confirm_logout = True
+		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+	elif do_scan == 3:
+		logout( request )
+		return HttpResponseRedirect( '/RaceDB/Home/' )		
+		
+	competition_id = request.session.get('competition_id', None)
+	
+	if competition_id is None:
+		# Find the next competition by date.
+		competition = Competition.objects.filter(start_date__gte=datetime.date.today()).order_by('-start_date').first()
+		# If that fails, just get the latest competition for testing.
+		if not competition:
+			competition = Competition.objects.all().order_by('-start_date').first()
+		if not competition:
+			errors.append( _('No Competition Found') )
+			return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		request.session['competition_id'] = competition_id = competition.id
+	else:
+		competition = get_object_or_404( Competition, pk=competition_id )
+		
+	if not competition.using_tags:
+		errors.append( _('Competition is not using tags.') )
+		errors.append( _('The Competition must be configured to use tags for use Self Serve.') )
+		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+
+	rfid_antenna = request.session.get('rfid_antenna', None)
+	if rfid_antenna is None:
+		if request.method == 'POST':
+			form = SelfServeAntennaForm( request.POST )
+			if form.is_valid():
+				rfid_antenna = int(form.cleaned_data['rfid_antenna'])
+				if not rfid_antenna:
+					return HttpResponseRedirect( path_noargs )
+				request.session['rfid_antenna'] = rfid_antenna
+			
+			return HttpResponseRedirect( path_noargs )
+		else:
+			form = SelfServeAntennaForm()
+			return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		
+	if not do_scan:
+		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+	
+	tag = None
+	status, response = ReadTag(rfid_antenna)
+	if not status:
+		status_entries.append(
+			(_('Tag Read Failure'), response.get('errors',[]) ),
+		)
+	else:
+		tags = response.get('tags', [])
+		try:
+			tag = tags[0]
+		except (AttributeError, IndexError) as e:
+			status = False
+			status_entries.append(
+				(_('Tag Read Failure'), [e] ),
+			)
+	
+	if tag and len(tags) > 1:
+		status = False
+		status_entries.append(
+			(_('Multiple Tags Read (check that only one tag is near the antenna).'), tags )
+		)
+
+	if not status:
+		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		
+	license_holder, participants = participant_key_filter( competition, tag, False )
+	if not license_holder:
+		errors.append( string_concat(_('Tag not found '), u' (', tag, u').') )
+		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+
+	check_failures = (
+		('good_bib',			_('Missing Bib Number')),
+		('good_category',		_('Missing Category')),
+		#('good_team',			_('Missing Team')),
+		('good_paid',			_('Missing Payment')),
+		('good_tag',			_('Missing Tag')),
+		('good_uci_code',		_('Incorrect UCI Code')),
+		('good_license',		_('Missing License')),
+		('good_signature',		_('Missing Signature')),
+		('good_est_kmh',		_('Missing Estimated Speed')),
+		('good_waiver',			_('Missing/Expired Insurance Waiver')),
+	)
+	for p in participants:
+		for check, message in check_failures:
+			if not getattr(p, check)():
+				errors.append( message )
+				break
+		if errors:
+			break
+
+	return render_to_response( 'self_serve.html', RequestContext(request, locals()) )

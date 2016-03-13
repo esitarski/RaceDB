@@ -143,21 +143,24 @@ RWU13	Women	Road Girls Under 13 <age 10-12>
 RWU15	Women	Road Girls Under 15 <age 13-14>
 RWU17	Women	Road Girls Under 17 <age 15-16>
 RWJ	Women	Road Women Junior <age 17-18>
-RWC4	Women	Road Category 4
-RWC3	Women	Road Category 3
-RWC2	Women	Road Category 2
-RWC1	Women	Road Category 1
+RWCat4	Women	Road Category 4
+RWCat3	Women	Road Category 3
+RWCat2	Women	Road Category 2
+RWCat1	Women	Road Category 1
 
 RMU13	Men	Road Boys Under 13 <age 10-12>
 RMU15	Men	Road Boys Under 15 <age 13-14>
 RMU17	Men	Road Boys Under 17 <age 15-16>
 RMJ	Men	Road Men Junior <age 17-18>
-RMC5	Men	Road Category 5
-RMC4	Men	Road Category 4
-RMC3	Men	Road Category 3
-RMC2	Men	Road Category 2
-RMC1	Men	Road Category 1
+RMCat5	Men	Road Category 5
+RMCat4	Men	Road Category 4
+RMCat3	Men	Road Category 3
+RMCat2	Men	Road Category 2
+RMCat1	Men	Road Category 1
 '''
+
+usac_cx = usac_road.replace('RW','CXW').replace('RM','CXM').replace('Road','CX')
+usac_mtb = usac_road.replace('RW','MW').replace('RM','MM').replace('Road','MTB')
 
 oca_road = '''
 RWU13	Women	Road Girls Under 13 <age 10-12>
@@ -226,6 +229,9 @@ rfs = [
 	(u'CC - Road',		u'Canadian Cycling', cc_road),
 	(u'Open',			u'Men and Women', open),
 	(u'USAC - Road',	u'USA Cycling Road', usac_road),
+	(u'USAC - CycloCross',	u'USA Cycling CycloCross', usac_cx),
+	(u'USAC - MTB',	u'USA Cycling MTB', usac_mtb),
+	(u'USAC - Track',	u'USA Cycling Tracl', usac_mtb),
 ]
 
 def init_categories():

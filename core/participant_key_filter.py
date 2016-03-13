@@ -6,11 +6,11 @@ from django.db import transaction, IntegrityError
 from TagFormat import getLicenseFromTag
 from models import SystemInfo
 
-def participant_key_filter( competition, key, auto_add_participant = True ):
+def participant_key_filter( competition, key, auto_add_participant=True ):
 	# Convert the key to upper.
 	# The license_code, tag and tag2 are all stored in upper-case, so it is safe to do
 	# exact matches.
-	key = key.strip().upper().lstrip( '0' )
+	key = key.strip().upper().lstrip('0')
 	
 	if not key:
 		return None, []

@@ -9,6 +9,7 @@ warnings.simplefilter('error', DeprecationWarning)
 urlpatterns = [
 	url(r'^$', views.home, name='home'),
 	url(r'^(?P<rfid_antenna>\d+)/$', views.home, name='home'),
+	url(r'^(?i)Home/$', views.home),
 	
 	url(r'^(?i).*Competitions/$', views.CompetitionsDisplay),
 	url(r'^(?i).*CompetitionNew/$', views.CompetitionNew),
@@ -205,6 +206,9 @@ urlpatterns = [
 	
 	url(r'^(?i).*GetEvents/$', views.GetEvents),
 	url(r'^(?i).*GetEvents/(?P<date>\d\d\d\d-\d\d-\d\d)/$', views.GetEvents),
+	
+	url(r'^(?i).*SelfServe/$', views.SelfServe),
+	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', views.SelfServe),
 	
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}),
 	url(r'^(?i).*logout/$', views.Logout),

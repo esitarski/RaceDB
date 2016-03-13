@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load staticfiles %}
+{% load i18n %}
+
+{% block onload %}
+	console.log( 'called from onload');
+	{% if license_holder or status_entries or errors %}
+		setTimeout(function(){ window.location.href = "{{path_noargs}}"; }, 60*1000);
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+table.info-table tr td {
+	font-size: 125%;
+}
+table.info-table tr th {
+	font-size: 125%;
+}
+</style>
+<p/>
+<h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a> {% trans "Self-Serve" %}
+	{% if rfid_antenna %}{% trans "Antenna" %} {{rfid_antenna}} {% endif %}
+</h3>
+<br/>
+{% if competition %}
+	<h2><strong>{{competition.name}}</strong> <span style="font-size: 80%">{{competition.date_range_str}}</span></h2>
+	<hr/>
+{% endif %}
+{% if form %}
+	{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+	{% load crispy_forms_tags %}
+	{% crispy form %}
+{% elif confirm_logout %}
+	{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+	<h2>{% trans "Leave Self-Serve" %}</h2>
+	<h3>{% trans "Are you sure?" %}</h3>
+	<br/>
+	<a href="{{path_noargs}}3"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="{{path_noargs}}"><image src="{% static "images/cancel-btn-big.png" %}"/></a>
+{% else %}
+	{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+	{% if not do_scan and not errors %}
+		<h2>{% trans "Read RFID Tag" %}</h2>
+		<br/>
+		<h4>
+			{% trans "Hold RFID tag to Antenna and press SCAN" %}
+		</h4>
+		<br/>
+		<a href="{{path_noargs}}1"><image src="{% static "images/scan-btn-big.png" %}"/></a>	
+	{% elif status_entries %}
+		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+		<h3>{% trans "Status" %}: {% trans "Failure" %}</h3>
+		<dl>
+		{% for se in status_entries %}
+			<dt>{{se.0}}</dt>
+			{% for line in se.1 %}
+				<dd>{{line|linebreaks}}</dd>
+			{% endfor %}
+		{% endfor %}
+		</dl>
+		<h4>{% trans "Please try again." %}</h4>
+		<h4>{% trans "If it still doesn't work, see registration." %}</h4>
+		<br/>
+		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+	{% elif errors %}
+		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+		{% for e in errors %}
+			<h3>{% trans "Error" %}: {{e}}</h3>
+		{% endfor %}
+		<br/>
+		<h4>{% trans "Please see registration." %}</h4>
+		<br/>
+		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+	{% elif license_holder %}
+		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+		{% with h=p.license_holder %}
+			<h2>{{h.first_name}} {{h.last_name}}</h2>
+			<h4>
+				{{h.get_gender_display}} {{h.license_code}}&nbsp;&nbsp;
+				<span style="white-space: nowrap;">
+					{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
+				</span>
+			</h4>
+		{% endwith %}
+		<br/>
+		<table class="table info-table" style="width: auto">
+		<thead>
+			<tr>
+				<th>{% trans "Bib" %}</th>
+				<th>{% trans "Category" %}</th>
+				<th>{% trans "Team" %}</th>
+				<th>{% trans "Event" %}</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for p in participants %}
+			<tr>
+				<td class="text-right">{{p.bib}}</td>
+				<td>{{p.category.code}}</td>
+				<td>{% if p.team %}{{p.team.name}}{% else %}{% trans "No Team / Independent" %}{% endif %}</td>
+				<td>
+					{% for w in p.get_start_waves %}
+						{{w.event.name}} <span style="white-space: nowrap;">({{w.event.date_time|date:"Y-m-d f a"}})</span>
+					{% endfor %}
+					{% for w in p.get_start_wave_tts %}
+						{{w.event.name}} <span style="white-space: nowrap;">({{w.event.date_time|date:"Y-m-d f a"}})</span>
+					{% endfor %}
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+		<h4>{% trans "To fix incorrect information, please see registration." %}</h4>
+		<br/>
+		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+	{% endif %}
+	
+{% endif %}
+{% endblock %}

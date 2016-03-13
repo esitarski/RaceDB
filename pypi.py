@@ -48,7 +48,7 @@ def pypi():
 	googleDrive = os.path.join( googleDrive, 'RaceDB' )
 	
 	# Delete any existing unofficial releases.
-	officialRelease = '1.3.0'
+	officialRelease = '1.4.0'
 	
 	for root, dirs, files in os.walk( googleDrive ):
 		for f in files:

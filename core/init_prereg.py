@@ -83,15 +83,15 @@ def init_prereg(
 			zip_postal		= to_str(get_key(ur,('ZipPostal','Zip', 'Postal', 'Zip Code', 'Postal Code', 'ZipCode', 'PostalCode',), None))
 			
 			preregistered	= to_bool(ur.get('preregistered', True))
-			paid			= to_bool(ur.get('paid', None))
-			bib				= (to_int(ur.get('bib', None)) or None)
-			tag				= to_int_str(get_key(ur,('Tag','Chip'), None))
+			paid			= to_bool(get_key(ur,('paid','Fee Paid'), None))
+			bib				= (to_int(get_key(ur,('bib','Bib Number'), None)) or None)
+			tag				= to_int_str(get_key(ur,('Tag','Chip','Chip ID'), None))
 			note		 	= to_str(ur.get('note', None))
 			team_name		= to_str(ur.get('team', None))
 			club_name		= to_str(ur.get('club', None))
 			if not team_name:
 				team_name = club_name
-			category_code   = to_str(ur.get('category', None))
+			category_code   = to_str(get_key(ur,('category', 'CX Category'), None))
 			
 			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
 			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
@@ -100,6 +100,7 @@ def init_prereg(
 			participant_optional_events = {
 				optional_events[field]:to_bool(value) for field, value in ur.iteritems() if field in optional_events
 			}
+			race_entered    = to_str(get_key(ur,('Race Entered',), None))
 			
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
