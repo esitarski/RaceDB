@@ -2,17 +2,19 @@
 
 # Users and Roles
 
-There are two types of users in the system:
+There are three types of users in the system:
 
 1. __super__: the super user can create/edit/delete anything
 1. __reg__: the registration staff person can check it riders only
+1. __serve__: self-serve users.  Allows riders to confirm pre-reg data only - cannot edit data in database.
 
 RaceDB security is not designed for public access over the internet, and it is meant to be run locally.
 
 The password for __super__ is super, the password for __reg__ is reg.
 All staff working on registration should login with the __reg__ login.
+The password for __serve__ is __serve__.
 
-As a __reg__ user, a much simpler vew of the system is presented, for example, Delete options are absent.
+As a __reg__ user, a much simpler view of the system is presented, for example, Delete options are absent.
 
 Additionally, Competitions are only shown if they are active today.  This makes it harder for a __reg__ user to start registering
 people for the wrong competition.
@@ -31,4 +33,8 @@ Of course, changing users returns you to the same web page.
 This is useful feature if you find yourself at a __reg__ user's computer and you have to do something on the spot to fix a problem.
 Just log in as __super__, make your change right on the screen, then log back in as __reg__.
 
+The __serve__ user is great for self-serve application where riders confirm that their chip tags work and that their pre-reg information is correct.
 
+## Self-Serve
+
+Using the __serve__ user, it is possible to set up a number of kiosks that allow riders to check their own pre-reg 

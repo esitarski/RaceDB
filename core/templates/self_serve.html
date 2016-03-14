@@ -114,7 +114,10 @@ table.info-table tr th {
 		{% endfor %}
 		</tbody>
 		</table>
-		<h4>{% trans "To fix incorrect information, please see registration." %}</h4>
+		<h4>
+			{% trans "Registration Confirmed." %}<br/>
+			{% trans "To fix incorrect information, please see registration." %}
+		</h4>
 		<br/>
 		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% endif %}
