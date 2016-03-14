@@ -2466,7 +2466,7 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	pks = [lh.pk for lh in duplicates if lh != license_holder_merge]
 	if not pks:
 		return
-	
+		
 	# Cache and delete the Participant Options.
 	participant_options = [(po.participant.pk, po) for po in ParticipantOption.objects.filter( participant__license_holder__pk__in=[lh.pk for lh in duplicates] ) ]
 	for participant_pk, po in participant_options:
@@ -2522,7 +2522,16 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 			if not NumberSetEntry.objects.filter( number_set=ns, bib=bib ).exists():
 				NumberSetEntry( number_set=ns, bib=bib, license_holder=license_holder_merge, date_lost=date_lost ).save()
 	
-	# Final delete.  Cascade delete will clean up unnecessary SeasonsPass entries.
+	# Combine waivers.  Preserve most recent date_signed for all legal entities.
+	for w in Waiver.objects.filter( license_holder__pk__in=pks ):
+		w_merge = Waiver.objects.filter( license_holder=license_holder_merge, legal_entity=w.legal_entity ).first()
+		if not w_merge:								# Add waiver if it doesn't exist.
+			Waiver( license_holder=license_holder_merge, legal_entity=w.legal_entity, date_signed=w.date_signed ).save()
+		elif w_merge.date_signed < w.date_signed:	# Else update to more recent date signed if necessary.
+			w_merge.date_signed = w.date_signed
+			w_merge.save()
+	
+	# Final delete.  Cascade delete will clean up old SeasonsPass and Waiver entries.
 	LicenseHolder.objects.filter( pk__in=pks ).delete()
 
 #-----------------------------------------------------------------------------------------------
