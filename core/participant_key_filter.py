@@ -68,4 +68,3 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 		participants = list(Participant.objects.filter(competition=competition, license_holder=license_holder))
 		participants.sort( key = lambda p: p.category.sequence if p.category else p.bib )
 		return license_holder, participants
-

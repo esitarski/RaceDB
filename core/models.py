@@ -1873,13 +1873,14 @@ class Participant(models.Model):
 			not self.needs_tag
 		)
 	
+	def good_uci_code( self ):		return self.license_holder.uci_code_error is None
+	def good_license( self ):		return not self.license_holder.is_temp_license
+	
 	def good_bib( self ):			return self.is_competitor and self.bib
 	def good_category( self ):		return self.is_competitor and self.category
 	def good_team( self ):			return self.is_competitor and self.team
 	def good_paid( self ):			return self.is_competitor and self.paid
 	def good_tag( self ):			return not self.needs_tag
-	def good_uci_code( self ):		return self.license_holder.uci_code_error is None
-	def good_license( self ):		return not self.license_holder.is_temp_license
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
 	def good_est_kmh( self ):		return self.est_kmh or (not self.has_tt_events())
 	def good_waiver( self ):		return not self.has_unsigned_waiver

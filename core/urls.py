@@ -2,6 +2,7 @@ from django.conf.urls import url
 from django.contrib.auth.views import login
 
 from core import views
+from core import self_serve
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -207,8 +208,8 @@ urlpatterns = [
 	url(r'^(?i).*GetEvents/$', views.GetEvents),
 	url(r'^(?i).*GetEvents/(?P<date>\d\d\d\d-\d\d-\d\d)/$', views.GetEvents),
 	
-	url(r'^(?i).*SelfServe/$', views.SelfServe),
-	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', views.SelfServe),
+	url(r'^(?i).*SelfServe/$', self_serve.SelfServe),
+	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
 	
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}),
 	url(r'^(?i).*logout/$', views.Logout),
