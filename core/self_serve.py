@@ -75,6 +75,7 @@ def SelfServe( request, do_scan=0 ):
 	do_scan = int(do_scan)
 	
 	exclude_breadcrumbs = True
+	version = RaceDBVersion
 	
 	form = None
 	status_entries = []
@@ -94,8 +95,9 @@ def SelfServe( request, do_scan=0 ):
 		return HttpResponseRedirect( '/RaceDB/Home/' )		
 		
 	competition_id = request.session.get('competition_id', None)
+	competition = Competition.objects.filter( pk=competition_id ).first() if competition_id else None
 	
-	if competition_id is None:
+	if competition is None:
 		# Find the next competition by date.
 		competition = Competition.objects.filter(start_date__gte=datetime.date.today()).order_by('-start_date').first()
 		# If that fails, just get the latest competition for testing.
@@ -105,12 +107,9 @@ def SelfServe( request, do_scan=0 ):
 			errors.append( _('No Competition Found') )
 			return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
 		request.session['competition_id'] = competition_id = competition.id
-	else:
-		competition = get_object_or_404( Competition, pk=competition_id )
 		
 	if not competition.using_tags:
-		errors.append( _('Competition is not using tags.') )
-		errors.append( _('The Competition must be configured to use tags for use Self Serve.') )
+		errors.append( _('Competition must be configured to use tags.') )
 		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
 
 	rfid_antenna = request.session.get('rfid_antenna', None)
@@ -167,7 +166,7 @@ def SelfServe( request, do_scan=0 ):
 		errors.append( _('Not Registered') )
 
 	license_holder_warnings = (
-		('good_license',		_('Temporary License')),
+		('good_license',		_('Temporary License (do you have a permanent one now?)')),
 		('good_uci_code',		_('Incorrect UCI Code')),
 	)
 	participant_errors = (

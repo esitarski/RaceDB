@@ -7,6 +7,9 @@ from helptxt.compile import CompileHelp
 from dependencies import pyllrp
 from helptxt.version import version
 
+# Delete any existing unofficial releases.
+officialRelease = '1.5.0'
+	
 def pypi():
 	CompileHelp( 'helptxt' )
 	subprocess.call( ['python', 'manage.py', 'collectstatic', '--noinput'] )
@@ -46,9 +49,6 @@ def pypi():
 		if os.path.exists(googleDrive):
 			break
 	googleDrive = os.path.join( googleDrive, 'RaceDB' )
-	
-	# Delete any existing unofficial releases.
-	officialRelease = '1.4.0'
 	
 	for root, dirs, files in os.walk( googleDrive ):
 		for f in files:

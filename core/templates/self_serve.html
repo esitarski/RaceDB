@@ -5,7 +5,6 @@
 {% load i18n %}
 
 {% block onload %}
-	console.log( 'called from onload');
 	{% if license_holder or status_entries or errors %}
 		setTimeout(function(){ window.location.href = "{{path_noargs}}"; }, 60*1000);
 	{% endif %}
@@ -13,18 +12,11 @@
 
 {% block content %}
 <style>
-table.info-table tr td {
-	font-size: 125%;
-}
-table.info-table tr th {
-	font-size: 125%;
-}
-ul.warning-list li {
-	font-size: 150%;
-}
-ul.error-list li {
-	font-size: 150%;
-}
+table.info-table tr td { font-size: 125%; }
+table.info-table tr th { font-size: 125%; }
+
+ul.warning-list li { font-size: 150%; }
+ul.error-list li { font-size: 150%; }
 </style>
 <p/>
 <h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a> {% trans "Self-Serve" %}
@@ -91,14 +83,14 @@ ul.error-list li {
 		{% if warnings %}
 			<br/>
 			<h3>{% trans "Please help us with the following" %}:</h3>
-			<ul class="error-list">
+			<ul class="warning-list">
 				{% for w in warnings %}
 					<li>{{w}}</li>
 				{% endfor %}
 			</ul>
 		{% endif %}
 		<br/>
-		<h4>{% trans "Please see the registration desk." %}</h4>
+		<h4>{% trans "Please see the registration desk" %}.</h4>
 		<br/>
 		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% elif license_holder %}
@@ -113,7 +105,7 @@ ul.error-list li {
 			</h4>
 		{% endwith %}
 		<br/>
-		<h2>{% trans "Registration Confirmed." %}</h2>
+		<h2>{% trans "Registration Confirmed" %}.</h2>
 		<br/>
 		<table class="table info-table" style="width: auto">
 		<thead>
@@ -127,7 +119,7 @@ ul.error-list li {
 		<tbody>
 		{% for p in participants %}
 			<tr>
-				<td class="text-right">{{p.bib}}</td>
+				<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}{% trans "None" %}{% endif %}</td>
 				<td>{{p.category.code}}</td>
 				<td>{% if p.team %}{{p.team.name}}{% else %}{% trans "No Team / Independent" %}{% endif %}</td>
 				<td>
@@ -144,8 +136,8 @@ ul.error-list li {
 		</table>
 		{% if warnings %}
 			<br/>
-			<h3>{% trans "Please help us with the following" %}:</h3>
-			<ul class="error-list">
+			<h3>{% trans "Please help us at the registration desk with the following" %}:</h3>
+			<ul class="warning-list">
 				{% for w in warnings %}
 					<li>{{w}}</li>
 				{% endfor %}
@@ -156,6 +148,8 @@ ul.error-list li {
 		<br/>
 		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% endif %}
-	
 {% endif %}
+
+<p style="margin-top: 30px;"><strong>RaceDB {{version}}.</strong>&nbsp;&nbsp;&nbsp;
+Created by Edward Sitarski, Toronto, Ontario, Canada &#169;&nbsp;2014-{% now "Y" %}.</p>
 {% endblock %}
