@@ -18,27 +18,6 @@ table.info-table tr th { font-size: 125%; }
 ul.warning-list li { font-size: 150%; }
 ul.error-list li { font-size: 150%; }
 
-.isa_info, .isa_success, .isa_warning, .isa_error {
-    margin: 10px 0px;
-    padding:12px;
-	border-radius:.5em;
-}
-.isa_info {
-    color: #00529B;
-    background-color: #BDE5F8;
-}
-.isa_success {
-    color: #4F8A10;
-    background-color: #DFF2BF;
-}
-.isa_warning {
-    color: #9F6000;
-    background-color: #FEEFB3;
-}
-.isa_error {
-    color: #D8000C;
-    background-color: #FFBABA;
-}
 </style>
 <p/>
 <h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a> {% trans "Self-Serve" %}
@@ -71,7 +50,7 @@ ul.error-list li { font-size: 150%; }
 		<a href="{{path_noargs}}1"><image src="{% static "images/scan-btn-big.png" %}"/></a>	
 	{% elif status_entries %}
 		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
-		<div class="isa_error">
+		<div class="alert alert-danger">
 			<h3>{% trans "Tag Read Failure" %}</h3>
 			<br/>
 			<h4>{% trans "Please try again." %}</h4>
@@ -102,7 +81,7 @@ ul.error-list li { font-size: 150%; }
 				</h4>
 			{% endwith %}
 		{% endif %}
-		<div class=isa_error>
+		<div class="alert alert-danger">
 			<h3>{% trans "Not Ready to Race!" %}</h3>
 			<h3>{% trans "You MUST see the registration desk" %}.</h3>
 		</div>
@@ -112,7 +91,7 @@ ul.error-list li { font-size: 150%; }
 		{% endfor %}
 		</ul>
 		{% if warnings %}
-			<div class=isa_warning>
+			<div class="alert alert-warning">
 				<h3>{% trans "Please help us with the following" %}:</h3>
 			</div>
 			<ul class="warning-list">
@@ -135,7 +114,7 @@ ul.error-list li { font-size: 150%; }
 			</h4>
 		{% endwith %}
 		<br/>
-			<div class=isa_success>
+			<div class="alert alert-success">
 				<h2>{% trans "Registration Confirmed." %}</h2>
 				<h2>{% trans "Ready to Race." %}</h2>
 			</div>
@@ -167,7 +146,7 @@ ul.error-list li { font-size: 150%; }
 		</tbody>
 		</table>
 		{% if warnings %}
-			<div class=isa_warning>
+			<div class="alert alert-warning">
 				<h3>{% trans "Please help us at the registration desk with the following" %}:</h3>
 			</div>
 			<ul class="warning-list">

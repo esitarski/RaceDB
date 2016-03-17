@@ -148,8 +148,10 @@ def SelfServe( request, do_scan=0 ):
 	
 	if tag and len(tags) > 1:
 		status = False
+		if len(tags) > 4:
+			tags = tags[:4] + ['...']
 		status_entries.append(
-			(_('Multiple Tags Read (check that only one tag is near the antenna).'), tags )
+			(_('Multiple Tags Read (check that only one tag is near the antenna).'), [u', '.join(tags)] )
 		)
 
 	if not status:
