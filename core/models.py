@@ -260,10 +260,9 @@ class NumberSet(models.Model):
 		return None
 		
 	def assign_bib( self, license_holder, bib ):
-		if self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).exists():
-			return
-		self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
-		NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
+		if not self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).exists():
+			self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
+			NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
 	
 	def set_lost( self, bib ):
 		self.numbersetentry_set.filter(bib=bib, date_lost=None).update( date_lost=datetime.date.today() )

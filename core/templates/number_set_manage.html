@@ -11,7 +11,7 @@
 
 <style>
 .bib-table { padding-left:2cm; }
-.bib-table td { padding-left:1.5cm; padding-top:4px; padding-bottom:4px; }
+.bib-table td { padding-left:0.5cm; padding-top:4px; padding-bottom:4px; }
 </style>
 
 {% if number_set_lost.exists %}
@@ -31,7 +31,7 @@
 <tbody>
 	{% for nse in number_set_lost %}
 		{% with lh=nse.license_holder %}
-			<tr onclick="jump('./BibFound/{{nse.id}}/');">
+			<tr onclick="jump('./BibReturn/{{nse.id}}/');">
 				<td class="text-right">{{forloop.counter}}.</td>
 				<td class="text-right">{{nse.bib}}</td>
 				<td>
@@ -78,7 +78,8 @@
 						{% for nse in lh.nses %}
 						<tr>
 							<td class="text-right">{{nse.bib}}</td>
-							<td><a class="btn btn-warning btn-xs" href="./BibReturn/{{nse.id}}/">{% trans "Return Bib" %}</a></td>
+							<td><a class="btn btn-warning btn-xs" href="./BibReturn/{{nse.id}}/">{% trans "Return" %}</a></td>
+							<td><a class="btn btn-warning btn-xs" href="./BibLost/{{nse.id}}/">{% trans "Lost" %}</a></td>
 						</tr>
 						{% endfor %}
 					</tbody>

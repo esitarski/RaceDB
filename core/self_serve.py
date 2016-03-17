@@ -1,49 +1,8 @@
-import re
-import os
-import locale
-
-import json
-import datetime
-import string
-import pprint
-import StringIO
-
-import utils
-from WriteLog import logCall
-
-from models import *
-
-from django.db.models import Q
-from django.db import transaction, IntegrityError
-from django.utils.translation import string_concat
-
-from django.http import HttpResponse, HttpResponseRedirect
-from django.template import Template, Context, RequestContext
-from django.shortcuts import render_to_response, get_object_or_404
-from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required, user_passes_test
-
-from django import forms
-from django.forms import ModelForm, Form
-
-from django.utils.safestring import mark_safe
+from views_common import *
 from django.utils.translation import ugettext_lazy as _
 
-from django.contrib.staticfiles.templatetags.staticfiles import static
-
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row
-from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
-from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
-
 from participant_key_filter import participant_key_filter
-
 from ReadWriteTag import ReadTag, WriteTag
-
-from context_processors import getContext
-
-from autostrip import autostrip
-from views import access_validation
 
 #--------------------------------------------------------------------------
 @autostrip

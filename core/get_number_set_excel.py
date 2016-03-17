@@ -1,4 +1,3 @@
-
 import os
 import datetime
 import StringIO
@@ -12,11 +11,12 @@ from models import *
 import xlsxwriter
 
 data_headers = (
-	'Bib', 'LastName', 'FirstName',
+	'Bib', 'License',
+	'LastName', 'FirstName',
 	'Gender',
 	'DOB',
 	'City', 'StateProv',
-	'License', 'UCICode',
+	'UCICode',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -52,13 +52,13 @@ def get_number_set_excel( license_holders, number_set_lost ):
 		for nse in lh.nses:
 			data = [
 				nse.bib,
+				lh.license_code,
 				lh.last_name,
 				lh.first_name,
 				lh.get_gender_display(),
 				lh.date_of_birth.strftime('%Y-%m-%d'),
 				lh.city,
 				lh.state_prov,
-				lh.license_code,
 				lh.uci_code,
 			]
 			row = write_row_data( ws, row, data )

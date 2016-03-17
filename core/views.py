@@ -1,49 +1,5 @@
-import re
-import os
-import locale
-
-try:
-	locale.setlocale(locale.LC_ALL, "")
-except Exception as e:
-	print 'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e)
-
-import json
-import datetime
-import string
-import pprint
-import StringIO
-from init_prereg import init_prereg
-
-import utils
-from WriteLog import logCall
-
-from models import *
-
-from django.db.models import Q
-from django.db import transaction, IntegrityError
-from django.utils.translation import string_concat
-
-from django.http import HttpResponse, HttpResponseRedirect
-from django.template import Template, Context, RequestContext
-from django.shortcuts import render_to_response, get_object_or_404
-from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse
-
-from django import forms
-from django.forms import ModelForm, Form
-from django.forms.models import inlineformset_factory
-from django.forms.formsets import formset_factory
-
-from django.utils.safestring import mark_safe
+from views_common import *
 from django.utils.translation import ugettext_lazy as _
-
-from django.contrib.staticfiles.templatetags.staticfiles import static
-
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row
-from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
-from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -57,97 +13,17 @@ from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
 
 from participant_key_filter import participant_key_filter
-from autostrip import autostrip
 
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
 from AnalyzeLog import AnalyzeLog
 
-#---------------------------------------------------------------------
+#-----------------------------------------------------------------------
 from context_processors import getContext
 
 import create_users
 
 from django.views.decorators.cache import patch_cache_control
-from functools import wraps
-
-def access_validation( selfserve_ok=False ):
-	def decorator( decorated_func ):
-		decorated_func = logCall(login_required(decorated_func))
-		
-		@wraps( decorated_func )
-		def wrap( request, *args, **kwargs ):
-			if request.user.username == 'serve' and not selfserve_ok:
-				response = HttpResponseRedirect('/RaceDB/SelfServe')
-			else:
-				response = decorated_func( request, *args, **kwargs )
-			
-			patch_cache_control(
-				response,
-				no_cache=True,
-				no_store=True,
-				must_revalidate=True,
-				proxy_revalidate=True,
-				max_age=0,
-			)
-			response['Pragma'] = 'no-cache'
-			return response
-			
-		return wrap
-	return decorator
-	
-# Maximum return for large queries.
-MaxReturn = 200
-
-def pushUrl( request, name, *args, **kwargs ):
-	cancelUrl = kwargs.pop( 'cancelUrl', False )
-	while name.endswith('/'):
-		name = name[:-1]
-	target = getContext(request, 'cancelUrl' if cancelUrl else 'path')
-	if args:
-		url = u'{}{}/{}/'.format( target, name, u'/'.join( unicode(a) for a in args ) )
-	else:
-		url = u'{}{}/'.format( target, name )
-	return url
-
-def setFormReadOnly( form ):
-	instance = getattr( form, 'instance', None )
-	if instance:
-		for name, field in form.fields.iteritems():
-			field.required = False
-			field.widget.attrs['readonly'] = True
-			field.widget.attrs['disabled'] = True
-	return form
-	
-def getQuery( filter_name, request, queryName = 'q' ):
-	if queryName in request.GET:
-		query = request.GET[queryName]
-	else:
-		query = request.session.get(filter_name, '')
-	request.session[filter_name] = query
-	return query
-
-def applyFilter( query, objects, keyFunc = unicode, doSort = True, reverse = False ):
-	query = utils.normalizeSearch( query )
-	if query:
-		qFields = query.split()
-		ret = (obj for obj in objects if all(q in utils.normalizeSearch(keyFunc(obj)) for q in qFields) )
-	else:
-		ret = objects
-	if doSort:
-		ret = sorted( ret, reverse = reverse, key = lambda obj: utils.normalizeSearch(keyFunc(obj)) )
-	return ret
-	
-def copyFormFields( obj, form ):
-	for f in form:
-		setattr(obj, f.name, form.cleaned_data[f.name])
-	return obj
-	
-def formChangedObject( obj_original, obj, form ):
-	for f in form:
-		if getattr(obj_original, f.name, None) != getattr(obj, f.name, None):
-			return True
-	return False
 
 @access_validation()
 def home( request, rfid_antenna=None ):
@@ -159,207 +35,8 @@ def home( request, rfid_antenna=None ):
 	version = RaceDBVersion
 	return render_to_response( 'home.html', RequestContext(request, locals()) )
 	
-#--------------------------------------------------------------------------------------------
-def Container( *args ):
-	return Div( *args, css_class = 'container' )
+#-----------------------------------------------------------------------
 
-def Row( *args ):
-	return Div( *args, css_class = 'row' )
-
-def Col( field, cols=1 ):
-	return Div( field, css_class = 'col-md-{}'.format(cols) )
-
-def ColKey( *args, **kwargs ):
-	return Div( *args, css_class = 'col-md-{}'.format(kwargs.get('cols',1)) )
-
-@autostrip
-class SearchForm( Form ):
-	search_text = forms.CharField( required = False )
-	
-	def __init__(self, additional_buttons, *args, **kwargs):
-		self.additional_buttons = additional_buttons
-		hide_cancel_button = kwargs.pop( 'hide_cancel_button', False )
-		
-		super(SearchForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		button_args = [
-			Submit( 'search-submit', 'Search', css_class = 'btn btn-primary hidden-print' ),
-		]
-		
-		# Add additional search buttons.
-		for ab in additional_buttons:
-			name, value, cls = ab[:3]
-			if len(ab) == 4:
-				button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
-				
-		# Add cancel button.
-		if not hide_cancel_button:
-			button_args.append( Submit( 'cancel-submit', 'Cancel', css_class = 'btn btn-warning hidden-print' ) )
-			
-		# Add non-search buttons.
-		if additional_buttons:
-			button_args.append( HTML('&nbsp;' * 8) )
-			for ab in additional_buttons:
-				name, value, cls = ab[:3]
-				if len(ab) == 3:
-					button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
-		
-		Layout(
-			Row(
-				Col( Field('search_text', size=80), 6 ),
-			)
-		)
-		self.helper.layout.append(  HTML( '{{ form.errors }} {{ form.non_field_errors }}' ) )
-		
-		self.helper.layout.extend( [
-				Row( *button_args ),
-			]
-		)
-
-#--------------------------------------------------------------------------------------------
-
-SAVE_BUTTON		= (1<<0)
-OK_BUTTON		= (1<<1)
-CANCEL_BUTTON	= (1<<2)
-NEW_BUTTONS		= OK_BUTTON | SAVE_BUTTON | CANCEL_BUTTON
-DELETE_BUTTONS	= OK_BUTTON | CANCEL_BUTTON
-EDIT_BUTTONS	= 0xFFFF
-
-def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, print_button=None, cancel_alias=None ):
-	btns = []
-	if button_mask & SAVE_BUTTON != 0:
-		btns.append( Submit('save-submit', _('Save'), css_class='btn btn-primary hidden-print') )
-	if button_mask & OK_BUTTON:
-		btns.append( Submit('ok-submit', _('OK'), css_class='btn btn-primary hidden-print') )
-	if button_mask & CANCEL_BUTTON:
-		btns.append( Submit('cancel-submit', (cancel_alias or _('Cancel')), css_class='btn btn-warning hidden-print') )
-	
-	if additional_buttons:
-		btns.append( HTML(u'&nbsp;' * 8) )
-		for ab in additional_buttons:
-			name, value, cls = ab[:3]
-			btns.append( Submit(name, value, css_class = cls + ' hidden-print') )
-		
-	if print_button:
-		btns.append( HTML(u'&nbsp;' * 8) )
-		btns.append( HTML(string_concat(
-					u'<button class="btn btn-primary hidden-print" onClick="window.print()">',
-					print_button,
-					'</button>'
-				)
-			)
-		)
-	
-	form.helper.layout.append( Div(*btns, css_class = 'row') )
-	#form.helper.layout.append( Div( HTML( '{{ form.errors }} {{ form.non_field_errors }}' ), css_class = 'row') )
-
-	
-def GenericModelForm( ModelClass ):
-	@autostrip
-	class GMForm( ModelForm ):
-		class Meta:
-			model = ModelClass
-			fields = '__all__'
-			
-		def __init__( self, *args, **kwargs ):
-			self.button_mask = kwargs.pop( 'button_mask', [] )
-			
-			super(GMForm, self).__init__(*args, **kwargs)
-			self.helper = FormHelper( self )
-			self.helper.form_action = '.'
-			self.helper.form_class = 'form-inline'
-			
-			self.additional_buttons = []
-			addFormButtons( self, self.button_mask, self.additional_buttons )
-			
-	return GMForm
-
-def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
-	title = string_concat(_('New'), ' ', ModelClass._meta.verbose_name.title())
-	
-	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
-	isEdit = False
-	
-	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-		form = ModelFormClass( request.POST, button_mask=NEW_BUTTONS )
-		if form.is_valid():
-			instance = form.save()
-			
-			if 'ok-submit' in request.POST:
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
-				
-			if 'save-submit' in request.POST:
-				return HttpResponseRedirect( pushUrl(request, '{}Edit'.format(ModelClass.__name__), instance.id, cancelUrl=True) )
-	else:
-		instance = ModelClass( **instance_fields )
-		form = ModelFormClass( instance=instance, button_mask=NEW_BUTTONS )
-	
-	form_context = {}
-	form_context.update( locals() )
-	form_context.update( additional_context )
-	return render_to_response( template or 'generic_form.html', RequestContext(request, form_context) )
-	
-def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, template = None, additional_context = {} ):
-	instance = get_object_or_404( ModelClass, pk=instanceId )
-	
-	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
-	isEdit = True
-	
-	title = unicode(_('Edit {}')).format(ModelClass._meta.verbose_name.title())
-	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			print 'cancel-submit'
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
-		if form.is_valid():
-			formInstance = form.save( commit = False )
-			formInstance.save()
-			try:
-				form.save_m2m()
-			except Exception as e:
-				pass
-			if 'ok-submit' in request.POST:
-				print 'ok-submit'
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
-				
-			for ab in getattr(form, 'additional_buttons', []):
-				if ab[3:] and ab[0] in request.POST:
-					return ab[3]( request, instance )
-	else:
-		form = ModelFormClass( instance=instance, button_mask=EDIT_BUTTONS )
-		
-	form_context = {}
-	form_context.update( locals() )
-	form_context.update( additional_context )
-	return render_to_response( template or 'generic_form.html', RequestContext(request, form_context) )
-
-def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, template = None, additional_context = {} ):
-	instance = get_object_or_404( ModelClass, pk=instanceId )
-	
-	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
-	isEdit = False
-	
-	title = unicode(_('Delete {}')).format(ModelClass._meta.verbose_name.title())
-	if request.method == 'POST':
-		if 'cancel-submit' not in request.POST:
-			instance.delete()
-		return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	else:
-		form = setFormReadOnly( ModelFormClass(instance = instance, button_mask=DELETE_BUTTONS) )
-		
-	form_context = {}
-	form_context.update( locals() )
-	form_context.update( additional_context )
-	return render_to_response( template or 'generic_form.html', RequestContext(request, form_context) )
-
-#--------------------------------------------------------------------------------------------
 @autostrip
 class LicenseHolderTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
@@ -406,7 +83,6 @@ class LicenseHolderTagForm( Form ):
 				button_args[1],
 			),
 		)
-
 
 @access_validation()
 def LicenseHolderTagChange( request, licenseHolderId ):
@@ -799,7 +475,7 @@ class RfidScanForm( Form ):
 			),
 		)
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def LicenseHolderRfidScan( request ):
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
@@ -860,14 +536,14 @@ def LicenseHolderRfidScan( request ):
 		
 	return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
 
-#------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def LicenseHoldersCorrectErrors( request ):
 	license_holders = LicenseHolder.get_errors()
 	isEdit = True
 	return render_to_response( 'license_holder_correct_errors_list.html', RequestContext(request, locals()) )
 
-#------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def LicenseHoldersManageDuplicates( request ):
 	duplicates = LicenseHolder.get_duplicates()
@@ -959,7 +635,7 @@ def LicenseHoldersMergeDuplicatesOK( request, mergeId, duplicateIds ):
 	license_holder_merge_duplicates( license_holder_merge, duplicates )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-#------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def LicenseHolderNew( request ):
 	return GenericNew( LicenseHolder, request, LicenseHolderForm,
@@ -982,7 +658,7 @@ def LicenseHolderDelete( request, licenseHolderId ):
 		template='license_holder_form.html',
 	)
 	
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @autostrip
 class TeamForm( ModelForm ):
 	class Meta:
@@ -1044,7 +720,7 @@ def TeamEdit( request, teamId ):
 def TeamDelete( request, teamId ):
 	return GenericDelete( Team, request, teamId, TeamForm )
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @autostrip
 class LegalEntityForm( ModelForm ):
 	class Meta:
@@ -1118,875 +794,7 @@ def LegalEntityEdit( request, legalEntityId ):
 def LegalEntityDelete( request, legalEntityId ):
 	return GenericDelete( LegalEntity, request, legalEntityId, LegalEntityForm )
 
-#--------------------------------------------------------------------------------------------
-
-@transaction.atomic
-def NormalizeSequence( objs ):
-	for sequence, o in enumerate(objs):
-		o.sequence = sequence + 1
-		o.save()
-	
-def SwapAdjacentSequence( Class, obj, swapBefore ):
-	NormalizeSequence( Class.objects.all() )
-	try:
-		objAdjacent = Class.objects.get( sequence=obj.sequence + (-1 if swapBefore else 1) )
-	except Class.DoesNotExist:
-		return
-		
-	objAdjacent.sequence, obj.sequence = obj.sequence, objAdjacent.sequence
-	objAdjacent.save()
-	obj.save()
-
-@transaction.atomic
-def MoveSequence( Class, obj, toTop ):
-	if toTop:
-		for o in Class.objects.filter( sequence__lt = obj.sequence ):
-			o.sequence = o.sequence + 1
-			o.save()
-		obj.sequence = 0
-	else:
-		for o in Class.objects.filter( sequence__gt = obj.sequence ):
-			o.sequence = o.sequence - 1
-			o.save()
-		obj.sequence = Class.objects.count() - 1
-	
-	obj.save()	
-
-#--------------------------------------------------------------------------------------------
-
-@autostrip
-class RaceClassDisplayForm( Form ):
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(RaceClassDisplayForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		btns = [('new-submit', _('New Race Class'), 'btn btn-success')]
-		addFormButtons( self, button_mask, btns )
-
-@autostrip
-class RaceClassForm( ModelForm ):
-	class Meta:
-		model = RaceClass
-		fields = '__all__'
-		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(RaceClassForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=50), 4),
-			),
-			Field( 'sequence', type='hidden' ),
-		)
-		addFormButtons( self, button_mask )
-		
-@access_validation()
-def RaceClassesDisplay( request ):
-	NormalizeSequence( RaceClass.objects.all() )
-	if request.method == 'POST':
-	
-		if 'ok-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'RaceClassNew') )
-			
-		form = RaceClassDisplayForm( request.POST )
-	else:
-		form = RaceClassDisplayForm()
-		
-	race_classes = RaceClass.objects.all()
-	return render_to_response( 'race_class_list.html', RequestContext(request, locals()) )
-
-@access_validation()
-def RaceClassNew( request ):
-	return GenericNew( RaceClass, request, RaceClassForm )
-
-@access_validation()
-def RaceClassEdit( request, raceClassId ):
-	return GenericEdit( RaceClass, request, raceClassId, RaceClassForm )
-	
-@access_validation()
-def RaceClassDelete( request, raceClassId ):
-	return GenericDelete( RaceClass, request, raceClassId, RaceClassForm )
-
-@access_validation()
-def RaceClassDown( request, raceClassId ):
-	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
-	SwapAdjacentSequence( RaceClass, raceClass, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def RaceClassUp( request, raceClassId ):
-	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
-	SwapAdjacentSequence( RaceClass, raceClass, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def RaceClassBottom( request, raceClassId ):
-	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
-	NormalizeSequence( RaceClass.objects.all() )
-	MoveSequence( RaceClass, raceClass, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def RaceClassTop( request, raceClassId ):
-	raceClass = get_object_or_404( RaceClass, pk=raceClassId )
-	NormalizeSequence( RaceClass.objects.all() )
-	MoveSequence( RaceClass, raceClass, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-#--------------------------------------------------------------------------------------------
-
-@autostrip
-class DisciplineDisplayForm( Form ):
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(DisciplineDisplayForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		btns = [('new-submit', _('New Discipline'), 'btn btn-success')]
-		addFormButtons( self, button_mask, btns )
-
-@autostrip
-class DisciplineForm( ModelForm ):
-	class Meta:
-		model = Discipline
-		fields = '__all__'
-		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(DisciplineForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=50), 4),
-			),
-			Field( 'sequence', type='hidden' ),
-		)
-		addFormButtons( self, button_mask )
-		
-@access_validation()
-def DisciplinesDisplay( request ):
-	NormalizeSequence( Discipline.objects.all() )
-	if request.method == 'POST':
-	
-		if 'ok-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'DisciplineNew') )
-			
-		form = DisciplineDisplayForm( request.POST )
-	else:
-		form = DisciplineDisplayForm()
-		
-	disciplines = Discipline.objects.all()
-	return render_to_response( 'discipline_list.html', RequestContext(request, locals()) )
-
-@access_validation()
-def DisciplineNew( request ):
-	return GenericNew( Discipline, request, DisciplineForm )
-
-@access_validation()
-def DisciplineEdit( request, disciplineId ):
-	return GenericEdit( Discipline, request, disciplineId, DisciplineForm )
-	
-@access_validation()
-def DisciplineDelete( request, disciplineId ):
-	return GenericDelete( Discipline, request, disciplineId, DisciplineForm )
-
-@access_validation()
-def DisciplineDown( request, disciplineId ):
-	discipline = get_object_or_404( Discipline, pk=disciplineId )
-	SwapAdjacentSequence( Discipline, discipline, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def DisciplineUp( request, disciplineId ):
-	discipline = get_object_or_404( Discipline, pk=disciplineId )
-	SwapAdjacentSequence( Discipline, discipline, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def DisciplineBottom( request, disciplineId ):
-	discipline = get_object_or_404( Discipline, pk=disciplineId )
-	NormalizeSequence( Discipline.objects.all() )
-	MoveSequence( Discipline, discipline, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def DisciplineTop( request, disciplineId ):
-	discipline = get_object_or_404( Discipline, pk=disciplineId )
-	NormalizeSequence( Discipline.objects.all() )
-	MoveSequence( Discipline, discipline, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-#--------------------------------------------------------------------------------------------
-@autostrip
-class NumberSetDisplayForm( Form ):
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(NumberSetDisplayForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		btns = [('new-submit', _('New NumberSet'), 'btn btn-success')]
-		addFormButtons( self, button_mask, btns )
-
-@autostrip
-class NumberSetForm( ModelForm ):
-	class Meta:
-		model = NumberSet
-		fields = '__all__'
-		
-	def manageCB( self, request, numberSet ):
-		return HttpResponseRedirect( pushUrl(request,'NumberSetManage', numberSet.id) )
-		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(NumberSetForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=50), 4),
-			),
-			Field( 'sequence', type='hidden' ),
-		)
-		
-		self.additional_buttons = []
-		if button_mask == EDIT_BUTTONS:
-			self.additional_buttons.extend( [
-					( 'manage-submit', _("Manage"), 'btn btn-primary', self.manageCB ),
-			])
-		
-		addFormButtons( self, button_mask, self.additional_buttons )
-
-@access_validation()
-def NumberSetsDisplay( request ):
-	NormalizeSequence( NumberSet.objects.all() )
-	if request.method == 'POST':
-	
-		if 'ok-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'NumberSetNew') )
-			
-		form = NumberSetDisplayForm( request.POST )
-	else:
-		form = NumberSetDisplayForm()
-		
-	number_sets = NumberSet.objects.all()
-	return render_to_response( 'number_set_list.html', RequestContext(request, locals()) )
-
-@access_validation()
-def NumberSetNew( request ):
-	return GenericNew( NumberSet, request, NumberSetForm )
-
-@access_validation()
-def NumberSetDelete( request, numberSetId ):
-	return GenericDelete( NumberSet, request, numberSetId, NumberSetForm )
-
-@access_validation()
-def NumberSetDown( request, numberSetId ):
-	number_set = get_object_or_404( NumberSet, pk=numberSetId )
-	SwapAdjacentSequence( NumberSet, number_set, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def NumberSetUp( request, numberSetId ):
-	number_set = get_object_or_404( NumberSet, pk=numberSetId )
-	SwapAdjacentSequence( NumberSet, number_set, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def NumberSetBottom( request, numberSetId ):
-	number_set = get_object_or_404( NumberSet, pk=numberSetId )
-	NormalizeSequence( NumberSet.objects.all() )
-	MoveSequence( NumberSet, number_set, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def NumberSetTop( request, numberSetId ):
-	number_set = get_object_or_404( NumberSet, pk=numberSetId )
-	NormalizeSequence( NumberSet.objects.all() )
-	MoveSequence( NumberSet, number_set, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def BibReturn( request, numberSetEntryId, confirmed=False ):
-	nse = get_object_or_404( NumberSetEntry, pk=numberSetEntryId )
-	if confirmed:
-		nse.number_set.return_to_pool( nse.bib )
-		return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	page_title = _('Return Bib to NumberSet')
-	message = string_concat('<strong>', unicode(nse.bib), u'</strong>: ', nse.license_holder.full_name(), u'<br/><br/>',
-		_('Return Bib to the NumberSet so it can be used again.'))
-	cancel_target = getContext(request,'popUrl')
-	target = getContext(request,'popUrl') + 'BibReturn/{}/{}/'.format(numberSetEntryId,1)
-	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
-
-@access_validation()
-def NumberSetEdit( request, numberSetId ):
-	number_set = get_object_or_404( NumberSet, pk=numberSetId )
-	return GenericEdit( NumberSet, request, numberSetId, NumberSetForm )
-
-@autostrip
-class NumberSetManageForm( Form ):
-	search_text = forms.CharField( required=False, label=_("Search Text") )
-	search_bib = forms.IntegerField( required=False, label=_("Search Bib"), min_value=1, max_value=999999 )
-	
-	def __init__( self, *args, **kwargs ):
-		super(NumberSetManageForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('search_text', size=50), 4),
-				Col(Field('search_bib', size=50), 4),
-			),
-		)
-		
-		self.additional_buttons = [
-				( 'search-submit', _("Search"), 'btn btn-success' ),
-				( 'ok-submit', _("OK"), 'btn btn-primary' ),
-				( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary' ),
-		]
-		
-		addFormButtons( self, 0, self.additional_buttons )
-
-@access_validation()
-def NumberSetManage( request, numberSetId ):
-	number_set = get_object_or_404( NumberSet, pk=numberSetId )
-	search_fields = request.session.get('number_set_manage_filter', {})
-	
-	number_set.normalize()
-	
-	def getData( search_fields ):
-		q = Q()
-		
-		search_text = utils.normalizeSearch( search_fields.get('search_text', '') )
-		for n in search_text.split():
-			q &= Q( license_holder__search_text__contains = n )
-			
-		search_bib = search_fields.get('search_bib', 0)
-		if search_bib:
-			q &= Q( bib=search_bib )
-		
-		license_holders = defaultdict( list )
-		
-		for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).filter(q).order_by('bib'):
-			license_holders[nse.license_holder].append( nse )
-		for lh, nses in license_holders.iteritems():
-			lh.nses = nses
-		license_holders = sorted( (license_holders.iterkeys()), key = lambda lh: lh.search_text )
-		number_set_lost = NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).filter(q).order_by('bib')
-		
-		return license_holders, number_set_lost
-	
-	if request.method == 'POST':
-		if 'ok-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-				
-		form = NumberSetManageForm( request.POST )
-		if form.is_valid():
-			search_fields = {
-				'search_text': form.cleaned_data['search_text'],
-				'search_bib': form.cleaned_data['search_bib'],
-			}
-			request.session['number_set_manage_filter'] = search_fields
-		
-			if 'excel-export-submit' in request.POST:
-				xl = get_number_set_excel( *getData(search_fields) )
-				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-				response['Content-Disposition'] = 'attachment; filename=RaceDB-NumberSet-{}-{}.xlsx'.format(
-					utils.removeDiacritic(number_set.name),
-					datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
-				)
-				return response
-	else:
-		form = NumberSetManageForm( initial = search_fields )
-	
-	license_holders, number_set_lost = getData( search_fields )
-	allocated_bibs_count = sum( len(lh.nses) for lh in license_holders )
-	return render_to_response( 'number_set_manage.html', RequestContext(request, locals()) )	
-
-#--------------------------------------------------------------------------------------------
-@autostrip
-class ReportLabelDisplayForm( Form ):
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(ReportLabelDisplayForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		btns = [('new-submit', _('New ReportLabel'), 'btn btn-success')]
-		addFormButtons( self, button_mask, btns )
-
-@autostrip
-class ReportLabelForm( ModelForm ):
-	class Meta:
-		model = ReportLabel
-		fields = '__all__'
-		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(ReportLabelForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=50), 4),
-			),
-			Field( 'sequence', type='hidden' ),
-		)
-		
-		self.additional_buttons = []
-		
-		addFormButtons( self, button_mask, self.additional_buttons )
-
-@access_validation()
-def ReportLabelsDisplay( request ):
-	NormalizeSequence( ReportLabel.objects.all() )
-	if request.method == 'POST':
-	
-		if 'ok-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'ReportLabelNew') )
-			
-		form = ReportLabelDisplayForm( request.POST )
-	else:
-		form = ReportLabelDisplayForm()
-		
-	report_labels = ReportLabel.objects.all()
-	return render_to_response( 'report_label_list.html', RequestContext(request, locals()) )
-
-@access_validation()
-def ReportLabelNew( request ):
-	return GenericNew( ReportLabel, request, ReportLabelForm )
-
-@access_validation()
-def ReportLabelEdit( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	return GenericEdit(
-		ReportLabel, request, reportLabelId, ReportLabelForm,
-	)
-	
-@access_validation()
-def ReportLabelDelete( request, reportLabelId ):
-	return GenericDelete( ReportLabel, request, reportLabelId, ReportLabelForm )
-
-@access_validation()
-def ReportLabelDown( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	SwapAdjacentSequence( ReportLabel, report_label, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def ReportLabelUp( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	SwapAdjacentSequence( ReportLabel, report_label, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def ReportLabelBottom( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	NormalizeSequence( ReportLabel.objects.all() )
-	MoveSequence( ReportLabel, report_label, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def ReportLabelTop( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	NormalizeSequence( ReportLabel.objects.all() )
-	MoveSequence( ReportLabel, report_label, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-#--------------------------------------------------------------------------------------------
-@autostrip
-class SeasonsPassDisplayForm( Form ):
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(SeasonsPassDisplayForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		btns = [('new-submit', _("New Season's Pass"), 'btn btn-success')]
-		addFormButtons( self, button_mask, btns )
-
-@autostrip
-class SeasonsPassForm( ModelForm ):
-	class Meta:
-		model = SeasonsPass
-		fields = '__all__'
-		
-	def addSeasonsPassHolderDB( self, request, seasonsPass ):
-		return HttpResponseRedirect( pushUrl(request, 'SeasonsPassHolderAdd', seasonsPass.id) )
-		
-	def exportToExcelCB( self, request, seasonsPass ):
-		xl = get_seasons_pass_excel( seasonsPass )
-		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-		response['Content-Disposition'] = 'attachment; filename=RaceDB-SeasonsPassHolders-{}-{}.xlsx'.format(
-			utils.removeDiacritic(seasonsPass.name),
-			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
-		)
-		return response
-		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
-		
-		super(SeasonsPassForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=50), 4),
-			),
-			Field( 'sequence', type='hidden' ),
-		)
-		
-		self.additional_buttons = []
-		if button_mask == EDIT_BUTTONS:
-			self.additional_buttons.extend( [
-					( 'add-seasons-pass-holder-submit', _("Add Season's Pass Holders"), 'btn btn-success', self.addSeasonsPassHolderDB ),
-					( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary', self.exportToExcelCB ),
-			])
-		
-		addFormButtons( self, button_mask, self.additional_buttons )
-
-@access_validation()
-def SeasonsPassesDisplay( request ):
-	NormalizeSequence( SeasonsPass.objects.all() )
-	if request.method == 'POST':
-	
-		if 'ok-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'SeasonsPassNew') )
-			
-		form = SeasonsPassDisplayForm( request.POST )
-	else:
-		form = SeasonsPassDisplayForm()
-	
-	seasons_passes = SeasonsPass.objects.all()
-	return render_to_response( 'seasons_pass_list.html', RequestContext(request, locals()) )
-
-@access_validation()
-def SeasonsPassNew( request ):
-	return GenericNew( SeasonsPass, request, SeasonsPassForm )
-
-@access_validation()
-def SeasonsPassEdit( request, seasonsPassId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	return GenericEdit(
-		SeasonsPass, request, seasonsPassId, SeasonsPassForm,
-		template='seasons_pass_edit.html',
-		additional_context={'seasons_pass_entries':SeasonsPassHolder.objects.select_related('license_holder').filter(seasons_pass=seasons_pass)}
-	)
-	
-@access_validation()
-def SeasonsPassDelete( request, seasonsPassId ):
-	return GenericDelete( SeasonsPass, request, seasonsPassId, SeasonsPassForm )
-
-@access_validation()
-def SeasonsPassCopy( request, seasonsPassId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	seasons_pass.clone()
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def SeasonsPassDown( request, seasonsPassId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	SwapAdjacentSequence( SeasonsPass, seasons_pass, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def SeasonsPassUp( request, seasonsPassId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	SwapAdjacentSequence( SeasonsPass, seasons_pass, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def SeasonsPassBottom( request, seasonsPassId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	NormalizeSequence( SeasonsPass.objects.all() )
-	MoveSequence( SeasonsPass, seasons_pass, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def SeasonsPassTop( request, seasonsPassId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	NormalizeSequence( SeasonsPass.objects.all() )
-	MoveSequence( SeasonsPass, seasons_pass, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-#--------------------------------------------------------------------------------------------
-
-@access_validation()
-def SeasonsPassHolderAdd( request, seasonsPassId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	
-	search_text = request.session.get('license_holder_filter', '')
-	btns = [
-		('license-holder-new-submit', _('Create New License Holder'), 'btn btn-warning'),
-		('ok-submit', _('OK'), 'btn btn-success'),
-	]
-	if request.method == 'POST':
-	
-		if 'ok-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'license-holder-new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
-			
-		form = SearchForm( btns, request.POST, hide_cancel_button=True )
-		if form.is_valid():
-			search_text = form.cleaned_data['search_text']
-			request.session['license_holder_filter'] = search_text
-	else:
-		form = SearchForm( btns, initial = {'search_text': search_text}, hide_cancel_button=True )
-	
-	existing_seasons_pass_holders = set(spe.license_holder.id for spe in SeasonsPassHolder.objects.filter(seasons_pass=seasons_pass))
-	
-	# Analyse the search_text to try to use an indexed field.
-	search_text = utils.normalizeSearch(search_text)
-	license_holders = license_holders_from_search_text( search_text )
-	return render_to_response( 'license_holder_seasons_pass_list.html', RequestContext(request, locals()) )
-
-@access_validation()
-def SeasonsPassLicenseHolderAdd( request, seasonsPassId, licenseHolderId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
-	try:
-		SeasonsPassHolder( seasons_pass=seasons_pass, license_holder=license_holder ).save()
-	except Exception as e:
-		print e
-		pass
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def SeasonsPassLicenseHolderRemove( request, seasonsPassId, licenseHolderId ):
-	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
-	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
-	try:
-		SeasonsPassHolder.objects.get( seasons_pass=seasons_pass, license_holder=license_holder ).delete()
-	except Exception as e:
-		print e
-		pass
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def SeasonsPassHolderRemove( request, seasonsPassHolderId ):
-	seasons_pass_holder = get_object_or_404( SeasonsPassHolder, pk=seasonsPassHolderId )
-	seasons_pass_holder.delete()
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-#--------------------------------------------------------------------------------------------
-@autostrip
-class CategoryFormatForm( ModelForm ):
-	class Meta:
-		model = CategoryFormat
-		fields = '__all__'
-		
-	def newCategoryCB( self, request, categoryFormat ):
-		return HttpResponseRedirect( pushUrl(request, 'CategoryNew', categoryFormat.id) )
-	
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop( 'button_mask', EDIT_BUTTONS )
-		
-		super(CategoryFormatForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=50), 4),
-				Col(Field('description', size=100), 8),
-			),
-		)
-		self.additional_buttons = []
-		if button_mask == EDIT_BUTTONS:
-			self.additional_buttons.extend( [
-					( 'new-category-submit', _('New Category'), 'btn btn-success', self.newCategoryCB ),
-			])
-			
-		addFormButtons( self, button_mask, self.additional_buttons )
-		
-def CategoryFormatsDisplay( request ):
-	search_text = request.session.get('categoryFormat_filter', '')
-	btns = [('new-submit', _('New Category'), 'btn btn-success')]
-	
-	if request.method == 'POST':
-	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'CategoryFormatNew') )
-			
-		form = SearchForm( btns, request.POST )
-		if form.is_valid():
-			search_text = form.cleaned_data['search_text']
-			request.session['categoryFormat_filter'] = search_text
-	else:
-		form = SearchForm( btns, initial = {'search_text': search_text} )
-		
-	category_formats = applyFilter( search_text, CategoryFormat.objects.all(), CategoryFormat.get_search_text )
-	return render_to_response( 'category_format_list.html', RequestContext(request, locals()) )
-
-@access_validation()
-def CategoryFormatNew( request ):
-	return GenericNew( CategoryFormat, request, CategoryFormatForm, template = 'category_format_form.html' )
-
-@access_validation()
-def CategoryFormatEdit( request, categoryFormatId ):
-	return GenericEdit( CategoryFormat, request, categoryFormatId, CategoryFormatForm, template = 'category_format_form.html' )
-	
-@access_validation()
-def CategoryFormatCopy( request, categoryFormatId ):
-	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
-	category_format_new = category_format.make_copy()
-	category_format_new.name = getCopyName( CategoryFormat, category_format.name )
-	category_format.save()
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryFormatDelete( request, categoryFormatId ):
-	return GenericDelete( CategoryFormat, request, categoryFormatId, template = 'category_format_form.html' )
-
-@transaction.atomic
-def CategorySwapAdjacent( category, swapBefore ):
-	NormalizeSequence( Category.objects.filter(format=category.format) )
-	try:
-		categoryAdjacent = Category.objects.get(format=category.format, sequence=category.sequence + (-1 if swapBefore else 1) )
-	except Category.DoesNotExist:
-		return
-		
-	categoryAdjacent.sequence, category.sequence = category.sequence, categoryAdjacent.sequence
-	categoryAdjacent.save()
-	category.save()
-	
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryDown( request, categoryId ):
-	category = get_object_or_404( Category, pk=categoryId )
-	CategorySwapAdjacent( category, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryUp( request, categoryId ):
-	category = get_object_or_404( Category, pk=categoryId )
-	CategorySwapAdjacent( category, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-#--------------------------------------------------------------------------------------------
-
-@autostrip
-class CategoryForm( ModelForm ):
-	class Meta:
-		model = Category
-		fields = '__all__'
-		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
-		
-		super(CategoryForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('code', size=10), 2),
-				Col(Field('gender'), 2),
-				Col(Field('description', size=100), 8),
-			),
-			Field( 'sequence', type='hidden' ),
-			Field( 'format', type='hidden' ),
-		)
-		addFormButtons( self, button_mask )
-
-		
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryNew( request, categoryFormatId ):
-	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
-
-	title = unicode(_('New {}')).format(Category._meta.verbose_name.title())
-	
-	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-		form = CategoryForm( request.POST )
-		if form.is_valid():
-			category = form.save( commit = False )
-			category.format = category_format
-			category.sequence = category_format.next_category_seq
-			category.save()
-			
-			if 'save-submit' in request.POST:
-				return HttpResponseRedirect( pushUrl(request,'CategoryEdit', category.id, cancelUrl = True) )
-			
-			if 'ok-submit' in request.POST:
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	else:
-		category = Category( format = category_format ,sequence = 0 )
-		form = CategoryForm( instance = category )
-	
-	return render_to_response( 'category_form.html', RequestContext(request, locals()) )
-
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryEdit( request, categoryId ):
-	return GenericEdit( Category, request, categoryId, CategoryForm, template = 'category_form.html' )
-	
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryDelete( request, categoryId ):
-	return GenericDelete( Category, request, categoryId, CategoryForm )
-
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 def GetFinishLynxResponse( competition ):
 	zip = FinishLynxExport( competition )
@@ -2086,7 +894,7 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col('ftp_host', 2),
 					Col('ftp_user', 2),
-					Col('ftp_password', 2),
+					Col(Field('ftp_password', autocomplete='off'), 2),
 					Col(Field('ftp_path', size=80), 6),
 				),
 				Row(
@@ -2326,12 +1134,12 @@ def FinishLynx( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return GetFinishLynxResponse( competition )
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def CompetitionEventParticipationSummary( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def StartLists( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -2371,7 +1179,7 @@ def StartListExcelDownload( request, eventId, eventType ):
 	)
 	return response
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @autostrip
 class UploadPreregForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
@@ -2423,7 +1231,7 @@ def UploadPrereg( request, competitionId ):
 	
 	return render_to_response( 'upload_prereg.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @autostrip
 class ImportExcelForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
@@ -2475,7 +1283,7 @@ def LicenseHoldersImportExcel( request ):
 	
 	return render_to_response( 'license_holder_import_excel.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @autostrip
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
@@ -2609,7 +1417,8 @@ def GenerateStartTimes( request, eventTTId ):
 	instance.create_initial_seeding()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 def GetCategoryNumbersForm( competition, category_numbers = None ):
 	class CategoryNumbersForm( GenericModelForm(CategoryNumbers) ):
 		def __init__( self, *args, **kwargs ):
@@ -2691,7 +1500,7 @@ def CategoryNumbersDelete( request, categoryNumbersId ):
 		),
 	)
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @autostrip
 class EventMassStartForm( ModelForm ):
@@ -2788,7 +1597,7 @@ def EventMassStartCrossMgr( request, eventId ):
 	)
 	return response
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 def GetWaveForm( event_mass_start, wave = None ):
 	@autostrip
@@ -2893,7 +1702,7 @@ def WaveDelete( request, waveId ):
 		template = 'wave_form.html'
 	)
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @autostrip
 class EventTTForm( ModelForm ):
@@ -2991,7 +1800,7 @@ def EventTTCrossMgr( request, eventTTId ):
 	)
 	return response
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 def GetWaveTTForm( event_tt, wave_tt = None ):
 	@autostrip
@@ -3126,7 +1935,7 @@ def WaveTTUp( request, waveTTId ):
 	WaveTTSwapAdjacent( waveTT, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-#----------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @autostrip
 class ParticipantSearchForm( Form ):
@@ -3203,7 +2012,7 @@ def Participants( request, competitionId ):
 	else:
 		form = ParticipantSearchForm( competition = competition, initial = participant_filter )
 	
-	#-----------------------------------------------------------------------------------------------
+	#-------------------------------------------------------------------
 	
 	participants = Participant.objects.filter( competition=competition )
 	missing_category_count = Participant.objects.filter( competition=competition, role=Participant.Competitor, category__isnull=True ).count()
@@ -3289,7 +2098,7 @@ def Participants( request, competitionId ):
 	
 	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @access_validation()
 def ParticipantsInEvents( request, competitionId ):
@@ -3322,7 +2131,7 @@ def ParticipantsInEvents( request, competitionId ):
 	
 	return render_to_response( 'participants_in_events.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @access_validation()
 def ParticipantManualAdd( request, competitionId ):
@@ -3533,7 +2342,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 		participant.add_to_default_optional_events()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def ParticipantRoleChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
@@ -3553,7 +2362,7 @@ def ParticipantRoleSelect( request, participantId, role ):
 	participant.auto_confirm().save()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 	
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 def ParticipantBooleanChange( request, participantId, field ):
 	participant = get_object_or_404( Participant, pk=participantId )
@@ -3563,7 +2372,7 @@ def ParticipantBooleanChange( request, participantId, field ):
 	participant.save()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @access_validation()
 def ParticipantTeamChange( request, participantId ):
@@ -3603,7 +2412,7 @@ def ParticipantTeamSelect( request, participantId, teamId ):
 	participant.auto_confirm().save()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 class Bib( object ):
 	def __init__( self, bib, license_holder = None ):
 		self.bib = bib
@@ -3688,7 +2497,7 @@ def ParticipantBibSelect( request, participantId, bib ):
 	
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @autostrip
 class ParticipantNoteForm( Form ):
 	note = forms.CharField( widget = forms.Textarea, required = False, label = _('Note') )
@@ -3757,7 +2566,8 @@ def ParticipantGeneralNoteChange( request, participantId ):
 		
 	return render_to_response( 'participant_note_change.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 def GetParticipantOptionForm( participation_optional_events ):
 	choices = [(event.option_id, u'{} ({})'.format(event.name, event.get_event_type_display()))
 					for event, is_participating in participation_optional_events]
@@ -3814,7 +2624,9 @@ def ParticipantOptionChange( request, participantId ):
 		)
 		
 	return render_to_response( 'participant_option_change.html', RequestContext(request, locals()) )
-#--------------------------------------------------------------------------
+	
+#-----------------------------------------------------------------------
+
 def GetParticipantEstSpeedForm( competition ):
 	@autostrip
 	class ParticipantEstSpeedForm( Form ):
@@ -3889,7 +2701,8 @@ def ParticipantEstSpeedChange( request, participantId ):
 	
 	return render_to_response( 'participant_est_speed_change.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 @autostrip
 class ParticipantWaiverForm( Form ):
 	def __init__(self, *args, **kwargs):
@@ -3928,7 +2741,7 @@ def ParticipantWaiverChange( request, participantId ):
 		
 	return render_to_response( 'participant_waiver_change.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @autostrip
 class ParticipantTagForm( Form ):
@@ -4075,7 +2888,8 @@ def ParticipantTagChange( request, participantId ):
 		
 	return render_to_response( 'participant_tag_change.html', RequestContext(request, locals()) )
 	
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 @autostrip
 class ParticipantSignatureForm( Form ):
 	signature = forms.CharField( required = False, label = _('Signature') )
@@ -4152,7 +2966,8 @@ def SetSignatureWithTouchScreen( request, use_touch_screen ):
 	request.session['signature_with_touch_screen'] = bool(int(use_touch_screen))
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 @access_validation()
 def ParticipantBarcodeAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -4192,7 +3007,8 @@ def ParticipantMultiFound( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return render_to_response( 'participant_multi_found.html', RequestContext(request, locals()) )
 	
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 @access_validation()
 def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 	competition = get_object_or_404( Competition, pk=competitionId )
@@ -4285,7 +3101,8 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 		participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
 		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 @autostrip
 class SystemInfoForm( ModelForm ):
 	class Meta:
@@ -4330,7 +3147,8 @@ class SystemInfoForm( ModelForm ):
 def SystemInfoEdit( request ):
 	return GenericEdit( SystemInfo, request, SystemInfo.get_singleton().id, SystemInfoForm )
 	
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
 def get_year_choices():
 	year_choices = [
 		(y, u'{}'.format(y))
@@ -4443,7 +3261,7 @@ def ParticipantReport( request ):
 		
 	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )
 
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def AttendanceAnalytics( request ):
@@ -4502,7 +3320,8 @@ def AttendanceAnalytics( request ):
 		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
 	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
-#--------------------------------------------------------------------------
+	
+#-----------------------------------------------------------------------
 
 def get_discipline_race_class_choices():
 	discipline_used, race_class_used = set(), set()
@@ -4594,7 +3413,7 @@ def YearOnYearAnalytics( request ):
 		
 	return render_to_response( 'year_on_year_analytics.html', RequestContext(request, locals()) )
 
-#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 def GetEvents( request, date=None ):
 	if date is None:
@@ -4614,7 +3433,7 @@ def GetEvents( request, date=None ):
 	}
 	return JsonResponse( response )
 
-#-----------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 def QRCode( request ):
 	exclude_breadcrumbs = True
@@ -4623,7 +3442,7 @@ def QRCode( request ):
 	qrpath = os.path.dirname( qrpath ) + '/'
 	return render_to_response( 'qrcode.html', RequestContext(request, locals()) )
 	
-#--------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 def Logout( request ):
 	logout( request )
