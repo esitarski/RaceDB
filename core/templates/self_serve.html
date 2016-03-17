@@ -17,6 +17,28 @@ table.info-table tr th { font-size: 125%; }
 
 ul.warning-list li { font-size: 150%; }
 ul.error-list li { font-size: 150%; }
+
+.isa_info, .isa_success, .isa_warning, .isa_error {
+    margin: 10px 0px;
+    padding:12px;
+	border-radius:.5em;
+}
+.isa_info {
+    color: #00529B;
+    background-color: #BDE5F8;
+}
+.isa_success {
+    color: #4F8A10;
+    background-color: #DFF2BF;
+}
+.isa_warning {
+    color: #9F6000;
+    background-color: #FEEFB3;
+}
+.isa_error {
+    color: #D8000C;
+    background-color: #FFBABA;
+}
 </style>
 <p/>
 <h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a> {% trans "Self-Serve" %}
@@ -49,7 +71,13 @@ ul.error-list li { font-size: 150%; }
 		<a href="{{path_noargs}}1"><image src="{% static "images/scan-btn-big.png" %}"/></a>	
 	{% elif status_entries %}
 		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
-		<h3>{% trans "Status" %}: {% trans "Failure" %}</h3>
+		<div class="isa_error">
+			<h3>{% trans "Tag Read Failure" %}</h3>
+			<br/>
+			<h4>{% trans "Please try again." %}</h4>
+			<br/>
+			<h4>{% trans "If it still doesn't work, you MUST see the registration desk." %}</h4>
+		</div>
 		<br/>
 		<dl>
 		{% for se in status_entries %}
@@ -59,8 +87,6 @@ ul.error-list li { font-size: 150%; }
 			{% endfor %}
 		{% endfor %}
 		</dl>
-		<h4>{% trans "Please try again." %}</h4>
-		<h4>{% trans "If it still doesn't work, see the registration desk." %}</h4>
 		<br/>
 		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% elif errors %}
@@ -68,7 +94,7 @@ ul.error-list li { font-size: 150%; }
 		{% if license_holder %}
 			{% with h=license_holder %}
 				<h2>{{h.first_name}} {{h.last_name}}</h2>
-				<h4>
+				<h4 style="margin-left: 30px;">
 					{{h.get_gender_display}} {{h.license_code_trunc}}&nbsp;&nbsp;
 					<span style="white-space: nowrap;">
 						{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
@@ -76,13 +102,19 @@ ul.error-list li { font-size: 150%; }
 				</h4>
 			{% endwith %}
 		{% endif %}
-		<br/>
+		<div class=isa_error>
+			<h3>{% trans "Not Ready to Race!" %}</h3>
+			<h3>{% trans "You MUST see the registration desk" %}.</h3>
+		</div>
+		<ul class="error-list">
 		{% for e in errors %}
-			<h3>{% trans "Error" %}: {{e}}</h3>
+			<li>{{e}}</li>
 		{% endfor %}
+		</ul>
 		{% if warnings %}
-			<br/>
-			<h3>{% trans "Please help us with the following" %}:</h3>
+			<div class=isa_warning>
+				<h3>{% trans "Please help us with the following" %}:</h3>
+			</div>
 			<ul class="warning-list">
 				{% for w in warnings %}
 					<li>{{w}}</li>
@@ -90,14 +122,12 @@ ul.error-list li { font-size: 150%; }
 			</ul>
 		{% endif %}
 		<br/>
-		<h4>{% trans "Please see the registration desk" %}.</h4>
-		<br/>
 		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% elif license_holder %}
 		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
 		{% with h=license_holder %}
 			<h2>{{h.first_name}} {{h.last_name}}</h2>
-			<h4>
+			<h4 style="margin-left: 30px;">
 				{{h.get_gender_display}} {{h.license_code_trunc}}&nbsp;&nbsp;
 				<span style="white-space: nowrap;">
 					{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
@@ -105,14 +135,16 @@ ul.error-list li { font-size: 150%; }
 			</h4>
 		{% endwith %}
 		<br/>
-		<h2>{% trans "Registration Confirmed" %}.</h2>
-		<br/>
+			<div class=isa_success>
+				<h2>{% trans "Registration Confirmed." %}</h2>
+				<h2>{% trans "Ready to Race." %}</h2>
+			</div>
 		<table class="table info-table" style="width: auto">
 		<thead>
 			<tr>
 				<th>{% trans "Bib" %}</th>
-				<th>{% trans "Category" %}</th>
 				<th>{% trans "Team" %}</th>
+				<th>{% trans "Category" %}</th>
 				<th>{% trans "Event" %}</th>
 			</tr>
 		</thead>
@@ -120,8 +152,8 @@ ul.error-list li { font-size: 150%; }
 		{% for p in participants %}
 			<tr>
 				<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}{% trans "None" %}{% endif %}</td>
-				<td>{{p.category.code}}</td>
 				<td>{% if p.team %}{{p.team.name}}{% else %}{% trans "No Team / Independent" %}{% endif %}</td>
+				<td>{{p.category.code}}</td>
 				<td>
 					{% for w in p.get_start_waves %}
 						{{w.event.name}} <span style="white-space: nowrap;">({{w.event.date_time|date:"Y-m-d f a"}})</span><br/>
@@ -135,8 +167,9 @@ ul.error-list li { font-size: 150%; }
 		</tbody>
 		</table>
 		{% if warnings %}
-			<br/>
-			<h3>{% trans "Please help us at the registration desk with the following" %}:</h3>
+			<div class=isa_warning>
+				<h3>{% trans "Please help us at the registration desk with the following" %}:</h3>
+			</div>
 			<ul class="warning-list">
 				{% for w in warnings %}
 					<li>{{w}}</li>
@@ -150,6 +183,10 @@ ul.error-list li { font-size: 150%; }
 	{% endif %}
 {% endif %}
 
-<p style="margin-top: 30px;"><strong>RaceDB {{version}}.</strong>&nbsp;&nbsp;&nbsp;
-Created by Edward Sitarski, Toronto, Ontario, Canada &#169;&nbsp;2014-{% now "Y" %}.</p>
+{% if not form %}
+	<p style="margin-top: 30px; color:#A0A0A0;">
+		<strong>RaceDB {{version}}.</strong>&nbsp;&nbsp;&nbsp;
+		Created by Edward Sitarski, Toronto, Ontario, Canada &#169;&nbsp;2014-{% now "Y" %}.
+	</p>
+{% endif %}
 {% endblock %}

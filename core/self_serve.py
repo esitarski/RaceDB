@@ -156,7 +156,6 @@ def SelfServe( request, do_scan=0 ):
 		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
 		
 	license_holder, participants = participant_key_filter( competition, tag, False )
-	print license_holder, participants
 	
 	if not license_holder:
 		errors.append( string_concat(_('Tag not found '), u' (', tag, u').') )
@@ -165,17 +164,20 @@ def SelfServe( request, do_scan=0 ):
 	if not participants:
 		errors.append( _('Not Registered') )
 
+	license_holder_errors = (
+		('good_waiver',			_('Missing/Expired Insurance Waiver')),
+	)
 	license_holder_warnings = (
 		('good_license',		_('Temporary License (do you have a permanent one now?)')),
 		('good_uci_code',		_('Incorrect UCI Code')),
 	)
+	
 	participant_errors = (
+		('good_paid',			_('Missing Payment')),
 		('good_bib',			_('Missing Bib Number')),
 		('good_category',		_('Missing Category')),
-		('good_paid',			_('Missing Payment')),
 		('good_tag',			_('Missing Tag')),
 		('good_signature',		_('Missing Signature')),
-		('good_waiver',			_('Missing/Expired Insurance Waiver')),
 	)
 	participant_warnings = (
 		#('good_team',			_('No Team Name on File')),
@@ -183,14 +185,26 @@ def SelfServe( request, do_scan=0 ):
 	)
 	for i, p in enumerate(participants):
 		if i == 0:
+			for check, message in license_holder_errors:
+				if not getattr(p, check)():
+					errors.append( message )
 			for check, message in license_holder_warnings:
 				if not getattr(p, check)():
 					warnings.append( message )
+		
 		for check, message in participant_warnings:
 			if not getattr(p, check)():
 				warnings.append( message )
 		for check, message in participant_errors:
 			if not getattr(p, check)():
-				errors.append( message )
+				if check in ('good_bib', 'good_paid'):
+					errors.append( string_concat(message, u' (', p.category.code if p.category else _('Missing Category'),u')') )
+				else:
+					errors.append( message )
+				
+	if not errors:
+		for p in participants:
+			p.confirmed = True
+			p.save()
 
 	return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
