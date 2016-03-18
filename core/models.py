@@ -260,7 +260,12 @@ class NumberSet(models.Model):
 		return None
 		
 	def assign_bib( self, license_holder, bib ):
-		if not self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).exists():
+		nse = self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).first()
+		if nse:
+			if nse.date_lost is not None:
+				nse.date_lost = None
+				nse.save()
+		else:
 			self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
 			NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
 	
@@ -1877,12 +1882,19 @@ class Participant(models.Model):
 	
 	def good_bib( self ):			return self.is_competitor and self.bib
 	def good_category( self ):		return self.is_competitor and self.category
+	def good_tag( self ):			return not self.needs_tag
 	def good_team( self ):			return self.is_competitor and self.team
 	def good_paid( self ):			return self.is_competitor and self.paid
-	def good_tag( self ):			return not self.needs_tag
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
 	def good_est_kmh( self ):		return self.est_kmh or (not self.has_tt_events())
 	def good_waiver( self ):		return not self.has_unsigned_waiver
+	
+	def can_start( self ):
+		return (
+			self.good_bib() and
+			self.good_category() and
+			self.good_tag()
+		)
 	
 	@property
 	def is_done( self ):

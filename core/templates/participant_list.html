@@ -48,14 +48,20 @@
 	{% for p in participants %}
 		{% with h=p.license_holder %}
 		<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
-			<td>{% if not p.is_done %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}</td>
+			<td>{% if not p.is_done %}<img
+					{% if not p.can_start %}
+						src="{% static "images/error.png" %}"
+					{% else %}
+						src="{% static "images/warning.png" %}"
+					{% endif %}
+				style="width:20px;height:20px;"\>{% endif %}</td>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-			<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
+			<td>{% if p.bib %}{{p.bib}}{% else %}<image src="{% static "images/error.png" %}" >{% endif %}</td>
 			<td>{{h.get_gender_display}}</td>
 			<td>{{p.get_role_display}}</td>
-			<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
+			<td>{% if p.category %}{{p.category.code}}{% else %}<image src="{% static "images/error.png" %}" >{% endif %}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td class="text-nowrap">
 				<span style="white-space: nowrap;">
@@ -67,7 +73,7 @@
 					{% if p.confirmed %}
 						<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
 					{% else %}
-						<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
+						<span class="label label-warning"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
 					{% endif %}
 				{% endif %}
 			</td>
@@ -76,11 +82,11 @@
 					{% if p.paid %}
 						<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
 					{% else %}
-						<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
+						<span class="label label-warning"><image src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
 					{% endif %}
 				{% endif %}
 			</td>
-			{% if competition.using_tags %}<td>{{p.get_tag_str}}</td>{% endif %}
+			{% if competition.using_tags %}<td>{% if p.get_tag_str %}{{p.get_tag_str}}{% else %}<image src="{% static "images/error.png" %}" >{% endif %}</td>{% endif %}
 			<td>{{h.get_location}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning btn-sm" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>

@@ -129,7 +129,7 @@
 			{{p.team.get_team_type_display}}<span>
 			{% if p.team.nation_code %}, {{p.team.nation_code}}{% endif %}</span>
 		{% else %}
-			<span class="label label-danger">{% trans "No team" %}</span>
+			<strong>{% trans "No team" %}</strong>
 		{% endif %}
 	</td>
 	<td>
@@ -141,7 +141,7 @@
 {% endif %}
 {% if p.is_competitor %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantCategoryChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Category" %}{% if not p.good_category %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Category" %}{% if not p.good_category %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 	<td>
 		{% if p.category %}
 			<strong>{{p.category.code}}:</strong>
@@ -165,7 +165,7 @@
 		{% if p.preregistered %}
 			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+			<span class="label label-default"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 	</td>
 	{% if request.user.is_superuser and isEdit %}
@@ -179,7 +179,7 @@
 		{% if p.paid %}
 			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+			<span class="label label-warning"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 		{% if p.is_seasons_pass_holder %} {% trans "(Season's Pass Holder)" %} {% endif %}
 	</td>
@@ -190,7 +190,7 @@
 {% endif %}
 {% if p.category and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantBibChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% trans "Bib" %}{% if not p.good_bib %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+		<td class="text-right">{% trans "Bib" %}{% if not p.good_bib %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 		<td>
 			{% if p.bib %} <strong>{{p.bib}}</strong> {% else %} <span class="label label-danger">{% trans "No bib" %}</span> {% endif %}
 		</td>
@@ -201,7 +201,7 @@
 {% endif %}
 {% if c.using_tags and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantTagChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% if p.tag and p.tag2 %}{% trans "Chip Tags" %}{% else %}{% trans "Chip Tag" %}{% endif %}{% if not p.good_tag %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+		<td class="text-right">{% if p.tag and p.tag2 %}{% trans "Chip Tags" %}{% else %}{% trans "Chip Tag" %}{% endif %}{% if not p.good_tag %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 		<td>
 			{% if not p.tag and not p.tag2 %}
 				 <span class="label label-danger">{% trans "No tag" %}</span>
@@ -370,8 +370,10 @@
 	{% if isEdit %}
 		{% if participant.is_done %}
 			<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate. Process Next Entry" %}</a>
+		{% elif participant.can_start %}
+			<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Rider has Warnings. Process Next Entry Anyway?" %}</a>
 		{% else %}
-			<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Incomplete. Process Next Entry Anyway" %}</a>
+			<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Errors.  Rider Cannot Start.  Process Next Entry Anyway?" %}</a>
 		{% endif %}
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
 	{% else %}

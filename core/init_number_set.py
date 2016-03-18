@@ -8,7 +8,7 @@ import import_utils
 from import_utils import *
 from models import *
 
-def init_number_set( number_setId, worksheet_name='', worksheet_contents=None, message_stream=sys.stdout ):
+def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, message_stream=sys.stdout ):
 	
 	tstart = datetime.datetime.now()
 
@@ -20,7 +20,7 @@ def init_number_set( number_setId, worksheet_name='', worksheet_contents=None, m
 			message_stream.write( unicode(s) )
 	
 	try:
-		number_set = NumberSet.objects.get( pk=number_setId )
+		number_set = NumberSet.objects.get( pk=numberSetId )
 	except NumberSet.DoesNotExist:
 		messsage_stream_write( u'**** Cannot find NumberSet\n' )
 		return
@@ -32,21 +32,8 @@ def init_number_set( number_setId, worksheet_name='', worksheet_contents=None, m
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
 			bib = get_key(ur, bib_col_names, u'')
-			license_code = to_int_str(get_key(ur, license_col_names, u'')).upper().strip()
-
-			if not bib or not license_code:
+			if not bib:
 				continue
-			
-			#------------------------------------------------------------------------------
-			# Get LicenseHolder.
-			#
-			try:
-				license_holder = LicenseHolder.objects.get( license_code=license_code )
-			except LicenseHolder.DoesNotExist:
-				messsage_stream_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}"\n'.format(
-					i, license_code) )
-				continue
-			
 			try:
 				bib = int(bib)
 			except ValueError:
@@ -54,20 +41,37 @@ def init_number_set( number_setId, worksheet_name='', worksheet_contents=None, m
 					i, license_code) )
 				continue
 			
-			number_set.assign_bib( license_holder, bib )
-			
-			messsage_stream_write(
-				u'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
-					i=i,
-					bib=bib,
-					license_code=license_holder.license_code,
-					dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
-					uci_code=license_holder.uci_code,
-					last_name=license_holder.last_name,
-					first_name=license_holder.first_name,
-					city=license_holder.city, state_prov=license_holder.state_prov,
+			license_code = to_int_str(get_key(ur, license_col_names, u'')).upper().strip()
+			if license_code:
+				try:
+					license_holder = LicenseHolder.objects.get( license_code=license_code )
+				except LicenseHolder.DoesNotExist:
+					messsage_stream_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: "{}"\n'.format(
+						i, license_code) )
+					continue
+				
+				number_set.assign_bib( license_holder, bib )
+				messsage_stream_write(
+					u'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
+						i=i,
+						bib=bib,
+						license_code=license_holder.license_code,
+						dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
+						uci_code=license_holder.uci_code,
+						last_name=license_holder.last_name,
+						first_name=license_holder.first_name,
+						city=license_holder.city, state_prov=license_holder.state_prov,
+					)
 				)
-			)
+			else:
+				number_set.set_lost( bib )
+				messsage_stream_write(
+					u'Row {i:>6}: {bib:>4} Lost\n'.format(
+						i=i,
+						bib=bib,
+					)
+				)
+			
 	
 	sheet_name = None
 	if worksheet_contents is not None:
@@ -120,8 +124,5 @@ def init_number_set( number_setId, worksheet_name='', worksheet_contents=None, m
 			
 	process_ur_records( ur_records )
 	
-	messsage_stream_write( u'\n' )
-	for section, total in sorted( times.iteritems(), key = lambda e: e[1], reverse=True ):
-		messsage_stream_write( u'{}={:.6f}\n'.format(section, total) )
 	messsage_stream_write( u'\n' )
 	messsage_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )

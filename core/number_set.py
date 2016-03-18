@@ -2,6 +2,7 @@ from views_common import *
 from django.utils.translation import ugettext_lazy as _
 
 from get_number_set_excel import get_number_set_excel
+from init_number_set import init_number_set
 
 @autostrip
 class NumberSetDisplayForm( Form ):
@@ -132,6 +133,54 @@ def NumberSetEdit( request, numberSetId ):
 	return GenericEdit( NumberSet, request, numberSetId, NumberSetForm )
 
 @autostrip
+class UploadNumberSetForm( Form ):
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	
+	def __init__( self, *args, **kwargs ):
+		super( UploadNumberSetForm, self ).__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+			),
+		)
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+
+def handle_upload_number_set( numberSetId, excel_contents ):
+	worksheet_contents = excel_contents.read()
+	message_stream = StringIO.StringIO()
+	init_number_set(
+		numberSetId=numberSetId,
+		worksheet_contents=worksheet_contents,
+		message_stream=message_stream,
+	)
+	results_str = message_stream.getvalue()
+	return results_str
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def UploadNumberSet( request, numberSetId ):
+	number_set = get_object_or_404( NumberSet, pk=numberSetId )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = UploadNumberSetForm(request.POST, request.FILES)
+		if form.is_valid():
+			results_str = handle_upload_number_set( numberSetId, request.FILES['excel_file'] )
+			del request.FILES['excel_file']
+			return render_to_response( 'upload_number_set.html', RequestContext(request, locals()) )
+	else:
+		form = UploadNumberSetForm()
+	
+	return render_to_response( 'upload_number_set.html', RequestContext(request, locals()) )
+	
+@autostrip
 class NumberSetManageForm( Form ):
 	search_text = forms.CharField( required=False, label=_("Search Text") )
 	search_bib = forms.IntegerField( required=False, label=_("Search Bib"), min_value=1, max_value=999999 )
@@ -153,7 +202,7 @@ class NumberSetManageForm( Form ):
 				( 'search-submit', _("Search"), 'btn btn-success' ),
 				( 'ok-submit', _("OK"), 'btn btn-primary' ),
 				( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary' ),
-				( 'excel-import-submit', _("Import from Excel"), 'btn btn-primary' ),
+				( 'excel-update-submit', _("Update from Excel"), 'btn btn-primary' ),
 		]
 		
 		addFormButtons( self, 0, self.additional_buttons )
@@ -208,8 +257,8 @@ def NumberSetManage( request, numberSetId ):
 				)
 				return response
 				
-			if 'excel-import-submit' in request.POST:
-				pass
+			if 'excel-update-submit' in request.POST:
+				return HttpResponseRedirect( pushUrl(request,'NumberSetUploadExcel', number_set.id) )
 	else:
 		form = NumberSetManageForm( initial = search_fields )
 	
