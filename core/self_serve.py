@@ -6,8 +6,31 @@ from ReadWriteTag import ReadTag, WriteTag
 
 #--------------------------------------------------------------------------
 @autostrip
+class SelfServeCompetitionForm( Form ):
+	competition_choice = forms.ChoiceField(
+				choices = lambda: [(c.pk, string_concat(c.name, ' - ', c.date_range_str))
+					for c in Competition.objects.filter(start_date__gte=datetime.date.today()).order_by('start_date')],
+				label = _('Choose a Competition') )
+	
+	def __init__(self, *args, **kwargs):
+		super(SelfServeCompetitionForm, self).__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+		]
+		
+		self.helper.layout = Layout(
+			Row( Field('competition_choice', size=8, style="font-size: 250%;"), ),
+			Row( button_args[0], ),
+		)
+		
+@autostrip
 class SelfServeAntennaForm( Form ):
-	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('Configure the RFID Antenna to Read Tags') )
+	rfid_antenna = forms.ChoiceField( choices = [(i, mark_safe('&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;'.format(i))) for i in xrange(1,5)], label = _('Antenna to Read Tags') )
 	
 	def __init__(self, *args, **kwargs):
 		super(SelfServeAntennaForm, self).__init__(*args, **kwargs)
@@ -21,7 +44,7 @@ class SelfServeAntennaForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			Row( Field('rfid_antenna'), ),
+			Row( Field('rfid_antenna', size=4, style="font-size: 250%;"), ),
 			Row( button_args[0], ),
 		)
 		
@@ -57,14 +80,29 @@ def SelfServe( request, do_scan=0 ):
 	competition = Competition.objects.filter( pk=competition_id ).first() if competition_id else None
 	
 	if competition is None:
-		# Find the next competition by date.
-		competition = Competition.objects.filter(start_date__gte=datetime.date.today()).order_by('-start_date').first()
-		# If that fails, just get the latest competition for testing.
-		if not competition:
+		# Find the self-serve competition.
+		competitions = list(Competition.objects.filter(start_date__gte=datetime.date.today()).order_by('start_date'))
+		if not competitions:
+			# Get the latest competition for testing.
 			competition = Competition.objects.all().order_by('-start_date').first()
+		elif len(competitions) == 1:
+			competition = competitions[0]
+		else:
+			# Ask the user what competition they want.
+			if request.method == 'POST':
+				form = SelfServeCompetitionForm( request.POST )
+				if form.is_valid():
+					competition = Competition.objects.filter( pk=form.cleaned_data['competition_choice'] ).first()
+				else:
+					return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+			else:
+				form = SelfServeCompetitionForm()
+				return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		
 		if not competition:
-			errors.append( _('No Competition Found') )
+			errors.append( _('No Competition') )
 			return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		
 		request.session['competition_id'] = competition_id = competition.id
 		
 	if not competition.using_tags:
