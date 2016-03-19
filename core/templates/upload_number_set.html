@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<style>
+#id_excel_file { width: 600px; }
+</style>
+<h2>{{title}}</h2>
+<h2>{{number_set.name}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+<p class="text-center">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+{% if results_str %}
+<pre>{{results_str}}</pre>
+{% endif %}
+<p>
+<h3>Import a Number Set from Excel.</h3>
+<p>
+Adds or Updates Bib Numbers in the number set.
+</p>
+<p>
+The Excel spreadsheet must consist of a Bib column, and a License column.  All other colums are ignored.
+<table class="table">
+<thead>
+<tr><th>Column</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Bib</strong> or <strong>Bib Number</strong></td><td>Optional.  Bib number for the rider.</td></tr>
+<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Required.  License code (<strong>not UCI code</strong>).  If the License Code is empty, the Bib will be marked as Lost.</td></tr>
+</tbody>
+</table>
+</p>
+{% endblock content %}
