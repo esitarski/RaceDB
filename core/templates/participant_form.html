@@ -81,12 +81,12 @@
 
 {% if c.has_waiver %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantWaiverChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Waiver" %}{% if p.has_unsigned_waiver %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Waiver" %}{% if p.has_unsigned_waiver %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 	<td>
 		<strong>
 			{% if not p.has_unsigned_waiver %}{% trans "Correct" %}
-			{% elif p.non_existant_waiver %}{% trans "Missing" %}
-			{% else %}{% trans "Expired" %}
+			{% elif p.non_existant_waiver %}<span class="label label-danger">{% trans "Missing" %}</span>
+			{% else %}<span class="label label-danger">{% trans "Expired" %}</span>
 			{% endif %}
 		</strong>
 	</td>
@@ -158,21 +158,6 @@
 		{% endif %}
 	</td>
 </tr>
-{% if p.is_competitor and p.category %}
-<tr {% if request.user.is_superuser and isEdit %}onclick="jump('{{path}}ParticipantPreregisteredChange/{{p.id}}/');"{% endif %}>
-	<td class="text-right">{% trans "Preregistered" %}:</td>
-	<td>
-		{% if p.preregistered %}
-			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
-		{% else %}
-			<span class="label label-default"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
-		{% endif %}
-	</td>
-	{% if request.user.is_superuser and isEdit %}
-		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantPreregisteredChange/{{p.id}}/">{% trans "Change" %}</a></td>
-	{% endif %}
-</tr>
-{% endif %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantPaidChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Paid" %}{% if not p.good_paid %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 	<td>
@@ -259,6 +244,21 @@
 	</td>
 	{% if isEdit %}
 		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantSignatureChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
+{% if p.is_competitor and p.category %}
+<tr {% if request.user.is_superuser and isEdit %}onclick="jump('{{path}}ParticipantPreregisteredChange/{{p.id}}/');"{% endif %}>
+	<td class="text-right">{% trans "Preregistered" %}:</td>
+	<td>
+		{% if p.preregistered %}
+			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
+		{% else %}
+			<span class="label label-default"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+		{% endif %}
+	</td>
+	{% if request.user.is_superuser and isEdit %}
+		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantPreregisteredChange/{{p.id}}/">{% trans "Change" %}</a></td>
 	{% endif %}
 </tr>
 {% endif %}

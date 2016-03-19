@@ -1893,7 +1893,8 @@ class Participant(models.Model):
 		return (
 			self.good_bib() and
 			self.good_category() and
-			self.good_tag()
+			self.good_tag() and
+			self.good_waiver()
 		)
 	
 	@property
