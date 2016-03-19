@@ -111,7 +111,7 @@ def init_ccn( fname ):
 		break
 	
 	if not ws:
-		print 'Cannot find sheet ending with "{}"'.format(suffix)
+		print 'Cannot find sheet.'
 		return
 		
 	num_rows = ws.nrows

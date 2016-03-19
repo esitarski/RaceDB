@@ -880,10 +880,10 @@ class Event( models.Model ):
 			for c in w.categories.all():
 				for p in Participant.objects.filter( competition = self.competition, category = c, bib__isnull = False ):
 					if p.bib in bibParticipant:
-						duplicates.append( _('{}: {} ({}) and {} ({}) have duplicate Bib {}').format(
-							w.name,
-							bibParticipant[p.bib].name, bibParticipant[p.bib].category.code,
-							p.name, p.category.code, p.bib) )
+						duplicates.append( sting_contat(
+							w.name, ': ', bibParticipant[p.bib].name,
+							' ( ', bibParticipant[p.bib].category.code, ') and ',
+							p.name, ' (', p.category.code, ' ) ', _('have duplicate Bib'), p.bib) )
 					else:
 						bibParticipant[p.bib] = p
 		return duplicates
@@ -1310,7 +1310,7 @@ class LicenseHolder(models.Model):
 	def correct_uci_county_code( self ):
 		uci_code_save = self.uci_code
 		country_code = self.uci_code[:3].upper()
-		if country_code and county_code.isalpha() and country_code != iso_uci_country_codes.get(country_code, country_code):
+		if country_code and country_code.isalpha() and country_code != iso_uci_country_codes.get(country_code, country_code):
 			country_code = iso_uci_country_codes.get(country_code, country_code)
 			
 		dob = self.date_of_birth.strftime('%Y%m%d')

@@ -47,7 +47,7 @@ class DurationFormField( CharField ):
 		super(DurationFormField, self).__init__(*args, **kwargs)
 
 	def clean(self, value):
-		value = super(CharField, self).clean(value)
+		value = super(DurationFormField, self).clean(value)
 		value = value.strip()
 		if value and not reDuration.match(value):
 			raise FormValidationError('Must be in format [-]HH:MM:SS.ddd')

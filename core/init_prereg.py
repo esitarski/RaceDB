@@ -62,7 +62,7 @@ def init_prereg(
 			date_of_birth	= get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
 			try:
 				date_of_birth = date_from_value(date_of_birth)
-			except:
+			except Exception as e:
 				print 'Row {}: Invalid birthdate (ignoring) "{}" ({}) {}'.format( i, date_of_birth, ur, e )
 				date_of_birth = None
 			date_of_birth 	= date_of_birth if date_of_birth != import_utils.invalid_date_of_birth else None
@@ -258,12 +258,16 @@ def init_prereg(
 				else:
 					override_events_str = ''
 				
-				messsage_stream_write( u'Row {:>6}: {:>8} {:>10} {}, {}, {}, {}{}\n'.format(
-							i,
-							license_holder.license_code, license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.uci_code,
-							license_holder.last_name, license_holder.first_name,
-							license_holder.city, license_holder.state_prov,
-							override_events_str,
+				messsage_stream_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
+							row=i,
+							license=license_holder.license_code,
+							dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
+							uci=license_holder.uci_code,
+							lname=license_holder.last_name,
+							fname=license_holder.first_name,
+							city=license_holder.city,
+							state_prov=license_holder.state_prov,
+							ov=override_events_str,
 					)
 				)
 	

@@ -2,7 +2,7 @@
 from django.db import transaction
 import datetime
 import string
-from models import Rider
+from models import *
 import utils
 from large_delete_all import large_delete_all
 

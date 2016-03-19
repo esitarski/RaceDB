@@ -38,7 +38,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 				bib = int(bib)
 			except ValueError:
 				messsage_stream_write( u'**** Row {}: invalid Bib: {}"\n'.format(
-					i, license_code) )
+					i, bib) )
 				continue
 			
 			license_code = to_int_str(get_key(ur, license_col_names, u'')).upper().strip()
