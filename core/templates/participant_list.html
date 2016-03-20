@@ -22,7 +22,7 @@
 </style>
 {% include "show_count.html" %}
 {% spaceless %}
-{% with using_waiver=competition.has_waiver using_tags=competition.using_tags %}
+{% with using_waiver=competition.has_waiver using_tags=competition.using_tags using_signature=competition.show_signature %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
 	<tr>
@@ -35,6 +35,7 @@
 		{% if using_tags %}<th>{% trans "Tag" %}</th>{% endif %}
 		{% if using_waiver %}<th>{% trans "Waiver" %}</th>{% endif %}
 		<th>{% trans "Paid" %}</th>
+		{% if using_signature %}<th>{% trans "Sig." %}</th>{% endif %}
 		<th>{% trans "Confirmed" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Role" %}</th>
@@ -54,44 +55,53 @@
 					{% else %}
 						src="{% static "images/warning.png" %}"
 					{% endif %}
-				style="width:20px;height:20px;"\>
+				style="width:20px;height:20px;"/>
 				{% endif %}
 			</td>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
 			<td>{% if p.role == 110 %}
-					{% if p.category %}{{p.category.code}}{% else %}<img src="{% static "images/error.png" %}" >{% endif %}
+					{% if p.category %}{{p.category.code}}{% else %}<img src="{% static "images/error.png" %}"/>{% endif %}
 				{% endif %}
 			</td>
-			<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<img src="{% static "images/error.png" %}" >{% endif %}</td>
+			<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<img src="{% static "images/error.png" %}"/>{% endif %}</td>
 			{% if using_tags %}
-				<td>{% if p.get_tag_str %}{{p.get_tag_str}}{% else %}<img src="{% static "images/error.png" %}" >{% endif %}</td>
+				<td>{% if p.get_tag_str %}{{p.get_tag_str}}{% else %}<img src="{% static "images/error.png" %}"/>{% endif %}</td>
 			{% endif %}
 			{% if using_waiver %}
 				<td class="text-center">
 					{% if p.good_waiver %}
-						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
+						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
 					{% else %}
-						<img src="{% static "images/error.png" %}" >
+						<img src="{% static "images/error.png" %}" />
 					{% endif %}
 				</td>
 			{% endif %}
 			<td class="text-center">
 				{% if p.role == 110 %}
 					{% if p.paid %}
-						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
+						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
 					{% else %}
-						<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
+						<img src="{% static "images/error.png" %}"/>
 					{% endif %}
 				{% endif %}
 			</td>
+			{% if using_signature %}
+				<td class="text-center">
+					{% if p.good_signature %}
+						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
+					{% else %}
+						<img src="{% static "images/error.png" %}" />
+					{% endif %}
+				</td>
+			{% endif %}
 			<td class="text-center">
 				{% if p.role == 110 %}
 					{% if p.confirmed %}
-						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" ></span>
+						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
 					{% else %}
-						<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
+						<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}"/></span>
 					{% endif %}
 				{% endif %}
 			</td>

@@ -218,7 +218,7 @@ urlpatterns = [
 	
 	url(r'^(?i).*SelfServe/$', self_serve.SelfServe),
 	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
-	url(r'^(?i).*SelfServe/QRCode/$', self_serve.SelfServeQRCode),
+	url(r'^(?i).*SelfServe/SelfServeQR/$', self_serve.SelfServeQRCode),
 	
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}),
 	url(r'^(?i).*logout/$', views.Logout),

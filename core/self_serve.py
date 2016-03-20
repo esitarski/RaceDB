@@ -54,6 +54,8 @@ def SelfServeQRCode( request ):
 	if request.user.username != 'serve':
 		return HttpResponseRedirect( '/RaceDB' )
 	
+	print '**** called 2'
+	
 	exclude_breadcrumbs = True
 	qrpath = request.build_absolute_uri()
 	
@@ -69,6 +71,8 @@ def SelfServe( request, do_scan=0 ):
 	# Prevent non-serve users from coming here.
 	if request.user.username != 'serve':
 		return HttpResponseRedirect( '/RaceDB' )
+	
+	print '**** called 1'
 	
 	do_scan = int(do_scan)
 	

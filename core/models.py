@@ -1867,16 +1867,6 @@ class Participant(models.Model):
 		
 		return self
 	
-	@property
-	def show_confirm( self ):
-		return (
-			self.is_competitor and
-			self.bib and
-			self.category and
-			self.paid and
-			not self.needs_tag
-		)
-	
 	def good_uci_code( self ):		return self.license_holder.uci_code_error is None
 	def good_license( self ):		return not self.license_holder.is_temp_license
 	
@@ -1894,19 +1884,27 @@ class Participant(models.Model):
 			self.good_bib() and
 			self.good_category() and
 			self.good_tag() and
-			self.good_waiver()
+			self.good_waiver() and
+			self.good_paid() and
+			self.good_signature()
+		)
+	
+	@property
+	def show_confirm( self ):
+		return (
+			self.is_competitor and
+			self.can_start()
 		)
 	
 	@property
 	def is_done( self ):
 		if self.is_competitor:
 			return (
+				self.can_start() and
 				self.show_confirm and
 				self.good_uci_code() and
 				self.good_license() and
-				self.good_signature() and
-				self.good_est_kmh() and
-				self.good_waiver()
+				self.good_est_kmh()
 			)
 		elif self.role < 200:
 			return (
