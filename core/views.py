@@ -3438,8 +3438,9 @@ def GetEvents( request, date=None ):
 def QRCode( request ):
 	exclude_breadcrumbs = True
 	qrpath = request.build_absolute_uri()
-	qrpath = os.path.dirname( qrpath )
-	qrpath = os.path.dirname( qrpath ) + '/'
+	for i in xrange(2):
+		qrpath = os.path.dirname( qrpath )
+	qrpath += '/'
 	return render_to_response( 'qrcode.html', RequestContext(request, locals()) )
 	
 #-----------------------------------------------------------------------

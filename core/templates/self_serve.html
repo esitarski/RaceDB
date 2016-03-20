@@ -18,11 +18,19 @@ table.info-table tr th { font-size: 125%; }
 ul.warning-list li { font-size: 150%; }
 ul.error-list li { font-size: 150%; }
 
+div.title {
+    display:flex;
+    align-items:center;
+}
+
 </style>
 <p/>
-<h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a> {% trans "Self-Serve" %}
+<div class="title">
+<h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"/></a> {% trans "Self-Serve" %}
 	{% if rfid_antenna %}{% trans "Antenna" %} {{rfid_antenna}} {% endif %}
+	<a href="{{cancelUrl}}SelfServe/SelfServeQRCode/"><img src="{% static "images/glyphicons_258_qrcode.png" %}" alt="QRCode"/></a>
 </h3>
+</div>
 <br/>
 {% if competition %}
 	<h2><strong>{{competition.name}}</strong> <span style="font-size: 80%">{{competition.date_range_str}}</span></h2>
@@ -37,9 +45,9 @@ ul.error-list li { font-size: 150%; }
 	<h2>{% trans "Leave Self-Serve" %}</h2>
 	<h3>{% trans "Are you sure?" %}</h3>
 	<br/>
-	<a href="{{path_noargs}}3"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+	<a href="{{path_noargs}}3"><img src="{% static "images/ok-btn-big.png" %}"/></a>
 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-	<a href="{{path_noargs}}"><image src="{% static "images/cancel-btn-big.png" %}"/></a>
+	<a href="{{path_noargs}}"><img src="{% static "images/cancel-btn-big.png" %}"/></a>
 {% else %}
 	{% comment %}-------------------------------------------------------------------------------{% endcomment %}
 	{% if not do_scan and not errors %}
@@ -47,7 +55,7 @@ ul.error-list li { font-size: 150%; }
 		<br/>
 		<h4>{% trans "Hold RFID tag to Antenna and press SCAN" %}</h4>
 		<br/>
-		<a href="{{path_noargs}}1"><image src="{% static "images/scan-btn-big.png" %}"/></a>	
+		<a href="{{path_noargs}}1"><img src="{% static "images/scan-btn-big.png" %}"/></a>	
 	{% elif status_entries %}
 		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
 		<div class="alert alert-danger">
@@ -67,7 +75,7 @@ ul.error-list li { font-size: 150%; }
 		{% endfor %}
 		</dl>
 		<br/>
-		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+		<a href="{{path_noargs}}"><img src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% elif errors %}
 		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
 		{% if license_holder %}
@@ -101,7 +109,7 @@ ul.error-list li { font-size: 150%; }
 			</ul>
 		{% endif %}
 		<br/>
-		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+		<a href="{{path_noargs}}"><img src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% elif license_holder %}
 		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
 		{% with h=license_holder %}
@@ -158,7 +166,7 @@ ul.error-list li { font-size: 150%; }
 		<br/>
 		<h4>{% trans "To fix any incorrect information, please see the registration desk." %}</h4>
 		<br/>
-		<a href="{{path_noargs}}"><image src="{% static "images/ok-btn-big.png" %}"/></a>
+		<a href="{{path_noargs}}"><img src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% endif %}
 {% endif %}
 

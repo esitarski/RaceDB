@@ -162,9 +162,9 @@
 	<td class="text-right">{% trans "Paid" %}{% if not p.good_paid %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 	<td>
 		{% if p.paid %}
-			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
+			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-warning"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+			<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 		{% if p.is_seasons_pass_holder %} {% trans "(Season's Pass Holder)" %} {% endif %}
 	</td>
@@ -206,7 +206,7 @@
 		{% if p.est_kmh > 0.0 %}
 			<strong>{{p.est_speed_display}}</strong>
 		{% else %}
-			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+			<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}</td>
 		{% if isEdit %}
 			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantEstSpeedChange/{{p.id}}/">{% trans "Change" %}</a></td>
@@ -218,9 +218,9 @@
 	<td class="text-right">{% trans "Confirmed" %}:</td>
 	<td>
 		{% if p.confirmed %}
-			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
+			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+			<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 	</td>
 	{% if isEdit %}
@@ -234,12 +234,12 @@
 	<td>
 	{% if p.signature %}
 		{% if p.is_jsignature %}
-			<image width="240" height="64" id="signature" src="data:{{p.signature|safe}}" style="background: #FFFF88"></image>
+			<img width="240" height="64" id="signature" src="data:{{p.signature|safe}}" style="background: #FFFF88"></image>
 		{% else %}
 			<canvas width="240" height="64" id="signature"></canvas>
 		{% endif %}
 	{% else %}
-		<span class="label label-danger"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No signature" %}</span>
+		<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No signature" %}</span>
 	{% endif %}
 	</td>
 	{% if isEdit %}
@@ -252,9 +252,9 @@
 	<td class="text-right">{% trans "Preregistered" %}:</td>
 	<td>
 		{% if p.preregistered %}
-			<span class="label label-default"><image src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
+			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
 		{% else %}
-			<span class="label label-default"><image src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+			<span class="label label-default"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
 	</td>
 	{% if request.user.is_superuser and isEdit %}

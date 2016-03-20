@@ -35,9 +35,9 @@
 			<td class="hidden-print">
 				<div class="btn-group">
 					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}CategoryUp/{{c.id}}/">
-						<image src='{% static "images/glyphicons_213_up_arrow.png" %}' ></a> {% endif %}
+						<img src='{% static "images/glyphicons_213_up_arrow.png" %}' ></a> {% endif %}
 					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}CategoryDown/{{c.id}}/">
-						<image src='{% static "images/glyphicons_212_down_arrow.png" %}' ></a> {% endif %}
+						<img src='{% static "images/glyphicons_212_down_arrow.png" %}' ></a> {% endif %}
 				</div>
 			</td>
 			{% endif %}

@@ -47,7 +47,23 @@ class SelfServeAntennaForm( Form ):
 			Row( Field('rfid_antenna', size=4, style="font-size: 250%;"), ),
 			Row( button_args[0], ),
 		)
-		
+
+@access_validation( True )
+def SelfServeQRCode( request ):
+	# Prevent non-serve users from coming here.
+	if request.user.username != 'serve':
+		return HttpResponseRedirect( '/RaceDB' )
+	
+	exclude_breadcrumbs = True
+	qrpath = request.build_absolute_uri()
+	
+	for i in xrange(2):
+		qrpath = os.path.dirname( qrpath )
+	qrpath += '/login/?next=/RaceDB/SelfServe/'
+
+	qrcode_note = _('Login with Username: serve')
+	return render_to_response( 'qrcode.html', RequestContext(request, locals()) )
+	
 @access_validation( True )
 def SelfServe( request, do_scan=0 ):
 	# Prevent non-serve users from coming here.

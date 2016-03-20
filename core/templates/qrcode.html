@@ -14,14 +14,16 @@
 <script type="text/javascript">
 new QRCode("qrcode", {
     text: "{{qrpath}}",
-    width: 512,
-    height: 512,
+    width: 440,
+    height: 440,
     colorDark : "#000000",
     colorLight : "#ffffff",
     correctLevel : QRCode.CorrectLevel.H
 });
 </script>
-<br/><br/><br/>
-<a href="{{cancelUrl}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a>
+<br/><br/>
+{% if qrcode_note %}<h3>{{qrcode_note}}</h3>{% endif %}
+<br/>
+<a href="{{cancelUrl}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"/></a>
 <a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "OK" %}</a>
 {% endblock content %}

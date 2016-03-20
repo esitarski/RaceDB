@@ -76,19 +76,19 @@
 					<a class="btn btn-primary" href="{{path}}CompetitionRegAnalytics/{{competition.id}}">{% trans "Reg Analytics" %}</a>
 				{% endif %}
 				&nbsp;
-				<button class="btn btn-primary hidden-print" onClick="window.print()"><image src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print" %}</button>
+				<button class="btn btn-primary hidden-print" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print" %}</button>
 				&nbsp;
-				<a class="btn btn-primary hidden-print" href="{{path}}FinishLynx/{{competition.id}}""><image src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
+				<a class="btn btn-primary hidden-print" href="{{path}}FinishLynx/{{competition.id}}""><img src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<a class="btn btn-success" href="{{path}}TeamsShow/{{competition.id}}"><image src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
+				<a class="btn btn-success" href="{{path}}TeamsShow/{{competition.id}}"><img src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
 				&nbsp;&nbsp;
 				
-				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><image src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
+				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}"><img src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
 				&nbsp;&nbsp;
 				{% if competition.using_tags %}
-					<a class="btn btn-success" href="{{path}}ParticipantRfidAdd/{{competition.id}}"><image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
+					<a class="btn btn-success" href="{{path}}ParticipantRfidAdd/{{competition.id}}"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
 				{% else %}
-					<a class="btn btn-success" href="{{path}}ParticipantManualAdd/{{competition.id}}"><image src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
+					<a class="btn btn-success" href="{{path}}ParticipantManualAdd/{{competition.id}}"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
 				{% endif %}
 			</div>
 		</div>
@@ -141,7 +141,7 @@
 					<br/>&nbsp;<br/>
 				{% endif %}
 				<a class="btn btn-primary btn-sm hidden-print" href="{{path}}EventMassStartCrossMgr/{{e.id}}/">
-					<image src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
+					<img src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
 				</a>
 				<br/>&nbsp;<br/>
 				<a class="btn btn-success btn-sm hidden-print" href="{{path}}StartList/{{e.id}}/">{% trans "Start List" %}</a>
@@ -198,7 +198,7 @@
 					<br/>&nbsp;<br/>
 				{% endif %}
 				<a class="btn btn-primary btn-sm hidden-print" href="{{path}}EventTTCrossMgr/{{e.id}}/">
-					<image src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
+					<img src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
 				</a>
 				<br/>&nbsp;<br/>
 				<a class="btn btn-success btn-sm hidden-print" href="{{path}}StartListTT/{{e.id}}/">{% trans "Start List" %}</a>

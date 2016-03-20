@@ -12,21 +12,21 @@
 {% if 'login/' not in path.lower %}
 	{% for bc in breadcrumbs %}
 		{% if forloop.first %}
-			<li><a href="{{bc.url}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a></li>
+			<li><a href="{{bc.url}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"/></a></li>
 		{% else %}
 			<li><a class="btn btn-info" href="{{bc.url}}">{{bc.name}}</a></li>
 		{% endif %}
 	{% endfor %}
-	<li><a href="{{path}}QRCode/"><img src="{% static "images/glyphicons_258_qrcode.png" %}" alt="QRCode"></img></a></li>
+	<li><a href="{{path}}QRCode/"><img src="{% static "images/glyphicons_258_qrcode.png" %}" alt="QRCode"/></a></li>
 	{% if request.user.is_superuser %}
-		<li><a href="{{path}}logout/"><img src="{% static "images/super.png" %}" alt="RaceDB"></img></a></li>
+		<li><a href="{{path}}logout/"><img src="{% static "images/super.png" %}" alt="RaceDB"/></a></li>
 	{% elif request.user.is_staff %}
-		<li><a href="{{path}}logout/"><img src="{% static "images/reg.png" %}" alt="RaceDB"></img></a></li>
+		<li><a href="{{path}}logout/"><img src="{% static "images/reg.png" %}" alt="RaceDB"/></a></li>
 	{% endif %}
-	<li><a href="{{path}}logout/"><img src="{% static "images/exit.png" %}" alt="logout"></img></a></li>
+	<li><a href="{{path}}logout/"><img src="{% static "images/exit.png" %}" alt="logout"/></a></li>
 {% else %}
-	<li><a href="{{bc.url}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img></a></li>
-	<li><a href="{{path}}QRCode/"><img src="{% static "images/glyphicons_258_qrcode.png" %}" alt="QRCode"></img></a></li>
+	<li><a href="{{bc.url}}"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"/></a></li>
+	<li><a href="{{path}}QRCode/"><img src="{% static "images/glyphicons_258_qrcode.png" %}" alt="QRCode"/></a></li>
 {% endif %}
 </ul>
 {% endspaceless %}

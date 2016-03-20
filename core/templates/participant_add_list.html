@@ -7,18 +7,18 @@
 <ul class="nav nav-tabs">
 	<li role="presentation" class="active">
 		<a href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
-			<image src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
+			<img src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
 		</a>
 	</li>
 	<li role="presentation">
 		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
-			<image src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
+			<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
 		</a>
 	</li>
 {% if competition.using_tags %}
 	<li role="presentation">
 		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
-			<image src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
+			<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
 		</a>
 	</li>
 {% endif %}
