@@ -1889,6 +1889,12 @@ class Participant(models.Model):
 			self.good_signature()
 		)
 	
+	def can_tt_start( self ):
+		return (
+			self.good_bib() and
+			self.good_category()
+		)
+	
 	@property
 	def show_confirm( self ):
 		return (
@@ -2126,25 +2132,34 @@ class EventTT( Event ):
 		min_gap = datetime.timedelta( seconds=10 )
 		zero_gap = datetime.timedelta( seconds=0 )
 		
+		empty_gap_before_wave = zero_gap
+		
 		sequenceCur = 1
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
-			participants = sorted( wave_tt.get_participants_unsorted(), key=wave_tt.get_sequence_key() )
+			participants = sorted( [p for p in wave_tt.get_participants_unsorted() if p.can_tt_start()], key=wave_tt.get_sequence_key() )
+			
+			# Carry the "before gaps" of empty waves.
+			if not participants:
+				empty_gap_before_wave = max( empty_gap_before_wave, wave_tt.gap_before_wave )
+				continue
+			
 			last_fastest = len(participants) - wave_tt.num_fastest_participants
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
 				rider_gap = max(
 					wave_tt.fastest_participants_start_gap if i >= last_fastest else zero_gap,
 					wave_tt.regular_start_gap,
-					min_gap
+					min_gap,
 				)
-				tCur += max( wave_tt.gap_before_wave if i == 0 else zero_gap, rider_gap )
+				tCur += max( max(empty_gap_before_wave, wave_tt.gap_before_wave) if i == 0 else zero_gap, rider_gap )
 				
 				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
 				sequenceCur += 1
 				
 			EntryTT.objects.bulk_create( entry_tt_pending )
 			entry_tt_pending = []
+			empty_gap_before_wave = zero_gap
 	
 	def get_start_time( self, participant ):
 		try:
