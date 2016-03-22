@@ -13,6 +13,7 @@ from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
 
 from participant_key_filter import participant_key_filter
+from init_prereg import init_prereg
 
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport

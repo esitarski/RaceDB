@@ -67,7 +67,7 @@ def init_ccn( fname ):
 				'last_name':	to_str(ur.get('Name','')).strip(),
 				'first_name':	to_str(ur.get('Firstname','')).strip(),
 				'gender':		gender_from_str(to_str(ur.get('Sex','m'))),
-				'date_of_birth':date_of_birth if date_of_birth and date_of_birth != invalid_date else None,
+				'date_of_birth':date_of_birth if date_of_birth and date_of_birth != invalid_date_of_birth else None,
 				'uci_code':		to_str(ur.get('Ucicode','')).strip(),
 				'city':			to_str(ur.get('City','')).strip(),
 				'state_prov':	to_str(ur.get('Province','')).strip(),

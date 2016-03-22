@@ -15,7 +15,10 @@ with open( 'pylint_output.txt', 'w' ) as output:
 		print f
 		out, err = subprocess.Popen( [cmd, '--errors-only', f], stdout=subprocess.PIPE, stderr=subprocess.STDOUT ).communicate()
 		for line in out.split('\n'):
-			if "Undefined variable '_' (undefined-variable)" not in line:
-				print line
-				output.write( '{}\n'.format(line) )
+			if "Undefined variable '_' (undefined-variable)" in line:
+				continue
+			if "No config file found, using default configuration" in line:
+				continue
+			print line
+			output.write( '{}\n'.format(line) )
 		output.flush()

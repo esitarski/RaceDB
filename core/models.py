@@ -880,7 +880,7 @@ class Event( models.Model ):
 			for c in w.categories.all():
 				for p in Participant.objects.filter( competition = self.competition, category = c, bib__isnull = False ):
 					if p.bib in bibParticipant:
-						duplicates.append( sting_contat(
+						duplicates.append( string_concat(
 							w.name, ': ', bibParticipant[p.bib].name,
 							' ( ', bibParticipant[p.bib].category.code, ') and ',
 							p.name, ' (', p.category.code, ' ) ', _('have duplicate Bib'), p.bib) )

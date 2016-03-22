@@ -1,6 +1,7 @@
 from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from views import license_holders_from_search_text
+from get_seasons_pass_excel import get_seasons_pass_excel
 
 @autostrip
 class SeasonsPassDisplayForm( Form ):

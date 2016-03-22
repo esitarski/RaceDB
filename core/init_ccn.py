@@ -123,13 +123,13 @@ def init_ccn( fname = fnameDefault ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			print u'{:>6}: {:>8} {:>10} {}, {}, {}, {}'.format(
-				i,
-				removeDiacritic(lh.license_code),
-				lh.date_of_birth.strftime('%Y/%m/%d'),
-				lh.uci_code,
-				removeDiacritic(lh.last_name), removeDiacritic(lh.first_name),
-				removeDiacritic(lh.city), removeDiacritic(lh.state_prov) )
+			print u'{i:>6}: {license:>8} {dob:>10} {uci_code} {last}, {first}, {city}, {state_prov}'.format(
+				i=i,
+				license=removeDiacritic(lh.license_code),
+				dob=lh.date_of_birth.strftime('%Y/%m/%d'),
+				uci_code=lh.uci_code,
+				last=removeDiacritic(lh.last_name), first=removeDiacritic(lh.first_name),
+				city=removeDiacritic(lh.city), state_prov=removeDiacritic(lh.state_prov) )
 			TeamHint.objects.filter( license_holder=lh ).delete()
 			
 			teams = [t.strip() for t in ur.get('Afiliates','').split(',')]
