@@ -53,7 +53,8 @@ On other platforms, launch a terminal.
 ***********************************************************************
 Step 4:  Install "pip"
 
-"pip" is the python package installer.
+"pip" is the python package installer.  It should come with Python 2.7.
+If you are using an old version you will have to install it yourself.
 
 In your cmd/terminal window, enter:
 
@@ -67,7 +68,13 @@ Then, enter:
 
 You will see a bunch of text scroll up as pip installs.
 
-If you are running on Windows and get the message:
+***********************************************************************
+Step 5:  If on Windows, check and fix your Path.
+
+In a cmd window, type:
+    python
+	
+If you get the message:
 
     ‘python’ is not recognized as an internal or external command
 
@@ -80,7 +87,7 @@ c)  Return to Step 3 - make sure you close the old "cmd" window and open a new o
 
 
 ***********************************************************************
-Step 5:  Install the RaceDB Dependencies
+Step 6:  Install the RaceDB Dependencies
 
 In your cmd/terminal enter:
 
@@ -94,7 +101,7 @@ By patient!
 This may take a few minutes as the modules are downloaded and configured.
 
 ***********************************************************************
-Step 6:  Set your time zone.
+Step 7:  Set your time zone.
 
 cd to the RaceDB directory.
 In your cmd/terminal entry:
@@ -106,7 +113,7 @@ This will configure RaceDB for your timezone.
 If you change timezones, make sure you run set_timezone again.
 
 ***********************************************************************
-Step 7:  Initialize the Database
+Step 8:  Initialize the Database
 
 In your cmd/terminal enter two commands:
 
@@ -126,7 +133,7 @@ This data includes:
 * Some Tdf Teams
 
 ***********************************************************************
-Step 8:  Start the RaceDB Server (run RaceDB)
+Step 9:  Start the RaceDB Server (run RaceDB)
 
 In your cmd/terminal enter:
 
@@ -190,6 +197,6 @@ By patient!
 This may take a few minutes.
 
 That's it!
-Now, follow Step 8 to launch RaceDB as usual with:
+Now, follow Step 9 to launch RaceDB as usual with:
 
   python manage.py launch <your_usual_launch_options_if_you_have_any>
