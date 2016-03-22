@@ -13,7 +13,10 @@ with open( 'pylint_output.txt', 'w' ) as output:
 		except IndexError:
 			pass
 		print f
-		out, err = subprocess.Popen( [cmd, '--errors-only', f], stdout=subprocess.PIPE, stderr=subprocess.STDOUT ).communicate()
+		out, err = subprocess.Popen(
+			[cmd, '--load-plugins', 'pylint_django', '--errors-only', f],
+			stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+		).communicate()
 		for line in out.split('\n'):
 			if "Undefined variable '_' (undefined-variable)" in line:
 				continue
