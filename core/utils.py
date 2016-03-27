@@ -155,6 +155,9 @@ class Breadcrumbs( object ):
 		i = 1
 		while i < len(components):
 			j = i + 1
+			#
+			# Strip numeric arguments to we show the logical path only.
+			#
 			while j < len(components) and reNum.match( components[j] ):
 				j += 1
 			breadcrumbs.append( Breadcrumb(splitCapWords(components[i]), '/'.join(components[:j]) ) )
