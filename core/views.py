@@ -801,7 +801,7 @@ def GetFinishLynxResponse( competition ):
 	zip = FinishLynxExport( competition )
 	response = HttpResponse(zip, content_type="application/zip")
 	response['Content-Disposition'] = 'attachment; filename={}-FinishLynx.zip'.format(
-		utils.removeDiacritic(competition.name),
+		utils.cleanFileName(competition.name),
 	)
 	return response	
 
@@ -1173,8 +1173,8 @@ def StartListExcelDownload( request, eventId, eventType ):
 	xl = get_start_list_excel( event )
 	response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	response['Content-Disposition'] = 'attachment; filename=RaceDB-{}-{}_{}-{}.xlsx'.format(
-		utils.removeDiacritic(event.competition.name),	
-		utils.removeDiacritic(event.name),
+		utils.cleanFileName(event.competition.name),	
+		utils.cleanFileName(event.name),
 		event.date_time.strftime('%Y-%m-%d-%H%M%S'),
 		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 	)
@@ -1593,8 +1593,8 @@ def EventMassStartCrossMgr( request, eventId ):
 	response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	response['Content-Disposition'] = 'attachment; filename={}-{}-{}.xlsx'.format(
 		eventMassStart.date_time.strftime('%Y-%m-%d'),
-		utils.removeDiacritic(competition.name),
-		utils.removeDiacritic(eventMassStart.name),
+		utils.cleanFileName(competition.name),
+		utils.cleanFileName(eventMassStart.name),
 	)
 	return response
 
@@ -1796,8 +1796,8 @@ def EventTTCrossMgr( request, eventTTId ):
 	response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	response['Content-Disposition'] = 'attachment; filename={}-{}-{}.xlsx'.format(
 		eventTT.date_time.strftime('%Y-%m-%d'),
-		utils.removeDiacritic(competition.name),
-		utils.removeDiacritic(eventTT.name),
+		utils.cleanFileName(competition.name),
+		utils.cleanFileName(eventTT.name),
 	)
 	return response
 

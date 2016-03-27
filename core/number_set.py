@@ -252,7 +252,7 @@ def NumberSetManage( request, numberSetId ):
 				xl = get_number_set_excel( *getData(search_fields) )
 				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 				response['Content-Disposition'] = 'attachment; filename=RaceDB-NumberSet-{}-{}.xlsx'.format(
-					utils.removeDiacritic(number_set.name),
+					utils.cleanFileName(number_set.name),
 					datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 				)
 				return response

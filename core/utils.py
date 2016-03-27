@@ -32,6 +32,12 @@ def removeDiacritic( s ):
 def cleanExcelSheetName( s ):
 	return re.sub( '[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]
 
+validFilenameChars = set( "-_.() " + string.ascii_letters + string.digits )
+def cleanFileName( filename ):
+	cleanedFilename = unicodedata.normalize('NFKD', unicode(filename)).encode('ASCII', 'ignore')
+	cleanedFilename = cleanedFilename.replace( '/', '_' )
+	return ''.join(c for c in cleanedFilename if c in validFilenameChars)
+	
 def toUnicode( s ):
 	if isinstance( s, unicode ):
 		return s

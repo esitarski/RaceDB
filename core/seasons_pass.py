@@ -29,7 +29,7 @@ class SeasonsPassForm( ModelForm ):
 		xl = get_seasons_pass_excel( seasonsPass )
 		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 		response['Content-Disposition'] = 'attachment; filename=RaceDB-SeasonsPassHolders-{}-{}.xlsx'.format(
-			utils.removeDiacritic(seasonsPass.name),
+			utils.cleanFileName(seasonsPass.name),
 			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 		)
 		return response
