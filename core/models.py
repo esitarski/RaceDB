@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from django.utils.safestring import mark_safe
+from django.utils.translation import string_concat
 
 import patch_sqlite_text_factory
 

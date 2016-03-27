@@ -1,22 +1,22 @@
 import os
-import sys
 import re
+import sys
+import string
 import urllib
-import unicodedata
 import datetime
+import unicodedata
 
 def uniquify(seq, idfun=None):  
 	# order preserving 
-	if idfun is None: 
-		def idfun(x): return x 
+	if idfun is None:
+		idfun = lambda x: x
 	seen = set()
 	result = [] 
 	for item in seq: 
 		marker = idfun(item) 
-		if marker in seen:
-			continue 
-		seen.add( marker )
-		result.append(item) 
+		if marker not in seen:
+			seen.add( marker )
+			result.append(item) 
 	return result
 
 def removeDiacritic( s ):
@@ -205,3 +205,5 @@ def pop3Url( url ):
 def cancelUrl( url ):
 	return Breadcrumbs(url).cancelUrl
 
+if __name__ == '__main__':
+	print uniquify([4,4,4,4,3,3,3,2,2,1])
