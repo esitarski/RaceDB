@@ -319,6 +319,9 @@ class SeasonsPass(models.Model):
 			sph.save()
 		return seasons_pass_new
 	
+	def has_license_holder( self, license_holder ):
+		return self.seasonspassholders_set.filter(license_holder=license_holder).exists()
+	
 	class Meta:
 		verbose_name = _("Season's Pass")
 		verbose_name_plural = _("Season's Passes")

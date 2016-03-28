@@ -8,7 +8,26 @@
 	{% if license_holder or status_entries or errors %}
 		setTimeout(function(){ window.location.href = "{{path_noargs}}"; }, 60*1000);
 	{% endif %}
-{% endblock %}
+	$('img').click(function() {
+		var srcCur = $(this).attr('src'), srcNext = null;
+		if( srcCur.indexOf('ok') != -1 )
+			srcNext = $("#ok-deselect").attr('src');
+		else if( srcCur.indexOf('cancel') != -1 )
+			srcNext = $("#cancel-deselect").attr('src');
+		else if( srcCur.indexOf('scan') != -1 )
+			srcNext = $("#scan-deselect").attr('src');
+		if( srcNext != null )
+			$(this).attr('src', srcNext);
+		$('body').css({'cursor' : 'wait'});
+	});
+	
+	{% comment %}
+		Force a logout at midnight to reset to the next day's competition.
+	{% endcomment %}
+	var today = new Date();
+	var tomorrow = new Date(today.getFullYear(),today.getMonth(),today.getDate()+1);
+	setTimeout(function(){ window.location.href = "{{path_noargs}}2"; }, tomorrow-today);
+{% endblock onload %}
 
 {% block content %}
 <style>
@@ -25,6 +44,11 @@ div.title {
 
 </style>
 <p/>
+<div style="display:none">
+	<img id="ok-deselect" src="{% static "images/ok-btn-deselect-big.png" %}" />
+	<img id="scan-deselect" src="{% static "images/scan-btn-deselect-big.png" %}" />
+	<img id="cancel-deselect" src="{% static "images/cancel-btn-deselect-big.png" %}" />
+</div>
 <div class="title">
 <h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"/></a> {% trans "Self-Serve" %}
 	{% if rfid_antenna %}{% trans "Antenna" %} {{rfid_antenna}} {% endif %}

@@ -1,7 +1,7 @@
 from views_common import *
 from django.utils.translation import ugettext_lazy as _
 
-from participant_key_filter import participant_key_filter
+from participant_key_filter import participant_key_filter, add_participant_from_license_holder
 from ReadWriteTag import ReadTag, WriteTag
 
 #--------------------------------------------------------------------------
@@ -54,8 +54,6 @@ def SelfServeQRCode( request ):
 	if request.user.username != 'serve':
 		return HttpResponseRedirect( '/RaceDB' )
 	
-	print '**** called 2'
-	
 	exclude_breadcrumbs = True
 	qrpath = request.build_absolute_uri()
 	
@@ -71,8 +69,6 @@ def SelfServe( request, do_scan=0 ):
 	# Prevent non-serve users from coming here.
 	if request.user.username != 'serve':
 		return HttpResponseRedirect( '/RaceDB' )
-	
-	print '**** called 1'
 	
 	do_scan = int(do_scan)
 	
@@ -179,6 +175,10 @@ def SelfServe( request, do_scan=0 ):
 	if not license_holder:
 		errors.append( string_concat(_('Tag not found '), u' (', tag, u').') )
 		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+	
+	# If the license holder has a season's pass for the competition, try to add him/her as a participant.
+	if not participants and competition.seasons_pass and competition.seasons_pass.has_license_holder(license_holder):
+		license_holder, participants = add_participant_from_license_holder( competition, license_holder )
 		
 	if not participants:
 		errors.append( _('Not Registered') )
