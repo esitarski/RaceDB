@@ -6,7 +6,7 @@ import argparse
 import subprocess
 import compileall
 
-pyllrp = 'pip-install-pyllrp-0.1.3.zip'
+pyllrp = 'pip-install-pyllrp-0.1.4.zip'
 
 dependencies = [
 	'django==1.8.7',
