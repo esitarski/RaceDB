@@ -43,7 +43,7 @@ def findImpinjHost( impinjPort, callback = None ):
 			callback( '{}:{}'.format(impinjHost, impinjPort) )
 		
 		readerSocket = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-		readerSocket.settimeout( 3.0 )
+		readerSocket.settimeout( 4.0 )
 		try:
 			readerSocket.connect( (impinjHost, impinjPort) )
 		except Exception as e:
@@ -57,12 +57,9 @@ def findImpinjHost( impinjPort, callback = None ):
 			
 		readerSocket.close()
 		
-		# Check that the return from the reader is valid.
-		try:
-			readerTime = response.getFirstParameterByClass(UTCTimestamp_Parameter).Microseconds
-		except Exception as e:
-			continue
-		else:
+		# Check if the connection succeeded.
+		connectionAttemptEvent = response.getFirstParameterByClass(ConnectionAttemptEvent_Parameter)
+		if connectionAttemptEvent and connectionAttemptEvent.Status == ConnectionAttemptStatusType.Success:
 			if callback:
 				callback( 'Success!' )
 			return impinjHost
@@ -73,4 +70,7 @@ def AutoDetect( impinjPort = 5084, callback = None ):
 	return findImpinjHost( impinjPort, callback )
 		
 if __name__ == '__main__':
-	print AutoDetect(5084)
+	def cb( message ):
+		print 'message:',  message, '...'
+	ret = AutoDetect(5084, cb)
+	print 'AutoDetect returned:', ret
