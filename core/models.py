@@ -2342,7 +2342,7 @@ class WaveTT( WaveBase ):
 		try:
 			for label, value in (
 					(_('GapBefore'), self.gap_before_wave),
-					(_('RegGap'), self.regular_start_gap),
+					(_('RegularGap'), self.regular_start_gap),
 					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
@@ -2359,7 +2359,7 @@ class WaveTT( WaveBase ):
 		try:
 			for label, value in (
 					(_('GapBefore'), self.gap_before_wave),
-					(_('RegGap'), self.regular_start_gap),
+					(_('RegularGap'), self.regular_start_gap),
 					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):

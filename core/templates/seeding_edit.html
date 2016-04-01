@@ -20,8 +20,8 @@
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
 <div class="hidden-print">
 <hr/>
-{% trans "Change the seeding by entering values in the Adjust field, then pressing the 'Apply Adjustments' button  (or press Enter)." %}<br/>
-{% trans "Adjustment can be made relative to the current position by enter a number leading with +/-, or you can specify a new position by entering the number on its own." %}<br/>
+{% trans "Change the seeding by entering values in the <strong>Adjust</strong> field, then pressing the <strong>Apply Adjustments</strong> button  (or press Enter)." %}<br/>
+{% trans "Adjustments can be made relative to the current position by enter a number leading with +/-, or you can specify a new position by entering the number on its own." %}<br/>
 {% trans "Examples" %}:
 <p>
 <ul>
@@ -29,6 +29,9 @@
 <li>{% trans "Enter +3 to move a Participant three places later." %}</li>
 <li>{% trans "Enter 11 to move a Participant to position 11." %}</li>
 </ul>
+</p>
+<p>
+{% trans "<strong>Seed Option</strong> is used to seed a rider Early or Late in the start wave.  Early or Late riders will be seeded amongst themselves with the Sequence criteria." %}
 </p>
 {% trans "Remember to apply your changes with 'Apply Adjustments' (or press Enter)." %}
 <hr/>
@@ -116,7 +119,7 @@
 		<th>{% trans "UCI Code" %}</th>
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
-		<th>{% trans "Seed Opt." %}</th>
+		<th>{% trans "Seed Option" %}</th>
 		<th>{% trans "Adjust" %}</th>
 	</tr>
 </thead>
