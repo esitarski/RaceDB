@@ -91,7 +91,7 @@ def init_prereg(
 			club_name		= to_str(ur.get('club', None))
 			if not team_name:
 				team_name = club_name
-			category_code   = to_str(get_key(ur,('category', 'CX Category'), None))
+			category_code   = to_str(get_key(ur,('category', 'CX Category', 'Road Category', 'MTB Category',), None))
 			
 			est_kmh			= to_float(get_key(ur,('Est kmh','kmh'), None))
 			est_mph			= to_float(get_key(ur,('Est mph','mph'), None))

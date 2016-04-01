@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='participant',
             name='seed_option',
-            field=models.SmallIntegerField(default=1, verbose_name='Seed Option', choices=[(1, 'None'), (0, 'Seed Early'), (2, 'Seed Late')]),
+            field=models.SmallIntegerField(default=1, verbose_name='Seed Option', choices=[(1, '-'), (0, 'Seed Early'), (2, 'Seed Late')]),
         ),
     ]
