@@ -93,6 +93,21 @@ def init_prereg(
 				team_name = club_name
 			category_code   = to_str(get_key(ur,('category', 'CX Category'), None))
 			
+			est_kmh			= to_float(get_key(ur,('Est kmh','kmh'), None))
+			est_mph			= to_float(get_key(ur,('Est mph','mph'), None))
+			if est_mph is not None:
+				est_kmh = 1.609344 * est_mph
+				est_mph = None
+			seed_option		= to_str(get_key(ur,('Seed Option',), None))
+			if seed_option is not None:
+				seed_option = seed_option.lower()
+				if 'early' in seed_option:
+					seed_option = 0
+				elif 'late' in seed_option:
+					seed_option = 2
+				else:
+					seed_option = 1
+			
 			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
 			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
 			uci_code = to_str(get_key(ur,('UCI Code','UCICode', 'UCI'), None))
@@ -222,6 +237,7 @@ def init_prereg(
 						('category',category), ('team',team),
 						('bib',bib), ('tag',tag), ('note',note),
 						('preregistered',preregistered), ('paid',paid), 
+						('seed_option',seed_option), ('est_kmh',est_kmh), 
 					):
 					if value is not None:
 						setattr( participant, attr, value )

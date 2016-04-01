@@ -88,6 +88,14 @@ def to_int( v ):
 	except:
 		return None
 
+def to_float( v ):
+	if v is None:
+		return None
+	try:
+		return float(v)
+	except:
+		return None
+
 def to_tag( v ):
 	return None if v is None else to_int_str(v).upper()
 

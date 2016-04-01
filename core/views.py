@@ -1288,7 +1288,7 @@ def LicenseHoldersImportExcel( request ):
 @autostrip
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
-	seed_early = forms.BooleanField( required = False )
+	seed_option = forms.ChoiceField( choices=Participant.SEED_OPTION_CHOICES )
 	adjustment = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'adjustment'}) )
 	entry_tt_pk = forms.CharField( widget=forms.HiddenInput() )
 
@@ -1300,7 +1300,7 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 			super( AdjustmentFormSet, self ).__init__(
 				initial=[{
 					'est_speed':u'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
-					'seed_early': e.participant.seed_early,
+					'seed_option': e.participant.seed_option,
 					'adjustment': '',
 					'entry_tt_pk': unicode(e.pk),
 				} for e in entry_tts]
@@ -1362,9 +1362,9 @@ def SeedingEdit( request, eventTTId ):
 						pass
 					
 					try:
-						seed_early = d['seed_early']
-						if entry_tt.participant.seed_early != seed_early:
-							entry_tt.participant.seed_early = seed_early
+						seed_option = d['seed_option']
+						if entry_tt.participant.seed_option != seed_option:
+							entry_tt.participant.seed_option = seed_option
 							participant_changed = True
 					except ValueError:
 						pass
@@ -2631,8 +2631,13 @@ def ParticipantOptionChange( request, participantId ):
 def GetParticipantEstSpeedForm( competition ):
 	@autostrip
 	class ParticipantEstSpeedForm( Form ):
-		est_speed = forms.FloatField( required = False, label=_('Estimated Speed for Time Trial') )
-		seed_early = forms.BooleanField( required = False, label=_('Seed Early'), help_text=_('Tells RaceDB to start this rider as early as possible in the Start Wave') )
+		est_speed = forms.FloatField( required = False,
+			label=string_concat(_('Estimated speed for Time Trial'), ' (', competition.speed_unit_display, ')'),
+			help_text=_('Enter a value or choose from the grid below.')
+		)
+		seed_option = forms.ChoiceField( required = False, choices=Participant.SEED_OPTION_CHOICES, label=_('Seed Option'),
+			help_text=_('Tells RaceDB to start this rider as Early or as Late as possible in the Start Wave')
+		)
 		
 		def __init__(self, *args, **kwargs):
 			super(ParticipantEstSpeedForm, self).__init__(*args, **kwargs)
@@ -2648,11 +2653,8 @@ def GetParticipantEstSpeedForm( competition ):
 			
 			self.helper.layout = Layout(
 				Row(
-					Col(Field('est_speed', css_class = 'form-control', size = '20'), 2),
-					Col(HTML( competition.speed_unit_display ), 2),
-				),
-				Row(
-					Field('seed_early'),
+					Col(Field('est_speed', css_class = 'form-control', size = '20'), 5),
+					Col(Field('seed_option'), 6),
 				),
 				Row(
 					button_args[0],
@@ -2676,12 +2678,12 @@ def ParticipantEstSpeedChange( request, participantId ):
 		if form.is_valid():
 			est_speed = form.cleaned_data['est_speed']
 			participant.est_kmh = competition.to_kmh( est_speed or 0.0 )
-			participant.seed_early = form.cleaned_data['seed_early']
+			participant.seed_option = form.cleaned_data['seed_option']
 			participant.save()
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = GetParticipantEstSpeedForm(competition)(
-			initial = dict( est_speed=competition.to_local_speed(participant.est_kmh), seed_early=participant.seed_early )
+			initial = dict( est_speed=competition.to_local_speed(participant.est_kmh), seed_option=participant.seed_option )
 		)
 	
 	speed_rc = {}

@@ -207,7 +207,8 @@
 			<strong>{{p.est_speed_display}}</strong>
 		{% else %}
 			<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
-		{% endif %}</td>
+		{% endif %}
+		</td>
 		{% if isEdit %}
 			<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantEstSpeedChange/{{p.id}}/">{% trans "Change" %}</a></td>
 		{% endif %}

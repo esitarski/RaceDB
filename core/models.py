@@ -1645,22 +1645,23 @@ class Participant(models.Model):
 	
 	est_kmh=models.FloatField( default=0.0, verbose_name=_('Est Kmh') )
 	seed_early=models.BooleanField( default=False, verbose_name=_('Seed Early') )
+	SEED_OPTION_CHOICES = ((1,_('-')),(0,_('Seed Early')),(2,_('Seed Late')),)
+	seed_option=models.SmallIntegerField( choices=SEED_OPTION_CHOICES, default=1, verbose_name=_('Seed Option') )
 	
 	@property
 	def est_speed_display( self ):
 		return u'{:g} {}{}'.format(
 			self.competition.to_local_speed(self.est_kmh),
 			self.competition.speed_unit_display,
-			u' ({})'.format( _('seed early') ) if self.seed_early else u'',
+			u' ({})'.format( self.get_seed_option_display() ) if self.seed_option != 1 else u'',
 		)
 	
 	def get_short_role_display( self ):
 		role = self.get_role_display()
-		
 	
 	@property
 	def adjusted_est_kmh( self ):
-		return self.est_kmh - 100000.0 if self.seed_early else self.est_kmh
+		return [-1000000.0, 0.0, 1000000][self.seed_option] + self.est_kmh
 	
 	def save( self, *args, **kwargs ):
 		license_holder_update = kwargs.pop('license_holder_update', True)
@@ -2299,7 +2300,7 @@ class WaveTT( WaveBase ):
 	def get_sequence_key( self ):
 		if self.sequence_option == self.est_speed_increasing:
 			return lambda p: (
-				0 if p.seed_early else 1,
+				p.seed_option,
 				p.est_kmh,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(datetime.date.today()),
@@ -2307,21 +2308,21 @@ class WaveTT( WaveBase ):
 			)
 		elif self.sequence_option == self.age_increasing:
 			return lambda p: (
-				0 if p.seed_early else 1,
+				p.seed_option,
 				p.license_holder.date_of_birth,
 				-(p.bib or 0),
 				p.id,
 			)
 		elif self.sequence_option == self.bib_increasing:
 			return lambda p: (
-				0 if p.seed_early else 1,
+				p.seed_option,
 				p.bib or 0,
 				p.license_holder.get_tt_metric(datetime.date.today()),
 				p.id,
 			)
 		elif self.sequence_option == self.age_decreasing:
 			return lambda p: (
-				0 if p.seed_early else 1,
+				p.seed_option,
 				datetime.date(3000,1,1) - p.license_holder.date_of_birth,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(datetime.date.today()),
@@ -2329,7 +2330,7 @@ class WaveTT( WaveBase ):
 			)
 		elif self.sequence_option == self.bib_decreasing:
 			return lambda p: (
-				0 if p.seed_early else 1,
+				p.seed_option,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(datetime.date.today()),
 				p.id,
