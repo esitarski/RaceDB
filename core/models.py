@@ -430,6 +430,20 @@ class Competition(models.Model):
 	def report_labels_text( self ):
 		return u', '.join( r.name for r in self.report_labels.all() )
 	
+	@property
+	def event_types_text( self ):
+		types = []
+		if EventMassStart.objects.filter( competition=self ).exists():
+			types.append( _('MS') )
+		if EventTT.objects.filter( competition=self ).exists():
+			if types:
+				types.append( ',' )
+			types.append( _('TT') )
+		if types:
+			types = ['('] + types + [')']
+			return string_concat( *types )
+		return ''
+	
 	def to_local_speed( self, kmh ):
 		return kmh if self.distance_unit == 0 else kmh * 0.621371
 		
