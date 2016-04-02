@@ -1320,11 +1320,12 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 			for i, form in enumerate(self):
 				form.entry_tt = entry_tts[i]
 				form.wave = participant_wave.get(entry_tts[i].participant.pk, None)
+				form.gap_change = 0
 				if i > 0:
 					tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
 					if tDeltaCur != tDelta:
 						if i > 1:
-							form.gap_change = True
+							form.gap_change = 1 if tDeltaCur > tDelta else -1
 						tDelta = tDeltaCur
 		else:
 			super( AdjustmentFormSet, self ).__init__( *args, **kwargs )

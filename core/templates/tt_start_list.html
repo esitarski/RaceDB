@@ -96,6 +96,12 @@
 	.gap-change {
 		border-top: 3px solid #000;
 	}
+	.gap-change-inc {
+		border-top: 2px solid #006400;
+	}
+	.gap-change-dec {
+		border-top: 2px solid #640000;
+	}
 </style>
 
 <h3 class="visible-print page-break-before">
@@ -125,7 +131,7 @@
 <tbody>
 {% for p in instance.get_participants_seeded %}
 	{% with h=p.license_holder %}
-	<tr onclick="jump('./ParticipantEdit/{{p.id}}/');" {% if p.gap_change %}class="gap-change"{% endif %}>
+	<tr onclick="jump('./ParticipantEdit/{{p.id}}/');" {% if p.gap_change > 0 %}class="gap-change-inc"{% elif p.gap_change < 0%}class="gap-change-dec"{% endif %}>
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td class="text-right clock-time">{% if p.clock_time %}{{p.clock_time | time:"h:i:s a"}}{% else %}{% trans "None" %}{% endif %}</td>
 		<td class="text-right start-time">{% if p.start_time %}{{p.start_time}}{% else %}{% trans "None" %}{% endif %}</td>

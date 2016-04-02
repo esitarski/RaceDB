@@ -2218,12 +2218,13 @@ class EventTT( Event ):
 		
 		tDelta = datetime.timedelta( seconds = 0 )
 		for i, p in enumerate(participants):
+			p.gap_change = 0
 			if i > 0:
 				try:
 					tDeltaCur = p.start_time - participants[i-1].start_time
 					if tDeltaCur != tDelta:
 						if i > 1:
-							p.gap_change = True
+							p.gap_change = 1 if tDeltaCur > tDelta else -1
 						tDelta = tDeltaCur
 				except Exception as e:
 					pass
