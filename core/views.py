@@ -1025,7 +1025,6 @@ def CompetitionCopy( request, competitionId ):
 	competition_new.save()
 	
 	if recurring_start_date:
-		competition_new.adjust_event_times( recurring_start_date - competition_new.start_date )
 		competition_new.start_date = recurring_start_date
 		competition_new.save()
 	
