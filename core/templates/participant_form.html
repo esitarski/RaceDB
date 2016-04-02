@@ -286,6 +286,7 @@
 					{% if is_participating %}<span class="label label-success">&#x2713;
 					{% else %}<span class="label label-default">{% endif %}{{event.short_name}}
 					{% if is_participating %}</span>{% endif %}
+					&nbsp;
 				{% endif %}
 			{% endfor %}
 		</td>
@@ -302,7 +303,7 @@
 		{% if sw %}
 			<hr/>
 				{% for w in sw %}
-					<h3>
+					<h3 {% if forloop.counter != 1 %}style="margin-top: 6px;"{% endif %}>
 					{% trans "Mass Start" %} {{forloop.counter}}:
 					<span class="label label-default">{{w.event.date_time|time}}</span>
 					<strong>{{w.name}}</strong> -
@@ -320,7 +321,7 @@
 		{% if swtt %}
 			<hr/>
 				{% for w in swtt %}
-					<h3>
+					<h3 {% if forloop.counter != 1 %}style="margin-top: 6px;"{% endif %}>
 					{% trans "TT Start" %} {{forloop.counter}}:
 					<span class="label label-default">{{w.event.date_time|time}}</span>
 					<strong>{{w.name}}</strong> -
