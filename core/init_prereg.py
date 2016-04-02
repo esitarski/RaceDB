@@ -93,8 +93,8 @@ def init_prereg(
 				team_name = club_name
 			category_code   = to_str(get_key(ur,('category', 'CX Category', 'Road Category', 'MTB Category',), None))
 			
-			est_kmh			= to_float(get_key(ur,('Est kmh','kmh'), None))
-			est_mph			= to_float(get_key(ur,('Est mph','mph'), None))
+			est_kmh			= to_float(get_key(ur,('Est kmh','Est. kmh','kmh'), None))
+			est_mph			= to_float(get_key(ur,('Est mph','Est. mph','mph'), None))
 			if est_mph is not None:
 				est_kmh = 1.609344 * est_mph
 				est_mph = None
