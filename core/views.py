@@ -882,14 +882,16 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col('start_date', 2),
 					Col('number_of_days', 2),
+					Col('recurring', 2),
 					Col('distance_unit', 2),
-					Col('number_set', 3),
-					Col('seasons_pass', 3),
 				),
-				Row( HTML('<hr/>') ),
 				Row(
-					Col('using_tags', 3),
-					Col('use_existing_tags', 3),
+					Col('number_set', 4),
+					Col('seasons_pass', 4),
+				),
+				Row(
+					Col(Field('using_tags'), 4),
+					Col(Field('use_existing_tags'), 4),
 				),
 				Row( HTML('<hr/>') ),
 				Row(
@@ -1015,9 +1017,18 @@ def CompetitionEdit( request, competitionId ):
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionCopy( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	recurring_start_date = competition.start_date + datetime.timedelta( days=competition.recurring ) if competition.recurring else None
+	
 	competition_new = competition.make_copy()
 	competition_new.name = getCopyName( Competition, competition.name )
 	competition_new.save()
+	
+	if recurring_start_date:
+		competition_new.adjust_event_times( recurring_start_date - competition_new.start_date )
+		competition_new.start_date = recurring_start_date
+		competition_new.save()
+	
 	return HttpResponseRedirect(getContext(request, 'cancelUrl'))
 	
 @access_validation()

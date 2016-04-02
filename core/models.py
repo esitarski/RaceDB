@@ -57,15 +57,30 @@ MilesToKm = 1.0 / KmToMiles
 
 #----------------------------------------------------------------------------------------
 def getCopyName( ModelClass, cur_name ):
-	base_name = cur_name
-	suffix = u' - Copy('
-	if suffix in base_name:
-		base_name = base_name[:base_name.index(suffix)]
-	for i in xrange(1, 100000):
-		new_name = u'{}{}{})'.format( base_name, suffix, i )
-		if not Competition.objects.filter(name = new_name).exists():
+	suffix = u' - ['
+	try:
+		base_name = cur_name[:cur_name.rindex(suffix)]
+	except:
+		base_name = cur_name
+	
+	while 1:
+		try:
+			names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
+		except:
+			return cur_name
+		
+		iMax = 2
+		for n in names:
+			try:
+				iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
+			except:
+				continue
+		
+		new_name = u'{}{}{}]'.format( base_name, suffix, iMax )
+		if not ModelClass.objects.filter( name=new_name ).exists():
 			return new_name
-	return None
+	
+	return cur_name
 
 #----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
@@ -422,6 +437,15 @@ class Competition(models.Model):
 	
 	legal_entity = models.ForeignKey( LegalEntity, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Legal Entity') )
 	
+	RECURRING_CHOICES = (
+		( 0, '-'),
+		( 7, _('Every Week')),
+		(14, _('Every 2 Weeks')),
+		(21, _('Every 3 Weeks')),
+		(28, _('Every 4 Weeks')),
+	)
+	recurring = models.PositiveSmallIntegerField(choices=RECURRING_CHOICES, default=0, verbose_name=_('Recurring') )
+	
 	@property
 	def speed_unit_display( self ):
 		return 'km/h' if self.distance_unit == 0 else 'mph'
@@ -488,7 +512,7 @@ class Competition(models.Model):
 		return competition_new
 		
 	def adjust_event_times( self, time_delta ):
-		for e in self.eventmassstart_set.all():
+		for e in self.get_events():
 			e.date_time += time_delta
 			e.save()
 	
