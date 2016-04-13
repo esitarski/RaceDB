@@ -336,6 +336,16 @@ class SeasonsPass(models.Model):
 	
 	def has_license_holder( self, license_holder ):
 		return SeasonsPassHolder.objects.filter(seasons_pass=self, license_holder=license_holder).exists()
+		
+	def add( self, license_holder ):
+		try:
+			SeasonsPassHolder(seasons_pass=self, license_holder=license_holder).save()
+			return True
+		except IntegrityError as e:
+			return False
+			
+	def remove( self, license_holder ):
+		SeasonsPassHolder.objects.filter(seasons_pass=self, lisence_holder=license_holder).detete()
 	
 	class Meta:
 		verbose_name = _("Season's Pass")
