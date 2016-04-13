@@ -124,11 +124,21 @@ The first command builds the required database structure for all the RaceDB modu
 During the process, you may be required to enter an admin login.
 I recommend calling the admin user "admin" with the password "admin".
 
-The second command will initialize some data into the database (default categories and some riders from the TdF).
+The second command will initialize default disciplines and categories.
 This data includes:
 
-* Some starter Category Formats and Categories
 * Disciplines
+* Some starter Category Formats and Categories
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Step 8.5:  Initialize Demo Data
+
+If you want the demo data in your database and play with a tutorial, enter the following:
+
+  python manage.py init_demo
+
+This data includes:
+
 * Some Tdf Riders
 * Some Tdf Teams
 

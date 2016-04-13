@@ -1523,6 +1523,21 @@ class EventMassStartForm( ModelForm ):
 	def newWaveCB( self, request, eventMassStart ):
 		return HttpResponseRedirect( pushUrl(request,'WaveNew',eventMassStart.id) )
 	
+	def clean( self ):
+		cleaned_data = super(EventMassStartForm, self).clean()
+		competition = cleaned_data.get("competition")
+		if competition:			
+			date_time = cleaned_data.get("date_time")
+			if not (competition.start_date <=
+					date_time.date() <
+					(competition.start_date + datetime.timedelta(days=competition.number_of_days))):
+				raise forms.ValidationError(
+					_('"Date Time" must be within the date(s) of the Competition: %(date_range_str)s.  See Competition "Start Date and "Number of Days".'),
+					code='invalid',
+					params={'date_range_str': competition.date_range_str},
+				)
+		return cleaned_data
+	
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
@@ -1724,6 +1739,21 @@ class EventTTForm( ModelForm ):
 	
 	def newWaveTTCB( self, request, eventTT ):
 		return HttpResponseRedirect( pushUrl(request,'WaveTTNew',eventTT.id) )
+	
+	def clean( self ):
+		cleaned_data = super(EventTTForm, self).clean()
+		competition = cleaned_data.get("competition")
+		if competition:			
+			date_time = cleaned_data.get("date_time")
+			if not (competition.start_date <=
+					date_time.date() <
+					(competition.start_date + datetime.timedelta(days=competition.number_of_days))):
+				raise forms.ValidationError(
+					_('"Date Time" must be within the date(s) of the Competition: %(date_range_str)s.  See Competition "Start Date and "Number of Days".'),
+					code='invalid',
+					params={'date_range_str': competition.date_range_str},
+				)
+		return cleaned_data
 	
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
@@ -3244,6 +3274,7 @@ def get_participant_report_form():
 			if start_date and end_date:
 				if start_date > end_date:
 					raise forms.ValidationError( _("Start Date must be less than End Date") )
+			return cleaned_data
 	
 	return ParticipantReportForm
 

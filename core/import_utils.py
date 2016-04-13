@@ -78,7 +78,7 @@ def to_bool( v ):
 	if v is None:
 		return None
 	s = unicode(v).strip()
-	return s[:1] in u'YyTt1'
+	return s[:1] in u'YyTt1' if s else None
 
 def to_int( v ):
 	if v is None:
