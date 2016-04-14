@@ -63,7 +63,7 @@ def init_prereg(
 			try:
 				date_of_birth = date_from_value(date_of_birth)
 			except Exception as e:
-				print 'Row {}: Invalid birthdate (ignoring) "{}" ({}) {}'.format( i, date_of_birth, ur, e )
+				messsage_stream_write( 'Row {}: Invalid birthdate (ignoring) "{}" ({}) {}'.format(i, date_of_birth, ur, e) )
 				date_of_birth = None
 			date_of_birth 	= date_of_birth if date_of_birth != import_utils.invalid_date_of_birth else None
 			

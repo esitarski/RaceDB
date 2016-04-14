@@ -241,23 +241,24 @@ def init_license_holders():
 			print removeDiacritic(first_name), removeDiacritic(last_name), \
 				removeDiacritic(gender), removeDiacritic(date_of_birth), removeDiacritic(nationality), \
 				removeDiacritic(uci_code), removeDiacritic(team)
-			r = LicenseHolder(
-							first_name=first_name,
-							last_name=last_name,
-							gender=gender,
-							nationality=nationality,
-							date_of_birth=date_of_birth,
-							uci_code=uci_code,
-							license_code = unicode(count+1) )
-			r.save()
+			fields = {
+				'first_name': first_name,
+				'last_name': last_name,
+				'gender': gender,
+				'nationality': nationality,
+				'date_of_birth': date_of_birth,
+				'uci_code': uci_code,
+				'license_code ':  unicode(count+1),
+			}
+			if not LicenseHolder.objects.filter(**fields).exists():
+				LicenseHolder(**fields).save()
 			
 			if not Team.objects.filter(name = team).exists():
-				t = Team(
-						name = team,
-						team_code = team[:3],
-						team_type = 7,
-					)
-				t.save()
+				Team(
+					name = team,
+					team_code = team[:3],
+					team_type = 7,
+				).save()
 				
 	process_records( lines )
 

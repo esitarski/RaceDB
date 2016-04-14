@@ -4,11 +4,12 @@ from xlrd import open_workbook, xldate_as_tuple
 import HTMLParser
 from django.db import transaction, IntegrityError
 from django.db.models import Q
+from large_delete_all import large_delete_all
 import import_utils
 from import_utils import *
 from models import *
 
-def init_seasons_pass( SeasonsPassId, worksheet_name='', worksheet_contents=None, message_stream=sys.stdout ):
+def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None, message_stream=sys.stdout, clear_existing=False ):
 	
 	tstart = datetime.datetime.now()
 
@@ -20,10 +21,13 @@ def init_seasons_pass( SeasonsPassId, worksheet_name='', worksheet_contents=None
 			message_stream.write( unicode(s) )
 	
 	try:
-		seasons_pass = SeasonsPass.objects.get( pk=SeasonsPassId )
+		seasons_pass = SeasonsPass.objects.get( pk=seasonsPassId )
 	except SeasonsPass.DoesNotExist:
 		messsage_stream_write( u'**** Cannot find SeasonsPass\n' )
 		return
+		
+	if clear_existing:
+		large_delete_all( SeasonsPassHolder, Q(seasons_pass=seasons_pass) )
 	
 	license_col_names = ('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode')
 	
@@ -32,6 +36,17 @@ def init_seasons_pass( SeasonsPassId, worksheet_name='', worksheet_contents=None
 		for i, ur in ur_records:
 			
 			license_code = to_int_str(get_key(ur, license_col_names, u'')).upper().strip()
+			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
+			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
+			date_of_birth	= get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
+			try:
+				date_of_birth = date_from_value(date_of_birth)
+			except Exception as e:
+				messsage_stream_write( 'Row {:>6}: Invalid birthdate (ignoring) "{}" ({}) {}'.format( i, date_of_birth, ur, e ) )
+				date_of_birth = None
+			date_of_birth 	= date_of_birth if date_of_birth != import_utils.invalid_date_of_birth else None
+
+			license_holder = None
 			if license_code:
 				try:
 					license_holder = LicenseHolder.objects.get( license_code=license_code )
@@ -40,25 +55,46 @@ def init_seasons_pass( SeasonsPassId, worksheet_name='', worksheet_contents=None
 						i, license_code) )
 					continue
 				
-				seasons_pass.add( license_holder )
-				messsage_stream_write(
-					u'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
-						i=i,
-						bib=bib,
-						license_code=license_holder.license_code,
-						dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
-						uci_code=license_holder.uci_code,
-						last_name=license_holder.last_name,
-						first_name=license_holder.first_name,
-						city=license_holder.city, state_prov=license_holder.state_prov,
+			elif last_name:
+				q = Q(search_text__startswith=utils.get_search_text([last_name,first_name]))
+				if date_of_birth:
+					q &= Q(date_of_birth=date_of_birth)
+				try:
+					license_holder = LicenseHolder.objects.get( q )
+				except LicenseHolder.DoesNotExist:
+					messsage_stream_write( u'**** Row {}: cannot find LicenceHolder: "{}, {}" {}\n'.format(
+						i, last_name, first_name, date_of_birth if date_of_birth else '')
 					)
-				)
+					continue
+				except LicenseHolder.MultipleObjectsReturned:
+					messsage_stream_write( u'**** Row {}: found multiple LicenceHolders matching "{}, {}" {}\n'.format(
+						i, last_name, first_name, date_of_birth if date_of_birth else '')
+					)
+					continue
+
 			else:
 				messsage_stream_write(
-					u'Row {i:>6}: Missing License\n'.format(
+					u'Row {i:>6}: Missing License or LastName, FirstName [Date of Birth]\n'.format(
 						i=i,
 					)
 				)
+				continue
+				
+			if not license_holder:
+				continue
+			
+			seasons_pass.add( license_holder )
+			messsage_stream_write(
+				u'Row {i:>6}: {license_code:>8} {dob:>10} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
+					i=i,
+					license_code=license_holder.license_code,
+					dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
+					uci_code=license_holder.uci_code,
+					last_name=license_holder.last_name,
+					first_name=license_holder.first_name,
+					city=license_holder.city, state_prov=license_holder.state_prov,
+				)
+			)
 			
 	
 	sheet_name = None

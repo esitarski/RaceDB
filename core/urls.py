@@ -179,6 +179,7 @@ urlpatterns = [
 	url(r'^(?i).*SeasonsPassHolderRemove/(?P<seasonsPassHolderId>\d+)/$', seasons_pass.SeasonsPassHolderRemove),
 	url(r'^(?i).*SeasonsPassLicenseHolderAdd/(?P<seasonsPassId>\d+)/(?P<licenseHolderId>\d+)/$', seasons_pass.SeasonsPassLicenseHolderAdd),
 	url(r'^(?i).*SeasonsPassLicenseHolderRemove/(?P<seasonsPassId>\d+)/(?P<licenseHolderId>\d+)/$', seasons_pass.SeasonsPassLicenseHolderRemove),
+	url(r'^(?i).*SeasonsPassHolderUploadExcel/(?P<seasonsPassId>\d+)/$', seasons_pass.UploadSeasonsPass),
 	
 	url(r'^(?i).*RaceClasses/$', race_class.RaceClassesDisplay),
 	url(r'^(?i).*RaceClassNew/$', race_class.RaceClassNew),

@@ -238,6 +238,14 @@ class LicenseHolderForm( ModelForm ):
 		def error_html( error ):
 			return u'<span class="help-block"><strong>{}{}</strong>'.format(u'&nbsp;'*8,error) if error else u''
 		
+		def warning_html( warning ):
+			return '<img src="{}" style="width:20px;height:20px;"/>'.format(static('images/warning.png')) if warning else ''
+		
+		def uci_code_html():
+			if lh and lh.uci_country:
+				return u'<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.uci_country)), lh.uci_code)
+			return ''
+		
 		self.helper.layout = Layout(
 			#Field( 'id', type='hidden' ),
 			Row(
@@ -245,7 +253,7 @@ class LicenseHolderForm( ModelForm ):
 				Col(Field('first_name', size=40), 4),
 				Col('gender', 2),
 				ColKey(
-					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.date_of_birth_error else '')),
+					HTML(warning_html(lh and lh.date_of_birth_error)),
 					Field('date_of_birth', size=10),
 					HTML(error_html(lh and lh.date_of_birth_error)),
 					cols=2),
@@ -262,15 +270,18 @@ class LicenseHolderForm( ModelForm ):
 			),
 			Row(
 				ColKey(
-					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.license_code_error else '')),
+					HTML(warning_html(lh and lh.license_code_error)),
 					Field('license_code'),
 					HTML(error_html(lh and lh.license_code_error)),
-					cols=3),
+					cols=3,
+				),
 				ColKey(
-					HTML('<img src="{}"/>'.format(static('images/warning.png') if lh and lh.uci_code_error else '')),
+					HTML(warning_html(lh and lh.uci_code_error)),
 					Field('uci_code'),
 					HTML(error_html(lh and lh.uci_code_error)),
-					cols=9),
+					cols=4,
+				),
+				Col(HTML(uci_code_html()), 5),
 			),
 			Row(
 				Col('existing_tag', 3),
@@ -278,8 +289,16 @@ class LicenseHolderForm( ModelForm ):
 				Col('active', 3),
 			),
 			Row(
-				Col(Field('emergency_contact_name', size=50), 4),
-				Col(Field('emergency_contact_phone'), 4),
+				ColKey(
+					HTML(warning_html(lh and not lh.emergency_contact_name)),
+					Field('emergency_contact_name', size=50),
+					cols=6,
+				),
+				ColKey(
+					HTML(warning_html(lh and not lh.emergency_contact_phone)),
+					Field('emergency_contact_phone'),
+					cols=4,
+				),
 			),
 			Row(
 				Field('note', cols=80, rows=4),

@@ -187,8 +187,9 @@ def SelfServe( request, do_scan=0 ):
 		('good_waiver',			_('Missing/Expired Insurance Waiver')),
 	)
 	license_holder_warnings = (
-		('good_license',		_('Temporary License (do you have a permanent one now?)')),
-		('good_uci_code',		_('Incorrect UCI Code')),
+		('good_license',			_('Temporary License (do you have a permanent one now?)')),
+		('good_uci_code',			_('Incorrect UCI Code')),
+		('good_emergency_contact',	_('Incomplete Emergency Contact')),
 	)
 	
 	participant_errors = (

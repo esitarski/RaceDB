@@ -1419,7 +1419,10 @@ class LicenseHolder(models.Model):
 	
 	@property
 	def uci_country( self ):
-		return self.uci_code[:3] if self.uci_code and not self.uci_code[:3].isdigit() else None
+		if not self.uci_code:
+			return None
+		country_code = self.uci_code[:3]
+		return country_code if country_code in uci_country_codes_set else None
 		
 	@property
 	def uci_code_error( self ):
@@ -1474,6 +1477,10 @@ class LicenseHolder(models.Model):
 		if age > self.MaxAge:
 			return _(u'age too old')
 		return None
+
+	@property
+	def emergency_contact_incomplete( self ):
+		return not (self.emergency_contact_name and self.emergency_contact_phone)
 	
 	@property
 	def license_code_error( self ):
@@ -1922,6 +1929,7 @@ class Participant(models.Model):
 	
 	def good_uci_code( self ):		return self.license_holder.uci_code_error is None
 	def good_license( self ):		return not self.license_holder.is_temp_license
+	def good_emergency_contact( self ):	return not self.license_holder.emergency_contact_incomplete
 	
 	def good_bib( self ):			return self.is_competitor and self.bib
 	def good_category( self ):		return self.is_competitor and self.category
@@ -1963,6 +1971,7 @@ class Participant(models.Model):
 				self.show_confirm and
 				self.good_uci_code() and
 				self.good_license() and
+				self.good_emergency_contact() and
 				self.good_est_kmh()
 			)
 		elif self.role < 200:

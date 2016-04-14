@@ -47,7 +47,7 @@
 {% spaceless %}
 <table class="table table-hover table-condensed">
 <tr onclick="jump({% if isEdit %}'{{path}}LicenseHolderEdit/{{h.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Participant" %}{% if not p.good_license or not p.good_uci_code %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Participant" %}{% if not p.good_license or not p.good_uci_code or not p.good_emergency_contact %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
 	<td>
 		<strong>{{h.full_name}}:</strong>
 		{{h.get_gender_display}}
@@ -65,11 +65,16 @@
 		{% if h.city %} {{h.city}}, {% endif %}
 		{% if h.state_prov %} {{h.state_prov}}, {% endif %}
 		{% if h.nationality %} {{h.nationality}} {% endif %}
-		{% if isEdit and h.license_code and h.is_temp_license %}
-			<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Click here to fix License Code" %}</a>
-		{% endif %}
-		{% if isEdit and h.uci_code and h.uci_code_error %}
-			<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Click here to fix UCI Code" %}: {{h.uci_code_error}}</a>
+		{% if isEdit %}
+			{% if h.license_code and h.is_temp_license %}
+				<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Fix License Code" %}</a>
+			{% endif %}
+			{% if h.uci_code and h.uci_code_error %}
+				<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Fix UCI Code" %}: {{h.uci_code_error}}</a>
+			{% endif %}
+			{% if h.emergency_contact_incomplete %}
+				<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Fix Emergency Contact" %}</a>
+			{% endif %}
 		{% endif %}
 	</td>
 	<td>

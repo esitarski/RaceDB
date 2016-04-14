@@ -2,6 +2,7 @@ from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from views import license_holders_from_search_text
 from get_seasons_pass_excel import get_seasons_pass_excel
+from init_seasons_pass import init_seasons_pass
 
 @autostrip
 class SeasonsPassDisplayForm( Form ):
@@ -34,6 +35,9 @@ class SeasonsPassForm( ModelForm ):
 		)
 		return response
 		
+	def importFromExcelCB( self, request, seasonsPass ):
+		return HttpResponseRedirect( pushUrl(request, 'SeasonsPassHolderUploadExcel', seasonsPass.id) )		
+		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
@@ -53,6 +57,7 @@ class SeasonsPassForm( ModelForm ):
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
 					( 'add-seasons-pass-holder-submit', _("Add Season's Pass Holders"), 'btn btn-success', self.addSeasonsPassHolderDB ),
+					( 'excel-import-submit', _("Import from Excel"), 'btn btn-primary', self.importFromExcelCB ),
 					( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary', self.exportToExcelCB ),
 			])
 		
@@ -185,5 +190,57 @@ def SeasonsPassHolderRemove( request, seasonsPassHolderId ):
 	seasons_pass_holder = get_object_or_404( SeasonsPassHolder, pk=seasonsPassHolderId )
 	seasons_pass_holder.delete()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+#-----------------------------------------------------------------------
+@autostrip
+class UploadSeasonsPassForm( Form ):
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	clear_existing = forms.BooleanField( required=False, label=_('Clear Existing Seasons Pass Holders First'), help_text=_("Removes all current Season's Pass Holders.  Use with Caution.") )
+	
+	def __init__( self, *args, **kwargs ):
+		super( UploadSeasonsPassForm, self ).__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+				Col( Field('clear_existing'), 4 ),
+			),
+		)
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+
+def handle_upload_seasons_pass( seasonsPassId, excel_contents, clear_existing ):
+	worksheet_contents = excel_contents.read()
+	message_stream = StringIO.StringIO()
+	init_seasons_pass(
+		seasonsPassId=seasonsPassId,
+		worksheet_contents=worksheet_contents,
+		message_stream=message_stream,
+		clear_existing=clear_existing,
+	)
+	results_str = message_stream.getvalue()
+	return results_str
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def UploadSeasonsPass( request, seasonsPassId ):
+	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = UploadSeasonsPassForm(request.POST, request.FILES)
+		if form.is_valid():
+			results_str = handle_upload_seasons_pass( seasonsPassId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )
+			del request.FILES['excel_file']
+			return render_to_response( 'upload_seasons_pass.html', RequestContext(request, locals()) )
+	else:
+		form = UploadSeasonsPassForm()
+	
+	return render_to_response( 'upload_seasons_pass.html', RequestContext(request, locals()) )
 
 
