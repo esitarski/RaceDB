@@ -18,6 +18,7 @@ from init_prereg import init_prereg
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
 from AnalyzeLog import AnalyzeLog
+import WriteLog
 
 #-----------------------------------------------------------------------
 from context_processors import getContext
@@ -1123,6 +1124,7 @@ def CompetitionRegAnalytics( request, competitionId ):
 	except:
 		pass
 	payload_json = json.dumps(payload, separators=(',',':'))
+	logFileName = WriteLog.logFileName
 	return render_to_response( 'reg_analytics.html', RequestContext(request, locals()) )
 
 @access_validation()
