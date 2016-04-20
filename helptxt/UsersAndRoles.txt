@@ -37,4 +37,8 @@ The __serve__ user is great for self-serve application where riders confirm that
 
 ## Self-Serve
 
-Using the __serve__ user, it is possible to set up a number of kiosks that allow riders to check their own pre-reg 
+Using the __serve__ user, it is possible to set up a number of kiosks that allow riders to check in by reading their tags.
+The Self-Serve screen validates all important rider information (waiver, payment, category, etc.).  If there are any problems, the rider is directed to the registration desk.
+
+Self-Serve can also be used for on-site drop-in racing (no prereg).  Of course, you will need to set up a Seasons Pass for payment, and track Waivers to cover the insurance.
+

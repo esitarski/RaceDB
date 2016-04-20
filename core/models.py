@@ -1745,10 +1745,11 @@ class Participant(models.Model):
 					competition.number_set.assign_bib( license_holder, self.bib )
 				
 			if license_holder_update:
-				if license_holder.existing_tag != self.tag or license_holder.existing_tag2 != self.tag2:
-					license_holder.existing_tag = self.tag
-					license_holder.existing_tag2 = self.tag2
-					license_holder.save()
+				if competition.use_existing_tags:
+					if license_holder.existing_tag != self.tag or license_holder.existing_tag2 != self.tag2:
+						license_holder.existing_tag = self.tag
+						license_holder.existing_tag2 = self.tag2
+						license_holder.save()
 				
 		self.propagate_bib_tag()
 		return super(Participant, self).save( *args, **kwargs )

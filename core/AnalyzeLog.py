@@ -60,6 +60,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	functionCount = { fname:0 for fname in [
 			'ParticipantCategorySelect', 'ParticipantBibSelect', 'ParticipantTeamSelect',
 			'ParticipantPaidChange', 'ParticipantTagChange', 'ParticipantSignatureChange',
+			'SelfServe',
 		]
 	}
 	
