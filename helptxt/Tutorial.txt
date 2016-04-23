@@ -219,3 +219,18 @@ This often involves paying a separate entry fee for participating in each race.
 This is possible in RaceDB.  After entering the License Holder in his/her primary Category, you can enter the same License Holder again in a different category as another Participant.
 
 You may need to issue another Bib number to the rider.  If you have issued Chip Tags and used the "Auto Generate Tag" feature, you will not need to re-issue tags.  All tags generated with "Auto Generate" are unique across all License Holders and are carried-forward to multiply-entered License Holders.
+
+## CrossMgr Integration
+
+There are two ways to create a perfect Excel file for CrossMgr from RaceDB.
+
+The first is from inside RaceDB itself.  Next to each Event is a CrossMgr download button.  This will download the CrossMgr file and put it into your browser downloads folder.  To open the Excel file in CrossMgr, drag-and-drop it into CrossMgr or onto the CrossMgr desktop icon.
+
+This is a somewhat inconvenient as you probably don't want to open the Event in the download folder.
+
+The alternative is to open the race from CrossMgr itself.  In CrossMgr, do __File|Open from RaceDB...__.  Follow the instructions that tell you how you can drag-and-drop the RaceDB url into the CrossMgr dialog so it knows how to reach the RaceDB server.
+
+CrossMgr will show all the Events that day.  Pick the one you want to open.
+
+The advantage this method is that it will choose a reasonable folder to put everything in so you don't have to worry about it.
+It is also easier if you already have CrossMgr up, you can just open the next race.
