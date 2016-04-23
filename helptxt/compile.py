@@ -1,5 +1,6 @@
 import markdown
 import django
+import datetime
 from django.conf import settings
 from django import template
 import django.template.loader		# Required magic: otherwise the standard template tags will not be available.
@@ -68,6 +69,7 @@ def CompileHelp( dir = '.' ):
 			del style
 		with open('epilog.html') as f:
 			epilog = f.read()
+			epilog = epilog.replace('YYYY', '{}'.format(datetime.datetime.now().year))
 
 		contentDiv = '<div class="content">'
 		
