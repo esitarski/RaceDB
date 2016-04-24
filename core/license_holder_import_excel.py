@@ -1,4 +1,4 @@
-
+import re
 import sys
 import datetime
 from collections import namedtuple, defaultdict
@@ -44,9 +44,9 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				lh.save()
 				success = True
 					
-	# Replace all the current license codes with unique a temp codes.
 	temp_to_existing = {}
 	if update_license_codes:
+		print 'Replace all the current license codes with unique temp codes...'
 		success = True
 		while success:
 			success = False
@@ -208,7 +208,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 	if not ws:
 		messsage_stream_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
-		
+	
+	print 'Process all rows in spreadsheet...'
 	num_rows = ws.nrows
 	num_cols = ws.ncols
 	for r in xrange(num_rows):
@@ -234,8 +235,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			
 	process_ur_records( ur_records )
 	
-	# Fix all the license codes.
 	if update_license_codes:
+		print 'Fix all the license codes...'
 	
 		# Check if the license code changes would cause a conflict.
 		# Ignore changes if they do.
@@ -251,14 +252,34 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 		for k in repairs:
 			temp_to_existing[k] = k.replace(cpy_prefix, dup_prefix)
 		
+		print "Repairing temporary license codes..."
+		bad_licenses = []
 		success = True
 		while success:
 			success = False
-			with transaction.atomic():
-				for lh in LicenseHolder.objects.filter( license_code__startswith=cpy_prefix )[:999]:
-					lh.license_code = temp_to_existing.get(lh.license_code, lh.license_code)
-					lh.save()
-					success = True
+			lh, license_code_original, license_code_new = None, None, None
+			try:
+				with transaction.atomic():
+					for lh in LicenseHolder.objects.filter( license_code__startswith=cpy_prefix ).exclude( license_code__in=bad_licenses )[:999]:
+						success = True
+						license_code_original, license_code_new = lh.license_code, temp_to_existing.get(lh.license_code, lh.license_code)
+						license_code_new = re.sub( '_XXX_|_CPY_|_DUP_', 'TEMP_', license_code_new )
+						lh.license_code = license_code_new
+						lh.license_code = lh.license_code.replace( '_XXX_', 'TEMP_' )
+						lh.save()
+						
+			except Exception as e:
+				if license_code_original:
+					bad_licenses.append( license_code_original )
+				messsage_stream_write( u'License fix failure: tmp="{}"  new="{}" {} {} {}, {} {}, {} - {} \n'.format(
+						license_code_original,
+						license_code_new,
+						lh.date_of_birth.strftime('%Y-%m-%d'), lh.uci_code,
+						lh.last_name, lh.first_name,
+						lh.city, lh.state_prov,
+						e,
+					)
+				)
 	
 	messsage_stream_write( u'\n' )
 	messsage_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )
