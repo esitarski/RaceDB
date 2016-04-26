@@ -263,7 +263,12 @@ Zimbabwe	Zimbabwe	ZIM	ZIM	ZWE	3OFï
 
 uci_country_codes = {}
 iso_uci_country_codes = {}
+ioc_country = {}
 countries = []
+
+country_short_forms = {
+	'United States':	'USA',
+}
 
 for line in country_ioc.split('\n'):
 	line = line.strip()
@@ -275,6 +280,7 @@ for line in country_ioc.split('\n'):
 	if not fields[2]:
 		continue
 	uci_country_codes[fields[0].upper()] = fields[2]
+	ioc_country[fields[2]] = country_short_forms.get( fields[0], fields[0] )
 	countries.append( fields[0]  )
 	
 	try:
@@ -299,9 +305,44 @@ uci_country_codes['Dutch'.upper()] = 'NED'
 
 uci_country_codes['Deutschland'.upper()] = 'GER'
 
+#-----------------------------------------------------------------------
+
 def ioc_from_country( country ):
 	return uci_country_codes.get(removeDiacritic(country.strip()).upper(), None)
+	
+def country_from_ioc( ioc ):
+	return ioc_country.get(removeDiacritic(ioc.strip()[:3]).upper(), None)
 
 uci_country_codes_set = set( n.upper() for n in uci_country_codes.itervalues() )
 
 country_ioc = None
+
+#-----------------------------------------------------------------------
+
+provinces = '''
+Alberta	AB
+British Columbia	BC
+Manitoba	MB
+New Brunswick	NB
+Newfoundland and Labrador	NL
+Northwest Territories	NT
+Nova Scotia	NS
+Nunavut	NU
+Ontario	ON
+Prince Edward Island	PE
+Quebec	QC
+Saskatchewan	SK
+Yukon	YT
+'''
+
+province_codes = {}
+for line in provinces.split( '\n' ):
+	line = line.strip()
+	if not line:
+		continue
+	fields = line.split('\t')
+	province_codes[fields[1].strip()] = fields[0].strip()
+
+provinces = None
+
+#-----------------------------------------------------------------------

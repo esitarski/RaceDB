@@ -27,7 +27,7 @@ import utils
 import random
 from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
-from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes
+from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes
 from large_delete_all import large_delete_all
 from WriteLog import writeLog
 
@@ -325,18 +325,17 @@ class SeasonsPass(models.Model):
 		name_new = None
 		for i in xrange(1, 1000):
 			name_new = u'{} Copy({})'.format( self.name.split( ' Copy(' )[0], i )
-			if not SeasonsPass.objects.exists( name = name_new ):
+			if not SeasonsPass.objects.filter( name=name_new ).exists():
 				break
-		seasons_pass_new = SeasonsPass( name = name_new )
+		seasons_pass_new = SeasonsPass( name=name_new )
 		seasons_pass_new.save()
-		for sph in SeasonsPass.objects.filter( seasons_pass = self ):
-			sph.seasons_pass = seasons_pass_new
-			sph.save()
+		with transaction.atomic():
+			for sph in SeasonsPassHolder.objects.filter( seasons_pass=self ):
+				sph.seasons_pass = seasons_pass_new
+				sph.pk = None
+				sph.save()
 		return seasons_pass_new
 	
-	def has_license_holder( self, license_holder ):
-		return SeasonsPassHolder.objects.filter(seasons_pass=self, license_holder=license_holder).exists()
-		
 	def add( self, license_holder ):
 		try:
 			SeasonsPassHolder(seasons_pass=self, license_holder=license_holder).save()
@@ -344,8 +343,15 @@ class SeasonsPass(models.Model):
 		except IntegrityError as e:
 			return False
 			
+	def has_license_holder( self, license_holder ):
+		return SeasonsPassHolder.objects.filter(seasons_pass=self, license_holder=license_holder).exists()
+		
 	def remove( self, license_holder ):
-		SeasonsPassHolder.objects.filter(seasons_pass=self, lisence_holder=license_holder).detete()
+		SeasonsPassHolder.objects.filter(seasons_pass=self, license_holder=license_holder).delete()
+	
+	@property
+	def holders_count( self ):
+		return self.seasonspassholder_set.all().count()
 	
 	class Meta:
 		verbose_name = _("Season's Pass")
@@ -1385,6 +1391,12 @@ class LicenseHolder(models.Model):
 		
 		for f in ['last_name', 'first_name', 'city', 'state_prov', 'nationality', 'uci_code']:
 			setattr( self, f, (getattr(self, f) or '').strip() )
+		
+		if not self.nationality and self.uci_code:
+			self.nationality = country_from_ioc( self.uci_code ) or self.nationality
+		
+		if not self.state_prov and self.license_code and self.license_code[:2] in province_codes:
+			self.state_prov = province_codes[self.license_code[:2]]
 		
 		try:
 			self.license_code = self.license_code.strip().lstrip('0')

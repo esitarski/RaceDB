@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% load static %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 <h2>{{title}}</h2>
@@ -11,10 +12,11 @@
 <thead>
 	<tr>
 		<th></th>
-		<th>Name</th>
-		<th>Team Code</th>
-		<th>Team Type</th>
-		<th>Nation Code</th>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Team Code" %}</th>
+		<th>{% trans "Team Type" %}</th>
+		<th>{% trans "Nation Code" %}</th>
+		<th>{% trans "Active" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -26,6 +28,12 @@
 			<td>{{t.team_code}}</td>
 			<td>{{t.get_team_type_display}}</td>
 			<td>{{t.nation_code}}</td>
+			<td>{% if t.active %}
+					<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
+				{% else %}
+					<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}"/></span>
+				{% endif %}
+			</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>
 				&nbsp;

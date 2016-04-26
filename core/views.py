@@ -701,6 +701,9 @@ class TeamForm( ModelForm ):
 				Col('team_type', 2),
 				Col('nation_code', 2),
 			),
+			Row(
+				Col('active', 3),
+			),
 		)
 		addFormButtons( self, button_mask )
 		
@@ -2458,7 +2461,7 @@ def ParticipantTeamChange( request, participantId ):
 		form = SearchForm( btns, initial = {'search_text': search_text} )
 		
 	search_text = utils.normalizeSearch(search_text)
-	q = Q()
+	q = Q( active=True )
 	for n in search_text.split():
 		q &= Q( search_text__contains = n )
 	teams = Team.objects.filter(q)[:MaxReturn]
