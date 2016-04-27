@@ -50,7 +50,7 @@ function drawCharts() {
 	var participantTransactionCountChart = new google.visualization.ComboChart(document.getElementById("participantTransactionCountDiv"));
 	participantTransactionCountChart.draw(
 		participantTransactionCountTable, {
-				title:'Edits Required per Participant (one required for validation)',
+				title:'Edits Required per Participant (min one required for validation)',
 				bar: { groupWidth: '85%' },
 				legend: {position: 'none'},
 				seriesType: 'bars',
@@ -79,7 +79,7 @@ function drawCharts() {
 	var functionCountChart = new google.visualization.ColumnChart(document.getElementById("functionCountDiv"));
 	functionCountChart.draw(
 		functionCountTable, {
-			title:'Fields Changed in Additional Edits (' + functionCountTotal + ' changes total)',
+			title:'Field Edits (' + functionCountTotal + ' changes total)',
 			bar: { groupWidth: '85%' },
 			legend: {position: 'none'},
 			animation: animationOption
