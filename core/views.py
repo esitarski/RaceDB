@@ -1073,7 +1073,12 @@ def CompetitionDashboard( request, competitionId ):
 
 def GetRegAnalyticsForm( competition ):
 	class RegAnalyticsForm( Form ):
-		dates = [d.strftime('%Y-%m-%d') for d in sorted( set(e.date_time.date() for e in competition.get_events()) )]
+		finish_date = competition.finish_date
+		d = competition.start_date
+		dates = []
+		while d <= finish_date:
+			dates.append( d.strftime('%Y-%m-%d') )
+			d += datetime.timedelta( days = 1 )
 		
 		day = forms.ChoiceField( required = True, choices=((d, d) for d in dates) )
 		

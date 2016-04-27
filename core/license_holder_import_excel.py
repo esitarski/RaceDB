@@ -22,6 +22,22 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 		def messsage_stream_write( s ):
 			message_stream.write( unicode(s) )
 	
+	#-------------------------------------------------------------------------------------------------
+	discipline_cols = {
+		'Road':				['national road', 'provincial road'],
+		'Cyclocross':		['national cyclocross', 'provincial cyclocross'],
+		'Track':			['track'],
+		'MTB':				['cross country', 'provincial cross country', 'downhill', 'fourx'],
+		'Para':				['para cycling'],
+	}
+	discipline_id = {}
+	for dname in discipline_cols.iterkeys():
+		try:
+			discipline_by_name[dname] = Discipline.objects.get(name=dname)
+		except (Discipline.DoesNotExist,  Discipline.MultipleObjectsReturned):
+			pass
+	#-------------------------------------------------------------------------------------------------
+	
 	cpy_prefix = '_CPY_'
 	dup_prefix = '_DUP_'
 	err_prefix = '_XXX_'
