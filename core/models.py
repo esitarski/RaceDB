@@ -1135,7 +1135,7 @@ class WaveBase( models.Model ):
 		
 		return sorted( other_bibs & my_bibs )
 	
-	def get_partitipant_options( self ):
+	def get_participant_options( self ):
 		return ParticipantOption.objects.filter(
 			competition=self.event.competition,
 			option_id=self.event.option_id,
@@ -2295,7 +2295,12 @@ class EventTT( Event ):
 			p.start_time = start_times.get( p.pk, None )
 			p.clock_time = None if p.start_time is None else self.date_time + p.start_time
 		
-		participants.sort( key=lambda p: (p.start_time.total_seconds() if p.start_time else 1000.0*24.0*60.0*60.0, p.bib or 0) )
+		participants.sort(
+			key=lambda p: (
+				p.start_time.total_seconds() if p.start_time else 1000.0*24.0*60.0*60.0,
+				p.bib or 0, p.license_holder.date_of_birth,
+			)
+		)
 		
 		tDelta = datetime.timedelta( seconds = 0 )
 		for i, p in enumerate(participants):
@@ -2312,6 +2317,37 @@ class EventTT( Event ):
 		
 		return participants
 	
+	def repair_seeding( self ):
+		if not EntryTT.objects.filter(event=self).exists():
+			self.create_initial_seeding()
+		
+		participants = self.get_participants_seeded()
+		start_time_deltas = []
+		p_last = None
+		for p in participants:
+			if p.start_time:
+				if p_last:
+					start_time_deltas.append( p.start_time.total_seconds() - p_last.start_time.total_seconds() )
+				p_last = p
+		
+		start_time_deltas.sort()
+		try:
+			gap_median = datetime.timedelta( seconds=start_time_deltas[len(start_time_deltas)//2] )
+		except IndexError:
+			gap_median = datetime.timedelta( seconds=60 )
+		
+		entry_tt_pending = []
+		tCur = datetime.timedelta( seconds=0 )
+		for sequenceCur, p in enumerate(participants, 1):
+			if p.start_time:
+				tCur = p.start_time
+			else:
+				p.start_time = tCur + gap_median
+				tCur = p.start_time
+				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
+				
+		EntryTT.objects.bulk_create( entry_tt_pending )
+
 	def get_unseeded_count( self ):
 		return sum( 1 for p in self.get_participants_seeded() if p.start_time is None ) if self.create_seeded_startlist else 0
 	

@@ -1447,6 +1447,7 @@ def SeedingEdit( request, eventTTId ):
 				if "regenerate_start_times" in request.POST:
 					instance.create_initial_seeding()
 	
+	instance.repair_seeding()
 	entry_tts=list(instance.entrytt_set.all())
 	for e in entry_tts:
 		e.clock_time = instance.date_time + e.start_time

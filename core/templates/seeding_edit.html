@@ -33,7 +33,7 @@
 <p>
 {% trans "<strong>Seed Option</strong> is used to seed a rider Early or Late in the start wave.  Early or Late riders will be seeded amongst themselves with the Sequence criteria." %}
 </p>
-{% trans "Remember to apply your changes with 'Apply Adjustments' (or press Enter)." %}
+{% trans "Apply your changes with 'Apply Adjustments' (or press Enter)." %}
 <hr/>
 <form method="post" action=".">
 {% csrf_token %}
@@ -45,6 +45,16 @@
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <hr/>
 </div>
+{% with bsc=instance.get_bad_start_count %}
+	{% if bsc > 0 %}
+		<div class="alert alert-danger" role="alert">
+			<h4>
+				{% trans "Starters Missing Critical Information" %}: {{instance.get_bad_start_count}}<br/>
+				{% trans "Make sure to check all entries before starting." %}
+			</h4>
+		</div>
+	{% endif %}
+{% endwith %}
 <h2 class="visible-print">{% trans "Waves" %}</h2>
 {% spaceless %}
 <table class="table table-striped table-hover">
@@ -66,7 +76,7 @@
 			<td>{{w.category_count_text}}</td>
 			<td>{{w.get_sequence_option_display}}</td>
 			<td>{{w.gap_rules_text}}</td>
-			<td class="text-center">{{w.get_participants_unsorted.count}}</td>
+			<td class="text-center">{{w.get_starters_str}}</td>
 			{% if late_reg_exists %}<td class="text-center">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
@@ -133,10 +143,10 @@
 	{% for form in adjustment_formset %}
 		{% with e=form.entry_tt w=form.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
 		<tr {% if form.gap_change > 0 %}class="gap-change-inc"{% elif form.gap_change < 0 %}class="gap-change-dec"{% endif %}>
-			<td class="text-right">{{forloop.counter}}.</td>
+			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
 			<td class="text-right">{{e.clock_time | time:"g:i:s a"}}</td>
 			<td class="text-right">{{e.start_time}}</td>
-			<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
+			<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
