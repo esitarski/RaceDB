@@ -41,7 +41,7 @@
 			<td class="text-right">{{w.start_offset}}</td>
 			<td>{{w.get_details_html|safe}}</td>
 			<td>{{w.category_count_text}}</td>
-			<td class="text-center">{{w.get_participant_count}}</td>
+			<td class="text-center">{{w.get_starters_str}}</td>
 			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}

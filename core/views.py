@@ -1686,6 +1686,7 @@ def GetWaveForm( event_mass_start, wave = None ):
 				Field( 'event', type='hidden' ),
 				Row(
 					Col(Field('name', size=40), 4),
+					Col(Field('max_participants'), 3),
 				),
 				Row(
 					Col(Field('start_offset'), 2),
@@ -1905,6 +1906,7 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 				Field( 'sequence', type='hidden' ),
 				Row(
 					Col(Field('name', size=40), 4),
+					Col(Field('max_participants'), 3),
 				),
 				Row(
 					Col(Field('distance'), 3),

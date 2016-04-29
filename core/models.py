@@ -1135,6 +1135,15 @@ class WaveBase( models.Model ):
 		
 		return sorted( other_bibs & my_bibs )
 	
+	def get_partitipant_options( self ):
+		return ParticipantOption.objects.filter(
+			competition=self.event.competition,
+			option_id=self.event.option_id,
+			participant__role=Participant.Competitor,
+			participant__competition=self.event.competition,
+			participant__category__in=self.categories.all(),
+		)
+		
 	def get_participants_unsorted( self ):
 		if not self.event.option_id:
 			return Participant.objects.filter(
@@ -1143,21 +1152,20 @@ class WaveBase( models.Model ):
 				category__in=self.categories.all(),
 			)
 		else:
+			return Participant.objects.filter( pk__in=self.get_participant_options().values_list('participant__pk', flat=True) )
+	
+	def get_participant_count( self ):
+		if not self.event.option_id:
 			return Participant.objects.filter(
+				competition=self.event.competition,
 				role=Participant.Competitor,
-				pk__in=ParticipantOption.objects.filter(
-					competition=self.event.competition,
-					option_id=self.event.option_id,
-					participant__competition=self.event.competition,
-					participant__category__in=self.categories.all(),
-				).values_list('participant__pk', flat=True)
-			)
+				category__in=self.categories.all(),
+			).count()
+		else:
+			return self.get_participant_options().count()
 	
 	def get_participants( self ):
 		return self.get_participants_unsorted().select_related('license_holder','team').order_by('bib')
-	
-	def get_participant_count( self ):
-		return self.get_participants_unsorted().count()
 	
 	@property
 	def spots_remaining( self ):
@@ -1166,6 +1174,14 @@ class WaveBase( models.Model ):
 	@property
 	def is_full( self ):
 		return self.max_participants is not None and self.spots_remaining <= 0
+		
+	def get_starters_str( self ):
+		count = self.get_participant_count()
+		if self.max_participants is None:
+			return '{}'.format( count )
+		else:
+			percent = 100.0 * float(count)/float(self.max_participants)
+			return '({:.0f}%) {}/{}'.format( percent, count, self.max_participants )
 	
 	def could_participate( self, participant ):
 		return participant.category and self.categories.filter(pk=participant.category.pk).exists()
@@ -1232,7 +1248,7 @@ class WaveBase( models.Model ):
 			u'{:.2f}&nbsp;{}'.format(distance, self.distance_unit) if distance else None,
 			u'{}&nbsp;{}'.format(self.laps, _('laps') if self.laps != 1 else _('lap')) if self.laps else None,
 			u'{}&nbsp;{}'.format(self.minutes, _('min')) if getattr(self, 'minutes', None) else None,
-			u'{}:&nbsp;{}'.format(_('Strs'), self.get_participant_count()) if include_starters else None,
+			u'{}:&nbsp;{}'.format(_('Strs'), self.get_starters_str().replace(' ', '&nbsp;')) if include_starters else None,
 		] if v )
 	
 	class Meta:

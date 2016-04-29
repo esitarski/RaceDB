@@ -32,7 +32,7 @@
 					<td>{{w.name}}</td>
 					<td>{{w.start_offset}}</td>
 					<td>{{w.category_text}}</td>
-					<td>{{w.get_participants.count}}</td>
+					<td>{{w.get_starters_str}}</td>
 					{% if isEdit %}
 						<td class="hidden-print">
 							<a class="btn btn-warning hidden-print" href="./WaveDelete/{{w.id}}/">Delete</a>&nbsp;
