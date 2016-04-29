@@ -1089,6 +1089,8 @@ class WaveBase( models.Model ):
 	distance = models.FloatField( null = True, blank = True, verbose_name = _('Distance') )
 	laps = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Laps') )
 	
+	max_participants = models.PositiveIntegerField( null = True, blank = True, verbose_name = _('Max Participants') )
+	
 	@property
 	def distance_unit( self ):
 		return self.event.competition.get_distance_unit_display() if self.event else ''
@@ -1156,7 +1158,15 @@ class WaveBase( models.Model ):
 	
 	def get_participant_count( self ):
 		return self.get_participants_unsorted().count()
-		
+	
+	@property
+	def spots_remaining( self ):
+		return None if self.max_participants is None else max(0, self.max_participants - get_participant_count())
+	
+	@property
+	def is_full( self ):
+		return self.max_participants is not None and self.spots_remaining <= 0
+	
 	def could_participate( self, participant ):
 		return participant.category and self.categories.filter(pk=participant.category.pk).exists()
 	
@@ -1965,7 +1975,6 @@ class Participant(models.Model):
 	
 	def can_tt_start( self ):
 		return (
-			self.good_bib() and
 			self.good_category()
 		)
 	
@@ -2289,7 +2298,10 @@ class EventTT( Event ):
 	
 	def get_unseeded_count( self ):
 		return sum( 1 for p in self.get_participants_seeded() if p.start_time is None ) if self.create_seeded_startlist else 0
-		
+	
+	def get_bad_start_count( self ):
+		return sum( wave_tt.get_bad_start_count() for wave_tt in self.wavett_set.all() )
+	
 	def has_unseeded( self ):
 		if not self.create_seeded_startlist:
 			return False
@@ -2441,7 +2453,7 @@ class WaveTT( WaveBase ):
 		return u' '.join( summary )
 	
 	def get_participants( self ):
-		participants = list( self.get_participants_unsorted().select_related('competition','license_holder','team') )
+		participants = list( self.get_participants_unsorted().select_related('license_holder','team') )
 		
 		if not self.event.create_seeded_startlist:
 			participants.sort( key=lambda p: p.bib or 0 )
@@ -2495,6 +2507,9 @@ class WaveTT( WaveBase ):
 			)
 		)
 		return [p for p in self.get_participants_unsorted() if p.pk not in has_start_time]
+		
+	def get_bad_start_count( self ):
+		return sum( 1 for p in self.get_participants_unsorted() if not p.can_start() )
 	
 	class Meta:
 		verbose_name = _('TTWave')

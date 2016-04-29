@@ -85,7 +85,8 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 				continue
 			
 			if funcName in functionCount:
-				functionCount[funcName] += 1
+				if funcName != 'SelfServe' or 'do_scan=1' in line:
+					functionCount[funcName] += 1
 			
 			if funcName == 'ParticipantEdit':
 				bucket = getBucket( timestamp )

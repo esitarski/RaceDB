@@ -11,7 +11,10 @@
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 <h2><strong>{{instance.competition.name}}</strong></h2>
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
-<br/><h4>{% trans "Total Starters" %}: {{instance.get_participant_count}}</h4>
+<br/>
+<h4>
+{% trans "Starters" %}: {{instance.get_participant_count}}&nbsp;&nbsp;&nbsp;&nbsp;
+{% trans "Bad Starts (missing critical information)" %}: {{instance.get_bad_start_count}}</h4>
 <div class="hidden-print">
 <hr/>
 <button class="btn btn-primary" id="focus" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
@@ -41,6 +44,7 @@
 	<tr>
 		<th></th>
 		<th>{% trans "Wave" %}</th>
+		<th>{% trans "Bad Starts" %}</th>
 		<th>{% trans "Details" %}</th>
 		<th>{% trans "Categories" %}</th>
 		<th class="text-center">{% trans "Strs" %}</th>
@@ -53,6 +57,7 @@
 		<tr onclick="jump('./WaveTTEdit/{{w.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{w.name}}</td>
+			<td>{{w.get_bad_start_count}}</td>
 			<td>{{w.get_details_html|safe}}</td>
 			<td>{{w.category_count_text}}</td>
 			<td class="text-center">{{w.get_participant_count}}</td>
@@ -135,7 +140,7 @@
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td class="text-right clock-time">{% if p.clock_time %}{{p.clock_time | time:"h:i:s a"}}{% else %}{% trans "None" %}{% endif %}</td>
 		<td class="text-right start-time">{% if p.start_time %}{{p.start_time}}{% else %}{% trans "None" %}{% endif %}</td>
-		<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
+		<td>{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}{% if p.bib %}{{p.bib}}{% endif %}</td>
 		<td>{{p.license_holder.full_name}}</td>
 		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 		<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>

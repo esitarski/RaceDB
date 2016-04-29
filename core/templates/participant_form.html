@@ -47,7 +47,7 @@
 {% spaceless %}
 <table class="table table-hover table-condensed">
 <tr onclick="jump({% if isEdit %}'{{path}}LicenseHolderEdit/{{h.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Participant" %}{% if not p.good_license or not p.good_uci_code or not p.good_emergency_contact %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Participant" %}{% if not p.good_license or not p.good_uci_code or not p.good_emergency_contact %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 	<td>
 		<strong>{{h.full_name}}:</strong>
 		{{h.get_gender_display}}
@@ -86,7 +86,7 @@
 
 {% if c.has_waiver %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantWaiverChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Waiver" %}{% if p.has_unsigned_waiver %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Waiver" %}{% if p.has_unsigned_waiver %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 	<td>
 		<strong>
 			{% if not p.has_unsigned_waiver %}{% trans "Correct" %}
@@ -146,7 +146,7 @@
 {% endif %}
 {% if p.is_competitor %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantCategoryChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Category" %}{% if not p.good_category %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Category" %}{% if not p.good_category %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 	<td>
 		{% if p.category %}
 			<strong>{{p.category.code}}:</strong>
@@ -164,7 +164,7 @@
 	</td>
 </tr>
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantPaidChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Paid" %}{% if not p.good_paid %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Paid" %}{% if not p.good_paid %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 	<td>
 		{% if p.paid %}
 			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
@@ -180,7 +180,7 @@
 {% endif %}
 {% if p.category and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantBibChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% trans "Bib" %}{% if not p.good_bib %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+		<td class="text-right">{% trans "Bib" %}{% if not p.good_bib %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 		<td>
 			{% if p.bib %} <strong>{{p.bib}}</strong> {% else %} <span class="label label-danger">{% trans "No bib" %}</span> {% endif %}
 		</td>
@@ -191,7 +191,7 @@
 {% endif %}
 {% if c.using_tags and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantTagChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% if p.tag and p.tag2 %}{% trans "Chip Tags" %}{% else %}{% trans "Chip Tag" %}{% endif %}{% if not p.good_tag %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+		<td class="text-right">{% if p.tag and p.tag2 %}{% trans "Chip Tags" %}{% else %}{% trans "Chip Tag" %}{% endif %}{% if not p.good_tag %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 		<td>
 			{% if not p.tag and not p.tag2 %}
 				 <span class="label label-danger">{% trans "No tag" %}</span>
@@ -206,7 +206,7 @@
 {% endif %}
 {% if p.has_tt_events and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantEstSpeedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% trans "Est. TT Speed" %}{% if not p.good_est_kmh %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+		<td class="text-right">{% trans "Est. TT Speed" %}{% if not p.good_est_kmh %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 		<td>
 		{% if p.est_kmh > 0.0 %}
 			<strong>{{p.est_speed_display}}</strong>
@@ -236,7 +236,7 @@
 {% endif %}
 {% if c.show_signature and p.is_competitor and p.category %}
 <tr onclick="jump({% if isEdit %}'{{path}}ParticipantSignatureChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Signature" %}{% if not p.good_signature %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"\>{% endif %}:</td>
+	<td class="text-right">{% trans "Signature" %}{% if not p.good_signature %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 	<td>
 	{% if p.signature %}
 		{% if p.is_jsignature %}
