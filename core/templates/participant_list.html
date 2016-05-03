@@ -61,9 +61,9 @@
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
 			<td>{% if p.role == 110 %}{% if p.category %}{{p.category.code}}{% else %}{{error_img}}{% endif %}{% endif %}</td>
-			<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}{{error_img}}{% endif %}</td>
+			<td class="text-right">{% if p.bib %}{{p.bib|safe}}{% else %}{{error_img}}{% endif %}</td>
 			{% if using_tags %}
-				<td>{% if p.get_tag_str %}{{p.get_tag_str}}{% else %}{{error_img}}{% endif %}</td>
+				<td>{% if p.get_tag_str %}{{p.get_tag_str|safe}}{% else %}{{error_img}}{% endif %}</td>
 			{% endif %}
 			{% if using_waiver %}
 				<td class="text-center">
@@ -86,7 +86,7 @@
 				{% endif %}
 			</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-			<td>{{p.get_role_display}}</td>
+			<td>{{p.get_role_display|safe}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td class="text-nowrap">{{p.uci_info}}</td>
 			<td>{{h.state_prov}}</td>
