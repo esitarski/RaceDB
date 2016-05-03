@@ -284,14 +284,15 @@
 </tr>
 {% if p.has_optional_events and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'{{path}}ParticipantOptionChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% trans "Optional Events" %}:</td>
+		<td class="text-right">{% trans "Optional Events" %}{% if not p.has_any_events %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 		<td>
 			{% for event, optional, is_participating in p.get_participant_events %}
 				{% if optional %}
-					{% if is_participating %}<span class="label label-success">&#x2713;
-					{% else %}<span class="label label-default">{% endif %}{{event.short_name}}
-					{% if is_participating %}</span>{% endif %}
-					&nbsp;
+					{% if is_participating %}
+						<span class="label label-success">&#x2713;{{event.short_name}}</span>&nbsp;
+					{% else %}
+						<span class="label label-default">{{event.short_name}}</span>&nbsp;
+					{% endif %}
 				{% endif %}
 			{% endfor %}
 		</td>
@@ -378,11 +379,19 @@
 <hr/>
 	{% if isEdit %}
 		{% if participant.is_done %}
-			<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate. Process Next Entry" %}</a>
+			{% if participant.has_any_events %}
+				<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate.  Proceed." %}</a>
+			{% else %}
+				<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "No Events Selected.  Proceed anyway?" %}</a>
+			{% endif %}
 		{% elif participant.can_start %}
-			<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Rider has Warnings. Process Next Entry Anyway?" %}</a>
+			{% if participant.has_any_events %}
+				<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Warnings.  Proceed anyway?" %}</a>
+			{% else %}
+				<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "No Events Selected.  Proceed anyway?" %}</a>
+			{% endif %}
 		{% else %}
-			<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Errors.  Rider Cannot Start.  Process Next Entry Anyway?" %}</a>
+			<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Errors.  Cannot Start.  Proceed anyway?" %}</a>
 		{% endif %}
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
 	{% else %}

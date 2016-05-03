@@ -612,6 +612,13 @@ class Competition(models.Model):
 				if event.could_participate(participant):
 					participant_events.append( (event, event.is_optional, event.is_participating(participant)) )
 		return participant_events
+		
+	def has_any_events( self, participant ):
+		for events in (self.eventmassstart_set.all(), self.eventtt_set.all()):
+			for event in events:
+				if event.could_participate(participant) and event.is_participating(participant):
+					return True
+		return False
 	
 	def get_participants( self ):
 		return Participant.objects.filter( competition = self )
@@ -2071,13 +2078,6 @@ class Participant(models.Model):
 		)
 	
 	def get_category_participants( self ):
-		print list(
-			Participant.objects.filter(
-				competition = self.competition,
-				license_holder = self.license_holder,
-				role = self.Competitor,
-			)
-		)
 		return list(
 			Participant.objects.filter(
 				competition = self.competition,
@@ -2124,7 +2124,19 @@ class Participant(models.Model):
 	
 	def has_tt_events( self ):
 		return any( entered and event.event_type == 1 for event, optional, entered in self.get_participant_events() )
-		
+	
+	def has_any_events( self ):
+		return self.competition.has_any_events(self)
+	
+	def event_count( self ):
+		return sum( 1 for event, optional, entered in self.get_participant_events() if entered )
+
+	def event_mass_start_count( self ):
+		return sum( 1 for event, optional, entered in self.get_participant_events() if event.event_type == 0 and entered )
+	
+	def event_tt_count( self ):
+		return sum( 1 for event, optional, entered in self.get_participant_events() if event.event_type == 1 and entered )
+	
 	@property
 	def allocated_bibs( self ):
 		return self.competition.number_set.numbersetentry_set.filter( license_holder=self.license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True) \

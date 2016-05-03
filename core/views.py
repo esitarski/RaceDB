@@ -1,5 +1,6 @@
 from views_common import *
 from django.utils.translation import ugettext_lazy as _
+from django.utils.safestring import mark_safe
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -2067,6 +2068,19 @@ def Participants( request, competitionId ):
 	pfKey = 'participant_filter_{}'.format( competitionId )
 	participant_filter = request.session.get(pfKey, {})
 	
+	#--------------------------------------------------------------------
+	warning_img = mark_safe('<img src="{}" style="width:20px;height:20px;"/>'.format(static('images/warning.png')))
+	error_img = mark_safe('<img src="{}" style="width:20px;height:20px;"/>'.format(static('images/error.png')))
+	good_img = mark_safe('<span class="label label-default"><img src="{}"/></span>'.format(static('images/glyphicons_206_ok_2.png')))
+	bad_img = mark_safe('<span class="label label-default"><img src="{}"/></span>'.format(static('images/glyphicons_207_remove_2.png')))
+	
+	def get_uci_info( p ):
+		h = p.license_holder
+		country = h.uci_country
+		p.uci_info = mark_safe( '<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, h.uci_code) ) if country else h.uci_code
+		return p
+	#--------------------------------------------------------------------
+	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -2089,8 +2103,9 @@ def Participants( request, competitionId ):
 	#-------------------------------------------------------------------
 	
 	participants = Participant.objects.filter( competition=competition )
-	missing_category_count = Participant.objects.filter( competition=competition, role=Participant.Competitor, category__isnull=True ).count()
-	missing_bib_count = Participant.objects.filter( competition=competition, role=Participant.Competitor, bib__isnull=True ).count()
+	competitors = participants.filter( role=Participant.Competitor )
+	missing_category_count = competitors.filter( category__isnull=True ).count()
+	missing_bib_count = competitors.filter( bib__isnull=True ).count()
 	
 	if participant_filter.get('scan',0):
 		name_text = utils.normalizeSearch( participant_filter['scan'] )
@@ -2100,6 +2115,8 @@ def Participants( request, competitionId ):
 			for n in names:
 				q |= Q(license_holder__search_text__contains = n)
 			participants = participants.filter( q ).select_related('team', 'license_holder')
+			
+			participants = (get_uci_info(p) for p in participants)
 			return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 	
 	if participant_filter.get('bib',None) is not None:
@@ -2169,7 +2186,8 @@ def Participants( request, competitionId ):
 			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 		)
 		return response
-	
+		
+	participants = (get_uci_info(p) for p in participants)
 	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 
 #-----------------------------------------------------------------------

@@ -49,70 +49,46 @@
 	{% for p in participants %}
 		{% with h=p.license_holder %}
 		<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
-			<td>{% if not p.is_done %}<img
+			<td>{% if not p.is_done %}
 					{% if not p.can_start %}
-						src="{% static "images/error.png" %}"
+						{{error_img}}
 					{% else %}
-						src="{% static "images/warning.png" %}"
+						{{warning_img}}
 					{% endif %}
-				style="width:20px;height:20px;"/>
 				{% endif %}
 			</td>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{% if p.role == 110 %}
-					{% if p.category %}{{p.category.code}}{% else %}<img src="{% static "images/error.png" %}"/>{% endif %}
-				{% endif %}
-			</td>
-			<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<img src="{% static "images/error.png" %}"/>{% endif %}</td>
+			<td>{% if p.role == 110 %}{% if p.category %}{{p.category.code}}{% else %}{{error_img}}{% endif %}{% endif %}</td>
+			<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}{{error_img}}{% endif %}</td>
 			{% if using_tags %}
-				<td>{% if p.get_tag_str %}{{p.get_tag_str}}{% else %}<img src="{% static "images/error.png" %}"/>{% endif %}</td>
+				<td>{% if p.get_tag_str %}{{p.get_tag_str}}{% else %}{{error_img}}{% endif %}</td>
 			{% endif %}
 			{% if using_waiver %}
 				<td class="text-center">
-					{% if p.good_waiver %}
-						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
-					{% else %}
-						<img src="{% static "images/error.png" %}" />
-					{% endif %}
+					{% if p.good_waiver %}{{good_img}}{% else %}{{error_img}}{% endif %}
 				</td>
 			{% endif %}
 			<td class="text-center">
 				{% if p.role == 110 %}
-					{% if p.paid %}
-						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
-					{% else %}
-						<img src="{% static "images/error.png" %}"/>
-					{% endif %}
+					{% if p.paid %}{{good_img}}{% else %}{{error_img}}{% endif %}
 				{% endif %}
 			</td>
 			{% if using_signature %}
 				<td class="text-center">
-					{% if p.good_signature %}
-						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
-					{% else %}
-						<img src="{% static "images/error.png" %}" />
-					{% endif %}
+					{% if p.good_signature %}{{good_img}}{% else %}{{error_img}}{% endif %}
 				</td>
 			{% endif %}
 			<td class="text-center">
 				{% if p.role == 110 %}
-					{% if p.confirmed %}
-						<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
-					{% else %}
-						<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}"/></span>
-					{% endif %}
+					{% if p.confirmed %}{{good_img}}{% else %}{{bad_img}}{% endif %}
 				{% endif %}
 			</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{{p.get_role_display}}</td>
 			<td>{{h.license_code_trunc}}</td>
-			<td class="text-nowrap">
-				<span style="white-space: nowrap;">
-					{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
-				</span>
-			</td>
+			<td class="text-nowrap">{{p.uci_info}}</td>
 			<td>{{h.state_prov}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning btn-sm" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
