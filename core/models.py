@@ -1052,12 +1052,14 @@ class Event( models.Model ):
 			return Participant.objects.filter(
 				competition=self.competition,
 				category__in=categories,
+				role=Participant.Competitor,
 			).select_related('license_holder','team')
 		else:
 			return Participant.objects.filter(
 				pk__in=ParticipantOption.objects.filter(
 					competition=self.competition,
 					option_id=self.option_id,
+					participant__role=Participant.Competitor,
 					participant__competition=self.competition,
 					participant__category__in=categories,
 				).values_list('participant__pk', flat=True)

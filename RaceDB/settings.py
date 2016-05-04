@@ -130,7 +130,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join( BASE_DIR, 'RaceDB', 'static_root' )
 
-if os.path.exists(r'c:\Projects\RaceDBDeploy'):
+if os.path.exists(r'c:\Projects\RaceDBDeploy') or os.path.exists('home/nloaner'):
 	TEMPLATES = [{
 		'BACKEND': 'django.template.backends.django.DjangoTemplates',
 		'APP_DIRS': True,
@@ -149,7 +149,8 @@ if os.path.exists(r'c:\Projects\RaceDBDeploy'):
 		},
 	}]
 else:
-	TEMPLATES = [{
+	TEMPLATES = [
+	{
 		'BACKEND': 'django.template.backends.django.DjangoTemplates',
 		'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'core', 'templates')],
 		'OPTIONS': {
@@ -171,4 +172,5 @@ else:
 				]),
 			],
 		},
-	}]
+	},	
+	]

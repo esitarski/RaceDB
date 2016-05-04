@@ -30,7 +30,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 		'MTB':				['cross country', 'provincial cross country', 'downhill', 'fourx'],
 		'Para':				['para cycling'],
 	}
-	discipline_id = {}
+	discipline_by_name = {}
 	for dname in discipline_cols.iterkeys():
 		try:
 			discipline_by_name[dname] = Discipline.objects.get(name=dname)

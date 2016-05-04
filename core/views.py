@@ -1,6 +1,7 @@
 from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
+from django.utils import timezone
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -2014,7 +2015,8 @@ def WaveTTUp( request, waveTTId ):
 
 @autostrip
 class ParticipantSearchForm( Form ):
-	scan = forms.CharField( required=False, label = _('Scan Search'), help_text=_('Including License and RFID Tag') )
+	scan = forms.CharField( required=False, label = _('Scan Search'), help_text=_('Searches License and RFID Tag only') )
+	event = forms.ChoiceField( required=False, label = _('Event'), help_text=_('For faster response, review one Event at a time') )
 	name_text = forms.CharField( required=False, label = _('Name Text') )
 	team_text = forms.CharField( required=False, label = _('Team Text') )
 	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib: (-1 to find NoBib)') )
@@ -2038,6 +2040,11 @@ class ParticipantSearchForm( Form ):
 		if competition:
 			self.fields['category'].choices = \
 				[(-1, '----')] + [(-2, _('*** Missing ***'))] + [(category.id, category.code_gender) for category in competition.get_categories()]
+			events = competition.get_events()
+			events.sort( key = lambda e: e.date_time )
+			self.fields['event'].choices = \
+				[(-1, 'All')] + [(event.id, u'{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
+			
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
 		self.fields['role_type'].choices = roleChoices
@@ -2054,7 +2061,7 @@ class ParticipantSearchForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			Row( Field('scan', size=20, autofocus=True ), ),
+			Row( Field('scan', size=20, autofocus=True ), HTML('&nbsp;'*8), Field('event'),),
 			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
 			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), Field('complete'), ),
 			Row( *(button_args[:-1] + [HTML('&nbsp;'*8)] + button_args[-1:]) ),
@@ -2077,7 +2084,7 @@ def Participants( request, competitionId ):
 	def get_uci_info( p ):
 		h = p.license_holder
 		country = h.uci_country
-		p.uci_info = mark_safe( '<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, h.uci_code) ) if country else h.uci_code
+		p.uci_info = mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, h.uci_code) ) if country else h.uci_code
 		return p
 	#--------------------------------------------------------------------
 	
@@ -2102,7 +2109,18 @@ def Participants( request, competitionId ):
 	
 	#-------------------------------------------------------------------
 	
-	participants = Participant.objects.filter( competition=competition )
+	participants = None
+	if participant_filter.get('event', -1) >= 0:
+		event_pk = participant_filter.get('event', -1)
+		for c in [EventMassStart, EventTT]:
+			event = c.objects.filter(pk=event_pk).first()
+			if event:
+				participants = event.get_participants()
+				break
+			
+	if participants is None:
+		participants = Participant.objects.filter( competition=competition )
+	
 	competitors = participants.filter( role=Participant.Competitor )
 	missing_category_count = competitors.filter( category__isnull=True ).count()
 	missing_bib_count = competitors.filter( bib__isnull=True ).count()
