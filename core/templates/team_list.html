@@ -7,6 +7,7 @@
 <hr class="hidden-print"/>
 {% crispy form %}
 {% include "show_count.html" %}
+{% with is_superuser=request.user.is_superuser %}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
@@ -16,7 +17,7 @@
 		<th>{% trans "Team Code" %}</th>
 		<th>{% trans "Team Type" %}</th>
 		<th>{% trans "Nation Code" %}</th>
-		<th>{% trans "Active" %}</th>
+		{% if is_superuser %}<th>{% trans "Active" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -28,12 +29,14 @@
 			<td>{{t.team_code}}</td>
 			<td>{{t.get_team_type_display}}</td>
 			<td>{{t.nation_code}}</td>
+			{% if is_superuser %}
 			<td>{% if t.active %}
 					<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}"/></span>
 				{% else %}
 					<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}"/></span>
 				{% endif %}
 			</td>
+			{% endif %}
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>
 				&nbsp;
@@ -45,5 +48,6 @@
 </tbody>
 </table>
 {% endspaceless %}
+{% endwith %}
 ({% trans "maximum 500 results shown" %})
 {% endblock content %}

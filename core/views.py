@@ -682,33 +682,45 @@ def LicenseHolderDelete( request, licenseHolderId ):
 	)
 	
 #-----------------------------------------------------------------------
-@autostrip
-class TeamForm( ModelForm ):
-	class Meta:
-		model = Team
-		fields = '__all__'
-		
-	def __init__( self, *args, **kwargs ):
-		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
-		
-		super(TeamForm, self).__init__(*args, **kwargs)
-		self.helper = FormHelper( self )
-		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
-		
-		self.helper.layout = Layout(
-			Row(
-				Col(Field('name', size=50), 4),
-				Col(Field('team_code', size=4), 2),
-				Col('team_type', 2),
-				Col('nation_code', 2),
-			),
-			Row(
-				Col('active', 3),
-			),
-		)
-		addFormButtons( self, button_mask )
-		
+def GetTeamForm( request ):
+	is_superuser = request.user.is_superuser
+	
+	@autostrip
+	class TeamForm( ModelForm ):
+		class Meta:
+			model = Team
+			if not is_superuser:
+				widgets = {'active': forms.HiddenInput()}
+			else:
+				widgets = {}
+			fields = '__all__'
+			
+		def __init__( self, *args, **kwargs ):
+			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
+			
+			super(TeamForm, self).__init__(*args, **kwargs)
+			self.helper = FormHelper( self )
+			self.helper.form_action = '.'
+			self.helper.form_class = 'form-inline'
+			
+			self.helper.layout = Layout(
+				Row(
+					Col(Field('name', size=100), 12),
+				),
+				Row(
+					Col(Field('team_code', size=4), 2),
+					Col('team_type', 2),
+					Col('nation_code', 3),
+					Col('active', 2),
+				),
+				Row(
+					HTML('&nbsp'*8),
+				)
+			)
+			addFormButtons( self, button_mask )
+	
+	return TeamForm
+
 @access_validation()
 def TeamsDisplay( request ):
 	search_text = request.session.get('teams_filter', '')
@@ -736,15 +748,15 @@ def TeamsDisplay( request ):
 
 @access_validation()
 def TeamNew( request ):
-	return GenericNew( Team, request, TeamForm )
+	return GenericNew( Team, request, GetTeamForm(request) )
 	
 @access_validation()
 def TeamEdit( request, teamId ):
-	return GenericEdit( Team, request, teamId, TeamForm )
+	return GenericEdit( Team, request, teamId, GetTeamForm(request) )
 	
 @access_validation()
 def TeamDelete( request, teamId ):
-	return GenericDelete( Team, request, teamId, TeamForm )
+	return GenericDelete( Team, request, teamId, GetTeamForm(request) )
 
 #-----------------------------------------------------------------------
 @autostrip
