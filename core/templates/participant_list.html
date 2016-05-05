@@ -22,6 +22,10 @@
     background-color: #FF7878;
 }
 </style>
+{% if event %}
+	<br/><h3>{% trans "Event" %}: <strong>{{event.short_name}}<strong></h3>
+{% endif %}
+
 {% include "show_count.html" %}
 {% spaceless %}
 {% with using_waiver=competition.has_waiver using_tags=competition.using_tags using_signature=competition.show_signature %}

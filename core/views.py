@@ -2117,6 +2117,7 @@ def Participants( request, competitionId ):
 	#-------------------------------------------------------------------
 	
 	participants = None
+	event = None
 	if participant_filter.get('event', -1) >= 0:
 		event_pk = participant_filter.get('event', -1)
 		for c in [EventMassStart, EventTT]:
