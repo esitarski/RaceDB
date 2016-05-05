@@ -37,12 +37,7 @@
 				<td>{{lh.city}}, {{lh.state_prov}}</td>
 				<td>{{lh.nationality}}</td>
 				<td>{{lh.license_code_trunc}}</td>
-				<td><span style="white-space: nowrap;">
-					{% if lh.uci_code %}
-						{% if lh.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{lh.uci_country}}.png" ></img>{% endif %}
-						<span>{{lh.uci_code}}</span>
-					{% endif %}
-				</span></td>
+				<td class="text-nowrap">{{lh.get_uci_html}}</td>
 				<td class="hidden-print">
 					<a class="btn btn-warning" href="./SeasonsPassHolderRemove/{{spe.id}}/">{% trans "Remove" %}</a>
 					&nbsp;&nbsp;

@@ -38,8 +38,18 @@
 			<td>{{h.city}}</td>
 			<td>{{h.state_prov}}</td>
 			<td>{{h.nationality}}</td>
-			<td><span style="white-space: nowrap;">{% if h.license_code_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{{h.license_code_trunc}}</span></td>
-			<td><span style="white-space: nowrap;">{% if h.uci_code_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}</span></td>
+			<td class="text-nowrap">
+				{% if h.license_code_error %}
+					<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>
+				{% endif %}
+				{{h.license_code_trunc}
+			</td>
+			<td class="text-nowrap">
+				{% if h.uci_code_error %}
+					<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>
+				{% endif %}
+				{{h.get_uci_html}}
+			</td>
 			{% if isEdit %}
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="{{path}}LicenseHolderDelete/{{h.id}}/">{% trans "Delete" %}</a>

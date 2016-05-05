@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from django.utils.safestring import mark_safe
 from django.utils.translation import string_concat
+from django.contrib.staticfiles.templatetags.staticfiles import static
 
 import patch_sqlite_text_factory
 
@@ -1612,7 +1613,11 @@ class LicenseHolder(models.Model):
 			key=lambda x:x.search_text
 		)
 		return (lh for lh in license_holders if lh.has_error)
-		
+	
+	def get_uci_html( self ):
+		country = self.uci_country
+		return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, self.uci_code) ) if country else self.uci_code
+	
 	class Meta:
 		verbose_name = _('LicenseHolder')
 		verbose_name_plural = _('LicenseHolders')

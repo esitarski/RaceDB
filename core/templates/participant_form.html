@@ -171,7 +171,7 @@
 		{% else %}
 			<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
 		{% endif %}
-		{% if p.is_seasons_pass_holder %} {% trans "(Season's Pass Holder)" %} {% endif %}
+		{% if p.is_seasons_pass_holder %} ({% trans "Season's Pass Holder" %}) {% endif %}
 	</td>
 	{% if isEdit %}
 		<td><a class="btn btn-success hidden-print" href="{{path}}ParticipantPaidChange/{{p.id}}/">{% trans "Change" %}</a></td>

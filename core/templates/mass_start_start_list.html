@@ -105,12 +105,7 @@
 				<td>{{p.license_holder.full_name}}</td>
 				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 				<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-				<td><span style="white-space: nowrap;">
-					{% if h.uci_code %}
-						{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}
-						<span>{{h.uci_code}}</span>
-					{% endif %}
-				</span></td>
+				<td class="text-nowrap">{{h.get_uci_html}}</td>
 				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
 				<td class="hidden-print">
 					<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>

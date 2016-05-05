@@ -2088,16 +2088,11 @@ def Participants( request, competitionId ):
 	participant_filter = request.session.get(pfKey, {})
 	
 	#--------------------------------------------------------------------
-	warning_img = mark_safe('<img src="{}" style="width:20px;height:20px;"/>'.format(static('images/warning.png')))
-	error_img = mark_safe('<img src="{}" style="width:20px;height:20px;"/>'.format(static('images/error.png')))
-	good_img = mark_safe('<span class="label label-default"><img src="{}"/></span>'.format(static('images/glyphicons_206_ok_2.png')))
-	bad_img = mark_safe('<span class="label label-default"><img src="{}"/></span>'.format(static('images/glyphicons_207_remove_2.png')))
+	warning_img = mark_safe('<img src="{}" class="warn"/>'.format(static('images/warning.png')))
+	error_img = mark_safe('<img src="{}" class="err"/>'.format(static('images/error.png')))
+	good_img = mark_safe('<img src="{}"/>'.format(static('images/glyphicons_206_ok_2_blue.png')))
+	bad_img = mark_safe('<img src="{}"/>'.format(static('images/glyphicons_207_remove_2_blue.png')))
 	
-	def get_uci_info( p ):
-		h = p.license_holder
-		country = h.uci_country
-		p.uci_info = mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, h.uci_code) ) if country else h.uci_code
-		return p
 	#--------------------------------------------------------------------
 	
 	if request.method == 'POST':
@@ -2145,8 +2140,6 @@ def Participants( request, competitionId ):
 			for n in names:
 				q |= Q(license_holder__search_text__contains = n)
 			participants = participants.filter( q ).select_related('team', 'license_holder')
-			
-			participants = (get_uci_info(p) for p in participants)
 			return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 	
 	if participant_filter.get('bib',None) is not None:
@@ -2217,7 +2210,6 @@ def Participants( request, competitionId ):
 		)
 		return response
 		
-	participants = (get_uci_info(p) for p in participants)
 	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
 
 #-----------------------------------------------------------------------

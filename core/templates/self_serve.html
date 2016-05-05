@@ -106,9 +106,7 @@ div.title {
 				<h2>{{h.first_name}} {{h.last_name}}</h2>
 				<h4 style="margin-left: 30px;">
 					{{h.get_gender_display}} {{h.license_code_trunc}}&nbsp;&nbsp;
-					<span style="white-space: nowrap;">
-						{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
-					</span>
+					<span class="text-nowrap">{{h.get_uci_html}}</span>
 				</h4>
 			{% endwith %}
 		{% endif %}
@@ -139,9 +137,7 @@ div.title {
 			<h2>{{h.first_name}} {{h.last_name}}</h2>
 			<h4 style="margin-left: 30px;">
 				{{h.get_gender_display}} {{h.license_code_trunc}}&nbsp;&nbsp;
-				<span style="white-space: nowrap;">
-					{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}
-				</span>
+				<span class="text-nowrap">{{h.get_uci_html}}</span>
 			</h4>
 		{% endwith %}
 		<br/>
@@ -166,10 +162,10 @@ div.title {
 				<td>{{p.category.code}}</td>
 				<td>
 					{% for w in p.get_start_waves %}
-						{{w.event.name}} <span style="white-space: nowrap;">({{w.event.date_time|date:"Y-m-d f a"}})</span><br/>
+						{{w.event.name}} <span class="text-nowrap">({{w.event.date_time|date:"Y-m-d f a"}})</span><br/>
 					{% endfor %}
 					{% for w in p.get_start_wave_tts %}
-						{{w.event.name}} <span style="white-space: nowrap;">({{w.event.date_time|date:"Y-m-d f a"}})</span><br/>
+						{{w.event.name}} <span class="text-nowrap">({{w.event.date_time|date:"Y-m-d f a"}})</span><br/>
 					{% endfor %}
 				</td>
 			</tr>

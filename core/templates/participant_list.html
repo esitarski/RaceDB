@@ -2,6 +2,10 @@
 {% block content %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+<style>
+.err { width:20px;height:20px; }
+.warn { width:20px;height:20px; }
+</style>
 <h2>{{title}}: <strong>{{competition.name}}</strong></h2>
 {% crispy form %}
 {% if missing_category_count %}
@@ -86,7 +90,7 @@
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{{p.get_role_display|safe}}</td>
 			<td>{{h.license_code_trunc}}</td>
-			<td class="text-nowrap">{{p.uci_info}}</td>
+			<td class="text-nowrap">{{h.get_uci_html}}</td>
 			<td>{{h.state_prov}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning btn-sm" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>

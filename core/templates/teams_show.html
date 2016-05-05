@@ -27,6 +27,10 @@ function hideShowTeam( i ) {
 .borderless tbody tr td, .borderless tbody tr th, .borderless thead tr th {
     border: none;
 }
+.rider-name {
+	font-size: 120%;
+	font-weight: bold;
+}
 </style>
 <h2>{% trans "Teams"%}: {{competition.name}}: {{competition.start_date}}</h2>
 <div class="hidden-print">
@@ -34,7 +38,7 @@ function hideShowTeam( i ) {
 	<ul class="nav nav-pills">
 		<li role="presentation" class="active" id="idSelect0"><a href="#" onclick="hideShowTeam(0)">{% trans "All" %}</a></li>
 		{% for ti in team_info %}
-			<li role="presentation" id="idSelect{{forloop.counter}}" href="#" onclick="hideShowTeam({{forloop.counter}})"><a>{{ti.team_name}}<sub>&nbsp;{{ti.competitor_count}}</sub></a></li>
+			<li role="presentation" id="idSelect{{forloop.counter}}" href="#" onclick="hideShowTeam({{forloop.counter}})"><a>{{ti.team_name}}<sup>&nbsp;{{ti.competitor_count}}</sup></a></li>
 		{% endfor %}
 	</ul>
 	<hr/>
@@ -52,7 +56,7 @@ function hideShowTeam( i ) {
 					<li>{{p.get_role_display}}: <span style="font-size: 120%; font-weight: bold;">{{h.first_name}} {{h.last_name}}</span>, {{h.email}}, {{h.phone}}</li>
 				{% endwith %}
 			{% empty %}
-					<li style="font-size: 120%; font-weight: bold;">&lt;&lt;{% trans "No staff." %}&gt;&gt;</li>
+					<li style="font-size: 120%; font-weight: bold;">&lt;&lt;{% trans "No staff" %}&gt;&gt;</li>
 			{% endfor %}
 			</ul>
 			<table class="table table-condensed table-hover borderless">
@@ -61,18 +65,12 @@ function hideShowTeam( i ) {
 						<tr><td>&nbsp;</td></tr>
 					{% endif %}
 					<tr onclick="jump('{{path}}ParticipantEdit/{{p.id}}/')");>
-					<td>{% if p.bib %}{{p.bib}}{% else %}{% trans 'NoBib' %}{% endif %}</td>
+					<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}{% trans 'NoBib' %}{% endif %}</td>
 					{% with h=p.license_holder %}
-						<td><span style="font-size: 120%; font-weight: bold;">{{h.last_name}}, {{h.first_name}}</span></td>
+						<td><span class="rider-name">{{h.last_name}}, {{h.first_name}}</span></td>
 						<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-						<td>
-							<span style="white-space: nowrap;">
-								{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}<span>{{h.uci_code}}</span>
-							</span>
-						</td>
-						<td>
-							<span>{{h.license_code_trunc}}</span>
-						</td>
+						<td class="text-nowap">{{h.get_uci_html}}</td>
+						<td>{{h.license_code_trunc}}</td>
 						<td class="hidden-print">
 							<a class="btn btn-success btn-sm" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
 						</td>

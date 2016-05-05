@@ -7,6 +7,10 @@
 <hr/>
 {% crispy form %}
 {% include "show_count.html" %}
+<style>
+.warn { width:20px; height:20px; }
+.err { width:20px; height:20px; }
+</style>
 <table class="table table-striped table-hover table-condensed">
 {% spaceless %}
 <thead>
@@ -38,12 +42,19 @@
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{% if h.date_of_birth_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{{h.date_of_birth}}</td>
+			<td class="text-nowrap">{% if h.date_of_birth_error %}<img class="warn" src="{% static "images/warning.png" %}"\>&nbsp;{% endif %}{{h.date_of_birth}}</td>
 			<td>{{h.city}}</td>
 			<td>{{h.state_prov}}</td>
 			<td>{{h.nationality}}</td>
-			<td><span style="white-space: nowrap;">{% if h.license_code_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{{h.license_code_trunc}}</span></td>
-			<td><span style="white-space: nowrap;">{% if h.uci_code_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{% if h.uci_country %}<img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}{{h.uci_code}}</span></td>
+			<td class="text-nowrap">
+				{% if h.license_code_error %}<img class="warn" src="{% static "images/warning.png" %}"\>&nbsp;{% endif %}{{h.license_code_trunc}}
+			</td>
+			<td class="text-nowrap">
+				{% if h.uci_code_error %}
+					<img class="warn" src="{% static "images/warning.png" %}"\>
+				{% endif %}
+				{{h.get_uci_html}}
+			</td>
 			<td>{% if h.existing_tag %}{{h.existing_tag}}{% endif %}{% if h.existing_tag2 %}, {{h.existing_tag2}}{% endif %}</td>
 			{% if isEdit %}
 			<td class="hidden-print">
