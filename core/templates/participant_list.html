@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block content %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% block content %}
 <style>
 .err { width:20px;height:20px; }
 .warn { width:20px;height:20px; }
@@ -21,6 +21,7 @@
 .isfalse {
     background-color: #FF7878;
 }
+
 </style>
 {% if event %}
 	<br/><h3>{% trans "Event" %}: <strong>{{event.short_name}}<strong></h3>
@@ -32,7 +33,6 @@
 <table class="table table-striped table-hover table-condensed">
 <thead>
 	<tr>
-		<th></th>
 		<th></th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Gender" %}</th>
@@ -55,40 +55,37 @@
 	{% for p in participants %}
 		{% with h=p.license_holder %}
 		<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
-			<td>{% if not p.is_done %}
-					{% if not p.can_start %}
-						{{error_img}}
-					{% else %}
-						{{warning_img}}
-					{% endif %}
+			<td class="text-right text-nowrap">
+				{% if not p.is_done %}
+					{% if not p.can_start %}<span class="is-err"/>{% else %}<span class="is-warn"/>{% endif %}&nbsp;
 				{% endif %}
+				{{forloop.counter}}.
 			</td>
-			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{% if p.role == 110 %}{% if p.category %}{{p.category.code}}{% else %}{{error_img}}{% endif %}{% endif %}</td>
-			<td class="text-right">{% if p.bib %}{{p.bib|safe}}{% else %}{{error_img}}{% endif %}</td>
+			<td>{% if p.role == 110 %}{% if p.category %}{{p.category.code}}{% else %}<span class="is-err"/>{% endif %}{% endif %}</td>
+			<td class="text-right">{% if p.bib %}{{p.bib|safe}}{% else %}<span class="is-err"/>{% endif %}</td>
 			{% if using_tags %}
-				<td>{% if p.get_tag_str %}{{p.get_tag_str|safe}}{% else %}{{error_img}}{% endif %}</td>
+				<td>{% if p.get_tag_str %}{{p.get_tag_str|safe}}{% else %}<span class="is-err"/>{% endif %}</td>
 			{% endif %}
 			{% if using_waiver %}
 				<td class="text-center">
-					{% if p.good_waiver %}{{good_img}}{% else %}{{error_img}}{% endif %}
+					{% if p.good_waiver %}<span class="is-good"/>{% else %}<span class="is-err"/>{% endif %}
 				</td>
 			{% endif %}
 			<td class="text-center">
 				{% if p.role == 110 %}
-					{% if p.paid %}{{good_img}}{% else %}{{error_img}}{% endif %}
+					{% if p.paid %}<span class="is-good"/>{% else %}<span class="is-err"/>{% endif %}
 				{% endif %}
 			</td>
 			{% if using_signature %}
 				<td class="text-center">
-					{% if p.good_signature %}{{good_img}}{% else %}{{error_img}}{% endif %}
+					{% if p.good_signature %}<span class="is-good"/>{% else %}<span class="is-err"/>{% endif %}
 				</td>
 			{% endif %}
 			<td class="text-center">
 				{% if p.role == 110 %}
-					{% if p.confirmed %}{{good_img}}{% else %}{{bad_img}}{% endif %}
+					{% if p.confirmed %}<span class="is-good"/>{% else %}<span class="is-bad"/>{% endif %}
 				{% endif %}
 			</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>

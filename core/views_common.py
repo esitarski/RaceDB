@@ -53,7 +53,7 @@ from functools import wraps
 
 #-----------------------------------------------------------------------
 
-def access_validation( selfserve_ok=False ):
+def access_validation( selfserve_ok=False, no_cache=True ):
 	def decorator( decorated_func ):
 		decorated_func = logCall(login_required(decorated_func))
 		
@@ -64,22 +64,23 @@ def access_validation( selfserve_ok=False ):
 			else:
 				response = decorated_func( request, *args, **kwargs )
 			
-			patch_cache_control(
-				response,
-				no_cache=True,
-				no_store=True,
-				must_revalidate=True,
-				proxy_revalidate=True,
-				max_age=0,
-			)
-			response['Pragma'] = 'no-cache'
+			if no_cache:
+				patch_cache_control(
+					response,
+					no_cache=True,
+					no_store=True,
+					must_revalidate=True,
+					proxy_revalidate=True,
+					max_age=0,
+				)
+				response['Pragma'] = 'no-cache'
 			return response
 			
 		return wrap
 	return decorator
 	
 # Maximum return for large queries.
-MaxReturn = 200
+MaxReturn = 500
 
 #-----------------------------------------------------------------------
 

@@ -17,6 +17,8 @@ from license_holder_import_excel import license_holder_import_excel
 from participant_key_filter import participant_key_filter
 from init_prereg import init_prereg
 
+from print_bib import print_bib_labels
+
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
 from AnalyzeLog import AnalyzeLog
@@ -2087,14 +2089,6 @@ def Participants( request, competitionId ):
 	pfKey = 'participant_filter_{}'.format( competitionId )
 	participant_filter = request.session.get(pfKey, {})
 	
-	#--------------------------------------------------------------------
-	warning_img = mark_safe('<img src="{}" class="warn"/>'.format(static('images/warning.png')))
-	error_img = mark_safe('<img src="{}" class="err"/>'.format(static('images/error.png')))
-	good_img = mark_safe('<img src="{}"/>'.format(static('images/glyphicons_206_ok_2_blue.png')))
-	bad_img = mark_safe('<img src="{}"/>'.format(static('images/glyphicons_207_remove_2_blue.png')))
-	
-	#--------------------------------------------------------------------
-	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -2365,6 +2359,16 @@ def ParticipantDoDelete( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	participant.delete()
 	return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	
+@access_validation()
+def ParticipantPrintBibLabels( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	pdf_str = print_bib_labels( participant )
+	response = HttpResponse(pdf_str, content_type="application/pdf")
+	response['Content-Disposition'] = 'attachment; filename=RaceDB-Bib-{}.pdf'.format(
+		participant.bib,
+	)
+	return response
 	
 @autostrip
 class ParticipantCategorySelectForm( Form ):

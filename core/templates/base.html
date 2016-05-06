@@ -33,6 +33,22 @@ h2, h3, h4, h5 { margin: 1px; }
     padding: 0px;
     border: 1px solid #CCC;
 }
+
+.is-good::before {
+	content: url({% static "images/glyphicons_206_ok_2_blue.png" %});
+}
+.is-bad::before {
+	content: url({% static "images/glyphicons_207_remove_2_blue.png" %});
+}
+.is-err::before {
+	content: url({% static "images/error.png" %});
+	width:20px; height:20px; 
+}
+.is-warn::before {
+	content: url({% static "images/warning.png" %});
+	width:20px; height:20px; 
+}
+
 </style>
 <script type="text/javascript">
 {% block javascript %}
