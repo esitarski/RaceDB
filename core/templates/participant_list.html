@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load good_bad_icon %}
+{% load good_err_icon %}
 {% block content %}
 <h2>{{title}}: <strong>{{competition.name}}</strong></h2>
 {% crispy form %}
@@ -65,24 +67,14 @@
 				<td>{% if p.get_tag_str %}{{p.get_tag_str|safe}}{% else %}<span class="is-err"/>{% endif %}</td>
 			{% endif %}
 			{% if using_waiver %}
-				<td class="text-center">
-					{% if p.good_waiver %}<span class="is-good"/>{% else %}<span class="is-err"/>{% endif %}
-				</td>
+				<td class="text-center">{{p.good_waiver|good_err_icon}}</td>
 			{% endif %}
-			<td class="text-center">
-				{% if p.role == 110 %}
-					{% if p.paid %}<span class="is-good"/>{% else %}<span class="is-err"/>{% endif %}
-				{% endif %}
-			</td>
+			<td class="text-center">{% if p.role == 110 %}{{p.paid|good_err_icon}}{% endif %}</td>
 			{% if using_signature %}
-				<td class="text-center">
-					{% if p.good_signature %}<span class="is-good"/>{% else %}<span class="is-err"/>{% endif %}
-				</td>
+				<td class="text-center">{{p.good_signature|good_err_icon}}</td>
 			{% endif %}
 			<td class="text-center">
-				{% if p.role == 110 %}
-					{% if p.confirmed %}<span class="is-good"/>{% else %}<span class="is-bad"/>{% endif %}
-				{% endif %}
+				{% if p.role == 110 %}{{p.confirmed|good_bad_icon}}{% endif %}
 			</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{{p.get_role_display|safe}}</td>
