@@ -2,10 +2,6 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% block content %}
-<style>
-.err { width:20px;height:20px; }
-.warn { width:20px;height:20px; }
-</style>
 <h2>{{title}}: <strong>{{competition.name}}</strong></h2>
 {% crispy form %}
 {% if missing_category_count %}
