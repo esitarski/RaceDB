@@ -51,7 +51,7 @@
 			</td>
 			<td>{% if h.existing_tag %}{{h.existing_tag}}{% endif %}{% if h.existing_tag2 %}, {{h.existing_tag2}}{% endif %}</td>
 			<td class="text-nowrap">
-				{% if not h.emergency_contact_name or not h.emergency_contact_phone %}<span class="is-warn"/>&nbsp;{% endif %}
+				{% if h.emergency_contact_incomplete %}<span class="is-warn"/>&nbsp;{% endif %}
 				{{h.emergency_contact_name}}<br/>{{h.emergency_contact_phone}}
 			</td>
 			{% if isEdit %}
