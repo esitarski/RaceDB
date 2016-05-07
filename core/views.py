@@ -996,17 +996,16 @@ def CompetitionsDisplay( request ):
 		if request.user.is_superuser:
 			form = SearchForm( btns, initial = {'search_text': search_text} )
 	
-	if form:
-		competitions = applyFilter( search_text, Competition.objects.all(), Competition.get_search_text )
-	else:
-		competitions = Competition.objects.all()
+	competitions = Competition.objects.all()
 	
-	# If not super user, only show the competitions for today.
-	in_the_future = (not request.user.is_superuser)
-	if in_the_future:
-		today = datetime.date.today()
-		competitions = [x for x in competitions if x.start_date >= today]
+	# If not super user, only show the competitions for today and after.
+	future_only = (not request.user.is_superuser)
+	if future_only:
+		competitions = competitions.filter(start_date__gte = datetime.date.today())
 		
+	if form:
+		competitions = applyFilter( search_text, competitions, Competition.get_search_text )
+	
 	competitions = sorted( competitions, key = lambda x: x.start_date, reverse = True )
 	return render_to_response( 'competition_list.html', RequestContext(request, locals()) )
 
