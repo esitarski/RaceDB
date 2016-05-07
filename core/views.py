@@ -1002,10 +1002,10 @@ def CompetitionsDisplay( request ):
 		competitions = Competition.objects.all()
 	
 	# If not super user, only show the competitions for today.
-	just_for_today = (not request.user.is_superuser)
-	if just_for_today:
+	in_the_future = (not request.user.is_superuser)
+	if in_the_future:
 		today = datetime.date.today()
-		competitions = [x for x in competitions if x.start_date <= today <= x.finish_date]
+		competitions = [x for x in competitions if x.start_date >= today]
 		
 	competitions = sorted( competitions, key = lambda x: x.start_date, reverse = True )
 	return render_to_response( 'competition_list.html', RequestContext(request, locals()) )
