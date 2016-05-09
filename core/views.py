@@ -2364,9 +2364,7 @@ def ParticipantPrintBibLabels( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	pdf_str = print_bib_labels( participant )
 	response = HttpResponse(pdf_str, content_type="application/pdf")
-	response['Content-Disposition'] = 'attachment; filename=RaceDB-Bib-{}.pdf'.format(
-		participant.bib,
-	)
+	response['Content-Disposition'] = 'inline'
 	return response
 	
 @autostrip
