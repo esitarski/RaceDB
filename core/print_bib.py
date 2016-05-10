@@ -68,8 +68,9 @@ class Rect( object ):
 		else:
 			return Rect( self.top, self.right, self.height, self.width )
 	
-	def draw_text_to_fit( self, pdf, text, options=AlignCenter|AlignMiddle, consider_descenders=False ):
-		text = unicode(text).encode('windows-1252', 'ignore')
+	def draw_text_to_fit( self, pdf, text, options=AlignCenter|AlignMiddle, consider_descenders=False, convert_to_text=True ):
+		if convert_to_text:
+			text = unicode(text).encode('windows-1252', 'ignore')
 		
 		descenders = has_descenders(text) if consider_descenders else False
 		
@@ -124,13 +125,29 @@ def print_bib_labels( participant, competition_name=None, left_page=True, right_
 	footer = Rect( margin, page_height - margin - header.height, header.width, header.height )
 	field = Rect( header.x, header.bottom + sep, width, footer.top - header.bottom - sep*2 )
 
+	leftArrow, rightArrow = chr(172), chr(174)
+	
 	font_name = 'Helvetica'
 	for lp in ([True] if left_page else []) + ([False] if right_page else []):
 		pdf.add_page()
 		
+		arrow = copy.deepcopy( header )
+		pdf.set_font( 'Symbol' )
+		arrowWidth = arrow.draw_text_to_fit( pdf, leftArrow if lp else rightArrow, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle,
+			consider_descenders=True,
+			convert_to_text=False,
+		)
+		arrowWidth += pdf.get_string_width('  ')
+		
+		header_remain = copy.deepcopy( header )
+		if lp:
+			header_remain.x += arrowWidth
+			header_remain.width -= arrowWidth
+		else:
+			header_remain.width -= arrowWidth
+		
 		pdf.set_font( font_name )
-		header.draw_text_to_fit( pdf, ('<<< ' if lp else '') + competition_name + ('' if lp else ' >>>'),
-			(Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, True )
+		header_remain.draw_text_to_fit( pdf, competition_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, True )
 		
 		pdf.set_font( font_name, 'b' )
 		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )
