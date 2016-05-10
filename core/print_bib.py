@@ -142,9 +142,7 @@ def print_bib_labels( participant, competition_name=None, left_page=True, right_
 		header_remain = copy.deepcopy( header )
 		if lp:
 			header_remain.x += arrowWidth
-			header_remain.width -= arrowWidth
-		else:
-			header_remain.width -= arrowWidth
+		header_remain.width -= arrowWidth
 		
 		pdf.set_font( font_name )
 		header_remain.draw_text_to_fit( pdf, competition_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, True )
