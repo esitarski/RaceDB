@@ -35,10 +35,16 @@
 	border-top: none;
 	padding: 3px;
 }
-</style>
-{% if title %}<h1>{{title}}</h1><br/>{% endif %}
 
-<h3 class="visible-print text-center">{% trans "Race Voucher" %}</h3>
+@media print {
+  a[href]:after {
+    content: none !important;
+  }
+}
+</style>
+{% if title %}<h1 class="hidden-print">{{title}}</h1><br/>{% endif %}
+
+<h3 class="visible-print">{% trans "Race Voucher" %}</h3>
 <hr class="visible-print" />
 {% with p=participant h=participant.license_holder c=participant.competition %}
 <h2><strong>{{c.name}}</strong>: {{c.start_date}}
