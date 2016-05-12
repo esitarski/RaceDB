@@ -572,14 +572,14 @@ function drawCharts() {
 	//
 	var compCategoryChart = new google.visualization.ColumnChart(document.getElementById("compCategoryChartDiv"));
 	compCategoryChart.draw(google.visualization.arrayToDataTable(payload.category_competition_count),
-		{title:'Category Participation (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
+		{title:'Participation by Category (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
 	
 	// -----------------------------------------------------------------
 	// Event Participation
 	//
 	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventChartDiv"));
 	compEventChart.draw(google.visualization.arrayToDataTable(payload.event_competition_count),
-		{title:'Event Participation (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
+		{title:'Participation by Event (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
 	
 	// -----------------------------------------------------------------
 	// Prereg Percent
@@ -767,7 +767,7 @@ function drawCharts() {
 </p>
 
 <p>
-<h3 class="page-break-before">Attendance by Age Profile</h3>
+<h3 class="page-break-before">Total Participation by Age</h3>
 <div class="container"/>
 	<div class="row">
 		<div class="col-xs-4">
@@ -784,7 +784,7 @@ function drawCharts() {
 </p>
 
 <p>
-<h3>Average Attendance by Age</h3>
+<h3>Average Number of Events Attended by Age</h3>
 <div class="container"/>
 	<div class="row">
 		<div class="col-xs-4">
@@ -801,7 +801,7 @@ function drawCharts() {
 </p>
 
 <p>
-<h3>Participating License Holder Age Profile (as of {{payload.profile_year}})</h3>
+<h3>License Holder Participation by Age (as of {{payload.profile_year}})</h3>
 <div class="container"/>
 	<div class="row">
 		<div class="col-xs-4">
