@@ -75,14 +75,21 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 			'name': competition.name,
 			'start_date': competition.start_date.strftime('%Y-%m-%d'),
 			'events': [],
+			
 			'attendees_men': 0,
 			'attendees_women': 0,
 			'attendees_total': 0,
+			
 			'participants_men': 0,
 			'participants_women': 0,
 			'participants_total': 0,
+			
 			'prereg_participants_men': 0,
 			'prereg_participants_women': 0,
+			
+			'participants_paid_seasons_pass': 0,
+			'participants_paid_on_venue': 0,
+			'participants_unpaid': 0,
 		}
 		for event in competition.get_events():
 			if not event.has_participants():
@@ -174,6 +181,27 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		competition_data['attendees_total'] = competition_data['attendees_men'] + competition_data['attendees_women']
 		competition_data['participants_total'] = competition_data['participants_men'] + competition_data['participants_women']
 		competition_data['prereg_participants_total'] = competition_data['prereg_participants_men'] + competition_data['prereg_participants_women']
+
+		#------------------------------------------------
+		if competition.seasons_pass:
+			competition_data['participants_paid_seasons_pass'] = Participant.objects.filter(
+				competition=competition,
+				paid=True,
+				license_holder__in=SeasonsPassHolder.objects.filter(seasons_pass=competition.seasons_pass).values_list('license_holder', flat=True)
+			).count()
+			competition_data['participants_paid_on_venue'] = Participant.objects.filter(
+				competition=competition,
+				paid=True
+			).exclude(
+				license_holder__in=SeasonsPassHolder.objects.filter(seasons_pass=competition.seasons_pass).values_list('license_holder', flat=True)
+			).count()
+		else:
+			competition_data['participants_paid_on_venue'] = Participant.objects.filter(
+				competition=competition,
+				paid=True
+			).count()
+		competition_data['participants_unpaid'] = Participant.objects.filter(competition=competition, paid=False).count()
+		
 		data.append( competition_data )
 	
 	age_range_average = [

@@ -603,9 +603,40 @@ function drawCharts() {
 	preregChartData.addRows( rows );
 	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventPreRegChartDiv"));
 	compEventChart.draw(preregChartData, {
-			title:'Event PreReg: Overall: ' +
+			title:'PreReg: Overall: ' +
 				formatPercentInt(payload.prereg_participants_total, payload.participants_total).f +
 				' (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			isStacked: false,
+			legend: {position: 'top'},
+			animation: animationOption,
+			vAxis: {viewWindow: {min: 0, max:100}}
+		}
+	);
+	
+	// -----------------------------------------------------------------
+	// Payment
+	//
+	var paymentChartData = new google.visualization.DataTable();
+	paymentChartData.addColumn('string', 'Competition');
+	paymentChartData.addColumn('number', 'On Venue');
+	paymentChartData.addColumn('number', "Season's Pass");
+	paymentChartData.addColumn('number', 'Unpaid');
+	var rows = [];
+	var competitions = payload.competitions;
+	for( var iCompetition = 0; iCompetition < competitions.length; ++iCompetition ) {
+		var competition = competitions[iCompetition];
+		rows.push( [
+			competition.name,
+			formatPercentInt(competition.participants_paid_on_venue, competition.participants_total),
+			formatPercentInt(competition.participants_paid_seasons_pass, competition.participants_total),
+			formatPercentInt(competition.participants_unpaid, competition.participants_total)
+		] );
+	}
+	paymentChartData.addRows( rows );
+	var paymentEventChart = new google.visualization.ColumnChart(document.getElementById("compEventPaymentChartDiv"));
+	paymentEventChart.draw(paymentChartData, {
+			title:'Payment Method (includes attendees competing in multiple categories)',
 			bar: { groupWidth: '75%' },
 			isStacked: false,
 			legend: {position: 'top'},
@@ -823,6 +854,7 @@ function drawCharts() {
 <div id='compCategoryChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventPreRegChartDiv'style="width: 1200px; height: 500px;"></div>
+<div id='compEventPaymentChartDiv'style="width: 1200px; height: 500px;"></div>
 <!-- <div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div> -->
 {% if payload.postal_codes %}
 	<br/>
