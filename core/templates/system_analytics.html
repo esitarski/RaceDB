@@ -619,7 +619,7 @@ function drawCharts() {
 	//
 	var paymentChartData = new google.visualization.DataTable();
 	paymentChartData.addColumn('string', 'Competition');
-	paymentChartData.addColumn('number', 'On Venue');
+	paymentChartData.addColumn('number', 'Single');
 	paymentChartData.addColumn('number', "Season's Pass");
 	paymentChartData.addColumn('number', 'Unpaid');
 	var rows = [];
@@ -636,7 +636,7 @@ function drawCharts() {
 	paymentChartData.addRows( rows );
 	var paymentEventChart = new google.visualization.ColumnChart(document.getElementById("compEventPaymentChartDiv"));
 	paymentEventChart.draw(paymentChartData, {
-			title:'Payment Method (includes attendees competing in multiple categories)',
+			title:'Payment Type (includes attendees competing in multiple categories)',
 			bar: { groupWidth: '75%' },
 			isStacked: false,
 			legend: {position: 'top'},
