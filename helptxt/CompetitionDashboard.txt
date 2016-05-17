@@ -33,6 +33,8 @@ However, it is possible to enter a Licence Holder more than once in the Competit
 
 Shows information about the current Competition.
 
+Also supports __Upload Prereg List__ from an Excel file.
+
 ### Category Format
 
 The format of Categories to be used for this Competition.  See [Category Formats][] for details.
