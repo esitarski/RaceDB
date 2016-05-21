@@ -2,6 +2,8 @@ from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
+from subprocess import Popen, PIPE
+import uuid
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -2362,10 +2364,38 @@ def ParticipantDoDelete( request, participantId ):
 @access_validation()
 def ParticipantPrintBibLabels( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
+	system_info = SystemInfo.get_singleton()
 	pdf_str = print_bib_labels( participant )
-	response = HttpResponse(pdf_str, content_type="application/pdf")
-	response['Content-Disposition'] = 'inline'
-	return response
+	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
+		try:
+			tmp_file = os.path.join(
+				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+				'pdfs',
+				'{}-{}'.format(participant.bib, uuid.uuid4().hex)
+			) + '.pdf'
+			with open(tmp_file, 'wb') as f:
+				f.write( pdf_str )
+			p = Popen(
+				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				stdin=PIPE, stdout=PIPE, stderr=PIPE,
+			)
+			stdout_info, stderr_info = p.communicate( pdf_str )
+		except Exception as e:
+			stdout_info, stderr_info = '', e
+		
+		try:
+			os.remove( tmp_file )
+		except:
+			pass
+		
+		title = _("Print Status")
+		return render_to_response( 'cmd_response.html', RequestContext(request, locals()) )
+	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
+		response = HttpResponse(pdf_str, content_type="application/pdf")
+		response['Content-Disposition'] = 'inline'
+		return response
+	else:
+		return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	
 @autostrip
 class ParticipantCategorySelectForm( Form ):
@@ -3238,6 +3268,11 @@ class SystemInfoForm( ModelForm ):
 		self.helper.layout = Layout(
 			Row(
 				Col(Field('tag_template', size=24), 6),
+			),
+			HTML( '<hr/>' ),
+			Row(
+				Col(Field('print_tag_option'), 4),
+				Col(Field('server_print_tag_cmd', size=80), 8),				
 			),
 			HTML( '<hr/>' ),
 			Row(

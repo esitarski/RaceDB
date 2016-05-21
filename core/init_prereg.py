@@ -37,9 +37,6 @@ def init_prereg(
 			messsage_stream_write( u'**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
 			return
 	
-	if clear_existing:
-		large_delete_all( Participant, Q(competition=competition) )
-		
 	optional_events = { event.name.lower():event for event in competition.get_events() if event.optional }
 	
 	# Construct a cache to find categories quicker.
@@ -121,7 +118,8 @@ def init_prereg(
 			# Get LicenseHolder.
 			#
 			license_holder = None
-			with transaction.atomic():
+			#with transaction.atomic():
+			if True:
 				if license_code and license_code.upper() != u'TEMP':
 					try:
 						license_holder = LicenseHolder.objects.get( license_code=license_code )
@@ -133,7 +131,7 @@ def init_prereg(
 					try:
 						# No license code.  Try to find the participant by last/first name.
 						# Case insensitive comparison.
-						license_holder = LicenseHolder.objects.get( last_name__iexact=last_name, first_name__iexact=first_name )
+						license_holder = LicenseHolder.objects.get( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 					except LicenseHolder.DoesNotExist:
 						# No name match.
 						# Create a temporary license holder.
@@ -324,6 +322,10 @@ def init_prereg(
 				messsage_stream_write( u'            {}{}\n'.format(f, optional_event_str) )
 			
 			fields_lower = [f.lower() for f in fields]
+			if clear_existing or 'bib' in fields_lower or 'bib number' in fields_lower:
+				messsage_stream_write( u'Clearing existing Participants...\n' )
+				large_delete_all( Participant, Q(competition=competition) )
+			
 			if not any( r.lower() in fields_lower for r in license_col_names ):
 				messsage_stream_write( u'License column not found in Header Row.  Aborting.\n' )
 				return

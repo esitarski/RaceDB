@@ -107,6 +107,15 @@ class SystemInfo(models.Model):
 	reg_allow_add_multiple_categories = models.BooleanField( default = True, verbose_name = _('Allow "reg" to Add Participants to Multiple Categories'),
 			 help_text=_('If True, reg staff can add participants to Multiple Categories (eg. race up a catgegory).  If False, only "super" can do so.'))
 	
+	NO_PRINT_TAG, SERVER_PRINT_TAG, CLIENT_PRINT_TAG = 0, 1, 2
+	print_tag_option = models.PositiveSmallIntegerField( default = NO_PRINT_TAG, verbose_name = _('Print Tag Option'), choices=(
+			(NO_PRINT_TAG,_("No Bib Tag Print (Hide Print Bib Tag Button)")),
+			(SERVER_PRINT_TAG,_("Print Bib Tag on Server (use command)")),
+			(CLIENT_PRINT_TAG,_("Print Bib Tag on Client (print from browser)")),
+		),
+	)
+	server_print_tag_cmd = models.CharField( max_length = 160, default = 'lpr "$1"', verbose_name = _('Cmd used to print Bib Tag (parameter is PDF file})')  )
+	
 	@classmethod
 	def get_tag_template_default( cls ):
 		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in xrange(4))

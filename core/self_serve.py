@@ -48,7 +48,7 @@ class SelfServeAntennaForm( Form ):
 			Row( button_args[0], ),
 		)
 
-@access_validation( True )
+@access_validation( selfserve_ok=True )
 def SelfServeQRCode( request ):
 	# Prevent non-serve users from coming here.
 	if request.user.username != 'serve':
@@ -64,7 +64,7 @@ def SelfServeQRCode( request ):
 	qrcode_note = _('Login with Username: serve')
 	return render_to_response( 'qrcode.html', RequestContext(request, locals()) )
 	
-@access_validation( True )
+@access_validation( selfserve_ok=True )
 def SelfServe( request, do_scan=0 ):
 	# Prevent non-serve users from coming here.
 	if request.user.username != 'serve':

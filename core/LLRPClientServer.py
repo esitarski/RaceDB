@@ -90,7 +90,7 @@ class LLRPServer( threading.Thread ):
 
 	def logMessage( self, *args ):
 		if self.messageQ:
-			self.messageQ.put( ' '.join(str(a).strip() for a in args) )
+			self.messageQ.put( ' '.join('{}'.format(a).strip() for a in args) )
 	
 	def shutdown( self ):
 		s = self.getClientSocket()
@@ -298,8 +298,8 @@ class LLRPServer( threading.Thread ):
 						try:
 							outputdata[s], running = self.handleRequest( inputdata[s] )
 						except Exception as e:
-							self.logMessage( 'Exception:', e )
 							self.exception_termination = True
+							self.logMessage( 'Exception:', e )
 							break
 						self.logMessage( 'Reply:', outputdata[s] )
 						

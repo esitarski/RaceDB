@@ -399,8 +399,10 @@
 		{% else %}
 			<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Errors.  Cannot Start.  Proceed anyway?" %}</a>
 		{% endif %}
-		&nbsp;&nbsp;&nbsp;
-		<a class="btn btn-primary hidden-print" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "Print Bib Labels" %}</a>
+		{% if system_info.print_tag_option != 0 %}
+			&nbsp;&nbsp;&nbsp;
+			<a class="btn btn-primary hidden-print" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "Print Bib Labels" %}</a>
+		{% endif %}
 		&nbsp;&nbsp;&nbsp;
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
 	{% else %}
