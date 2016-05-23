@@ -20,8 +20,8 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	if exclude_labels:
 		competitions = competitions.exclude( report_labels__in = exclude_labels )
 	
-	competitions = competitions.order_by( 'start_date' )
-	
+	competitions = sorted( set(competitions), key=lambda c: c.start_date )
+		
 	year_on_year = []
 	license_holders_year = []
 	license_holders_all = set()
