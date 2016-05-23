@@ -22,7 +22,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	if exclude_labels:
 		competitions = competitions.exclude( report_labels__in = exclude_labels )
 	
-	competitions = competitions.order_by( 'pk' ).distinct().order_by( 'start_date' )
+	competitions = competitions.order_by( 'start_date', 'pk' ).distinct()
 	
 	license_holders_event_errors = set()
 	
