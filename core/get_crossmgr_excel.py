@@ -106,7 +106,10 @@ def add_categories_page( wb, title_format, event ):
 	#
 	ws = wb.add_worksheet('--CrossMgr-Categories')
 	
-	participant_categories = set( p.category for p in Participant.objects.filter(competition = event.competition) )
+	participant_categories = set( Category.objects.filter(pk__in =
+			Participant.objects.filter(competition = event.competition).order_by('category__pk').values_list('category__pk',flat=True).distinct()
+		)
+	)
 	
 	exclude_empty_categories = SystemInfo.get_exclude_empty_categories()
 	
