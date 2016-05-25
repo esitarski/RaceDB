@@ -45,7 +45,10 @@
 	<tr>
 	{% for b in bibs %}
 		<td>
-		{% if b.license_holder %}
+		{% if b.lost %}
+			<a class="btn btn-warning btn-bib-available" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/"
+				title='{% trans "Lost: Assign if Found" %}'>{{b.bib}}</a>
+		{% elif b.license_holder %}
 			<span class="label label-default label-bib" title="{{b.full_name}}">{{b.bib}}</span>
 		{% else %}
 			<a class="btn btn-success btn-bib-available" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/">{{b.bib}}</a>

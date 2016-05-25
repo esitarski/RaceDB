@@ -521,6 +521,7 @@ class Competition(models.Model):
 		category_numbers = self.categorynumbers_set.all()
 		event_mass_starts = self.eventmassstart_set.all()
 		event_tts = self.eventtt_set.all()
+		report_labels = list( self.report_labels.all() )
 	
 		start_date_old, start_date_new = self.start_date, datetime.date.today()
 		competition_new = self
@@ -534,6 +535,9 @@ class Competition(models.Model):
 			e.make_copy( competition_new, start_date_old, start_date_new )
 		for e in event_tts:
 			e.make_copy( competition_new, start_date_old, start_date_new )
+		
+		if report_labels:
+			competition_new.report_labels.add( *report_labels )
 		
 		return competition_new
 		
