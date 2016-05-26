@@ -164,6 +164,7 @@ urlpatterns = [
 	url(r'^(?i).*BibReturn/(?P<numberSetEntryId>\d+)/$', number_set.BibReturn),
 	url(r'^(?i).*BibReturn/(?P<numberSetEntryId>\d+)/(?P<confirmed>\d+)/$', number_set.BibReturn),
 	url(r'^(?i).*BibLost/(?P<numberSetEntryId>\d+)/$', number_set.BibLost),
+	url(r'^(?i).*BibLost/(?P<numberSetEntryId>\d+)/(?P<confirmed>\d+)/$', number_set.BibLost),
 	url(r'^(?i).*NumberSetUploadExcel/(?P<numberSetId>\d+)/$', number_set.UploadNumberSet),
 	
 	url(r'^(?i).*SeasonsPasses/$', seasons_pass.SeasonsPassesDisplay),

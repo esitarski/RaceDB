@@ -2586,10 +2586,10 @@ def ParticipantBibChange( request, participantId ):
 	if competition.number_set:
 		allocated_numbers.update( { nse.bib:nse.license_holder
 			for nse in NumberSetEntry.objects.select_related('license_holder').filter( number_set=competition.number_set, date_lost=None ) } )
-		lost_bibs = set( NumberSetEntry.objects.filter(number_set=competition.number_set).exclude(date_lost=None).values_list('bib') )
+		lost_bibs = set( NumberSetEntry.objects.filter(number_set=competition.number_set).exclude(date_lost=None).values_list('bib',flat=True) )
 	else:
 		lost_bibs = set()
-	
+		
 	if category_numbers:
 		available_numbers = sorted( category_numbers.get_numbers() )
 		category_numbers_defined = True

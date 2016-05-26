@@ -118,7 +118,8 @@ def BibReturn( request, numberSetEntryId, confirmed=False ):
 def BibLost( request, numberSetEntryId, confirmed=False ):
 	nse = get_object_or_404( NumberSetEntry, pk=numberSetEntryId )
 	if confirmed:
-		nse.number_set.return_to_pool( nse.bib )
+		nse.date_lost = datetime.date.today()
+		nse.save()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	page_title = _('Record Bib as Lost (and unavailable)')
 	message = string_concat('<strong>', unicode(nse.bib), u'</strong>: ', nse.license_holder.full_name(), u'<br/><br/>',
@@ -215,26 +216,17 @@ def NumberSetManage( request, numberSetId ):
 	number_set.normalize()
 	
 	def getData( search_fields ):
-		q = Q()
+		q = Q( number_set=number_set )
+		
+		search_bib = search_fields.get('search_bib', 0)
+		if search_bib:
+			q &= Q( bib=search_bib )
 		
 		search_text = utils.normalizeSearch( search_fields.get('search_text', '') )
 		for n in search_text.split():
 			q &= Q( license_holder__search_text__contains = n )
 			
-		search_bib = search_fields.get('search_bib', 0)
-		if search_bib:
-			q &= Q( bib=search_bib )
-		
-		license_holders = defaultdict( list )
-		
-		for nse in NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set, date_lost=None).filter(q).order_by('bib'):
-			license_holders[nse.license_holder].append( nse )
-		for lh, nses in license_holders.iteritems():
-			lh.nses = nses
-		license_holders = sorted( (license_holders.iterkeys()), key = lambda lh: lh.search_text )
-		number_set_lost = NumberSetEntry.objects.select_related('license_holder').filter(number_set=number_set).exclude(date_lost=None).filter(q).order_by('bib')
-		
-		return license_holders, number_set_lost
+		return NumberSetEntry.objects.filter( q ).order_by( 'bib' )
 	
 	if request.method == 'POST':
 		if 'ok-submit' in request.POST:
@@ -249,7 +241,7 @@ def NumberSetManage( request, numberSetId ):
 			request.session['number_set_manage_filter'] = search_fields
 		
 			if 'excel-export-submit' in request.POST:
-				xl = get_number_set_excel( *getData(search_fields) )
+				xl = get_number_set_excel( getData(search_fields) )
 				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 				response['Content-Disposition'] = 'attachment; filename=RaceDB-NumberSet-{}-{}.xlsx'.format(
 					utils.cleanFileName(number_set.name),
@@ -262,8 +254,7 @@ def NumberSetManage( request, numberSetId ):
 	else:
 		form = NumberSetManageForm( initial = search_fields )
 	
-	license_holders, number_set_lost = getData( search_fields )
-	allocated_bibs_count = sum( len(lh.nses) for lh in license_holders )
+	nses = getData( search_fields )
 	return render_to_response( 'number_set_manage.html', RequestContext(request, locals()) )	
 
 
