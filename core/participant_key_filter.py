@@ -23,6 +23,8 @@ def add_participant_from_license_holder( competition, license_holder ):
 		return license_holder, participants
 
 def participant_key_filter( competition, key, auto_add_participant=True ):
+	system_info = SystemInfo.get_singleton()
+	
 	# Check if the code has an embedded license code.
 	license_code = None
 	if system_info.license_code_regex:
@@ -38,8 +40,6 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	if not key:
 		return None, []
 		
-	system_info = SystemInfo.get_singleton()
-	
 	# Check for an existing participant.
 	if license_code:
 		participants = list( Participant.objects.filter( competition=competition, license_holder__license_code=license_code ) )
