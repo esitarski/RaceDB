@@ -37,7 +37,7 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	license_code = None
 	if system_info.license_code_regex:
 		try:
-			license_code = re.match( system_info.license_code_regex, key ).group( 'license_code' )
+			license_code = re.match(system_info.license_code_regex, key).group('license_code').lstrip('0')
 		except Exception as e:
 			pass
 			

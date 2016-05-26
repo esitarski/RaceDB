@@ -2,7 +2,7 @@
 
 # System Info
 
-Information applied to the entire system.
+Information applied to the entire system.  Most of the fields are explained right on the System Info screen.  Further explanation for some fields is below.
 
 ## Tag Template
 
@@ -35,3 +35,35 @@ The number of minutes that registration is considered __closed__ before an event
 If __-1__, then registration is never considered closed.
 
 Currently, this just shows a warning message on the __Participant Form__ showing the late registered __Start Waves__ - it does not physically stop the registration process.
+
+## License Code Regex
+
+In certain areas, licenses are plastic cards with magnetic stripes.  Inexpensive USB magnetic card readers are easy to get, and it would be great to enter riders into RaceDB with a card swipe.
+
+The magnetic stripe can contain a number of fields of data including name, gender and license code.  Of course, RaceDB is only interested in the license code information and doesn't care about the rest.
+
+The __License Code Regex__ tells RaceDB how to find the license code in the magnetic stripe information.
+
+For example, say the magnetic stripe had the following format:
+    
+    %JOHN SMITH ADULT?;123456?
+	
+The license code is the text after the first semicolon and before the last question mark.
+
+We can pull the license code out of this data with the following regex:
+
+    [^;]*;(?P<license_code>[^?]*).*
+	
+Basically, the regex says to skip everything up to and including the first semicolon, then match a named field called __license_code__ up to the first question mark, then skip the rest of the string.
+	
+Full details on regex format can be found [here](https://docs.python.org/2/library/re.html).
+
+If the __License Code Regex__ is specified and contains a __license_code__ field, RaceDB will use it on the __Barcode Add__ page to lookup the participant by license code.  Reg staff can enter riders into RaceDB with a card swipe.
+
+## Print Tag Option
+
+This tells RaceDB how to print a RFID tag to a tag printer.
+
+RaceDB can print a 3.9" x 2.4" sticker with the competition name, rider name and bib number as a pdf file.  This sticker is applied to the RFID tag, often attached under the seat.
+
+This option tells RaceDB how to print the sticker.
