@@ -30,6 +30,12 @@
 	background-color: #CCCCCC;
 	display: inline-block;
 }
+.lost-bib {
+	font-size: 100%;
+	margin: 10px;
+	background-color: #999999;
+	display: inline-block;
+}
 .btn-bib-available {
 	font-size: 130%;
 	margin: 10px;
@@ -45,9 +51,9 @@
 	<tr>
 	{% for b in bibs %}
 		<td>
-		{% if b.lost %}
-			<a class="btn btn-warning btn-bib-available" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/"
-				title='{% trans "Lost Bib: If found, assign." %}'>{{b.bib}}</a>
+		{% if b.date_lost %}
+			<a class="btn btn-warning lost-bib" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/"
+				title='{% trans "Lost on" %} {{b.date_lost|date:"Y-m-d"}}. {% trans "If found, assign." %}'>{{b.bib}}</a>
 		{% elif b.license_holder %}
 			<span class="label label-default label-bib" title="{{b.full_name}}">{{b.bib}}</span>
 		{% else %}

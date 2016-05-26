@@ -2560,11 +2560,11 @@ def ParticipantTeamSelect( request, participantId, teamId ):
 
 #-----------------------------------------------------------------------
 class Bib( object ):
-	def __init__( self, bib, license_holder = None, lost=False ):
+	def __init__( self, bib, license_holder = None, date_lost=None ):
 		self.bib = bib
 		self.license_holder = license_holder
 		self.full_name = license_holder.full_name() if license_holder else ''
-		self.lost = lost
+		self.date_lost = date_lost
 
 @access_validation()
 def ParticipantBibChange( request, participantId ):
@@ -2586,9 +2586,9 @@ def ParticipantBibChange( request, participantId ):
 	if competition.number_set:
 		allocated_numbers.update( { nse.bib:nse.license_holder
 			for nse in NumberSetEntry.objects.select_related('license_holder').filter( number_set=competition.number_set, date_lost=None ) } )
-		lost_bibs = set( NumberSetEntry.objects.filter(number_set=competition.number_set).exclude(date_lost=None).values_list('bib',flat=True) )
+		lost_bibs = dict( NumberSetEntry.objects.filter(number_set=competition.number_set).exclude(date_lost=None).values_list('bib','date_lost') )
 	else:
-		lost_bibs = set()
+		lost_bibs = {}
 		
 	if category_numbers:
 		available_numbers = sorted( category_numbers.get_numbers() )
@@ -2597,7 +2597,7 @@ def ParticipantBibChange( request, participantId ):
 		available_numbers = []
 		category_numbers_defined = False
 	
-	bibs = [Bib(n, allocated_numbers.get(n, None), n in lost_bibs) for n in available_numbers]
+	bibs = [Bib(n, allocated_numbers.get(n, None), lost_bibs.get(n,None)) for n in available_numbers]
 	del available_numbers
 	del allocated_numbers
 	del lost_bibs
