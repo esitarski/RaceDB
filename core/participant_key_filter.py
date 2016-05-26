@@ -6,6 +6,8 @@ from django.db import transaction, IntegrityError
 from TagFormat import getLicenseFromTag
 from models import SystemInfo
 
+import re
+
 def add_participant_from_license_holder( competition, license_holder ):
 	# Try to create a new participant from the license_holder and return that.
 	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
@@ -28,19 +30,31 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	
 	if not key:
 		return None, []
+		
+	system_info = SystemInfo.get_singleton()
 	
-	# First check for an existing participant.
-	participants = list( Participant.objects.filter( competition=competition ).filter(
-		Q(license_holder__license_code=key) | Q(tag=key) | Q(tag2=key)) )
+	# Check if the code has an embedded license code.
+	license_code = None
+	if system_info.license_code_regex:
+		try:
+			license_code = re.match( system_info.license_code_regex, key ).group( 'license_code' )
+		except Exception as e:
+			pass
+			
+	# Check for an existing participant.
+	if license_code:
+		participants = list( Participant.objects.filter( competition=competition, license_holder__license_code=license_code ) )
+	else:
+		participants = list( Participant.objects.filter( competition=competition ).filter(
+			Q(license_holder__license_code=key) | Q(tag=key) | Q(tag2=key)) )
 	
 	if participants:
-		participants.sort( key = lambda p: p.category.sequence if p.category else p.bib )
+		participants.sort( key = lambda p: (p.category.sequence if p.category else 999999, p.bib if p.bib else 999999) )
 		return participants[0].license_holder, participants
 	
 	# Check for a license encoded in an rfid tag.
 	tag_original = None
 	if competition.using_tags and competition.use_existing_tags:
-		system_info = SystemInfo.get_singleton()
 		if system_info.tag_from_license:
 			license_from_tag = getLicenseFromTag( key, system_info.tag_from_license_id )
 			if license_from_tag is not None:
@@ -48,7 +62,9 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 				key = license_from_tag
 	
 	# Second, check for a license holder matching the key.
-	if competition.using_tags and competition.use_existing_tags:
+	if license_code:
+		q = Q(license_code=license_code)
+	elif competition.using_tags and competition.use_existing_tags:
 		q = Q(license_code=key) | Q(existing_tag=key) | Q(existing_tag2=key)
 	else:
 		q = Q(license_code=key)

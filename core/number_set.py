@@ -4,6 +4,8 @@ from django.utils.translation import ugettext_lazy as _
 from get_number_set_excel import get_number_set_excel
 from init_number_set import init_number_set
 
+import re
+
 @autostrip
 class NumberSetDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
@@ -202,6 +204,7 @@ class NumberSetManageForm( Form ):
 		self.additional_buttons = [
 				( 'search-submit', _("Search"), 'btn btn-success' ),
 				( 'ok-submit', _("OK"), 'btn btn-primary' ),
+				( 'bib-list-update-submit', _("Update by Bib List"), 'btn btn-primary' ),
 				( 'excel-export-submit', _("Export to Excel"), 'btn btn-primary' ),
 				( 'excel-update-submit', _("Update from Excel"), 'btn btn-primary' ),
 		]
@@ -231,7 +234,7 @@ def NumberSetManage( request, numberSetId ):
 	if request.method == 'POST':
 		if 'ok-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-				
+		
 		form = NumberSetManageForm( request.POST )
 		if form.is_valid():
 			search_fields = {
@@ -239,6 +242,9 @@ def NumberSetManage( request, numberSetId ):
 				'search_bib': form.cleaned_data['search_bib'],
 			}
 			request.session['number_set_manage_filter'] = search_fields
+		
+			if 'bib-list-update-submit' in request.POST:
+				return HttpResponseRedirect( pushUrl(request,'NumberSetBibList', number_set.id) )
 		
 			if 'excel-export-submit' in request.POST:
 				xl = get_number_set_excel( getData(search_fields) )
@@ -256,5 +262,56 @@ def NumberSetManage( request, numberSetId ):
 	
 	nses = getData( search_fields )
 	return render_to_response( 'number_set_manage.html', RequestContext(request, locals()) )	
+
+@autostrip
+class BibListForm( Form ):
+	bibs = forms.CharField( required=False, label=_("Bib Numbers"), help_text=_("Comma separated list of bib numbers.") )
+	
+	def __init__( self, *args, **kwargs ):
+		super(BibListForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col(Field('bibs', size=120), 8),
+			),
+		)
+		
+		self.additional_buttons = [
+				( 'done-submit', _("Done"), 'btn btn-success' ),
+				( 'lost-submit', _("Set Bibs Lost"), 'btn btn-primary' ),
+				( 'found-submit', _("Set Bibs Found"), 'btn btn-primary' ),
+		]
+		
+		addFormButtons( self, 0, self.additional_buttons )
+
+@access_validation()
+def NumberSetBibList( request, numberSetId ):
+	number_set = get_object_or_404( NumberSet, pk=numberSetId )
+	
+	if request.method == 'POST':
+		if 'done-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+				
+		form = BibListForm( request.POST )
+		if form.is_valid():
+			bibs = form.cleaned_data['bibs']
+			bibs = re.sub( '\D+', ' ', bibs ).strip()
+			bib_nums = set( int(n) for n in bibs.split() )
+			
+			if 'lost-submit' in request.POST:
+				for bib in bib_nums:
+					number_set.set_lost( bib )
+			elif 'found-submit' in request.POST:
+				for bib in bib_nums:
+					number_set.return_to_pool( bib )
+			
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = BibListForm()
+	title = _('Number Set Bib List')
+	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )	
 
 

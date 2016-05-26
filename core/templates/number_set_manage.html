@@ -14,6 +14,7 @@
 .bib-table td { padding-left:0.5cm; padding-top:4px; padding-bottom:4px; }
 </style>
 
+{% spaceless %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
 	<tr>
@@ -54,13 +55,13 @@
 				{% else %}
 					<a class="btn btn-success" href="./BibLost/{{nse.id}}/">{% trans "Bib Lost" %}</a>
 				{% endif %}
-				&nbsp;
-				<a class="btn btn-warning" href="./LicenseHolderEdit/{{lh.id}}/">{% trans "License Holder" %}</a>
+				&nbsp;<a class="btn btn-warning" href="./LicenseHolderEdit/{{lh.id}}/">{% trans "License Holder" %}</a>
 			</td>
 		</tr>
 		{% endwith %}
 	{% endfor %}
 </tbody>
 </table>
+{% endspaceless %}
 
 {% endblock content %}

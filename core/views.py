@@ -3294,6 +3294,9 @@ class SystemInfoForm( ModelForm ):
 			Row(
 				Col(Field('reg_allow_add_multiple_categories', size=6), 6),
 			),
+			Row(
+				Col(Field('license_code_regex', size=80), 6),
+			),
 			HTML( '<hr/>' ),
 			Field( 'rfid_server_host', type='hidden' ),
 			Field( 'rfid_server_port', type='hidden' ),
