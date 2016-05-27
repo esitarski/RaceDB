@@ -89,7 +89,7 @@ class Rect( object ):
 		pdf.text( text_rect.x, text_rect.y + text_height * 0.85, text )
 		return text_width
 	
-def print_bib_labels( participant, competition_name=None, left_page=True, right_page=True ):
+def print_bib_labels( participant, sponsor_name=None, left_page=True, right_page=True ):
 	competition = participant.competition
 	license_holder = participant.license_holder
 	
@@ -98,8 +98,11 @@ def print_bib_labels( participant, competition_name=None, left_page=True, right_
 	if len(name) > 32:
 		name = u'{}. {}'.format( license_holder.first_name[:1], license_holder.last_name )
 	
-	if competition_name is None:
-		competition_name = competition.name
+	if sponsor_name is None:
+		if competition.number_set and competition.number_set.sponsor:
+			sponsor_name = competition.number_set.sponsor
+		else:
+			sponsor_name = competition.name
 	system_name = 'CrossMgr'
 	
 	inches_to_points = 72.0
@@ -145,7 +148,7 @@ def print_bib_labels( participant, competition_name=None, left_page=True, right_
 		header_remain.width -= arrowWidth
 		
 		pdf.set_font( font_name )
-		header_remain.draw_text_to_fit( pdf, competition_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, True )
+		header_remain.draw_text_to_fit( pdf, sponsor_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, True )
 		
 		pdf.set_font( font_name, 'b' )
 		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )

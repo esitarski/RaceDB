@@ -40,6 +40,12 @@ class NumberSetForm( ModelForm ):
 			Row(
 				Col(Field('name', size=50), 4),
 			),
+			Row(
+				Col(Field('sponsor', size=80), 6),
+			),
+			Row(
+				Col(Field('description', size=80), 6),
+			),
 			Field( 'sequence', type='hidden' ),
 		)
 		

@@ -13,6 +13,8 @@
 	<tr>
 		<th></th>
 		<th>{% trans "Name" %}</th>
+		<th>{% trans "Sponsor" %}</th>
+		<th>{% trans "Description" %}</th>
 		<th class="hidden-print"></th>
 		<th class="hidden-print"></th>
 	</tr>
@@ -22,6 +24,8 @@
 		<tr onclick="jump('{{path}}NumberSetManage/{{r.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{r.name}}</td>
+			<td>{{r.sponsor}}</td>
+			<td>{{r.description}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="{{path}}NumberSetDelete/{{r.id}}/">{% trans "Delete" %}</a>
 				<a class="btn btn-primary" href="{{path}}NumberSetEdit/{{r.id}}/">{% trans "Edit" %}</a>

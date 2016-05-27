@@ -273,6 +273,9 @@ class NumberSet(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
 	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = 0 )
 
+	sponsor = models.CharField( max_length = 80, default = '', blank = True, verbose_name  = _('Sponsor') )
+	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name = _('Description') )
+	
 	def save( self, *args, **kwargs ):
 		init_sequence( NumberSet, self )
 		return super( NumberSet, self ).save( *args, **kwargs )
