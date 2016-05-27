@@ -67,3 +67,5 @@ This tells RaceDB how to print a RFID tag to a tag printer.
 RaceDB can print a 3.9" x 2.4" sticker with the competition name, rider name and bib number as a pdf file.  This sticker is applied to the RFID tag, often attached under the seat.
 
 This option tells RaceDB how to print the sticker.
+
+If the Competition has a Number Set, the Number Set Sponsor will be used on the tag.  If not, the name of the Competition will be used.
