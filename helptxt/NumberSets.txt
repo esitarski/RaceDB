@@ -25,3 +25,11 @@ Define a __Number Set__ called "MTB Numbers" and another __Number Set__ called "
 
 Now, RaceDB can correctly find the different Bib numbers.
 
+## Sponsor
+
+The Sponsor of this Number Set.  If you use the __Print Tags__ option in [System Info][], this is the name that will be printed on the tags.
+
+## Description
+
+Internal description of the Number Set.  Can be any text you like.
+
