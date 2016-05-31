@@ -60,6 +60,28 @@ Full details on regex format can be found [here](https://docs.python.org/2/libra
 
 If the __License Code Regex__ is specified and contains a __license_code__ field, RaceDB will use it on the __Barcode Add__ page to lookup the participant by license code.  Reg staff can enter riders into RaceDB with a card swipe.
 
+RaceDB supports an extension to the regex format: you can specify multiple regex's separated with a__||__ (double-bar).
+
+For example:
+
+    (?P<license_code>^\d*);.*||[^;]*;(?P<license_code>[^?]*).*
+
+This tells RaceDB to try the expression __(?P<license_code>^\d*);.*__, and if that fails, try __[^;]*;(?P<license_code>[^?]*).*__.  In standard regex syntax, group names must be unique.  This extension allows groups names to be repeated in each expression.
+
+The above example would match licenses of the form:
+
+    123456;JOHN SMITH;MEN
+	
+That is, match an all-numeric license code at the beginning, and:
+
+    %JOHN SMITH ADULT?;123456?
+
+That is, match a license code following the first semicolon.
+
+Any number of regex's can be combined, separated by a double-bar __||__.
+
+As with all license codes in RaceDB, leading zeros in are ignored.
+
 ## Print Tag Option
 
 This tells RaceDB how to print a RFID tag to a tag printer.

@@ -23,19 +23,24 @@ def add_participant_from_license_holder( competition, license_holder ):
 		return license_holder, participants
 
 def participant_key_filter( competition, key, auto_add_participant=True ):
+	key = key.strip()
+	
 	system_info = SystemInfo.get_singleton()
 	
 	# Check if the code has an embedded license code.
 	license_code = None
 	if system_info.license_code_regex:
-		try:
-			license_code = re.match(system_info.license_code_regex, key.strip()).group('license_code').lstrip('0')
-		except Exception as e:
-			pass
+		for license_code_regex in system_info.license_code_regex.split('||'):
+			license_code_regex = license_code_regex.strip()
+			try:
+				license_code = re.match(license_code_regex, key).group('license_code').lstrip('0')
+				break
+			except Exception as e:
+				pass
 			
 	# Convert the key to upper.
 	# The license_code, tag and tag2 are all stored in upper-case, so it is safe to do exact matches.
-	key = key.strip().upper().lstrip('0')
+	key = key.upper().lstrip('0')
 	
 	if not key:
 		return None, []
