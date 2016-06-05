@@ -180,6 +180,12 @@ def get_nationality( participant ):
 		else:
 			nationality = nationality[:24]
 	return nationality
+
+def format_phone( phone ):
+	phone = unicode( phone )
+	if len(phone) == len('AAA333NNNN') and phone.isdigit():
+		return u'({}) {}-{}'.format(phone[:3], phone[3:6], phone[6:])
+	return phone
 	
 def print_id_label( participant ):
 	competition = participant.competition
@@ -238,7 +244,7 @@ def print_id_label( participant ):
 	if license_holder.phone:
 		info.append(
 			['', u'  '.join([
-				u'Phone: {}'.format(license_holder.phone),
+				u'Phone: {}'.format(format_phone(license_holder.phone)),
 				]),
 			]
 		)
@@ -261,7 +267,7 @@ def print_id_label( participant ):
 	info.append( ['',''] )
 	info.append( ['', u'Emergency Contact:'] )
 	info.append( ['', u'  {}'.format(license_holder.emergency_contact_name)] )
-	info.append( ['', u'  Phone: {}'.format(license_holder.emergency_contact_phone)] )
+	info.append( ['', u'  Phone: {}'.format(format_phone(license_holder.emergency_contact_phone))] )
 	
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,
 		leftJustifyCols = [0,1], hasHeader=False, horizontalLines=False )
