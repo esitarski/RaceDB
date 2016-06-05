@@ -19,7 +19,7 @@ from license_holder_import_excel import license_holder_import_excel
 from participant_key_filter import participant_key_filter
 from init_prereg import init_prereg
 
-from print_bib import print_bib_labels
+from print_bib import print_bib_tag_label, print_id_label
 
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
@@ -2365,7 +2365,43 @@ def ParticipantDoDelete( request, participantId ):
 def ParticipantPrintBibLabels( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	system_info = SystemInfo.get_singleton()
-	pdf_str = print_bib_labels( participant )
+	pdf_str = print_bib_tag_label( participant )
+	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
+		try:
+			tmp_file = os.path.join(
+				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+				'pdfs',
+				'{}-{}'.format(participant.bib, uuid.uuid4().hex)
+			) + '.pdf'
+			with open(tmp_file, 'wb') as f:
+				f.write( pdf_str )
+			p = Popen(
+				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				stdin=PIPE, stdout=PIPE, stderr=PIPE,
+			)
+			stdout_info, stderr_info = p.communicate( pdf_str )
+		except Exception as e:
+			stdout_info, stderr_info = '', e
+		
+		try:
+			os.remove( tmp_file )
+		except:
+			pass
+		
+		title = _("Print Status")
+		return render_to_response( 'cmd_response.html', RequestContext(request, locals()) )
+	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
+		response = HttpResponse(pdf_str, content_type="application/pdf")
+		response['Content-Disposition'] = 'inline'
+		return response
+	else:
+		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	
+@access_validation()
+def ParticipantPrintEmergencyContactInfo( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	system_info = SystemInfo.get_singleton()
+	pdf_str = print_id_label( participant )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
 			tmp_file = os.path.join(

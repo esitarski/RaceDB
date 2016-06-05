@@ -402,6 +402,7 @@
 		{% if system_info.print_tag_option != 0 %}
 			&nbsp;&nbsp;&nbsp;
 			<a class="btn btn-primary hidden-print" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "Print Bib Labels" %}</a>
+			<a class="btn btn-primary hidden-print" href="./ParticipantPrintEmergencyContactInfo/{{p.id}}/">{% trans 'Print In Case of Emergency' %}</a>
 		{% endif %}
 		&nbsp;&nbsp;&nbsp;
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
