@@ -234,7 +234,7 @@ East Timor	Timor-Leste[15]	TLS	TLS	TLS	3OFI
 Togo	Togo	TOG	TOG	TGO	3OFï
 Tokelau	Tokelau			TKL	1--ï
 Tonga	Tonga	TGA	TGA	TON	3OFï
-Trinidad and Tobago	Trinidad and Tobago	TRI	TRI	TTO	3OFï
+Trinidad and Tobago	Trinidad and Tobago	TTO	TTO	TTO	3OFï
 Tunisia	Tunisia	TUN	TUN	TUN	3OFI
 Turkey	Turkey	TUR	TUR	TUR	3OFI
 Turkmenistan	Turkmenistan	TKM	TKM	TKM	3OFI
@@ -304,6 +304,9 @@ uci_country_codes['The Netherlands'.upper()] = 'NED'
 uci_country_codes['Dutch'.upper()] = 'NED'
 
 uci_country_codes['Deutschland'.upper()] = 'GER'
+
+uci_country_codes['Trinidad'.upper()] = 'TTO'
+uci_country_codes['Tobago'.upper()] = 'TTO'
 
 #-----------------------------------------------------------------------
 
