@@ -179,6 +179,8 @@ def get_nationality( participant ):
 			nationality = license_holder.uci_country
 		else:
 			nationality = nationality[:24]
+	if nationality == 'CANADA':
+		nationality = 'Canada'
 	return nationality
 
 def format_phone( phone ):
@@ -266,8 +268,8 @@ def print_id_label( participant ):
 	)
 	info.append( ['',''] )
 	info.append( ['', u'Emergency Contact:'] )
-	info.append( ['', u'  {}'.format(license_holder.emergency_contact_name)] )
-	info.append( ['', u'  Phone: {}'.format(format_phone(license_holder.emergency_contact_phone))] )
+	info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or '(none provided)')] )
+	info.append( ['', u'  Phone: {}'.format(format_phone(license_holder.emergency_contact_phone or '(none provided)'))] )
 	
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,
 		leftJustifyCols = [0,1], hasHeader=False, horizontalLines=False )
