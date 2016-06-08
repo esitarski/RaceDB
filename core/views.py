@@ -889,7 +889,7 @@ def GetCompetitionForm( competition_cur = None ):
 			
 		def editReportTags( self, request, competition ):
 			return HttpResponseRedirect( pushUrl(request,'ReportLabels') )
-		
+			
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
@@ -961,6 +961,7 @@ def GetCompetitionForm( competition_cur = None ):
 				self.additional_buttons.append(
 					('edit-report-labels-submit', _('Edit Report Labels'), 'btn btn-primary', self.editReportTags),
 				)
+				
 				if competition_cur and competition_cur.using_tags:
 					self.additional_buttons.append(
 						('auto-generate-missing-tags-submit', _('Auto Generate Missing Tags for Existing Participants'), 'btn btn-primary', self.autoGenerateMissingTags),
@@ -1235,6 +1236,20 @@ def StartListExcelDownload( request, eventId, eventType ):
 		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 	)
 	return response
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competitionId, confirmed=False ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	if confirmed:
+		competition.add_all_participants_to_default_events()
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Apply Optional Event Defaults to Existing Participants')
+	message = _('This will reapply Optional Events defaults to all existing Participants.  Participants will be added to "Select by Default" Optional Events and will be excluded from them otherwise.  If Participants have made previous choices regarding the events they are participating in, these will be overwritten.')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'CompetitionApplyOptionalEventChangesToExistingParticipants/{}/{}/'.format(competition.id,1)
+	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
 
 #-----------------------------------------------------------------------
 @autostrip
@@ -3497,9 +3512,9 @@ def AttendanceAnalytics( request ):
 	
 	page_title = [u'Analytics']
 	if initial.get('start_date',None) is not None:
-		page_title.append( u'from {}'.format( initial['start_date'] .strftime('%Y-%d-%m') ) )
+		page_title.append( u'from {}'.format( initial['start_date'] .strftime('%Y-%m-%d') ) )
 	if initial.get('end_date', None) is not None:
-		page_title.append( u'to {}'.format( initial['end_date'].strftime('%Y-%d-%m') ) )
+		page_title.append( u'to {}'.format( initial['end_date'].strftime('%Y-%m-%d') ) )
 	if initial.get('organizers',None):
 		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
 	page_title = u' '.join( page_title )

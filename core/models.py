@@ -13,6 +13,9 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import string_concat
 from django.contrib.staticfiles.templatetags.staticfiles import static
 
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+
 import patch_sqlite_text_factory
 
 import DurationField
@@ -26,6 +29,7 @@ import base64
 from django.utils.translation import ugettext_lazy as _
 import utils
 import random
+import itertools
 from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
 from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes
@@ -570,6 +574,36 @@ class Competition(models.Model):
 		if sd.year == ed.year:
 			return u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%b %d, %Y') )
 		return u'{}-{}'.format( sd.strftime('%b %d, %Y'), ed.strftime('%b %d, %Y') )
+	
+	@property
+	def has_optional_events( self ):
+		return (
+			EventMassStart.objects.filter(competition=self, optional=True).exists() or
+			EventTT.objects.filter(competition=self, optional=True).exists()
+		)
+		
+	def add_all_participants_to_default_events( self ):
+		ParticipantOption.objects.filter( competition=self ).delete()
+
+		default_events = [event for event in self.get_events() if event.optional and event.select_by_default]
+		if not default_events:
+			return
+		
+		category_event_ids = defaultdict( set )
+		for event in default_events:
+			for category in event.get_categories():
+				category_event_ids[category.pk].add( event.option_id )
+
+		options = list(
+			itertools.chain.from_iterable(
+				(ParticipantOption( competition=self, participant=participant, option_id=option_id )
+					for option_id in category_event_ids[participant.category.pk])
+				for participant in Participant.objects.filter(
+					competition=self, role=Participant.Competitor, category__isnull=False
+				)
+			)
+		)
+		ParticipantOption.objects.bulk_create( options )
 	
 	def full_name( self ):
 		return ' '.join( [self.name, self.organizer] )
@@ -2614,8 +2648,10 @@ class ParticipantOption( models.Model ):
 	@transaction.atomic
 	def set_option_ids( participant, option_ids = [] ):
 		ParticipantOption.objects.filter(competition=participant.competition, participant=participant).delete()
-		for option_id in option_ids:
-			ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id ).save()
+		ParticipantOption.objects.bulk_create(
+			[ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id )
+				for option_id in set(option_ids)]
+		)
 	
 	@staticmethod
 	@transaction.atomic
@@ -2664,6 +2700,15 @@ class ParticipantOption( models.Model ):
 		)
 		verbose_name = _("Participant Option")
 		verbose_name_plural = _("Participant Options")
+
+#-------------------------------------------------------------------------------------
+
+@receiver( pre_delete, sender=EventMassStart )
+@receiver( pre_delete, sender=EventTT )
+def clean_up_event_option_id( sender, **kwargs ):
+	event = kwargs.get('instance', None)
+	if event and event.optional:
+		ParticipantOption.objects.filter(competition=event.competition, option_id=event.option_id).delete()
 
 #-------------------------------------------------------------------------------------
 
