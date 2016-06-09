@@ -4,6 +4,7 @@ Get started with RaceDB
 ## Competitions and Participant Data
 
 * [Competitions][]
+    * [Events][]
 * [License Holders][]
 * [Teams][]
 * [Legal Entities][]

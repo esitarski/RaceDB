@@ -1128,6 +1128,21 @@ class Event( models.Model ):
 	def short_name( self ):
 		return u'{} ({})'.format( self.name, {0:_('Mass'), 1:_('TT')}.get(self.event_type,u'') )
 	
+	def apply_optional_participants( self ):
+		if not self.optional:
+			return
+			
+		ParticipantOption.objects.filter( competition=self.competition, option_id=self.option_id ).delete()
+
+		if self.select_by_default:
+			options = list(
+				ParticipantOption( competition=self.competition, participant=participant, option_id=self.option_id )
+					for participant in Participant.objects.filter(
+						competition=self.competition, role=Participant.Competitor, category__in=self.get_categories()
+					)
+			)
+			ParticipantOption.objects.bulk_create( options )
+	
 	class Meta:
 		verbose_name = _('Event')
 		verbose_name_plural = _('Events')

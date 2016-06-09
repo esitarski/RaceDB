@@ -1585,6 +1585,9 @@ class EventMassStartForm( ModelForm ):
 	def newWaveCB( self, request, eventMassStart ):
 		return HttpResponseRedirect( pushUrl(request,'WaveNew',eventMassStart.id) )
 	
+	def applyToParticipantsCB( self, request, eventMassStart ):
+		return HttpResponseRedirect( pushUrl(request,'EventApplyToExistingParticipants',eventMassStart.id) )
+	
 	def clean( self ):
 		cleaned_data = super(EventMassStartForm, self).clean()
 		competition = cleaned_data.get("competition")
@@ -1604,6 +1607,7 @@ class EventMassStartForm( ModelForm ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
 		super(EventMassStartForm, self).__init__(*args, **kwargs)
+		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline hidden-print'
@@ -1629,6 +1633,11 @@ class EventMassStartForm( ModelForm ):
 			self.additional_buttons.extend( [
 				('new-wave-submit', _('New Start Wave'), 'btn btn-success', self.newWaveCB),
 			] )
+			instance = getattr(self, 'instance', None)
+			if instance and instance.optional and instance.competition.has_participants():
+				self.additional_buttons.extend( [
+					('apply-to-participants-submit', _('Apply Select by Default to Existing Participants'), 'btn btn-success', self.applyToParticipantsCB),
+				] )
 		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Waves') if button_mask == EDIT_BUTTONS else None )
 
 @access_validation()
@@ -1803,6 +1812,9 @@ class EventTTForm( ModelForm ):
 	def newWaveTTCB( self, request, eventTT ):
 		return HttpResponseRedirect( pushUrl(request,'WaveTTNew',eventTT.id) )
 	
+	def applyToParticipantsCB( self, request, eventMassStart ):
+		return HttpResponseRedirect( pushUrl(request,'EventApplyToExistingParticipants',eventMassStart.id) )
+	
 	def clean( self ):
 		cleaned_data = super(EventTTForm, self).clean()
 		competition = cleaned_data.get("competition")
@@ -1848,6 +1860,11 @@ class EventTTForm( ModelForm ):
 			self.additional_buttons.extend( [
 				('new-wave-submit', _('New TT Wave'), 'btn btn-success', self.newWaveTTCB),
 			] )
+			instance = getattr(self, 'instance', None)
+			if instance and instance.optional and instance.competition.has_participants():
+				self.additional_buttons.extend( [
+					('apply-to-participants-submit', _('Apply Select by Default to Existing Participants'), 'btn btn-success', self.applyToParticipantsCB),
+				] )
 		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Waves') if button_mask == EDIT_BUTTONS else None )
 
 @access_validation()
@@ -2040,7 +2057,23 @@ def WaveTTUp( request, waveTTId ):
 	waveTT = get_object_or_404( WaveTT, pk=waveTTId )
 	WaveTTSwapAdjacent( waveTT, True )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def EventApplyToExistingParticipants( request, eventId, confirmed=False ):
+	event = EventMassStart.objects.filter(pk=eventId).first() or EventTT.objects.filter(pk=eventId).first()
+	assert event
 	
+	if confirmed:
+		event.apply_optional_participants()
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Apply Event Option Defaults to Existing Participants')
+	message = _("This will reapply this Event's Option defaults to all existing Participants.  Participants will be added if \"Select by Default\" is selected, otherwise they will be excluded.  If Participants have made previous choices regarding this Event, these will be overwritten.")
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'EventApplyToExistingParticipants/{}/{}/'.format(event.id,1)
+	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+
 #-----------------------------------------------------------------------
 
 @autostrip

@@ -211,15 +211,6 @@
 </table>
 {% if not events_tt.exists %}</div>{% endif %}
 
-{% if request.user.is_superuser and competition.has_participants and competition.has_optional_events %}
-<div class="hidden-print">
-	<a class="btn btn-primary" href="{{path}}CompetitionApplyOptionalEventChangesToExistingParticipants/{{competition.id}}/">
-		{% trans "Apply Optional Event Changes to Existing Participants" %}
-	</a>
-	<h4>&nbsp;</h4>
-</div>
-{% endif %}
-
 <h3 class="visible-print page-break-before">
 	<strong>{{competition.name}}</strong>
 </h3>

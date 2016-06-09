@@ -238,7 +238,6 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 	title = unicode(_('Edit {}')).format(ModelClass._meta.verbose_name.title())
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
-			print 'cancel-submit'
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
@@ -249,9 +248,12 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 				form.save_m2m()
 			except Exception as e:
 				pass
+			
 			if 'ok-submit' in request.POST:
-				print 'ok-submit'
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+			if 'save-submit' in request.POST:
+				return HttpResponseRedirect('.')
 				
 			for ab in getattr(form, 'additional_buttons', []):
 				if ab[3:] and ab[0] in request.POST:

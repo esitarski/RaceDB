@@ -65,6 +65,10 @@ urlpatterns = [
 	url(r'^(?i).*EventTTCrossMgr/(?P<eventTTId>\d+)/$', views.EventTTCrossMgr),
 	url(r'^(?i).*EventTTDelete/(?P<eventTTId>\d+)/$', views.EventTTDelete),
 	
+	url(r'^(?i).*EventApplyToExistingParticipants/(?P<eventId>\d+)/$', views.EventApplyToExistingParticipants),
+	url(r'^(?i).*EventApplyToExistingParticipants/(?P<eventId>\d+)/(?P<confirmed>\d+)/$', views.EventApplyToExistingParticipants),
+
+	
 	url(r'^(?i).*SeedingEdit/(?P<eventTTId>\d+)/$', views.SeedingEdit),
 	url(r'^(?i).*GenerateStartTimes/(?P<eventTTId>\d+)/$', views.GenerateStartTimes),
 	

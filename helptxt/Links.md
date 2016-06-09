@@ -2,6 +2,7 @@
 
 [Competitions]: 	Competitions.html
 [Competition Dashboard]: CompetitionDashboard.html
+[Events]:			Events.html
 [License Holders]:	LicenseHolders.html
 [Teams]: 			Teams.html
 [Legal Entities]:	LegalEntities.html

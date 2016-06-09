@@ -1,0 +1,24 @@
+[TOC]
+
+# Events
+
+An event is a race within a competition.
+Currently RaceDB supports __Mass Start__ and __Time Trial__ events.
+
+Each event has one or more Start Waves.  In a Mass Stat event, a Start Wave corresponds to a (potentially multi-category) start.
+In a Time Trial event, a Start Wave corresponds to a group of Categories that will be seeded together.
+
+All riders in a Start Wave do the same distance or race for the same minutes.
+
+## Apply Select by Default to Existing Participants
+
+Use this option if you have made changes to __Optional Events__ and you want to apply those changes to existing Participants.
+
+Examples:
+
+1. If you make the Event optional when it wasn't previously, and you have existing participants, you will need to press this button to add them.
+1. If you add some new Categories to an optional Event that were not there previously.  Again, press this button to add the existing participants.
+1. If you change the Event's __Select by Default__ option, press this button to reapply it on existing participants.
+
+Use with caution.  Choices previously made by a Participant will be overwritten by this feature.
+
