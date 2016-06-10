@@ -2096,6 +2096,8 @@ class ParticipantSearchForm( Form ):
 	
 	complete = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Complete') )
 	
+	has_events = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('None')), (1, _('Some'))), label = _('Has Events') )
+	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
 		super(ParticipantSearchForm, self).__init__(*args, **kwargs)
@@ -2126,7 +2128,7 @@ class ParticipantSearchForm( Form ):
 		self.helper.layout = Layout(
 			Row( Field('scan', size=20, autofocus=True ), HTML('&nbsp;'*8), Field('event'),),
 			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
-			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), Field('complete'), ),
+			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), Field('complete'), Field('has_events'), ),
 			Row( *(button_args[:-1] + [HTML('&nbsp;'*8)] + button_args[-1:]) ),
 		)
 
@@ -2245,6 +2247,12 @@ def Participants( request, competitionId ):
 	if 0 <= int(participant_filter.get('complete',-1) or 0) <= 1:
 		complete = bool(int(participant_filter['complete']))
 		participants = (p for p in participants if bool(p.is_done) == complete)
+	
+	has_events = int(participant_filter.get('has_events',-1))
+	if has_events == 0:
+		participants = (p for p in participants if p.is_competitor and not p.has_any_events())
+	elif has_events == 1:
+		participants = (p for p in participants if p.has_any_events())
 	
 	if request.method == 'POST' and 'export-excel-submit' in request.POST:
 		xl = get_participant_excel( Q(pk__in=[p.pk for p in participants]) )

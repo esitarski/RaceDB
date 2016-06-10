@@ -660,6 +660,8 @@ class Competition(models.Model):
 	
 	def get_participant_events( self, participant ):
 		participant_events = []
+		if not participant.category:
+			return participant_events
 		for events in (self.eventmassstart_set.all(), self.eventtt_set.all()):
 			for event in events:
 				if event.could_participate(participant):
@@ -667,7 +669,16 @@ class Competition(models.Model):
 		return participant_events
 		
 	def has_any_events( self, participant ):
-		for events in (self.eventmassstart_set.all(), self.eventtt_set.all()):
+		if not participant.category:
+			return False
+		if (
+			Wave.objects.filter(
+				event__competition=self, event__optional=False, categories__in=[participant.category]).exists() or 
+			WaveTT.objects.filter(
+				event__competition=self, event__optional=False, categories__in=[participant.category]).exists()
+			):
+			return True
+		for events in (self.eventmassstart_set.filter(optional=True), self.eventtt_set.filter(optional=True)):
 			for event in events:
 				if event.could_participate(participant) and event.is_participating(participant):
 					return True
