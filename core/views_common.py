@@ -154,7 +154,7 @@ EDIT_BUTTONS	= 0xFFFF
 
 def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, print_button=None, cancel_alias=None ):
 	btns = []
-	if button_mask & SAVE_BUTTON != 0:
+	if button_mask & SAVE_BUTTON:
 		btns.append( Submit('save-submit', _('Save'), css_class='btn btn-primary hidden-print') )
 	if button_mask & OK_BUTTON:
 		btns.append( Submit('ok-submit', _('OK'), css_class='btn btn-primary hidden-print') )

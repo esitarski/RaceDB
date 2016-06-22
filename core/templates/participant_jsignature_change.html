@@ -37,38 +37,37 @@ function reset_signature() {
   margin: 0 0 0 0;
   border: 2px dotted #000;
 }
+.btn {
+	padding: 4;
+}
 </style>
 
-<h2>{{title}}</h2>
-<h2>{% trans "Participant"%}: <strong>{{participant.license_holder.full_name}}</strong></h2>
+<h2><strong>{{participant.license_holder.full_name}}</strong></h2>
 {% if participant.team %}
-	<h2>{% trans "Team"%}: <strong>{{participant.team.name}}</strong>
-	</h2>
+	<h3><strong>{{participant.team.name}}</strong>
+	</h3>
 {% endif %}
 {% if participant.category %}
-	<h2>{% trans "Category" %}: <strong>{{participant.category.code}}:</strong>
+	<h3>{% trans "Category" %}: <strong>{{participant.category.code}}:</strong>
 	{{participant.category.get_gender_display}}, {{participant.category.description}}
-	</h2>
+	</h3>
 {% endif %}
-<p>&nbsp;</p>
 <hr/>
-<br/>
-<br/>
 <h2>
-{% trans "I, the undersigned, confirm that I am" %}
-<strong>{{participant.license_holder.first_name}} {{participant.license_holder.last_name}}</strong>
-{% trans "and my date of birth is " %}
-<strong>{{participant.license_holder.date_of_birth}}</strong>.
+{% trans "I confirm that I am" %}
+<strong>{{participant.license_holder.first_name}} {{participant.license_holder.last_name}}</strong>,
+{% if participant.category %}
+	{% trans "racing category" %} <strong>{{participant.category.code}}:</strong>,
+	{% trans "and my date of birth is " %}
+	<strong>{{participant.license_holder.date_of_birth}}</strong>.
+{% else %}
+	{% trans "and my date of birth is " %}
+	<strong>{{participant.license_holder.date_of_birth}}</strong>.
+{% endif %}
 </h2>
-<br/>
-<br/>
-<div id="id_signature_canvas"></div>
 {% crispy form %}
-<p/>
-<p/>
-<p/>
-<div class="container">
-	<div class="row hidden-print">
+<div class="container hidden-print">
+	<div class="row">
 		<div class="col-md-12 text-right">
 			<a class="btn btn-primary" href="{{path}}SetSignatureWithTouchScreen/0/">{% trans "Get Signature with Scriptel" %}</a>
 		</div>

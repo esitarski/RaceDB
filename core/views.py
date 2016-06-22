@@ -3164,6 +3164,8 @@ class ParticipantSignatureForm( Form ):
 			self.helper.layout = Layout(
 				Container(
 					Row( Col(Field('signature'), 12) ),
+					Row( Col(Div(id="id_signature_canvas"), 12) ),
+
 					Row(
 						Col(button_args[0],4),
 						Col(button_args[1],4),
