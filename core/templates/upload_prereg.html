@@ -80,10 +80,11 @@ The same prereg data sheet can be imported into the same Competition any number 
 </thead>
 <tbody>
 <tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Required.  Regional License code (<strong>not UCI code</strong>).</td></tr>
+<tr><td><strong>UCI Code</strong> or <strong>UCICode</strong> or <strong>UCI</strong></td><td>Optional data field.  UCI code (format NNNYYYYMMDD).</td></tr>
 <tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Optional data field.  Rider's Last name.</td></tr>
 <tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Optional data field.  Rider's First name.</td></tr>
-<tr><td><strong>Gender</strong> or <strong>Rider Gender</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else it is read as <strong>Men</strong>.  A blank field is read as "No Gender".</td></tr>
-<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional data field.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.</td></tr>
+<tr><td><strong>Gender</strong> or <strong>Rider Gender</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else, or is blank, it is read as <strong>Men</strong>.</td></tr>
+<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional data field.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.   If missing, and the UCI Code is present, the date of birth will be extracted from the UCI code.</td></tr>
 <tr><td><strong>Team</strong></td><td>Optional data field.  Rider's Team.  The Team must already be defined in the database.</td></tr>
 <tr><td><strong>Category</strong></td><td>Optional data field.  Rider's Category for this race.  The field must match the Category Code of a Category in the Competition's Category Format.</td></tr>
 <tr><td><strong>Preregistered</strong></td><td>Optional.  Sets the rider's preregistered flag.  Default is True. **</td></tr>

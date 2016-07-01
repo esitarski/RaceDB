@@ -56,13 +56,23 @@ def init_prereg(
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-			date_of_birth	= get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
+			date_of_birth	= get_key(ur, ('Date of Birth','Birthdate','DOB'), None)
 			try:
 				date_of_birth = date_from_value(date_of_birth)
 			except Exception as e:
-				messsage_stream_write( 'Row {}: Invalid birthdate (ignoring) "{}" ({}) {}'.format(i, date_of_birth, ur, e) )
+				messsage_stream_write( 'Row {}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
+					i, date_of_birth, ur, e)
+				)
 				date_of_birth = None
 			date_of_birth 	= date_of_birth if date_of_birth != import_utils.invalid_date_of_birth else None
+			
+			uci_code = to_str(get_key(ur,('UCI Code','UCICode', 'UCI'), None))
+			# If no date of birth, get it from the UCI code.
+			if not date_of_birth and uci_code:
+				try:
+					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
+				except:
+					pass
 			
 			license_code	= to_int_str(get_key(ur, license_col_names, u'')).upper().strip()
 			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
@@ -107,8 +117,6 @@ def init_prereg(
 			
 			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
 			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
-			uci_code = to_str(get_key(ur,('UCI Code','UCICode', 'UCI'), None))
-			
 			participant_optional_events = {
 				optional_events[field]:to_bool(value) for field, value in ur.iteritems() if field in optional_events
 			}
