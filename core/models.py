@@ -746,7 +746,7 @@ class Competition(models.Model):
 		participants_changed = []
 		if self.number_set:
 			participants = self.get_participants()
-			bib_last = { p.pk: p.bib for p in participants }
+			bib_last = { pk:bib for pk, bib in participants.values_list('pk', 'bib') }
 			participants.update( bib=None )
 			
 			self.number_set.normalize()
