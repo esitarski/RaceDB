@@ -899,7 +899,7 @@ class CategoryNumbers( models.Model ):
 			else:
 				nBegin, nEnd = [int(v) for v in pair[:2]]
 				nBegin = max( nBegin, 1 )
-				nEnd = min( nEnd, 10000 )
+				nEnd = min( nEnd, 99999 )
 				if exclude:
 					include.difference_update( xrange(nBegin, nEnd+1) )
 				else:
