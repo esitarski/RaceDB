@@ -747,19 +747,34 @@ class Competition(models.Model):
 		if self.number_set:
 			participants = self.get_participants()
 			
+			category_nums = {}
+			for category_numbers in CategoryNumbers.objects.filter( competition=self ):
+				for c in category_numbers.categories.all():
+					category_nums[c.pk] = category_numbers.get_numbers()
+			
 			bib_last = { pk:bib for pk, bib in participants.values_list('pk', 'bib') }
 			participants.update( bib=None )
 			
 			self.number_set.normalize()
 			
-			nses = { pk:bib for pk, bib in NumberSetEntry.objects.filter(number_set=self.number_set, date_lost=None)
-				.values_list('license_holder__pk', 'bib') }
+			nses = defaultdict( list )
+			for pk, bib in NumberSetEntry.objects.filter(
+					number_set=self.number_set, date_lost=None).values_list(
+					'license_holder__pk', 'bib'):
+				nses[pk].append( bib )
 			
 			with transaction.atomic():
 				for p in participants:
-					p.bib = nses.get( p.license_holder.pk, None )
-					if bib_last[p.pk] != p.bib:
+					bib_category = None
+					if p.category:
+						for bib in nses[p.license_holder.pk]:
+							if bib in category_nums[p.category.pk]:
+								bib_category = bib
+								break
+					if p.bib != bib_category:
+						p.bib = bib_category
 						p.save()
+					if bib_last[p.pk] != p.bib:
 						participants_changed.append( p )
 		
 		participants_changed.sort( key=lambda p: (p.bib or 99999999, p.license_holder.search_text) ) 
