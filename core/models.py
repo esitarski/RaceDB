@@ -746,16 +746,18 @@ class Competition(models.Model):
 		participants_changed = []
 		if self.number_set:
 			participants = self.get_participants()
+			
 			bib_last = { pk:bib for pk, bib in participants.values_list('pk', 'bib') }
 			participants.update( bib=None )
 			
 			self.number_set.normalize()
 			
+			nses = { pk:bib for pk, bib in NumberSetEntry.objects.filter(number_set=self.number_set, date_lost=None)
+				.values_list('license_holder__pk', 'bib') }
+			
 			with transaction.atomic():
 				for p in participants:
-					nse = NumberSetEntry.objects.filter( number_set=self.number_set, license_holder=p.license_holder, date_lost=None ).first()
-					if nse:
-						p.bib = nse.bib
+					p.bib = nses.get( p.license_holder.pk, None )
 					if bib_last[p.pk] != p.bib:
 						p.save()
 						participants_changed.append( p )
