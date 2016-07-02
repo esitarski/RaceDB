@@ -742,22 +742,23 @@ class Competition(models.Model):
 		participants_changed.sort( key=lambda p: (p.bib or 99999999, p.license_holder.search_text) ) 
 		return participants_changed
 	
-	@transaction.atomic
 	def apply_number_set( self ):
 		participants_changed = []
 		if self.number_set:
+			participants = self.get_participants()
+			bib_last = { p.pk: p.bib for p in participants }
+			participants.update( bib=None )
+			
 			self.number_set.normalize()
-			for participant in self.get_participants():
-				bib_last = participant.bib
-				
-				nse = NumberSetEntry.objects.filter( number_set=self.number_set, license_holder=participant.license_holder, date_lost=None ).first()
-				if nse:
-					participant.bib = nse.bib
-				else:
-					participant.bib = None
-				if bib_last != participant.bib:
-					participant.save()
-					participants_changed.append( participant )
+			
+			with transaction.atomic():
+				for p in participants:
+					nse = NumberSetEntry.objects.filter( number_set=self.number_set, license_holder=p.license_holder, date_lost=None ).first()
+					if nse:
+						p.bib = nse.bib
+					if bib_last[p.pk] != p.bib:
+						p.save()
+						participants_changed.append( p )
 		
 		participants_changed.sort( key=lambda p: (p.bib or 99999999, p.license_holder.search_text) ) 
 		return participants_changed
