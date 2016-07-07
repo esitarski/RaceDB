@@ -47,9 +47,9 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 		
 	# Check for an existing participant.
 	if license_code:
-		participants = list( Participant.objects.filter( competition=competition, license_holder__license_code=license_code ) )
+		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor, license_holder__license_code=license_code ) )
 	else:
-		participants = list( Participant.objects.filter( competition=competition ).filter(
+		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor ).filter(
 			Q(license_holder__license_code=key) | Q(tag=key) | Q(tag2=key)) )
 	
 	if participants:

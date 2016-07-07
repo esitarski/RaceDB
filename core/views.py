@@ -231,7 +231,7 @@ class LicenseHolderForm( ModelForm ):
 		
 	def manageTag( self, request, license_holder ):
 		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderTagChange', license_holder.id) )
-		
+	
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
@@ -272,8 +272,9 @@ class LicenseHolderForm( ModelForm ):
 				Col(Field('zip_postal', size=10), 3),
 			),
 			Row(
-				Col(Field('email', size=50), 4),
-				Col(Field('phone', size=50), 4),
+				Col(Field('email', size=50), 6),
+				Col(Field('phone', size=20), 4),
+				Col(HTML('<button id="idSendEmail class="btn btn-primary" onClick="sendEmail()">Send Email</button>'), 1),
 			),
 			Row(
 				ColKey(

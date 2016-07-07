@@ -24,6 +24,7 @@ data_headers = (
 	'Bib',
 	'Tag',
 	'Team',
+	'Role',
 	'Confirmed',
 	'Paid',
 )
@@ -49,7 +50,7 @@ def write_row_data( ws, row, row_data, format = None ):
 	return row + 1
 
 def get_participant_excel( q = None ):
-	q = q or Q()
+	q = (q or Q()) & Q( role=Participant.Competitor )
 	
 	output = StringIO.StringIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
@@ -79,6 +80,7 @@ def get_participant_excel( q = None ):
 			p.bib if p.bib else u'',
 			p.tag,
 			p.team.name if p.team else u'',
+			p.get_role_display(),
 			p.confirmed,
 			p.paid,
 		]

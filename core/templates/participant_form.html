@@ -10,6 +10,14 @@
 	{% endif %}
 {% endblock srcjavascript %}
 
+{% block javascript %}
+	function sendEmail() {
+		var email_value = "{{participant.license_holder.email}}";
+		if( email_value )
+			window.open('mailto:' + email_value);
+	}
+{% endblock javascript %}
+
 {% block onload %}
 	{% if participant.competition.show_signature and participant.signature and not participant.is_jsignature %}
 		var escript = new ScriptelEasyScript();
@@ -385,7 +393,7 @@
 <hr/>
 	{% if isEdit %}
 		{% if participant.is_done %}
-			{% if participant.has_any_events %}
+			{% if participant.has_any_events or not participant.is_competitor %}
 				<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate.  Proceed." %}</a>
 			{% else %}
 				<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "No Events Selected.  Proceed anyway?" %}</a>

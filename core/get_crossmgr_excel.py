@@ -107,7 +107,7 @@ def add_categories_page( wb, title_format, event ):
 	ws = wb.add_worksheet('--CrossMgr-Categories')
 	
 	participant_categories = set( Category.objects.filter(pk__in =
-			Participant.objects.filter(competition = event.competition).order_by('category__pk').values_list('category__pk',flat=True).distinct()
+			Participant.objects.filter(competition=event.competition,role=Participant.Competitor).order_by('category__pk').values_list('category__pk',flat=True).distinct()
 		)
 	)
 	

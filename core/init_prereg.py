@@ -1,3 +1,4 @@
+import re
 import sys
 import datetime
 from xlrd import open_workbook, xldate_as_tuple
@@ -39,11 +40,17 @@ def init_prereg(
 	
 	optional_events = { event.name.lower():event for event in competition.get_events() if event.optional }
 	
+	role_code = {}
+	for role_type, roles in Participant.COMPETITION_ROLE_CHOICES:
+		role_code.update( { unicode(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
+		
 	# Construct a cache to find categories quicker.
+	category_code_gender_suffix = re.compile( r' \(Open\)$| \(Men\) $| \(Women\)$' )
 	cat_gender = defaultdict( list )
 	for category in Category.objects.filter( format=competition.category_format ).order_by('gender', 'code'):
 		cat_gender[category.code].append( (category, category.gender) )
 	def get_category( category_code_search, gender_search ):
+		category_code_search = category_code_gender_suffix.sub( '', category_code_search ).strip()
 		for category, gender in cat_gender.get(category_code_search, []):
 			if gender_search == gender or gender == 2:
 				return category
@@ -122,6 +129,7 @@ def init_prereg(
 			}
 			race_entered    = to_str(get_key(ur,('Race Entered',), None))
 			
+			role			= role_code.get( ur.get('role','').lower().replace(' ', '').replace('.', ''), None )
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
 			#
@@ -244,6 +252,7 @@ def init_prereg(
 						('bib',bib), ('tag',tag), ('note',note),
 						('preregistered',preregistered), ('paid',paid), 
 						('seed_option',seed_option), ('est_kmh',est_kmh), 
+						('role',role),
 					):
 					if value is not None:
 						setattr( participant, attr, value )

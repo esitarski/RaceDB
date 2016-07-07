@@ -186,11 +186,13 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		if competition.seasons_pass:
 			competition_data['participants_paid_seasons_pass'] = Participant.objects.filter(
 				competition=competition,
+				role=Participant.Competitor,
 				paid=True,
 				license_holder__in=SeasonsPassHolder.objects.filter(seasons_pass=competition.seasons_pass).values_list('license_holder', flat=True)
 			).count()
 			competition_data['participants_paid_on_venue'] = Participant.objects.filter(
 				competition=competition,
+				role=Participant.Competitor,
 				paid=True
 			).exclude(
 				license_holder__in=SeasonsPassHolder.objects.filter(seasons_pass=competition.seasons_pass).values_list('license_holder', flat=True)
@@ -198,6 +200,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		else:
 			competition_data['participants_paid_on_venue'] = Participant.objects.filter(
 				competition=competition,
+				role=Participant.Competitor,
 				paid=True
 			).count()
 		competition_data['participants_unpaid'] = Participant.objects.filter(competition=competition, paid=False).count()

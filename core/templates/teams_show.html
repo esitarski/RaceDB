@@ -53,7 +53,9 @@ function hideShowTeam( i ) {
 			<ul>
 			{% for p in ti.staff %}
 				{% with h=p.license_holder %}
-					<li>{{p.get_role_display}}: <span style="font-size: 120%; font-weight: bold;">{{h.first_name}} {{h.last_name}}</span>, {{h.email}}, {{h.phone}}</li>
+					<li>{{p.get_role_display}}: <span style="font-size: 120%; font-weight: bold;">{{h.first_name}} {{h.last_name}}</span>, <a href="mailto:{{h.email}}">{{h.email}}</a>, <a href="tel:{{h.phone}}">{{h.phone}}</a>
+					&nbsp;&nbsp;&nbsp;<a class="btn btn-success btn-sm" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
+					</li>
 				{% endwith %}
 			{% empty %}
 					<li style="font-size: 120%; font-weight: bold;">&lt;&lt;{% trans "No staff" %}&gt;&gt;</li>

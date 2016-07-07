@@ -685,7 +685,7 @@ class Competition(models.Model):
 		return False
 	
 	def get_participants( self ):
-		return Participant.objects.filter( competition = self )
+		return Participant.objects.filter( competition=self )
 		
 	def has_participants( self ):
 		return self.get_participants().exists()
@@ -697,7 +697,7 @@ class Competition(models.Model):
 		if gender != -1:
 			categories_remaining = categories_remaining.filter( Q(gender=2) | Q(gender=gender) )
 		
-		participants = list( Participant.objects.filter(competition=self, license_holder=license_holder) )
+		participants = list( Participant.objects.filter(competition=self, role=Participant.Competitor, license_holder=license_holder) )
 		if not participants:
 			return list(categories_remaining)
 		
@@ -745,7 +745,9 @@ class Competition(models.Model):
 	def apply_number_set( self ):
 		participants_changed = []
 		if self.number_set:
-			participants = self.get_participants()
+			self.number_set.normalize()
+			
+			participants = self.get_participants().filter( role=Participant.Competitor )
 			
 			category_nums = {}
 			for category_numbers in CategoryNumbers.objects.filter( competition=self ):
@@ -755,13 +757,14 @@ class Competition(models.Model):
 			bib_last = { pk:bib for pk, bib in participants.values_list('pk', 'bib') }
 			participants.update( bib=None )
 			
-			self.number_set.normalize()
-			
 			nses = defaultdict( list )
 			for pk, bib in NumberSetEntry.objects.filter(
 					number_set=self.number_set, date_lost=None).values_list(
 					'license_holder__pk', 'bib'):
 				nses[pk].append( bib )
+				
+			for bibs in nses.itervalues():
+				bibs.sort()
 			
 			with transaction.atomic():
 				for p in participants:
@@ -786,7 +789,7 @@ class Competition(models.Model):
 			large_delete_all( NumberSetEntry, Q(number_set=self.number_set) )
 			NumberSetEntry.objects.bulk_create( [
 					NumberSetEntry(number_set=self.number_set, license_holder=participant.license_holder, bib=participant.bib, date_lost=None)
-						for participant in self.get_participants() if participant.bib
+						for participant in self.get_participants().filter(role=Participant.Competitor) if participant.bib
 				]
 			)
 			self.number_set.normalize()
@@ -1024,7 +1027,7 @@ class Event( models.Model ):
 		for w in self.get_wave_set().all():
 			bibParticipant = {}
 			for c in w.categories.all():
-				for p in Participant.objects.filter( competition = self.competition, category = c, bib__isnull = False ):
+				for p in Participant.objects.filter( competition=self.competition, role=Participant.Competitor, category=c, bib__isnull=False ):
 					if p.bib in bibParticipant:
 						duplicates.append( string_concat(
 							w.name, ': ', bibParticipant[p.bib].name,
@@ -1132,8 +1135,8 @@ class Event( models.Model ):
 		if not self.option_id:
 			return Participant.objects.filter(
 				competition=self.competition,
-				category__in=categories,
 				role=Participant.Competitor,
+				category__in=categories,
 			).select_related('license_holder','team')
 		else:
 			return Participant.objects.filter(
@@ -1802,7 +1805,7 @@ class Participant(models.Model):
 			(150, _('Paramedical Asst.')),
 			(160, _('Mechanic')),
 			(170, _('Driver')),
-			(199, _('Team Staff')),
+			(199, _('Staff')),
 			)
 		),
 		(_('Official'), (
@@ -1816,8 +1819,8 @@ class Participant(models.Model):
 		),
 		(_('Organizer'), (
 			(310, _('Administrator')),
-			(320, _('Mechanic')),
-			(330, _('Driver')),
+			(320, _('Organizer Mechanic')),
+			(330, _('Organizer Driver')),
 			(399, _('Organizer Staff')),
 			)
 		),
@@ -1897,6 +1900,12 @@ class Participant(models.Model):
 						license_holder.existing_tag = self.tag
 						license_holder.existing_tag2 = self.tag2
 						license_holder.save()
+		else:
+			self.bib = None
+			self.category = None
+			self.signature = ''
+			self.tag = ''
+			self.tag2 = ''
 				
 		self.propagate_bib_tag()
 		return super(Participant, self).save( *args, **kwargs )
@@ -2044,7 +2053,8 @@ class Participant(models.Model):
 		if not self.est_kmh:
 			for est_kmh in Participant.objects.filter(
 						license_holder=self.license_holder,
-						competition__discipline=self.competition.discipline
+						role=Participant.Competitor,
+						competition__discipline=self.competition.discipline,
 					).exclude(
 						est_kmh=0.0
 					).order_by(
@@ -2141,6 +2151,7 @@ class Participant(models.Model):
 		Participant.objects.filter(
 			competition=self.competition,
 			license_holder=self.license_holder,
+			role=Participant.Competitor,
 			category__in=category_numbers.categories.all()
 		).exclude(
 			id=self.id
@@ -2163,6 +2174,7 @@ class Participant(models.Model):
 		compatible_participant = Participant.objects.filter(
 			competition=self.competition,
 			license_holder=self.license_holder,
+			role=Participant.Competitor,
 			category__in=category_numbers.categories.all()
 		).exclude(
 			id=self.id
@@ -2173,25 +2185,25 @@ class Participant(models.Model):
 	def get_other_category_participants( self ):
 		return list(
 			Participant.objects.filter(
-				competition = self.competition,
-				license_holder = self.license_holder,
-				role = self.Competitor,
+				competition=self.competition,
+				license_holder=self.license_holder,
+				role=self.Competitor,
 			).exclude( id=self.id )
 		)
 	
 	def get_category_participants( self ):
 		return list(
 			Participant.objects.filter(
-				competition = self.competition,
-				license_holder = self.license_holder,
-				role = self.Competitor,
+				competition=self.competition,
+				license_holder=self.license_holder,
+				role=self.Competitor,
 			)
 		)
 	
 	def get_bib_conflicts( self ):
 		if not self.bib:
 			return []
-		conflicts = Participant.objects.filter( competition=self.competition, bib=self.bib )
+		conflicts = Participant.objects.filter( competition=self.competition, role=Participant.Competitor, bib=self.bib )
 		category_numbers = self.competition.get_category_numbers( self.category ) if self.category else None
 		if category_numbers:
 			conflicts = conflicts.filter( category__in=category_numbers.categories.all() )
