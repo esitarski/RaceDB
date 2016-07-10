@@ -21,18 +21,11 @@ Step 1:  Install Python 2.7:
 
 If you are running Mac or Linux, you likely have this already.
 
-If running Windows:
+If not,
 
-Go to https://www.python.org/download/releases/2.7.8/
+Go to https://www.python.org/downloads/
 
-Choose the installer for your platform:
-
-For Windows:
-* Windows x86 MSI Installer (for 32-bit windows).
-* Windows x86-64 MSI Installer (for 64-bit windows).
-
-To determine whether you are running 32 or 64 bit Windows, see:
-  windows.microsoft.com/en-us/windows7/find-out-32-or-64-bit
+Choose the latest installer of python 2.7.xx for your platform:
 
 ***********************************************************************
 Step 2:  Unzip RaceDB.zip
@@ -53,9 +46,15 @@ On other platforms, launch a terminal.
 ***********************************************************************
 Step 4:  Install "pip"
 
-"pip" is the python package installer.  It should come with Python 2.7.
-If you are using an old version you will have to install it yourself.
+"pip" is the python package installer.
+If you have python 2.7.9 or greater (but not python 3!) you can skip this step.
+To check what version of python you have, on the command line, enter:
 
+  python --version
+
+If this is earlier than python 2.7.9, you need to install pip.
+
+First, make sure you are connect to the internet.
 In your cmd/terminal window, enter:
 
   cd C:\RaceDB
