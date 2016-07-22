@@ -444,83 +444,89 @@ function drawCharts() {
 		}
 	);
 	
-	var menCategoriesChart = new google.visualization.ComboChart(document.getElementById("menCategoriesChartDiv"));
-	var total_cur = 0;
-	for( var i = 1; i < payload.category_total_men.length; ++i ) {
-		total_cur += payload.category_total_men[i][1];
-	}
-	for( var i = 1; i < payload.category_total_men.length; ++i ) {
-		payload.category_total_men[i][1] = formatIntPercent(payload.category_total_men[i][1], total_cur);
-		payload.category_total_men[i][2] = formatFloat(payload.category_total_men[i][2]);
-	}
-	menCategoriesChart.draw(
-		google.visualization.arrayToDataTable(payload.category_total_men),
-		{
-			title:"Men's Category Participation (includes attendees competing in multiple categories)",
-			bar: { groupWidth: '75%' },
-			legend: {position: 'none'},
-			animation: animationOption,
-			seriesType: 'bars',
-			series: {
-				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
-				vAxes: {
-					1: { minValue:0, maxValue:100 }
-				},
-			},
+	if( payload.category_total_men.length > 1 ) {
+		var menCategoriesChart = new google.visualization.ComboChart(document.getElementById("menCategoriesChartDiv"));
+		var total_cur = 0;
+		for( var i = 1; i < payload.category_total_men.length; ++i ) {
+			total_cur += payload.category_total_men[i][1];
 		}
-	);
+		for( var i = 1; i < payload.category_total_men.length; ++i ) {
+			payload.category_total_men[i][1] = formatIntPercent(payload.category_total_men[i][1], total_cur);
+			payload.category_total_men[i][2] = formatFloat(payload.category_total_men[i][2]);
+		}
+		menCategoriesChart.draw(
+			google.visualization.arrayToDataTable(payload.category_total_men),
+			{
+				title:"Men's Category Participation (includes attendees competing in multiple categories)",
+				bar: { groupWidth: '75%' },
+				legend: {position: 'none'},
+				animation: animationOption,
+				seriesType: 'bars',
+				series: {
+					1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+					vAxes: {
+						1: { minValue:0, maxValue:100 }
+					},
+				},
+			}
+		);
+	}
 	
-	var womenCategoriesChart = new google.visualization.ComboChart(document.getElementById("womenCategoriesChartDiv"));
-	var total_cur = 0;
-	for( var i = 1; i < payload.category_total_women.length; ++i ) {
-		total_cur += payload.category_total_women[i][1];
-	}
-	for( var i = 1; i < payload.category_total_women.length; ++i ) {
-		payload.category_total_women[i][1] = formatIntPercent(payload.category_total_women[i][1], total_cur);
-		payload.category_total_women[i][2] = formatFloat(payload.category_total_women[i][2]);
-	}
-	womenCategoriesChart.draw(
-		google.visualization.arrayToDataTable(payload.category_total_women),
-		{
-			title:"Women's Category Participation (includes attendees competing in multiple categories)",
-			bar: { groupWidth: '75%' },
-			legend: {position: 'none'},
-			animation: animationOption,
-			seriesType: 'bars',
-			series: {
-				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
-				vAxes: {
-					1: { minValue:0, maxValue:100 }
-				},
-			},
+	if( payload.category_total_women.length ) {
+		var womenCategoriesChart = new google.visualization.ComboChart(document.getElementById("womenCategoriesChartDiv"));
+		var total_cur = 0;
+		for( var i = 1; i < payload.category_total_women.length; ++i ) {
+			total_cur += payload.category_total_women[i][1];
 		}
-	);
+		for( var i = 1; i < payload.category_total_women.length; ++i ) {
+			payload.category_total_women[i][1] = formatIntPercent(payload.category_total_women[i][1], total_cur);
+			payload.category_total_women[i][2] = formatFloat(payload.category_total_women[i][2]);
+		}
+		womenCategoriesChart.draw(
+			google.visualization.arrayToDataTable(payload.category_total_women),
+			{
+				title:"Women's Category Participation (includes attendees competing in multiple categories)",
+				bar: { groupWidth: '75%' },
+				legend: {position: 'none'},
+				animation: animationOption,
+				seriesType: 'bars',
+				series: {
+					1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+					vAxes: {
+						1: { minValue:0, maxValue:100 }
+					},
+				},
+			}
+		);
+	}
 	
-	var openCategoriesChart = new google.visualization.ComboChart(document.getElementById("openCategoriesChartDiv"));
-	var total_cur = 0;
-	for( var i = 1; i < payload.category_total_open.length; ++i ) {
-		total_cur += payload.category_total_open[i][1];
-	}
-	for( var i = 1; i < payload.category_total_open.length; ++i ) {
-		payload.category_total_open[i][1] = formatIntPercent(payload.category_total_open[i][1], total_cur);
-		payload.category_total_open[i][2] = formatFloat(payload.category_total_open[i][2]);
-	}
-	openCategoriesChart.draw(
-		google.visualization.arrayToDataTable(payload.category_total_open),
-		{
-			title:"Open Category Participation (includes attendees competing in multiple categories)",
-			bar: { groupWidth: '75%' },
-			legend: {position: 'none'},
-			animation: animationOption,
-			seriesType: 'bars',
-			series: {
-				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
-				vAxes: {
-					1: { minValue:0, maxValue:100 }
-				},
-			},
+	if( payload.category_total_open.length > 1 ) {
+		var openCategoriesChart = new google.visualization.ComboChart(document.getElementById("openCategoriesChartDiv"));
+		var total_cur = 0;
+		for( var i = 1; i < payload.category_total_open.length; ++i ) {
+			total_cur += payload.category_total_open[i][1];
 		}
-	);
+		for( var i = 1; i < payload.category_total_open.length; ++i ) {
+			payload.category_total_open[i][1] = formatIntPercent(payload.category_total_open[i][1], total_cur);
+			payload.category_total_open[i][2] = formatFloat(payload.category_total_open[i][2]);
+		}
+		openCategoriesChart.draw(
+			google.visualization.arrayToDataTable(payload.category_total_open),
+			{
+				title:"Open Category Participation (includes attendees competing in multiple categories)",
+				bar: { groupWidth: '75%' },
+				legend: {position: 'none'},
+				animation: animationOption,
+				seriesType: 'bars',
+				series: {
+					1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+					vAxes: {
+						1: { minValue:0, maxValue:100 }
+					},
+				},
+			}
+		);
+	}
 	
 	// -----------------------------------------------------------------
 	// Average and Max by Category
