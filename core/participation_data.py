@@ -257,6 +257,9 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	
 	# Initialize the category total.
 	category_total = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_total_overall.iteritems()), key=lambda x: x[1], reverse=True )
+	category_total_men = [['Category', 'Total']] + [[re.sub(r' \(Men\)$', '', c), t] for c, t in category_total[1:] if c.endswith( ' (Men)' )]
+	category_total_women = [['Category', 'Total']] + [[re.sub(r' \(Women\)$', '', c), t] for c, t in category_total[1:] if c.endswith( ' (Women)' )]
+	category_total_open = [['Category', 'Total']] + [[re.sub(r' \(Open\)$', '', c), t] for c, t in category_total[1:] if c.endswith( ' (Open)' )]
 	
 	#--------------
 	ccc = [['Competition'] + [name for name, count in category_total[1:]]]
@@ -269,11 +272,13 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 				) if category_competition_total[competition].get(name, 0) != 0 else 0 for name, count in category_total[1:]] )
 	
 	# Add cumulative percent to the category total.
-	category_total[0].append( 'Cumulative %' )
-	cumulativePercent = 0.0
-	for c in category_total[1:]:
-		cumulativePercent += 100.0*c[-1] / participants_total
-		c.append( cumulativePercent )
+	for ct in [category_total, category_total_men, category_total_women, category_total_open]:
+		ct[0].append( 'Cumulative %' )
+		ct_total = sum( t for c, t in ct[1:] )
+		cumulativePercent = 0.0
+		for c in ct[1:]:
+			cumulativePercent += 100.0*c[-1] / ct_total
+			c.append( cumulativePercent )
 	
 	event_max = max(len(events) for events in event_competition_participants_total.itervalues()) if event_competition_participants_total else 0
 	eee = [['Competition'] + ['{}'.format(i+1) for i in xrange(event_max)]]
@@ -389,6 +394,9 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		'license_holder_women_profile':license_holder_women_profile,
 		
 		'category_total':category_total,
+		'category_total_men':category_total_men,
+		'category_total_women':category_total_women,
+		'category_total_open':category_total_open,
 		'category_competition_count':ccc,
 		'event_competition_count':eee,
 		

@@ -1793,7 +1793,7 @@ class Participant(models.Model):
 	team = models.ForeignKey( 'Team', null=True, db_index=True, on_delete=models.SET_NULL  )
 	
 	ROLE_NAMES = ( '',	# No zero code.
-		_('Team'), _('Official'), _('Organizer')
+		_('Team'), _('Official'), _('Organizer'), _('Press'),
 	)
 	Competitor = 110
 	COMPETITION_ROLE_CHOICES = (
@@ -1822,6 +1822,11 @@ class Participant(models.Model):
 			(320, _('Organizer Mechanic')),
 			(330, _('Organizer Driver')),
 			(399, _('Organizer Staff')),
+			)
+		),
+		(_('Press'), (
+			(410, _('Photographer')),
+			(420, _('Reporter')),
 			)
 		),
 	)

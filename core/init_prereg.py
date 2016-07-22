@@ -45,7 +45,7 @@ def init_prereg(
 		role_code.update( { unicode(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
 		
 	# Construct a cache to find categories quicker.
-	category_code_gender_suffix = re.compile( r' \(Open\)$| \(Men\) $| \(Women\)$' )
+	category_code_gender_suffix = re.compile( r'\(Open\)$|\(Men\)$|\(Women\)$' )
 	cat_gender = defaultdict( list )
 	for category in Category.objects.filter( format=competition.category_format ).order_by('gender', 'code'):
 		cat_gender[category.code].append( (category, category.gender) )

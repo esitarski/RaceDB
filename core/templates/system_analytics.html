@@ -430,7 +430,85 @@ function drawCharts() {
 	overallCategoriesChart.draw(
 		google.visualization.arrayToDataTable(payload.category_total),
 		{
-			title:'Participation by Category (includes attendees competing in multiple categories)',
+			title:'All Category Participation (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			legend: {position: 'none'},
+			animation: animationOption,
+			seriesType: 'bars',
+			series: {
+				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+				vAxes: {
+					1: { minValue:0, maxValue:100 }
+				},
+			},
+		}
+	);
+	
+	var menCategoriesChart = new google.visualization.ComboChart(document.getElementById("menCategoriesChartDiv"));
+	var total_cur = 0;
+	for( var i = 1; i < payload.category_total_men.length; ++i ) {
+		total_cur += payload.category_total_men[i][1];
+	}
+	for( var i = 1; i < payload.category_total_men.length; ++i ) {
+		payload.category_total_men[i][1] = formatIntPercent(payload.category_total_men[i][1], total_cur);
+		payload.category_total_men[i][2] = formatFloat(payload.category_total_men[i][2]);
+	}
+	menCategoriesChart.draw(
+		google.visualization.arrayToDataTable(payload.category_total_men),
+		{
+			title:"Men's Category Participation (includes attendees competing in multiple categories)",
+			bar: { groupWidth: '75%' },
+			legend: {position: 'none'},
+			animation: animationOption,
+			seriesType: 'bars',
+			series: {
+				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+				vAxes: {
+					1: { minValue:0, maxValue:100 }
+				},
+			},
+		}
+	);
+	
+	var womenCategoriesChart = new google.visualization.ComboChart(document.getElementById("womenCategoriesChartDiv"));
+	var total_cur = 0;
+	for( var i = 1; i < payload.category_total_women.length; ++i ) {
+		total_cur += payload.category_total_women[i][1];
+	}
+	for( var i = 1; i < payload.category_total_women.length; ++i ) {
+		payload.category_total_women[i][1] = formatIntPercent(payload.category_total_women[i][1], total_cur);
+		payload.category_total_women[i][2] = formatFloat(payload.category_total_women[i][2]);
+	}
+	womenCategoriesChart.draw(
+		google.visualization.arrayToDataTable(payload.category_total_women),
+		{
+			title:"Women's Category Participation (includes attendees competing in multiple categories)",
+			bar: { groupWidth: '75%' },
+			legend: {position: 'none'},
+			animation: animationOption,
+			seriesType: 'bars',
+			series: {
+				1: { targetAxisIndex:1, type:'line', color:'#FFA500' },
+				vAxes: {
+					1: { minValue:0, maxValue:100 }
+				},
+			},
+		}
+	);
+	
+	var openCategoriesChart = new google.visualization.ComboChart(document.getElementById("openCategoriesChartDiv"));
+	var total_cur = 0;
+	for( var i = 1; i < payload.category_total_open.length; ++i ) {
+		total_cur += payload.category_total_open[i][1];
+	}
+	for( var i = 1; i < payload.category_total_open.length; ++i ) {
+		payload.category_total_open[i][1] = formatIntPercent(payload.category_total_open[i][1], total_cur);
+		payload.category_total_open[i][2] = formatFloat(payload.category_total_open[i][2]);
+	}
+	openCategoriesChart.draw(
+		google.visualization.arrayToDataTable(payload.category_total_open),
+		{
+			title:"Open Category Participation (includes attendees competing in multiple categories)",
 			bar: { groupWidth: '75%' },
 			legend: {position: 'none'},
 			animation: animationOption,
@@ -793,7 +871,22 @@ function drawCharts() {
 		</div>
 	</div>
 </div>
+
 <div id='overallCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
+<div class="container"/>
+	<div class="row">
+		<div class="col-xs-4">
+			<div id="menCategoriesChartDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+		<div class="col-xs-4">
+			<div id="womenCategoriesChartDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+		<div class="col-xs-4">
+			<div id="openCategoriesChartDiv" style="width: 400px; height: 300px;"></div>
+		</div>
+	</div>
+</div>
+
 <div id='aveMaxCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
 </p>
 
