@@ -864,7 +864,7 @@ function drawCharts() {
 	{{payload.attendees_total}} Attendees,
 	{{payload.license_holders_attendance_total}} License Holders
 </h2>
-<div class="container"/>
+<div class="container">
 	<div class="row">
 		<div class="col-xs-4">
 			<div id="entriesDiv" style="width: 400px; height: 300px;"></div>
@@ -879,7 +879,7 @@ function drawCharts() {
 </div>
 
 <div id='overallCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
-<div class="container"/>
+<div class="container">
 	<div class="row">
 		<div class="col-xs-4">
 			<div id="menCategoriesChartDiv" style="width: 400px; height: 300px;"></div>
@@ -898,7 +898,7 @@ function drawCharts() {
 
 <p>
 <h3 class="page-break-before">Total Participation by Age</h3>
-<div class="container"/>
+<div class="container">
 	<div class="row">
 		<div class="col-xs-4">
 			<div id="histAllDiv" style="width: 400px; height: 300px;"></div>
@@ -915,7 +915,7 @@ function drawCharts() {
 
 <p>
 <h3>Average Number of Events Attended by Age</h3>
-<div class="container"/>
+<div class="container">
 	<div class="row">
 		<div class="col-xs-4">
 			<div id="aveEventsAllDiv" style="width: 400px; height: 300px;"></div>
@@ -932,7 +932,7 @@ function drawCharts() {
 
 <p>
 <h3>License Holder Participation by Age (as of {{payload.profile_year}})</h3>
-<div class="container"/>
+<div class="container">
 	<div class="row">
 		<div class="col-xs-4">
 			<div id="histAgeAllDiv" style="width: 400px; height: 300px;"></div>
@@ -954,7 +954,6 @@ function drawCharts() {
 <div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventPreRegChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='compEventPaymentChartDiv'style="width: 1200px; height: 500px;"></div>
-<!-- <div id="postalCodeChartDiv" style="width: 1200px; height: 500px;"></div> -->
 {% if payload.postal_codes %}
 	<br/>
 	<h3 class="page-break-before">Postal Chart</h3>
