@@ -3,8 +3,9 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">
 var payload = {{payload_json|safe}};
-google.load("visualization", "1.1", {packages:["corechart", "table" /*, "treemap" */]});
-google.setOnLoadCallback(drawCharts);
+
+google.charts.load("current", {packages:["corechart", "table"]});
+google.charts.setOnLoadCallback(drawCharts);
 
 function formatFloat( num, precision ) {
 	return {v:num, f:num.toFixed(precision ? precision : 2)};

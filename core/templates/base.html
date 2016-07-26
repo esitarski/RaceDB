@@ -4,20 +4,25 @@
 <title>{% if page_title %}{{page_title}}{% else %}RaceDB by Edward Sitarski{% endif %}</title>
 {% load staticfiles %}
 {% include "meta.html" %}
+<script type="text/javascript" src="{% static "js/jquery-2.2.4.min.js" %}"></script>
+
 <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
 <link rel="stylesheet" href="{% static "bootstrap/css/datepicker.css" %}">
 <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap-datetimepicker.min.css" %}">
+
 {% block linkstyles %}
 {% endblock linkstyles %}
-<script type="text/javascript" src="{% static "js/jquery-2.0.3.min.js" %}"></script>
-<!-- <script type="text/javascript" src="{% static "js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.min.js" %}"></script> -->
+
 {% block srcjavascript %}
 {% endblock srcjavascript %}
+
 <style>
 .row { margin: 8px 0px; }
 h2, h3, h4, h5 { margin: 1px; }
 @media print {
     .page-break-before {page-break-before: always;}
+{% block printstyle %}
+{% endblock printstyle %}
 }
 .table-no-border>thead>tr>th, 
 .table-no-border>tbody>tr>th, 
@@ -48,7 +53,8 @@ h2, h3, h4, h5 { margin: 1px; }
 	content: url({% static "images/warning.png" %});
 	width:20px; height:20px; 
 }
-
+{% block style %}
+{% endblock style %}
 </style>
 <script type="text/javascript">
 {% block javascript %}
@@ -111,7 +117,7 @@ function jump( link ) { window.location = link; }
 </div>
 <br/>&nbsp;<br/>&nbsp;<br/>
 <script type="text/javascript" src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+<script type="text/javascript" src="{% static "bootstrap/js/bootstrap-datepicker.js" %}"></script>
 <script type="text/javascript" src="{% static "bootstrap/js/bootstrap-datetimepicker.min.js" %}"></script>
-<script type="text/javascript" src="{% static "js/bootstrap-datepicker.js" %}"></script>
 </body>
 </html>

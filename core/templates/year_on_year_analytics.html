@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
 var payload = {{payload_json|safe}};
-google.load("visualization", "1", {packages:["corechart"]});
-google.setOnLoadCallback(drawCharts);
+
+google.charts.load("current", {packages:["corechart", "calendar"]});
+google.charts.setOnLoadCallback(drawCharts);
 
 function formatFloat( num, precision ) {
 	return {v:num, f:num.toFixed(precision ? precision : 2)};
@@ -16,6 +17,26 @@ function formatIntPercent( num, total ) {
 }
 
 function drawCharts() {
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn({ type: 'date', id: 'Date' });
+	dataTable.addColumn({ type: 'number', id: 'Participants' });
+	dataTable.addColumn({ type: 'string', role: 'tooltip', 'p': {'html': true} });
+	var rows = [];
+	var calendar = payload.calendar;
+	for( var i = 0; i < calendar.length; ++i )
+		rows.push( [new Date(calendar[i][0][0], calendar[i][0][1], calendar[i][0][2]), calendar[i][1], calendar[i][2]] );
+	dataTable.addRows( rows );
+	var calendarChart = new google.visualization.Calendar(document.getElementById('calendarChartDiv'));
+	calendarChart.draw(dataTable, {
+			title: "Participant by Day",
+			noDataPattern: {
+				backgroundColor: '#DDDDDD',
+				color: '#FFFFFF'
+			},
+			tooltip: {isHtml: true}
+		}
+	);
+
 	var animationOption = {};
 
 	var participantsTotalChart = new google.visualization.ColumnChart(document.getElementById('participantsTotalChartDiv'));
@@ -61,6 +82,9 @@ function drawCharts() {
 	{{payload.attendees_total}} Attendees,
 	{{payload.license_holders_attendance_total}} License Holders
 </h2>
+<p>
+<div id='calendarChartDiv'style="width: 1200px; height: 300px;"></div>
+</p>
 <div id='participantsTotalChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='licenseHoldersProfileChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='lastYearButNotThisYearChartDiv'style="width: 1200px; height: 500px;"></div>

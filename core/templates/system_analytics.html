@@ -1,10 +1,42 @@
 {% extends "base.html" %}
+
+{% block style %}
+	chart-big { min-height: 500px; width: 100%; height: 500px; }
+	chart-small { min-width: 400px; min-height: 300px; width: 400px; height: 300px; }
+{% endblock style %}
+
+{% block printstyle %}
+  .nav { display: none !important; }
+  .tab-content > .tab-pane {
+		display: block !important;
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+  .tab-content > .fade { opacity: 1; }
+{% endblock printstyle %}
+
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
+
 var payload = {{payload_json|safe}};
-google.load("visualization", "1.1", {packages:["corechart", "table" /*, "treemap" */]});
-google.setOnLoadCallback(drawCharts);
+google.charts.load("current", {packages:["corechart", "table"]});
+google.charts.setOnLoadCallback(drawCharts);
+
+var big_width=1200, big_height=500;
+var small_width=400, small_height=300;
+
+function fixSize( divId, options ) {
+	if( (' ' + document.getElementById(divId).className.trim() + ' ').indexOf(' chart-big ') > -1 ) {
+		options['width'] = big_width;
+		options['height'] = big_height;
+	}
+	else {
+		//options['width'] = small_width;
+		options['height'] = small_height;
+	}
+	return options;
+}
 
 function componentToHex(c) {
     var hex = c.toString(16);
@@ -422,14 +454,15 @@ function drawCharts() {
 	// -----------------------------------------------------------------
 	// Participation by Category
 	//
-	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById("overallCategoriesChartDiv"));
+	var divId = "overallCategoriesChartDiv";
+	var overallCategoriesChart = new google.visualization.ComboChart(document.getElementById(divId));
 	for( var i = 1; i < payload.category_total.length; ++i ) {
 		payload.category_total[i][1] = formatIntPercent(payload.category_total[i][1], payload.participants_total);
 		payload.category_total[i][2] = formatFloat(payload.category_total[i][2]);
 	}
 	overallCategoriesChart.draw(
 		google.visualization.arrayToDataTable(payload.category_total),
-		{
+		fixSize(divId, {
 			title:'All Category Participation (includes attendees competing in multiple categories)',
 			bar: { groupWidth: '75%' },
 			legend: {position: 'none'},
@@ -440,12 +473,13 @@ function drawCharts() {
 				vAxes: {
 					1: { minValue:0, maxValue:100 }
 				},
-			},
-		}
+			}
+		})
 	);
 	
 	if( payload.category_total_men.length > 1 ) {
-		var menCategoriesChart = new google.visualization.ComboChart(document.getElementById("menCategoriesChartDiv"));
+		var divId = "menCategoriesChartDiv";
+		var menCategoriesChart = new google.visualization.ComboChart(document.getElementById(divId));
 		var total_cur = 0;
 		for( var i = 1; i < payload.category_total_men.length; ++i ) {
 			total_cur += payload.category_total_men[i][1];
@@ -456,7 +490,7 @@ function drawCharts() {
 		}
 		menCategoriesChart.draw(
 			google.visualization.arrayToDataTable(payload.category_total_men),
-			{
+			fixSize(divId, {
 				title:"Men's Category Participation (includes attendees competing in multiple categories)",
 				bar: { groupWidth: '75%' },
 				legend: {position: 'none'},
@@ -467,13 +501,14 @@ function drawCharts() {
 					vAxes: {
 						1: { minValue:0, maxValue:100 }
 					},
-				},
-			}
+				}
+			})
 		);
 	}
 	
 	if( payload.category_total_women.length ) {
-		var womenCategoriesChart = new google.visualization.ComboChart(document.getElementById("womenCategoriesChartDiv"));
+		var divId = "womenCategoriesChartDiv";
+		var womenCategoriesChart = new google.visualization.ComboChart(document.getElementById(divId));
 		var total_cur = 0;
 		for( var i = 1; i < payload.category_total_women.length; ++i ) {
 			total_cur += payload.category_total_women[i][1];
@@ -484,7 +519,7 @@ function drawCharts() {
 		}
 		womenCategoriesChart.draw(
 			google.visualization.arrayToDataTable(payload.category_total_women),
-			{
+			fixSize(divId, {
 				title:"Women's Category Participation (includes attendees competing in multiple categories)",
 				bar: { groupWidth: '75%' },
 				legend: {position: 'none'},
@@ -495,13 +530,14 @@ function drawCharts() {
 					vAxes: {
 						1: { minValue:0, maxValue:100 }
 					},
-				},
-			}
+				}
+			})
 		);
 	}
 	
 	if( payload.category_total_open.length > 1 ) {
-		var openCategoriesChart = new google.visualization.ComboChart(document.getElementById("openCategoriesChartDiv"));
+		var divId = "openCategoriesChartDiv";
+		var openCategoriesChart = new google.visualization.ComboChart(document.getElementById(divId));
 		var total_cur = 0;
 		for( var i = 1; i < payload.category_total_open.length; ++i ) {
 			total_cur += payload.category_total_open[i][1];
@@ -512,7 +548,7 @@ function drawCharts() {
 		}
 		openCategoriesChart.draw(
 			google.visualization.arrayToDataTable(payload.category_total_open),
-			{
+			fixSize(divId, {
 				title:"Open Category Participation (includes attendees competing in multiple categories)",
 				bar: { groupWidth: '75%' },
 				legend: {position: 'none'},
@@ -523,26 +559,26 @@ function drawCharts() {
 					vAxes: {
 						1: { minValue:0, maxValue:100 }
 					},
-				},
-			}
+				}
+			})
 		);
 	}
 	
 	// -----------------------------------------------------------------
 	// Average and Max by Category
 	//
-	var aveMaxCategoriesChart = new google.visualization.CandlestickChart(document.getElementById("aveMaxCategoriesChartDiv"));
+	var divId = "aveMaxCategoriesChartDiv";
+	var aveMaxCategoriesChart = new google.visualization.CandlestickChart(document.getElementById(divId));
 	for( var i = 0; i < payload.category_average_max.length; ++i ) {
 		var r = payload.category_average_max[i];
 		payload.category_average_max[i] = [r[0], {v:r[1], f:'Avg: ' + r[1].toFixed(2) + ' --> Max: ' + r[2]}, {v:r[1],f:''}, {v:r[2],f:''}, {v:r[2], f:''}];
 	}
 	aveMaxCategoriesChart.draw(
 		google.visualization.arrayToDataTable(payload.category_average_max, true),
-		{
+		fixSize(divId, {
 			title:'Ave --> Max Participation by Category by Competition (includes attendees competing in multiple categories)',
-			legend: { position: 'none' },
-			animation: animationOption
-		}
+			legend: { position: 'none' }
+		})
 	);
 	
 	
@@ -594,7 +630,13 @@ function drawCharts() {
 	}
 	
 	var chartAveAll = new google.visualization.ColumnChart(document.getElementById('aveEventsAllDiv'));
-	var options = { title: 'All', legend: { position: 'none' }, hAxis:{baseline:0}, bar:{groupWidth:'90%'}, animation: animationOption };
+	var options = {
+		title: 'All',
+		legend: { position: 'none' },
+		hAxis:{baseline:0, textStyle: {fontSize:8} },
+		bar:{groupWidth:'90%'},
+		animation: animationOption
+	};
 	chartAveAll.draw(getAgeRangeAveEntriesTable( payload.age_range_average ), options);
 	
 	var chartAveMen = new google.visualization.ColumnChart(document.getElementById('aveEventsMenDiv'));
@@ -648,22 +690,51 @@ function drawCharts() {
 		] );
 	}
 	compChartData.addRows( rows );
-	var compChart = new google.visualization.ColumnChart(document.getElementById("compChartDiv"));
-	compChart.draw(compChartData, {title:'Attendees by Gender', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
+	
+	var divId = "compChartDiv";
+	var compChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	compChart.draw(compChartData, 
+		fixSize( divId, {
+			title:'Attendees by Gender',
+			bar: { groupWidth: '75%' },
+			isStacked: true,
+			legend: {position: 'none'},
+			hAxis: { textPosition: 'none' },
+			animation: animationOption
+		})
+	);
 	
 	// -----------------------------------------------------------------
 	// Category Participation
 	//
-	var compCategoryChart = new google.visualization.ColumnChart(document.getElementById("compCategoryChartDiv"));
+	var divId = "compCategoryChartDiv";
+	var compCategoryChart = new google.visualization.ColumnChart(document.getElementById(divId));
 	compCategoryChart.draw(google.visualization.arrayToDataTable(payload.category_competition_count),
-		{title:'Participation by Category (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'top'}, animation: animationOption} );
+		fixSize(divId, {
+			title:'Participation by Category (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			isStacked: true,
+			legend: {position: 'none'},
+			hAxis: { textPosition: 'none' },
+			animation: animationOption
+		})
+	);
 	
 	// -----------------------------------------------------------------
 	// Event Participation
 	//
-	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventChartDiv"));
+	var divId = "compEventChartDiv";
+	var compEventChart = new google.visualization.ColumnChart(document.getElementById(divId));
 	compEventChart.draw(google.visualization.arrayToDataTable(payload.event_competition_count),
-		{title:'Participation by Event (includes attendees competing in multiple categories)', bar: { groupWidth: '75%' }, isStacked: true, legend: {position: 'none'}, animation: animationOption} );
+		fixSize(divId, {
+			title:'Participation by Event (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			isStacked: true,
+			legend: {position: 'none'},
+			hAxis: { textPosition: 'none' },
+			animation: animationOption
+		})
+	);
 	
 	// -----------------------------------------------------------------
 	// Prereg Percent
@@ -685,17 +756,21 @@ function drawCharts() {
 		] );
 	}
 	preregChartData.addRows( rows );
-	var compEventChart = new google.visualization.ColumnChart(document.getElementById("compEventPreRegChartDiv"));
-	compEventChart.draw(preregChartData, {
+	
+	var divId = "compEventPreRegChartDiv";
+	var compEventChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	compEventChart.draw(preregChartData,
+		fixSize(divId, {
 			title:'PreReg: Overall: ' +
 				formatPercentInt(payload.prereg_participants_total, payload.participants_total).f +
 				' (includes attendees competing in multiple categories)',
 			bar: { groupWidth: '75%' },
 			isStacked: false,
-			legend: {position: 'top'},
+			legend: {position: 'none'},
 			animation: animationOption,
+			hAxis: { textPosition: 'none' },
 			vAxis: {viewWindow: {min: 0, max:100}}
-		}
+		})
 	);
 	
 	// -----------------------------------------------------------------
@@ -718,15 +793,18 @@ function drawCharts() {
 		] );
 	}
 	paymentChartData.addRows( rows );
-	var paymentEventChart = new google.visualization.ColumnChart(document.getElementById("compEventPaymentChartDiv"));
-	paymentEventChart.draw(paymentChartData, {
+	var divId = "compEventPaymentChartDiv";
+	var paymentEventChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	paymentEventChart.draw(paymentChartData,
+		fixSize(divId, {
 			title:'Payment Type (includes attendees competing in multiple categories)',
 			bar: { groupWidth: '75%' },
-			isStacked: false,
-			legend: {position: 'top'},
+			isStacked: true,
+			legend: {position: 'none'},
 			animation: animationOption,
+			hAxis: { textPosition: 'none' },
 			vAxis: {viewWindow: {min: 0, max:100}}
-		}
+		})
 	);
 	
 	// -----------------------------------------------------------------
@@ -740,37 +818,43 @@ function drawCharts() {
 	// Disciplines
 	//
 {% if payload.discipline_used_len > 1 %}
-	var disciplineOverallChart = new google.visualization.ColumnChart(document.getElementById("disciplineOverallChartDiv"));
-	disciplineOverallChart.draw(google.visualization.arrayToDataTable(payload.discipline_overall), {
+	var divId = "disciplineOverallChartDiv";
+	var disciplineOverallChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	disciplineOverallChart.draw(google.visualization.arrayToDataTable(payload.discipline_overall),
+		fixSize( divId, {
 			title:'Discipline Participation: All License Holders',
 			bar: { groupWidth: '75%' },
 			isStacked: false,
 			legend: {position: 'none'},
 			animation: animationOption,
 			vAxis: {viewWindow: {max: 100}}
-		}
+		})
 	);
 	
-	var disciplineGenderChart = new google.visualization.ColumnChart(document.getElementById("disciplineGenderChartDiv"));
-	disciplineGenderChart.draw(google.visualization.arrayToDataTable(payload.discipline_gender), {
+	var divId = "disciplineGenderChartDiv";
+	var disciplineGenderChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	disciplineGenderChart.draw(google.visualization.arrayToDataTable(payload.discipline_gender),
+		fixSize( divId, {
 			title:'Discipline Participation by Gender',
 			bar: { groupWidth: '75%' },
 			isStacked:false,
 			legend: {position: 'none'},
 			animation: animationOption,
 			vAxis: {viewWindow: {max: 100}}
-		}
+		})
 	);
 	
-	var disciplineAgeChart = new google.visualization.ColumnChart(document.getElementById("disciplineAgeChartDiv"));
-	disciplineAgeChart.draw(google.visualization.arrayToDataTable(payload.discipline_age), {
+	var divId = "disciplineAgeChartDiv";
+	var disciplineAgeChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	disciplineAgeChart.draw(google.visualization.arrayToDataTable(payload.discipline_age),
+		fixSize( divId, {
 			title:'Discipline Participation by Age',
 			bar: { groupWidth: '75%' },
 			isStacked: false,
 			legend: {position: 'top', maxLines: 3},
 			animation: animationOption,
 			vAxis: {viewWindow: {max: 100}}
-		}
+		})
 	);
 {% endif %}
 	
@@ -864,109 +948,166 @@ function drawCharts() {
 	{{payload.attendees_total}} Attendees,
 	{{payload.license_holders_attendance_total}} License Holders
 </h2>
-<div class="container">
+<div class="container"/>
 	<div class="row">
 		<div class="col-xs-4">
-			<div id="entriesDiv" style="width: 400px; height: 300px;"></div>
+			<div id="entriesDiv" class="chart-small"></div>
 		</div>
 		<div class="col-xs-4">
-			<div id="licenseHoldersDiv" style="width: 400px; height: 300px;"></div>
+			<div id="licenseHoldersDiv" class="chart-small"></div>
 		</div>
 		<div class="col-xs-4">
-			<div id="aveEntriesDiv" style="width: 400px; height: 300px;"></div>
+			<div id="aveEntriesDiv" class="chart-small"></div>
 		</div>
 	</div>
 </div>
 
-<div id='overallCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
 <div class="container">
-	<div class="row">
-		<div class="col-xs-4">
-			<div id="menCategoriesChartDiv" style="width: 400px; height: 300px;"></div>
+	<ul class="nav nav-tabs">
+		<li class="nav active"><a href="#ByCategory" data-toggle="tab">Category</a></li>
+		<li class="nav"><a href="#ByAge" data-toggle="tab">Age</a></li>
+		<li class="nav"><a href="#ByCompAndEvent" data-toggle="tab">Comp &amp; Event</a></li>
+		<li class="nav"><a href="#ByDiscipline" data-toggle="tab">Discipline</a></li>
+		<li class="nav"><a href="#ByPostalChart" data-toggle="tab">Postal</a></li>
+		<li class="nav"><a href="#ByData" data-toggle="tab">Data</a></li>
+	</ul>
+
+	<div class="tab-content">
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade in active" id="ByCategory">
+			<p>
+			<h3 class="page-break-before">Participation by Category</h3>
+			<div id='overallCategoriesChartDiv' class='chart-big'></div>
+			<div class="container">
+				<div class="row">
+					<div class="col-xs-4">
+						<div id="menCategoriesChartDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="womenCategoriesChartDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="openCategoriesChartDiv" class="chart-small"></div>
+					</div>
+				</div>
+			</div>
+			<div id='aveMaxCategoriesChartDiv' class="chart-big"></div>
+			</p>
 		</div>
-		<div class="col-xs-4">
-			<div id="womenCategoriesChartDiv" style="width: 400px; height: 300px;"></div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade" id="ByAge">
+			<p>
+			<h3 class="page-break-before">Participation by Age</h3>
+			<div class="container">
+				<div class="row">
+					<div class="col-xs-4">
+						<div id="histAllDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="histMenDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="histWomenDiv" class="chart-small"></div>
+					</div>
+				</div>
+			</div>
+			</p>
+
+			<p>
+			<h3>Average Number of Events Attended by Age</h3>
+			<div class="container">
+				<div class="row">
+					<div class="col-xs-4">
+						<div id="aveEventsAllDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="aveEventsMenDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="aveEventsWomenDiv" class="chart-small"></div>
+					</div>
+				</div>
+			</div>
+			</p>
+
+			<p>
+			<h3>License Holder Participation by Age (as of {{payload.profile_year}})</h3>
+			<div class="container">
+				<div class="row">
+					<div class="col-xs-4">
+						<div id="histAgeAllDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="histAgeMenDiv" class="chart-small"></div>
+					</div>
+					<div class="col-xs-4">
+						<div id="histAgeWomenDiv" class="chart-small"></div>
+					</div>
+				</div>
+			</div>
+			</p>
 		</div>
-		<div class="col-xs-4">
-			<div id="openCategoriesChartDiv" style="width: 400px; height: 300px;"></div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade" id="ByCompAndEvent">
+			<p>
+			<h2 class="page-break-before">Competitions and Events</h2>
+			<div id="compChartDiv" class="chart-big"></div>
+			<div id="compCategoryChartDiv" class="chart-big"></div>
+			<div id="compEventChartDiv" class="chart-big"></div>
+			<div id="compEventPreRegChartDiv" class="chart-big"></div>
+			<div id="compEventPaymentChartDiv" class="chart-big"></div>
+			</p>
+		</div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade" id="ByDiscipline">
+			<p>
+			<h3 class="page-break-before">Participation by Discipline</h3>
+			{% if payload.discipline_used_len > 1 %}
+				<div class="container">
+					<div class="row">
+						<div class="col-xs-4">
+							<div id="disciplineOverallChartDiv" class="chart-small"></div>
+						</div>
+						<div class="col-xs-4">
+							<div id="disciplineGenderChartDiv" class="chart-small"></div>
+						</div>
+						<div class="col-xs-4">
+							<div id="disciplineAgeChartDiv" class="chart-small"></div>
+						</div>
+					</div>
+				</div>
+			{% endif %}
+			</p>
+		</div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade" id="ByPostalChart">
+			<p>
+			<h3 class="page-break-before">Postal Chart</h3>
+			{% if payload.postal_codes %}
+				<canvas width=600 height=600 id="postalCodeCanvas"></canvas>
+			{% endif %}
+			</p>
+		</div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade" id="ByData">
+			<p>
+			<h2 class="page-break-before" >Data</h2>
+			<div id='statsTableDiv'></div>
+			<br/>
+			<div id='compTableDiv' class="page-break-before"></div>
+			</p>
 		</div>
 	</div>
 </div>
 
-<div id='aveMaxCategoriesChartDiv' style="width: 1200px; height: 500px;"></div>
 </p>
 
 <p>
-<h3 class="page-break-before">Total Participation by Age</h3>
-<div class="container">
-	<div class="row">
-		<div class="col-xs-4">
-			<div id="histAllDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-		<div class="col-xs-4">
-			<div id="histMenDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-		<div class="col-xs-4">
-			<div id="histWomenDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-	</div>
-</div>
-</p>
-
-<p>
-<h3>Average Number of Events Attended by Age</h3>
-<div class="container">
-	<div class="row">
-		<div class="col-xs-4">
-			<div id="aveEventsAllDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-		<div class="col-xs-4">
-			<div id="aveEventsMenDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-		<div class="col-xs-4">
-			<div id="aveEventsWomenDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-	</div>
-</div>
-</p>
-
-<p>
-<h3>License Holder Participation by Age (as of {{payload.profile_year}})</h3>
-<div class="container">
-	<div class="row">
-		<div class="col-xs-4">
-			<div id="histAgeAllDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-		<div class="col-xs-4">
-			<div id="histAgeMenDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-		<div class="col-xs-4">
-			<div id="histAgeWomenDiv" style="width: 400px; height: 300px;"></div>
-		</div>
-	</div>
-</div>
-</p>
-
-<p>
-<h2 class="page-break-before">Competitions</h2>
-<div id='compChartDiv'style="width: 1200px; height: 500px;"></div>
-<div id='compCategoryChartDiv'style="width: 1200px; height: 500px;"></div>
-<div id='compEventChartDiv'style="width: 1200px; height: 500px;"></div>
-<div id='compEventPreRegChartDiv'style="width: 1200px; height: 500px;"></div>
-<div id='compEventPaymentChartDiv'style="width: 1200px; height: 500px;"></div>
-{% if payload.postal_codes %}
-	<br/>
-	<h3 class="page-break-before">Postal Chart</h3>
-	<canvas width=600 height=600 id="postalCodeCanvas"></canvas>
-{% endif %}
-
-{% if payload.discipline_used_len > 1 %}
-<h3 class="page-break-before">Discipline Analysis</h3>
-<div id='disciplineOverallChartDiv'style="width: 1200px; height: 500px;"></div>
-<div id='disciplineGenderChartDiv'style="width: 1200px; height: 500px;"></div>
-<div id='disciplineAgeChartDiv'style="width: 1200px; height: 500px;"></div>
-<hr/>
-{% endif %}
 
 {% if False and license_holders_event_errors %}
 <div class="hidden-print">
@@ -1006,11 +1147,4 @@ function drawCharts() {
 <hr/>
 </div>
 {% endif %}
-
-<h2 class="page-break-before" >Detailed Data</h2>
-<div id='statsTableDiv'></div>
-<br/>
-<div id='compTableDiv' class="page-break-before"></div>
-</p>
-
 {% endblock content %}

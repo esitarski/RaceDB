@@ -1077,9 +1077,6 @@ class Event( models.Model ):
 		categories_without_wave = categories_all - categories_with_wave
 		return sorted( categories_without_wave, key = lambda c: c.sequence )
 	
-	def get_participant_count( self ):
-		return sum( w.get_participant_count() for w in self.get_wave_set().all() )
-
 	def get_late_reg_exists( self ):
 		return any( w.get_late_reg().exists() for w in self.get_wave_set().all() )
 		
@@ -1152,6 +1149,9 @@ class Event( models.Model ):
 	def has_participants( self ):
 		return self.get_participants().exists()
 		
+	def get_participant_count( self ):
+		return self.get_participants().count()
+
 	def __unicode__( self ):
 		return u'{}, {} ({})'.format(self.date_time, self.name, self.competition.name)
 	

@@ -2,6 +2,7 @@
 import datetime
 import utils
 from collections import defaultdict
+from StringIO import StringIO
 from models import *
 
 def year_on_year_data( discipline=None, race_class=None, organizers=None, include_labels=None, exclude_labels=None ):
@@ -25,6 +26,9 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	year_on_year = []
 	license_holders_year = []
 	license_holders_all = set()
+	participants_by_day = defaultdict( int )
+	events_by_day = defaultdict( list )
+	
 	for competition in competitions:
 		if not competition.has_participants():
 			continue
@@ -45,6 +49,9 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		for event in competition.get_events():
 			if not event.has_participants():
 				continue
+			
+			participants_by_day[event.date_time.date()] += event.get_participant_count()
+			events_by_day[event.date_time.date()].append( (competition.name, event.name) )
 			
 			add_to_value( 'events_total', 1 )
 			
@@ -114,6 +121,29 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 			for y, ap, att in zip(years, license_holders_profile, license_holders_total_year)]
 		license_holders_profile.insert( 0, ['Year'] + ['{}'.format(i) for i in xrange(max_profile)] )
 	
+	def format_competitions_events( d, v, competitions_events ):
+		out = StringIO()
+		out.write( '<div style="padding:5px 5px 5px 5px">' )
+		out.write( u'<strong>{}<br/>'.format(v) )
+		out.write( unicode(d.strftime('%Y-%m-%d')) )
+		out.write( u'</strong>' )
+		competition_last = None
+		for i, (competition, event) in enumerate(competitions_events):
+			if competition != competition_last:
+				if competition_last is not None:
+					out.write( u'</ul>' )
+				out.write( u'<strong>' )
+				out.write( competition )
+				out.write( u'</strong><ul>' )
+				competition_last = competition
+			out.write( '<li>' )
+			out.write( event )
+			out.write( '</li>' )
+		
+		out.write( '</ul></div>' )
+		return out.getvalue()
+		
+	calendar = sorted( [[d.year, d.month-1, d.day], v, format_competitions_events(d, v, events_by_day[d])] for d, v in participants_by_day.iteritems() )
 	payload = {
 		'competitions_total': sum( yoy['competitions_total'] for yoy in year_on_year ),
 		'events_total': sum( yoy['events_total'] for yoy in year_on_year ),
@@ -128,5 +158,6 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		'last_year_but_not_this_year': add_year_label(last_year_but_not_this_year),
 		'some_year_but_not_this_year': add_year_label(some_year_but_not_this_year),
 		'participants_total': participants_total,
+		'calendar': calendar,
 	}
 	return payload
