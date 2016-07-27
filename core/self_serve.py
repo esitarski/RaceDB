@@ -184,6 +184,7 @@ def SelfServe( request, do_scan=0 ):
 		errors.append( _('Not Registered') )
 
 	license_holder_errors = (
+		('good_eligible',		_('Ineligible to Compete')),
 		('good_waiver',			_('Missing/Expired Insurance Waiver')),
 	)
 	license_holder_warnings = (

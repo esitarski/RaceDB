@@ -309,6 +309,10 @@ class LicenseHolderForm( ModelForm ):
 				),
 			),
 			Row(
+				Col('eligible', 2),
+				Col( HTML(_('If not Eligible to Compete, this License Holder will not be allowed to participate in races until it is reset.  Always add a note (below) explaining the reason.')), 6 ),
+			),
+			Row(
 				Field('note', cols=80, rows=4),
 			),
 		)
@@ -2099,6 +2103,8 @@ class ParticipantSearchForm( Form ):
 	
 	has_events = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('None')), (1, _('Some'))), label = _('Has Events') )
 	
+	eligible = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Eligible') )
+	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
 		super(ParticipantSearchForm, self).__init__(*args, **kwargs)
@@ -2129,7 +2135,8 @@ class ParticipantSearchForm( Form ):
 		self.helper.layout = Layout(
 			Row( Field('scan', size=20, autofocus=True ), HTML('&nbsp;'*8), Field('event'),),
 			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
-			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'), Field('paid'), Field('complete'), Field('has_events'), ),
+			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'),
+				Field('paid'), Field('complete'), Field('has_events'), Field('eligible'), ),
 			Row( *(button_args[:-1] + [HTML('&nbsp;'*8)] + button_args[-1:]) ),
 		)
 
@@ -2214,6 +2221,9 @@ def Participants( request, competitionId ):
 	
 	if 0 <= int(participant_filter.get('paid',-1)) <= 1:
 		participants = participants.filter( paid=bool(int(participant_filter['paid'])) )
+	
+	if 0 <= int(participant_filter.get('eligible',-1)) <= 1:
+		participants = participants.filter( license_holder__eligible=bool(int(participant_filter['eligible'])) )
 	
 	participants = participants.select_related('team', 'license_holder')
 	

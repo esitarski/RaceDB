@@ -37,10 +37,11 @@
 		<th>{% trans "Category" %}</th>
 		<th>{% trans "Bib" %}</th>
 		{% if using_tags %}<th>{% trans "Tag" %}</th>{% endif %}
+		<th>{% trans "Eligible" %}</th>
 		{% if using_waiver %}<th>{% trans "Waiver" %}</th>{% endif %}
 		<th>{% trans "Paid" %}</th>
 		{% if using_signature %}<th>{% trans "Sig." %}</th>{% endif %}
-		<th>{% trans "Confirmed" %}</th>
+		<th>{% trans "Conf." %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Role" %}</th>
 		<th>{% trans "License" %}</th>
@@ -66,6 +67,7 @@
 			{% if using_tags %}
 				<td>{% if p.get_tag_str %}{{p.get_tag_str|safe}}{% else %}<span class="is-err"/>{% endif %}</td>
 			{% endif %}
+			<td class="text-center">{% if p.role == 110 %}{{h.eligible|good_err_icon}}{% endif %}</td>
 			{% if using_waiver %}
 				<td class="text-center">{{p.good_waiver|good_err_icon}}</td>
 			{% endif %}

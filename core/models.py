@@ -1182,6 +1182,9 @@ class Event( models.Model ):
 				participant__category__in=categories,
 			).count()
 
+	def get_ineligible( self ):
+		return self.get_participants().filter( license_holder__eligible=False ).order_by('license_holder__search_text')
+			
 	def __unicode__( self ):
 		return u'{}, {} ({})'.format(self.date_time, self.name, self.competition.name)
 	
@@ -1524,6 +1527,7 @@ class LicenseHolder(models.Model):
 	SearchTextLength = 256
 	search_text = models.CharField( max_length=SearchTextLength, blank=True, default='', db_index=True )
 	
+	eligible = models.BooleanField( default=True, verbose_name=_('Eligible to Compete'), db_index=True )
 	note = models.TextField( null=True, blank=True, verbose_name=_('LicenseHolder Note') )
 	
 	emergency_contact_name = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact') )
@@ -2132,9 +2136,11 @@ class Participant(models.Model):
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
 	def good_est_kmh( self ):		return self.est_kmh or (not self.has_tt_events())
 	def good_waiver( self ):		return not self.has_unsigned_waiver
+	def good_eligible( self ):		return not self.is_competitor or self.license_holder.eligible
 	
 	def can_start( self ):
 		return (
+			self.good_eligible() and
 			self.good_bib() and
 			self.good_category() and
 			self.good_tag() and
@@ -2145,6 +2151,7 @@ class Participant(models.Model):
 	
 	def can_tt_start( self ):
 		return (
+			self.good_eligible() and
 			self.good_category()
 		)
 	
