@@ -1147,10 +1147,40 @@ class Event( models.Model ):
 			).select_related('license_holder','team')
 
 	def has_participants( self ):
-		return self.get_participants().exists()
+		categories = []
+		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
+		if not self.option_id:
+			return Participant.objects.filter(
+				competition=self.competition,
+				role=Participant.Competitor,
+				category__in=categories,
+			).exists()
+		else:
+			return ParticipantOption.objects.filter(
+				competition=self.competition,
+				option_id=self.option_id,
+				participant__role=Participant.Competitor,
+				participant__competition=self.competition,
+				participant__category__in=categories,
+			).exists()
 		
 	def get_participant_count( self ):
-		return self.get_participants().count()
+		categories = []
+		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
+		if not self.option_id:
+			return Participant.objects.filter(
+				competition=self.competition,
+				role=Participant.Competitor,
+				category__in=categories,
+			).count()
+		else:
+			return ParticipantOption.objects.filter(
+				competition=self.competition,
+				option_id=self.option_id,
+				participant__role=Participant.Competitor,
+				participant__competition=self.competition,
+				participant__category__in=categories,
+			).count()
 
 	def __unicode__( self ):
 		return u'{}, {} ({})'.format(self.date_time, self.name, self.competition.name)

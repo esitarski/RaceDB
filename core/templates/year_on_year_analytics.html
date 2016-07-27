@@ -28,7 +28,7 @@ function drawCharts() {
 	dataTable.addRows( rows );
 	var calendarChart = new google.visualization.Calendar(document.getElementById('calendarChartDiv'));
 	calendarChart.draw(dataTable, {
-			title: "Participant by Day",
+			title: "Participants by Day",
 			noDataPattern: {
 				backgroundColor: '#DDDDDD',
 				color: '#FFFFFF'
@@ -83,7 +83,7 @@ function drawCharts() {
 	{{payload.license_holders_attendance_total}} License Holders
 </h2>
 <p>
-<div id='calendarChartDiv'style="width: 1200px; height: 300px;"></div>
+<div id='calendarChartDiv'style="width: 1200px; height: {{payload.calendar_height}}px;"></div>
 </p>
 <div id='participantsTotalChartDiv'style="width: 1200px; height: 500px;"></div>
 <div id='licenseHoldersProfileChartDiv'style="width: 1200px; height: 500px;"></div>

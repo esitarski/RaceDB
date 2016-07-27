@@ -1,6 +1,7 @@
 
 import datetime
 import utils
+import operator
 from collections import defaultdict
 from StringIO import StringIO
 from models import *
@@ -21,50 +22,54 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	if exclude_labels:
 		competitions = competitions.exclude( report_labels__in = exclude_labels )
 	
-	competitions = competitions.order_by( 'start_date', 'pk' ).distinct()
+	all_events = []
+	for c in competitions:
+		all_events.extend( c.get_events() )
+	all_events.sort( key=(lambda e: e.date_time) )
 	
 	year_on_year = []
 	license_holders_year = []
 	license_holders_all = set()
-	participants_by_day = defaultdict( int )
 	events_by_day = defaultdict( list )
 	
-	for competition in competitions:
-		if not competition.has_participants():
+	competition_set = set()
+	
+	for event in all_events:
+		if not event.has_participants():
 			continue
 		
-		if not year_on_year or year_on_year[-1]['year'] != competition.start_date.year:
-			year_on_year.append( {'year':competition.start_date.year} )
+		event_date = event.date_time.date()
+		event_year = event_date.year
+		if not year_on_year or year_on_year[-1]['year'] != event_year:
+			year_on_year.append( {'year':event_year} )
 			license_holders_year.append( set() )
-		year_cur = year_on_year[-1]
-		
-		def add_to_value( k, v ):
-			year_cur[k] = year_cur.get(k, 0) + v
-		
-		add_to_value( 'competitions_total', 1 )
-		
-		license_holders = set()
-		license_holders_men = set()
-		license_holders_women = set()
-		for event in competition.get_events():
-			if not event.has_participants():
-				continue
 			
-			participants_by_day[event.date_time.date()] += event.get_participant_count()
-			events_by_day[event.date_time.date()].append( (competition.name, event.name) )
+			year_cur = year_on_year[-1]
 			
-			add_to_value( 'events_total', 1 )
+			def add_to_value( k, v ):
+				year_cur[k] = year_cur.get(k, 0) + v
 			
-			for participant in event.get_participants():
-				license_holders.add( participant.license_holder )
-				add_to_value( 'participants_total', 1 )
-				if participant.license_holder.gender == 0:
-					license_holders_men.add( participant.license_holder )
-					add_to_value( 'participants_men_total', 1 )
-				else:
-					license_holders_women.add( participant.license_holder )
-					add_to_value( 'participants_women_total', 1 )
+			license_holders = set()
+			license_holders_men = set()
+			license_holders_women = set()
+	
+		if event.competition not in competition_set:
+			add_to_value( 'competitions_total', 1 )
+			
+		events_by_day[event_date].append( event )
 		
+		add_to_value( 'events_total', 1 )
+		
+		for participant in event.get_participants():
+			license_holders.add( participant.license_holder )
+			add_to_value( 'participants_total', 1 )
+			if participant.license_holder.gender == 0:
+				license_holders_men.add( participant.license_holder )
+				add_to_value( 'participants_men_total', 1 )
+			else:
+				license_holders_women.add( participant.license_holder )
+				add_to_value( 'participants_women_total', 1 )
+	
 		add_to_value( 'attendees_total', len(license_holders) )
 		add_to_value( 'attendees_men_total', len(license_holders_men) )
 		add_to_value( 'attendees_women_total', len(license_holders_women) )
@@ -121,29 +126,38 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 			for y, ap, att in zip(years, license_holders_profile, license_holders_total_year)]
 		license_holders_profile.insert( 0, ['Year'] + ['{}'.format(i) for i in xrange(max_profile)] )
 	
-	def format_competitions_events( d, v, competitions_events ):
+	def format_competitions_events( d, events ):
+		events.sort( key=lambda e: (e.competition.name, e.date_time) )
+		counts = [event.get_participant_count() for event in events]
+		participants_total = sum( counts )
+		
+		competition_counts = defaultdict( int )
+		for event, count in zip(events, counts):
+			competition_counts[event.competition] += count
+		
 		out = StringIO()
-		out.write( '<div style="padding:5px 5px 5px 5px">' )
-		out.write( u'<strong>{}<br/>'.format(v) )
-		out.write( unicode(d.strftime('%Y-%m-%d')) )
-		out.write( u'</strong>' )
+		out.write( u'<div style="padding:5px 5px 5px 5px">' )
+		out.write( u'<strong>{}:</strong>&nbsp;{}<br/>'.format(participants_total, d.strftime('%Y-%m-%d')) )
+		
 		competition_last = None
-		for i, (competition, event) in enumerate(competitions_events):
-			if competition != competition_last:
+		for event, count in zip(events, counts):
+			if event.competition != competition_last:
 				if competition_last is not None:
 					out.write( u'</ul>' )
-				out.write( u'<strong>' )
-				out.write( competition )
-				out.write( u'</strong><ul>' )
-				competition_last = competition
-			out.write( '<li>' )
-			out.write( event )
-			out.write( '</li>' )
+				out.write( u'<strong>{}:&nbsp;</strong>&nbsp;{}<ul>'.format(competition_counts[event.competition], event.competition.name.replace(u' ', u'&nbsp;') ) )
+				competition_last = event.competition
+			out.write( u'<li><strong>{}:</strong>&nbsp;{}</li>'.format(count, event.name.replace(u' ', u'&nbsp;')) )
 		
-		out.write( '</ul></div>' )
-		return out.getvalue()
+		out.write( u'</ul></div>' )
+		return [[d.year, d.month-1, d.day], participants_total, out.getvalue()]
 		
-	calendar = sorted( [[d.year, d.month-1, d.day], v, format_competitions_events(d, v, events_by_day[d])] for d, v in participants_by_day.iteritems() )
+	calendar = sorted( format_competitions_events(d, v) for d, v in events_by_day.iteritems() )
+	if calendar:
+		year_min = min( c[0][0] for c in calendar )
+		year_max = max( c[0][0] for c in calendar )
+	else:
+		year_min = year_max = 1970
+	
 	payload = {
 		'competitions_total': sum( yoy['competitions_total'] for yoy in year_on_year ),
 		'events_total': sum( yoy['events_total'] for yoy in year_on_year ),
@@ -159,5 +173,6 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		'some_year_but_not_this_year': add_year_label(some_year_but_not_this_year),
 		'participants_total': participants_total,
 		'calendar': calendar,
+		'calendar_height': (year_max - year_min + 1) * 150,
 	}
 	return payload
