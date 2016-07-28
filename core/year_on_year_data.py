@@ -49,13 +49,13 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 			def add_to_value( k, v ):
 				year_cur[k] = year_cur.get(k, 0) + v
 			
-			license_holders = set()
-			license_holders_men = set()
-			license_holders_women = set()
-	
 		if event.competition not in competition_set:
 			add_to_value( 'competitions_total', 1 )
 			competition_set.add( event.competition )
+			
+			license_holders = set()
+			license_holders_men = set()
+			license_holders_women = set()
 			
 		events_by_day[event_date].append( event )
 		
