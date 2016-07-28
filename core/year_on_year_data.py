@@ -55,6 +55,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	
 		if event.competition not in competition_set:
 			add_to_value( 'competitions_total', 1 )
+			competition_set.add( event.competition )
 			
 		events_by_day[event_date].append( event )
 		
