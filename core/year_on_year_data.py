@@ -53,14 +53,14 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 			add_to_value( 'competitions_total', 1 )
 			competition_set.add( event.competition )
 			
-			license_holders = set()
-			license_holders_men = set()
-			license_holders_women = set()
-			
 		events_by_day[event_date].append( event )
 		
 		add_to_value( 'events_total', 1 )
 		
+		license_holders = set()
+		license_holders_men = set()
+		license_holders_women = set()
+	
 		for participant in event.get_participants():
 			license_holders.add( participant.license_holder )
 			add_to_value( 'participants_total', 1 )
@@ -74,6 +74,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		add_to_value( 'attendees_total', len(license_holders) )
 		add_to_value( 'attendees_men_total', len(license_holders_men) )
 		add_to_value( 'attendees_women_total', len(license_holders_women) )
+		
 		license_holders_year[-1] |= license_holders
 		license_holders_all |= license_holders
 
@@ -154,8 +155,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		
 	calendar = sorted( format_competitions_events(d, v) for d, v in events_by_day.iteritems() )
 	if calendar:
-		year_min = min( c[0][0] for c in calendar )
-		year_max = max( c[0][0] for c in calendar )
+		year_min, year_max = min( c[0][0] for c in calendar ), max( c[0][0] for c in calendar )
 	else:
 		year_min = year_max = 1970
 	

@@ -48,11 +48,11 @@ function drawCharts() {
 	licenseHoldersProfileChart.draw(google.visualization.arrayToDataTable(payload.license_holders_profile), options);
 	
 	var lastYearButNotThisYearChart = new google.visualization.ColumnChart(document.getElementById('lastYearButNotThisYearChartDiv'));
-	var options = { title: 'License Holders Who Attended Last Year but not This Year', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
+	var options = { title: 'License Holders Who Attended the Previous Year but not the Current Year', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
 	lastYearButNotThisYearChart.draw(google.visualization.arrayToDataTable(payload.last_year_but_not_this_year), options);
 	
 	var someYearButNotThisYearChart = new google.visualization.ColumnChart(document.getElementById('someYearButNotThisYearChartDiv'));
-	var options = { title: 'License Holders Who Attended Some Year but not This Year', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
+	var options = { title: 'License Holders Who Attended any Previous Year but not the Current Year', legend: { position: 'none' }, hAxis:{baseline:0}, vAxis: {minValue: 0}, bar:{groupWidth:'90%'}, animation: animationOption };
 	someYearButNotThisYearChart.draw(google.visualization.arrayToDataTable(payload.some_year_but_not_this_year), options);
 }
  </script>
