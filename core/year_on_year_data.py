@@ -22,6 +22,8 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	if exclude_labels:
 		competitions = competitions.exclude( report_labels__in = exclude_labels )
 	
+	competitions = competitions.order_by( 'start_date', 'pk' ).distinct()
+
 	all_events = []
 	for c in competitions:
 		all_events.extend( c.get_events() )
