@@ -2,6 +2,7 @@
 import datetime
 import utils
 import operator
+import itertools
 from collections import defaultdict
 from StringIO import StringIO
 from models import *
@@ -24,10 +25,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	
 	competitions = competitions.order_by( 'start_date', 'pk' ).distinct()
 
-	all_events = []
-	for c in competitions:
-		all_events.extend( c.get_events() )
-	all_events.sort( key=(lambda e: e.date_time) )
+	all_events = sorted( itertools.chain.from_iterable(c.get_events() for c in competitions), key=operator.attrgetter('date_time') )
 	
 	year_on_year = []
 	license_holders_year = []
