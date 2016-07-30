@@ -1779,7 +1779,7 @@ def WaveNew( request, eventMassStartId ):
 				break
 		waveLetter.reverse()
 		waveLetter = ''.join( waveLetter )
-		wave.name = _('Wave') + ' ' + waveLetter
+		wave.name = u'Wave' + u' ' + waveLetter
 		if waves_existing:
 			wave_last = waves_existing[-1]
 			wave.start_offset = wave_last.start_offset + datetime.timedelta(seconds = 60.0)
@@ -2014,7 +2014,7 @@ def WaveTTNew( request, eventTTId ):
 				break
 		wave_ttLetter.reverse()
 		wave_ttLetter = ''.join( wave_ttLetter )
-		wave_tt.name = _('WaveTT') + ' ' + wave_ttLetter
+		wave_tt.name = u'WaveTT') + u' ' + wave_ttLetter
 		if wave_tts_existing:
 			wave_tt_last = wave_tts_existing[-1]
 			wave_tt.distance = wave_tt_last.distance

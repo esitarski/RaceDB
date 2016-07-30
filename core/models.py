@@ -180,7 +180,7 @@ class CategoryFormat(models.Model):
 			return 1
 		
 	def full_name( self ):
-		return ','.join( [self.name, self.description] )
+		return u','.join( [self.name, self.description] )
 		
 	def get_search_text( self ):
 		return utils.get_search_text( [self.name, self.description] )
@@ -606,7 +606,7 @@ class Competition(models.Model):
 		ParticipantOption.objects.bulk_create( options )
 	
 	def full_name( self ):
-		return ' '.join( [self.name, self.organizer] )
+		return u' '.join( [self.name, self.organizer] )
 		
 	def get_search_text( self ):
 		return utils.get_search_text( [self.name, self.organizer] )
