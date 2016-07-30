@@ -2014,7 +2014,7 @@ def WaveTTNew( request, eventTTId ):
 				break
 		wave_ttLetter.reverse()
 		wave_ttLetter = ''.join( wave_ttLetter )
-		wave_tt.name = u'WaveTT') + u' ' + wave_ttLetter
+		wave_tt.name = u'WaveTT' + u' ' + wave_ttLetter
 		if wave_tts_existing:
 			wave_tt_last = wave_tts_existing[-1]
 			wave_tt.distance = wave_tt_last.distance
