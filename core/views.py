@@ -1767,8 +1767,7 @@ def WaveNew( request, eventMassStartId ):
 			if 'save-submit' in request.POST:
 				return HttpResponseRedirect( pushUrl(request, 'WaveEdit', instance.id, cancelUrl = True) )
 	else:
-		wave = Wave()
-		wave.event = event_mass_start
+		wave = Wave( event = event_mass_start )
 		waves_existing = list( event_mass_start.wave_set.all() )
 		c = len( waves_existing )
 		waveLetter = []
@@ -2002,8 +2001,7 @@ def WaveTTNew( request, eventTTId ):
 			if 'save-submit' in request.POST:
 				return HttpResponseRedirect( pushUrl(request, 'WaveTTEdit', instance.id, cancelUrl = True) )
 	else:
-		wave_tt = WaveTT()
-		wave_tt.event = event_tt
+		wave = WaveTT( event = event_tt )
 		wave_tts_existing = list( event_tt.wavett_set.all() )
 		c = len( wave_tts_existing )
 		wave_ttLetter = []
