@@ -2,8 +2,7 @@ from django.db.models import Q
 from django.db import transaction
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template import Template, Context, RequestContext
-from django.shortcuts import render_to_response, get_object_or_404
+from django.template import Template
 from django.forms import ModelForm, Form
 from django.forms.models import inlineformset_factory
 from django import forms

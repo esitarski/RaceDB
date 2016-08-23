@@ -304,8 +304,16 @@ class NumberSet(models.Model):
 			self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
 			NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
 	
-	def set_lost( self, bib ):
-		self.numbersetentry_set.filter(bib=bib, date_lost=None).update( date_lost=datetime.date.today() )
+	def set_lost( self, bib, license_holder=None, date_lost=None ):
+		q1 = Q( bib=bib )
+		if license_holder:
+			q1 &= Q( license_holder=license_holder )
+		q2 = Q( date_lost=None )
+		if date_lost:
+			q2 |= Q( date_lost__gte=date_lost )
+		
+		date_lost_update = date_lost if date_lost else datetime.date.today()
+		self.numbersetentry_set.filter(q1).filter(q2).update( date_lost=date_lost_update )
 	
 	def return_to_pool( self, bib ):
 		self.numbersetentry_set.filter( bib=bib ).delete()
@@ -480,6 +488,9 @@ class Competition(models.Model):
 		(28, _('Every 4 Weeks')),
 	)
 	recurring = models.PositiveSmallIntegerField(choices=RECURRING_CHOICES, default=0, verbose_name=_('Recurring') )
+	
+	def get_filename_base( self ):
+		return utils.cleanFileName(u'{}-{}'.format( self.name, self.start_date.strftime('%Y-%m-%d'))).replace(' ', '-')
 	
 	@property
 	def speed_unit_display( self ):
@@ -1486,9 +1497,7 @@ def validate_postal_code( postal ):
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
 
 def random_temp_license( prefix = u'TEMP_'):
-	numbers = '0123456789'
-	numbers_max = len(numbers)-1
-	return u''.join( [prefix, ''.join(numbers[random.randint(0,numbers_max)] for i in xrange(15))] )
+	return u'{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in xrange(15)) )
 
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
@@ -1816,7 +1825,7 @@ class FormatTimeDelta( datetime.timedelta ):
 	def __repr__( self ):
 		fraction, seconds = math.modf( self.total_seconds() )
 		seconds = int(seconds)
-		return '%d:%02d:%02.3f' % (seconds // (60*60), (seconds // 60) % 60, seconds % 60 + fraction)
+		return '{}:{:02d}:{:02.3f}'.format(seconds // (60*60), (seconds // 60) % 60, seconds % 60 + fraction)
 	
 	def __unicode( self ):
 		return unicode( self.__repr__() )
@@ -2114,7 +2123,7 @@ class Participant(models.Model):
 			self.paid = True
 		
 		if not self.role:
-			self.role = Participant._meta.get_field_by_name('role')[0].default
+			self.role = Participant._meta.get_field('role').default
 		
 		if self.role != self.Competitor:
 			self.bib = None

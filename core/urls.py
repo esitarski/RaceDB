@@ -15,13 +15,15 @@ warnings.simplefilter('error', DeprecationWarning)
 
 urlpatterns = [
 	url(r'^$', views.home, name='home'),
-	url(r'^(?P<rfid_antenna>\d+)/$', views.home, name='home'),
+	url(r'^(?P<rfid_antenna>\d+)/$', views.home),
 	url(r'^(?i)Home/$', views.home),
 	
 	url(r'^(?i).*Competitions/$', views.CompetitionsDisplay),
 	url(r'^(?i).*CompetitionNew/$', views.CompetitionNew),
 	url(r'^(?i).*CompetitionCopy/(?P<competitionId>\d+)/$', views.CompetitionCopy),
 	url(r'^(?i).*CompetitionEdit/(?P<competitionId>\d+)/$', views.CompetitionEdit),
+	url(r'^(?i).*CompetitionExport/(?P<competitionId>\d+)/$', views.CompetitionExport),
+	url(r'^(?i).*CompetitionImport/$', views.CompetitionImport),
 	url(r'^(?i).*CompetitionDelete/(?P<competitionId>\d+)/$', views.CompetitionDelete),
 	url(r'^(?i).*CompetitionDashboard/(?P<competitionId>\d+)/$', views.CompetitionDashboard),
 	url(r'^(?i).*CompetitionRegAnalytics/(?P<competitionId>\d+)/$', views.CompetitionRegAnalytics),
@@ -155,9 +157,9 @@ urlpatterns = [
 	url(r'^(?i).*CategoryUp/(?P<categoryId>\d+)/$', category.CategoryUp),
 	url(r'^(?i).*CategoryDown/(?P<categoryId>\d+)/$', category.CategoryDown),
 	
-	url(r'^(?i).*CategoryNew/(?P<categoryFormatId>\d+)/$', category.CategoryNew, name='catetory_new'),
-	url(r'^(?i).*CategoryEdit/(?P<categoryId>\d+)/$', category.CategoryEdit, name='category_edit'),
-	url(r'^(?i).*CategoryDelete/(?P<categoryId>\d+)/$', category.CategoryDelete, name='category_delete'),
+	url(r'^(?i).*CategoryNew/(?P<categoryFormatId>\d+)/$', category.CategoryNew),
+	url(r'^(?i).*CategoryEdit/(?P<categoryId>\d+)/$', category.CategoryEdit),
+	url(r'^(?i).*CategoryDelete/(?P<categoryId>\d+)/$', category.CategoryDelete),
 	
 	url(r'^(?i).*NumberSets/$', number_set.NumberSetsDisplay),
 	url(r'^(?i).*NumberSetNew/$', number_set.NumberSetNew),
@@ -231,6 +233,6 @@ urlpatterns = [
 	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
 	url(r'^(?i).*SelfServe/SelfServeQR/$', self_serve.SelfServeQRCode),
 	
-	url(r'^(?i)login/$', login, {'template_name': 'login.html'}),
+	url(r'^(?i)login/$', login, {'template_name': 'login.html'}, name='login'),
 	url(r'^(?i).*logout/$', views.Logout),
 ]

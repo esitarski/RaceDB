@@ -16,13 +16,12 @@ import RaceDB.wsgi
 import RaceDB.urls
 from core.LLRPClientServer import runServer
 from core.models import SystemInfo, models_fix_data
-from optparse import make_option
 
 def launch_server( **options ):
 
 	# Migrate the database automatically.
 	print 'Performing database migration (if necessary)...'
-	management.call_command('migrate', '--noinput', verbosity=0)
+	#management.call_command('migrate', '--noinput', verbosity=0)
 	
 	models_fix_data()
 
@@ -63,52 +62,51 @@ def launch_server( **options ):
 	serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
 
 class Command(BaseCommand):
-	option_list = BaseCommand.option_list + (
-		make_option('--host',
+	
+	help = 'Launch the application server'
+	
+	def add_arguments(self, parser):
+		parser.add_argument('--host',
 			dest='host',
-			type="string",
+			type=str,
 			default='0.0.0.0',
-			help='Host for application web server'),
-		make_option('--port',
+			help='Host for application web server')
+		parser.add_argument('--port',
 			dest='port',
-			type="int",
+			type=int,
 			default=8000,
-			help='Port for application web server'),
-		make_option('--rfid_reader',
+			help='Port for application web server')
+		parser.add_argument('--rfid_reader',
 			dest='rfid_reader',
 			action='store_true',
 			default=False,
-			help='Launch rfid reader server'),
-		make_option('--rfid_reader_host',
+			help='Launch rfid reader server')
+		parser.add_argument('--rfid_reader_host',
 			dest='rfid_reader_host',
-			type='string',
+			type=str,
 			default='',
-			help='Host for RFID reader'),
-		make_option('--rfid_transmit_power',
+			help='Host for RFID reader')
+		parser.add_argument('--rfid_transmit_power',
 			dest='rfid_transmit_power',
-			type='int',
+			type=int,
 			default=0,
-			help='Transmit power for rfid reader (0=max).  Consult your reader for details.'),
-		make_option('--rfid_receiver_sensitivity',
+			help='Transmit power for rfid reader (0=max).  Consult your reader for details.')
+		parser.add_argument('--rfid_receiver_sensitivity',
 			dest='rfid_receiver_sensitivity',
-			type='int',
+			type=int,
 			default=0,
-			help='Receiver sensitivity for rfid reader (0=max).  Consult your reader for details.'),
-		make_option('--no_browser',
+			help='Receiver sensitivity for rfid reader (0=max).  Consult your reader for details.')
+		parser.add_argument('--no_browser',
 			dest='no_browser',
 			action='store_true',
 			default=False,
-			help='Do not launch a browser'),
-		make_option('--database',
+			help='Do not launch a browser')
+		parser.add_argument('--database',
 			dest='database',
-			type='string',
+			type=str,
 			default='',
-			help='Database file to access'),
-	)
-
-	args = '[host default: 0.0.0.0] [port default: 8000]'
-	help = 'Launch the application server'
-
+			help='Database file to access')
+					
 	def handle(self, *args, **options):
 		launch_server( **options )
 

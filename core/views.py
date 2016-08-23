@@ -2,8 +2,11 @@ from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
+from django.contrib.auth.views import logout
+
 from subprocess import Popen, PIPE
 import uuid
+import zipfile
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -41,7 +44,7 @@ def home( request, rfid_antenna=None ):
 		except Exception as e:
 			pass
 	version = RaceDBVersion
-	return render_to_response( 'home.html', RequestContext(request, locals()) )
+	return render( request, 'home.html', locals() )
 	
 #-----------------------------------------------------------------------
 
@@ -123,7 +126,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 						unicode(e),
 					)),
 				)
-				return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
+				return render( request, 'rfid_write_status.html', locals() )
 			
 			# Check for tag actions.
 			if any(submit_btn in request.POST for submit_btn in ('read-validate-tag-submit','write-tag-submit','auto-generate-and-write-tag-submit') ):
@@ -199,7 +202,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 								status_entries.append(
 									(_('Tag read matches rider tag'), [u'{} = {}'.format(tag, tagRead)] ),
 								)
-						return render_to_response( 'rfid_validate.html', RequestContext(request, locals()) )
+						return render( request, 'rfid_validate.html', locals() )
 					else:
 						# Handle writing the tag.
 						status, response = WriteTag(tag, rfid_antenna)
@@ -209,7 +212,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 							]
 				
 				if not status:
-					return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
+					return render( request, 'rfid_write_status.html', locals() )
 				# if status: fall through to ok-submit case.
 			
 			# ok-submit
@@ -219,7 +222,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 	else:
 		form = LicenseHolderTagForm( initial = dict(tag=license_holder.existing_tag, rfid_antenna=rfid_antenna) )
 		
-	return render_to_response( 'license_holder_tag_change.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_tag_change.html', locals() )
 
 #--------------------------------------------------------------------------------------------
 
@@ -430,7 +433,7 @@ def LicenseHoldersDisplay( request ):
 	
 	license_holders = license_holders_from_search_text( search_text )
 	isEdit = True
-	return render_to_response( 'license_holder_list.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_list.html', locals() )
 
 #--------------------------------------------------------------------------
 @autostrip
@@ -476,7 +479,7 @@ def LicenseHolderBarcodeScan( request ):
 	else:
 		form = BarcodeScanForm()
 		
-	return render_to_response( 'license_holder_scan_form.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_scan_form.html', locals() )
 
 #--------------------------------------------------------------------------
 
@@ -559,27 +562,27 @@ def LicenseHolderRfidScan( request ):
 					)
 			
 			if not status:
-				return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
+				return render( request, 'license_holder_scan_rfid.html', locals() )
 			
 			request.session['license_holder_filter'] = u'rfid={}'.format(tag.lstrip('0'))
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
 		
-	return render_to_response( 'license_holder_scan_rfid.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_scan_rfid.html', locals() )
 
 #-----------------------------------------------------------------------
 @access_validation()
 def LicenseHoldersCorrectErrors( request ):
 	license_holders = LicenseHolder.get_errors()
 	isEdit = True
-	return render_to_response( 'license_holder_correct_errors_list.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_correct_errors_list.html', locals() )
 
 #-----------------------------------------------------------------------
 @access_validation()
 def LicenseHoldersManageDuplicates( request ):
 	duplicates = LicenseHolder.get_duplicates()
-	return render_to_response( 'license_holder_duplicate_list.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_duplicate_list.html', locals() )
 
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city} - {state_prov} - {nationality} - {license}'.format(
@@ -638,7 +641,7 @@ def LicenseHoldersSelectDuplicates( request, duplicateIds ):
 			return HttpResponseRedirect( '{}LicenseHoldersSelectMergeDuplicate/{}/'.format(getContext(request,'cancelUrl'), ','.join('{}'.format(pk) for pk in pks)) )
 	else:
 		form = GetLicenseHolderSelectDuplicatesForm( duplicates )( initial=dict(pks=pks) )
-	return render_to_response( 'license_holder_select_duplicates.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_select_duplicates.html', locals() )
 	
 @access_validation()
 def LicenseHoldersSelectMergeDuplicate( request, duplicateIds ):
@@ -646,7 +649,7 @@ def LicenseHoldersSelectMergeDuplicate( request, duplicateIds ):
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
 	if duplicates.count() != len(pks):
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	return render_to_response( 'license_holder_select_merge_duplicate.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_select_merge_duplicate.html', locals() )
 
 @access_validation()
 def LicenseHoldersMergeDuplicates( request, mergeId, duplicateIds ):
@@ -655,7 +658,7 @@ def LicenseHoldersMergeDuplicates( request, mergeId, duplicateIds ):
 	duplicates = LicenseHolder.objects.filter(pk__in=pks).order_by('search_text')
 	if duplicates.count() != len(pks):
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	return render_to_response( 'license_holder_select_merge_duplicate_confirm.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_select_merge_duplicate_confirm.html', locals() )
 
 def LicenseHoldersMergeDuplicatesOK( request, mergeId, duplicateIds ):
 	license_holder_merge = get_object_or_404( LicenseHolder, pk=mergeId )
@@ -753,7 +756,7 @@ def TeamsDisplay( request ):
 	for n in search_text.split():
 		q &= Q( search_text__contains = n )
 	teams = Team.objects.filter(q)[:MaxReturn]
-	return render_to_response( 'team_list.html', RequestContext(request, locals()) )
+	return render( request, 'team_list.html', locals() )
 
 @access_validation()
 def TeamNew( request ):
@@ -827,7 +830,7 @@ def LegalEntitiesDisplay( request ):
 	for n in search_text.split():
 		q &= Q( name__icontains = n )
 	legal_entities = LegalEntity.objects.filter(q)[:MaxReturn]
-	return render_to_response( 'legal_entity_list.html', RequestContext(request, locals()) )
+	return render( request, 'legal_entity_list.html', locals() )
 	
 @access_validation()
 def LegalEntityNew( request ):
@@ -878,19 +881,19 @@ def GetCompetitionForm( competition_cur = None ):
 			participants_changed = competition.auto_generate_missing_tags()
 			participants_changed_count = len(participants_changed)
 			title = _('Tags Updated')
-			return render_to_response( 'participants_changed.html', RequestContext(request, locals()) )
+			return render( request, 'participants_changed.html', locals() )
 			
 		def applyNumberSet( self, request, competition ):
 			page_title = _('Apply Number Set')
 			message = _('This will overwrite participant bibs from the NumberSet.')
 			target = pushUrl(request, 'ApplyNumberSet', competition.id)
-			return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+			return render( request, 'are_you_sure.html', locals() )
 			
 		def initializeNumberSet( self, request, competition ):
 			page_title = _('Initialize Number Set')
 			message = _('This will initialize and replace the NumberSet using the Participant Bib Numbers from this Competition.')
 			target = pushUrl(request, 'InitializeNumberSet', competition.id)
-			return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+			return render( request, 'are_you_sure.html', locals() )
 			
 		def editReportTags( self, request, competition ):
 			return HttpResponseRedirect( pushUrl(request,'ReportLabels') )
@@ -987,13 +990,19 @@ def GetCompetitionForm( competition_cur = None ):
 def CompetitionsDisplay( request ):
 	form = None
 	search_text = request.session.get('competition_filter', '')
-	btns = [('new-submit', _('New Competition'), 'btn btn-success')] if request.user.is_superuser else []
+	btns = []
+	if request.user.is_superuser:
+		btns.append( ('new-submit', _('New Competition'), 'btn btn-success') )
+		btns.append( ('import-submit', _('Import Competition'), 'btn btn-primary') )
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionNew') )
+		
+		if 'import-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'CompetitionImport') )
 		
 		if request.user.is_superuser:
 			form = SearchForm( btns, request.POST )
@@ -1015,7 +1024,7 @@ def CompetitionsDisplay( request ):
 		competitions = applyFilter( search_text, competitions, Competition.get_search_text )
 	
 	competitions = sorted( competitions, key = lambda x: x.start_date, reverse = True )
-	return render_to_response( 'competition_list.html', RequestContext(request, locals()) )
+	return render( request, 'competition_list.html', locals() )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1024,7 +1033,7 @@ def CompetitionNew( request ):
 	if not CategoryFormat.objects.count():
 		missing.append( (_('No Category Formats defined.'), pushUrl(request,'CategoryFormats')) )
 	if missing:
-		return render_to_response( 'missing_elements.html', RequestContext(request, locals()) )
+		return render( request, 'missing_elements.html', locals() )
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -1047,7 +1056,7 @@ def CompetitionNew( request ):
 			break
 		form = GetCompetitionForm(competition)( instance = competition, button_mask = NEW_BUTTONS )
 	
-	return render_to_response( 'competition_form.html', RequestContext(request, locals()) )
+	return render( request, 'competition_form.html', locals() )
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1092,7 +1101,7 @@ def CompetitionDashboard( request, competitionId ):
 	events_mass_start = competition.get_events_mass_start()
 	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
-	return render_to_response( 'competition_dashboard.html', RequestContext(request, locals()) )
+	return render( request, 'competition_dashboard.html', locals() )
 
 def GetRegAnalyticsForm( competition ):
 	class RegAnalyticsForm( Form ):
@@ -1156,7 +1165,7 @@ def CompetitionRegAnalytics( request, competitionId ):
 		pass
 	payload_json = json.dumps(payload, separators=(',',':'))
 	logFileName = WriteLog.logFileName
-	return render_to_response( 'reg_analytics.html', RequestContext(request, locals()) )
+	return render( request, 'reg_analytics.html', locals() )
 
 @access_validation()
 def TeamsShow( request, competitionId ):
@@ -1190,7 +1199,7 @@ def TeamsShow( request, competitionId ):
 				competitors[i].different_category = True
 	
 	num_teams = len(team_info)
-	return render_to_response( 'teams_show.html', RequestContext(request, locals()) )
+	return render( request, 'teams_show.html', locals() )
 
 @access_validation()
 def FinishLynx( request, competitionId ):
@@ -1207,21 +1216,21 @@ def CompetitionEventParticipationSummary( request, competitionId ):
 def StartLists( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	events = competition.get_events()
-	return render_to_response( 'start_lists.html', RequestContext(request, locals()) )
+	return render( request, 'start_lists.html', locals() )
 	
 @access_validation()
 def StartList( request, eventId ):
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
 	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
-	return render_to_response( 'mass_start_start_list.html', RequestContext(request, locals()) )
+	return render( request, 'mass_start_start_list.html', locals() )
 	
 @access_validation()
 def StartListTT( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	time_stamp = datetime.datetime.now()
 	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
-	return render_to_response( 'tt_start_list.html', RequestContext(request, locals()) )
+	return render( request, 'tt_start_list.html', locals() )
 
 def StartListExcelDownload( request, eventId, eventType ):
 	eventType = int(eventType)
@@ -1254,7 +1263,7 @@ def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competi
 	message = _('This will reapply Optional Events defaults to all existing Participants.  Participants will be added to "Select by Default" Optional Events and will be excluded from them otherwise.  If Participants have made previous choices regarding the events they are participating in, these will be overwritten.')
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'CompetitionApplyOptionalEventChangesToExistingParticipants/{}/{}/'.format(competition.id,1)
-	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+	return render( request, 'are_you_sure.html', locals() )
 
 #-----------------------------------------------------------------------
 @autostrip
@@ -1301,12 +1310,11 @@ def UploadPrereg( request, competitionId ):
 		form = UploadPreregForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )
-			del request.FILES['excel_file']
-			return render_to_response( 'upload_prereg.html', RequestContext(request, locals()) )
+			return render( request, 'upload_prereg.html', locals() )
 	else:
 		form = UploadPreregForm()
 	
-	return render_to_response( 'upload_prereg.html', RequestContext(request, locals()) )
+	return render( request, 'upload_prereg.html', locals() )
 
 #-----------------------------------------------------------------------
 @autostrip
@@ -1353,12 +1361,11 @@ def LicenseHoldersImportExcel( request ):
 		form = ImportExcelForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_license_holder_import_excel( request.FILES['excel_file'], form.cleaned_data['update_license_codes'] )
-			del request.FILES['excel_file']
-			return render_to_response( 'license_holder_import_excel.html', RequestContext(request, locals()) )
+			return render( request, 'license_holder_import_excel.html', locals() )
 	else:
 		form = ImportExcelForm()
 	
-	return render_to_response( 'license_holder_import_excel.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_import_excel.html', locals() )
 
 #-----------------------------------------------------------------------
 @autostrip
@@ -1489,7 +1496,7 @@ def SeedingEdit( request, eventTTId ):
 	for e in entry_tts:
 		e.clock_time = instance.date_time + e.start_time
 	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts )
-	return render_to_response( 'seeding_edit.html', RequestContext(request, locals()) )
+	return render( request, 'seeding_edit.html', locals() )
 
 def GenerateStartTimes( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
@@ -1520,7 +1527,7 @@ def GetCategoryNumbersForm( competition, category_numbers = None ):
 def CategoryNumbersDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	category_numbers_list = sorted( CategoryNumbers.objects.filter(competition = competition), key = CategoryNumbers.get_key )
-	return render_to_response( 'category_numbers_list.html', RequestContext(request, locals()) )
+	return render( request, 'category_numbers_list.html', locals() )
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1546,7 +1553,7 @@ def CategoryNumbersNew( request, competitionId ):
 		category_numbers.competition = competition
 		form = GetCategoryNumbersForm(competition)( instance = category_numbers, button_mask = NEW_BUTTONS )
 	
-	return render_to_response( 'category_numbers_form.html', RequestContext(request, locals()) )
+	return render( request, 'category_numbers_form.html', locals() )
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1648,7 +1655,7 @@ class EventMassStartForm( ModelForm ):
 @access_validation()
 def EventMassStartDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	return render_to_response( 'event_mass_start_list.html', RequestContext(request, locals()) )
+	return render( request, 'event_mass_start_list.html', locals() )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1672,7 +1679,7 @@ def EventMassStartNew( request, competitionId ):
 		)
 		form = EventMassStartForm( instance = instance, button_mask = NEW_BUTTONS )
 	
-	return render_to_response( 'event_mass_start_form.html', RequestContext(request, locals()) )
+	return render( request, 'event_mass_start_form.html', locals() )
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1787,7 +1794,7 @@ def WaveNew( request, eventMassStartId ):
 			wave.minutes = wave_last.minutes
 		form = GetWaveForm(event_mass_start, wave)(instance = wave, button_mask = NEW_BUTTONS)
 	
-	return render_to_response( 'wave_form.html', RequestContext(request, locals()) )
+	return render( request, 'wave_form.html', locals() )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1874,7 +1881,7 @@ class EventTTForm( ModelForm ):
 @access_validation()
 def EventTTDisplay( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	return render_to_response( 'event_tt_list.html', RequestContext(request, locals()) )
+	return render( request, 'event_tt_list.html', locals() )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -1898,7 +1905,7 @@ def EventTTNew( request, competitionId ):
 		)
 		form = EventTTForm( instance = instance, button_mask = NEW_BUTTONS )
 	
-	return render_to_response( 'event_tt_form.html', RequestContext(request, locals()) )
+	return render( request, 'event_tt_form.html', locals() )
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -2001,25 +2008,25 @@ def WaveTTNew( request, eventTTId ):
 			if 'save-submit' in request.POST:
 				return HttpResponseRedirect( pushUrl(request, 'WaveTTEdit', instance.id, cancelUrl = True) )
 	else:
-		wave = WaveTT( event = event_tt )
+		wave_tt = WaveTT( event = event_tt )
 		wave_tts_existing = list( event_tt.wavett_set.all() )
 		c = len( wave_tts_existing )
-		wave_ttLetter = []
+		wave_tt_letter = []
 		while 1:
-			wave_ttLetter.append( string.ascii_uppercase[c % 26] )
+			wave_tt_letter.append( string.ascii_uppercase[c % 26] )
 			c //= 26
 			if c == 0:
 				break
-		wave_ttLetter.reverse()
-		wave_ttLetter = ''.join( wave_ttLetter )
-		wave_tt.name = u'WaveTT' + u' ' + wave_ttLetter
+		wave_tt_letter.reverse()
+		wave_tt_letter = ''.join( wave_tt_letter )
+		wave_tt.name = u'WaveTT' + u' ' + wave_tt_letter
 		if wave_tts_existing:
 			wave_tt_last = wave_tts_existing[-1]
 			wave_tt.distance = wave_tt_last.distance
 			wave_tt.laps = wave_tt_last.laps
 		form = GetWaveTTForm(event_tt, wave_tt)(instance=wave_tt, button_mask=NEW_BUTTONS)
 	
-	return render_to_response( 'wave_tt_form.html', RequestContext(request, locals()) )
+	return render( request, 'wave_tt_form.html', locals() )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -2075,7 +2082,7 @@ def EventApplyToExistingParticipants( request, eventId, confirmed=False ):
 	message = _("This will reapply this Event's Option defaults to all existing Participants.  Participants will be added if \"Select by Default\" is selected, otherwise they will be excluded.  If Participants have made previous choices regarding this Event, these will be overwritten.")
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'EventApplyToExistingParticipants/{}/{}/'.format(event.id,1)
-	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+	return render( request, 'are_you_sure.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -2192,7 +2199,7 @@ def Participants( request, competitionId ):
 			for n in names:
 				q |= Q(license_holder__search_text__contains = n)
 			participants = participants.filter( q ).select_related('team', 'license_holder')
-			return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
+			return render( request, 'participant_list.html', locals() )
 	
 	if participant_filter.get('bib',None) is not None:
 		bib = participant_filter['bib']
@@ -2271,7 +2278,7 @@ def Participants( request, competitionId ):
 		)
 		return response
 		
-	return render_to_response( 'participant_list.html', RequestContext(request, locals()) )
+	return render( request, 'participant_list.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -2304,7 +2311,7 @@ def ParticipantsInEvents( request, competitionId ):
 				event_status.append( check_codes['unavailable'] )
 		participant.event_status = event_status
 	
-	return render_to_response( 'participants_in_events.html', RequestContext(request, locals()) )
+	return render( request, 'participants_in_events.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -2340,7 +2347,7 @@ def ParticipantManualAdd( request, competitionId ):
 		for p in Participant.objects.select_related('license_holder').filter(competition=competition) )
 	
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
-	return render_to_response( 'participant_add_list.html', RequestContext(request, locals()) )
+	return render( request, 'participant_add_list.html', locals() )
 
 @access_validation()
 def ParticipantAddToCompetition( request, competitionId, licenseHolderId ):
@@ -2389,7 +2396,7 @@ def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId,
 	if participant:
 		return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
 	
-	return render_to_response( 'participant_add_to_category_confirm.html', RequestContext(request, locals()) )
+	return render( request, 'participant_add_to_category_confirm.html', locals() )
 
 @access_validation()
 def ParticipantEdit( request, participantId ):
@@ -2400,7 +2407,7 @@ def ParticipantEdit( request, participantId ):
 	is_suspicious_age = not (8 <= competition_age <= 90)
 	isEdit = True
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
-	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
+	return render( request, 'participant_form.html', locals() )
 	
 @access_validation()
 def ParticipantEditFromLicenseHolder( request, competitionId, licenseHolderId ):
@@ -2418,7 +2425,7 @@ def ParticipantRemove( request, participantId ):
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	is_suspicious_age = not (8 <= competition_age <= 90)
 	isEdit = False
-	return render_to_response( 'participant_form.html', RequestContext(request, locals()) )
+	return render( request, 'participant_form.html', locals() )
 	
 @access_validation()
 def ParticipantDoDelete( request, participantId ):
@@ -2454,7 +2461,7 @@ def ParticipantPrintBibLabels( request, participantId ):
 			pass
 		
 		title = _("Print Status")
-		return render_to_response( 'cmd_response.html', RequestContext(request, locals()) )
+		return render( request, 'cmd_response.html', locals() )
 	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
 		response = HttpResponse(pdf_str, content_type="application/pdf")
 		response['Content-Disposition'] = 'inline'
@@ -2490,7 +2497,7 @@ def ParticipantPrintEmergencyContactInfo( request, participantId ):
 			pass
 		
 		title = _("Print Status")
-		return render_to_response( 'cmd_response.html', RequestContext(request, locals()) )
+		return render( request, 'cmd_response.html', locals() )
 	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
 		response = HttpResponse(pdf_str, content_type="application/pdf")
 		response['Content-Disposition'] = 'inline'
@@ -2553,7 +2560,7 @@ def ParticipantCategoryChange( request, participantId ):
 	if gender != -1:
 		categories = categories.filter( Q(gender=2) | Q(gender=gender) )
 	available_categories = set( competition.get_available_categories(license_holder, gender=gender, participant_exclude=participant) )
-	return render_to_response( 'participant_category_select.html', RequestContext(request, locals()) )	
+	return render( request, 'participant_category_select.html', locals() )	
 
 @access_validation()
 def ParticipantCategorySelect( request, participantId, categoryId ):
@@ -2570,7 +2577,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 			categories.add( participant.category )
 	if competition.is_category_conflict(categories):
 		has_error, conflict_explanation, conflict_participant = True, _('Cannot assign to another Category that already exists in an Event.'), None
-		return render_to_response( 'participant_integrity_error.html', RequestContext(request, locals()) )
+		return render( request, 'participant_integrity_error.html', locals() )
 	
 	category_changed = (participant.category != category)
 	participant.category = category
@@ -2583,7 +2590,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 		participant.auto_confirm().save()
 	except IntegrityError:
 		has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
-		return render_to_response( 'participant_integrity_error.html', RequestContext(request, locals()) )
+		return render( request, 'participant_integrity_error.html', locals() )
 
 	if category_changed:
 		participant.add_to_default_optional_events()
@@ -2593,7 +2600,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 @access_validation()
 def ParticipantRoleChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
-	return render_to_response( 'participant_role_select.html', RequestContext(request, locals()) )
+	return render( request, 'participant_role_select.html', locals() )
 
 @access_validation()
 def ParticipantRoleSelect( request, participantId, role ):
@@ -2646,7 +2653,7 @@ def ParticipantTeamChange( request, participantId ):
 	for n in search_text.split():
 		q &= Q( search_text__contains = n )
 	teams = Team.objects.filter(q)[:MaxReturn]
-	return render_to_response( 'participant_team_select.html', RequestContext(request, locals()) )
+	return render( request, 'participant_team_select.html', locals() )
 	
 @access_validation()
 def ParticipantTeamSelect( request, participantId, teamId ):
@@ -2717,7 +2724,7 @@ def ParticipantBibChange( request, participantId ):
 		competition.number_set and
 		participant.bib == competition.number_set.get_bib( competition, participant.license_holder, participant.category )
 	)
-	return render_to_response( 'participant_bib_select.html', RequestContext(request, locals()) )
+	return render( request, 'participant_bib_select.html', locals() )
 	
 @access_validation()
 def ParticipantBibSelect( request, participantId, bib ):
@@ -2795,7 +2802,7 @@ def ParticipantNoteChange( request, participantId ):
 	else:
 		form = ParticipantNoteForm( initial = dict(note = participant.note) )
 		
-	return render_to_response( 'participant_note_change.html', RequestContext(request, locals()) )
+	return render( request, 'participant_note_change.html', locals() )
 
 @access_validation()
 def ParticipantGeneralNoteChange( request, participantId ):
@@ -2816,7 +2823,7 @@ def ParticipantGeneralNoteChange( request, participantId ):
 	else:
 		form = ParticipantNoteForm( initial = dict(note = license_holder.note) )
 		
-	return render_to_response( 'participant_note_change.html', RequestContext(request, locals()) )
+	return render( request, 'participant_note_change.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -2875,7 +2882,7 @@ def ParticipantOptionChange( request, participantId ):
 			initial = dict(options = [event.option_id for event, is_participating in participation_optional_events if is_participating])
 		)
 		
-	return render_to_response( 'participant_option_change.html', RequestContext(request, locals()) )
+	return render( request, 'participant_option_change.html', locals() )
 	
 #-----------------------------------------------------------------------
 
@@ -2953,7 +2960,7 @@ def ParticipantEstSpeedChange( request, participantId ):
 	speed_table = [ [ speed_rc[(row, col)] for col in xrange(col_max) ] for row in xrange(row_max) ]
 	speed_table.reverse()
 	
-	return render_to_response( 'participant_est_speed_change.html', RequestContext(request, locals()) )
+	return render( request, 'participant_est_speed_change.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -2993,7 +3000,7 @@ def ParticipantWaiverChange( request, participantId ):
 	else:
 		form = ParticipantWaiverForm()
 		
-	return render_to_response( 'participant_waiver_change.html', RequestContext(request, locals()) )
+	return render( request, 'participant_waiver_change.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -3082,7 +3089,7 @@ def ParticipantTagChange( request, participantId ):
 					)),
 				)
 			if not status:
-				return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
+				return render( request, 'rfid_write_status.html', locals() )
 			
 			participant.tag = tag
 			try:
@@ -3096,7 +3103,7 @@ def ParticipantTagChange( request, participantId ):
 						u'{}'.format(e),
 					)),
 				)
-				return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
+				return render( request, 'rfid_write_status.html', locals() )
 			
 			if make_this_existing_tag:
 				license_holder.existing_tag = tag
@@ -3110,7 +3117,7 @@ def ParticipantTagChange( request, participantId ):
 							unicode(e),
 						)),
 					)
-					return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
+					return render( request, 'rfid_write_status.html', locals() )
 			
 			if 'write-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
 				if not rfid_antenna:
@@ -3130,7 +3137,7 @@ def ParticipantTagChange( request, participantId ):
 						]
 				
 				if not status:
-					return render_to_response( 'rfid_write_status.html', RequestContext(request, locals()) )
+					return render( request, 'rfid_write_status.html', locals() )
 				# if status: fall through to ok-submit case.
 			
 			# ok-submit
@@ -3140,7 +3147,7 @@ def ParticipantTagChange( request, participantId ):
 	else:
 		form = ParticipantTagForm( initial = dict(tag=participant.tag, rfid_antenna=rfid_antenna, make_this_existing_tag=competition.use_existing_tags) )
 		
-	return render_to_response( 'participant_tag_change.html', RequestContext(request, locals()) )
+	return render( request, 'participant_tag_change.html', locals() )
 	
 #-----------------------------------------------------------------------
 
@@ -3213,9 +3220,9 @@ def ParticipantSignatureChange( request, participantId ):
 		form = ParticipantSignatureForm( is_jsignature=signature_with_touch_screen )
 	
 	if signature_with_touch_screen:
-		return render_to_response( 'participant_jsignature_change.html', RequestContext(request, locals()) )
+		return render( request, 'participant_jsignature_change.html', locals() )
 	else:
-		return render_to_response( 'participant_signature_change.html', RequestContext(request, locals()) )
+		return render( request, 'participant_signature_change.html', locals() )
 	
 @access_validation()
 def SetSignatureWithTouchScreen( request, use_touch_screen ):
@@ -3240,28 +3247,28 @@ def ParticipantBarcodeAdd( request, competitionId ):
 				
 			license_holder, participants = participant_key_filter( competition, scan, False )
 			if not license_holder:
-				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
+				return render( request, 'participant_scan_error.html', locals() )
 			
 			if len(participants) == 1:
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
 			if len(participants) > 1:
-				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
+				return render( request, 'participant_scan_error.html', locals() )
 			
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
 		form = BarcodeScanForm( hide_cancel_button=True )
 		
-	return render_to_response( 'participant_scan_form.html', RequestContext(request, locals()) )
+	return render( request, 'participant_scan_form.html', locals() )
 	
 @access_validation()
 def ParticipantNotFound( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	return render_to_response( 'participant_not_found.html', RequestContext(request, locals()) )
+	return render( request, 'participant_not_found.html', locals() )
 	
 @access_validation()
 def ParticipantMultiFound( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	return render_to_response( 'participant_multi_found.html', RequestContext(request, locals()) )
+	return render( request, 'participant_multi_found.html', locals() )
 	
 #-----------------------------------------------------------------------
 
@@ -3317,29 +3324,29 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 					)
 			
 			if not status:
-				return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
+				return render( request, 'participant_scan_rfid.html', locals() )
 				
 			license_holder, participants = participant_key_filter( competition, tag, False )
 			if not license_holder:
-				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
+				return render( request, 'participant_scan_error.html', locals() )
 			
 			if len(participants) == 1:
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
 			if len(participants) > 1:
-				return render_to_response( 'participant_scan_error.html', RequestContext(request, locals()) )
+				return render( request, 'participant_scan_error.html', locals() )
 			
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna), hide_cancel_button=True )
 		
-	return render_to_response( 'participant_scan_rfid.html', RequestContext(request, locals()) )
+	return render( request, 'participant_scan_rfid.html', locals() )
 
 @access_validation()
 def LicenseHolderAddConfirm( request, competitionId, licenseHolderId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	competition_age = competition.competition_age( license_holder )
-	return render_to_response( 'license_holder_add_confirm.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_add_confirm.html', locals() )
 
 @access_validation()
 def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderId ):
@@ -3524,7 +3531,7 @@ def ParticipantReport( request ):
 	else:
 		form = get_participant_report_form()( initial={'start_date':start_date, 'end_date':end_date} )
 		
-	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )
+	return render( request, 'generic_form.html', locals() )
 
 #-----------------------------------------------------------------------
 @access_validation()
@@ -3584,7 +3591,7 @@ def AttendanceAnalytics( request ):
 	if initial.get('exclude_labels',None):
 		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
-	return render_to_response( 'system_analytics.html', RequestContext(request, locals()) )
+	return render( request, 'system_analytics.html', locals() )
 	
 #-----------------------------------------------------------------------
 
@@ -3676,7 +3683,7 @@ def YearOnYearAnalytics( request ):
 	if initial.get('exclude_labels',None):
 		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
-	return render_to_response( 'year_on_year_analytics.html', RequestContext(request, locals()) )
+	return render( request, 'year_on_year_analytics.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -3706,12 +3713,96 @@ def QRCode( request ):
 	for i in xrange(2):
 		qrpath = os.path.dirname( qrpath )
 	qrpath += '/'
-	return render_to_response( 'qrcode.html', RequestContext(request, locals()) )
+	return render( request, 'qrcode.html', locals() )
 	
+#-----------------------------------------------------------------------
+from competition_import_export import competition_import, competition_export, get_competition_name_start_date
+import tempfile
+import gzip
+from wsgiref.util import FileWrapper
+import zipfile
+import json
+import traceback
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CompetitionExport( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	def get_tmp_length( tmp ):
+		tmp.seek(0, 2)
+		tmp_length = tmp.tell()
+		tmp.seek(0)
+	
+	json_tmp = tempfile.TemporaryFile()
+	competition_export( competition, json_tmp )
+	json_tmp.flush()
+	json_tmp_length = get_tmp_length( json_tmp )
+	json_tmp.seek( 0 )
+	
+	response = HttpResponse(FileWrapper(json_tmp), content_type="application/json")
+	response['Content-Disposition'] = 'attachment; filename={}.json'.format(competition.get_filename_base())
+	response['Content-Length'] = json_tmp_length
+	return response
+
+@autostrip
+class ImportCompetitionForm( Form ):
+	json_file = forms.FileField( required=True, label=_('Competition File (*.json)') )
+	
+	def __init__( self, *args, **kwargs ):
+		super( ImportCompetitionForm, self ).__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(Field('json_file', accept=".json")),
+		)
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+
+def handle_import_competition( json_file_request ):
+	message_stream = StringIO.StringIO()
+		
+	try:
+		name, start_date, pydata = get_competition_name_start_date( stream=json_file_request )
+		if name is None:
+			message_stream.write( 'Error: File is Missing Competition Name and Start Date.\n' )
+			message_stream.write( 'Filename: "{}"'.format(file_names[0]) )
+			return message_stream.getvalue()
+		
+	except Exception as e:
+		message_stream.write( 'Error: Missing Competition Name and Start Date.\n' )
+		message_stream.write( 'Error: "{}".\n'.format(e) )
+		return message_stream.getvalue()
+			
+	if Competition.objects.filter( name=name, start_date=start_date ).exists():
+		message_stream.write( 'Error: Competition "{}" "{}" exists already.\n'.format(name, start_date.strftime('%Y-%m-%d')) )
+		message_stream.write( 'Rename or Delete the existing Competition before importing.' )
+		return message_stream.getvalue()
+
+	competition_import( pydata=pydata )
+	message_stream.write( 'Competition "{}" "{}" imported.\n'.format(name, start_date.strftime('%Y-%m-%d')) )
+	message_stream.write( 'Success!\n' )
+	
+	return message_stream.getvalue()
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CompetitionImport( request ):
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = ImportCompetitionForm(request.POST, request.FILES)
+		if form.is_valid():
+			results_str = handle_import_competition( request.FILES['json_file'] )
+			return render( request, 'import_competition.html', locals() )
+	else:
+		form = ImportCompetitionForm()
+	
+	return render( request, 'import_competition.html', locals() )
 #-----------------------------------------------------------------------
 
 def Logout( request ):
-	logout( request )
-	next = getContext(request, 'cancelUrl')
-	return HttpResponseRedirect('/RaceDB/login?next=' + next)
-
+	return logout( request, next_page=getContext(request, 'cancelUrl') )

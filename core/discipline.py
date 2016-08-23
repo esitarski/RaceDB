@@ -52,7 +52,7 @@ def DisciplinesDisplay( request ):
 		form = DisciplineDisplayForm()
 		
 	disciplines = Discipline.objects.all()
-	return render_to_response( 'discipline_list.html', RequestContext(request, locals()) )
+	return render( request, 'discipline_list.html', locals() )
 
 @access_validation()
 def DisciplineNew( request ):

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<style>
+#id_excel_file { width: 600px; }
+</style>
+<h2>{{title}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+<p class="text-center">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+{% if results_str %}
+<pre>{{results_str}}</pre>
+{% endif %}
+<p>
+<h3>Import a Competition and all its Dependencies</h3>
+<h3>(must be previously exported from RaceDB)</h3>
+<p>
+Imports the Competition and all its dependent data including:
+<ul>
+<li>Race Disciple and Class</li>
+<li>Mass Start and TT Events with Start Waves</li>
+<li>Category Format and Categories</li>
+<li>Category Numbers</li>
+<li>Report Labels</li>
+<li>Participants and Participant Options (for Optional Events)</li>
+<li>License Holders</li>
+<li>Season's Pass Holders</li>
+<li>Bib Numbers and Number Set</li>
+<li>Signed Waivers</li>
+</ul>
+<p>
+You cannot Import a Competition with the same name and Start Date of an existing Competition.  You must either Rename or Delete the existing Competition first.
+</p>
+<p>
+In general, existing records in the current database are re-used if they match the those required by the Competition, otherwise new records are created.<br/>
+For example, if the imported Competition has a Category Format that is the same as an existing one, the existing one will be used.
+If the imported Competition has a different Category Format, a new one and its Categories will be created.
+</p>
+<p>
+Notes on License Holders:
+<ul>
+<li>License Holders are first matched by License Code.</li>
+<li>It this fails, they are matched on Last, First, Gender and Date of Birth.  If this succeeds, the existing License Holder will be used, but the License Code field will not be changed from its current value.  The assumption is that the License Holder's License has been updated in the current database version.</li>
+<li>If still no License Holder is found, a new License Holder is created.  If the new License Holder's License Code would cause a duplicate with an existing Code, he/she will be assigned a TEMP one to prevent the duplicate.</li>
+<li>License Holder and Waiver information will not be changed if the License Holder participated in an event more recent that the Competition being Imported.  In this way out-of-date data will not overwrite more current data.</li>
+</ul>
+</p>
+{% endblock content %}

@@ -23,9 +23,8 @@ from django.db import transaction, IntegrityError
 from django.utils.translation import string_concat
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template import Template, Context, RequestContext
-from django.shortcuts import render_to_response, get_object_or_404
-from django.contrib.auth import logout
+from django.template import Template
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 
@@ -227,7 +226,7 @@ def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additio
 	form_context = {}
 	form_context.update( locals() )
 	form_context.update( additional_context )
-	return render_to_response( template or 'generic_form.html', RequestContext(request, form_context) )
+	return render( request, template or 'generic_form.html', form_context )
 	
 def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, template = None, additional_context = {} ):
 	instance = get_object_or_404( ModelClass, pk=instanceId )
@@ -264,7 +263,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 	form_context = {}
 	form_context.update( locals() )
 	form_context.update( additional_context )
-	return render_to_response( template or 'generic_form.html', RequestContext(request, form_context) )
+	return render( request, template or 'generic_form.html', form_context )
 
 def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, template = None, additional_context = {} ):
 	instance = get_object_or_404( ModelClass, pk=instanceId )
@@ -283,7 +282,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	form_context = {}
 	form_context.update( locals() )
 	form_context.update( additional_context )
-	return render_to_response( template or 'generic_form.html', RequestContext(request, form_context) )
+	return render( request, template or 'generic_form.html', form_context )
 
 #-----------------------------------------------------------------------
 

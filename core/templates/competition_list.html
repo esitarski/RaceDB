@@ -42,7 +42,9 @@
 					<a class="btn btn-warning" href="{{path}}CompetitionDelete/{{c.id}}">{% trans "Delete" %}</a>
 					&nbsp;
 					<a class="btn btn-primary" href="{{path}}CompetitionCopy/{{c.id}}">{% trans "Copy" %}</a>
-					&nbsp;&nbsp;&nbsp;
+					&nbsp;
+					<a class="btn btn-primary" href="{{path}}CompetitionExport/{{c.id}}">{% trans "Export" %}</a>
+					&nbsp;&nbsp;
 				{% endif %}
 				<a class="btn btn-success" href="{{path}}CompetitionDashboard/{{c.id}}">{% trans "Dashboard" %}</a>
 			</td>

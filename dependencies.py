@@ -9,8 +9,8 @@ import compileall
 pyllrp = 'pip-install-pyllrp-0.1.4.zip'
 
 dependencies = [
-	'django==1.8.7',
-	'django-crispy-forms==1.5.2',
+	'django==1.9.9',
+	'django-crispy-forms==1.6',
 	'django-extensions',
 	'dj_static',
 	'waitress',
@@ -18,7 +18,12 @@ dependencies = [
 	'xlrd',
 	'pytz',
 	'fpdf',
+	'natural-keys',
 	pyllrp,
+]
+
+uninstall_dependencies = [
+	'south',
 ]
 
 def update_dependencies( upgrade ):
@@ -34,6 +39,11 @@ def update_dependencies( upgrade ):
 		args = [pip, 'install', d]
 		if upgrade:
 			args.append('--upgrade')
+		print( ' '.join(args) )
+		subprocess.call( args )
+
+	for d in uninstall_dependencies:
+		args = [pip, 'uninstall', d]
 		print( ' '.join(args) )
 		subprocess.call( args )
 

@@ -52,7 +52,7 @@ def CategoryFormatsDisplay( request ):
 		form = SearchForm( btns, initial = {'search_text': search_text} )
 		
 	category_formats = applyFilter( search_text, CategoryFormat.objects.all(), CategoryFormat.get_search_text )
-	return render_to_response( 'category_format_list.html', RequestContext(request, locals()) )
+	return render( request, 'category_format_list.html', locals() )
 
 @access_validation()
 def CategoryFormatNew( request ):
@@ -156,7 +156,7 @@ def CategoryNew( request, categoryFormatId ):
 		category = Category( format = category_format ,sequence = 0 )
 		form = CategoryForm( instance = category )
 	
-	return render_to_response( 'category_form.html', RequestContext(request, locals()) )
+	return render( request, 'category_form.html', locals() )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )

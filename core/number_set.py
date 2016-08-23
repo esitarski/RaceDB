@@ -73,7 +73,7 @@ def NumberSetsDisplay( request ):
 		form = NumberSetDisplayForm()
 		
 	number_sets = NumberSet.objects.all()
-	return render_to_response( 'number_set_list.html', RequestContext(request, locals()) )
+	return render( request, 'number_set_list.html', locals() )
 
 @access_validation()
 def NumberSetNew( request ):
@@ -120,7 +120,7 @@ def BibReturn( request, numberSetEntryId, confirmed=False ):
 		_('Return Bib to the NumberSet so it can be used again.'))
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'BibReturn/{}/{}/'.format(numberSetEntryId,1)
-	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+	return render( request, 'are_you_sure.html', locals() )
 
 @access_validation()
 def BibLost( request, numberSetEntryId, confirmed=False ):
@@ -134,7 +134,7 @@ def BibLost( request, numberSetEntryId, confirmed=False ):
 		_('Record Bib as Lost and no longer available.'))
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'BibLost/{}/{}/'.format(numberSetEntryId,1)
-	return render_to_response( 'are_you_sure.html', RequestContext(request, locals()) )
+	return render( request, 'are_you_sure.html', locals() )
 
 @access_validation()
 def NumberSetEdit( request, numberSetId ):
@@ -183,11 +183,11 @@ def UploadNumberSet( request, numberSetId ):
 		if form.is_valid():
 			results_str = handle_upload_number_set( numberSetId, request.FILES['excel_file'] )
 			del request.FILES['excel_file']
-			return render_to_response( 'upload_number_set.html', RequestContext(request, locals()) )
+			return render( request, 'upload_number_set.html', locals() )
 	else:
 		form = UploadNumberSetForm()
 	
-	return render_to_response( 'upload_number_set.html', RequestContext(request, locals()) )
+	return render( request, 'upload_number_set.html', locals() )
 	
 @autostrip
 class NumberSetManageForm( Form ):
@@ -267,7 +267,7 @@ def NumberSetManage( request, numberSetId ):
 		form = NumberSetManageForm( initial = search_fields )
 	
 	nses = getData( search_fields )
-	return render_to_response( 'number_set_manage.html', RequestContext(request, locals()) )	
+	return render( request, 'number_set_manage.html', locals() )	
 
 @autostrip
 class BibListForm( Form ):
@@ -318,6 +318,6 @@ def NumberSetBibList( request, numberSetId ):
 	else:
 		form = BibListForm()
 	title = _('Number Set Bib List')
-	return render_to_response( 'generic_form.html', RequestContext(request, locals()) )	
+	return render( request, 'generic_form.html', locals() )	
 
 

@@ -52,7 +52,7 @@ def RaceClassesDisplay( request ):
 		form = RaceClassDisplayForm()
 		
 	race_classes = RaceClass.objects.all()
-	return render_to_response( 'race_class_list.html', RequestContext(request, locals()) )
+	return render( request, 'race_class_list.html', locals() )
 
 @access_validation()
 def RaceClassNew( request ):

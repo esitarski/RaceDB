@@ -55,7 +55,7 @@ def ReportLabelsDisplay( request ):
 		form = ReportLabelDisplayForm()
 		
 	report_labels = ReportLabel.objects.all()
-	return render_to_response( 'report_label_list.html', RequestContext(request, locals()) )
+	return render( request, 'report_label_list.html', locals() )
 
 @access_validation()
 def ReportLabelNew( request ):

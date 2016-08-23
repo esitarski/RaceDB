@@ -62,7 +62,7 @@ def SelfServeQRCode( request ):
 	qrpath += '/login/?next=/RaceDB/SelfServe/'
 
 	qrcode_note = _('Login with Username: serve')
-	return render_to_response( 'qrcode.html', RequestContext(request, locals()) )
+	return render( request, 'qrcode.html', locals() )
 	
 @access_validation( selfserve_ok=True )
 def SelfServe( request, do_scan=0 ):
@@ -87,7 +87,7 @@ def SelfServe( request, do_scan=0 ):
 	
 	if do_scan == 2:
 		confirm_logout = True
-		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		return render( request, 'self_serve.html', locals() )
 	elif do_scan == 3:
 		logout( request )
 		return HttpResponseRedirect( '/RaceDB/Home/' )		
@@ -110,20 +110,20 @@ def SelfServe( request, do_scan=0 ):
 				if form.is_valid():
 					competition = Competition.objects.filter( pk=form.cleaned_data['competition_choice'] ).first()
 				else:
-					return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+					return render( request, 'self_serve.html', locals() )
 			else:
 				form = SelfServeCompetitionForm()
-				return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+				return render( request, 'self_serve.html', locals() )
 		
 		if not competition:
 			errors.append( _('No Competition') )
-			return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+			return render( request, 'self_serve.html', locals() )
 		
 		request.session['competition_id'] = competition_id = competition.id
 		
 	if not competition.using_tags:
 		errors.append( _('Competition must be configured to use tags.') )
-		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		return render( request, 'self_serve.html', locals() )
 
 	rfid_antenna = request.session.get('rfid_antenna', None)
 	if rfid_antenna is None:
@@ -138,10 +138,10 @@ def SelfServe( request, do_scan=0 ):
 			return HttpResponseRedirect( path_noargs )
 		else:
 			form = SelfServeAntennaForm()
-			return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+			return render( request, 'self_serve.html', locals() )
 		
 	if not do_scan:
-		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		return render( request, 'self_serve.html', locals() )
 	
 	tag = None
 	status, response = ReadTag(rfid_antenna)
@@ -168,13 +168,13 @@ def SelfServe( request, do_scan=0 ):
 		)
 
 	if not status:
-		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		return render( request, 'self_serve.html', locals() )
 		
 	license_holder, participants = participant_key_filter( competition, tag, False )
 	
 	if not license_holder:
 		errors.append( string_concat(_('Tag not found '), u' (', tag, u').') )
-		return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+		return render( request, 'self_serve.html', locals() )
 	
 	# If the license holder has a season's pass for the competition, try to add him/her as a participant.
 	if not participants and competition.seasons_pass and competition.seasons_pass.has_license_holder(license_holder):
@@ -228,4 +228,4 @@ def SelfServe( request, do_scan=0 ):
 			p.confirmed = True
 			p.save()
 
-	return render_to_response( 'self_serve.html', RequestContext(request, locals()) )
+	return render( request, 'self_serve.html', locals() )

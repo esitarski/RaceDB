@@ -49,8 +49,9 @@ The spreadsheet must have a specific format:
 <li>The first Row of the sheet must be a <strong>Header Row</strong>.</li>
 <li>The Header Row must contain a <strong>License</strong> column.</li>
 <li>The sheet can include some, or all, of addition Participant information column headers (see below).</li>
-<li>The Header Row can also contain the names of Optional Events for the Competition.  True/False values in these columns specifies whether the Licence Holder is participating in this Event, and will override the Event's default.
+<li>The Header Row can also contain the names of Optional Events for the Competition.  True/False values in these columns specifies whether the Licence Holder is participating in this Event, and will override the Event's default opt-in/opt-out.
 <li>Other header columns are ignored.</li>
+<li>Capitalization in the Header Row is ignored (BIB=bib=Bib=BiB=bIb).  Underscores '_' are treated as spaces.</li>
 </ul>
 </p>
 <p>
@@ -79,23 +80,23 @@ The same prereg data sheet can be imported into the same Competition any number 
 <tr><th>Column</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Required.  Regional License code (<strong>not UCI code</strong>).</td></tr>
-<tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Optional.  Rider's Last name.</td></tr>
-<tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Optional.  Rider's First name.</td></tr>
-<tr><td><strong>Gender</strong> or <strong>Rider Gender</strong></td><td>Optional.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else it is read as <strong>Men</strong>.  A blank field is read as "No Gender".</td></tr>
-<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.</td></tr>
+<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong> or <strong>Lic</strong> or <strong>Lic #</strong></td><td>Required.  Regional License code (<strong>not UCI code</strong>).</td></tr>
+<tr><td><strong>LastName</strong> or <strong>Last Name</strong> or <strong>LName</strong></td><td>Optional.  Rider's Last name.</td></tr>
+<tr><td><strong>FirstName</strong> or <strong>First Name</strong> or <strong>FName</strong></td><td>Optional.  Rider's First name.</td></tr>
+<tr><td><strong>Gender</strong> or <strong>Rider Gender</strong> or <strong>Sex</strong></td><td>Optional.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else it is read as <strong>Men</strong>.  A blank field is read as "No Gender".</td></tr>
+<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong> or <strong>Birthday</strong></td><td>Optional.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.</td></tr>
 <tr><td><strong>Team</strong></td><td>Optional.  Rider's Team.  The Team must already be defined in the database.</td></tr>
 <tr><td><strong>Category</strong></td><td>Optional.  Rider's Category for this race.  The field must match the Category Code of a Category in the Competition's Category Format.</td></tr>
 <tr><td><strong>UCI Code</strong> or <strong>UCICode</strong> or <strong>UCI</strong></td><td>Optional data field.  UCI code (format NNNYYYYMMDD).</td></tr>
-<tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Optional data field.  Rider's Last name.</td></tr>
-<tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Optional data field.  Rider's First name.</td></tr>
-<tr><td><strong>Gender</strong> or <strong>Rider Gender</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else, or is blank, it is read as <strong>Men</strong>.</td></tr>
+<tr><td><strong>LastName</strong> or <strong>Last Name</strong> or <strong>LName</strong></td><td>Optional data field.  Rider's Last name.</td></tr>
+<tr><td><strong>FirstName</strong> or <strong>First Name</strong> or <strong>FName</strong></td><td>Optional data field.  Rider's First name.</td></tr>
+<tr><td><strong>Gender</strong> or <strong>Rider Gender</strong> or <strong>Sex</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else, or is blank, it is read as <strong>Men</strong>.</td></tr>
 <tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional data field.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.   If missing, and the UCI Code is present, the date of birth will be extracted from the UCI code.</td></tr>
-<tr><td><strong>Team</strong></td><td>Optional data field.  Rider's Team.  The Team must already be defined in the database.</td></tr>
+<tr><td><strong>Team</strong> or <strong>Rider Team</strong></td><td>Optional data field.  Rider's Team.  The Team must already be defined in the database.</td></tr>
 <tr><td><strong>Category</strong></td><td>Optional data field.  Rider's Category for this race.  The field must match the Category Code of a Category in the Competition's Category Format.</td></tr>
 <tr><td><strong>Preregistered</strong></td><td>Optional.  Sets the rider's preregistered flag.  Default is True. **</td></tr>
 <tr><td><strong>Paid</strong></td><td>Optional.  Indicates that the rider has paid.  Default is False. **</td></tr>
-<tr><td><strong>Bib</strong> or <strong>Bib Number</strong></td>
+<tr><td><strong>Bib</strong> or <strong>Bib Number</strong> or <strong>BibNum</strong> or <strong>Bib #</strong></td>
 	<td>Optional.  Bib number for the rider.  Bib numbers can also be assigned from RaceDB beforehand, or given out on race day on-the-fly.  Not required if using <strong>Number Sets</strong>.  If this column exists, all existng Participants in the Competition will be cleared first.</td>
 </tr>
 <tr><td><strong>Tag</strong> or <strong>Chip</strong> or <strong>Chip ID</strong></td><td>Optional.  RFID tag for the rider.  Not required if auto-generated tags or if re-using existing tags.</td></tr>
@@ -110,11 +111,11 @@ Non-competitor roles cannot compete in Events and are for contact purposes only.
 <tr><td><strong>Email</strong></td><td>Optional.  Participant's email.</td></tr>
 <tr><td><strong>Phone</strong></td><td>Optional.  Participant's phone number.</td></tr>
 <tr><td><strong>City</strong></td><td>Optional.  Participant's city.</td></tr>
-<tr><td><strong>State</strong> or <strong>Prov</strong> or <strong>StateProv</strong></td><td>Optional.  Participant's state/prov.</td></tr>
+<tr><td><strong>State</strong> or <strong>Prov</strong> or <strong>StateProv</strong> or <strong>Province</strong></td><td>Optional.  Participant's state/prov.</td></tr>
 <tr><td><strong>ZipPostal</strong> or <strong>Zip</strong> or <strong>Postal</strong></td><td>Optional.  Participant's zip/postal code.</td></tr>
 <tr><td><strong>Emergency Contact</strong></td><td>Optional.  Name of emergency contact.</td></tr>
 <tr><td><strong>Emergency Phone</strong></td><td>Optional.  Phone number of emergency contact.</td></tr>
-<tr><td><strong>Optional Event Names</strong></td><td>Optional.  Indicates whether the License Holder is participating in the Event, which must be an Optional Event of the Competition.  This overrides the opt-in/opt-out option of the Event.  However, a Participant can only be added to the Event if his/her Category allows.  **.</td></tr>
+<tr><td><strong>Optional Event Names</strong></td><td>Optional.  List of Optional Events.  Indicates whether the License Holder is participating in the Event.  Overrides the opt-in/opt-out default option of the Event.  However, a Participant can only be added to the Event if his/her Category allows.  **.</td></tr>
 </tbody>
 </table>
 </p>

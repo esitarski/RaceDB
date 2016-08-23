@@ -12,7 +12,7 @@
 }
 </style>
 
-<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+<form method="post" action="{% url 'login' %}">
 {% csrf_token %}
 <table id="login-table">
 <tr>

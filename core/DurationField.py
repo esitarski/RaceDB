@@ -104,9 +104,7 @@ class DurationField( FloatField ):
 		return value
 	
 	def from_db_value( self, value, expression, connection, context ):
-			if value is None:
-				return value
-			return formatted_timedelta( seconds = value )
+		return formatted_timedelta( seconds=value ) if value is not None else None
 	
 	def get_db_prep_value(self, value, connection, prepared=False):
 		try:
@@ -116,9 +114,7 @@ class DurationField( FloatField ):
 		
 	def value_to_string( self, instance ):
 		td = getattr(instance, self.attname)
-		if td:
-			return format_seconds( td.total_seconds() )
-		return None
+		return format_seconds( td.total_seconds() )
 		
 	def formfield( self, form_class=DurationFormField, **kwargs ):
 		defaults = {"help_text": "[-]HH:MM:SS.ddd"}

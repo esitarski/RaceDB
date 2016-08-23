@@ -79,7 +79,7 @@ def SeasonsPassesDisplay( request ):
 		form = SeasonsPassDisplayForm()
 	
 	seasons_passes = SeasonsPass.objects.all()
-	return render_to_response( 'seasons_pass_list.html', RequestContext(request, locals()) )
+	return render( request, 'seasons_pass_list.html', locals() )
 
 @access_validation()
 def SeasonsPassNew( request ):
@@ -161,7 +161,7 @@ def SeasonsPassHolderAdd( request, seasonsPassId ):
 	# Analyse the search_text to try to use an indexed field.
 	search_text = utils.normalizeSearch(search_text)
 	license_holders = license_holders_from_search_text( search_text )
-	return render_to_response( 'license_holder_seasons_pass_list.html', RequestContext(request, locals()) )
+	return render( request, 'license_holder_seasons_pass_list.html', locals() )
 
 @access_validation()
 def SeasonsPassLicenseHolderAdd( request, seasonsPassId, licenseHolderId ):
@@ -237,10 +237,10 @@ def UploadSeasonsPass( request, seasonsPassId ):
 		if form.is_valid():
 			results_str = handle_upload_seasons_pass( seasonsPassId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )
 			del request.FILES['excel_file']
-			return render_to_response( 'upload_seasons_pass.html', RequestContext(request, locals()) )
+			return render( request, 'upload_seasons_pass.html', locals() )
 	else:
 		form = UploadSeasonsPassForm()
 	
-	return render_to_response( 'upload_seasons_pass.html', RequestContext(request, locals()) )
+	return render( request, 'upload_seasons_pass.html', locals() )
 
 
