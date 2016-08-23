@@ -68,11 +68,11 @@ def _build_instance(Model, data, db, field_names, existing_license_codes):
 				existing_license_codes.add( instance.license_code )
 				
 		if existing_instance:
-			# Re-use the internal tags as they are guarenteed unique.
+			# Re-use the internal tags as they are guaranteed unique.
 			instance.existing_tag = existing_instance.existing_tag
 			instance.existing_tag2 = existing_instance.existing_tag2
 		else:
-			# Do not import tags from external systems as they could cause collisions with internal tags.
+			# Do not import tags from external systems as they could be duplicates of internal tags.
 			instance.existing_tag = None
 			instance.existing_tag2 = None
 		
