@@ -67,9 +67,14 @@ def _build_instance(Model, data, db, field_names, existing_license_codes):
 				# Update the known license codes.
 				existing_license_codes.add( instance.license_code )
 				
-		if existing_instance and existing_instance.existing_tag:
+		if existing_instance:
+			# Re-use the internal tags as they are guarenteed unique.
 			instance.existing_tag = existing_instance.existing_tag
 			instance.existing_tag2 = existing_instance.existing_tag2
+		else:
+			# Do not import tags from external systems as they could cause collisions with internal tags.
+			instance.existing_tag = None
+			instance.existing_tag2 = None
 		
 	elif Model == Category:
 		existing_instance = search( code=instance.code, gender=instance.gender, )
