@@ -40,7 +40,11 @@ class FieldMap( object ):
 		self.name_to_col = {}
 		self.unmapped = set()
 		for i, h in enumerate(header):
-			h = normalize( h )
+			try:
+				h = normalize( h )
+			except Exception as e:
+				continue
+			
 			try:
 				name = self.alias_to_name[h]
 			except KeyError:
@@ -63,7 +67,10 @@ class FieldMap( object ):
 		return name in self.name_to_col
 		
 	def get_name_from_alias( self, alias ):
-		alias = normalize( alias )
+		try:
+			alias = normalize( alias )
+		except Exception as e:
+			return None
 		return None if alias in self.unmapped else self.alias_to_name.get(alias, None)
 
 standard_field_aliases = (
