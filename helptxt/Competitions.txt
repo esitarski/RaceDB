@@ -25,16 +25,22 @@ Shows a list of all Competitions in the system with the most recent shown first.
 
 Clicking on a Competition row triggers the default button (Dashboard).  This brings you to the main Competetion screen, the [Competition Dashboard][].
 
+The "Import Competition" can imports a previously Expored Competition.  All information associated with a Competition is imported.  Existing data records are re-used, missing data is created.
+
 ## Competition Copy
 Makes a copy of the competition including all category information, Mass Start Events, Start Waves and Category numbers.  The Participants are not copied.
 
 To create a new Competition from an existing one, press Copy, then change the fields in the new Competition to customize it (for example, Name, Date, Organizer).
 
+## Competition Export
+
+Exports the Competition and all its data dependencies including Categories, Start Waves, Number Ranges, Participants, Options, etc.
+
 ## Competition Edit
 
 Shows all the data associated with a Competition.
 
-There are two additional buttons:
+There are some additional buttons:
 
 1. __Auto Generate Missing Tags for Existing Participants__
 1. __Reapply Number Set to Existing Participants__
