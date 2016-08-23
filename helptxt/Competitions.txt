@@ -25,7 +25,12 @@ Shows a list of all Competitions in the system with the most recent shown first.
 
 Clicking on a Competition row triggers the default button (Dashboard).  This brings you to the main Competetion screen, the [Competition Dashboard][].
 
-The "Import Competition" can imports a previously Expored Competition.  All information associated with a Competition is imported.  Existing data records are re-used, missing data is created.
+The __Import Competition__ can import a previously Expored Competition.  All information associated with a Competition is imported.  Existing data records are re-used, missing data is created from the import.
+
+This feature enables a __decentralized__ approach to managing races:
+
+1. Create an empty Competition, configure it with all the required Categories, Start Waves, etc. and send it to organizers.  The organizers __Import__ the template then customize it for their race.
+1. Organizers send back the Competition after the race.  The data contains all the permanent number assignments and waivers.  Importing the Competition will update the master database.
 
 ## Competition Copy
 Makes a copy of the competition including all category information, Mass Start Events, Start Waves and Category numbers.  The Participants are not copied.
