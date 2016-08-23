@@ -1,11 +1,14 @@
 
 import unicodedata
 def remove_diacritic(input):
-    '''
-    Accept a unicode string, and return a normal string (bytes in Python 3)
-    without any diacritical marks.
-    '''
-    return unicodedata.normalize('NFKD', input).encode('ASCII', 'ignore')
+	'''
+	Accept a unicode string, and return a normal string (bytes in Python 3)
+	without any diacritical marks.
+	'''
+	if isinstance(input, unicode):
+		return unicodedata.normalize('NFKD', input).encode('ASCII', 'ignore')
+	else:
+		return input
 
 def normalize( s ):
 	return remove_diacritic( s.replace('.','').replace('_',' ').strip().lower() )
