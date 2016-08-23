@@ -1,5 +1,5 @@
-
 import unicodedata
+
 def remove_diacritic(input):
 	'''
 	Accept a unicode string, and return a normal string (bytes in Python 3)
