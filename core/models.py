@@ -1704,8 +1704,20 @@ class LicenseHolder(models.Model):
 			]
 		)
 		
-	def get_unique_tag( self ):
+	@staticmethod
+	def auto_create_tags():
+		LicenseHolder.objects.exclude( existing_tag=None ).update( existing_tag=None )
+		LicenseHolder.objects.exclude( existing_tag2=None ).update( existing_tag2=None )
+
 		system_info = SystemInfo.get_singleton()
+		while LicenseHolder.objects.filter( existing_tag=None ).exists():
+			with transaction.atomic():
+				for lh in LicenseHolder.objects.filter( existing_tag=None )[:999]:
+					lh.existing_tag = lh.get_unique_tag( system_info )
+					lh.save()
+	
+	def get_unique_tag( self, system_info=None ):
+		system_info = system_info or SystemInfo.get_singleton()
 		if system_info.tag_from_license and self.license_code:
 			return getTagFromLicense( self.license_code, system_info.tag_from_license_id )
 		else:

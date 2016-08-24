@@ -383,6 +383,7 @@ def LicenseHoldersDisplay( request ):
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('correct-errors-submit', _('Correct Errors'), 'btn btn-primary'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
+		('auto-create-tags-submit', _('Auto Create Tags'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
 	]
@@ -409,6 +410,9 @@ def LicenseHoldersDisplay( request ):
 			
 		if 'manage-duplicates-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )
+			
+		if 'auto-create-tags-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersAutoCreateTags') )
 			
 		if 'import-excel-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersImportExcel') )
@@ -577,6 +581,19 @@ def LicenseHoldersCorrectErrors( request ):
 	license_holders = LicenseHolder.get_errors()
 	isEdit = True
 	return render( request, 'license_holder_correct_errors_list.html', locals() )
+
+#-----------------------------------------------------------------------
+@access_validation()
+def LicenseHoldersAutoCreateTags( request, confirmed=False ):
+	if confirmed:
+		LicenseHolder.auto_create_tags()
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Auto Create Tags for All License Holders')
+	message = _("This will create tags for all License Holders.  If SystemInfo 'RFID Tag from License' is set, the tag will be created based on the License Code.  Otherwise it will be created from the unique database id.")
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'LicenseHoldersAutoCreateTags/1/'
+	return render( request, 'are_you_sure.html', locals() )
 
 #-----------------------------------------------------------------------
 @access_validation()
