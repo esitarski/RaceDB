@@ -383,7 +383,7 @@ def LicenseHoldersDisplay( request ):
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('correct-errors-submit', _('Correct Errors'), 'btn btn-primary'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
-		('auto-create-tags-submit', _('Auto Create Tags'), 'btn btn-primary'),
+		('auto-create-tags-submit', _('Auto Create All Tags'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
 	]
