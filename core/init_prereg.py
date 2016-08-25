@@ -48,7 +48,7 @@ def init_prereg(
 			event_name_count[event.name] += 1
 	for event_name, count in event_name_count.iteritems():
 		if count > 1:
-			message_stream_write( u'**** Error: Duplicate Optional Event Name: "{}".  Adding to Optional Events will not work properly.\n'.format(event_name) )
+			message_stream_write( u'**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
 	
 	role_code = {}
 	for role_type, roles in Participant.COMPETITION_ROLE_CHOICES:
