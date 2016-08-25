@@ -1,13 +1,14 @@
 import re
 import sys
 import datetime
+from fnmatch import fnmatch
 from xlrd import open_workbook, xldate_as_tuple
 import HTMLParser
 from collections import namedtuple, defaultdict
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from large_delete_all import large_delete_all
-from FieldMap import standard_field_map
+from FieldMap import standard_field_map, normalize
 import import_utils
 from import_utils import *
 from models import *
@@ -39,7 +40,8 @@ def init_prereg(
 			message_stream_write( u'**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
 			return
 	
-	optional_events = { event.name.lower():event for event in competition.get_events() if event.optional }
+	optional_events = { normalize(event.name):event for event in competition.get_events() if event.optional }
+	pattern_optional_events = defaultdict( list )
 	
 	# Check for duplicate event names.
 	event_name_count = defaultdict( int )
@@ -69,8 +71,6 @@ def init_prereg(
 	times = defaultdict(float)
 	
 	ifm = standard_field_map()
-	for op in optional_events.iterkeys():
-		ifm.set_aliases( op, (op,) )
 	
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
@@ -138,9 +138,12 @@ def init_prereg(
 			
 			emergency_contact_name = to_str(v('emergency_contact_name', None))
 			emergency_contact_phone = to_int_str(v('emergency_contact_phone', None))
-			participant_optional_events = {
-				event:to_bool(v(event_name,False)) for event_name, event in optional_events.iteritems()
-			}
+			
+			participant_optional_events = []
+			for pattern, events in pattern_optional_events.iteritems():
+				included = v(pattern, False)
+				participant_optional_events.extend( (event, included) for event in events )
+			
 			race_entered    = to_str(v('race_entered', None))
 			
 			role			= role_code.get( v('role','').lower().replace(' ', '').replace('.', ''), None )
@@ -303,7 +306,7 @@ def init_prereg(
 				if participant_optional_events:
 					participant_optional_events = {
 						event:(included and event.could_participate(participant))
-						for event, included in participant_optional_events.iteritems()
+						for event, included in participant_optional_events
 					}
 					option_included = { event.option_id:included for event, included in participant_optional_events.iteritems() }
 					ParticipantOption.sync_option_ids( participant, option_included )
@@ -357,6 +360,19 @@ def init_prereg(
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unicode(v.value).strip() for v in row]
+			
+			# Add all Optional Event patterns.
+			for field in fields:
+				try:
+					pattern = normalize( field )
+				except:
+					continue
+				for event_name, event in optional_events.iteritems():
+					if fnmatch(event_name, pattern):
+						pattern_optional_events[pattern].append( event )
+			for pattern in pattern_optional_events.iterkeys():
+				ifm.set_aliases( pattern, (pattern,) )
+			
 			ifm.set_headers( fields )
 			message_stream_write( u'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
