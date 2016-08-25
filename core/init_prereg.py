@@ -41,6 +41,15 @@ def init_prereg(
 	
 	optional_events = { event.name.lower():event for event in competition.get_events() if event.optional }
 	
+	# Check for duplicate event names.
+	event_name_count = defaultdict( int )
+	for event in competition.get_events():
+		if event.optional:
+			event_name_count[event.name] += 1
+	for event_name, count in event_name_count.iteritems():
+		if count > 1:
+			message_stream_write( u'**** Error: Duplicate Optional Event Name: "{}".  Adding to Optional Events will not work properly.\n'.format(event_name) )
+	
 	role_code = {}
 	for role_type, roles in Participant.COMPETITION_ROLE_CHOICES:
 		role_code.update( { unicode(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
