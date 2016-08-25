@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connection
 from django.db import transaction, IntegrityError
 from django.db.models import Max
 from django.db.models import Q
@@ -1706,8 +1706,8 @@ class LicenseHolder(models.Model):
 		
 	@staticmethod
 	def auto_create_tags():
-		LicenseHolder.objects.exclude( existing_tag=None ).update( existing_tag=None )
-		LicenseHolder.objects.exclude( existing_tag2=None ).update( existing_tag2=None )
+		LicenseHolder.objects.exclude( existing_tag__isnull=True ).update( existing_tag=None )
+		LicenseHolder.objects.exclude( existing_tag2__isnull=True ).update( existing_tag2=None )
 
 		system_info = SystemInfo.get_singleton()
 		while LicenseHolder.objects.filter( existing_tag=None ).exists():

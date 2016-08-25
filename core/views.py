@@ -589,8 +589,8 @@ def LicenseHoldersAutoCreateTags( request, confirmed=False ):
 		LicenseHolder.auto_create_tags()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
-	page_title = _('Auto Create Tags for All License Holders')
-	message = _("This will create tags for all License Holders.  If SystemInfo 'RFID Tag from License' is set, the tag will be created based on the License Code.  Otherwise it will be created from the unique database id.")
+	page_title = _('Auto Create Tag Values for All License Holders')
+	message = _("Create tag values for all License Holders.  If SystemInfo 'RFID Tag from License' is set, the tag will be created from the License Code.  Otherwise it will be created from the Database ID.")
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'LicenseHoldersAutoCreateTags/1/'
 	return render( request, 'are_you_sure.html', locals() )

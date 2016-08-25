@@ -60,7 +60,7 @@ def init_prereg(
 	times = defaultdict(float)
 	
 	ifm = standard_field_map()
-	for op in optional_events:
+	for op in optional_events.iterkeys():
 		ifm.set_aliases( op, (op,) )
 	
 	# Process the records in large transactions for efficiency.
@@ -130,7 +130,7 @@ def init_prereg(
 			emergency_contact_name = to_str(v('emergency_contact_name', None))
 			emergency_contact_phone = to_int_str(v('emergency_contact_phone', None))
 			participant_optional_events = {
-				optional_events[field]:to_bool(v('field',False)) for field in optional_events
+				event:to_bool(v(event_name,False)) for event_name, event in optional_events.iteritems()
 			}
 			race_entered    = to_str(v('race_entered', None))
 			
