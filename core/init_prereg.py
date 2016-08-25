@@ -141,7 +141,7 @@ def init_prereg(
 			
 			participant_optional_events = []
 			for pattern, events in pattern_optional_events.iteritems():
-				included = v(pattern, False)
+				included = to_bool(v(pattern, False))
 				participant_optional_events.extend( (event, included) for event in events )
 			
 			race_entered    = to_str(v('race_entered', None))

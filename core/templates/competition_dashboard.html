@@ -24,7 +24,11 @@
 		<div class="row">
 			<div class="col-md-12">
 				<strong>{{competition.name}}</strong>{% if competition.description %}, {{competition.description}}{% endif %},
-				{{competition.category_format.name}}{% if competition.report_labels_text %}, {{competition.report_labels_text}}{% endif %}
+				{% if request.user.is_superuser %}
+					<a class="btn btn-primary btn-xs" href="{{path}}CategoryFormatEdit/{{competition.category_format.id}}">{{competition.category_format.name}}</a>
+				{% else %}
+					{{competition.category_format.name}}
+				{% endif %}{% if competition.report_labels_text %}, {{competition.report_labels_text}}{% endif %}
 			</div>
 		</div>
 		<div class="row">
@@ -66,7 +70,13 @@
 				{% endif %}
 			</div>
 			<div class="col-md-3">
-				{{competition|get_field_name:"seasons_pass"}}:&nbsp;<strong>{% if competition.seasons_pass %}{{competition.seasons_pass.name}}{% else %}{% trans "No" %}{% endif %}</strong>
+				{% if competition.seasons_pass %}
+					{% if request.user.is_superuser %}
+						{{competition|get_field_name:"seasons_pass"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}SeasonsPassEdit/{{competition.seasons_pass.id}}">{{competition.seasons_pass.name}}</a>
+					{% else %}
+						{{competition|get_field_name:"seasons_pass"}}:&nbsp;<strong>{{competition.seasons_pass.name}}</strong>
+					{% endif %}
+				{% endif %}
 			</div>
 		</div>
 		<div class="row hidden-print">

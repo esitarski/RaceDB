@@ -7,6 +7,7 @@ from django.contrib.auth.views import logout
 from subprocess import Popen, PIPE
 import uuid
 import zipfile
+import operator
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -2134,10 +2135,9 @@ class ParticipantSearchForm( Form ):
 		if competition:
 			self.fields['category'].choices = \
 				[(-1, '----')] + [(-2, _('*** Missing ***'))] + [(category.id, category.code_gender) for category in competition.get_categories()]
-			events = competition.get_events()
-			events.sort( key = lambda e: e.date_time )
+			events = sorted( competition.get_events(), key = lambda e: e.date_time )
 			self.fields['event'].choices = \
-				[(-1, 'All')] + [(event.id, u'{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
+				[(u'-1.0', _('All'))] + [(u'{}.{}'.format(event.event_type, event.id), u'{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
 			
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
@@ -2161,7 +2161,6 @@ class ParticipantSearchForm( Form ):
 				Field('paid'), Field('complete'), Field('has_events'), Field('eligible'), ),
 			Row( *(button_args[:-1] + [HTML('&nbsp;'*8)] + button_args[-1:]) ),
 		)
-
 		
 @access_validation()
 def Participants( request, competitionId ):
@@ -2191,18 +2190,17 @@ def Participants( request, competitionId ):
 	
 	#-------------------------------------------------------------------
 	
-	participants = None
 	event = None
-	if participant_filter.get('event', -1) >= 0:
-		event_pk = participant_filter.get('event', -1)
-		for c in [EventMassStart, EventTT]:
-			event = c.objects.filter(pk=event_pk).first()
-			if event:
-				participants = event.get_participants()
-				break
+	try:
+		event_type, event_pk = [int(v) for v in participant_filter.get('event', '-1.0').split('.')]
+	except:
+		event_type, event_pk = None, None
+	if event_type == 0:
+		event = competition.eventmassstart_set.filter(pk=event_pk).first()
+	elif event_type == 1:
+		event = competition.eventtt_set.filter(pk=event_pk).first()
 			
-	if participants is None:
-		participants = Participant.objects.filter( competition=competition )
+	participants = event.get_participants() if event else competition.participant_set.all()
 	
 	competitors = participants.filter( role=Participant.Competitor )
 	missing_category_count = competitors.filter( category__isnull=True ).count()
