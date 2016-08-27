@@ -15,6 +15,11 @@
 			<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
 		</a>
 	</li>
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantBibAdd/{{competition.id}}/">
+			<img src="{% static "images/bib_icon_blue.png" %}"/>&nbsp;&nbsp;{% trans "Bib Add" %}
+		</a>
+	</li>
 {% if competition.using_tags %}
 	<li role="presentation">
 		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">

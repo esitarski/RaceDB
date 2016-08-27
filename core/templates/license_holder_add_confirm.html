@@ -33,7 +33,7 @@
 		</tr>
 		<tr><td class="text-right">{% trans "From" %}:</td>				<td><strong>{{license_holder.city}}, {{license_holder.state_prov}}</strong></td></tr>
 		<tr><td class="text-right">{% trans "Nationality" %}:</td>		<td><strong>{{license_holder.nationality}}</strong></td></tr>
-		<tr><td class="text-right">{% trans "License" %}:</td>			<td><strong>{{license_holder.license_code}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "License" %}:</td>			<td><strong>{{license_holder.license_code_trunc}}</strong></td></tr>
 		<tr><td class="text-right">{% trans "UCI Code" %}:</td>			<td><strong>{{license_holder.uci_code}}</strong></td></tr>
 		{% if competition.use_tags and competition.use_existing_tags %}
 			<tr>

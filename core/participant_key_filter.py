@@ -53,7 +53,7 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 			Q(license_holder__license_code=key) | Q(tag=key) | Q(tag2=key)) )
 	
 	if participants:
-		participants.sort( key = lambda p: (p.category.sequence if p.category else 999999, p.bib if p.bib else 999999) )
+		participants.sort( key = lambda p: (p.category.sequence if p.category else 999999, p.bib or 999999) )
 		return participants[0].license_holder, participants
 	
 	# Check for a license encoded in an rfid tag.
@@ -86,6 +86,24 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	if competition.using_tags and competition.use_existing_tags and tag_original and license_holder.existing_tag != tag_original:
 		license_holder.existing_tag = tag_original
 		license_holder.save()
+	
+	if not auto_add_participant:
+		return license_holder, []
+	
+	return add_participant_from_license_holder( competition, license_holder )
+
+def participant_bib_filter( competition, bib, auto_add_participant=True ):
+	# Check for an existing participant.
+	participants = list( competition.participant_set.filter(bib=bib, role=Participant.Competitor) )
+	if participants:
+		participants.sort( key = lambda p: (p.category.sequence if p.category else 999999, p.bib or 999999) )
+		return participants[0].license_holder, participants
+
+	# Check that we can find this bib in the number set.
+	if competition.number_set:
+		license_holder = competition.number_set.numbersetentry_set.filter( bib=bib ).first()
+	else:
+		license_holder = None
 	
 	if not auto_add_participant:
 		return license_holder, []

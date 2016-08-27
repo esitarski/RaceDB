@@ -20,7 +20,7 @@ from participation_data import participation_data
 from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
 
-from participant_key_filter import participant_key_filter
+from participant_key_filter import participant_key_filter, participant_bib_filter
 from init_prereg import init_prereg
 
 from print_bib import print_bib_tag_label, print_id_label
@@ -2135,7 +2135,7 @@ class ParticipantSearchForm( Form ):
 		if competition:
 			self.fields['category'].choices = \
 				[(-1, '----')] + [(-2, _('*** Missing ***'))] + [(category.id, category.code_gender) for category in competition.get_categories()]
-			events = sorted( competition.get_events(), key = lambda e: e.date_time )
+			events = sorted( competition.get_events(), key = operator.attrgetter('date_time') )
 			self.fields['event'].choices = \
 				[(u'-1.0', _('All'))] + [(u'{}.{}'.format(event.event_type, event.id), u'{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
 			
@@ -3379,6 +3379,62 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 		participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
 		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
 
+#-----------------------------------------------------------------------
+@autostrip
+class BibScanForm( Form ):
+	bib = forms.IntegerField( required = False, label = _('Bib') )
+	
+	def __init__(self, *args, **kwargs):
+		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
+		super(BibScanForm, self).__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
+			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+		]
+		if hide_cancel_button:
+			button_args = button_args[:-1]
+		
+		self.helper.layout = Layout(
+			Row(
+				Field('bib', size=10),
+			),
+			Row( *button_args ),
+		)
+
+@access_validation()
+def ParticipantBibAdd( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = BibScanForm( request.POST, hide_cancel_button=True )
+		if form.is_valid():
+			bib = form.cleaned_data['bib']
+			if not bib:
+				return HttpResponseRedirect(getContext(request,'path'))
+				
+			license_holder, participants = participant_bib_filter( competition, bib, False )
+			if not license_holder:
+				return render( request, 'participant_scan_error.html', locals() )
+			
+			if len(participants) == 1:
+				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
+			if len(participants) > 1:
+				return render( request, 'participant_scan_error.html', locals() )
+			
+			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
+	else:
+		form = BibScanForm( hide_cancel_button=True )
+		
+	return render( request, 'participant_add_bib.html', locals() )
+	
 #-----------------------------------------------------------------------
 
 @autostrip

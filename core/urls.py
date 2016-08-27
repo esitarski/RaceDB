@@ -45,6 +45,7 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantBarcodeAdd/(?P<competitionId>\d+)/$', views.ParticipantBarcodeAdd),
 	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/$', views.ParticipantRfidAdd),
 	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidAdd),
+	url(r'^(?i).*ParticipantBibAdd/(?P<competitionId>\d+)/$', views.ParticipantBibAdd),
 	
 	url(r'^(?i).*CategoryNumbers/(?P<competitionId>\d+)/$', views.CategoryNumbersDisplay),
 	url(r'^(?i).*CategoryNumbersNew/(?P<competitionId>\d+)/$', views.CategoryNumbersNew),

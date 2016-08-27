@@ -26,6 +26,11 @@ document.forms[0].submit();
 			<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
 		</a>
 	</li>
+	<li role="presentation">
+		<a href="{{cancelUrl}}ParticipantBibAdd/{{competition.id}}/">
+			<img src="{% static "images/bib_icon_blue.png" %}"/>&nbsp;&nbsp;{% trans "Bib Add" %}
+		</a>
+	</li>
 	<li role="presentation" class="active">
 		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
 			<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
