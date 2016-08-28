@@ -33,8 +33,6 @@ import WriteLog
 #-----------------------------------------------------------------------
 from context_processors import getContext
 
-import create_users
-
 from django.views.decorators.cache import patch_cache_control
 
 @access_validation()

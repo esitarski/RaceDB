@@ -16,6 +16,7 @@ import RaceDB.wsgi
 import RaceDB.urls
 from core.LLRPClientServer import runServer
 from core.models import SystemInfo, models_fix_data
+from core.create_users import create_users
 
 def launch_server( **options ):
 
@@ -23,6 +24,7 @@ def launch_server( **options ):
 	print 'Performing database migration (if necessary)...'
 	#management.call_command('migrate', '--noinput', verbosity=0)
 	
+	create_users()
 	models_fix_data()
 
 	# Start the rfid server.

@@ -14,5 +14,3 @@ def create_users():
 		root.is_staff = True
 		root.is_superuser = True
 		root.save()
-
-create_users()
