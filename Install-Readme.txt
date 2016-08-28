@@ -158,12 +158,14 @@ and press Ctrl-c.  Alternatively, close the cmd/terminal by pressing the X butto
 
 RaceDB does not require the internet while it is running.
 
-To start RaceDB and connect to the rfid reader, use the following command:
+To start RaceDB and connect to an Impinj RFID reader, use the following command:
 
   python manage.py launch --rfid_reader
   
- When RaceDB comes up, login with username="super", password="super".
- This will log you into the system with superuser capabilities, which you will need to configure races.
+You must open port 5084 on your operating system.
+  
+When RaceDB comes up, login with username="super", password="super".
+This will log you into the system with superuser capabilities, which you will need to configure races.
  
  To see all possible "launch" command options, do:
  

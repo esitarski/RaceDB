@@ -1,0 +1,29 @@
+{% load i18n %}
+{% load static %}
+{% load staticfiles %}
+<ul class="nav nav-tabs">
+	<li role="presentation" {% if add_by_manual %}class="active"{% endif %}>
+		<a href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
+			<img src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;&nbsp;{% trans "Manual Add" %}
+		</a>
+	</li>
+	<li role="presentation" {% if add_by_barcode %}class="active"{% endif %}>
+		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
+			<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
+		</a>
+	</li>
+	<li role="presentation" {% if add_by_bib %}class="active"{% endif %}>
+		<a href="{{cancelUrl}}ParticipantBibAdd/{{competition.id}}/">
+			<img src="{% static "images/bib_icon_blue.png" %}"/>&nbsp;&nbsp;{% trans "Bib Add" %}
+		</a>
+	</li>
+{% if competition.using_tags %}
+	<li role="presentation" {% if add_by_rfid %}class="active"{% endif %}>
+		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
+			<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
+		</a>
+	</li>
+{% endif %}
+</ul>
+<br/>
+<h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>

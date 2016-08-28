@@ -22,6 +22,8 @@ from django.db.models import Q
 from django.db import transaction, IntegrityError
 from django.utils.translation import string_concat
 
+from django.contrib.auth.views import logout
+
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import Template
 from django.shortcuts import render, get_object_or_404

@@ -1,15 +1,27 @@
 from views_common import *
+import operator
+
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from participant_key_filter import participant_key_filter, add_participant_from_license_holder
 from ReadWriteTag import ReadTag, WriteTag
+
+def get_valid_competitions():
+	dNow = timezone.now().date()
+	return [
+		c for c in Competition.objects.filter(
+			start_date__gte=dNow-datetime.timedelta(days=365)).order_by(
+			'start_date')
+		if c.start_date + datetime.timedelta(days=(c.number_of_days or 1)) > dNow
+	]
 
 #--------------------------------------------------------------------------
 @autostrip
 class SelfServeCompetitionForm( Form ):
 	competition_choice = forms.ChoiceField(
 				choices = lambda: [(c.pk, string_concat(c.name, ' - ', c.date_range_str))
-					for c in Competition.objects.filter(start_date__gte=datetime.date.today()).order_by('start_date')],
+					for c in get_valid_competitions()],
 				label = _('Choose a Competition') )
 	
 	def __init__(self, *args, **kwargs):
@@ -96,8 +108,7 @@ def SelfServe( request, do_scan=0 ):
 	competition = Competition.objects.filter( pk=competition_id ).first() if competition_id else None
 	
 	if competition is None:
-		# Find the self-serve competition.
-		competitions = list(Competition.objects.filter(start_date__gte=datetime.date.today()).order_by('start_date'))
+		competitions = get_valid_competitions()
 		if not competitions:
 			# Get the latest competition for testing.
 			competition = Competition.objects.all().order_by('-start_date').first()

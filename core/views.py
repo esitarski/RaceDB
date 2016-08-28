@@ -1032,14 +1032,17 @@ def CompetitionsDisplay( request ):
 	competitions = Competition.objects.all()
 	
 	# If not super user, only show the competitions for today and after.
-	future_only = (not request.user.is_superuser)
-	if future_only:
-		competitions = competitions.filter(start_date__gte = datetime.date.today())
+	if not request.user.is_superuser:
+		dNow = timezone.now().date()
+		competitions = competitions.filter(start_date__gte = dNow - datetime.timedelta(days=365) )
+		competitions = [c for c in competitions
+			if c.start_date + datetime.timedelta(days=(c.number_of_days or 1)) > dNow
+		]
 		
 	if form:
 		competitions = applyFilter( search_text, competitions, Competition.get_search_text )
 	
-	competitions = sorted( competitions, key = lambda x: x.start_date, reverse = True )
+	competitions = sorted( competitions, key = operator.attrgetter('start_date'), reverse=True )
 	return render( request, 'competition_list.html', locals() )
 
 @access_validation()
@@ -2334,6 +2337,7 @@ def ParticipantManualAdd( request, competitionId ):
 	
 	search_text = request.session.get('participant_new_filter', '')
 	btns = [('new-submit', 'New License Holder', 'btn btn-success')]
+	add_by_manual = True
 	if request.method == 'POST':
 	
 		if 'cancel-submit' in request.POST:
@@ -3248,6 +3252,7 @@ def SetSignatureWithTouchScreen( request, use_touch_screen ):
 def ParticipantBarcodeAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
+	add_by_barcode = True
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -3295,6 +3300,7 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 	tag = None
 	tags = []
 	
+	add_by_rfid = True
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -3408,6 +3414,7 @@ class BibScanForm( Form ):
 def ParticipantBibAdd( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
+	add_by_bib = True
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -3430,7 +3437,7 @@ def ParticipantBibAdd( request, competitionId ):
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
 		form = BibScanForm( hide_cancel_button=True )
-		
+	
 	return render( request, 'participant_add_bib.html', locals() )
 	
 #-----------------------------------------------------------------------
