@@ -26,6 +26,7 @@ import os
 import math
 import datetime
 import base64
+import operator
 from django.utils.translation import ugettext_lazy as _
 import utils
 import random
@@ -2286,12 +2287,24 @@ class Participant(models.Model):
 	def get_start_wave_tts( self ):
 		if not self.category:
 			return []
-		waves = sorted( WaveTT.objects.filter(event__competition=self.competition, categories=self.category), key=lambda w: w.sequence )
+		waves = sorted(
+			WaveTT.objects.filter(event__competition=self.competition, categories=self.category),
+			key=operator.attrgetter('sequence')
+		)
 		waves = [w for w in waves if w.is_participating(self)]
 		reg_closure_minutes = SystemInfo.get_reg_closure_minutes()
 		for w in waves:
 			w.is_late = w.reg_is_late( reg_closure_minutes, self.registration_timestamp )
+			ett = EntryTT.objects.filter( event=w.event, participant=self ).first()
+			w.clock_time = w.event.date_time + ett.start_time if ett else None
 		return waves
+	
+	def has_start_wave_tts( self ):
+		if not self.category:
+			return False
+		return any( w.is_participating(self) for w in
+			WaveTT.objects.filter(event__competition=self.competition, categories=self.category)
+		)
 	
 	def get_participant_events( self ):
 		return self.competition.get_participant_events(self)

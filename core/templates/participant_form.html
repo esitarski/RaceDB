@@ -337,7 +337,6 @@
 					<span class="label label-default">{{w.event.date_time|time}}</span>
 					<strong>{{w.name}}</strong>,
 					{{w.event.name}},
-					{{w.event.get_event_type_display}},
 					{{w.event.date_time|date}},
 					{% trans 'Strs' %}: {{w.get_starters_str}}
 					{% if w.is_late %}
@@ -353,10 +352,15 @@
 				{% for w in swtt %}
 					<h3 {% if forloop.counter != 1 %}style="margin-top: 6px;"{% endif %}>
 					{% trans "TT Start" %} {{forloop.counter}}:
-					<span class="label label-default">{{w.event.date_time|time}}</span>
+					<span class="label label-default">
+						{% if w.clock_time %}
+							{% trans "Start Time" %}: {{w.clock_time|date:"g:i:s a"}}
+						{% else %}
+							{% trans "Unseeded" %}: {{w.event.date_time|time}}
+						{% endif %}
+					</span>&nbsp;
 					<strong>{{w.name}}</strong>,
 					{{w.event.name}},
-					{{w.event.get_event_type_display}},
 					{{w.event.date_time|date:"Y-m-d"}},
 					{% trans 'Strs' %}: {{w.get_starters_str}}
 					{% if w.is_late %}
@@ -366,6 +370,10 @@
 				{% endfor %}
 		{% endif %}
 	{% endwith %}
+	{% if p.has_start_wave_tts %}
+		<br/>
+		<h4>{% trans "Participants are reminded to be at the start 15 minutes before their TT start time." %}</h4>
+	{% endif %}
 {% endif %}
 	{% if isEdit and p.is_competitor %}
 	{% with cat_part=p.get_category_participants %}
@@ -419,10 +427,10 @@
 		{% if system_info.print_tag_option != 0 %}
 			&nbsp;&nbsp;&nbsp;
 			<a class="btn btn-primary hidden-print" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "Print Bib Labels" %}</a>
-			<a class="btn btn-primary hidden-print" href="./ParticipantPrintEmergencyContactInfo/{{p.id}}/">{% trans 'Print In Case of Emergency' %}</a>
+			<a class="btn btn-primary hidden-print" href="./ParticipantPrintEmergencyContactInfo/{{p.id}}/">{% trans 'Print In Case of Emergency Info' %}</a>
 		{% endif %}
 		&nbsp;&nbsp;&nbsp;
-		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print Race Voucher" %}</button>
+		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Print" %}</button>
 	{% else %}
 		<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 		<a class="btn btn-warning hidden-print" href="{{cancelUrl}}ParticipantDoDelete/{{p.id}}/">{% trans "OK" %}</a>

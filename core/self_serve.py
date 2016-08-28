@@ -170,6 +170,12 @@ def SelfServe( request, do_scan=0 ):
 				(_('Tag Read Failure'), [e] ),
 			)
 	
+	'''
+	tag = '8F7200101914'
+	tags = [tag]
+	status = True
+	'''
+	
 	if tag and len(tags) > 1:
 		status = False
 		if len(tags) > 4:
