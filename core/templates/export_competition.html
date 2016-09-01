@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+<p>
+<h3>Export a Competition (and all its Dependencies)</h3>
+<p>
+Exports the Competition and all its dependent data including:
+<ul>
+<li>Race Disciple and Class</li>
+<li>Mass Start and TT Events with Start Waves</li>
+<li>Category Format and Categories</li>
+<li>Category Numbers</li>
+<li>Report Labels</li>
+<li>Participants and Participant Options (for Optional Events)</li>
+<li>License Holders</li>
+<li>Season's Pass Holders</li>
+<li>Bib Numbers and Number Set</li>
+<li>Signed Waivers</li>
+</ul>
+<p>
+If "Export as Template" is selected, participant information will be excluded.
+This makes it easy to export existing competitions to use them as a template for future competitions.
+</p>
+<p>
+If "Remove FTP Upload Info" option is selected, FTP host and login information will be excluded.
+</p>
+{% endblock content %}

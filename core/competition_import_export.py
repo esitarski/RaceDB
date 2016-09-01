@@ -282,17 +282,43 @@ def _get_model(model_identifier):
 def competition_import( stream=None, pydata=None ):
 	competition_deserializer( pydata if pydata else json.load(stream) )
 
-def get_competition_name_start_date( stream=None, pydata=[] ):
+def get_competition_name_start_date( stream=None, pydata=[],
+		import_as_template=None, name=None, start_date=None ):
 	if stream:
 		pydata = json.load( stream )
+	
+	if import_as_template:
+		pydata = [d for d in pydata if not (d['model'] in ('core.licenceholder' or 'core.team') or 'license_holder' in d['fields']) ]
+			
 	for d in pydata:
 		if d['model'] == 'core.competition':
+			if name:
+				d['fields']['name'] = name
+			
+			if start_date:
+				dt_comp = datetime.date( *[int(v) for v in d['fields']['start_date'].split('-')] )
+				dt_delta = start_date - dt_comp
+				for d_event in pydata:
+					if d_event['model'] not in ('core.eventmassstart', 'core.eventtt'):
+						continue
+					dt_event = datetime.date( *[int(v) for v in d_event['fields']['date_time'][:10].split('-')] ) + dt_delta
+					d_event['fields']['date_time'] = dt_event.strftime('%Y-%m-%d') + d_event['fields']['date_time'][10:]
+				
+				d['fields']['start_date'] = start_date.strftime('%Y-%m-%d')
+			
 			return d['fields']['name'], datetime.date( *[int(v) for v in d['fields']['start_date'].split('-')] ), pydata
+	
 	return None, None, None
 
 # ----------------------------------------------------------------------------------------------------
 
-def competition_export( competition, stream, indent=0 ):
+def competition_export( competition, stream, export_as_template=False, remove_ftp_info=False ):
+	if remove_ftp_info:
+		attrs = ("ftp_host", "ftp_user", "ftp_password", "ftp_path", "ftp_upload_during_race", "ga_tracking_id")
+		ftp_info_save = { a:getattr(competition, a) for a in attrs }
+		for a in attrs:
+			setattr( competition, a, Competition._meta.get_field(a).default )
+  
 	license_holder_ids = set()
 	def get_license_holders():
 		assert not license_holder_ids
@@ -321,20 +347,20 @@ def competition_export( competition, stream, indent=0 ):
 	
 	arr.append( competition )
 	arr.extend( competition.category_format.category_set.all() )
-	arr.extend( get_teams() )
+	if not export_as_template:
+		arr.extend( get_teams() )
+		arr.extend( get_license_holders() )
+		arr.extend( competition.get_participants() )
 	
-	arr.extend( get_license_holders() )
-	arr.extend( competition.get_participants() )
-	
-	if competition.number_set:
-		arr.extend( nse for nse in competition.number_set.numbersetentry_set.all()
-			if nse.license_holder_id in license_holder_ids )
-	if competition.seasons_pass:
-		arr.extend( sph for sph in competition.seasons_pass.seasonspassholder_set.all()
-			if sph.license_holder_id in license_holder_ids )
-	if competition.legal_entity:
-		arr.extend( w for w in competition.legal_entity.waiver_set.all()
-			if w.license_holder_id in license_holder_ids )
+		if competition.number_set:
+			arr.extend( nse for nse in competition.number_set.numbersetentry_set.all()
+				if nse.license_holder_id in license_holder_ids )
+		if competition.seasons_pass:
+			arr.extend( sph for sph in competition.seasons_pass.seasonspassholder_set.all()
+				if sph.license_holder_id in license_holder_ids )
+		if competition.legal_entity:
+			arr.extend( w for w in competition.legal_entity.waiver_set.all()
+				if w.license_holder_id in license_holder_ids )
 	
 	arr.extend( competition.categorynumbers_set.all() )
 	
@@ -347,8 +373,15 @@ def competition_export( competition, stream, indent=0 ):
 	arr.extend( EntryTT.objects.filter(event__competition=competition) )
 	arr.extend( competition.participantoption_set.all() )
 	
+	if export_as_template:
+		arr = [o for o in arr if not (hasattr(o, 'license_holder') or isinstance(o, LicenseHolder) or isinstance(o, Team))]
+	
 	# Serialize all the object to json.
 	json_serializer = serializers.get_serializer("json")()
 	json_serializer.serialize(arr, indent=1, stream=stream)
-	
+
+	if remove_ftp_info:
+		for k, v in ftp_info_save.iteritems():
+			setattr( competition, k, v )
+
 	return arr

@@ -3800,30 +3800,71 @@ import zipfile
 import json
 import traceback
 
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CompetitionExport( request, competitionId ):
-	competition = get_object_or_404( Competition, pk=competitionId )
+@autostrip
+class ExportCompetitionForm( Form ):
+	export_as_template = forms.BooleanField( required=False, label=_('Export as Template (exclude Participants)') )
+	remove_ftp_info = forms.BooleanField( required=False, label=_('Remove FTP Upload Info') )
 	
+	def __init__( self, *args, **kwargs ):
+		super( ExportCompetitionForm, self ).__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(Field('export_as_template')),
+			Row(Field('remove_ftp_info')),
+		)
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+
+def handle_export_competition( competition, export_as_template=False, remove_ftp_info=False ):
 	def get_tmp_length( tmp ):
 		tmp.seek(0, 2)
 		tmp_length = tmp.tell()
 		tmp.seek(0)
 	
 	json_tmp = tempfile.TemporaryFile()
-	competition_export( competition, json_tmp )
+	competition_export( competition, json_tmp, export_as_template=export_as_template, remove_ftp_info=remove_ftp_info )
 	json_tmp.flush()
 	json_tmp_length = get_tmp_length( json_tmp )
 	json_tmp.seek( 0 )
 	
-	response = HttpResponse(FileWrapper(json_tmp), content_type="application/json")
+	response = HttpResponse( FileWrapper(json_tmp), content_type="application/json" )
 	response['Content-Disposition'] = 'attachment; filename={}.json'.format(competition.get_filename_base())
 	response['Content-Length'] = json_tmp_length
 	return response
 
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CompetitionExport( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	title = string_concat( _('Export'), u': ', competition.name )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = ExportCompetitionForm(request.POST)
+		if form.is_valid():
+			return handle_export_competition(
+				competition,
+				form.cleaned_data['export_as_template'],
+				form.cleaned_data['remove_ftp_info'],
+			)
+	else:
+		form = ExportCompetitionForm()
+	
+	return render( request, 'export_competition.html', locals() )
+
 @autostrip
 class ImportCompetitionForm( Form ):
 	json_file = forms.FileField( required=True, label=_('Competition File (*.json)') )
+	
+	name = forms.CharField( required=False, label=_('Change Name to'), help_text=_('Leave blank to use existing Competition name') )
+	start_date = forms.DateField( required=False, label=_('Change Start Date to'), help_text=_('Leave blank to use existing Competition date') )
+	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore License Holders if they exist)') )
 	
 	def __init__( self, *args, **kwargs ):
 		super( ImportCompetitionForm, self ).__init__( *args, **kwargs )
@@ -3833,15 +3874,23 @@ class ImportCompetitionForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row(Field('json_file', accept=".json")),
+			Row(HTML('&nbsp;')),
+			Row(Col(Field('name'), 6), Col(Field('start_date'), 3)),
+			Row(Field('import_as_template')),
 		)
 		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_import_competition( json_file_request ):
+def handle_import_competition( json_file_request, import_as_template, name, start_date ):
 	message_stream = StringIO.StringIO()
 		
 	try:
-		name, start_date, pydata = get_competition_name_start_date( stream=json_file_request )
+		name, start_date, pydata = get_competition_name_start_date(
+			stream=json_file_request,
+			import_as_template=import_as_template,
+			name=name,
+			start_date=start_date,
+		 )
 		if name is None:
 			message_stream.write( 'Error: File is Missing Competition Name and Start Date.\n' )
 			message_stream.write( 'Filename: "{}"'.format(file_names[0]) )
@@ -3872,7 +3921,12 @@ def CompetitionImport( request ):
 	
 		form = ImportCompetitionForm(request.POST, request.FILES)
 		if form.is_valid():
-			results_str = handle_import_competition( request.FILES['json_file'] )
+			results_str = handle_import_competition(
+				request.FILES['json_file'],
+				form.cleaned_data['import_as_template'],
+				form.cleaned_data['name'] or None,
+				form.cleaned_data['start_date'] or None,
+			)
 			return render( request, 'import_competition.html', locals() )
 	else:
 		form = ImportCompetitionForm()
