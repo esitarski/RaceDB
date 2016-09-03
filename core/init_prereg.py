@@ -70,7 +70,10 @@ def init_prereg(
 		
 	times = defaultdict(float)
 	
-	ifm = standard_field_map()
+	has_legal_entity = competition.legal_entity
+	ifm = standard_field_map( exclude = ([] if has_legal_entity else ['waiver']) )
+	if has_legal_entity:
+		waiver_signed_date = competition.legal_entity.waiver_expiry_date + datetime.timedelta(days=1)
 	
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
@@ -147,6 +150,7 @@ def init_prereg(
 			race_entered    = to_str(v('race_entered', None))
 			
 			role			= role_code.get( v('role','').lower().replace(' ', '').replace('.', ''), None )
+			waiver			= v('waiver',None)
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
 			#
@@ -315,6 +319,12 @@ def init_prereg(
 					)
 				else:
 					override_events_str = ''
+				
+				if waiver is not None:
+					if waiver:
+						participant.sign_waiver_now( waiver_signed_date )
+					else:
+						participant.unsign_waiver_now()
 				
 				message_stream_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
 							row=i,

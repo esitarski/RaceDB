@@ -941,7 +941,7 @@ class CategoryNumbers( models.Model ):
 	def save(self, *args, **kwargs):
 		self.normalize()
 		return super(CategoryNumbers, self).save( *args, **kwargs )
-		
+	
 	class Meta:
 		verbose_name = _('CategoryNumbers')
 		verbose_name_plural = _('CategoriesNumbers')
@@ -2044,18 +2044,18 @@ class Participant(models.Model):
 		waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
 		return not waiver or waiver.date_signed < legal_entity.waiver_expiry_date
 	
-	def sign_waiver_now( self ):
+	def sign_waiver_now( self, backdate = None ):
 		legal_entity = self.competition.legal_entity
 		if legal_entity:
 			waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
 			if waiver:
-				waiver.date_signed = datetime.date.today()
+				waiver.date_signed = (backdate or datetime.date.today())
 				waiver.save()
 			else:
 				Waiver(
 					license_holder=self.license_holder,
 					legal_entity=legal_entity,
-					date_signed=datetime.date.today()
+					date_signed=(backdate or datetime.date.today())
 				).save()
 	
 	def unsign_waiver_now( self ):

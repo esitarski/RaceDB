@@ -258,6 +258,9 @@
 	<tr>
 		<th>{% trans "Categories" %}</th>
 		<th>{% trans "Numbers" %}</th>
+		<th>{% trans "Available" %}</th>
+		<th>{% trans "Allocated" %}</th>
+		<th>{% trans "Remaining" %}</th>
 		<th></th>
 	</tr>
 </thead>
@@ -266,6 +269,9 @@
 		<tr onclick="jump('{{path}}CategoryNumbersEdit/{{c.id}}/');">
 			<td>{{c.category_list}}</td>
 			<td>{{c.range_str}}</td>
+			<td class="text-right">{{c.available_count}}</td>
+			<td class="text-right">{{c.allocated_count}}</td>
+			<td class="text-right">{{c.remaining_count}}</td>
 			<td>
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning hidden-print" href="{{path}}CategoryNumbersDelete/{{c.id}}/">{% trans "Delete" %}</a>&nbsp;

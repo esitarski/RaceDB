@@ -1,4 +1,3 @@
-
 import os
 import datetime
 import StringIO
@@ -59,8 +58,23 @@ def get_participant_excel( q = None ):
 	
 	ws = wb.add_worksheet('Participants')
 	
+	competition = None
+	optional_events = None
+	row = None
+	
 	row = write_row_data( ws, 0, data_headers, title_format )
-	for p in Participant.objects.filter(q):
+	for p in Participant.objects.filter(q).select_related('license_holder'):
+		if competition is None:
+			headers = list(data_headers)
+			
+			competition = p.competition
+			legal_entity = competition.legal_entity
+			if legal_entity:
+				headers.append( 'Waiver' )
+			optional_events = [e for e in competition.get_events() if e.optional]
+			headers.extend( [e.name for e in optional_events] )
+			row = write_row_data( ws, 0, headers, title_format )
+			
 		lh = p.license_holder
 		data = [
 			lh.last_name,
@@ -84,6 +98,10 @@ def get_participant_excel( q = None ):
 			p.confirmed,
 			p.paid,
 		]
+		if legal_entity:
+			data.append( p.good_waiver() )
+		for e in optional_events:
+			data.append( e.is_participating(p) )
 		row = write_row_data( ws, row, data )
 			
 	wb.close()

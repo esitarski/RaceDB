@@ -1120,6 +1120,15 @@ def CompetitionDashboard( request, competitionId ):
 	events_mass_start = competition.get_events_mass_start()
 	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
+	comp_allocated = set()
+	if competition.number_set:
+		comp_allocated = set(competition.number_set.numbersetentry_set.values_list('bib', flat=True))
+	comp_allocated |= set( competition.get_participants().values_list('bib', flat=True) )
+	for c in category_numbers:
+		cn = c.get_numbers()
+		c.available_count = len(cn)
+		c.allocated_count = len(cn & comp_allocated)
+		c.remaining_count = c.available_count - c.allocated_count
 	return render( request, 'competition_dashboard.html', locals() )
 
 def GetRegAnalyticsForm( competition ):

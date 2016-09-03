@@ -29,7 +29,13 @@ class FieldMap( object ):
 		for a in self.aliases[name]:
 			self.alias_to_name[normalize(a)] = name
 		self.description[name] = description
-			
+
+	def __delitem__( self, name ):
+		for a in self.aliases[name]:
+			del self.alias_to_name[normalize(a)]
+		del self.aliases[name]
+		del self.description[name]
+		
 	def get_aliases( self, name ):
 		return self.aliases.get(name, tuple())
 		
@@ -186,18 +192,25 @@ standard_field_aliases = (
 		('Preregistered', 'Prereg'),
 		"Preregistered",
 	),
+	('waiver',
+		('Waiver',),
+		"Waiver",
+	),
 )
 
-def standard_field_map():
+def standard_field_map( exclude = [] ):
 	fm = FieldMap()
 	for a in standard_field_aliases:
 		fm.set_aliases( *a )
+	for e in exclude:
+		del fm[e]
 	return fm
 	
 if __name__ == '__main__':
 	sfm = standard_field_map()
 	headers = ('BibNum', 'Role', 'license', 'UCI Code', 'note', 'tag', 'Emergency Phone')
 	sfm.set_headers( headers )
+	del sfm['note']
 	
 	row = (133, 'Competitor', 'ABC123', 'CAN19900925', 'Awesome', '123456', '415-789-5432')
 	v = sfm.finder( row )

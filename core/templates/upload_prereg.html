@@ -117,11 +117,12 @@ Non-competitor roles cannot compete in Events and are for contact purposes only.
 <tr><td><strong>Emergency Phone</strong></td><td>Optional.  Phone number of emergency contact.</td></tr>
 <tr><td><strong>Optional Event Names</strong></td><td>Optional.  List of Optional Events.  Indicates whether the License Holder is participating in the Event.  Overrides the opt-in/opt-out default option of the Event.  However, a Participant can only be added to the Event if his/her Category allows.  **.<br/>
 Event Names can contain wildcards (*, ?, etc.).  For example, "Road Race*" will match all events starting with "Road Race" in the name.  RaceDB will then try to add the participant to all matched events, succeeding when the participant's Category is allowed to enter that Event.</td></tr>
+<tr><td><strong>Waiver</strong></td><td>Optional.  This only applies if the Competition has a Legal Entity defined.  If the value is True**, the participant's waiver will be recorded as signed on day after the expiry date.  If False, the participant will be considered as not having a signed Waiver.  If Blank, the participant's waiver status will remain unchanged.</td></tr>
 </tbody>
 </table>
 </p>
 <p>
-** The cell value is considered True if the value's first character is any of 't', 'T', 'y', 'Y', 1 or TRUE.  Otherwise False.
+** The cell value is considered True if the Excel value is TRUE or 1, or the first character is 't', 'T', 'y' or 'Y'.  Otherwise False.
 </p>
 <h3>Example Headers:</h3>
 <p>
