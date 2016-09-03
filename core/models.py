@@ -911,7 +911,7 @@ class CategoryNumbers( models.Model ):
 					include.discard( n )
 				else:
 					include.add( n )
-			else:
+			elif len(pair) >= 2:
 				nBegin, nEnd = [int(v) for v in pair[:2]]
 				nBegin, nEnd = max(nBegin, 1), min(nEnd, 99999)
 				if exclude:
