@@ -150,7 +150,7 @@ def init_prereg(
 			race_entered    = to_str(v('race_entered', None))
 			
 			role			= role_code.get( v('role','').lower().replace(' ', '').replace('.', ''), None )
-			waiver			= v('waiver',None)
+			waiver			= to_bool(v('waiver',None))
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
 			#
