@@ -1823,7 +1823,7 @@ class NumberSetEntry(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
 	bib = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Bib') )
 	
-	# If date_lost will only have a value if the number is not lost.
+	# If date_lost is null, the number is is use.
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
 	
 	class Meta:

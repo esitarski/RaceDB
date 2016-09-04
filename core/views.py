@@ -1121,15 +1121,21 @@ def CompetitionDashboard( request, competitionId ):
 	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
 	
-	comp_allocated = set()
+	comp_inuse = set()
+	comp_lost = set()
 	if competition.number_set:
-		comp_allocated = set(competition.number_set.numbersetentry_set.values_list('bib', flat=True))
-	comp_allocated |= set( competition.get_participants().values_list('bib', flat=True) )
+		for bib, date_lost in competition.number_set.numbersetentry_set.values_list('bib','date_lost'):
+			if date_lost:
+				comp_lost.add( bib )
+			else:
+				comp_inuse.add( bib )
+	comp_inuse |= set( competition.get_participants().values_list('bib', flat=True) )
 	for c in category_numbers:
 		cn = c.get_numbers()
-		c.available_count = len(cn)
-		c.allocated_count = len(cn & comp_allocated)
-		c.remaining_count = c.available_count - c.allocated_count
+		c.total_count = len(cn)
+		c.inuse_count = len(cn & comp_inuse)
+		c.lost_count = len(cn & comp_lost)
+		c.onhand_count = c.total_count - c.inuse_count - c.lost_count
 	
 	return render( request, 'competition_dashboard.html', locals() )
 
