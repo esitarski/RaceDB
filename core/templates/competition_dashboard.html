@@ -23,7 +23,7 @@
 	<div class="panel-body">
 		<div class="row">
 			<div class="col-md-12">
-				<strong>{{competition.name}}</strong>{% if competition.description %}, {{competition.description}}{% endif %},
+				<strong>{{competition.name}}</strong>{% if competition.description %}, {{competition.description}}{% endif %}, {% trans "Category Format" %}
 				{% if request.user.is_superuser %}
 					<a class="btn btn-primary btn-xs" href="{{path}}CategoryFormatEdit/{{competition.category_format.id}}">{{competition.category_format.name}}</a>
 				{% else %}
@@ -54,27 +54,32 @@
 			</div>
 		</div>
 		<div class="row hidden-print">
-			<div class="col-md-3">
-				{{competition|get_field_name:"using_tags"}}:&nbsp;<strong>{{competition.using_tags|yes_no}}</strong>
-			</div>
-			<div class="col-md-3">
+			<div class="col-md-12 hidden-print">
+				{% trans "Using RFID" %}:&nbsp;<strong>{{competition.using_tags|yes_no}}</strong>
+				<span>&nbsp;&nbsp;</span>
 				{{competition|get_field_name:"use_existing_tags"}}:&nbsp;<strong>{{competition.use_existing_tags|yes_no}}</strong>
-			</div>
-			<div class="col-md-3">
 				{% if competition.number_set %}
+					<span>&nbsp;&nbsp;</span>
 					{% if request.user.is_superuser %}
 						{{competition|get_field_name:"number_set"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}NumberSetManage/{{competition.number_set.id}}">{{competition.number_set.name}}</a>
 					{% else %}
 						{{competition|get_field_name:"number_set"}}:&nbsp;<strong>{{competition.number_set.name}}</strong>
 					{% endif %}
 				{% endif %}
-			</div>
-			<div class="col-md-3">
 				{% if competition.seasons_pass %}
+					<span>&nbsp;&nbsp;</span>
 					{% if request.user.is_superuser %}
 						{{competition|get_field_name:"seasons_pass"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}SeasonsPassEdit/{{competition.seasons_pass.id}}">{{competition.seasons_pass.name}}</a>
 					{% else %}
 						{{competition|get_field_name:"seasons_pass"}}:&nbsp;<strong>{{competition.seasons_pass.name}}</strong>
+					{% endif %}
+				{% endif %}
+				{% if competition.legal_entity %}
+					<span>&nbsp;&nbsp;</span>
+					{% if request.user.is_superuser %}
+						{{competition|get_field_name:"legal_entity"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}LegalEntityEdit/{{competition.legal_entity.id}}">{{competition.legal_entity.name}}</a>
+					{% else %}
+						{{competition|get_field_name:"legal_entity"}}:&nbsp;<strong>{{competition.legal_entity.name}}</strong>
 					{% endif %}
 				{% endif %}
 			</div>
