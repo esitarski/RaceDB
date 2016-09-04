@@ -263,10 +263,10 @@
 	<tr>
 		<th>{% trans "Categories" %}</th>
 		<th>{% trans "Numbers" %}</th>
-		<th>{% trans "Total" %}</th>
-		<th>{% trans "In-Use" %}</th>
-		{% if competition.number_set %}<th>{% trans "Lost" %}</th>{% endif %}
-		<th>{% trans "On-Hand" %}</th>
+		<th class="text-right">{% trans "Total" %}</th>
+		<th class="text-right">{% trans "In-Use" %}</th>
+		{% if competition.number_set %}<th class="text-right">{% trans "Lost" %}</th>{% endif %}
+		<th class="text-right">{% trans "On-Hand" %}</th>
 		<th></th>
 	</tr>
 </thead>
