@@ -122,7 +122,7 @@ def init_prereg(
 			club_name		= to_str(v('club', None))
 			if not team_name:
 				team_name = club_name
-			category_code   = to_str(v('category', None))
+			category_code   = to_str(v('category_code', None))
 			
 			est_kmh			= to_float(v('est_kmh', None))
 			est_mph			= to_float(v('est_mph', None))
