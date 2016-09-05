@@ -3671,8 +3671,8 @@ def CompetitionExport( request, competitionId ):
 class ImportCompetitionForm( Form ):
 	json_file = forms.FileField( required=True, label=_('Competition File (*.gzip|*.json)') )
 	
-	name = forms.CharField( required=False, label=_('Change Name to'), help_text=_('Leave blank to use existing Competition name') )
-	start_date = forms.DateField( required=False, label=_('Change Start Date to'), help_text=_('Leave blank to use existing Competition date') )
+	name = forms.CharField( required=False, label=_('Change Name to'), help_text=_('Leave blank to use Competition name in import file') )
+	start_date = forms.DateField( required=False, label=_('Change Start Date to'), help_text=_('Leave blank to use Competition date in import file') )
 	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore Participants and Teams)') )
 	
 	def __init__( self, *args, **kwargs ):
