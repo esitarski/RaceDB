@@ -3579,6 +3579,9 @@ from competition_import_export import competition_import, competition_export, ge
 import tempfile
 from wsgiref.util import FileWrapper
 import json
+import gzip
+import shutil
+from django.http import StreamingHttpResponse
 
 @autostrip
 class ExportCompetitionForm( Form ):
@@ -3598,6 +3601,34 @@ class ExportCompetitionForm( Form ):
 		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
+def gzip_response_from_tmp_file( f, fname ):
+	# Use cStringIO to create the file on the fly
+	gzip_stream = StringIO.StringIO()
+
+	# Create the Gzip file handler, with the StringIO in the fileobj
+	gzip_handler = gzip.GzipFile( fileobj=gzip_stream, filename=fname, mode='wb' )
+
+	# Write the tmp data into the gziped handler.
+	f.seek( 0 )
+	shutil.copyfileobj( f, gzip_handler )
+	gzip_handler.flush()
+	gzip_handler.close()
+
+	# Generate the response using the file wrapper, content type: x-gzip
+	# Since this file can be big, best to use the StreamingHTTPResponse
+	# that way we can guarantee that the file will be sent entirely.
+	response = StreamingHttpResponse( gzip_stream.getvalue(), content_type='application/x-gzip' )
+
+	# Add content disposition so the browser will download the file, don't use mime type !
+	response['Content-Disposition'] = ('attachment; filename=' + os.path.splitext(fname)[0] + '.gzip')
+
+	# Content size
+	gzip_stream.seek(0, os.SEEK_END)
+	response['Content-Length'] = gzip_stream.tell()
+
+	# Send back the response to the request, don't close the StringIO handler !
+	return response	
+
 def handle_export_competition( competition, export_as_template=False, remove_ftp_info=False ):
 	def get_tmp_length( tmp ):
 		tmp.seek(0, 2)
@@ -3611,10 +3642,7 @@ def handle_export_competition( competition, export_as_template=False, remove_ftp
 	json_tmp_length = get_tmp_length( json_tmp )
 	json_tmp.seek( 0 )
 	
-	response = HttpResponse( FileWrapper(json_tmp), content_type="application/json" )
-	response['Content-Disposition'] = 'attachment; filename={}.json'.format(competition.get_filename_base())
-	response['Content-Length'] = json_tmp_length
-	return response
+	return gzip_response_from_tmp_file( json_tmp, '{}.json'.format(competition.get_filename_base()) )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -3641,11 +3669,11 @@ def CompetitionExport( request, competitionId ):
 
 @autostrip
 class ImportCompetitionForm( Form ):
-	json_file = forms.FileField( required=True, label=_('Competition File (*.json)') )
+	json_file = forms.FileField( required=True, label=_('Competition File (*.gzip|*.json)') )
 	
 	name = forms.CharField( required=False, label=_('Change Name to'), help_text=_('Leave blank to use existing Competition name') )
 	start_date = forms.DateField( required=False, label=_('Change Start Date to'), help_text=_('Leave blank to use existing Competition date') )
-	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore License Holders if they exist)') )
+	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore Participants if present)') )
 	
 	def __init__( self, *args, **kwargs ):
 		super( ImportCompetitionForm, self ).__init__( *args, **kwargs )
@@ -3654,7 +3682,7 @@ class ImportCompetitionForm( Form ):
 		self.helper.form_class = 'form-inline'
 		
 		self.helper.layout = Layout(
-			Row(Field('json_file', accept=".json")),
+			Row(Field('json_file', accept=".gzip,.gz,.json")),
 			Row(HTML('&nbsp;')),
 			Row(Col(Field('name'), 6), Col(Field('start_date'), 3)),
 			Row(Field('import_as_template')),
@@ -3663,6 +3691,9 @@ class ImportCompetitionForm( Form ):
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
 def handle_import_competition( json_file_request, import_as_template, name, start_date ):
+	if json_file_request.name.endswith('.gzip') or json_file_request.name.endswith('.gz'):
+		json_file_request = gzip.GzipFile(filename=json_file_request.name, fileobj=json_file_request, mode='rb')
+		
 	message_stream = StringIO.StringIO()
 		
 	try:
