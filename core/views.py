@@ -3840,6 +3840,7 @@ def handle_export_competition( competition, export_as_template=False, remove_ftp
 		tmp.seek(0, 2)
 		tmp_length = tmp.tell()
 		tmp.seek(0)
+		return tmp_length
 	
 	json_tmp = tempfile.TemporaryFile()
 	competition_export( competition, json_tmp, export_as_template=export_as_template, remove_ftp_info=remove_ftp_info )
