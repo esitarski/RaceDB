@@ -3585,7 +3585,7 @@ from django.http import StreamingHttpResponse
 
 @autostrip
 class ExportCompetitionForm( Form ):
-	export_as_template = forms.BooleanField( required=False, label=_('Export as Template (exclude Participants)') )
+	export_as_template = forms.BooleanField( required=False, label=_('Export as Template (exclude Participants and Teams)') )
 	remove_ftp_info = forms.BooleanField( required=False, label=_('Remove FTP Upload Info') )
 	
 	def __init__( self, *args, **kwargs ):
@@ -3673,7 +3673,7 @@ class ImportCompetitionForm( Form ):
 	
 	name = forms.CharField( required=False, label=_('Change Name to'), help_text=_('Leave blank to use existing Competition name') )
 	start_date = forms.DateField( required=False, label=_('Change Start Date to'), help_text=_('Leave blank to use existing Competition date') )
-	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore Participants if present)') )
+	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore Participants and Teams)') )
 	
 	def __init__( self, *args, **kwargs ):
 		super( ImportCompetitionForm, self ).__init__( *args, **kwargs )
