@@ -10,6 +10,7 @@ from core import race_class
 from core import report_label
 from core import legal_entity
 from core import category
+from core import category_numbers
 from core import team
 
 import warnings
@@ -49,10 +50,10 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidAdd),
 	url(r'^(?i).*ParticipantBibAdd/(?P<competitionId>\d+)/$', views.ParticipantBibAdd),
 	
-	url(r'^(?i).*CategoryNumbers/(?P<competitionId>\d+)/$', views.CategoryNumbersDisplay),
-	url(r'^(?i).*CategoryNumbersNew/(?P<competitionId>\d+)/$', views.CategoryNumbersNew),
-	url(r'^(?i).*CategoryNumbersEdit/(?P<categoryNumbersId>\d+)/$', views.CategoryNumbersEdit),
-	url(r'^(?i).*CategoryNumbersDelete/(?P<categoryNumbersId>\d+)/$', views.CategoryNumbersDelete),
+	url(r'^(?i).*CategoryNumbers/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersDisplay),
+	url(r'^(?i).*CategoryNumbersNew/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersNew),
+	url(r'^(?i).*CategoryNumbersEdit/(?P<categoryNumbersId>\d+)/$', category_numbers.CategoryNumbersEdit),
+	url(r'^(?i).*CategoryNumbersDelete/(?P<categoryNumbersId>\d+)/$', category_numbers.CategoryNumbersDelete),
 	
 	url(r'^(?i).*EventMassStarts/(?P<competitionId>\d+)/$', views.EventMassStartDisplay),
 	url(r'^(?i).*EventMassStartNew/(?P<competitionId>\d+)/$', views.EventMassStartNew),
