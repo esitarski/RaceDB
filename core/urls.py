@@ -8,7 +8,9 @@ from core import seasons_pass
 from core import discipline
 from core import race_class
 from core import report_label
+from core import legal_entity
 from core import category
+from core import team
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -141,15 +143,15 @@ urlpatterns = [
 	url(r'^(?i).*LicenseHoldersMergeDuplicates/(?P<mergeId>\d+)/(?P<duplicateIds>[0123456789,]+)/$', views.LicenseHoldersMergeDuplicates),
 	url(r'^(?i).*LicenseHoldersMergeDuplicatesOK/(?P<mergeId>\d+)/(?P<duplicateIds>[0123456789,]+)/$', views.LicenseHoldersMergeDuplicatesOK),
 	
-	url(r'^(?i).*Teams/$', views.TeamsDisplay),
-	url(r'^(?i).*TeamNew/$', views.TeamNew),
-	url(r'^(?i).*TeamEdit/(?P<teamId>\d+)/$', views.TeamEdit),
-	url(r'^(?i).*TeamDelete/(?P<teamId>\d+)/$', views.TeamDelete),
+	url(r'^(?i).*Teams/$', team.TeamsDisplay),
+	url(r'^(?i).*TeamNew/$', team.TeamNew),
+	url(r'^(?i).*TeamEdit/(?P<teamId>\d+)/$', team.TeamEdit),
+	url(r'^(?i).*TeamDelete/(?P<teamId>\d+)/$', team.TeamDelete),
 	
-	url(r'^(?i).*LegalEntities/$', views.LegalEntitiesDisplay),
-	url(r'^(?i).*LegalEntityNew/$', views.LegalEntityNew),
-	url(r'^(?i).*LegalEntityEdit/(?P<legalEntityId>\d+)/$', views.LegalEntityEdit),
-	url(r'^(?i).*LegalEntityDelete/(?P<legalEntityId>\d+)/$', views.LegalEntityDelete),
+	url(r'^(?i).*LegalEntities/$', legal_entity.LegalEntitiesDisplay),
+	url(r'^(?i).*LegalEntityNew/$', legal_entity.LegalEntityNew),
+	url(r'^(?i).*LegalEntityEdit/(?P<legalEntityId>\d+)/$', legal_entity.LegalEntityEdit),
+	url(r'^(?i).*LegalEntityDelete/(?P<legalEntityId>\d+)/$', legal_entity.LegalEntityDelete),
 	
 	url(r'^(?i).*CategoryFormats/$', category.CategoryFormatsDisplay),
 	url(r'^(?i).*CategoryFormatNew/$', category.CategoryFormatNew),

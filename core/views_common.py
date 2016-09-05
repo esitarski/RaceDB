@@ -203,7 +203,7 @@ def GenericModelForm( ModelClass ):
 	return GMForm
 
 def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
-	title = string_concat(_('New'), ' ', ModelClass._meta.verbose_name.title())
+	title = string_concat(_('New'), ' ', ModelClass._meta.verbose_name)
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
@@ -236,7 +236,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = True
 	
-	title = unicode(_('Edit {}')).format(ModelClass._meta.verbose_name.title())
+	title = string_concat( _('Edit'), ' ', ModelClass._meta.verbose_name )
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -273,7 +273,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
 	
-	title = unicode(_('Delete {}')).format(ModelClass._meta.verbose_name.title())
+	title = string_concat( _('Edit'), ' ', ModelClass._meta.verbose_name )
 	if request.method == 'POST':
 		if 'cancel-submit' not in request.POST:
 			instance.delete()
