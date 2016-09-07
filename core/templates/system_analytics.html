@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load staticfiles %}
 
 {% block style %}
 	chart-big { min-height: 500px; width: 100%; height: 500px; }
@@ -16,9 +17,10 @@
 {% endblock printstyle %}
 
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script type="text/javascript">
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+{% endblock srcjavascript %}
 
+{% block javascript %}
 var payload = {{payload_json|safe}};
 google.charts.load("current", {packages:["corechart", "table"]});
 google.charts.setOnLoadCallback(drawCharts);
@@ -506,7 +508,7 @@ function drawCharts() {
 		);
 	}
 	
-	if( payload.category_total_women.length ) {
+	if( payload.category_total_women.length > 1 ) {
 		var divId = "womenCategoriesChartDiv";
 		var womenCategoriesChart = new google.visualization.ComboChart(document.getElementById(divId));
 		var total_cur = 0;
@@ -920,12 +922,17 @@ function drawCharts() {
 	var compTable = new google.visualization.Table(document.getElementById('compTableDiv'));
 	compTable.draw(compData, {showRowNumber: false, alternatingRowStyle:false, sort:'disable'});
 }
- </script>
-{% endblock srcjavascript %}
-{% load staticfiles %}
+var initiator = '';
+$(document).ready(function() {
+	$(":submit").click(function() { initiator = this.name });
+});
+
+{% endblock javascript %}
+
 {% block onload %}
 	$( "form" ).submit(function( event ) {
-		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+		if( initiator != "excel-export-submit" )
+			setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
 	});
 {% endblock onload %}
 {% block content %}

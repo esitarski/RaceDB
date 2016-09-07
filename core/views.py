@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE
 import uuid
 import zipfile
 import operator
+import itertools
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -16,12 +17,13 @@ from get_start_list_excel import get_start_list_excel
 from get_license_holder_excel import get_license_holder_excel
 from get_participant_excel import get_participant_excel
 from participation_excel import participation_excel
-from participation_data import participation_data
+from participation_data import participation_data, get_competitions
 from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
 
 from participant_key_filter import participant_key_filter, participant_bib_filter
 from init_prereg import init_prereg
+from emails import show_emails
 
 from print_bib import print_bib_tag_label, print_id_label
 
@@ -1138,6 +1140,19 @@ def StartListExcelDownload( request, eventId, eventType ):
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
+def StartListEmails( request, eventId, eventType ):
+	eventType = int(eventType)
+	if eventType == 0:
+		event = get_object_or_404( EventMassStart, pk=eventId )
+	elif eventType == 1:
+		event = get_object_or_404( EventTT, pk=eventId )
+	else:
+		assert False, 'unknown event type: {}'.format(eventType)
+	
+	return show_emails( request, participants=event.get_participants(), okUrl=getContext(request,'cancelUrl') )
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
 def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competitionId, confirmed=False ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	if confirmed:
@@ -1935,6 +1950,7 @@ class ParticipantSearchForm( Form ):
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
 			Submit( 'clear-submit', _('Clear Search'), css_class = 'btn btn-primary' ),
 			Submit( 'cancel-submit', _('OK'), css_class = 'btn btn-primary' ),
+			Submit( 'emails-submit', _('Emails'), css_class = 'btn btn-primary' ),
 			Submit( 'export-excel-submit', _('Export to Excel'), css_class = 'btn btn-primary' ),
 		]
 		
@@ -1943,7 +1959,7 @@ class ParticipantSearchForm( Form ):
 			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
 			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'),
 				Field('paid'), Field('complete'), Field('has_events'), Field('eligible'), ),
-			Row( *(button_args[:-1] + [HTML('&nbsp;'*8)] + button_args[-1:]) ),
+			Row( *(button_args[:-2] + [HTML('&nbsp;'*8)] + button_args[-2:]) ),
 		)
 		
 @access_validation()
@@ -2069,13 +2085,16 @@ def Participants( request, competitionId ):
 	elif has_events == 1:
 		participants = (p for p in participants if p.has_any_events())
 	
-	if request.method == 'POST' and 'export-excel-submit' in request.POST:
-		xl = get_participant_excel( Q(pk__in=[p.pk for p in participants]) )
-		response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-		response['Content-Disposition'] = 'attachment; filename=RaceDB-Participants-{}.xlsx'.format(
-			datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
-		)
-		return response
+	if request.method == 'POST':
+		if 'export-excel-submit' in request.POST:
+			xl = get_participant_excel( Q(pk__in=[p.pk for p in participants]) )
+			response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+			response['Content-Disposition'] = 'attachment; filename=RaceDB-Participants-{}.xlsx'.format(
+				datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+			)
+			return response
+		if 'emails-submit' in request.POST:
+			return show_emails( request, participants=participants )
 		
 	return render( request, 'participant_list.html', locals() )
 
@@ -3323,11 +3342,17 @@ def get_participant_report_form():
 		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()] )
 		
 		def __init__( self, *args, **kwargs ):
+			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			super(ParticipantReportForm, self).__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
+			
+			self.additional_buttons = []
+			if button_mask == EDIT_BUTTONS:
+				self.additional_buttons.append( ('emails-submit', _('Emails'), 'btn btn-primary') )
+				self.additional_buttons.append( ('excel-export-submit', _('Export LicenseHolders to Excel'), 'btn btn-primary') )
 			
 			self.helper.layout = Layout(
 				Row(
@@ -3350,7 +3375,7 @@ def get_participant_report_form():
 				),
 				HTML( '<hr/>' ),
 			)
-			addFormButtons( self, OK_BUTTON | CANCEL_BUTTON )
+			addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, additional_buttons=self.additional_buttons )
 	
 		def clean(self):
 			cleaned_data = super(ParticipantReportForm, self).clean()
@@ -3408,19 +3433,42 @@ def AttendanceAnalytics( request ):
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
+		
 		form = get_participant_report_form()( request.POST )
 		if form.is_valid():
 			initial = {
-				'start_date':form.cleaned_data['start_date'],
-				'end_date':form.cleaned_data['end_date'],
-				'disciplines':form.cleaned_data['disciplines'],
-				'race_classes':form.cleaned_data['race_classes'],
-				'organizers':form.cleaned_data['organizers'],
-				'include_labels':form.cleaned_data['include_labels'],
-				'exclude_labels':form.cleaned_data['exclude_labels'],
+				k:form.cleaned_data[k] for k in (
+					'start_date',
+					'end_date',
+					'disciplines',
+					'race_classes',
+					'organizers',
+					'include_labels',
+					'exclude_labels',
+				)
 			}
 			
+			if 'emails-submit' in request.POST:
+				return show_emails(
+					request,
+					emails=itertools.chain.from_iterable(
+						c.get_participants().exclude(license_holder__email='').values_list('license_holder__email',flat=True)
+							for c in get_competitions(**initial)
+					)
+				)
+		
+			if 'excel-export-submit' in request.POST:
+				q = Q( pk__in = set(itertools.chain.from_iterable(
+						c.get_participants().values_list('license_holder__pk',flat=True) for c in get_competitions(**initial)
+					))
+				)
+				xl = get_license_holder_excel( q )
+				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+				response['Content-Disposition'] = 'attachment; filename=RaceDB-Analytics-LicenseHolders-{}.xlsx'.format(
+					datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+				)
+				return response
+		
 			payload, license_holders_event_errors = participation_data( **initial )
 			payload_json = json.dumps(payload, separators=(',',':'))
 	else:

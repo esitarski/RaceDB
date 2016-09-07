@@ -4,14 +4,6 @@
 {% load static %}
 {% load staticfiles %}
 
-{% block onload %}
-$("form").submit(function(event) {
-		$('#id_license_code, #id_existing_tag, #id_existing_tag2, #tag, #tag2').each(
-			function() { $(this).val( $(this).val().trim().replace(/^0+/, '') );
-		});
-	});
-{% endblock onload %}
-
 {% block javascript %}
 	function sendEmail() {
 		var email = document.getElementById("id_email");
@@ -22,6 +14,14 @@ $("form").submit(function(event) {
 			alert( '{% trans "Missing Email!" %}' );
 	}
 {% endblock javascript %}
+
+{% block onload %}
+$("form").submit(function(event) {
+		$('#id_license_code, #id_existing_tag, #id_existing_tag2, #tag, #tag2').each(
+			function() { $(this).val( $(this).val().trim().replace(/^0+/, '') );
+		});
+	});
+{% endblock onload %}
 
 {% block content %}
 <h1>{{title}}</h1>

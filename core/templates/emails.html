@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block onload %}
+	document.getElementById('idEmailArea').select()
+{% endblock onload %}
+
+{% block javascript %}
+function CopyToClipboard() {
+	var textArea = document.getElementById('idEmailArea');
+	textArea.select();
+	document.execCommand("copy");
+	alert( '{{emails_length}} ' + '{% trans "Emails Copied to Clipboard" %}' );
+}
+{% endblock javascript %}
+
+{% block content %}
+<h2>{{title}}</h2>
+<hr/>
+<div class="container">
+	<div class="row">
+		<div class="col-md-3">
+			<a class="btn btn-primary" href="{% if okUrl %}{{okUrl}}{% else %}.{% endif %}">{% trans "OK" %}</a>
+		</div>
+	</div> <!-- row -->
+	<div class="row">
+		<div class="col-md-3"></div>
+	</div> <!-- row -->
+	<div class="row">
+		<div class="col-md-5">{% trans "Copy Emails to Clipboard, then Paste (Ctrl+v) as 'bcc' recipients." %}</div>	
+		<div class="col-md-3">
+			<button class="btn btn-success" onclick="CopyToClipboard();">{% trans "Copy to Clipboard" %}</button>
+		</div>
+	</div> <!-- row -->
+	<div class="row">
+		<div class="col-md-12">
+			<textarea rows=12 cols=72 wrap=hard id="idEmailArea">{{emails|join:";"}}</textarea>
+		</div>
+	</div> <!-- row -->
+</div> <!-- container -->
+<h4>{% trans "Total" %}: {{emails_length}}</h4>
+{% endblock content %}

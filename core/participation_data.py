@@ -4,8 +4,7 @@ import utils
 from collections import defaultdict
 from models import *
 
-def participation_data( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None ):
-	
+def get_competitions( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None ):
 	competitions = Competition.objects.all()
 	if start_date is not None:
 		competitions = competitions.filter( start_date__gte = start_date )
@@ -21,9 +20,10 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		competitions = competitions.filter( report_labels__in = include_labels )
 	if exclude_labels:
 		competitions = competitions.exclude( report_labels__in = exclude_labels )
+	return competitions.order_by( 'start_date', 'pk' ).distinct()
 	
-	competitions = competitions.order_by( 'start_date', 'pk' ).distinct()
-	
+def participation_data( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None ):
+	competitions = get_competitions( start_date, end_date, disciplines, race_classes, organizers, include_labels, exclude_labels )
 	license_holders_event_errors = set()
 	
 	data = []

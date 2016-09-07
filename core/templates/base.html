@@ -4,7 +4,10 @@
 <title>{% if page_title %}{{page_title}}{% else %}RaceDB by Edward Sitarski{% endif %}</title>
 {% load staticfiles %}
 {% include "meta.html" %}
-<script type="text/javascript" src="{% static "js/jquery-2.2.4.min.js" %}"></script>
+
+{% block srcjavascript %}
+	<script type="text/javascript" src="{% static "js/jquery-2.2.4.min.js" %}"></script>
+{% endblock srcjavascript %}
 
 <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
 <link rel="stylesheet" href="{% static "bootstrap/css/datepicker.css" %}">
@@ -12,9 +15,6 @@
 
 {% block linkstyles %}
 {% endblock linkstyles %}
-
-{% block srcjavascript %}
-{% endblock srcjavascript %}
 
 <style>
 .row { margin: 8px 0px; }

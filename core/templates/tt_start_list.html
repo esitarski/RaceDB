@@ -33,6 +33,9 @@
 	<a class="btn btn-success" href="./SeedingEdit/{{instance.id}}/">{% trans "Edit Seeding" %}</a>
 {% endif %}
 &nbsp;&nbsp;&nbsp;&nbsp;
+{% if request.user.is_superuser %}
+	<a class="btn btn-primary" href="{{path}}StartListEmails/{{instance.id}}/{{instance.event_type}}">{% trans "Emails" %}</a>
+{% endif %}
 <a class="btn btn-primary" href="{{path}}StartListExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export to Excel" %}</a>
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <hr/>

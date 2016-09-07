@@ -43,6 +43,7 @@ urlpatterns = [
 	
 	url(r'^(?i).*StartListTT/(?P<eventTTId>\d+)/$', views.StartListTT),
 	
+	url(r'^(?i).*StartListEmails/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.StartListEmails),
 	url(r'^(?i).*StartListExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.StartListExcelDownload),
 	
 	url(r'^(?i).*ParticipantBarcodeAdd/(?P<competitionId>\d+)/$', views.ParticipantBarcodeAdd),
