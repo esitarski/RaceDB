@@ -165,18 +165,16 @@ def init_prereg(
 							i, license_code, name) )
 						continue
 				else:
+					# No license code.  Try to find the participant by last/first name, [date_of_birth] and [gender].
+					# Case insensitive comparison, accents ignored for names.
+					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
+					if date_of_birth:
+						q &= Q( date_of_birth=date_of_birth )
+					if gender:
+						q &= Q( gender=gender )
+					
 					try:
-						# No license code.  Try to find the participant by last/first name and date_of_birth.
-						# Case insensitive comparison, accents ignored.
-						if date_of_birth:
-							license_holder = LicenseHolder.objects.get(
-								search_text__startswith=utils.get_search_text([last_name, first_name]),
-								date_of_birth=date_of_birth,
-							)
-						else:
-							license_holder = LicenseHolder.objects.get(
-								search_text__startswith=utils.get_search_text([last_name, first_name]),
-							)
+						license_holder = LicenseHolder.objects.get( q )
 					except LicenseHolder.DoesNotExist:
 						# No name match.
 						# Create a temporary license holder.
