@@ -382,9 +382,17 @@
 		{% if cat_part %}
 			{% for cp in cat_part %}
 				{% if isEdit %}
-					<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{cp.id}}">
+					{% if cp.category and c.bib %}
+						<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{cp.id}}">
+					{% else %}
+						<a class="btn btn-danger" href="{{popUrl}}ParticipantEdit/{{cp.id}}">
+					{% endif %}
 				{% else %}
-					<span class="label label-primary">
+					{% if cp.category and c.bib %}
+						<span class="label label-primary">
+					{% else %}
+						<span class="label label-danger">
+					{% endif %}
 				{% endif %}
 						{% if cp.category %}{{cp.category.code_gender}}{% else %}{% trans "No Category" %}{% endif %}
 						-
