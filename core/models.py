@@ -2203,6 +2203,10 @@ class Participant(models.Model):
 		else:
 			return self.good_uci_code()
 	
+	@property
+	def is_done_for_all_categories( self ):
+		return all( p.is_done for p in self.get_category_participants() )
+	
 	def auto_confirm( self ):
 		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:
 			self.confirmed = True

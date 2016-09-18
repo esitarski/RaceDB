@@ -417,21 +417,24 @@
 	{% endif %}
 <hr/>
 	{% if isEdit %}
-		{% if participant.is_done %}
-			{% if participant.has_any_events or not participant.is_competitor %}
-				<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate.  Proceed." %}</a>
+		{% with is_done=participant.is_done is_done_for_all_categories=participant.is_done_for_all_categories %}
+			{% if is_done_for_all_categories %}
+				{% if participant.has_any_events or not participant.is_competitor %}
+					<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Complete and Accurate.  Proceed." %}</a>
+				{% else %}
+					<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "No Events Selected.  Proceed anyway?" %}</a>
+				{% endif %}
+			{% elif is_done_for_all_categories and participant.can_start %}
+				{% if participant.has_any_events %}
+					<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Warnings.  Proceed anyway?" %}</a>
+				{% else %}
+					<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "No Events Selected.  Proceed anyway?" %}</a>
+				{% endif %}
 			{% else %}
-				<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "No Events Selected.  Proceed anyway?" %}</a>
+				<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Errors.  Cannot Start.  Proceed anyway?" %}</a>
 			{% endif %}
-		{% elif participant.can_start %}
-			{% if participant.has_any_events %}
-				<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Warnings.  Proceed anyway?" %}</a>
-			{% else %}
-				<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "No Events Selected.  Proceed anyway?" %}</a>
-			{% endif %}
-		{% else %}
-			<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Errors.  Cannot Start.  Proceed anyway?" %}</a>
-		{% endif %}
+		{% endwith %}
+		
 		{% if system_info.print_tag_option != 0 %}
 			&nbsp;&nbsp;&nbsp;
 			<a class="btn btn-primary hidden-print" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "Print Bib Labels" %}</a>
