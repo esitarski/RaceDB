@@ -69,7 +69,9 @@
 	<hr/>
 	<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 {% else %}
-	<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "No Category Numbers Defined" %}</a>
+	<a class="btn btn-warning" href="{{cancelUrl}}">
+		{{participant.category.code_gender}}: {% trans "No Numbers Defined" %} 
+	</a>
 	<hr/>
 	{% trans "Return to the Competition and define Numbers for this Category." %}<br/>
 	{% trans "For more info, see the" %} <a href="{% static "docs/Tutorial.html" %}" target="_blank">{% trans "Tutorial" %}</a>.
