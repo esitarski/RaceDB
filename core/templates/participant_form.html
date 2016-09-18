@@ -382,18 +382,18 @@
 		{% if cat_part %}
 			{% for cp in cat_part %}
 				{% if isEdit %}
-					{% if cp.category and c.bib %}
-						<a class="btn btn-primary" href="{{popUrl}}ParticipantEdit/{{cp.id}}">
-					{% else %}
-						<a class="btn btn-danger" href="{{popUrl}}ParticipantEdit/{{cp.id}}">
-					{% endif %}
+					<a	{% if cp.category and cp.bib %}class="btn btn-primary"
+						{% else %}class="btn btn-danger"
+						{% endif %}
+						href="{{popUrl}}ParticipantEdit/{{cp.id}}"
+					>
 				{% else %}
-					{% if cp.category and c.bib %}
-						<span class="label label-primary">
-					{% else %}
-						<span class="label label-danger">
-					{% endif %}
+					<span	{% if cp.category and cp.bib %}class="label label-primary"
+							{% else %}class="label label-danger"
+							{% endif %}
+					>
 				{% endif %}
+						{% if not cp.category or not cp.bib %}{% trans "Error:" %}{% endif %}
 						{% if cp.category %}{{cp.category.code_gender}}{% else %}{% trans "No Category" %}{% endif %}
 						-
 						{% if cp.bib %} {% trans "Bib" %}: {{cp.bib}} {% else %}{% trans "No Bib" %}{% endif %}
