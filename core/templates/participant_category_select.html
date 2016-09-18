@@ -31,7 +31,15 @@
 			<td>{{c.description}}</td>
 			<td>
 				{% if c in available_categories %}
-					<a class="btn btn-success" href="{{path}}ParticipantCategorySelect/{{participant.id}}/{{c.id}}/">{% trans "Select" %}</a>
+					{% if c in categories_with_numbers %}
+						<a class="btn btn-success" href="{{path}}ParticipantCategorySelect/{{participant.id}}/{{c.id}}/">
+							{% trans "Select" %}
+						</a>
+					{% else %}
+						{% trans "No Numbers" %}
+					{% endif %}
+				{% else %}
+					{% trans "Entered" %}
 				{% endif %}
 			</td>
 		</tr>

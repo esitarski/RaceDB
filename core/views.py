@@ -2379,6 +2379,12 @@ def ParticipantCategoryChange( request, participantId ):
 	if gender != -1:
 		categories = categories.filter( Q(gender=2) | Q(gender=gender) )
 	available_categories = set( competition.get_available_categories(license_holder, gender=gender, participant_exclude=participant) )
+	
+	categories_with_numbers = set()
+	for cn in CategoryNumbers.objects.filter( competition=competition ):
+		if cn.get_numbers():
+			categories_with_numbers |= set( cn.categories.all() )
+	
 	return render( request, 'participant_category_select.html', locals() )	
 
 @access_validation()
