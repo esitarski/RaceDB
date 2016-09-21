@@ -199,46 +199,12 @@ def SelfServe( request, do_scan=0 ):
 		
 	if not participants:
 		errors.append( _('Not Registered') )
-
-	license_holder_errors = (
-		('good_eligible',		_('Ineligible to Compete')),
-		('good_waiver',			_('Missing/Expired Insurance Waiver')),
-	)
-	license_holder_warnings = (
-		('good_license',			_('Temporary License (do you have a permanent one now?)')),
-		('good_uci_code',			_('Incorrect UCI Code')),
-		('good_emergency_contact',	_('Incomplete Emergency Contact')),
-	)
-	
-	participant_errors = (
-		('good_paid',			_('Missing Payment')),
-		('good_bib',			_('Missing Bib Number')),
-		('good_category',		_('Missing Category')),
-		('good_tag',			_('Missing Tag')),
-		('good_signature',		_('Missing Signature')),
-	)
-	participant_warnings = (
-		#('good_team',			_('No Team Name on File')),
-		('good_est_kmh',		_('Missing Estimated TT Speed')),
-	)
-	for i, p in enumerate(participants):
-		if i == 0:
-			for check, message in license_holder_errors:
-				if not getattr(p, check)():
-					errors.append( message )
-			for check, message in license_holder_warnings:
-				if not getattr(p, check)():
-					warnings.append( message )
 		
-		for check, message in participant_warnings:
-			if not getattr(p, check)():
-				warnings.append( message )
-		for check, message in participant_errors:
-			if not getattr(p, check)():
-				if check in ('good_bib', 'good_paid'):
-					errors.append( string_concat(message, u' (', p.category.code if p.category else _('Missing Category'),u')') )
-				else:
-					errors.append( message )
+	errors, warnings = p.get_lh_errors_warnings()
+	for p in participants:
+		e, w = p.errors_warnings()
+		errors.extend( e )
+		warnings.extend( w )
 				
 	if not errors:
 		for p in participants:

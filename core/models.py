@@ -2156,7 +2156,7 @@ class Participant(models.Model):
 	def good_team( self ):			return self.is_competitor and self.team
 	def good_paid( self ):			return self.is_competitor and self.paid
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
-	def good_est_kmh( self ):		return self.est_kmh or (not self.has_tt_events())
+	def good_est_kmh( self ):		return self.est_kmh or not self.has_tt_events()
 	def good_waiver( self ):		return not self.has_unsigned_waiver
 	def good_eligible( self ):		return not self.is_competitor or self.license_holder.eligible
 	
@@ -2203,10 +2203,61 @@ class Participant(models.Model):
 		else:
 			return self.good_uci_code()
 	
+	def get_lh_errors_warnings( self ):
+		license_holder_errors = (
+			('good_eligible',		_('Ineligible to Compete')),
+			('good_waiver',			_('Missing/Expired Insurance Waiver')),
+		)
+		license_holder_warnings = (
+			('good_license',			_('Temporary License (do you have a permanent one now?)')),
+			('good_uci_code',			_('Incorrect UCI Code')),
+			('good_emergency_contact',	_('Incomplete Emergency Contact')),
+		)
+		
+		return (
+			[message for check, message in license_holder_errors if not not getattr(self, check)()],
+			[message for check, message in license_holder_warnings if not not getattr(self, check)()],
+		)
+	
+	def get_errors_warnings( self ):
+		participant_errors = (
+			('good_paid',			_('Missing Payment')),
+			('good_bib',			_('Missing Bib Number')),
+			('good_category',		_('Missing Category')),
+			('good_tag',			_('Missing Tag')),
+			('good_signature',		_('Missing Signature')),
+		)
+		participant_warnings = (
+			#('good_team',			_('No Team Name on File')),
+			('good_est_kmh',		_('Missing Estimated TT Speed')),
+		)
+		
+		errors = []
+		for check, message in participant_errors:
+			if not getattr(self, check)():
+				if check in ('good_bib', 'good_paid'):
+					errors.append(
+						string_concat(
+							message,
+							u' (', self.category.code if self.category else _('Missing Category'),u')'
+					))
+				else:
+					errors.append( message )
+		
+		return errors, [message for check, message in participant_warnings if not getattr(self, check)()]
+	
+	def get_errors_warnings_all_categories( self ):
+		errors, warnings = [], []
+		for p in self.get_category_participants():
+			e, w = p.get_errors_warnings()
+			errors.extend( e )
+			warnings.extend( w )
+		return errors, warnings
+	
 	@property
 	def is_done_for_all_categories( self ):
 		return all( p.is_done for p in self.get_category_participants() )
-	
+		
 	def auto_confirm( self ):
 		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:
 			self.confirmed = True
@@ -2311,13 +2362,13 @@ class Participant(models.Model):
 		)
 	
 	def get_participant_events( self ):
-		return self.competition.get_participant_events(self)
+		return self.competition.get_participant_events( self )
 		
 	def has_optional_events( self ):
 		return any( optional for event, optional, entered in self.get_participant_events() )
 	
 	def has_tt_events( self ):
-		return any( entered and event.event_type == 1 for event, optional, entered in self.get_participant_events() )
+		return any( entered for event, optional, entered in self.get_participant_events() if event.event_type == 1 )
 	
 	def has_any_events( self ):
 		return self.competition.has_any_events(self)
