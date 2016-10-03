@@ -1158,6 +1158,13 @@ class Event( models.Model ):
 				).values_list('participant__pk', flat=True)
 			).select_related('license_holder','team')
 
+	def get_num_nationalities( self ):
+		return len(
+			set(
+				uci[:3] for uci in self.get_participants().values_list('license_holder__uci_code',flat=True) if uci
+			)
+		)
+			
 	def has_participants( self ):
 		categories = []
 		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
