@@ -106,8 +106,13 @@ div.title {
 				<h2>{{h.first_name}} {{h.last_name}}</h2>
 				<h4 style="margin-left: 30px;">
 					{{h.get_gender_display}} {{h.license_code_trunc}}&nbsp;&nbsp;
-					<span class="text-nowrap">{{h.get_uci_html}}</span>
+					{% if h.get_uci_html %}
+						<span class="text-nowrap">{{h.get_uci_html}}</span>
+					{% else %}
+						<span class="text-nowrap">{% trans "DOB" %}: {{h.date_of_birth|date:"Y-m-d"}}</span>
+					{% endif %}
 				</h4>
+				<br/>
 			{% endwith %}
 		{% endif %}
 		<div class="alert alert-danger">
@@ -193,8 +198,7 @@ div.title {
 				{% endfor %}
 			</ul>
 		{% endif %}
-		<br/>
-		<h4>{% trans "If you notice any incorrect information, please see the registration desk." %}</h4>
+		<h4>{% trans "If any information is incorrect, see the registration desk." %}</h4>
 		<br/>
 		<a href="{{path_noargs}}"><img src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% endif %}

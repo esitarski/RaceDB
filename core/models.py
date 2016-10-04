@@ -945,6 +945,13 @@ class CategoryNumbers( models.Model ):
 	class Meta:
 		verbose_name = _('CategoryNumbers')
 		verbose_name_plural = _('CategoriesNumbers')
+		
+def get_num_nationalities( participants ):
+	nationalities = set(
+		uci[:3] for uci in participants.values_list('license_holder__uci_code',flat=True)
+			if uci[:3] in uci_country_codes_set
+	)
+	return len(nationalities)
 
 class Event( models.Model ):
 	competition = models.ForeignKey( Competition, db_index = True )
@@ -1159,11 +1166,7 @@ class Event( models.Model ):
 			).select_related('license_holder','team')
 
 	def get_num_nationalities( self ):
-		return len(
-			set(
-				uci[:3] for uci in self.get_participants().values_list('license_holder__uci_code',flat=True) if uci
-			)
-		)
+		return get_num_nationalities( self.get_participants() )
 			
 	def has_participants( self ):
 		categories = []
@@ -1326,7 +1329,10 @@ class WaveBase( models.Model ):
 	
 	def get_participants( self ):
 		return self.get_participants_unsorted().select_related('license_holder','team').order_by('bib')
-	
+
+	def get_num_nationalities( self ):
+		return get_num_nationalities( self.get_participants_unsorted().select_related('license_holder') )
+		
 	@property
 	def spots_remaining( self ):
 		return None if self.max_participants is None else max(0, self.max_participants - get_participant_count())
@@ -2222,8 +2228,8 @@ class Participant(models.Model):
 		)
 		
 		return (
-			[message for check, message in license_holder_errors if not not getattr(self, check)()],
-			[message for check, message in license_holder_warnings if not not getattr(self, check)()],
+			[message for check, message in license_holder_errors if not getattr(self, check)()],
+			[message for check, message in license_holder_warnings if not getattr(self, check)()],
 		)
 	
 	def get_errors_warnings( self ):

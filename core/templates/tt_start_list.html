@@ -13,7 +13,8 @@
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
 <br/>
 <h4>
-{% trans "Starters" %}: {{instance.get_participant_count}}&nbsp;&nbsp;&nbsp;&nbsp;
+{% trans "Nationalities" %}: {{instance.get_num_nationalities}},
+{% trans "Starters" %}: {{instance.get_participant_count}}
 </h4>
 {% with bsc=instance.get_bad_start_count %}
 	{% if bsc > 0 %}

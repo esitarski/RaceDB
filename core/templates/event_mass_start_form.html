@@ -20,6 +20,7 @@
 				<th>{% trans "Wave" %}</th>
 				<th>{% trans "Start Offset" %}</th>
 				<th>{% trans "Categories" %}</th>
+				<th>{% trans "Nat." %}</th>
 				<th>{% trans "Strs" %}</th>
 				{% if isEdit %}
 					<th class="hidden-print"></th>
@@ -32,6 +33,7 @@
 					<td>{{w.name}}</td>
 					<td>{{w.start_offset}}</td>
 					<td>{{w.category_text}}</td>
+					<td>{{w.get_num_nationalities}}</td>
 					<td>{{w.get_starters_str}}</td>
 					{% if isEdit %}
 						<td class="hidden-print">

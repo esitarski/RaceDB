@@ -22,6 +22,7 @@
 				<th>{% trans "Wave" %}</th>
 				<th>{% trans "Categories" %}</th>
 				<th>{% trans "Gap Rules" %}</th>
+				<th>{% trans "Nat." %}</th>
 				<th>{% trans "Strs" %}</th>
 				{% if isEdit %}
 					<th class="hidden-print"></th>
@@ -35,6 +36,7 @@
 					<td>{{w.name}}</td>
 					<td>{{w.category_text_html|safe}}</td>
 					<td>{{w.gap_rules_html|safe}}</td>
+					<td>{{w.get_num_nationalities}}</td>
 					<td>{{w.get_participants|length}}</td>
 					{% if isEdit %}
 						<td class="hidden-print">

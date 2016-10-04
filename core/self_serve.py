@@ -153,28 +153,28 @@ def SelfServe( request, do_scan=0 ):
 		
 	if not do_scan:
 		return render( request, 'self_serve.html', locals() )
-	
-	tag = None
-	status, response = ReadTag(rfid_antenna)
-	if not status:
-		status_entries.append(
-			(_('Tag Read Failure'), response.get('errors',[]) ),
-		)
-	else:
-		tags = response.get('tags', [])
-		try:
-			tag = tags[0]
-		except (AttributeError, IndexError) as e:
-			status = False
+
+	debug = True
+	if not debug:
+		tag = None
+		status, response = ReadTag(rfid_antenna)
+		if not status:
 			status_entries.append(
-				(_('Tag Read Failure'), [e] ),
+				(_('Tag Read Failure'), response.get('errors',[]) ),
 			)
-	
-	'''
-	tag = '8F7200101914'
-	tags = [tag]
-	status = True
-	'''
+		else:
+			tags = response.get('tags', [])
+			try:
+				tag = tags[0]
+			except (AttributeError, IndexError) as e:
+				status = False
+				status_entries.append(
+					(_('Tag Read Failure'), [e] ),
+				)
+	else:
+		tag = '8F7200647614'
+		tags = [tag]
+		status = True
 	
 	if tag and len(tags) > 1:
 		status = False
@@ -186,7 +186,7 @@ def SelfServe( request, do_scan=0 ):
 
 	if not status:
 		return render( request, 'self_serve.html', locals() )
-		
+	
 	license_holder, participants = participant_key_filter( competition, tag, False )
 	
 	if not license_holder:
@@ -200,9 +200,9 @@ def SelfServe( request, do_scan=0 ):
 	if not participants:
 		errors.append( _('Not Registered') )
 		
-	errors, warnings = p.get_lh_errors_warnings()
+	errors, warnings = participants[0].get_lh_errors_warnings()
 	for p in participants:
-		e, w = p.errors_warnings()
+		e, w = p.get_errors_warnings()
 		errors.extend( e )
 		warnings.extend( w )
 				
