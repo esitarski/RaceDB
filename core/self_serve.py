@@ -154,8 +154,8 @@ def SelfServe( request, do_scan=0 ):
 	if not do_scan:
 		return render( request, 'self_serve.html', locals() )
 
-	debug = False
-	if not debug:
+	debugRFID = False
+	if not debugRFID:
 		tag = None
 		status, response = ReadTag(rfid_antenna)
 		if not status:
