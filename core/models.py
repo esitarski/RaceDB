@@ -2179,11 +2179,26 @@ class Participant(models.Model):
 			self.good_bib() and
 			self.good_category() and
 			self.good_tag() and
-			self.good_waiver() and
 			self.good_paid() and
-			self.good_signature()
+			self.good_signature() and
+			self.good_waiver()
 		)
-	
+		
+	@classmethod
+	def get_can_start_query( cls, competition ):
+		q = Q(
+			role=Participant.Competitor,
+			bib__isnull=False,
+			category__isnull=False,
+			paid=True,
+			license_holder__eligible=True,
+		)
+		if competition.using_tags:
+			q &= Q( tag__isnull=False )
+		if competition.show_signature:
+			q &= ~Q( signature='' )
+		return q
+		
 	def can_tt_start( self ):
 		return (
 			self.good_eligible() and
@@ -2202,7 +2217,6 @@ class Participant(models.Model):
 		if self.is_competitor:
 			return (
 				self.can_start() and
-				self.show_confirm and
 				self.good_uci_code() and
 				self.good_license() and
 				self.good_emergency_contact() and
@@ -2266,6 +2280,11 @@ class Participant(models.Model):
 			errors.extend( e )
 			warnings.extend( w )
 		return errors, warnings
+		
+	def get_errors_warnings_bool_all_categories( self ):
+		errors_lh, warnings_lh = self.get_lh_errors_warnings()
+		errors, warnings = self.get_errors_warnings_all_categories()
+		return (errors_lh or errors), (warnings_lh or warnings)
 	
 	@property
 	def is_done_for_all_categories( self ):

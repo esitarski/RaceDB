@@ -423,8 +423,8 @@
 	{% endif %}
 <hr/>
 	{% if isEdit %}
-		{% with errors_warnings_all_categories=participant.get_errors_warnings_all_categories %}
-			{% if not errors_warnings_all_categories.0 and not errors_warnings_all_categories.1 %}
+		{% with ewbac=participant.get_errors_warnings_bool_all_categories %}
+			{% if not ewbac.0 and not ewbac.1 %}
 				{% if participant.has_any_events or not participant.is_competitor %}
 					<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">
 						{% trans "Complete and Accurate.  Proceed." %}
@@ -434,7 +434,7 @@
 						{% trans "No Events Selected.  Proceed anyway?" %}
 					</a>
 				{% endif %}
-			{% elif not errors_warnings_all_categories.0 %}
+			{% elif not ewbac.0 %}
 				{% if participant.has_any_events %}
 					<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">
 						{% trans "Warnings.  Proceed anyway?" %}

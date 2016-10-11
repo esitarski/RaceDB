@@ -108,7 +108,7 @@ class SearchForm( Form ):
 		super(SearchForm, self).__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
+		self.helper.form_class = 'form-inline search'
 		
 		button_args = [
 			Submit( 'search-submit', 'Search', css_class = 'btn btn-primary hidden-print' ),

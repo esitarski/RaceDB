@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.contrib.auth.views import logout
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from subprocess import Popen, PIPE
 import uuid
@@ -1944,7 +1945,7 @@ class ParticipantSearchForm( Form ):
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
+		self.helper.form_class = 'form-inline search'
 		
 		button_args = [
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
@@ -1961,13 +1962,32 @@ class ParticipantSearchForm( Form ):
 				Field('paid'), Field('complete'), Field('has_events'), Field('eligible'), ),
 			Row( *(button_args[:-2] + [HTML('&nbsp;'*8)] + button_args[-2:]) ),
 		)
-		
+
 @access_validation()
 def Participants( request, competitionId ):
+	ParticipantsPerPage = 25
+	
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	pfKey = 'participant_filter_{}'.format( competitionId )
+	pageKey = 'participant_filter_page_{}'.format( competitionId )
 	participant_filter = request.session.get(pfKey, {})
+	
+	def getPaginator( participants ):
+		paginator = Paginator( participants, ParticipantsPerPage )
+		page = request.GET.get('page') or request.session.get(pageKey,0)
+		try:
+			participants = paginator.page(page)
+		except PageNotAnInteger:
+			# If page is not an integer, deliver first page.
+			page = 1
+			participants = paginator.page(page)
+		except EmptyPage:
+			# If page is out of range (e.g. 9999), deliver last page of results.
+			page = paginator.num_pages
+			participants = paginator.page(page)
+		request.session[pageKey] = page
+		return participants, paginator
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -1975,6 +1995,7 @@ def Participants( request, competitionId ):
 			
 		if 'clear-submit' in request.POST:
 			request.session[pfKey] = {}
+			request.session[pageKey] = None
 			return HttpResponseRedirect(getContext(request,'path'))
 			
 		form = ParticipantSearchForm( request.POST, competition=competition )
@@ -1984,7 +2005,9 @@ def Participants( request, competitionId ):
 			
 			participant_filter_no_scan = participant_filter.copy()
 			participant_filter_no_scan.pop( 'scan' )
+			
 			request.session[pfKey] = participant_filter_no_scan
+			request.session[pageKey] = None
 	else:
 		form = ParticipantSearchForm( competition = competition, initial = participant_filter )
 	
@@ -2014,6 +2037,7 @@ def Participants( request, competitionId ):
 			for n in names:
 				q |= Q(license_holder__search_text__contains = n)
 			participants = participants.filter( q ).select_related('team', 'license_holder')
+			participants, paginator = getPaginator( participants )
 			return render( request, 'participant_list.html', locals() )
 	
 	if participant_filter.get('bib',None) is not None:
@@ -2047,25 +2071,29 @@ def Participants( request, competitionId ):
 	
 	participants = participants.select_related('team', 'license_holder')
 	
+	object_checks = []
+
 	if participant_filter.get('name_text','').strip():
 		name_text = utils.normalizeSearch( participant_filter['name_text'] )
 		names = name_text.split()
 		if names:
-			participants = (p for p in participants
-				if all(n in utils.removeDiacritic(p.license_holder.full_name()).lower() for n in names) )
+			for n in names:
+				participants = participants.filter( license_holder__search_text__contains=n )
+			def name_filter( p ):
+				lh_name = utils.removeDiacritic(p.license_holder.full_name()).lower()
+				return all(n in lh_name for n in names)
+			object_checks.append( name_filter )
 
 	# Create a search function so we get a closure for the search text in the iterator.
 	def search_license_holder( participants, search_text, field ):
 		search_fields = utils.normalizeSearch( search_text ).split()
 		if search_fields:
-			return (p for p in participants if utils.matchSearchFields(search_fields, getattr(p.license_holder, field)) )
-		else:
-			return participants
+			object_checks.append( lambda p: utils.matchSearchFields(search_fields, getattr(p.license_holder, field)) )
 		
-	for field in ['city', 'state_prov', 'nationality']:
+	for field in ('city', 'state_prov', 'nationality'):
 		search_field = field + '_text'
 		if participant_filter.get(search_field,'').strip():
-			participants = search_license_holder(
+			search_license_holder(
 				participants,
 				participant_filter[search_field],
 				field
@@ -2073,18 +2101,30 @@ def Participants( request, competitionId ):
 	
 	team_search = participant_filter.get('team_text','').strip()
 	if team_search:
-		participants = (p for p in participants if p.team and utils.matchSearchFields(team_search, p.team.search_text) )
+		participants = participants.filter( team__isnull = False )
+		q = Q()
+		for t in team_search.split():
+			q &= Q( team__search_text__contains=t )
+		participants = participants.filter( q )
 		
 	if 0 <= int(participant_filter.get('complete',-1) or 0) <= 1:
 		complete = bool(int(participant_filter['complete']))
-		participants = (p for p in participants if bool(p.is_done) == complete)
+		if complete:
+			participants = participants.filter( Participant.get_can_start_query(competition) )
+		else:
+			participants = participants.exclude( Participant.get_can_start_query(competition) )
+		object_checks.append( lambda p: bool(p.is_done) == complete )
 	
 	has_events = int(participant_filter.get('has_events',-1))
 	if has_events == 0:
-		participants = (p for p in participants if p.is_competitor and not p.has_any_events())
+		participants = participants.filter( role = Participant.Competitor )
+		object_checks.append( lambda p: not p.has_any_events() )
 	elif has_events == 1:
-		participants = (p for p in participants if p.has_any_events())
+		object_checks.append( lambda p: p.has_any_events() )
 	
+	if object_checks:
+		partipants = [p for p in participants if all(oc(p) for oc in object_checks)]
+
 	if request.method == 'POST':
 		if 'export-excel-submit' in request.POST:
 			xl = get_participant_excel( Q(pk__in=[p.pk for p in participants]) )
@@ -2095,7 +2135,8 @@ def Participants( request, competitionId ):
 			return response
 		if 'emails-submit' in request.POST:
 			return show_emails( request, participants=participants )
-		
+			
+	participants, paginator = getPaginator( participants )
 	return render( request, 'participant_list.html', locals() )
 
 #-----------------------------------------------------------------------

@@ -90,7 +90,6 @@ function onLoad()
 		});
 	}
 	
-	
 	// Check for keyboard focus exception.
 	if( document.getElementById("focus") )
 		document.getElementById("focus").focus();
@@ -100,6 +99,22 @@ function onLoad()
 			$('form:first *:input[type!=hidden]:first').focus();
 		});
 	}
+	
+	// Highlight fields that are filled in.
+	var in_use_color = '#dff0d8';
+	var fs = $("form.search");
+	fs.find(".select.form-control").each(function() {
+		if( $(this).val() != $(this).find('option:first').val() )
+			$(this).css( 'background-color', in_use_color );
+	} );
+	fs.find(".numberinput.form-control").each(function() {
+		if( $(this).val() )
+			$(this).css( 'background-color', in_use_color );
+	} );
+	fs.find(".textinput.form-control").each(function() {
+		if( $(this).val() )
+			$(this).css( 'background-color', in_use_color );
+	} );
 
 {% block onload %}
 {% endblock onload %}
