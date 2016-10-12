@@ -1975,7 +1975,7 @@ def Participants( request, competitionId ):
 	
 	def getPaginator( participants ):
 		paginator = Paginator( participants, ParticipantsPerPage )
-		page = request.GET.get('page') or request.session.get(pageKey,0)
+		page = request.GET.get('page',None) or request.session.get(pageKey,None)
 		try:
 			participants = paginator.page(page)
 		except PageNotAnInteger:
