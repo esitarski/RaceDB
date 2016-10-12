@@ -2085,7 +2085,7 @@ def Participants( request, competitionId ):
 			object_checks.append( name_filter )
 
 	# Create a search function so we get a closure for the search text in the iterator.
-	def search_license_holder( participants, search_text, field ):
+	def search_license_holder( search_text, field ):
 		search_fields = utils.normalizeSearch( search_text ).split()
 		if search_fields:
 			object_checks.append( lambda p: utils.matchSearchFields(search_fields, getattr(p.license_holder, field)) )
@@ -2094,7 +2094,6 @@ def Participants( request, competitionId ):
 		search_field = field + '_text'
 		if participant_filter.get(search_field,'').strip():
 			search_license_holder(
-				participants,
 				participant_filter[search_field],
 				field
 			)
@@ -2123,7 +2122,11 @@ def Participants( request, competitionId ):
 		object_checks.append( lambda p: p.has_any_events() )
 	
 	if object_checks:
-		partipants = [p for p in participants if all(oc(p) for oc in object_checks)]
+		passed = []
+		for p in participants:
+			if all(oc(p) for oc in object_checks):
+				passed.append( p )
+		participants = passed
 
 	if request.method == 'POST':
 		if 'export-excel-submit' in request.POST:

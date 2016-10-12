@@ -81,7 +81,6 @@ def normalizeSearch( s ):
 def matchSearchFields( search, field ):
 	if isinstance(search, (unicode, bytes)):
 		search = normalizeSearch( search ).split()
-	
 	field = removeDiacritic( field.strip() ).lower()
 	return all( s in field for s in search )
 	
