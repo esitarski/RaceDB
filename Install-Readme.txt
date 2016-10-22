@@ -173,11 +173,31 @@ This will log you into the system with superuser capabilities, which you will ne
    
 The options starting at '--host" are of particular interest.  They allow you to choose the host and port of the RaceDB web server, connect to a particular rfid reader on the network, suppress automatically opening a browser and other capabilities.
  
- After logging in to RaceDB, click on the "Tutorial" and "Help" link at the bottom right of the page to get started.
+After logging in to RaceDB, click on the "Tutorial" and "Help" link at the bottom right of the page to get started.
+
+The system also comes with another login username="reg" password="reg".
+This is what the registration staff should use.  It disables access to configuration data and makes the system easier to use.
+It is OK if multiple people log in with the same username.
  
- The system also comes with another login username="reg" password="reg".
- This is what the registration staff should use.  It disables access to configuration data and makes the system easier to use.
- It is OK if multiple people log in with the same username.
+***********************************************************************
+RaceDB Config File:
+It is possible to configure launch options in a RaceDB.cfg config file.
+The default location of RaceDB.cfg in the same folder as "manage.py".
+You tell the launch command to look somewhere else for the file with the "--config" command.
+
+The launch command uses the config file to set the command line parameters.
+Parameters in the config file will override those on the command line.
+Lines beginning with '#' or ';' are comments.
+
+Sample config file:
+
+[launch]
+# Don't launch a browser on startup.
+no_browser=true
+
+# Open on port 8080.
+port=8080
+
  
 ***********************************************************************
 ***********************************************************************

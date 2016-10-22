@@ -1,4 +1,5 @@
 from waitress import serve
+from ConfigParser import SafeConfigParser, NoOptionError
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -18,7 +19,41 @@ from core.LLRPClientServer import runServer
 from core.models import SystemInfo, models_fix_data
 from core.create_users import create_users
 
-def launch_server( **options ):
+class KWArgs( object ):
+	def __init__( self ):
+		self.kwargs = {}
+
+	def add_argument( self, name, **info ):
+		self.kwargs[info['dest']] = info
+	
+	def __contains__( self, dest ):
+		return dest in self.kwargs
+	
+	def validate( self, dest, value ):
+		if dest not in self.kwargs:
+			return value, 'Unknown argument'
+		info = self.kwargs[dest]
+		
+		if info.get('action', None) in ('store_true', 'store_false'):
+			if isinstance(value, (int, float, long)):
+				return value != 0, None
+			elif isinstance(value, (str, unicode)):
+				value = value.strip()
+				if value[:1] in '1TtYy':
+					return True, None
+				elif value[:1] in '0FfNn':
+					return False, None
+				else:
+					return value, 'value must be true/false'
+			
+		try:
+			value = info['type'](value)
+		except Exception as e:
+			return value, e
+			
+		return value, None
+		
+def launch_server( command, **options ):
 
 	# Migrate the database automatically.
 	print 'Performing database migration (if necessary)...'
@@ -26,6 +61,34 @@ def launch_server( **options ):
 	
 	create_users()
 	models_fix_data()
+	
+	# Read the config file and adjust any options.
+	config_parser = SafeConfigParser()
+	try:
+		with open(options['config'], 'r') as fp:
+			config_parser.readfp( fp, options['config'] )
+		print 'Read config file "{}".'.format(options['config'])
+	except Exception as e:
+		if options['config'] != 'RaceDB.cfg':
+			print 'Could not parse config file "{}" - {}'.format(options['config'], e)
+		config_parser = None
+		
+	if config_parser:
+		kwargs = KWArgs()
+		command.add_arguments( kwargs )
+		for arg, value in list(options.items()):
+			try:
+				config_value = config_parser.get('launch', arg)
+			except NoOptionError:
+				continue
+			
+			config_value, error = kwargs.validate( arg, config_value )
+			if error:
+				print 'Error: {}={}: {}'.format(arg, config_value, error)
+				continue
+			
+			options[arg] = config_value
+			print '    {}={}'.format( arg, config_value )
 
 	# Start the rfid server.
 	if any([options['rfid_reader'], options['rfid_reader_host'], options['rfid_transmit_power'] > 0, options['rfid_receiver_sensitivity'] > 0]):
@@ -59,8 +122,7 @@ def launch_server( **options ):
 		
 	print 'To stop the server, click in this window and press Ctrl-c.'
 
-	# Add DjangoWhiteNoise to serve up static files efficiently in waitress.
-	#serve( DjangoWhiteNoise(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
+	# Add Cling to serve up static files efficiently.
 	serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
 
 class Command(BaseCommand):
@@ -107,8 +169,13 @@ class Command(BaseCommand):
 			dest='database',
 			type=str,
 			default='',
-			help='Database file to access')
+			help='Database file to use')
+		parser.add_argument('--config',
+			dest='config',
+			type=str,
+			default='RaceDB.cfg',
+			help='Configuration file')
 					
 	def handle(self, *args, **options):
-		launch_server( **options )
+		launch_server( self, **options )
 
