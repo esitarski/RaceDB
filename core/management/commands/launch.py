@@ -174,7 +174,7 @@ class Command(BaseCommand):
 			dest='config',
 			type=str,
 			default='RaceDB.cfg',
-			help='Configuration file')
+			help='Configuration file (.cfg)')
 					
 	def handle(self, *args, **options):
 		launch_server( self, **options )

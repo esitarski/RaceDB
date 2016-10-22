@@ -182,21 +182,23 @@ It is OK if multiple people log in with the same username.
 ***********************************************************************
 RaceDB Config File:
 It is possible to configure launch options in a RaceDB.cfg config file.
-The default location of RaceDB.cfg in the same folder as "manage.py".
-You tell the launch command to look somewhere else for the file with the "--config" command.
+Create the RaceDB.cfg file in the same folder as "manage.py" (default location).
+You can tell the launch command to look somewhere else for the file with the "--config" option.
 
-The launch command uses the config file to set the command line parameters.
-Parameters in the config file will override those on the command line.
-Lines beginning with '#' or ';' are comments.
+The config file is used to set the parameters to the launch command (do "python manage.py launch --help" to see what they are).
+Parameters in the config file will override those given on the command line.
+Lines in the config file beginning with '#' or ';' are comments.
 
 Sample config file:
 
+#-------------------------------------------
 [launch]
 # Don't launch a browser on startup.
 no_browser=true
 
-# Open on port 8080.
+# Open on port 8080 instead of default.
 port=8080
+#-------------------------------------------
 
  
 ***********************************************************************
