@@ -1,14 +1,27 @@
 from django.utils.translation import ugettext_lazy as _
 
-from models import *
-from pdf import PDF
-import fpdf
+import os
+import copy
 import math
 import getpass
-import copy
+import glob
+
+from models import *
+from pdf import PDF
+
+inches_to_points = 72.0
 
 def has_descenders( text ):
 	return any( d in text for d in 'jygpq' )
+	
+def get_font_file( fname ):
+	parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+	return os.path.join(parent, 'fonts', fname)
+
+def reset_font_cache():
+	font_cache = os.path.dirname( get_font_file('base.ttf') )
+	for f in glob.iglob( os.path.join(font_cache, '*.pkl') ):
+		os.remove( f )
 
 class Rect( object ):
 	AlignLeft = (1<<0)
@@ -63,6 +76,11 @@ class Rect( object ):
 			pdf.line( pLast[0], pLast[1], p[0], p[1] )
 			pLast = p
 	
+	def x_rescale( self, factor ):
+		width_new = self.width * factor
+		self.x += (self.width - width_new) / 2.0
+		self.width = width_new
+	
 	def get_rotated( self, bottomToTop=True ):
 		if bottomToTop:
 			return Rect( self.bottom, self.left, self.height, self.width )
@@ -90,7 +108,7 @@ class Rect( object ):
 		pdf.text( text_rect.x, text_rect.y + text_height * 0.85, text )
 		return text_width
 	
-def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_page=True ):
+def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_page=True, barcode=True ):
 	competition = participant.competition
 	license_holder = participant.license_holder
 	
@@ -106,8 +124,6 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 			sponsor_name = competition.name
 	system_name = 'CrossMgr'
 	
-	inches_to_points = 72.0
-	
 	# Use points at the units.
 	page_width = 3.9 * inches_to_points
 	page_height = 2.4 * inches_to_points
@@ -118,7 +134,8 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	pdf.set_subject( 'Bib number and rider info to be printed as a label to apply on the chip tag.' )
 	pdf.set_creator( getpass.getuser() )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
-	
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+		
 	margin = min(page_height, page_width) / 18.0
 	sep = margin / 2.5
 	
@@ -129,6 +146,10 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	footer = Rect( margin, page_height - margin - header.height, header.width, header.height )
 	field = Rect( header.x, header.bottom + sep, width, footer.top - header.bottom - sep*2 )
 
+	license_code = license_holder.license_code
+	if barcode:
+		pdf.add_font('code39', style='', fname=get_font_file('free3of9.ttf'), uni=True)
+	
 	leftArrow, rightArrow = chr(172), chr(174)
 	
 	font_name = 'Helvetica'
@@ -151,7 +172,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 		pdf.set_font( font_name )
 		header_remain.draw_text_to_fit( pdf, sponsor_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, True )
 		
-		pdf.set_font( font_name, 'b' )
+		pdf.set_font('din1451alt', '', 16)
 		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )
 		
 		pdf.set_font( font_name )
@@ -162,10 +183,65 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 			logo.x += name_width + sep
 		logo.width -= name_width + sep
 		if logo.width > 20:
-			logo.draw_text_to_fit( pdf, system_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle )
+			logo_width = logo.draw_text_to_fit( pdf, system_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle )
+		else:
+			logo_width = 0
+		
+		if barcode:
+			pdf.set_font( 'code39', '', footer.height*0.75 )
+			remaining_width = min( header.width/2, header.width - name_width - logo_width )
+			if lp:
+				barcode_rect = Rect( footer.x + logo_width, footer.y, remaining_width, footer.height )
+			else:
+				barcode_rect = Rect( footer.right - logo_width - remaining_width, footer.y, remaining_width, footer.height )
+			barcode_rect.x_rescale( 0.9 )
+			barcode_rect.draw_text_to_fit( pdf, license_code, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle )
 		
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
+
+def print_bib_on_rect( bib, license_code=None, widthInches=5.9, heightInches=3.9, copies=1 ):
+	page_width = widthInches * inches_to_points
+	page_height = heightInches * inches_to_points
+	
+	pdf = PDF( 'L', (page_height, page_width) )
+	pdf.set_author( RaceDBVersion )
+	pdf.set_title( 'Race Bib Number: {}'.format(bib) )
+	pdf.set_subject( 'Bib number.' )
+	pdf.set_creator( getpass.getuser() )
+	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+		
+	margin = min(page_height, page_width) / 18.0
+	sep = margin / 2.5
+	
+	height = page_height - margin*2.0
+	width = page_width - margin*2.0
+	
+	if license_code:
+		pdf.add_font('code39', style='', fname=get_font_file('free3of9.ttf'), uni=True)
+	
+	for c in xrange(copies):
+		pdf.add_page()
+		pdf.set_font('din1451alt', '', 16)
+		field = Rect( margin, margin, width, height )
+		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )
+		
+		if license_code:
+			pdf.set_font('code39', '', margin)
+			barcode_rect = Rect( margin, page_height-margin, width, margin )
+			barcode_rect.draw_text_to_fit( pdf, license_code, Rect.AlignCenter|Rect.AlignMiddle )
+	
+	pdf_str = pdf.output( dest='s' )
+	return pdf_str
+	
+def print_body_bib( participant ):
+	return print_bib_on_rect( participant.bib, participant.license_holder.license_code, 5.9, 3.9, 2 )
+	
+def print_shoulder_bib( participant ):
+	return print_bib_on_rect( participant.bib, None, 3.9, 2.4, 2 )
+
+#---------------------------------------------------------------------------------------------------------
 
 def calculate_age( born ):
     today = datetime.date.today()
@@ -234,6 +310,21 @@ def print_id_label( participant ):
 	
 	pdf.set_font( font_name )
 	info = []
+	info.append(
+		['', u',  '.join([
+			u'Age: {}'.format(calculate_age(license_holder.date_of_birth)),
+			u'Date of Birth: {}'.format(license_holder.date_of_birth.strftime('%Y-%m-%d')),
+			]),
+		]
+	)
+	info.append(
+		['', u',  '.join([
+			u'Gender: {}'.format(license_holder.get_gender_display()),
+			u'Nat: {}'.format(get_nationality(participant)),
+			]),
+		]
+	)
+	info.append( ['', ''] )
 	if participant.team:
 		info.append( ['', u'{}'.format(participant.team.name) ] )
 	info.append(
@@ -250,26 +341,11 @@ def print_id_label( participant ):
 				]),
 			]
 		)
-	info.append( ['', ''] )
 	
-	info.append(
-		['', u',  '.join([
-			u'Date of Birth: {}'.format(license_holder.date_of_birth.strftime('%Y-%m-%d')),
-			u'Age: {}'.format(calculate_age(license_holder.date_of_birth)),
-			]),
-		]
-	)
-	info.append(
-		['', u',  '.join([
-			u'Gender: {}'.format(license_holder.get_gender_display()),
-			u'Nat: {}'.format(get_nationality(participant)),
-			]),
-		]
-	)
 	info.append( ['',''] )
 	info.append( ['', u'Emergency Contact:'] )
-	info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or '(none provided)')] )
-	info.append( ['', u'  Phone: {}'.format(format_phone(license_holder.emergency_contact_phone or '(none provided)'))] )
+	info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
+	info.append( ['', u'  {}'.format(format_phone(license_holder.emergency_contact_phone or 'No phone number provided'))] )
 	
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,
 		leftJustifyCols = [0,1], hasHeader=False, horizontalLines=False )

@@ -196,6 +196,9 @@ Sample config file:
 # Don't launch a browser on startup.
 no_browser=true
 
+# Start with rfid reader.
+rfid_reader=true
+
 # Open on port 8080 instead of default.
 port=8080
 #-------------------------------------------

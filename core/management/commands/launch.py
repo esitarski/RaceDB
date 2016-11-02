@@ -18,6 +18,7 @@ import RaceDB.urls
 from core.LLRPClientServer import runServer
 from core.models import SystemInfo, models_fix_data
 from core.create_users import create_users
+from core.print_bib import reset_font_cache
 
 class KWArgs( object ):
 	def __init__( self ):
@@ -56,11 +57,15 @@ class KWArgs( object ):
 def launch_server( command, **options ):
 
 	# Migrate the database automatically.
-	print 'Performing database migration (if necessary)...'
+	# print 'Performing database migration (if necessary)...'
 	#management.call_command('migrate', '--noinput', verbosity=0)
 	
 	create_users()
 	models_fix_data()
+	try:
+		reset_font_cache()
+	except:
+		pass
 	
 	# Read the config file and adjust any options.
 	config_parser = SafeConfigParser()

@@ -26,7 +26,7 @@ from participant_key_filter import participant_key_filter, participant_bib_filte
 from init_prereg import init_prereg
 from emails import show_emails
 
-from print_bib import print_bib_tag_label, print_id_label
+from print_bib import print_bib_tag_label, print_id_label, print_body_bib, print_shoulder_bib
 
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
@@ -2306,7 +2306,79 @@ def ParticipantPrintBibLabels( request, participantId ):
 			tmp_file = os.path.join(
 				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
 				'pdfs',
-				'{}-{}'.format(participant.bib, uuid.uuid4().hex)
+				'{}-{}-Tag'.format(participant.bib, uuid.uuid4().hex)
+			) + '.pdf'
+			with open(tmp_file, 'wb') as f:
+				f.write( pdf_str )
+			p = Popen(
+				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				stdin=PIPE, stdout=PIPE, stderr=PIPE,
+			)
+			stdout_info, stderr_info = p.communicate( pdf_str )
+		except Exception as e:
+			stdout_info, stderr_info = '', e
+		
+		try:
+			os.remove( tmp_file )
+		except:
+			pass
+		
+		title = _("Print Status")
+		return render( request, 'cmd_response.html', locals() )
+	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
+		response = HttpResponse(pdf_str, content_type="application/pdf")
+		response['Content-Disposition'] = 'inline'
+		return response
+	else:
+		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	
+@access_validation()
+def ParticipantPrintBodyBib( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	system_info = SystemInfo.get_singleton()
+	pdf_str = print_body_bib( participant )
+	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
+		try:
+			tmp_file = os.path.join(
+				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+				'pdfs',
+				'{}-{}-Body'.format(participant.bib, uuid.uuid4().hex)
+			) + '.pdf'
+			with open(tmp_file, 'wb') as f:
+				f.write( pdf_str )
+			p = Popen(
+				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				stdin=PIPE, stdout=PIPE, stderr=PIPE,
+			)
+			stdout_info, stderr_info = p.communicate( pdf_str )
+		except Exception as e:
+			stdout_info, stderr_info = '', e
+		
+		try:
+			os.remove( tmp_file )
+		except:
+			pass
+		
+		title = _("Print Status")
+		return render( request, 'cmd_response.html', locals() )
+	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
+		response = HttpResponse(pdf_str, content_type="application/pdf")
+		response['Content-Disposition'] = 'inline'
+		return response
+	else:
+		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	
+@access_validation()
+def ParticipantPrintShoulderBib( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	system_info = SystemInfo.get_singleton()
+	pdf_str = print_shoulder_bib( participant )
+	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
+		try:
+			tmp_file = os.path.join(
+				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+				'pdfs',
+				'{}-{}-Shoulder'.format(participant.bib, uuid.uuid4().hex)
 			) + '.pdf'
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
@@ -2342,7 +2414,7 @@ def ParticipantPrintEmergencyContactInfo( request, participantId ):
 			tmp_file = os.path.join(
 				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
 				'pdfs',
-				'{}-{}'.format(participant.bib, uuid.uuid4().hex)
+				'{}-{}-Emergency'.format(participant.bib, uuid.uuid4().hex)
 			) + '.pdf'
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )

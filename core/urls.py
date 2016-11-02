@@ -126,6 +126,8 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantEstSpeedChange/(?P<participantId>\d+)/$', views.ParticipantEstSpeedChange ),
 	url(r'^(?i).*ParticipantWaiverChange/(?P<participantId>\d+)/$', views.ParticipantWaiverChange ),
 	url(r'^(?i).*ParticipantPrintBibLabels/(?P<participantId>\d+)/$', views.ParticipantPrintBibLabels ),
+	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/$', views.ParticipantPrintBodyBib ),
+	url(r'^(?i).*ParticipantPrintShoulderBib/(?P<participantId>\d+)/$', views.ParticipantPrintShoulderBib ),
 	url(r'^(?i).*ParticipantPrintEmergencyContactInfo/(?P<participantId>\d+)/$', views.ParticipantPrintEmergencyContactInfo ),
 	
 	url(r'^(?i).*LicenseHolders/$', views.LicenseHoldersDisplay),
