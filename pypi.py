@@ -27,6 +27,7 @@ def pypi():
 		'png', 'gif', 'jpg',
 		'xls', 'xlsx',
 		'gz',
+		'ttf',
 	}
 	for root, dirs, files in os.walk( '.' ):
 		for f in files:
