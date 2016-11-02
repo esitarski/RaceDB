@@ -2295,7 +2295,23 @@ def ParticipantDoDelete( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	participant.delete()
 	return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	
+
+def get_temp_print_filename( request, bib, ftype ):
+	port = request.META['SERVER_PORT']
+	rfid_antenna = int(request.session.get('rfid_antenna',0))
+	major_delimiter = '_'
+	minor_delimiter = '-'
+	return os.path.join(
+		os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+		'pdfs',
+		'{}{}{}'.format(
+			major_delimiter.join( '{}{}{}'.format(attr, minor_delimiter, value)
+				for attr, value in (('bib',bib), ('port',port), ('antenna',rfid_antenna), ('type',ftype)) ),
+			
+			major_delimiter, uuid.uuid4().hex
+		)
+	) + '.pdf'
+
 @access_validation()
 def ParticipantPrintBibLabels( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
@@ -2303,11 +2319,7 @@ def ParticipantPrintBibLabels( request, participantId ):
 	pdf_str = print_bib_tag_label( participant )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
-			tmp_file = os.path.join(
-				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-				'pdfs',
-				'{}-{}-Tag'.format(participant.bib, uuid.uuid4().hex)
-			) + '.pdf'
+			tmp_file = get_temp_print_filename( request, participant.bib, 'Tag' )
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
@@ -2339,11 +2351,7 @@ def ParticipantPrintBodyBib( request, participantId ):
 	pdf_str = print_body_bib( participant )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
-			tmp_file = os.path.join(
-				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-				'pdfs',
-				'{}-{}-Body'.format(participant.bib, uuid.uuid4().hex)
-			) + '.pdf'
+			tmp_file = get_temp_print_filename( request, participant.bib, 'Body' )
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
@@ -2375,11 +2383,7 @@ def ParticipantPrintShoulderBib( request, participantId ):
 	pdf_str = print_shoulder_bib( participant )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
-			tmp_file = os.path.join(
-				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-				'pdfs',
-				'{}-{}-Shoulder'.format(participant.bib, uuid.uuid4().hex)
-			) + '.pdf'
+			tmp_file = get_temp_print_filename( request, participant.bib, 'Shoulder' )
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
@@ -2411,11 +2415,7 @@ def ParticipantPrintEmergencyContactInfo( request, participantId ):
 	pdf_str = print_id_label( participant )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
-			tmp_file = os.path.join(
-				os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-				'pdfs',
-				'{}-{}-Emergency'.format(participant.bib, uuid.uuid4().hex)
-			) + '.pdf'
+			tmp_file = get_temp_print_filename( request, participant.bib, 'Emergency' )
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(

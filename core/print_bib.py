@@ -8,6 +8,7 @@ import glob
 
 from models import *
 from pdf import PDF
+from encode_code128 import encode_code128
 
 inches_to_points = 72.0
 
@@ -22,6 +23,29 @@ def reset_font_cache():
 	font_cache = os.path.dirname( get_font_file('base.ttf') )
 	for f in glob.iglob( os.path.join(font_cache, '*.pkl') ):
 		os.remove( f )
+
+def draw_code128( pdf, text, x, y, width, height ):
+	
+	width_max = 2.5*inches_to_points
+	if width > width_max:
+		x += (width - width_max) / 2
+		width = width_max
+	
+	barcode_widths = encode_code128( text )
+	
+	quiet_zone = 10
+	barcode_width = sum( barcode_widths ) + quiet_zone * 2
+
+	scale = float(width) / float(barcode_width)
+
+	barcode_width *= scale
+		
+	pdf.set_fill_color( 0, 0, 0 )
+	xCur = x + (width - barcode_width) / 2.0 + quiet_zone * scale
+	for i, w in enumerate(barcode_widths):
+		if not (i & 1):
+			pdf.rect(xCur, y, w*scale, height, 'F')
+		xCur += w*scale
 
 class Rect( object ):
 	AlignLeft = (1<<0)
@@ -147,8 +171,6 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	field = Rect( header.x, header.bottom + sep, width, footer.top - header.bottom - sep*2 )
 
 	license_code = license_holder.license_code
-	if barcode:
-		pdf.add_font('code39', style='', fname=get_font_file('free3of9.ttf'), uni=True)
 	
 	leftArrow, rightArrow = chr(172), chr(174)
 	
@@ -188,14 +210,12 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 			logo_width = 0
 		
 		if barcode:
-			pdf.set_font( 'code39', '', footer.height*0.75 )
 			remaining_width = min( header.width/2, header.width - name_width - logo_width )
 			if lp:
 				barcode_rect = Rect( footer.x + logo_width, footer.y, remaining_width, footer.height )
 			else:
 				barcode_rect = Rect( footer.right - logo_width - remaining_width, footer.y, remaining_width, footer.height )
-			barcode_rect.x_rescale( 0.9 )
-			barcode_rect.draw_text_to_fit( pdf, license_code, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle )
+			draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
 		
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
@@ -218,9 +238,6 @@ def print_bib_on_rect( bib, license_code=None, widthInches=5.9, heightInches=3.9
 	height = page_height - margin*2.0
 	width = page_width - margin*2.0
 	
-	if license_code:
-		pdf.add_font('code39', style='', fname=get_font_file('free3of9.ttf'), uni=True)
-	
 	for c in xrange(copies):
 		pdf.add_page()
 		pdf.set_font('din1451alt', '', 16)
@@ -228,9 +245,8 @@ def print_bib_on_rect( bib, license_code=None, widthInches=5.9, heightInches=3.9
 		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )
 		
 		if license_code:
-			pdf.set_font('code39', '', margin)
 			barcode_rect = Rect( margin, page_height-margin, width, margin )
-			barcode_rect.draw_text_to_fit( pdf, license_code, Rect.AlignCenter|Rect.AlignMiddle )
+			draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
 	
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
