@@ -158,7 +158,9 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	pdf.set_subject( 'Bib number and rider info to be printed as a label to apply on the chip tag.' )
 	pdf.set_creator( getpass.getuser() )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
+	
 	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+	pdf.add_font('Arrows', style='', fname=get_font_file('Arrrows-Regular.ttf'), uni=True)
 		
 	margin = min(page_height, page_width) / 18.0
 	sep = margin / 2.5
@@ -172,14 +174,16 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 
 	license_code = license_holder.license_code
 	
-	leftArrow, rightArrow = chr(172), chr(174)
+	leftArrow, rightArrow = 'A', 'a'
 	
 	font_name = 'Helvetica'
 	for lp in ([True] if left_page else []) + ([False] if right_page else []):
 		pdf.add_page()
 		
 		arrow = copy.deepcopy( header )
-		pdf.set_font( 'Symbol' )
+		arrow.y -= arrow.height * 0.5
+		arrow.height *= 2
+		pdf.set_font( 'Arrows' )
 		arrowWidth = arrow.draw_text_to_fit( pdf, leftArrow if lp else rightArrow, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle,
 			consider_descenders=True,
 			convert_to_text=False,
