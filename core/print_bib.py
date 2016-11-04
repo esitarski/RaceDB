@@ -24,12 +24,11 @@ def reset_font_cache():
 	for f in glob.iglob( os.path.join(font_cache, '*.pkl') ):
 		os.remove( f )
 
-def draw_code128( pdf, text, x, y, width, height ):
-	
-	width_max = 2.5*inches_to_points
-	if width > width_max:
-		x += (width - width_max) / 2
-		width = width_max
+barcode_width_max = 2.5*inches_to_points
+def draw_code128( pdf, text, x, y, width, height ):	
+	if width > barcode_width_max:
+		x += (width - barcode_width_max) / 2
+		width = barcode_width_max
 	
 	barcode_widths = encode_code128( text )
 	
@@ -224,7 +223,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
 
-def print_bib_on_rect( bib, license_code=None, widthInches=5.9, heightInches=3.9, copies=1 ):
+def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches=5.9, heightInches=3.9, copies=1 ):
 	page_width = widthInches * inches_to_points
 	page_height = heightInches * inches_to_points
 	
@@ -248,18 +247,43 @@ def print_bib_on_rect( bib, license_code=None, widthInches=5.9, heightInches=3.9
 		field = Rect( margin, margin, width, height )
 		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )
 		
+		pdf.set_font( 'Helvetica' )
+		if logo:
+			x = margin/2.0
+			logo_rect = Rect( x, page_height-margin, (page_width - barcode_width_max)/2.0 - x, margin*0.6 )
+			logo_rect.draw_text_to_fit( pdf, logo, Rect.AlignLeft|Rect.AlignMiddle )
+		
 		if license_code:
 			barcode_rect = Rect( margin, page_height-margin, width, margin )
 			draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
+			
+		if name:
+			x = (page_width + barcode_width_max)/2.0
+			name_rect = Rect( x, page_height-margin, page_width-margin/2.0 - x, margin*0.6 )
+			name_rect.draw_text_to_fit( pdf, name, Rect.AlignRight|Rect.AlignMiddle )
 	
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
 	
 def print_body_bib( participant ):
-	return print_bib_on_rect( participant.bib, participant.license_holder.license_code, 5.9, 3.9, 2 )
+	license_holder = participant.license_holder
+	return print_bib_on_rect(
+		participant.bib,
+		license_holder.license_code,
+		u'{} {}'.format(license_holder.first_name, license_holder.last_name),
+		'CrossMgr',
+		5.9, 3.9, 2
+	)
 	
 def print_shoulder_bib( participant ):
-	return print_bib_on_rect( participant.bib, None, 3.9, 2.4, 2 )
+	license_holder = participant.license_holder
+	return print_bib_on_rect(
+		participant.bib,
+		None,
+		None,
+		None,
+		3.9, 2.4, 2
+	)
 
 #---------------------------------------------------------------------------------------------------------
 

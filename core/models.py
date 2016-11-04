@@ -121,7 +121,7 @@ class SystemInfo(models.Model):
 			(CLIENT_PRINT_TAG,_("Print Bib Tag on Client (print from browser)")),
 		),
 	)
-	server_print_tag_cmd = models.CharField( max_length = 160, default = 'lpr "$1"', verbose_name = _('Cmd used to print Bib Tag (parameter is PDF file})')  )
+	server_print_tag_cmd = models.CharField( max_length = 160, default = 'lpr "$1"', verbose_name = _('Cmd used to print Bib Tag (parameter is the PDF file)')  )
 	
 	@classmethod
 	def get_tag_template_default( cls ):

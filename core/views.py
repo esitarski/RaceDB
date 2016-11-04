@@ -2319,7 +2319,7 @@ def ParticipantPrintBibLabels( request, participantId ):
 	pdf_str = print_bib_tag_label( participant )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
-			tmp_file = get_temp_print_filename( request, participant.bib, 'Tag' )
+			tmp_file = get_temp_print_filename( request, participant.bib, 'Frame' )
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(

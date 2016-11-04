@@ -28,6 +28,7 @@ def pypi():
 		'xls', 'xlsx',
 		'gz',
 		'ttf',
+		'bash',
 	}
 	for root, dirs, files in os.walk( '.' ):
 		for f in files:
