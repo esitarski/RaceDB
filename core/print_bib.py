@@ -280,8 +280,8 @@ def print_shoulder_bib( participant ):
 	return print_bib_on_rect(
 		participant.bib,
 		None,
-		None,
-		None,
+		u'{} {}'.format(license_holder.first_name, license_holder.last_name),
+		'CrossMgr',
 		3.9, 2.4, 2
 	)
 
