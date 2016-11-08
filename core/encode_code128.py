@@ -138,7 +138,7 @@ def encode_code128( data ):
 	# Data
 	while pos < length:
 		if charset is CODE128C:
-			if length - pos > 1 and text[pos:pos+2].isdigit():
+			if length - pos >= 2 and text[pos:pos+2].isdigit():
 				# Encode Code C two characters at a time
 				codes.append(int(text[pos:pos+2]))
 				pos += 2
@@ -156,9 +156,7 @@ def encode_code128( data ):
 			pos += 1
 
 	# Checksum
-	checksum = 0
-	for weight, code in enumerate(codes):
-		checksum += max(weight, 1) * code
+	checksum = sum( (weight or 1) * code for weight, code in enumerate(codes) )
 	codes.append(checksum % 103)
 
 	# Stop Code
