@@ -2345,10 +2345,10 @@ def ParticipantPrintBibLabels( request, participantId ):
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	
 @access_validation()
-def ParticipantPrintBodyBib( request, participantId ):
+def ParticipantPrintBodyBib( request, participantId, copies=2 ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	system_info = SystemInfo.get_singleton()
-	pdf_str = print_body_bib( participant )
+	pdf_str = print_body_bib( participant, copies )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
 			tmp_file = get_temp_print_filename( request, participant.bib, 'Body' )

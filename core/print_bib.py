@@ -241,7 +241,10 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	height = page_height - margin*2.0
 	width = page_width - margin*2.0
 	
-	for c in xrange(copies):
+	text_margin = margin
+	text_height = margin*0.5
+	
+	for c in xrange(int(copies)):
 		pdf.add_page()
 		pdf.set_font('din1451alt', '', 16)
 		field = Rect( margin, margin, width, height )
@@ -249,8 +252,8 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 		
 		pdf.set_font( 'Helvetica' )
 		if logo:
-			x = margin/2.0
-			logo_rect = Rect( x, page_height-margin, (page_width - barcode_width_max)/2.0 - x, margin*0.6 )
+			x = text_margin
+			logo_rect = Rect( x, page_height-margin, (page_width - barcode_width_max)/2.0 - x, text_height )
 			logo_rect.draw_text_to_fit( pdf, logo, Rect.AlignLeft|Rect.AlignMiddle )
 		
 		if license_code:
@@ -259,20 +262,20 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 			
 		if name:
 			x = (page_width + barcode_width_max)/2.0
-			name_rect = Rect( x, page_height-margin, page_width-margin/2.0 - x, margin*0.6 )
+			name_rect = Rect( x, page_height-margin, page_width-text_margin - x, text_height )
 			name_rect.draw_text_to_fit( pdf, name, Rect.AlignRight|Rect.AlignMiddle )
 	
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
 	
-def print_body_bib( participant ):
+def print_body_bib( participant, copies=2 ):
 	license_holder = participant.license_holder
 	return print_bib_on_rect(
 		participant.bib,
 		license_holder.license_code,
 		u'{} {}'.format(license_holder.first_name, license_holder.last_name),
 		'CrossMgr',
-		5.9, 3.9, 2
+		5.9, 3.9, copies
 	)
 	
 def print_shoulder_bib( participant ):
