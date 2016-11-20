@@ -33,7 +33,7 @@ import random
 import itertools
 from collections import defaultdict
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
-from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes
+from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes, ioc_from_code
 from large_delete_all import large_delete_all
 from WriteLog import writeLog
 
@@ -1624,8 +1624,7 @@ class LicenseHolder(models.Model):
 	def uci_country( self ):
 		if not self.uci_code:
 			return None
-		country_code = self.uci_code[:3]
-		return country_code if country_code in uci_country_codes_set else None
+		return ioc_from_code( self.uci_code )
 		
 	@property
 	def uci_code_error( self ):
