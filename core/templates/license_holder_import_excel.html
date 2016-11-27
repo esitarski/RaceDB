@@ -28,36 +28,34 @@
 Creates/Updates rider information in the database from an Excel spreadsheet.
 </p>
 <p>
-This feature works in two modes.  if <strong>Update License Codes based on First Name, Last Name, Date of Birth match</strong> is not checked (the default), License Holders data in the spreadsheet will be matched with existing License Holders in the database based on the License Code value.<br/>
-If the License Code value is missing or equal to TEMP, an attempt will be made to find the license holder based on Last, First, DOB and Gender.  If the license holder still cannot be found, he/she will be created and assigned a unique TEMP license code.
+This feature works in two modes.  If <strong>Update License Codes based on First Name, Last Name, Date of Birth match</strong> is not checked (the default), License Holders data in the spreadsheet will be matched with existing License Holders in the database based on the License Code value.<br/>
+If the License Code value is missing or equal to TEMP, an attempt will be made to find the license holder based on Last, First, DOB and Gender (if present).  If the license holder still cannot be found, he/she will be created and assigned a unique TEMP license code if one is not provided in the License column.
 <br/>
-If <strong>Update License Codes based on First Name, Last Name, Date of Birth match</strong> is checked, License Holders are be matched by the Last Name, First Name Date of Birth and Gender columns.  This is useful <strong>only</strong> if you need to change the license codes themselves of existing License Holders.  Although unlikely, it is possible that First Name, Last Name and DOB could match more than one License Holder.  In this case, RaceDB will silently pick one.  Upper/lower case is ignored in the name match, as well as accents.<br/>
+If <strong>Update License Codes based on First Name, Last Name, Date of Birth match</strong> is checked, License Holders are be matched by the Last Name, First Name Date of Birth and Gender.  This is useful <strong>only</strong> if you need to change the license codes themselves of existing License Holders.  Although unlikely, it is possible that First Name, Last Name and DOB could match more than one License Holder.  In this case, RaceDB will silently pick one.<br/>
 Always make a backup of your RaceDB.sqlite3 database before doing this.<br/>
-Unless you are changing the actual licese codes themselves, don't use this option.
 </p>
 <p>
 The spreadsheet must have a specific format:
 <ul>
-<li>The License Holder data <strong>must</strong> be the first Sheet of the spreadsheet</li>
-<li>The first Row of the sheet must be a <strong>Header Row</strong>.</li>
-<li>The Header Row must contain a <strong>License</strong> column.</li>
+<li>License Holder data <strong>must</strong> be the first Sheet of the spreadsheet</li>
+<li>The first Row of the sheet must be the <strong>Header Row</strong>.</li>
 <li>The sheet can include some, or all, of addition LicenseHolder information column headers (see below).</li>
-<li>Other header columns are ignored.</li>
-<li>Blank cells are ignored and will not replace existing values in the database.</li>
+<li>Unrecognized header columns are ignored.</li>
+<li>Blank cells are ignored.  Data in blank cells will not replace existing values in the database.</li>
 </ul>
 </p>
 <p>
-The same License Holder sheet can be imported any number of times.  This will not lead to duplicate entries if a match to an existing License Holder can be found.
+The same License Holder sheet can be imported any number of times.  This will not cause duplicate entries if a match to the existing License Holder can be found base on License Code or Last, First, DOB, Gender.
 </p>
 <table class="table">
 <thead>
 <tr><th>Column</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Regional License code (<strong>not UCI code</strong>).  If blank or TEMP, an attempt will be made to find the license holder base on Last, First, [DOB], [Gender].  It the license holder still cannot be found, a temporary unique license code will be created automatically.</td></tr>
+<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Regional License code (<strong>not UCI code</strong>).  Optional (but highly recommended if you have it).  If blank or TEMP, an attempt will be made to find the license holder base on Last, First, [DOB], [Gender].  It the license holder still cannot be found, a temporary unique license code will be created automatically.</td></tr>
 <tr><td><strong>LastName</strong> or <strong>Last Name</strong> or <strong>Last</strong></td><td>Optional data field.  Rider's Last name.</td></tr>
 <tr><td><strong>FirstName</strong> or <strong>First Name</strong> or <strong>First</strong></td><td>Optional data field.  Rider's First name.</td></tr>
-<tr><td><strong>Gender</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field contains anything else (or blank) it is read as <strong>Men</strong>.</td></tr>
+<tr><td><strong>Gender</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field contains anything else (or blank) it is understood as <strong>Men</strong>.</td></tr>
 <tr><td><strong>Date of Birth</strong> or <strong>DOB</strong></td><td>Optional data field.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.</td></tr>
 <tr><td><strong>UCI Code</strong> or <strong>UCICode</strong> or <strong>UCI</strong></td><td>Optional.  Rider's UCI code.</td></tr>
 <tr><td><strong>Tag</strong> or <strong>Chip</strong></td><td>Optional.  Permanent RFID tag for the rider.</td></tr>
@@ -75,6 +73,6 @@ The same License Holder sheet can be imported any number of times.  This will no
 </p>
 <p>
 ** The cell value is considered True if the value's first character is any of 't', 'T', 'y', 'Y', 1 or TRUE.  Otherwise False.<br/>
-*** "Exact match" means case independent match with accents ignored.<br/>
+*** "Exact match" means case insensitive match with any accents ignored.<br/>
 </p>
 {% endblock content %}

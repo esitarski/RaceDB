@@ -330,18 +330,18 @@ class NumberSet(models.Model):
 		return self.numbersetentry_set.filter(bib=bib).count()
 		
 	def get_bib_available( self, bib ):
-		return self.get_bib_max_count(bib) - self.get_bib_in_use()
+		return self.get_bib_max_count(bib) - self.get_bib_in_use(bib)
 	
 	def get_bib_max_count_all( self ):
-		range_events = self.range_events()
+		range_events = self.get_range_events()
 		if not range_events:
 			return defaultdict( lambda: 1 )
 		
 		counts = defaultdict( int )
 		c = 0
-		for i, (bib, v) in range_events.enumerate():
+		for i, (bib, v) in enumerate(range_events):
 			try:
-				bib_next = h[i+1][0]
+				bib_next = range_events[i+1][0]
 			except IndexError:
 				break
 			c += v
@@ -1947,7 +1947,7 @@ class NumberSetEntry(models.Model):
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
 
 	def save( self ):
-		if self.numbser_set.get_bib_available(self.bib) <= 0:
+		if self.number_set.get_bib_available(self.bib) <= 0:
 			raise IntegrityError()
 		return super( NumberSetEntry, self ).save()
 	

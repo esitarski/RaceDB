@@ -2634,11 +2634,15 @@ def ParticipantBibChange( request, participantId ):
 	
 	# Exclude existing bib numbers of all license holders if using existing bibs.  We don't know whether the existing license holders will show up.
 	if competition.number_set:
-		nq = competition.number_set.numbersetentry_set.select_related('license_holder').filter( date_lost__isnull=True )
+		nq = competition.number_set.numbersetentry_set.select_related('license_holder').filter(date_lost__isnull=True)
 		if category.gender != 2:
 			nq.filter( license_holder__gender = category.gender )
 		allocated_numbers.update( { nse.bib:nse.license_holder for nse in nq } )
-		lost_bibs = dict( NumberSetEntry.objects.filter(number_set=competition.number_set).exclude(date_lost=None).values_list('bib','date_lost') )
+		bib_available_all = competition.number_set.get_bib_available_all()
+		lost_bibs = { bib:date_lost
+			for bib, date_lost in competition.number_set.numbersetentry_set.exclude(date_lost__isnull=True).order_by('date_lost').values_list('bib','date_lost')
+				if bib_available_all[bib] == 0
+		}
 	else:
 		lost_bibs = {}
 		

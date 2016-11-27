@@ -195,7 +195,7 @@ def init_prereg(
 										'emergency_contact_name':emergency_contact_name,
 										'emergency_contact_phone':emergency_contact_phone,
 										'existing_tag':tag if competition.use_existing_tags else None,
-									}.iteritems() if value
+									}.iteritems() if valuef is not None
 								}
 							)
 							license_holder.save()
