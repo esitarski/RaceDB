@@ -11,15 +11,16 @@ import import_utils
 from CountryIOC import ioc_from_country
 from import_utils import *
 from models import *
+from FieldMap import standard_field_map, normalize 
 
 def license_holder_import_excel( worksheet_name='', worksheet_contents=None, message_stream=sys.stdout, update_license_codes=False ):
 	tstart = datetime.datetime.now()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def messsage_stream_write( s ):
+		def message_stream_write( s ):
 			message_stream.write( removeDiacritic(s) )
 	else:
-		def messsage_stream_write( s ):
+		def message_stream_write( s ):
 			message_stream.write( unicode(s) )
 	
 	#-------------------------------------------------------------------------------------------------
@@ -74,52 +75,62 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 					lh.save()
 					success = True
 	
-	license_col_names = ('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode')
+	ifm = standard_field_map()
 	
 	status_count = defaultdict( int )
 	
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-			license_code	= to_int_str(get_key(ur, license_col_names, u''))
-			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
-			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
-			name			= to_str(ur.get('name',u''))
+			v = ifm.finder( ur )
+			
+			uci_code = v('uci_code', None)
+			date_of_birth	= v('date_of_birth', None)
+			
+			# If no date of birth, try to get it from the UCI code.
+			if not date_of_birth and uci_code and not uci_code.isdigit():
+				try:
+					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
+				except:
+					pass
+			
+			try:
+				date_of_birth = date_from_value(date_of_birth)
+			except Exception as e:
+				message_stream_write( 'Row {}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
+					i, date_of_birth, ur, e)
+				)
+				date_of_birth = None
+			
+			# As a last resort, pick the default DOB
+			date_of_birth 	= date_of_birth or invalid_date_of_birth
+			
+			license_code	= to_int_str(v('license_code', u'')).upper().strip()
+			last_name		= to_str(v('last_name',u''))
+			first_name		= to_str(v('first_name',u''))
+			name			= to_str(v('name',u''))
 			if not name:
 				name = ' '.join( n for n in [first_name, last_name] if n )
 			
-			gender			= to_str(get_key(ur,('gender','rider gender'),u''))
+			gender			= to_str(v('gender',u''))
 			gender			= gender_from_str(gender) if gender else None
 			
-			date_of_birth   = get_key(ur, ('DOB', 'Date of Birth', 'DateofBirth', 'Birthdate'), None)
-			if date_of_birth:
-				try:
-					date_of_birth = date_from_value(date_of_birth)
-				except:
-					date_of_birth = None
-				if date_of_birth == import_utils.invalid_date_of_birth:
-					date_of_birth = None
-			else:
-				date_of_birth = None
-			uci_code = to_str(get_key(ur,('UCI Code','UCICode', 'UCI'), None))
+			email			= to_str(v('email', None))
+			phone			= to_str(v('phone', None))
+			city			= to_str(v('city', None))
+			state_prov		= to_str(v('state_prov', None))
+			zip_postal		= to_str(v('zip_postal', None))
+			nationality		= to_str(v('nationality', None))
 			
-			email			= to_str(ur.get('email', None))
-			city			= to_str(ur.get('city', None))
-			state_prov		= to_str(get_key(ur,('stateprov','state','prov','province','state prov'), None))
-			nationality		= to_str(get_key(ur,('nationality','nat','nat.'), None))
+			bib				= (to_int(v('bib', None)) or None)
+			tag				= to_int_str(v('tag', None))
+			note		 	= to_str(v('note', None))
 			
-			bib				= (to_int(ur.get('bib', None)) or None)
-			tag				= to_int_str(get_key(ur,('Tag','Chip'), None))
-			note		 	= to_str(ur.get('note', None))
-			
-			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
-			emergency_contact_phone = to_int_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
-			
-			zip_postal		= to_str(get_key(ur,('ZipPostal','Zip', 'Postal', 'Zip Code', 'Postal Code', 'ZipCode', 'PostalCode',), None))
-			
-			if not uci_code and (nationality and date_of_birth and ioc_from_country(nationality)):
-				uci_code = '{}{}'.format( ioc_from_country(nationality), date_of_birth.strftime('%Y%m%d') )
+			emergency_contact_name = to_str(v('emergency_contact_name', None))
+			emergency_contact_phone = to_str(v('emergency_contact_phone', None))
 
+			#---------------------------------------------
+			
 			license_holder_attr_value = {
 				'license_code':license_code,
 				'last_name':last_name,
@@ -128,7 +139,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				'date_of_birth':date_of_birth,
 				'uci_code':uci_code,
 				'emergency_contact_name':emergency_contact_name,
-				'emergency_contact_phone':emergency_contact_name,
+				'emergency_contact_phone':emergency_contact_phone,
 				'email':email,
 				'city':city,
 				'state_prov':state_prov,
@@ -145,44 +156,85 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			# Get LicenseHolder.
 			#
 			license_holder = None
-			with transaction.atomic():
-				status = "Unchanged"
+			status = 'Unchanged'
+			
+			#with transaction.atomic():
+			if update_license_codes:
+				license_holder = LicenseHolder.objects.filter( search_text__startswith=utils.get_search_text([last_name, first_name]) )
+				if date_of_birth and date_of_birth != invalid_date_of_birth:
+					license_holder = license_holder.filter( date_of_birth=date_of_birth )
+				if gender is not None:
+					license_holder = license_holder.filter( gender=gender )
+				license_holder = license_holder.first()
+			else:
 				
-				if update_license_codes:
-					license_holder = LicenseHolder.objects.filter( search_text__startswith=utils.get_search_text([last_name, first_name]) )
-					if date_of_birth:
-						license_holder = license_holder.filter( date_of_birth=date_of_birth )
-					license_holder = license_holder.first()
-				else:
-					if not license_code:
-						messsage_stream_write( u'**** Row {}: Missing License Code, Name="{}"\n'.format(
-							i, name) )
-						continue
-						
-					if license_code.upper().startswith(u'TEMP'):
-						messsage_stream_write( u'**** Row {}: Ignoring TEMP LicenseCode: {}, Name="{}"\n'.format(
-							i, license_code, name) )
-						continue
-					
-					license_holder = LicenseHolder.objects.filter( license_code=license_code ).first()
-					
-				if license_holder:
-					# Update with any new information.
-					if update_license_codes and license_holder_attr_value.get('license_code', None) is not None:
-						if temp_to_existing.get(license_holder.license_code,None) != license_holder_attr_value['license_code']:
-							temp_to_existing[license_holder.license_code] = license_holder_attr_value['license_code']
-							status = "LicenseCode Changed"
-						del license_holder_attr_value['license_code']
-					if set_attributes( license_holder, license_holder_attr_value, False ):
-						license_holder.save()
-						status = "Changed"
-				else:
+				if license_code and not license_code.upper() == u'TEMP':
+					# Try to find the license holder by license code.
 					try:
-						license_holder = LicenseHolder( **license_holder_attr_value )
+						license_holder = LicenseHolder.objects.get( license_code=license_code )
+					except LicenseHolder.DoesNotExist:
+						# No match.  Create a new license holder using the given license code.
+						try:
+							license_holder = LicenseHolder( **license_holder_attr_value )
+							license_holder.save()
+							status = 'Added'
+						except Exception as e:
+							message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+									i, e, name,
+								)
+							)
+							continue
+				else:
+					# No license code.  Try to find the participant by last/first name, [date_of_birth] and [gender].
+					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
+					if date_of_birth and date_of_birth != invalid_date_of_birth:
+						q &= Q( date_of_birth=date_of_birth )
+					if gender is not None:
+						q &= Q( gender=gender )
+					
+					try:
+						license_holder = LicenseHolder.objects.get( q )
+					except LicenseHolder.DoesNotExist:
+						# No name match.
+						# Create a temporary license holder.
+						try:
+							license_holder_attr_value['license_code'] = u'TEMP'
+							license_holder = LicenseHolder( **license_holder_attr_value )
+							del license_holder_attr_value['license_code']
+							license_holder.save()
+							status = 'Added'
+						
+						except Exception as e:
+							message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+									i, e, name,
+								)
+							)
+							continue
+					
+					except LicenseHolder.MultipleObjectsReturned:
+						message_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
+								i, name,
+							)
+						)
+						continue
+				
+				if not license_holder:
+					continue
+					
+				# Update with any new information.
+				if update_license_codes and license_holder_attr_value.get('license_code', None) is not None:
+					if temp_to_existing.get(license_holder.license_code,None) != license_holder_attr_value['license_code']:
+						temp_to_existing[license_holder.license_code] = license_holder_attr_value['license_code']
+						status = "LicenseCode Changed"
+					del license_holder_attr_value['license_code']
+				
+				if set_attributes( license_holder, license_holder_attr_value, False ):
+					try:
 						license_holder.save()
-						status = "Added"
+						if status != 'Added':
+							status = 'Changed'
 					except Exception as e:
-						messsage_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+						message_stream_write( u'**** Row {}: License Holder Exception: {}, Name="{}"\n'.format(
 								i, e, name,
 							)
 						)
@@ -191,16 +243,21 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				
 				status_count[status] += 1
 				if status != 'Unchanged':
-					messsage_stream_write( u'Row {:>6}: {}: {:>8} {:>10} {}, {}, {}, {}, {}\n'.format(
-								i,
-								status,
-								temp_to_existing[license_holder.license_code] if license_holder.license_code in temp_to_existing else license_holder.license_code,
+					msg = u'Row {:>6}: {}: {:>8} {}\n'.format(
+						i,
+						status,
+						temp_to_existing[license_holder.license_code] if license_holder.license_code in temp_to_existing else license_holder.license_code,
+						u', '.join( unicode(v) if v else u'None' for v in [
 								license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.uci_code,
-								license_holder.last_name, license_holder.first_name,
+								u'{} {}'.format(license_holder.first_name, license_holder.last_name),
 								license_holder.city, license_holder.state_prov,
-						)
-				)
-	
+								license_holder.emergency_contact_name, license_holder.emergency_contact_phone,
+							]
+						),
+					)
+					message_stream_write( msg )
+					print removeDiacritic(msg)[:-1]
+
 	sheet_name = None
 	if worksheet_contents is not None:
 		wb = open_workbook( file_contents = worksheet_contents )
@@ -217,12 +274,12 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
 		if cur_sheet_name == sheet_name or sheet_name is None:
-			messsage_stream_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
+			message_stream_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
 			ws = wb.sheet_by_name(cur_sheet_name)
 			break
 	
 	if not ws:
-		messsage_stream_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
+		message_stream_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 	
 	print 'Process all rows in spreadsheet...'
@@ -233,19 +290,18 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unicode(f.value).strip() for f in row]
-			messsage_stream_write( u'Header Row:\n' )
-			for f in fields:
-				messsage_stream_write( u'            {}\n'.format(f) )
-			
-			fields_lower = [f.lower() for f in fields]
-			if not any( r.lower() in fields_lower for r in license_col_names ):
-				messsage_stream_write( u'License column not found in Header Row.  Aborting.\n' )
-				return
+			ifm.set_headers( fields )
+			message_stream_write( u'Header Row:\n' )
+			for col, f in enumerate(fields, 1):
+				name = ifm.get_name_from_alias( f )
+				if name is not None:
+					message_stream_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+				else:
+					message_stream_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
 			continue
 			
-		ur = { f.strip().lower(): row[c].value for c, f in enumerate(fields) }
-		ur_records.append( (r+1, ur) )
-		if len(ur_records) == 999:
+		ur_records.append( (r+1, [v.value for v in row]) )
+		if len(ur_records) == 1000:
 			process_ur_records( ur_records )
 			ur_records = []
 			
@@ -262,7 +318,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			if v not in existing:
 				existing.add( v )
 				continue
-			messsage_stream_write( u'License code "{}" is non-unique.  Changed to "{}"\n'.format(v,k.replace(cpy_prefix, dup_prefix)) )
+			message_stream_write( u'License code "{}" is non-unique.  Changed to "{}"\n'.format(v,k.replace(cpy_prefix, dup_prefix)) )
 			repairs.add( k )
 		
 		for k in repairs:
@@ -287,7 +343,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			except Exception as e:
 				if license_code_original:
 					bad_licenses.append( license_code_original )
-				messsage_stream_write( u'License fix failure: tmp="{}"  new="{}" {} {} {}, {} {}, {} - {} \n'.format(
+				message_stream_write( u'License fix failure: tmp="{}"  new="{}" {} {} {}, {} {}, {} - {} \n'.format(
 						license_code_original,
 						license_code_new,
 						lh.date_of_birth.strftime('%Y-%m-%d'), lh.uci_code,
@@ -297,7 +353,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 					)
 				)
 	
-	messsage_stream_write( u'\n' )
-	messsage_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )
-	messsage_stream_write( u'\n' )
-	messsage_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	message_stream_write( u'\n' )
+	message_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )
+	message_stream_write( u'\n' )
+	message_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )

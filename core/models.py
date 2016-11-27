@@ -1,7 +1,6 @@
 from django.db import models, connection
 from django.db import transaction, IntegrityError
-from django.db.models import Max
-from django.db.models import Q
+from django.db.models import Q, Max, Count
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -24,6 +23,7 @@ from get_abbrev import get_abbrev
 import re
 import os
 import math
+from heapq import heappush
 import datetime
 import base64
 import operator
@@ -36,6 +36,8 @@ from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, 
 from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes, ioc_from_code
 from large_delete_all import large_delete_all
 from WriteLog import writeLog
+
+invalid_date_of_birth = datetime.date(1900,1,1)
 
 def fixNullUpper( s ):
 	if not s:
@@ -278,11 +280,86 @@ class NumberSet(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
 	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = 0 )
 
+	reRangeExcept = re.compile( r'[^\d,-]' )
+	range_str = models.CharField( max_length=120, default='', blank = True, verbose_name = _('Ranges') )
+	
 	sponsor = models.CharField( max_length = 80, default = '', blank = True, verbose_name  = _('Sponsor') )
 	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name = _('Description') )
 	
+	def get_range_events( self ):
+		if not self.range_str:
+			return []
+		range_events = []
+		for r in self.range_str.split(','):
+			if r.startswith('-'):
+				v = -1
+				r = r[1:]
+			else:
+				v = 1
+			if not r:
+				continue
+				
+			try:
+				a, b = r.split('-')[:2]
+			except ValueError:
+				a = b = r
+			
+			try:
+				a, b = int(a), int(b)
+			except ValueError:
+				continue
+			
+			range_events.append( (a, v) )
+			range_events.append( (b+1, -v) )
+		
+		range_events.sort()
+		return range_events
+	
+	def get_bib_max_count( self, bib, range_events = None  ):
+		range_events = range_events or self.get_range_events()
+		if not range_events:
+			return 1
+		count = 0
+		for a, v in range_events:
+			if a > bib:
+				break
+			count += v
+		return count
+		
+	def get_bib_in_use( self, bib ):
+		return self.numbersetentry_set.filter(bib=bib).count()
+		
+	def get_bib_available( self, bib ):
+		return self.get_bib_max_count(bib) - self.get_bib_in_use()
+	
+	def get_bib_max_count_all( self ):
+		range_events = self.range_events()
+		if not range_events:
+			return defaultdict( lambda: 1 )
+		
+		counts = defaultdict( int )
+		c = 0
+		for i, (bib, v) in range_events.enumerate():
+			try:
+				bib_next = h[i+1][0]
+			except IndexError:
+				break
+			c += v
+			if c > 0:
+				for bib in xrange(bib, bib_next):
+					counts[bib] = c
+		return counts
+	
+	def get_bib_available_all( self ):
+		bib_used = self.numbersetentry_set.values_list('bib').annotate(Count('bib'))
+		bib_available_all = self.get_bib_max_count_all()
+		for bib, used in bib_used:
+			bib_available_all[bib] -= used
+		return bib_available_all
+	
 	def save( self, *args, **kwargs ):
 		init_sequence( NumberSet, self )
+		self.range_str = self.reRangeExcept.sub( u'', self.range_str )
 		return super( NumberSet, self ).save( *args, **kwargs )
 		
 	def get_bib( self, competition, license_holder, category ):
@@ -296,14 +373,24 @@ class NumberSet(models.Model):
 		return None
 		
 	def assign_bib( self, license_holder, bib ):
+		# Check if this license_holder already has this bib assigned.
 		nse = self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).first()
 		if nse:
 			if nse.date_lost is not None:
 				nse.date_lost = None
 				nse.save()
-		else:
-			self.numbersetentry_set.filter( bib=bib ).exclude( license_holder=license_holder ).delete()
+			return
+
+		# Check if this bib is available.  If so, take it.
+		if self.get_bib_available(bib) > 0:
 			NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
+			return
+			
+		# The bib is unavailable.  Take one that was lost (presumably found), or take it form someone else.
+		nse = self.numbersetentry_set.filter( bib=bib, date_lost__isnull = True ).first() or self.numbersetentry_set.filter( bib=bib ).first()
+		nse.license_holder = license_holder
+		nse.date_lost = None
+		nse.save()
 	
 	def set_lost( self, bib, license_holder=None, date_lost=None ):
 		q1 = Q( bib=bib )
@@ -314,23 +401,39 @@ class NumberSet(models.Model):
 			q2 |= Q( date_lost__gte=date_lost )
 		
 		date_lost_update = date_lost if date_lost else datetime.date.today()
-		self.numbersetentry_set.filter(q1).filter(q2).update( date_lost=date_lost_update )
+		nse = self.numbersetentry_set.filter(q1).filter(q2).first()
+		nse.date_lost = date_lost_update
+		nse.save()
 	
-	def return_to_pool( self, bib ):
-		self.numbersetentry_set.filter( bib=bib ).delete()
+	def return_to_pool( self, bib, license_holder=None ):
+		# If we know the license holder, everything is specified.
+		if license_holder:
+			self.numbersetentry_set.filter( bib=bib, license_holder=license_holder ).delete()
+			return True
+			
+		# If there is only one possibility for the bib, return it.
+		if self.get_bib_max_count() == 1 or get_bib_in_use(bib) == 1:
+			self.numbersetentry_set.filter( bib=bib ).delete()
+			return True
+		
+		# If this bib was given to two riders and we don't know which one we are returning.
+		# Do nothing - FIXLATER.
+		return False
 	
 	def __unicode__( self ):
 		return self.name
 	
 	def normalize( self ):
 		# Nulls sort to the beginning.  If we have a lost bib it will have a date_lost.
-		# We want to keep lost entries, so we delete everything but the last one.
+		# We want to keep as many lost entries as we can, so we delete everything but the last values.
+		range_events = self.get_range_events()
 		duplicates = defaultdict( list )
 		for nse in self.numbersetentry_set.order_by('bib', 'date_lost'):
 			duplicates[nse.bib].append( nse.pk )
-		for pks in duplicates.itervalues():
-			if len(pks) > 1:
-				NumberSetEntry.objects.filter( pk__in=pks[:-1] ).delete()
+		for bib, pks in duplicates.iteritems():
+			bib_max_count = self.get_bib_max_count(bib, range_events)
+			if len(pks) > bib_max_count:
+				NumberSetEntry.objects.filter( pk__in=pks[:-bib_max_count] ).delete()
 	
 	class Meta:
 		verbose_name = _('Number Set')
@@ -1569,19 +1672,21 @@ class LicenseHolder(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or '').strip().upper()
-		if len(self.uci_code) == 3:
-			self.uci_code += self.date_of_birth.strftime( '%Y%m%d' )
-			
-		if not self.uci_code and ioc_from_country(self.nationality):
-			self.uci_code = '{}{}'.format( ioc_from_country(self.nationality), self.date_of_birth.strftime('%Y%m%d') )
-		
-		if len(self.uci_code) == 11:
-			country_code = self.uci_code[:3]
-			if country_code != iso_uci_country_codes.get(country_code, country_code):
-				self.uci_code = '{}{}'.format( iso_uci_country_codes.get(country_code, country_code), self.uci_code[3:] )
 		
 		for f in ['last_name', 'first_name', 'city', 'state_prov', 'nationality', 'uci_code']:
 			setattr( self, f, (getattr(self, f) or '').strip() )
+		
+		if self.date_of_birth != invalid_date_of_birth:
+			if self.uci_code and len(self.uci_code) == 3 and not self.uci_code.isdigit():
+				self.uci_code += self.date_of_birth.strftime( '%Y%m%d' )
+				
+			if not self.uci_code and ioc_from_country(self.nationality):
+				self.uci_code = '{}{}'.format( ioc_from_country(self.nationality), self.date_of_birth.strftime('%Y%m%d') )
+		
+		if len(self.uci_code) == 11 and not self.uci_code.isdigit():
+			country_code = self.uci_code[:3]
+			if country_code != iso_uci_country_codes.get(country_code, country_code):
+				self.uci_code = '{}{}'.format( iso_uci_country_codes.get(country_code, country_code), self.uci_code[3:] )
 		
 		if not self.nationality and self.uci_code:
 			self.nationality = country_from_ioc( self.uci_code ) or self.nationality
@@ -1637,6 +1742,9 @@ class LicenseHolder(models.Model):
 		
 		if len(self.uci_code) != 11:
 			return _(u'invalid length for uci code')
+			
+		if self.uci_code.isdigit():
+			return None
 
 		if self.uci_code[:3] not in uci_country_codes_set:
 			return _(u'invalid nation code')
@@ -1835,14 +1943,15 @@ class NumberSetEntry(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
 	bib = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Bib') )
 	
-	# If date_lost is null, the number is is use.
+	# If date_lost is null, the number is in use.
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
+
+	def save( self ):
+		if self.numbser_set.get_bib_available(self.bib) <= 0:
+			raise IntegrityError()
+		return super( NumberSetEntry, self ).save()
 	
 	class Meta:
-		unique_together = (
-			('number_set', 'bib'),
-		)
-
 		verbose_name = _('NumberSetEntry')
 		verbose_name_plural = _('NumberSetEntries')
 		

@@ -6,6 +6,7 @@
 {% load staticfiles %}
 
 <h1>{{title}}: {{number_set.name}}</h1>
+{% if number_set.range_str %}<h3>{{number_set.range_str}}</h3>{% endif %}
 {% if number_set.sponsor %}<h3>{{number_set.sponsor}}</h3>{% endif %}
 {% if number_set.description %}<h4>{{number_set.description}}</h4>{% endif %}
 <hr/>

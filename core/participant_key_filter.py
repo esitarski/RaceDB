@@ -92,20 +92,17 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	
 	return add_participant_from_license_holder( competition, license_holder )
 
-def participant_bib_filter( competition, bib, auto_add_participant=True ):
+def participant_bib_filter( competition, bib ):
 	# Check for an existing participant.
 	participants = list( competition.participant_set.filter(bib=bib, role=Participant.Competitor) )
-	if participants:
-		participants.sort( key = lambda p: (p.category.sequence if p.category else 999999, p.bib or 999999) )
-		return participants[0].license_holder, participants
+	license_holders = []
 
-	# Check that we can find this bib in the number set.
+	# Check if we can find this bib in the number set.
 	if competition.number_set:
-		license_holder = competition.number_set.numbersetentry_set.filter( bib=bib ).first()
-	else:
-		license_holder = None
+		license_holders = list(
+			competition.number_set.numbersetentry_set.filter(
+				bib=bib, date_lost__isnull=True ).exclude(
+				pk__in=[lh.pk for lk in license_holders])
+		)
 	
-	if not auto_add_participant:
-		return license_holder, []
-	
-	return add_participant_from_license_holder( competition, license_holder )
+	return license_holders, participants

@@ -5,7 +5,7 @@
 {% load staticfiles %}
 <h2>{{title}}</h2>
 <hr/>
-{% if not participants %}
+{% if not participants and not license_holders %}
 	<h3>{% trans "No match." %}</h3>
 	<hr/>
 	<a class="btn btn-primary" id="focus" href="{{path}}">{% trans "OK" %}</a>
@@ -69,6 +69,30 @@
 			</td>
 		</tr>
 		{% endwith %}
+	{% endfor %}
+	{% for h in license_holders %}
+		<tr onclick="jump('{{cancelUrl}}LicenseHolderAddConfirm/{{competition.id}}/{{h.id}}/');">
+			<td>{{h.full_name}}</td>
+			<td></td>
+			<td></td>
+			<td>{{h.get_gender_display}}</td>
+			<td></td>
+			<td></td>
+			<td>
+				<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
+			</td>
+			<td>
+				<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" ></span>
+			</td>
+			{% if competition.using_tags %}
+				<td></td>
+				<td></td>
+			{% endif %}
+			<td>{{h.location}}</td>
+			<td class="hidden-print">
+				<a class="btn btn-primary" href="{{cancelUrl}}LicenseHolderAddConfirm/{{competition.id}}/{{h.id}}/">{% trans "Add" %}</a>
+			</td>
+		</tr>
 	{% endfor %}
 </tbody>
 </table>

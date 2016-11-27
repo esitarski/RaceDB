@@ -213,7 +213,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 			logo_width = 0
 		
 		if barcode:
-			remaining_width = min( header.width/2, header.width - name_width - logo_width )
+			remaining_width = header.width - name_width - logo_width
 			if lp:
 				barcode_rect = Rect( footer.x + logo_width, footer.y, remaining_width, footer.height )
 			else:

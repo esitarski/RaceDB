@@ -44,7 +44,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 			except Exception as e:
 				messsage_stream_write( 'Row {:>6}: Invalid birthdate (ignoring) "{}" ({}) {}'.format( i, date_of_birth, ur, e ) )
 				date_of_birth = None
-			date_of_birth 	= date_of_birth if date_of_birth != import_utils.invalid_date_of_birth else None
+			date_of_birth 	= date_of_birth if date_of_birth != invalid_date_of_birth else None
 
 			license_holder = None
 			if license_code:

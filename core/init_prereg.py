@@ -87,11 +87,11 @@ def init_prereg(
 					i, date_of_birth, ur, e)
 				)
 				date_of_birth = None
-			date_of_birth 	= date_of_birth if date_of_birth != import_utils.invalid_date_of_birth else None
+			date_of_birth 	= date_of_birth if date_of_birth != invalid_date_of_birth else None
 			
-			uci_code = v('usi_code', None)
+			uci_code = v('uci_code', None)
 			# If no date of birth, get it from the UCI code.
-			if not date_of_birth and uci_code:
+			if not date_of_birth and uci_code and not uci_code.isdigit():
 				try:
 					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
 				except:
@@ -140,7 +140,7 @@ def init_prereg(
 					seed_option = 1
 			
 			emergency_contact_name = to_str(v('emergency_contact_name', None))
-			emergency_contact_phone = to_int_str(v('emergency_contact_phone', None))
+			emergency_contact_phone = to_str(v('emergency_contact_phone', None))
 			
 			participant_optional_events = []
 			for pattern, events in pattern_optional_events.iteritems():
@@ -170,7 +170,7 @@ def init_prereg(
 					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 					if date_of_birth:
 						q &= Q( date_of_birth=date_of_birth )
-					if gender:
+					if gender is not None:
 						q &= Q( gender=gender )
 					
 					try:

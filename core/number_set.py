@@ -41,6 +41,9 @@ class NumberSetForm( ModelForm ):
 				Col(Field('name', size=50), 4),
 			),
 			Row(
+				Col(Field('range_str', size=80), 6),
+			),
+			Row(
 				Col(Field('sponsor', size=80), 6),
 			),
 			Row(
@@ -113,7 +116,7 @@ def NumberSetTop( request, numberSetId ):
 def BibReturn( request, numberSetEntryId, confirmed=False ):
 	nse = get_object_or_404( NumberSetEntry, pk=numberSetEntryId )
 	if confirmed:
-		nse.number_set.return_to_pool( nse.bib )
+		nse.number_set.return_to_pool( nse.bib, nse.license_holder )
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	page_title = _('Return Bib to NumberSet')
 	message = string_concat('<strong>', unicode(nse.bib), u'</strong>: ', nse.license_holder.full_name(), u'<br/><br/>',

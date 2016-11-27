@@ -2621,11 +2621,12 @@ def ParticipantBibChange( request, participantId ):
 	if not participant.category:
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	competition = participant.competition
+	category = participant.category
 	
 	# Find the available category numbers.
 	participants = Participant.objects.filter( competition=competition )
 	
-	category_numbers = competition.get_category_numbers( participant.category )
+	category_numbers = competition.get_category_numbers( category )
 	if category_numbers:
 		participants.filter( category__in=category_numbers.categories.all() )
 	participants.select_related('license_holder')
@@ -2633,8 +2634,10 @@ def ParticipantBibChange( request, participantId ):
 	
 	# Exclude existing bib numbers of all license holders if using existing bibs.  We don't know whether the existing license holders will show up.
 	if competition.number_set:
-		allocated_numbers.update( { nse.bib:nse.license_holder
-			for nse in NumberSetEntry.objects.select_related('license_holder').filter( number_set=competition.number_set, date_lost=None ) } )
+		nq = competition.number_set.numbersetentry_set.select_related('license_holder').filter( date_lost__isnull=True )
+		if category.gender != 2:
+			nq.filter( license_holder__gender = category.gender )
+		allocated_numbers.update( { nse.bib:nse.license_holder for nse in nq } )
 		lost_bibs = dict( NumberSetEntry.objects.filter(number_set=competition.number_set).exclude(date_lost=None).values_list('bib','date_lost') )
 	else:
 		lost_bibs = {}
@@ -2684,10 +2687,10 @@ def ParticipantBibSelect( request, participantId, bib ):
 		
 		if competition.number_set:
 			if bib_save is not None and bib_save != bib:
-				competition.number_set.set_lost( bib_save )
+				competition.number_set.set_lost( bib_save, participant.license_holder )
 	else:
 		if competition.number_set and bib_save is not None:
-			competition.number_set.return_to_pool( bib_save )
+			competition.number_set.return_to_pool( bib_save, participant.license_holder )
 		participant.bib = None
 	
 	try:
@@ -3188,6 +3191,7 @@ def ParticipantBarcodeAdd( request, competitionId ):
 				return HttpResponseRedirect(getContext(request,'path'))
 				
 			license_holder, participants = participant_key_filter( competition, scan, False )
+			license_holders = []	# Required for participant_scan_error.
 			if not license_holder:
 				return render( request, 'participant_scan_error.html', locals() )
 			
@@ -3270,6 +3274,7 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 				return render( request, 'participant_scan_rfid.html', locals() )
 				
 			license_holder, participants = participant_key_filter( competition, tag, False )
+			license_holders = []	# Required for participant_scan_error.
 			if not license_holder:
 				return render( request, 'participant_scan_error.html', locals() )
 			
@@ -3349,16 +3354,15 @@ def ParticipantBibAdd( request, competitionId ):
 			if not bib:
 				return HttpResponseRedirect(getContext(request,'path'))
 				
-			license_holder, participants = participant_bib_filter( competition, bib, False )
-			if not license_holder:
-				return render( request, 'participant_scan_error.html', locals() )
-			
+			license_holders, participants = participant_bib_filter( competition, bib )
 			if len(participants) == 1:
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
-			if len(participants) > 1:
+			elif len(participants) > 1:
 				return render( request, 'participant_scan_error.html', locals() )
 			
-			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
+			if len(license_holders) == 1:
+				return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holders[0].id))
+			return render( request, 'participant_scan_error.html', locals() )			
 	else:
 		form = BibScanForm( hide_cancel_button=True )
 	
