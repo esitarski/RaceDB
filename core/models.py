@@ -373,37 +373,43 @@ class NumberSet(models.Model):
 		return None
 		
 	def assign_bib( self, license_holder, bib ):
-		# Check if this license_holder already has this bib assigned.
-		nse = self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).first()
-		if nse:
-			if nse.date_lost is not None:
-				nse.date_lost = None
-				nse.save()
-			return
+		# Check if this license_holder already has this bib assigned, or lost it.
+		with transaction.atomic():
+			nse = self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).first()
+			if nse:
+				if nse.date_lost is not None:
+					nse.date_lost = None
+					nse.save()
+				return
 
 		# Check if this bib is available.  If so, take it.
-		if self.get_bib_available(bib) > 0:
-			NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
-			return
+		with transaction.atomic():
+			if self.get_bib_available(bib) > 0:
+				NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
+				return
 			
-		# The bib is unavailable.  Take one that was lost (presumably found), or take it form someone else.
-		nse = self.numbersetentry_set.filter( bib=bib, date_lost__isnull = True ).first() or self.numbersetentry_set.filter( bib=bib ).first()
-		nse.license_holder = license_holder
-		nse.date_lost = None
-		nse.save()
+		# The bib is unavailable.  Take one that was lost (presumably found), or take it from someone else.
+		with transaction.atomic():
+			nse = self.numbersetentry_set.filter( bib=bib, date_lost__isnull = True ).first() or self.numbersetentry_set.filter( bib=bib ).first()
+			nse.license_holder = license_holder
+			nse.date_lost = None
+			nse.save()
 	
 	def set_lost( self, bib, license_holder=None, date_lost=None ):
+		if bib is None:
+			return
+		
 		q1 = Q( bib=bib )
 		if license_holder:
 			q1 &= Q( license_holder=license_holder )
-		q2 = Q( date_lost=None )
+		q2 = Q( date_lost__isnull=True )
 		if date_lost:
 			q2 |= Q( date_lost__gte=date_lost )
 		
-		date_lost_update = date_lost if date_lost else datetime.date.today()
 		nse = self.numbersetentry_set.filter(q1).filter(q2).first()
-		nse.date_lost = date_lost_update
-		nse.save()
+		if nse:
+			nse.date_lost = date_lost or datetime.date.today()
+			nse.save()
 	
 	def return_to_pool( self, bib, license_holder=None ):
 		# If we know the license holder, everything is specified.
@@ -1671,7 +1677,7 @@ class LicenseHolder(models.Model):
 			self.save()
 	
 	def save( self, *args, **kwargs ):
-		self.uci_code = (self.uci_code or '').strip().upper()
+		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
 		
 		for f in ['last_name', 'first_name', 'city', 'state_prov', 'nationality', 'uci_code']:
 			setattr( self, f, (getattr(self, f) or '').strip() )
@@ -1890,7 +1896,11 @@ class LicenseHolder(models.Model):
 	
 	def get_uci_html( self ):
 		country = self.uci_country
-		return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, self.uci_code) ) if country else self.uci_code
+		if self.uci_code.isdigit():
+			uci_code = u'&nbsp;'.join( self.uci_code[i:i+3] for i in xrange(0, len(self.uci_code), 3) )
+		else:
+			uci_code = self.uci_code
+		return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, uci_code) ) if country else uci_code
 	
 	class Meta:
 		verbose_name = _('LicenseHolder')
@@ -1947,7 +1957,7 @@ class NumberSetEntry(models.Model):
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
 
 	def save( self ):
-		if self.number_set.get_bib_available(self.bib) <= 0:
+		if self.date_lost is None and self.number_set.get_bib_available(self.bib) <= 0:
 			raise IntegrityError()
 		return super( NumberSetEntry, self ).save()
 	

@@ -53,7 +53,7 @@
 		<td>
 		{% if b.date_lost %}
 			<a class="btn btn-warning lost-bib" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/"
-				title='{% trans "Lost on" %} {{b.date_lost|date:"Y-m-d"}}. {% trans "If found, assign." %}'>{{b.bib}}</a>
+				title='{% trans "Lost on" %} {{b.date_lost|date:"Y-m-d"}} by {{b.license_holder.full_name}}'>{{b.bib}}</a>
 		{% elif b.license_holder %}
 			<span class="label label-default label-bib" title="{{b.full_name}}">{{b.bib}}</span>
 		{% else %}

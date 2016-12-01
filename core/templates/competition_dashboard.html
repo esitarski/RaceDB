@@ -61,7 +61,7 @@
 				{% if competition.number_set %}
 					<span>&nbsp;&nbsp;</span>
 					{% if request.user.is_superuser %}
-						{{competition|get_field_name:"number_set"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}NumberSetManage/{{competition.number_set.id}}">{{competition.number_set.name}}</a>
+						{{competition|get_field_name:"number_set"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}NumberSetEdit/{{competition.number_set.id}}">{{competition.number_set.name}}</a>
 					{% else %}
 						{{competition|get_field_name:"number_set"}}:&nbsp;<strong>{{competition.number_set.name}}</strong>
 					{% endif %}

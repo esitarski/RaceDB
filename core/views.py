@@ -2679,30 +2679,48 @@ def ParticipantBibSelect( request, participantId, bib ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
 	
-	bib_save = participant.bib
+	done = HttpResponseRedirect(getContext(request,'pop2Url'))
+	showSelectAgain = HttpResponseRedirect(getContext(request,'popUrl'))
 	
-	bib = int(bib )
-	if participant.category and bib > 0:
-		participant.bib = bib
+	bib_save = participant.bib
+	bib = int(bib)
+	
+	if competition.number_set and bib_save is not None:
+		def set_lost():
+			competition.number_set.set_lost( bib_save, participant.license_holder )
+	else:
+		def set_lost():
+			pass
+	
+	# No change - nothing to do.
+	if bib == bib_save:
+		return done
+	
+	# Bib assigned "No Bib".
+	if bib < 0:
+		participant.bib = None
+		set_lost()
+		return done		
+	
+	# Assign new Bib.
+	participant.bib = bib
+	
+	# Check for conflict in events.
+	if participant.category:
 		bib_conflicts = participant.get_bib_conflicts()
 		if bib_conflicts:
+			# If conflict, restore the previous bib and repeat.
 			participant.bib = bib_save
-			return HttpResponseRedirect(getContext(request,'popUrl'))		# Show the select screen again.
-		
-		if competition.number_set:
-			if bib_save is not None and bib_save != bib:
-				competition.number_set.set_lost( bib_save, participant.license_holder )
-	else:
-		if competition.number_set and bib_save is not None:
-			competition.number_set.return_to_pool( bib_save, participant.license_holder )
-		participant.bib = None
+			return showSelectAgain
+
+	set_lost()
 	
 	try:
 		participant.auto_confirm().save()
-	except IntegrityError as error:
-		return HttpResponseRedirect(getContext(request,'popUrl'))			# Show the select screen again.
+	except IntegrityError as e:
+		return showSelectAgain
 	
-	return HttpResponseRedirect(getContext(request,'pop2Url'))
+	return done
 
 #-----------------------------------------------------------------------
 @autostrip
