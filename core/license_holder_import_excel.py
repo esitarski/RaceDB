@@ -85,10 +85,11 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			v = ifm.finder( ur )
 			
 			uci_code = v('uci_code', None)
+			uci_id = v('uci_id', None)
 			date_of_birth	= v('date_of_birth', None)
 			
 			# If no date of birth, try to get it from the UCI code.
-			if not date_of_birth and uci_code and not uci_code.isdigit():
+			if not date_of_birth and uci_code:
 				try:
 					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
 				except:
@@ -121,6 +122,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			state_prov		= to_str(v('state_prov', None))
 			zip_postal		= to_str(v('zip_postal', None))
 			nationality		= to_str(v('nationality', None))
+			nation_code		= to_str(v('nation_code', None))
 			
 			bib				= (to_int(v('bib', None)) or None)
 			tag				= to_int_str(v('tag', None))

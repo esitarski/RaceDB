@@ -106,7 +106,9 @@ div.title {
 				<h2>{{h.first_name}} {{h.last_name}}</h2>
 				<h4 style="margin-left: 30px;">
 					{{h.get_gender_display}} {{h.license_code_trunc}}&nbsp;&nbsp;
-					{% if h.get_uci_html %}
+					{% if h.uci_id %}
+						<span class="text-nowrap">{{h.flag_get_uci_id_html}}</span>
+					{% elif h.get_uci_html %}
 						<span class="text-nowrap">{{h.get_uci_html}}</span>
 					{% else %}
 						<span class="text-nowrap">{% trans "DOB" %}: {{h.date_of_birth|date:"Y-m-d"}}</span>
@@ -142,7 +144,7 @@ div.title {
 			<h2>{{h.first_name}} {{h.last_name}}</h2>
 			<h4 style="margin-left: 30px;">
 				{{h.get_gender_display}} {{h.license_code_trunc}}&nbsp;&nbsp;
-				<span class="text-nowrap">{{h.get_uci_html}}</span>
+				<span class="text-nowrap">{{h.get_flag_uci_id_html}}</span>
 			</h4>
 		{% endwith %}
 		<br/>

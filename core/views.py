@@ -258,6 +258,11 @@ class LicenseHolderForm( ModelForm ):
 				return u'<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.uci_country)), lh.uci_code)
 			return ''
 		
+		def nation_code_html():
+			if lh and lh.nation_code:
+				return u'<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.nation_code)), lh.nation_code)
+			return ''
+		
 		self.helper.layout = Layout(
 			#Field( 'id', type='hidden' ),
 			Row(
@@ -272,9 +277,10 @@ class LicenseHolderForm( ModelForm ):
 			),
 			Row(
 				Col(Field('city', size=40), 3),
-				Col(Field('state_prov', size=40), 3),
-				Col(Field('nationality', size=40), 3),
-				Col(Field('zip_postal', size=10), 3),
+				Col(Field('state_prov', size=20), 3),
+				Col(Field('nationality', size=20), 2),
+				Col(Field('nation_code', size=3), 2),
+				Col(Field('zip_postal', size=10), 2),
 			),
 			Row(
 				Col(Field('email', size=50), 6),
@@ -289,12 +295,18 @@ class LicenseHolderForm( ModelForm ):
 					cols=3,
 				),
 				ColKey(
+					HTML(warning_html(lh and lh.uci_id_error)),
+					Field('uci_id'),
+					HTML(error_html(lh and lh.uci_id_error)),
+					cols=4,
+				),
+				ColKey(
 					HTML(warning_html(lh and lh.uci_code_error)),
 					Field('uci_code'),
 					HTML(error_html(lh and lh.uci_code_error)),
-					cols=4,
+					cols=3,
 				),
-				Col(HTML(uci_code_html()), 5),
+				Col(HTML(nation_code_html()), 2),
 			),
 			Row(
 				Col('existing_tag', 3),

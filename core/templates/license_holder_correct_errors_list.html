@@ -12,11 +12,10 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Date of Birth" %}</th>
-		<th>{% trans "City" %}</th>
-		<th>{% trans "State/Prov" %}</th>
-		<th>{% trans "Nationality" %}</th>
+		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCI Code" %}</th>
+		<th>{% trans "Nat." %}</th>
+		<th>{% trans "UCI ID" %}</th>
 		{% if isEdit %}
 		<th class="hidden-print"></th>
 		{% endif %}
@@ -35,20 +34,19 @@
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
 			<td>{% if h.date_of_birth_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{{h.date_of_birth}}</td>
-			<td>{{h.city}}</td>
-			<td>{{h.state_prov}}</td>
-			<td>{{h.nationality}}</td>
+			<td>{{h.get_location}}</td>
 			<td class="text-nowrap">
 				{% if h.license_code_error %}
 					<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>
 				{% endif %}
 				{{h.license_code_trunc}}
 			</td>
+			<td>{{h.get_nation_code_html}}</td>
 			<td class="text-nowrap">
-				{% if h.uci_code_error %}
+				{% if h.uci_id_error %}
 					<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>
 				{% endif %}
-				{{h.get_uci_html}}
+				{{h.get_uci_id_html}}
 			</td>
 			{% if isEdit %}
 			<td class="hidden-print">

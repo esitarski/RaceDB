@@ -30,7 +30,7 @@
 		<th>{% trans "DOB" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCI Code" %}</th>
+		<th>{% trans "UCI ID" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -51,7 +51,7 @@
 			<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{lh.get_location}}</td>
 			<td>{{lh.license_code_trunc}}</td>
-			<td class="text-nowrap">{{lh.get_uci_html}}</td>
+			<td class="text-nowrap">{{lh.get_flag_uci_id_html}}</td>
 			<td class="hidden-print">
 				{% if nse.date_lost %}
 					<a class="btn btn-success" href="./BibReturn/{{nse.id}}/">{% trans "Bib Found" %}</a>

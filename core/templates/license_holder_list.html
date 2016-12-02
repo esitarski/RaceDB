@@ -15,11 +15,9 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Date of Birth" %}</th>
-		<th>{% trans "City" %}</th>
-		<th>{% trans "State/Prov" %}</th>
-		<th>{% trans "Nationality" %}</th>
+		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCI Code" %}</th>
+		<th>{% trans "UCI ID" %}</th>
 		<th>{% trans "Existing Tag" %}</th>
 		<th>{% trans "Emergency Contact" %}</th>
 		{% if isEdit %}
@@ -40,14 +38,12 @@
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
 			<td class="text-nowrap">{% if h.date_of_birth_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.date_of_birth}}</td>
-			<td>{{h.city}}</td>
-			<td>{{h.state_prov}}</td>
-			<td>{{h.nationality}}</td>
+			<td>{{h.get_location}}</td>
 			<td class="text-nowrap">
 				{% if h.license_code_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.license_code_trunc}}
 			</td>
 			<td class="text-nowrap">
-				{% if h.uci_code_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.get_uci_html}}
+				{% if h.uci_id_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.get_flag_uci_id_html}}
 			</td>
 			<td>{% if h.existing_tag %}{{h.existing_tag}}{% endif %}{% if h.existing_tag2 %}, {{h.existing_tag2}}{% endif %}</td>
 			<td class="text-nowrap">

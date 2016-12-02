@@ -1639,12 +1639,14 @@ class LicenseHolder(models.Model):
 	city = models.CharField( max_length=64, blank=True, default='', verbose_name=_('City') )
 	state_prov = models.CharField( max_length=64, blank=True, default='', verbose_name=_('State/Prov') )
 	nationality = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Nationality') )
+	nation_code = models.CharField( max_length=3, blank=True, default='', verbose_name=_('Nation Code') )
 	zip_postal = models.CharField( max_length=12, blank=True, default='', verbose_name=_('Zip/Postal') )
 	
 	email = models.EmailField( blank=True )
 	phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Phone') )
 	
 	uci_code = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI Code') )
+	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI ID') )
 	
 	license_code = models.CharField( max_length=32, null=True, unique=True, verbose_name=_('License Code') )
 	
@@ -1676,12 +1678,33 @@ class LicenseHolder(models.Model):
 		if self.uci_code != uci_code_save:
 			self.save()
 	
+	reUCIID = re.compile( r'[^\d]' )
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
+		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'').upper() )
 		
-		for f in ['last_name', 'first_name', 'city', 'state_prov', 'nationality', 'uci_code']:
+		for f in ('last_name', 'first_name', 'city', 'state_prov', 'nationality', 'nation_code'):
 			setattr( self, f, (getattr(self, f) or '').strip() )
+		for f in ['license_code', 'existing_tag', 'existing_tag2']:
+			setattr( self, f, fixNullUpper(getattr(self, f)) )
+				
+		# Fix nation code.
+		if not self.nation_code:
+			if self.uci_code and country_from_ioc(self.uci_code[:3]):
+				self.nation_code = self.uci_code[:3]
+			elif ioc_from_country(self.nationality):
+				self.nation_code = ioc_from_country(self.nationality)
 		
+		if self.nation_code and country_from_ioc(self.nation_code):
+			self.nationality = country_from_ioc(self.nation_code)
+		else:
+			self.nation_code = u''
+		
+		# Check for ISO country code and convert to IOC country code.
+		if self.nation_code and self.nation_code != iso_uci_country_codes.get(self.nation_code, self.nation_code):
+			self.nation_code = iso_uci_country_codes.get(self.nation_code, self.nation_code)
+		
+		# Fix up date of birth.
 		if self.date_of_birth != invalid_date_of_birth:
 			if self.uci_code and len(self.uci_code) == 3 and not self.uci_code.isdigit():
 				self.uci_code += self.date_of_birth.strftime( '%Y%m%d' )
@@ -1689,13 +1712,11 @@ class LicenseHolder(models.Model):
 			if not self.uci_code and ioc_from_country(self.nationality):
 				self.uci_code = '{}{}'.format( ioc_from_country(self.nationality), self.date_of_birth.strftime('%Y%m%d') )
 		
-		if len(self.uci_code) == 11 and not self.uci_code.isdigit():
+		# Fix up UCI code.
+		if len(self.uci_code) == 11:
 			country_code = self.uci_code[:3]
 			if country_code != iso_uci_country_codes.get(country_code, country_code):
 				self.uci_code = '{}{}'.format( iso_uci_country_codes.get(country_code, country_code), self.uci_code[3:] )
-		
-		if not self.nationality and self.uci_code:
-			self.nationality = country_from_ioc( self.uci_code ) or self.nationality
 		
 		if not self.state_prov and self.license_code and self.license_code[:2] in province_codes:
 			self.state_prov = province_codes[self.license_code[:2]]
@@ -1705,9 +1726,6 @@ class LicenseHolder(models.Model):
 		except Exception as e:
 			pass
 		
-		for f in ['license_code', 'existing_tag', 'existing_tag2']:
-			setattr( self, f, fixNullUpper(getattr(self, f)) )
-			
 		self.zip_postal = validate_postal_code( self.zip_postal )
 		
 		# If the license_code is TEMP or empty, make a unique temporary code.
@@ -1738,6 +1756,32 @@ class LicenseHolder(models.Model):
 		return ioc_from_code( self.uci_code )
 		
 	@property
+	def nation_code_error( self ):
+		if not self:
+			return None
+			
+		if not self.nation_code:
+			return _(u'missing')
+			
+		if self.nation_code not in uci_country_codes_set:
+			return _(u'invalid nation code')	
+		return None
+	
+	@property
+	def uci_id_error( self ):
+		if not self or not self.uci_id:
+			return None
+			
+		self.uci_id = unicode(self.uci_id).upper().replace(u' ', u'')
+		
+		if not self.uci_id.isdigit():
+			return _(u'uci id must be all numeric')
+		
+		if len(self.uci_id) != 11:
+			return _(u'invalid length for uci id')
+		return None
+	
+	@property
 	def uci_code_error( self ):
 		if not self:
 			return None
@@ -1749,9 +1793,6 @@ class LicenseHolder(models.Model):
 		if len(self.uci_code) != 11:
 			return _(u'invalid length for uci code')
 			
-		if self.uci_code.isdigit():
-			return None
-
 		if self.uci_code[:3] not in uci_country_codes_set:
 			return _(u'invalid nation code')
 			
@@ -1810,7 +1851,7 @@ class LicenseHolder(models.Model):
 		return '{}, {} ({}, {}, {}, {})'.format(
 			self.last_name.upper(), self.first_name,
 			self.date_of_birth.isoformat(), self.get_gender_display(),
-			self.uci_code, self.license_code
+			self.nation_code, self.license_code
 		)
 		
 	def full_name( self ):
@@ -1896,11 +1937,25 @@ class LicenseHolder(models.Model):
 	
 	def get_uci_html( self ):
 		country = self.uci_country
-		if self.uci_code.isdigit():
-			uci_code = u'&nbsp;'.join( self.uci_code[i:i+3] for i in xrange(0, len(self.uci_code), 3) )
-		else:
-			uci_code = self.uci_code
+		uci_code = self.uci_code
 		return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, uci_code) ) if country else uci_code
+	
+	def get_nation_code_html( self ):
+		if self.nation_code in uci_country_codes_set:
+			return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), self.nation_code, self.nation_code) )
+		else:
+			return self.nation_code
+	
+	def get_uci_id_html( self ):
+		return mark_safe(u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) ))
+	
+	def get_flag_uci_id_html( self ):
+		if self.nation_code in uci_country_codes_set:
+			flag = '<img src="{}/{}.png"/>'.format(static('flags'), self.nation_code)
+		else:
+			flag = self.nation_code
+		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) )
+		return mark_safe( u'{}&nbsp;{}'.format(flag, uci_id) )
 	
 	class Meta:
 		verbose_name = _('LicenseHolder')

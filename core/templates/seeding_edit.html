@@ -132,7 +132,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Category" %}</th>
-		<th>{% trans "UCI Code" %}</th>
+		<th>{% trans "Nat. Code" %}</th>
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
 		<th>{% trans "Seed Option" %}</th>
@@ -150,7 +150,7 @@
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-			<td class="text-nowrap">{{h.get_uci_html}}</td>
+			<td class="text-nowrap">{{h.get_nation_code_html}}</td>
 			<td>{{w.name}}</td>
 			<td>{{form.est_speed}}</td>
 			<td>{{form.seed_option}}</td>
