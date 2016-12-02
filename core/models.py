@@ -1858,7 +1858,7 @@ class LicenseHolder(models.Model):
 		return u"{}, {}".format(self.last_name.upper(), self.first_name)
 		
 	def full_license( self ):
-		return u', '.join( f for f in [self.uci_code, self.license_code] if f )
+		return u', '.join( f for f in [self.uci_id, self.license_code] if f )
 		
 	def get_location( self ):
 		return u', '.join( f for f in [self.city, get_abbrev(self.state_prov)] if f )
@@ -1866,8 +1866,9 @@ class LicenseHolder(models.Model):
 	def get_search_text( self ):
 		return utils.get_search_text( [
 				self.last_name, self.first_name,
-				self.license_code, self.uci_code,
-				self.nationality, self.state_prov, self.city,
+				self.license_code,
+				self.nation_code, self.uci_id,
+				self.state_prov, self.city,
 				self.existing_tag, self.existing_tag2
 			]
 		)
