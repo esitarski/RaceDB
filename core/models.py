@@ -2394,18 +2394,16 @@ class Participant(models.Model):
 		if self.is_competitor:
 			return (
 				self.can_start() and
-				self.good_uci_code() and
 				self.good_license() and
 				self.good_emergency_contact() and
 				self.good_est_kmh()
 			)
 		elif self.role < 200:
 			return (
-				self.team and
-				self.good_uci_code()
+				self.team
 			)
 		else:
-			return self.good_uci_code()
+			return True
 	
 	def get_lh_errors_warnings( self ):
 		license_holder_errors = (
@@ -2414,7 +2412,6 @@ class Participant(models.Model):
 		)
 		license_holder_warnings = (
 			('good_license',			_('Temporary License (do you have a permanent one now?)')),
-			('good_uci_code',			_('Incorrect UCI Code')),
 			('good_emergency_contact',	_('Incomplete Emergency Contact')),
 		)
 		
