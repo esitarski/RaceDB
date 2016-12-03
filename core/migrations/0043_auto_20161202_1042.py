@@ -15,11 +15,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='licenseholder',
             name='nation_code',
-            field=models.CharField(blank=True, default=b'', max_length=3, verbose_name='Nation Code'),
+            field=models.CharField(blank=True, default=b'', max_length=3, verbose_name='NatCode'),
         ),
         migrations.AddField(
             model_name='licenseholder',
             name='uci_id',
-            field=models.CharField(blank=True, db_index=True, default=b'', max_length=11, verbose_name='UCI ID'),
+            field=models.CharField(blank=True, db_index=True, default=b'', max_length=11, verbose_name='UCIID'),
         ),
     ]

@@ -20,9 +20,10 @@ data_headers = (
 	'Bib#',
 	'LastName', 'FirstName',
 	'Team',
-	'Nat.', 'StateProv', 'City',
+	'City', 'StateProv',
 	'Category', 'Age', 'Gender',
-	'License', 'UCICode',
+	'License',
+	'NatCode', 'UCIID',
 	'Tag', 'Tag2',
 )
 
@@ -233,13 +234,15 @@ def get_crossmgr_excel( event_mass_start ):
 	
 	table = [list(data_headers)] if competition.using_tags else [list(data_headers[:-2])]
 	for p in event_mass_start.get_participants():
+		h = p.license_holder
 		row_data = [
 			p.bib if p.bib else '',
-			p.license_holder.last_name, p.license_holder.first_name,
+			h.last_name, h.first_name,
 			p.team.name if p.team else '',
-			p.license_holder.nationality, p.license_holder.state_prov, p.license_holder.city,
-			p.category.code, competition.competition_age(p.license_holder), get_gender_str(p.license_holder.gender),
-			p.license_holder.license_code_export, p.license_holder.uci_code,
+			h.city, h.state_prov,
+			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
+			h.license_code_export,
+			h.nation_code, h.get_uci_id_text(),
 		]
 		if competition.using_tags:
 			row_data.extend( [p.tag, p.tag2] )
@@ -299,14 +302,16 @@ def get_crossmgr_excel_tt( event_tt ):
 	for p in participants:
 		# Convert to Excel time which is a fraction of a day.
 		start_time = start_times.get(p, None)
+		h = p.license_holder
 		row_data = [
 			start_time.total_seconds() / (24.0*60.0*60.0) if start_time is not None else u'',
 			p.bib if p.bib else u'',
-			p.license_holder.last_name, p.license_holder.first_name,
+			h.last_name, h.first_name,
 			p.team.name if p.team else u'',
-			p.license_holder.nationality, p.license_holder.state_prov, p.license_holder.city,
-			p.category.code, competition.competition_age(p.license_holder), get_gender_str(p.license_holder.gender),
-			p.license_holder.license_code, p.license_holder.uci_code,
+			h.city, h.state_prov,
+			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
+			h.license_code,
+			h.nation_code, h.get_uci_id_text(),
 		]
 		if competition.using_tags:
 			row_data.extend( [p.tag, p.tag2] )

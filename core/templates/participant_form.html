@@ -70,7 +70,7 @@
 {% endif %}
 <table class="table table-hover table-condensed">
 <tr onclick="jump({% if isEdit %}'{{path}}LicenseHolderEdit/{{h.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Participant" %}{% if not p.good_license or not p.good_uci_code or not p.good_emergency_contact %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
+	<td class="text-right">{% trans "Participant" %}{% if not p.good_license or not p.good_emergency_contact %}&nbsp;<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 	<td>
 		<strong>{{h.full_name}}:</strong>
 		{{h.get_gender_display}}
@@ -79,21 +79,11 @@
 				{{h.license_code_trunc}}
 			{% if isEdit and h.is_temp_license %}</a>{% endif %}
 		{% endif %}
-		{% if h.uci_code %}
-			{% if h.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{h.uci_country}}.png" ></img>{% endif %}
-			{% if isEdit and h.uci_code_error %}<a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% endif %}
-				{{h.uci_code}}
-			{% if isEdit and h.uci_code_error %}</a>{% endif %}
-		{% endif %}
-		{% if h.city %} {{h.city}}, {% endif %}
-		{% if h.state_prov %} {{h.state_prov}}, {% endif %}
-		{% if h.nationality %} {{h.nationality}} {% endif %}
+		&nbsp;{{h.get_flag_uci_id_html}},
+		{{h.get_location}}
 		{% if isEdit %}
 			{% if h.license_code and h.is_temp_license %}
 				<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Fix License Code" %}</a>
-			{% endif %}
-			{% if h.uci_code and h.uci_code_error %}
-				<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Fix UCI Code" %}: {{h.uci_code_error}}</a>
 			{% endif %}
 			{% if h.emergency_contact_incomplete %}
 				<br/><a class="btn btn-warning" href='{{path}}LicenseHolderEdit/{{h.id}}/'>{% trans "Fix Emergency Contact" %}</a>

@@ -143,7 +143,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Category" %}</th>
-		<th>{% trans "Nat. Code" %}</th>
+		<th>{% trans "UCIID" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -158,7 +158,7 @@
 		<td>{{p.license_holder.full_name}}</td>
 		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 		<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-		<td class="text-nowrap">{{h.get_nation_code_html}}</td>
+		<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
 		<td class="hidden-print">
 			<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
 			&nbsp;&nbsp;

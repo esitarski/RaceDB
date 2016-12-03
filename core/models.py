@@ -1639,14 +1639,14 @@ class LicenseHolder(models.Model):
 	city = models.CharField( max_length=64, blank=True, default='', verbose_name=_('City') )
 	state_prov = models.CharField( max_length=64, blank=True, default='', verbose_name=_('State/Prov') )
 	nationality = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Nationality') )
-	nation_code = models.CharField( max_length=3, blank=True, default='', verbose_name=_('Nation Code') )
+	nation_code = models.CharField( max_length=3, blank=True, default='', verbose_name=_('NatCode') )
 	zip_postal = models.CharField( max_length=12, blank=True, default='', verbose_name=_('Zip/Postal') )
 	
 	email = models.EmailField( blank=True )
 	phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Phone') )
 	
 	uci_code = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI Code') )
-	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI ID') )
+	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCIID') )
 	
 	license_code = models.CharField( max_length=32, null=True, unique=True, verbose_name=_('License Code') )
 	
@@ -1942,16 +1942,19 @@ class LicenseHolder(models.Model):
 		return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, uci_code) ) if country else uci_code
 	
 	def get_nation_code_html( self ):
-		if self.nation_code in uci_country_codes_set:
+		if self.nation_code and self.nation_code in uci_country_codes_set:
 			return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), self.nation_code, self.nation_code) )
 		else:
 			return self.nation_code
 	
+	def get_uci_id_text( self ):
+		return u' '.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) )
+	
 	def get_uci_id_html( self ):
-		return mark_safe(u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) ))
+		return mark_safe( u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) ) )
 	
 	def get_flag_uci_id_html( self ):
-		if self.nation_code in uci_country_codes_set:
+		if self.nation_code and self.nation_code in uci_country_codes_set:
 			flag = '<img src="{}/{}.png"/>'.format(static('flags'), self.nation_code)
 		else:
 			flag = self.nation_code
