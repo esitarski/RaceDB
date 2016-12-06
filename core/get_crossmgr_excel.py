@@ -1,4 +1,3 @@
-
 import re
 import os
 import sys
@@ -235,6 +234,7 @@ def get_crossmgr_excel( event_mass_start ):
 	table = [list(data_headers)] if competition.using_tags else [list(data_headers[:-2])]
 	for p in event_mass_start.get_participants():
 		h = p.license_holder
+		print competition.competition_age(h)
 		row_data = [
 			p.bib if p.bib else '',
 			h.last_name, h.first_name,
