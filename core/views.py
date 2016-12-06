@@ -2644,15 +2644,33 @@ def ParticipantBibChange( request, participantId ):
 	participants.select_related('license_holder')
 	allocated_numbers = { p.bib: p.license_holder for p in participants }
 	
-	# Exclude existing bib numbers of all license holders if using existing bibs.  We don't know whether the existing license holders will show up.
+	# Exclude existing bib numbers of all license holders if using existing bibs.
+	# For duplicate license holders, chech whether the duplicate has ever races this category before.
+	# We don't know whether the existing license holders will show up.
 	if competition.number_set:
-		nq = competition.number_set.numbersetentry_set.select_related('license_holder').filter(date_lost__isnull=True)
-		if category.gender != 2:
-			nq.filter( license_holder__gender = category.gender )
-		allocated_numbers.update( { nse.bib:nse.license_holder for nse in nq } )
+		current_bibs = defaultdict( set )
+		nses = competition.number_set.numbersetentry_set.filter(date_lost__isnull=True)
+		if category_numbers:
+			nses = nses.filter( category_numbers.get_bib_query() )
+		for nse in nses.select_related('license_holder'):
+			current_bibs[nse.license_holder].add( nse.bib )
+		
+		pprevious = Participant.objects.filter( competition__number_set=competition.number_set, category=participant.category )
+		if category_numbers:
+			pprevious = pprevious.filter( category_numbers.get_bib_query() )
+		for p in pprevious.exclude(license_holder=participant.license_holder).select_related('license_holder'):
+			try:
+				if p.bib in current_bibs[p.license_holder]:
+					allocated_numbers.update[p.bib] = p.license_holder
+			except:
+				pass
+		
 		bib_available_all = competition.number_set.get_bib_available_all()
+		nses = competition.number_set.numbersetentry_set.exclude(date_lost__isnull=True)
+		if category_numbers:
+			nses = nses.filter( category_numbers.get_bib_query() )
 		lost_bibs = { bib:date_lost
-			for bib, date_lost in competition.number_set.numbersetentry_set.exclude(date_lost__isnull=True).order_by('date_lost').values_list('bib','date_lost')
+			for bib, date_lost in nses.order_by('date_lost').values_list('bib','date_lost')
 				if bib_available_all[bib] == 0
 		}
 	else:

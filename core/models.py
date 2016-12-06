@@ -1035,6 +1035,19 @@ class CategoryNumbers( models.Model ):
 			self.numCache = self.getNumbersWorker()
 			self.range_str_cache = self.range_str
 		return self.numCache
+		
+	def get_bib_query( self ):
+		qry = Q()
+		numbers = sorted( self.get_numbers() )
+		if not numbers:
+			return q
+		a = numbers[0]
+		for p, q in zip(numbers, numbers[1:]):
+			if p+1 != q:
+				qry |= Q(bib__range=(a, p))
+				a = q
+		qry |= Q(bib__range=(a, q))
+		return qry
 	
 	def __contains__( self, n ):
 		return n in self.get_numbers()
