@@ -8,7 +8,7 @@ from dependencies import pyllrp
 from helptxt.version import version
 
 # Delete any existing unofficial releases.
-officialRelease = '1.20.0'
+officialRelease = '1.20.26'
 	
 def pypi():
 	CompileHelp( 'helptxt' )
