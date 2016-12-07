@@ -130,7 +130,34 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join( BASE_DIR, 'RaceDB', 'static_root' )
 
-if os.path.exists(r'c:\Projects\RaceDBDeploy') or os.path.exists('home/nloaner'):
+TEMPLATES = [
+{
+	'BACKEND': 'django.template.backends.django.DjangoTemplates',
+	'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'core', 'templates')],
+	'OPTIONS': {
+		'debug': True,
+		'context_processors': [
+			'core.context_processors.standard',
+			'django.contrib.auth.context_processors.auth',
+			'django.template.context_processors.debug',
+			'django.template.context_processors.i18n',
+			'django.template.context_processors.media',
+			'django.template.context_processors.static',
+			'django.template.context_processors.tz',
+			'django.contrib.messages.context_processors.messages',
+		],
+		'loaders': [
+			('django.template.loaders.cached.Loader', [
+				'django.template.loaders.filesystem.Loader',
+				'django.template.loaders.app_directories.Loader',
+			]),
+		],
+	},
+},	
+]
+
+# Disable template caching if development.
+if os.path.exists(r'c:\Projects\RaceDBDeploy') or 'home/nloaner' in __file__:
 	TEMPLATES = [{
 		'BACKEND': 'django.template.backends.django.DjangoTemplates',
 		'APP_DIRS': True,
@@ -148,29 +175,3 @@ if os.path.exists(r'c:\Projects\RaceDBDeploy') or os.path.exists('home/nloaner')
 			],
 		},
 	}]
-else:
-	TEMPLATES = [
-	{
-		'BACKEND': 'django.template.backends.django.DjangoTemplates',
-		'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'core', 'templates')],
-		'OPTIONS': {
-			'debug': True,
-			'context_processors': [
-				'core.context_processors.standard',
-				'django.contrib.auth.context_processors.auth',
-				'django.template.context_processors.debug',
-				'django.template.context_processors.i18n',
-				'django.template.context_processors.media',
-				'django.template.context_processors.static',
-				'django.template.context_processors.tz',
-				'django.contrib.messages.context_processors.messages',
-			],
-			'loaders': [
-				('django.template.loaders.cached.Loader', [
-					'django.template.loaders.filesystem.Loader',
-					'django.template.loaders.app_directories.Loader',
-				]),
-			],
-		},
-	},	
-	]
