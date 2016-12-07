@@ -25,12 +25,13 @@ def pypi():
 		'txt', 'md',
 		'html', 'css', 'js',
 		'png', 'gif', 'jpg',
+		'json',
 		'xls', 'xlsx',
 		'gz',
 		'ttf',
 		'bash',
 	}
-	for root, dirs, files in os.walk( '.' ):
+	for root, dirs, files in os.walk('.'):
 		for f in files:
 			fname = os.path.join( root, f )
 			if any( d in fname for d in ['EV', 'GFRR', 'usac_heatmap', 'usac_bug', 'test_data', 'migrations_old', 'time_zone.py', "bugs"] ):
