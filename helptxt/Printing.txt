@@ -1,0 +1,63 @@
+[TOC]
+
+# Printing
+
+RaceDB support printing bib numbers, shoulder numbers and frame numbers "on demand".  This makes it possible to create the necessary numbers, and chip tags right at registration - no preparation necessary.  Printing can be sent to label printers or laser printers.
+
+## Enabling Printing in RaceDB
+
+To enabling printing, go to SystemInfo and set the __Print Tag Option__.  There are three options:
+
+1. __No Bib Tag Print__: printing capabilities are disabled in RaceDB
+2. __Print Bib Tag on Server__: printouts are done from the server the given command
+3. __Print Bib Tag on Client__: printouts are done from the client's browser
+
+### Option 1:  No Bib Tag Print
+Use Option 1 if you want to disable all printing in RaceDB.
+
+### Option 2:  Print Bib Tab on Server
+Use Option 2 if you want to enable printing from a printer (or printers) connected to the RaceDB host computer.
+If you are running RaceDB on tablets or other devices that do not support printers, you will need to use this method.
+
+This method is also the most convenient for RaceDB users as you can route to different printers based on the content (bib numbers, shoulder numbers or emergency information) and/or the antenna being used by the RaceDB user.  This allows you to have different label printers for the bib numbers and shoulder numbers.
+
+To make this work, you need to specify a command for RaceDB to use to send to the printer.  Some sample commands are provided in the "scripts" folder in the RaceDB install.
+
+It is important to include "$1" in the command.  RaceDB will substitute this for the pdf file to print.
+
+The pdf file name contains all the information required for the command to send it to different printers.
+
+For example:
+
+	230489203498023809_bib-356_port-5098_antenna-2_type-Frame.pdf
+
+	Major separator is underscore, minor is dash.
+	"type" is one of Frame, Body, Shoulder or Emergency.
+	"port" is the RaceDB server port.
+	"antenna" is the antenna of the RaceDB user.
+
+	You can print different bib types on different printers (see scripts/LABELS.py for an example)
+
+	if 'type-Body' in file_name:
+	  # print on the 6x4 printer.
+	  if 'port-8172' in file_name:
+		# print on the near bib printer
+		pass
+	  if 'port-8194' in file_name:
+		# print on the far bib printer
+		pass
+	else:
+	  # print on the 4x2.5 printer
+	  pass
+
+### Option 3:  Print Bib Tag on Client
+You can use Option 3 if you are running RaceDB from devices that support printers.  With this option, the printouts are first shown in the RaceDB user's browser.  It is then up to the user to print to an available printer.  The printer can be directlyed connected to the computer (USB cable), or it can be a network printer.  It just has to be accessible from the computer.
+
+## Selecting What to Print by Competition
+Once you have enabled printing in RaceDB, you can further control Bib, Shoulder and Frame printing options from the __Competition Edit__ screen.
+
+This reflects that depending on the competition, you do not need Shoulder numbers for Road or MTB races, or if you have permanent chip tags already, you do not need to print the Frame numbers.
+
+In this screen, select the print options you want.  Your choices will be displayed as options in the __Participant Edit__ screen.
+
+Note that there are two options that are similar __Bibs Label Print__ and __Bibs Laser Print__.  Bibs Label Print is to be used when you have a label printer and you with each bib number to be on a separate page (with a cut between).  Bibs Laser Print is to be used when you have a laser printer with 8.5x11 Tyvek and you wish to print two bibs numbers on the same page.

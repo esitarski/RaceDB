@@ -446,8 +446,10 @@
 			<span style="font-size: 150%">{% trans "Print" %}:</span>
 			{% if c.any_print and participant.is_competitor and participant.bib %}
 				<span class="hidden-print">
-					{% if c.bibs_label_print %}
+					{% if c.bib_label_print %}
 						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/1/">{% trans "1 Body Bib" %}</a>
+					{% endif %}
+					{% if c.bibs_label_print %}
 						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/2/">{% trans "2 Body Bibs" %}</a>
 					{% endif %}
 					{% if c.bibs_laser_print %}

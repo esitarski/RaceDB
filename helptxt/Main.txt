@@ -33,6 +33,10 @@ Get started with RaceDB
 
 * [Screen Navigation and Conventions][]
 
+## Printing Bib, Shoulder and Frame numbers
+
+* [Printing][]
+
 ## Hardware
 
 * [Hardware and Devices][]

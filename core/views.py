@@ -833,7 +833,13 @@ def GetCompetitionForm( competition_cur = None ):
 					Col('ftp_upload_during_race', 4),
 				),
 				Row( HTML('<hr/><strong>Number Print Options:</strong>') ),
-				Row( Col(Field('bibs_label_print'),3), Col(Field('bibs_laser_print'),3), Col(Field('shoulders_label_print'),3), Col(Field('frame_label_print'),3) ),
+				Row(
+					Col(Field('bib_label_print'),2),
+					Col(Field('bibs_label_print'),2),
+					Col(Field('bibs_laser_print'),2),
+					Col(Field('shoulders_label_print'),3),
+					Col(Field('frame_label_print'),3),
+				),
 				Row( HTML('<hr/>') ),
 				Row(
 					Col(Field('report_labels',size=8), 2),
