@@ -250,7 +250,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 			page_y = 0
 		else:
 			page_y = page_height * c
-			pdf.line( 0, page_y, page_width, page_y )
+			pdf.dashed_line( 0, page_y, page_width, page_y, space_length = 12 )
 		
 		pdf.set_font('din1451alt', '', 16)
 		field = Rect( margin, margin+page_y, width, height )
