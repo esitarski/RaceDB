@@ -447,17 +447,17 @@
 			{% if c.any_print and participant.is_competitor and participant.bib %}
 				<span class="hidden-print">
 					{% if c.bibs_label_print %}
-						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/1/">{% trans "1 Body" %}</a>
-						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/2/">{% trans "2 Body" %}</a>
+						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/1/">{% trans "1 Body Bib" %}</a>
+						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/2/">{% trans "2 Body Bibs" %}</a>
 					{% endif %}
 					{% if c.bibs_laser_print %}
-						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/2/1/">{% trans "2 Body" %}</a>
+						<a class="btn btn-primary" href="./ParticipantPrintBodyBib/{{p.id}}/2/1/">{% trans "2 Body Bibs" %}</a>
 					{% endif %}
 					{% if c.shoulders_label_print %}
-						<a class="btn btn-primary" href="./ParticipantPrintShoulderBib/{{p.id}}/">{% trans "2 Shoulder" %}</a>
+						<a class="btn btn-primary" href="./ParticipantPrintShoulderBib/{{p.id}}/">{% trans "2 Shoulder Nums" %}</a>
 					{% endif %}
 					{% if c.frame_label_print %}
-						<a class="btn btn-primary" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "Frame" %}</a>
+						<a class="btn btn-primary" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "2 Frame Nums" %}</a>
 					{% endif %}
 				</span>
 				&nbsp;&nbsp;&nbsp;
