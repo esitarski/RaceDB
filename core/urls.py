@@ -128,6 +128,7 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantPrintBibLabels/(?P<participantId>\d+)/$', views.ParticipantPrintBibLabels ),
 	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/$', views.ParticipantPrintBodyBib ),
 	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/$', views.ParticipantPrintBodyBib ),
+	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/(?P<onePage>\d+)/$', views.ParticipantPrintBodyBib ),
 	url(r'^(?i).*ParticipantPrintShoulderBib/(?P<participantId>\d+)/$', views.ParticipantPrintShoulderBib ),
 	url(r'^(?i).*ParticipantPrintEmergencyContactInfo/(?P<participantId>\d+)/$', views.ParticipantPrintEmergencyContactInfo ),
 	

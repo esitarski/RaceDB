@@ -24,7 +24,7 @@ def reset_font_cache():
 	for f in glob.iglob( os.path.join(font_cache, '*.pkl') ):
 		os.remove( f )
 
-barcode_width_max = 2.5*inches_to_points
+barcode_width_max = 3.0*inches_to_points
 def draw_code128( pdf, text, x, y, width, height ):	
 	if width > barcode_width_max:
 		x += (width - barcode_width_max) / 2
@@ -223,11 +223,11 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
 
-def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches=5.9, heightInches=3.9, copies=1 ):
+def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches=5.9, heightInches=3.9, copies=1, onePage=False ):
 	page_width = widthInches * inches_to_points
 	page_height = heightInches * inches_to_points
 	
-	pdf = PDF( 'L', (page_height, page_width) )
+	pdf = PDF( 'L', (page_height * (copies if onePage else 1), page_width) )
 	pdf.set_author( RaceDBVersion )
 	pdf.set_title( 'Race Bib Number: {}'.format(bib) )
 	pdf.set_subject( 'Bib number.' )
@@ -244,38 +244,52 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	text_margin = margin
 	text_height = margin*0.5
 	
-	for c in xrange(int(copies)):
-		pdf.add_page()
+	for c in xrange(copies):
+		if c == 0 or not onePage:
+			pdf.add_page()
+			page_y = 0
+		else:
+			page_y = page_height * c
+			pdf.line( 0, page_y, page_width, page_y )
+		
 		pdf.set_font('din1451alt', '', 16)
-		field = Rect( margin, margin, width, height )
+		field = Rect( margin, margin+page_y, width, height )
 		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )
 		
 		pdf.set_font( 'Helvetica' )
 		if logo:
 			x = text_margin
-			logo_rect = Rect( x, page_height-margin, (page_width - barcode_width_max)/2.0 - x, text_height )
+			logo_rect = Rect( x, page_height-margin+page_y, (page_width - barcode_width_max)/2.0 - x, text_height )
 			logo_rect.draw_text_to_fit( pdf, logo, Rect.AlignLeft|Rect.AlignMiddle )
 		
 		if license_code:
-			barcode_rect = Rect( margin, page_height-margin, width, margin )
+			barcode_rect = Rect( margin, page_height-margin*1.2+page_y, width, margin*0.8 )
 			draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
 			
 		if name:
 			x = (page_width + barcode_width_max)/2.0
-			name_rect = Rect( x, page_height-margin, page_width-text_margin - x, text_height )
+			name_rect = Rect( x, page_height-margin+page_y, page_width-text_margin - x, text_height )
 			name_rect.draw_text_to_fit( pdf, name, Rect.AlignRight|Rect.AlignMiddle )
 	
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
 	
-def print_body_bib( participant, copies=2 ):
+def print_body_bib( participant, copies=2, onePage=False ):
 	license_holder = participant.license_holder
+	copies = int(copies)
+	onePage = int(onePage)
+	
+	if onePage:
+		widthInches, heightInches = 8.5, 11.0/copies
+	else:
+		widthInches, heightInches = 5.9, 3.9
+	
 	return print_bib_on_rect(
 		participant.bib,
 		license_holder.license_code,
 		u'{} {}'.format(license_holder.first_name, license_holder.last_name),
 		'CrossMgr',
-		5.9, 3.9, copies
+		widthInches, heightInches, copies, onePage
 	)
 	
 def print_shoulder_bib( participant ):

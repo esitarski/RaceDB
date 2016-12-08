@@ -833,6 +833,8 @@ def GetCompetitionForm( competition_cur = None ):
 					Col('ftp_upload_during_race', 4),
 				),
 				Row( HTML('<hr/>') ),
+				Row( Col(Field('bibs_label_print'),3), Col(Field('bibs_laser_print'),3), Col(Field('shoulders_label_print'),3), Col(Field('frame_label_print'),3) ),
+				Row( HTML('<hr/>') ),
 				Row(
 					Col(Field('report_labels',size=8), 2),
 					Col('ga_tracking_id', 4),
@@ -2357,10 +2359,10 @@ def ParticipantPrintBibLabels( request, participantId ):
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	
 @access_validation()
-def ParticipantPrintBodyBib( request, participantId, copies=2 ):
+def ParticipantPrintBodyBib( request, participantId, copies=2, onePage=False ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	system_info = SystemInfo.get_singleton()
-	pdf_str = print_body_bib( participant, copies )
+	pdf_str = print_body_bib( participant, copies, onePage )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
 			tmp_file = get_temp_print_filename( request, participant.bib, 'Body' )

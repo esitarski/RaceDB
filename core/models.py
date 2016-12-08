@@ -599,6 +599,15 @@ class Competition(models.Model):
 	)
 	recurring = models.PositiveSmallIntegerField(choices=RECURRING_CHOICES, default=0, verbose_name=_('Recurring') )
 	
+	bibs_label_print = models.BooleanField( default=False, verbose_name=_("Bibs Label Print"), help_text=_('2 bibs on 2 labels') )
+	bibs_laser_print = models.BooleanField( default=False, verbose_name=_("Bibs Laser Print"), help_text=_('2 bibs on one page') )
+	shoulders_label_print = models.BooleanField( default=False, verbose_name=_("Shoulders Label Print"), help_text=_('2 numbers on 2 labels') )
+	frame_label_print = models.BooleanField( default=False, verbose_name=_("Frame Label Print"), help_text=_('2 frame numbers on 2 labels') )
+	
+	@property
+	def any_print( self ):
+		return self.bibs_label_print or self.bibs_laser_print or self.shoulders_label_print or self.frame_label_print
+	
 	def get_filename_base( self ):
 		return utils.cleanFileName(u'{}-{}'.format( self.name, self.start_date.strftime('%Y-%m-%d'))).replace(' ', '-')
 	
