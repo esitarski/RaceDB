@@ -235,14 +235,14 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
 		
-	margin = min(page_height, page_width) / 18.0
+	margin = min(page_height, page_width) / 17.5
 	sep = margin / 2.5
 	
 	height = page_height - margin*2.0
 	width = page_width - margin*2.0
 	
 	text_margin = margin
-	text_height = margin*0.5
+	text_height = margin*0.4
 	
 	for c in xrange(copies):
 		if c == 0 or not onePage:
