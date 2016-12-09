@@ -1798,10 +1798,13 @@ class LicenseHolder(models.Model):
 		self.uci_id = unicode(self.uci_id).upper().replace(u' ', u'')
 		
 		if not self.uci_id.isdigit():
-			return _(u'uci id must be all numeric')
+			return _(u'uci id must be all digits')
 		
 		if len(self.uci_id) != 11:
-			return _(u'invalid length for uci id')
+			return _(u'invalid length for uci id (must be 11 digits)')
+			
+		if int(self.uci_id[:-2]) % 97 != int(self.uci_id[-2:]):
+			return _(u'uci id check digit error')
 		return None
 	
 	@property
