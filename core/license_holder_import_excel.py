@@ -88,13 +88,6 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			uci_id = v('uci_id', None)
 			date_of_birth	= v('date_of_birth', None)
 			
-			# If no date of birth, try to get it from the UCI code.
-			if not date_of_birth and uci_code:
-				try:
-					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
-				except:
-					pass
-			
 			try:
 				date_of_birth = date_from_value(date_of_birth)
 			except Exception as e:
@@ -102,6 +95,13 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 					i, date_of_birth, ur, e)
 				)
 				date_of_birth = None
+			
+			# If no date of birth, try to get it from the UCI code.
+			if not date_of_birth and uci_code:
+				try:
+					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
+				except:
+					pass
 			
 			# As a last resort, pick the default DOB
 			date_of_birth 	= date_of_birth or invalid_date_of_birth
