@@ -55,7 +55,7 @@ To check what version of python you have, on the command line, enter:
 If this is earlier than python 2.7.9, you need to install pip.
 
 First, make sure you are connect to the internet.
-In your cmd/terminal window, enter:
+In your cmd/terminal window, make sure you are in the RaceDB install folder.  Do a:
 
   cd C:\RaceDB
   
@@ -88,7 +88,12 @@ c)  Return to Step 3 - make sure you close the old "cmd" window and open a new o
 ***********************************************************************
 Step 6:  Install the RaceDB Dependencies
 
-In your cmd/terminal enter:
+In your cmd/terminal window, make sure you are in the RaceDB install folder.  Do a:
+
+  cd C:\RaceDB
+  
+or wherever you unzipped RaceDB.
+Then enter:
 
   Windows:    python dependencies.py
   Linux/Mac:  sudo python dependencies.py
@@ -102,7 +107,7 @@ This may take a few minutes as the modules are downloaded and configured.
 ***********************************************************************
 Step 7:  Set your time zone.
 
-cd to the RaceDB directory.
+Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal entry:
 
     python set_timezone.py
@@ -114,6 +119,7 @@ If you change timezones, make sure you run set_timezone again.
 ***********************************************************************
 Step 8:  Initialize the Database
 
+Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal enter two commands:
 
   python manage.py migrate
@@ -132,6 +138,7 @@ This data includes:
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 Step 8.5:  Initialize Demo Data
 
+Ensure you are cd'd to the RaceDB directory (see above).
 If you want the demo data in your database and play with a tutorial, enter the following:
 
   python manage.py init_demo
@@ -144,6 +151,7 @@ This data includes:
 ***********************************************************************
 Step 9:  Start the RaceDB Server (run RaceDB)
 
+Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal enter:
 
   python manage.py launch
@@ -210,7 +218,6 @@ port=8080
 Upgrading:
 
 These instructions assume that you are running RaceDB 0.3.145 or later.
-Change: it is no longer necessary to do a "migrate" command - it is now done automatically.
 
 The upgrade will preserve your existing database and keep all your information.
 (But, make a backup of your database file, just in case).
@@ -231,6 +238,10 @@ You will see a text scrolling as necessary as the modules are installed.
 
 By patient!
 This may take a few minutes.
+
+Now, perform any database migrations:
+
+  python manage.py migrate
 
 That's it!
 Now, follow Step 9 to launch RaceDB as usual with:
