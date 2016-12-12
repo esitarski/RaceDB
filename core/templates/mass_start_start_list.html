@@ -32,6 +32,7 @@
 		<th class="text-right">{% trans "Start Offset" %}</th>
 		<th>{% trans "Details" %}</th>
 		<th>{% trans "Categories" %}</th>
+		<th class="text-center">{% trans "Nations" %}</th>
 		<th class="text-center">{% trans "Strs" %}</th>
 		{% if late_reg_exists %}<th class="text-center hidden-print">{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
@@ -44,6 +45,7 @@
 			<td class="text-right">{{w.start_offset}}</td>
 			<td>{{w.get_details_html|safe}}</td>
 			<td>{{w.category_count_text}}</td>
+			<td class="text-center">{{w.get_num_nationalities}}</td>
 			<td class="text-center">{{w.get_starters_str}}</td>
 			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">
@@ -81,7 +83,7 @@
 <hr class="page-break-before"/>
 <span class="visible-print">{{instance.competition.name}}, {{instance.name}}, {{instance.date_time}}</span>
 <h4>
-	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Strs" %}: {{w.get_participants.count}}
+	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Nations" %}: {{w.get_num_nationalities}}, {% trans "Strs" %}: {{w.get_participants.count}}
 	{% if request.user.is_superuser %}<a class="btn btn-success btn-xs hidden-print" href="./WaveEdit/{{w.id}}/">{% trans "Edit" %}</a>{% endif %}
 <br/>
 </h4>

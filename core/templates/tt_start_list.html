@@ -61,6 +61,7 @@
 		<th>{% trans "Bad Starts" %}</th>
 		<th>{% trans "Details" %}</th>
 		<th>{% trans "Categories" %}</th>
+		<th class="text-center">{% trans "Nations" %}</th>
 		<th class="text-center">{% trans "Strs" %}</th>
 		{% if late_reg_exists %}<th class="text-center hidden-print">{% trans "Late Reg" %}</th>{% endif %}
 		<th class="hidden-print"></th>
@@ -74,6 +75,7 @@
 			<td>{{w.get_bad_start_count}}</td>
 			<td>{{w.get_details_html|safe}}</td>
 			<td>{{w.category_count_text}}</td>
+			<td class="text-center">{{w.get_num_nationalities}}</td>
 			<td class="text-center">{{w.get_starters_str}}</td>
 			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg.count}}</td>{% endif %}
 			<td class="hidden-print">

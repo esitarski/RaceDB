@@ -1079,11 +1079,7 @@ class CategoryNumbers( models.Model ):
 		verbose_name_plural = _('CategoriesNumbers')
 		
 def get_num_nationalities( participants ):
-	nationalities = set(
-		uci[:3] for uci in participants.values_list('license_holder__uci_code',flat=True)
-			if uci[:3] in uci_country_codes_set
-	)
-	return len(nationalities)
+	return participants.exclude(license_holder__nation_code='').values('license_holder__nation_code').distinct().count()
 
 class Event( models.Model ):
 	competition = models.ForeignKey( Competition, db_index = True )
@@ -1962,14 +1958,21 @@ class LicenseHolder(models.Model):
 		)
 		return (lh for lh in license_holders if lh.has_error)
 	
+	@property
+	def nation_title( self ):
+		country = country_from_ioc(self.nation_code)
+		if country:
+			return u'{} - {}'.format(self.nation_code, country )
+		return self.nation_code
+	
 	def get_uci_html( self ):
-		country = self.uci_country
+		nation_code = self.uci_country
 		uci_code = self.uci_code
-		return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), country, uci_code) ) if country else uci_code
+		return mark_safe('<imgsrc="{}/{}.png" title="{}"/>&nbsp;{}'.format(static('flags'), nation_code, self.nation_title, uci_code) ) if nation_code else uci_code
 	
 	def get_nation_code_html( self ):
 		if self.nation_code and self.nation_code in uci_country_codes_set:
-			return mark_safe('<img src="{}/{}.png"/>&nbsp;{}'.format(static('flags'), self.nation_code, self.nation_code) )
+			return mark_safe('<img src="{}/{}.png" title="{}"/>&nbsp;{}'.format(static('flags'), self.nation_code, self.nation_title, self.nation_code) )
 		else:
 			return self.nation_code
 	
@@ -1981,7 +1984,7 @@ class LicenseHolder(models.Model):
 	
 	def get_flag_uci_id_html( self ):
 		if self.nation_code and self.nation_code in uci_country_codes_set:
-			flag = '<img src="{}/{}.png"/>'.format(static('flags'), self.nation_code)
+			flag = '<img src="{}/{}.png" title="{}"/>'.format(static('flags'), self.nation_code, self.nation_title)
 		else:
 			flag = self.nation_code
 		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) )
