@@ -27,6 +27,7 @@ from init_prereg import init_prereg
 from emails import show_emails
 
 from print_bib import print_bib_tag_label, print_id_label, print_body_bib, print_shoulder_bib
+from gs_cmd import gs_cmd
 
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
@@ -2332,6 +2333,11 @@ def get_temp_print_filename( request, bib, ftype ):
 		)
 	) + '.pdf'
 
+def get_cmd( cmd ):
+	if cmd.strip().startswith('$gswin'):
+		return cmd.replace('$gswin', gs_cmd() or 'gs_not_found', 1)
+	return cmd
+	
 @access_validation()
 def ParticipantPrintBibLabels( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
@@ -2343,7 +2349,7 @@ def ParticipantPrintBibLabels( request, participantId ):
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
-				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
 				stdin=PIPE, stdout=PIPE, stderr=PIPE,
 			)
 			stdout_info, stderr_info = p.communicate( pdf_str )
@@ -2375,7 +2381,7 @@ def ParticipantPrintBodyBib( request, participantId, copies=2, onePage=False ):
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
-				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
 				stdin=PIPE, stdout=PIPE, stderr=PIPE,
 			)
 			stdout_info, stderr_info = p.communicate( pdf_str )
@@ -2407,7 +2413,7 @@ def ParticipantPrintShoulderBib( request, participantId ):
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
-				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
 				stdin=PIPE, stdout=PIPE, stderr=PIPE,
 			)
 			stdout_info, stderr_info = p.communicate( pdf_str )
@@ -2439,7 +2445,7 @@ def ParticipantPrintEmergencyContactInfo( request, participantId ):
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
-				system_info.server_print_tag_cmd.replace('$1', tmp_file), shell=True, bufsize=-1,
+				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
 				stdin=PIPE, stdout=PIPE, stderr=PIPE,
 			)
 			stdout_info, stderr_info = p.communicate( pdf_str )

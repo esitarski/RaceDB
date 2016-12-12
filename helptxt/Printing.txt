@@ -29,19 +29,22 @@ To make this work, you need to specify a command for RaceDB to use to send to th
 
 It is important to include "$1" in the command.  RaceDB will substitute this for the pdf file to print.
 
-If you running in Windows and want to use a standard printer (say, to print pairs of Bib numbers on printable Tyvek sheets), you need to install another program to print from the RaceDB server.
+If you running in Windows and want to use a standard printer (say, to print pairs of Bib numbers on printable Tyvek sheets), you need to install another program to print from the RaceDB server (consult documentation for Linx and Mac, which generally use the "lp" command).
 
 Download Ghostscript from [here](http://www.ghostscript.com/download/gsdnld.html).  Choose from the "GNU Afferno General Public License" column and be careful to pick the 64-bit version if you are running a 64-bit version of Windows (likely).  Otherwise pick the 32-bit version.
 
-Once the .exe has downloaded, double-click on it to install.
+Once the Ghostscript .exe has downloaded, double-click on it to install.
 
 Now, cut-and-paste the following into the RaceDB print command:
 
-    "c:\Program Files\gs\gsV.VV\bin\gswin64.exe" -dBATCH -dNOPAUSE -sDEVICE=mswinpr2 -sOutputFile="%printer%PRINTER_NAME" "$1"
+    $gswin -sOutputFile="%printer%PRINTER_NAME" "$1"
 
-Change V.VV to be the version of Ghostscipt you just installed (9.20 at the time of this writing) and change PRINTER_NAME to be the __exact__ name of the printer you want to print to on your computer (including spaces).  Be sure to preserve all quotes in the command.
+Then change PRINTER_NAME to be the __exact__ name of the printer you want to print to on the RaceDB computer (include any spaces).  Be sure to preserve all $'s and quotes in the command.
+__$gswin__ is a special convenience command that tells RaceDB to call Ghostscript on windows with the appropriate options ("C:\Program Files\gs\gs9.20\bin\gswin64.exe" -dBATCH -dNOPAUSE -sDEVICE=mswinpr2 -sOutputFile="%printer%PRINTER_NAME" "$1").  Of course, if you wish to call your own script or program, you can enter that.)
 
-This will send all print requests PRINTER_NAME.  This is fine for the simple case, however, at some point you may wish to use a number of different label printers to print the bib, shoulder and frame numbers.
+The Ghostscript program will send the printout to PRINTER_NAME.
+
+This is fine for the simple case, however, at some point you may wish to use a number of different label printers to print the bib, shoulder and frame numbers.
 Alternatively, you may wish to have more than one printer and route the request to the printer closest to the reg user.
 
 To do so, you will have to write a more sophisticated command capable of sending print files to different printers (see scripts/LABELS.py for an example).
