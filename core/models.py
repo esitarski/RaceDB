@@ -1366,7 +1366,10 @@ class Event( models.Model ):
 #---------------------------------------------------------------------------------------------------------
 
 class EventMassStart( Event ):
-	
+	def __init__( self, *args, **kwargs ):
+		kwargs['event_type'] = 0
+		super( EventMassStart, self ).__init__( *args, **kwargs )
+			
 	win_and_out = models.BooleanField( default = False, verbose_name = _("Win and Out") )
 
 	class Meta:
