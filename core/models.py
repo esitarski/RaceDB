@@ -1144,6 +1144,12 @@ class Event( models.Model ):
 		for w in self.get_wave_set().all(): 
 			categories |= set( w.categories.all() )
 		return sorted( categories, key = lambda c: c.sequence )
+	
+	def get_result_class( self ):
+		raise NotImplementedError("Please Implement this method")
+			
+	def get_results( self ):
+		return self.get_result_class().objects.filter( event=self )
 
 	def reg_is_late( self, reg_closure_minutes, registration_timestamp ):
 		if reg_closure_minutes < 0:
@@ -1369,7 +1375,10 @@ class EventMassStart( Event ):
 	def __init__( self, *args, **kwargs ):
 		kwargs['event_type'] = 0
 		super( EventMassStart, self ).__init__( *args, **kwargs )
-			
+	
+	def get_result_class( self ):
+		return ResultMassStart
+	
 	win_and_out = models.BooleanField( default = False, verbose_name = _("Win and Out") )
 
 	class Meta:
@@ -2011,6 +2020,138 @@ class Waiver(models.Model):
 		verbose_name = _('Waiver')
 		verbose_name_plural = _('Waivers')
 
+#---------------------------------------------------------------
+#---------------------------------------------------------------
+
+class Result(models.Model):
+	participant = models.ForeignKey( 'Participant', db_index=True )
+	STATUS_CHOICES = (
+		(0, _('Finisher')),
+		(1, _('PUL')),		
+		(2, _('OTB')),
+		(3, _('DNF')),
+		(4, _('DQ')),
+		(5, _('DNS')),
+		(6, _('NP')),
+	)
+	status = models.PositiveSmallIntegerField( default=0, verbose_name=_('Status') )
+	rank = models.PositiveSmallIntegerField( db_index=True, null=True, default=None, verbose_name=_('Rank') )
+	
+	finish_time = DurationField.DurationField( null = True, blank=True, verbose_name=_('Finish Time') )
+	adjustment_time = DurationField.DurationField( default=0.0, blank=True, verbose_name=_('Adjustment Time') )
+	adjustment_note = models.CharField( max_length=128, default='', verbose_name=_('Adjustment Note') )
+	
+	@property
+	def adjusted_finish_time( self ):
+		return (self.finish_time or 0.0) + self.adjustment_time
+	
+	def get_race_time_class( self ):
+		raise NotImplementedError("Please Implement this method")
+		
+	def get_race_time_query( self ):
+		return self.get_race_time_class().objects.filter(result=self)
+		
+	def has_race_times( self ):
+		return self.get_race_time_query().exists()
+	
+	def set_race_times( self, race_times ):
+		self.delete_race_times()
+		if len(race_times) >= 2:
+			RTC = self.get_race_time_class()
+			RTC.objects.bulk_create( [RTC(result=self, race_time=rt) for rt in race_times] )
+			
+	def set_lap_times( self, lap_times ):
+		self.delete_race_times()
+		RTC = self.get_race_time_class()
+		rt = 0.0
+		rts = [RTC(result=self, race_time=rt)]
+		for lt in lap_times:
+			rt += lt
+			rts.append( RTC(result=self, race_time=rt) )
+		if len(rts) > 1:
+			RTC.objects.bulk_create( rts )
+	
+	def add_race_time( self, rt ):
+		self.get_race_time_class()( result=self, race_time=rt ).save()
+		
+	def add_lap_time( self, lt ):
+		rt = self.get_race_query().order_by('-race_time').first()
+		rt_last = rt.race_time if rt else 0.0
+		self.add_race_time( rt_last + lt )
+	
+	def delete_race_times( self ):
+		self.get_race_times_query().delete()
+		
+	def get_race_times( self ):
+		return tuple( rt for rt in self.get_race_time_query().values_list('race_time',flat=True) )
+		
+	def get_race_time( self, lap ):
+		return self.get_race_time_query()[lap]
+	
+	def get_lap_times( self ):
+		race_times = self.get_race_times()
+		return tuple( b - a for b, a in zip(race_times[1:], raceTimes) )
+	
+	def get_lap_time( self, lap ):
+		race_times = list( self.get_race_time_query()[lap-1:lap] )
+		return race_times[1] - race_times[0]
+	
+	class Meta:
+		verbose_name = _('Result')
+		verbose_name_plural = _('Results')
+		abstract = True
+		ordering = ['status', 'rank']
+
+class ResultMassStart(Result):
+	event = models.ForeignKey( 'EventMassStart', db_index=True )
+	def get_race_time_class( self ):
+		return RaceTimeMassStart
+	
+	class Meta:
+		unique_together = (
+			('participant', 'event'),
+		)
+		verbose_name = _('ResultMassStart')
+		verbose_name_plural = _('ResultsMassStart')
+
+class ResultTT(Result):
+	event = models.ForeignKey( 'EventTT', db_index=True )
+	def get_race_time_class( self ):
+		return RaceTimeTT
+	
+	class Meta:
+		unique_together = (
+			('participant', 'event'),
+		)
+		verbose_name = _('ResultTT')
+		verbose_name_plural = _('ResultsTT')
+
+#---------------------------------------------------------------
+
+class RaceTime(models.Model):
+	race_time = DurationField.DurationField( verbose_name=_('Race Time') )
+	
+	class Meta:
+		verbose_name = _('RaceTime')
+		verbose_name_plural = _('RaceTimes')
+		ordering = ['race_time']
+		abstract = True
+
+class RaceTimeMassStart(RaceTime):
+	result = models.ForeignKey( 'ResultMassStart', verbose_name=_('ResultMassStart') )
+	
+	class Meta:
+		verbose_name = _('RaceTimeMassStart')
+		verbose_name_plural = _('RaceTimesMassStart')
+
+class RaceTimeTT(RaceTime):
+	result = models.ForeignKey( 'ResultTT', verbose_name=_('ResultTT') )
+	
+	class Meta:
+		verbose_name = _('RaceTimeTT')
+		verbose_name_plural = _('RaceTimesTT')
+
+#---------------------------------------------------------------
 #---------------------------------------------------------------
 
 class TeamHint(models.Model):
@@ -2715,6 +2856,9 @@ class EventTT( Event ):
 		kwargs['event_type'] = 1
 		super( EventTT, self ).__init__( *args, **kwargs )
 		
+	def get_result_class( self ):
+		return ResultTT
+		
 	create_seeded_startlist = models.BooleanField( default=True, verbose_name=_('Create Seeded Startlist'),
 		help_text=_('If True, seeded start times will be generated in the startlist for CrossMgr.  If False, no seeded times will be generated, and the TT time will start on the first recorded time in CrossMgr.') )
 
@@ -3066,7 +3210,7 @@ class WaveTT( WaveBase ):
 class ParticipantOption( models.Model ):
 	competition = models.ForeignKey( Competition, db_index = True )
 	participant = models.ForeignKey( Participant, db_index = True )
-	option_id = models.PositiveIntegerField( verbose_name = ('Option Id') )
+	option_id = models.PositiveIntegerField( verbose_name = _('Option Id') )
 	
 	@staticmethod
 	@transaction.atomic

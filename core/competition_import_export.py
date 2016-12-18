@@ -364,17 +364,34 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	
 	arr.extend( competition.categorynumbers_set.all() )
 	
+	#-------------------------------------------------------------------
 	arr.extend( competition.eventmassstart_set.all() )
 	arr.extend( Wave.objects.filter(event__competition=competition) )
+	if not export_as_template:
+		arr.extend( ResultMassStart.objects.filter(event__competition=competition) )
+		arr.extend( RaceTimeMassStart.objects.filter(result__event__competition=competition) )
 	
+	#-------------------------------------------------------------------
 	arr.extend( competition.eventtt_set.all() )
-	arr.extend( WaveTT.objects.filter(event__competition=competition) )
+	arr.extend( WaveTT.objects.filter(event__competition=competition) )	
+	if not export_as_template:
+		arr.extend( EntryTT.objects.filter(event__competition=competition) )
+		arr.extend( ResultTT.objects.filter(event__competition=competition) )
+		arr.extend( RaceTimeTT.objects.filter(result__event__competition=competition) )
 	
-	arr.extend( EntryTT.objects.filter(event__competition=competition) )
-	arr.extend( competition.participantoption_set.all() )
-	
+	#-------------------------------------------------------------------
+	if not export_as_template:
+		arr.extend( competition.participantoption_set.all() )
+		
 	if export_as_template:
-		arr = [o for o in arr if not (hasattr(o, 'license_holder') or isinstance(o, LicenseHolder) or isinstance(o, Team))]
+		# Clear any references to participant-specific data.
+		arr = [o for o in arr if not (
+			hasattr(o, 'license_holder') or
+			hasattr(o, 'participant') or
+			hasattr(o, 'result') or
+			isinstance(o, LicenseHolder) or
+			isinstance(o, Team))
+		]
 	
 	# Serialize all the object to json.
 	json_serializer = serializers.get_serializer("json")()
