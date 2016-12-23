@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import math
 import string
 import urllib
 import datetime
@@ -19,6 +20,43 @@ def uniquify(seq, idfun=None):
 			result.append(item) 
 	return result
 
+def format_time_gap( secs, highPrecision=False, separateWithQuotes=True, forceHours=False ):
+	if secs is None:
+		secs = 0
+	if secs < 0:
+		sign = '-'
+		secs = -secs
+	else:
+		sign = ''
+	f, ss = math.modf(secs)
+	secs = int(ss)
+	hours = int(secs // (60*60))
+	minutes = int( (secs // 60) % 60 )
+	secs = (secs % 60) + f
+	if highPrecision:
+		secStr = '{:05.2f}'.format( secs )
+	else:
+		secStr = '{:02d}'.format( int(secs) )	# Truncate fractional seconds.
+	if secStr == '60' or secStr == '60.00':
+		secStr = '00.00' if highPrecision else '00'
+		minutes += 1
+		if minutes == 60:
+			minutes = 0
+			hours += 1
+	
+	if separateWithQuotes:
+		if forceHours or hours > 0:
+			return "{}{}h{}'{}\"".format(sign, hours, minutes, secStr)
+		else:
+			return "{}{}'{}\"".format(sign, minutes, secStr)
+	else:
+		if forceHours or hours > 0:
+			return "{}{}:{:02d}:{}".format(sign, hours, minutes, secStr)
+		else:
+			return "{}{:02d}:{}".format(sign, minutes, secStr)
+
+
+		
 def removeDiacritic( s ):
 	'''
 	Accept a unicode string, and return a normal string (bytes in Python 3)

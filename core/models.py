@@ -2025,21 +2025,30 @@ class Waiver(models.Model):
 
 class Result(models.Model):
 	participant = models.ForeignKey( 'Participant', db_index=True )
-	STATUS_CHOICES = (
-		(0, _('Finisher')),
-		(1, _('PUL')),		
-		(2, _('OTB')),
-		(3, _('DNF')),
-		(4, _('DQ')),
-		(5, _('DNS')),
-		(6, _('NP')),
+	# Figure out how to translate these (FIXLATER).
+	STATUS_CODE_NAMES = (
+		(0, 'Finisher'),
+		(1, 'PUL'),	
+		(2, 'OTB'),
+		(3, 'DNF'),
+		(4, 'DQ'),
+		(5, 'DNS'),
+		(6, 'NP'),
 	)
-	status = models.PositiveSmallIntegerField( default=0, verbose_name=_('Status') )
-	rank = models.PositiveSmallIntegerField( db_index=True, null=True, default=None, verbose_name=_('Rank') )
+	STATUS_CHOICES = STATUS_CODE_NAMES
+	status = models.PositiveSmallIntegerField( default=0, choices=STATUS_CHOICES, verbose_name=_('Status') )
 	
-	finish_time = DurationField.DurationField( null = True, blank=True, verbose_name=_('Finish Time') )
-	adjustment_time = DurationField.DurationField( default=0.0, blank=True, verbose_name=_('Adjustment Time') )
-	adjustment_note = models.CharField( max_length=128, default='', verbose_name=_('Adjustment Note') )
+	category_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Category Rank') )
+	category_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Category Starters') )
+	category_gap = models.CharField( max_length=8, blank=True, default='' )
+	
+	wave_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Wave Rank') )
+	wave_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Wave Starters') )
+	wave_gap = models.CharField( max_length=8, blank=True, default='' )
+	
+	finish_time = DurationField.DurationField( null=True, blank=True, verbose_name=_('Finish Time') )
+	adjustment_time = DurationField.DurationField( default=0.0, null=True, blank=True, verbose_name=_('Adjustment Time') )
+	adjustment_note = models.CharField( max_length=128, default='', blank=True, verbose_name=_('Adjustment Note') )
 	
 	@property
 	def adjusted_finish_time( self ):
@@ -2058,7 +2067,9 @@ class Result(models.Model):
 		self.delete_race_times()
 		if len(race_times) >= 2:
 			RTC = self.get_race_time_class()
-			RTC.objects.bulk_create( [RTC(result=self, race_time=rt) for rt in race_times] )
+			RTC.objects.bulk_create( [RTC(result=self, race_time=DurationField.formatted_timedelta(seconds=rt)) for rt in race_times] )
+			#for rt in race_times:
+			#	RTC(result=self, race_time=DurationField.formatted_timedelta(seconds=rt)).save()
 			
 	def set_lap_times( self, lap_times ):
 		self.delete_race_times()
@@ -2080,7 +2091,7 @@ class Result(models.Model):
 		self.add_race_time( rt_last + lt )
 	
 	def delete_race_times( self ):
-		self.get_race_times_query().delete()
+		self.get_race_time_query().delete()
 		
 	def get_race_times( self ):
 		return tuple( rt for rt in self.get_race_time_query().values_list('race_time',flat=True) )
@@ -2104,6 +2115,7 @@ class Result(models.Model):
 
 class ResultMassStart(Result):
 	event = models.ForeignKey( 'EventMassStart', db_index=True )
+	
 	def get_race_time_class( self ):
 		return RaceTimeMassStart
 	
