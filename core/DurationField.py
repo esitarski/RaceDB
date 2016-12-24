@@ -11,7 +11,7 @@ import math
 
 reDuration = re.compile( r'^[+-]?([0-9]*:)*[0-9]+\.?[0-9]*$' )
 
-def format_seconds( secs ):
+def format_seconds( secs, high_precision=True ):
 	if secs < 0:
 		sgnStr = '-'
 		secs = -secs
@@ -22,7 +22,7 @@ def format_seconds( secs ):
 	hours = seconds // (60*60)
 	minutes = (seconds // 60) % 60
 	seconds %= 60
-	if fraction > 0.000001:
+	if high_precision and fraction > 0.000001:
 		secStr = '{:06.3f}'.format( seconds + fraction )
 	else:
 		secStr = '{:02d}'.format( seconds )
@@ -34,6 +34,12 @@ def format_seconds( secs ):
 class formatted_timedelta(datetime.timedelta):
 	def __repr__( self ):
 		return format_seconds( self.total_seconds() )
+		
+	def format( self, high_precision=True ):
+		return format_seconds( self.total_seconds(), high_precision=True )
+
+	def format_no_decimals( self ):
+		return format_seconds( self.total_seconds(), False )
 
 	def __unicode__( self ):
 		return unicode(self.__repr__())

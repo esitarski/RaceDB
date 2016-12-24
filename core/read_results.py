@@ -3,6 +3,8 @@ import re
 import datetime
 
 from models import *
+import DurationField
+
 from django.utils import timezone
 
 reNonDigit = re.compile( r'[^\d]' )
@@ -121,7 +123,7 @@ def read_results_crossmgr( payload ):
 				event=event,
 				participant=participant,
 				status=name_to_status_code.get(d['status'], 'Finisher'),
-				finish_time=race_times[-1] if race_times else None,
+				finish_time=DurationField.formatted_timedelta(seconds=race_times[-1]) if race_times else None,
 				
 				category_rank=bib_category_rank[bib],
 				category_starters=category_starters[category],

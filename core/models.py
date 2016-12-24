@@ -1138,7 +1138,7 @@ class Event( models.Model ):
 			return self.wave_set
 		except AttributeError:
 			return self.wavett_set
-			
+	
 	def get_categories( self ):
 		categories = set()
 		for w in self.get_wave_set().all(): 
@@ -1151,6 +1151,17 @@ class Event( models.Model ):
 	def get_results( self ):
 		return self.get_result_class().objects.filter( event=self )
 
+	def has_results( self ):
+		return self.get_results().exists()
+	
+	def get_results_num_starters( self ):
+		return self.get_results().exclude(status=Result.cDNS).count()
+	
+	def get_results_num_nationalities( self ):
+		return self.get_results().exclude(
+			status=Result.cDNS).exclude(
+			participant__license_holder__nation_code='').values_list('participant__license_holder__nation_code').distinct().count()
+	
 	def reg_is_late( self, reg_closure_minutes, registration_timestamp ):
 		if reg_closure_minutes < 0:
 			return False
@@ -1467,12 +1478,20 @@ class WaveBase( models.Model ):
 		else:
 			return self.get_participant_options().count()
 	
-	def get_participants( self ):
-		return self.get_participants_unsorted().select_related('license_holder','team').order_by('bib')
+	def get_results( self ):
+		return self.event.get_results().filter(participant__category__in=self.categories.all())
 
-	def get_num_nationalities( self ):
-		return get_num_nationalities( self.get_participants_unsorted().select_related('license_holder') )
-		
+	def has_results( self ):
+		return self.get_results().exists()
+	
+	def get_results_num_starters( self ):
+		return self.get_results().exclude(status=Result.cDNS).count()
+	
+	def get_results_num_nationalities( self ):
+		return self.get_results().exclude(
+			status=Result.cDNS).exclude(
+			participant__license_holder__nation_code='').values_list('participant__license_holder__nation_code').distinct().count()
+	
 	@property
 	def spots_remaining( self ):
 		return None if self.max_participants is None else max(0, self.max_participants - get_participant_count())
@@ -1530,6 +1549,12 @@ class WaveBase( models.Model ):
 			category_count[p.category] += 1
 		return [(category, category_count[category]) for category in sorted(self.categories.all(), key=lambda c: c.sequence)]
 	
+	def get_results_category_count( self ):
+		category_count = defaultdict( int )
+		for rr in self.get_results():
+			category_count[rr.participant.category] += 1
+		return [(category, category_count[category]) for category in sorted(self.categories.all(), key=lambda c: c.sequence) if category_count[category] > 0]
+	
 	@property
 	def category_count_text( self ):
 		return u', '.join( u'{} {}'.format(category.code_gender, category_count) for category, category_count in self.get_category_count() )
@@ -1567,6 +1592,9 @@ class Wave( WaveBase ):
 	start_offset = DurationField.DurationField( default = 0, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
+	
+	def get_results( self ):
+		return self.event.get_results().select_related('participant', 'participant__license_holder').filter( participant__category__in=self.categories.all() )
 	
 	def get_json( self ):
 		js = super(Wave, self).get_json()
@@ -2026,14 +2054,15 @@ class Waiver(models.Model):
 class Result(models.Model):
 	participant = models.ForeignKey( 'Participant', db_index=True )
 	# Figure out how to translate these (FIXLATER).
+	cFinisher, cPUL, cOTB, cDNF, cDQ, cDNS, cNP = range(7)
 	STATUS_CODE_NAMES = (
-		(0, 'Finisher'),
-		(1, 'PUL'),	
-		(2, 'OTB'),
-		(3, 'DNF'),
-		(4, 'DQ'),
-		(5, 'DNS'),
-		(6, 'NP'),
+		(cFinisher, 'Finisher'),
+		(cPUL,	'PUL'),	
+		(cOTB,	'OTB'),
+		(cDNF, 	'DNF'),
+		(cDQ,	'DQ'),
+		(cDNS,	'DNS'),
+		(cNP,	'NP'),
 	)
 	STATUS_CHOICES = STATUS_CODE_NAMES
 	status = models.PositiveSmallIntegerField( default=0, choices=STATUS_CHOICES, verbose_name=_('Status') )
@@ -2051,15 +2080,31 @@ class Result(models.Model):
 	adjustment_note = models.CharField( max_length=128, default='', blank=True, verbose_name=_('Adjustment Note') )
 	
 	@property
+	def time_html( self ):
+		return mark_safe()
+	
+	@property
 	def adjusted_finish_time( self ):
-		return (self.finish_time or 0.0) + self.adjustment_time
+		return DurationField.formatted_timedelta(seconds=self.finish_time.total_seconds() + self.adjustment_time.total_seconds()) if self.finish_time is not None else None
 	
 	def get_race_time_class( self ):
 		raise NotImplementedError("Please Implement this method")
 		
 	def get_race_time_query( self ):
 		return self.get_race_time_class().objects.filter(result=self)
-		
+	
+	@property
+	def wave_rank_html( self ):
+		if self.status != 0:
+			return self.get_status_display()
+		return mark_safe(u'{}.'.format(self.wave_rank))
+	
+	@property
+	def category_rank_html( self ):
+		if self.status != 0:
+			return self.get_status_display()
+		return mark_safe(u'{}.'.format(self.category_rank))
+	
 	def has_race_times( self ):
 		return self.get_race_time_query().exists()
 	
@@ -2068,22 +2113,15 @@ class Result(models.Model):
 		if len(race_times) >= 2:
 			RTC = self.get_race_time_class()
 			RTC.objects.bulk_create( [RTC(result=self, race_time=DurationField.formatted_timedelta(seconds=rt)) for rt in race_times] )
-			#for rt in race_times:
-			#	RTC(result=self, race_time=DurationField.formatted_timedelta(seconds=rt)).save()
 			
 	def set_lap_times( self, lap_times ):
-		self.delete_race_times()
-		RTC = self.get_race_time_class()
-		rt = 0.0
-		rts = [RTC(result=self, race_time=rt)]
+		race_times = [0.0]
 		for lt in lap_times:
-			rt += lt
-			rts.append( RTC(result=self, race_time=rt) )
-		if len(rts) > 1:
-			RTC.objects.bulk_create( rts )
+			race_times.append( race_times[-1] + lt )
+		self.set_race_times( race_times )
 	
 	def add_race_time( self, rt ):
-		self.get_race_time_class()( result=self, race_time=rt ).save()
+		self.get_race_time_class()( result=self, race_time=DurationField.formatted_timedelta(seconds=rt) ).save()
 		
 	def add_lap_time( self, lt ):
 		rt = self.get_race_query().order_by('-race_time').first()
@@ -2111,7 +2149,7 @@ class Result(models.Model):
 		verbose_name = _('Result')
 		verbose_name_plural = _('Results')
 		abstract = True
-		ordering = ['status', 'rank']
+		ordering = ['status', 'wave_rank']
 
 class ResultMassStart(Result):
 	event = models.ForeignKey( 'EventMassStart', db_index=True )
@@ -3071,6 +3109,9 @@ class WaveTT( WaveBase ):
 	def save( self, *args, **kwargs ):
 		init_sequence( WaveTT, self )
 		return super( WaveTT, self ).save( *args, **kwargs )
+	
+	def get_results( self ):
+		return self.event.get_results().filter( participant__category__in=self.categories.all() )
 	
 	def get_speed( self, participant ):
 		try:
