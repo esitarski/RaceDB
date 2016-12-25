@@ -140,4 +140,4 @@ def read_results_crossmgr( payload ):
 			result.save()			
 			result.set_race_times( race_times )
 		
-	return errors, warnings
+	return {'errors': errors, 'warnings': warnings}

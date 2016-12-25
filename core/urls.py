@@ -67,6 +67,8 @@ urlpatterns = [
 	url(r'^(?i).*EventMassStartCrossMgr/(?P<eventId>\d+)/$', views.EventMassStartCrossMgr),
 	url(r'^(?i).*EventMassStartDelete/(?P<eventId>\d+)/$', views.EventMassStartDelete),
 	
+	url(r'^(?i).*UploadCrossMgr/$', views.UploadCrossMgr),
+	
 	url(r'^(?i).*WaveNew/(?P<eventMassStartId>\d+)/$', views.WaveNew),
 	url(r'^(?i).*WaveEdit/(?P<waveId>\d+)/$', views.WaveEdit),
 	url(r'^(?i).*WaveDelete/(?P<waveId>\d+)/$', views.WaveDelete),

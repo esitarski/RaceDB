@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.contrib.auth.views import logout
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.decorators.csrf import csrf_exempt
 
 from subprocess import Popen, PIPE
 import uuid
@@ -28,6 +29,8 @@ from emails import show_emails
 
 from print_bib import print_bib_tag_label, print_id_label, print_body_bib, print_shoulder_bib
 from gs_cmd import gs_cmd
+
+import read_results
 
 from ReadWriteTag import ReadTag, WriteTag
 from FinishLynx import FinishLynxExport
@@ -1545,6 +1548,21 @@ def EventMassStartCrossMgr( request, eventId ):
 		utils.cleanFileName(eventMassStart.name),
 	)
 	return response
+
+@csrf_exempt
+def UploadCrossMgr( request ):
+	payload, response = None, {'errors':[], 'warnings':[]}
+	if request.method == "POST":
+		try:
+			payload = json.loads( request.body.decode('utf-8') )
+		except Exception as e:
+			response['errors'].append( unicode(e) )
+	else:
+		response['errors'].append( u'Request must be of type POST with json payload.' )
+	
+	if payload:
+		response = read_results.read_results_crossmgr( payload )
+	return JsonResponse( response )
 
 #-----------------------------------------------------------------------
 
