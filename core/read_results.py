@@ -9,12 +9,16 @@ from django.utils import timezone
 
 reNonDigit = re.compile( r'[^\d]' )
 def get_event_from_payload( payload ):
-	# Create an timestamp in server time.
 	raceScheduledLocalList = [int(f) for f in reNonDigit.sub( ' ', payload['raceScheduledStart'] ).split()]
 	raceScheduledLocal = datetime.datetime(*raceScheduledLocalList)
 	
-	default_tz = timezone.get_default_timezone()
-	raceScheduledStart = default_tz.localize( raceScheduledLocal )
+	try:
+		tz = pytz.timezone(payload['raceTimeZone'])
+	except Exception as e:
+		# Default to the server timezone.
+		tz = timezone.get_default_timezone()
+	
+	raceScheduledStart = tz.localize( raceScheduledLocal )
 	raceNameText = payload['raceNameText']
 	
 	EventClass = EventTT if payload.get('isTimeTrial', False) else EventMassStart
