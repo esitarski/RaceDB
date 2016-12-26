@@ -5,6 +5,8 @@
 {% load static %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
+{% load good_bad_icon %}
+{% load good_err_icon %}
 
 {% with late_reg_exists=instance.get_late_reg_exists %}
 <h2 class="hidden-print">{{title}}</h2>
@@ -106,7 +108,7 @@
 		{% for p in w.get_participants %}
 			{% with h=p.license_holder %}
 			<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
-				<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
+				<td>{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
 				<td>{{p.license_holder.full_name}}</td>
 				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 				<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>

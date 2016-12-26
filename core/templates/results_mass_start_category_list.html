@@ -34,7 +34,6 @@
 		<th class="text-right">{% trans "Bib" %}</th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
-		<th>{% trans "Category" %}</th>
 		<th>{% trans "License" %}</th>
 		<th>{% trans "UCIID" %}</th>
 		<th class="text-right">{% trans "Time" %}</th>
@@ -49,11 +48,10 @@
 			<td class="text-right">{{p.bib}}</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-			<td>{{p.category.code_gender}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
 			<td class="text-right">{{rr.adjusted_finish_time.format_no_decimals}}</td>
-			<td class="text-right">{{rr.wave_gap}}</td>
+			<td class="text-right">{{rr.category_gap}}</td>
 		</tr>
 		{% endwith %}
 	{% endfor %}

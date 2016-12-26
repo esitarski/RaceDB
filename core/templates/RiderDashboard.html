@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+
+{% load to_js %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
+       'version':'1','packages':['table', 'corechart', 'timeline',]}]}"></script>
+{% endblock srcjavascript %}
+
+{% block style %}
+body { font-family: sans-serif; }
+
+.hidden { display: none; }
+
+div label input {
+   margin-right:220px;
+}
+
+select {
+	font-size: 110%;
+}
+
+@media print { .noprint { display: none; } }
+
+{% endblock style %}
+       
+{% block javascript %}
+google.setOnLoadCallback(onLoad);
+
+var payload = {{payload|to_js}};
+var bib = null;
+var data = null;
+var catDetails = null;
+var raceName = null;
+
+var bibRef = null;
+var categoryCur = null;
+
+Array.prototype.back = function() {
+	return this[this.length-1];
+}
+Array.prototype.binSearch = function( v ) {
+	var L = this.length, i = -1, m;
+	while( L - i > 1 ) {
+		if( this[m = ((L + i)>>1)] < v )
+			i = m;
+		else
+			L = m;
+	}
+	return L;
+}
+
+function getOrdinal( n ) {
+	var s = ['th', 'st', 'nd', 'rd'], v = n%100;
+	return n + (s[(v-20)%10]||s[v]||s[0]);
+}
+
+function byte2Hex(n) {
+	var nybHexString = "0123456789ABCDEF";
+	return String(nybHexString.substr((n >> 4) & 0x0F,1)) + nybHexString.substr(n & 0x0F,1);
+}
+
+function RGB2Color(r,g,b) {
+	return '#' + byte2Hex(r) + byte2Hex(g) + byte2Hex(b);
+}
+
+function makeColorGradient(frequency1, frequency2, frequency3,
+                             phase1, phase2, phase3,
+                             center, width, len)
+{
+	if (len == undefined)      len = 50;
+	if (center == undefined)   center = 128;
+	if (width == undefined)    width = 127;
+
+	var grad = [];
+	for (var i = 0; i <= len; ++i)
+	{
+		var red = Math.sin(frequency1*i + phase1) * width + center;
+		var grn = Math.sin(frequency2*i + phase2) * width + center;
+		var blu = Math.sin(frequency3*i + phase3) * width + center;
+		grad.push( RGB2Color(red,grn,blu) );
+	}
+	return grad.slice(1);  // Skip the first pink colour.
+}
+
+var colors = makeColorGradient(2.4,2.4,2.4,0,2,4,128,127,500);
+
+var catList = [];
+function dataProlog() {
+	if( payload ) { for( v in payload ) window[v] = payload[v]; payload = null; }
+	
+	// Find all the categories that this rider was ranked in.
+	categoryCur = null;
+	for( var i = 0; i < catDetails.length; ++i ) {
+		if( catDetails[i].name == 'All' )
+			continue;
+		
+		var cat = catDetails[i];
+		for( var p = 0; p < cat.pos.length; ++p ) {
+			if( cat.pos[p] == bib ) {
+				cat.place = (p+1) + '/' + cat.pos.length;
+				cat.iCat = i;
+				catList.push( cat );
+				if( !categoryCur || cat.pos.length < categoryCur.pos.length )
+					categoryCur = cat;
+				break;
+			}
+		}
+	}
+	catList.sort( function(x, y) { return x.pos.length - y.pos.length || x.iCat - y.iCat; } );
+	
+	document.getElementById( 'idRaceName' ).innerHTML = raceName;
+}
+
+function GetName( bib ) {
+	var d = data[bib];
+	if( !d )	return '';
+	if( d.LastName && d.FirstName )	return d.FirstName + ' ' + d.LastName;
+	if( d.LastName ) return d.LastName;
+	return d.FirstName;
+}
+
+function GetBibName( bib ) {
+	return bib + ': ' + GetName(bib);
+}
+
+function GetDateFromSecs( t ) {
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = ~~(secs % 60);
+	var ms = (t - secs) * 1000.0;
+	return new Date( 0, 0, 0, h, m, s, ms );
+}
+
+function FormatTimeHMS( t, highPrecision )
+{
+	var tStr = '';
+	if( t < 0 ) {
+		tStr = '-';
+		t = -t;
+	}
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
+	if( h > 0 )
+		tStr += h + 'h' + (m<10?'0':'') + m + 'm' + (s<10?'0':'') + s + 's';
+	else if( m > 0 )
+		tStr += m + 'm' + (s<10?'0':'') + s + 's';
+	else
+		tStr += s + 's';
+	return tStr;
+}
+
+function FormatTime( t, highPrecision )
+{
+	var tStr = '';
+	if( t < 0 ) {
+		tStr = '-';
+		t = -t;
+	}
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
+	if( h > 0 )
+		tStr += h + (m < 10 ? ':0' : ':') + m + (s < 10 ? ':0' : ':') + s;
+	else
+		tStr += m + (s < 10 ? ':0' : ':') + s;
+	return tStr;
+}
+
+function FormatTimeGap( t, highPrecision ) {
+	var tStr = '';
+	if( t < 0 ) {
+		tStr = '-';
+		t = -t;
+	}
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
+	if( h > 0 )
+		tStr += h + (m < 10 ? 'h0' : 'h') + m + (s < 10 ? "'0" : "'") + s;
+	else
+		tStr += m + (s < 10 ? "'0" : "'") + s;
+	tStr += '"';
+	return tStr;
+}
+
+function FormatDistanceGap( d, distanceUnit ) {
+	var suffix = 'behind';
+	if( d < 0 ) {
+		d *= -1;
+		suffix = 'ahead';
+	}
+	if( distanceUnit == 'km' ) {
+		if( d < 0.1 )
+			return (d*1000.0).toFixed(1) + ' m ' + suffix;
+		return d.toFixed(1) + ' ' + distanceUnit + ' ' + suffix;
+	}
+	else {
+		if( d <= 0.1 )
+			return (d*5280.0).toFixed(0) + ' ft ' + suffix;
+		return d.toFixed(1) + ' ' + distanceUnit + ' ' + suffix;
+	}
+}
+
+function getPositionByLap( bibIn ) {
+	var timeLapPosBib = [];
+	for( var i = 0; i < categoryCur.pos.length; ++i ) {
+		var bibCur = categoryCur.pos[i];
+		var d = data[bibCur];
+		for( var r = 1; r < d.raceTimes.length; ++r )
+			timeLapPosBib.push( {time:d.raceTimes[r] - d.raceTimes[0], lap:r, pos:i, bib:bibCur} );
+	}
+	if( timeLapPosBib.length == 0 )
+		return [];
+		
+	timeLapPosBib.sort( function(x, y) {return (x.time - y.time) || (y.lap - x.lap) || (x.pos - y.pos);} );
+	
+	var positionByLap = [];
+	var competitorCount = categoryCur.pos.length;
+	var seenLeader = {}; seenLeader[timeLapPosBib[0].bib] = true;
+	for( var i = 0; i < timeLapPosBib.length; ++i ) {
+		var bibCur = timeLapPosBib[i].bib;
+		if( !seenLeader[bibCur] ) {
+			seenLeader[bibCur] = true;
+			continue;
+		}
+		seenLeader = {}; seenLeader[bibCur] = true;
+		
+		var seen = {};
+		var positionThisLap = [];
+		for( var j = i; j < timeLapPosBib.length && positionThisLap.length < competitorCount; ++j ) {
+			var bibCur = timeLapPosBib[j].bib;
+			if( !seen[bibCur] ) {
+				positionThisLap.push( timeLapPosBib[j] );
+				seen[bibCur] = true;
+			}
+		}
+		positionThisLap.sort( function(x, y) {return (y.lap - x.lap) || (x.time - y.time) || (x.pos - y.pos);} );
+		competitorCount = positionThisLap.length;
+		for( var j = 0; j < positionThisLap.length; ++j ) {
+			if( positionThisLap[j].bib == bibIn ) {
+				positionByLap.push( j + 1 );
+				break;
+			}
+		}
+	}
+	return positionByLap;
+}
+
+function updateCategories() {
+	var categorySelect = document.getElementById( 'idCategorySelect' );
+	categorySelect.innerHTML = '';
+	categoryCur = null;
+	for( var i = 0; i < catList.length; ++i ) {
+		var cat = catList[i];
+		if( !categoryCur )
+			categoryCur = cat;
+		var op = document.createElement( 'option' );
+		op.value = i;
+		op.text = cat.name;
+		op.selected = (cat == categoryCur ? true : false);
+		categorySelect.add( op );
+	}
+	updateCompare();
+}
+
+function updateCategoryResults() {
+	var d = data[bib];
+	var cr = [];
+	for( var i = 0; i < catList.length; ++i ) {
+		cr.push( '<strong>' + catList[i].place + '</strong> in ' + catList[i].name );
+	}
+	cr.push( '<br/><br/>' );
+	if( d.status == 'Finisher' && d.raceTimes && d.raceTimes.length >= 2 ) {
+		var s = 'Finished in ' + FormatTimeHMS(d.raceTimes.back() - d.raceTimes[0], true);
+		if( d.speed )
+			s += ' at ' + d.speed;
+		cr.push( s );
+	}
+	else if( d.status != 'Finisher' )
+		cr.push( d.status );
+	document.getElementById( 'idCategoryResults' ).innerHTML = 'Placed: ' + cr.join('&nbsp;&nbsp;&nbsp;');
+}
+
+function categorySelectChange( select ) {
+	categoryCur = catList[select.options[select.selectedIndex].value];
+	updateCompare();
+	updateCompareDisplays();
+}
+
+function updateCompare() {
+	var categorySelect = document.getElementById( 'idCategorySelect' );
+	var compareSelect = document.getElementById( 'idCompareSelect' );
+	compareSelect.innerHTML = '';
+	bibRef = null;
+	var iBib = null;
+	for( var i = 0; i < categoryCur.pos.length; ++i ) {
+		var bibCur = categoryCur.pos[i];
+		if( bibCur == bib ) {
+			iBib = i;
+			continue;
+		}
+		if( !bibRef )
+			bibRef = bibCur;
+		var d = data[bibCur];
+		if( !(d.raceTimes && d.raceTimes.length >= 2) )
+			continue;
+		if( !(i < 20 || (iBib != null && (iBib-3 < i || i < iBib+2))) )
+			continue;
+		var op = document.createElement( 'option' );
+		op.value = bibCur;
+		op.text = (i+1) + '.  ' + GetName(bibCur);
+		compareSelect.add( op );
+	}
+}
+
+function compareSelectChange( select ) {
+	bibRef = null;
+	if( select.options.length )
+		bibRef = select.options[select.selectedIndex].value;
+	updateCompareDisplays();
+}
+
+function updateLapTable() {
+	var container = document.getElementById( 'idLapTable' );
+	if( !container.table )
+		container.table = new google.visualization.Table( container );
+	
+	var spacer = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+	var d = data[bib];
+	var hasSpeed = (d.speed && d.lapSpeeds && d.lapSpeeds.length > 0);
+	
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn( 'number', 'Lap' );
+	dataTable.addColumn( 'number', 'Lap Time' );
+	dataTable.addColumn( 'number', 'Race Time' + (!hasSpeed ? spacer : '') );
+	if( hasSpeed )
+		dataTable.addColumn( 'number', 'Lap Speed' + ' (' + d.speed.split(' ')[1] + ')' + spacer );
+	
+	for( var r = 1; r < d.raceTimes.length; ++r ) {
+		var lapTime = d.raceTimes[r] - d.raceTimes[r-1];
+		var raceTime = d.raceTimes[r] - d.raceTimes[0];
+		var row = [r, { v:lapTime, f:FormatTime(lapTime, true) }, { v:raceTime, f:FormatTime(raceTime, true) + (!hasSpeed ? spacer : '') }];
+		if( hasSpeed )
+			row.push( { v:d.lapSpeeds[r-1], f:d.lapSpeeds[r-1].toFixed(2) + spacer } );
+		dataTable.addRow( row );
+	}
+	container.table.draw( dataTable, {allowHtml: true} );
+}
+
+function GetGap( bib, bibRef ) {
+	var d = data[bib], dRef = data[bibRef];
+	if( !d || !dRef || !d.raceTimes || !dRef.raceTimes || d.raceTimes.length==0 || dRef.raceTimes.length==0 )
+		return {v:0, f:''};
+	if( d.raceTimes.length != dRef.raceTimes.length ) {
+		var lapsDown = dRef.raceTimes.length - d.raceTimes.length;
+		return {v:lapsDown*1000.0*60.0*60.0, f:-lapsDown + (Math.abs(lapsDown) > 1 ? ' laps' : ' lap') + (lapsDown < 0 ? ' more' : '')};
+	}
+	var g = (d.raceTimes.back() - d.raceTimes[0]) - (dRef.raceTimes.back() - dRef.raceTimes[0]);
+	return {v:g, f:FormatTimeGap(g)};
+}
+function GetGapDistance( bib, bibRef ) {
+	var d = data[bib], dRef = data[bibRef];
+	if( !d || !dRef || !d.raceTimes || !dRef.raceTimes || d.raceTimes.length==0 || dRef.raceTimes.length==0 ||
+		!d.speed )
+		return {v:0, f:''};
+	var speedUnit = d.speed.split(' ')[1];
+	var distanceUnit = (speedUnit.substring(0,1) == 'm' ? 'miles' : 'km');
+	var distance = 0, t = 0;
+	if( d.lapSpeeds && d.lapSpeeds.length > 0 ) {
+		t = (d.raceTimes.back() - d.raceTimes.slice(-2,-1)[0]) / (60.0*60.0);
+		distance = t * d.lapSpeeds.back();
+	}
+	else {
+		t = (d.raceTimes.back() - d.raceTimes[0]) / (60.0*60.0);
+		distance = t * d.speed;
+	}
+	if( d.raceTimes.length != dRef.raceTimes.length ) {
+		var lapsDown = dRef.raceTimes.length - d.raceTimes.length;
+		return {v:lapsDown*distance, f:FormatDistanceGap(lapsDown*distance,distanceUnit)};
+	}
+	var g = ((d.raceTimes.back() - d.raceTimes[0]) - (dRef.raceTimes.back() - dRef.raceTimes[0])) / (60.0*60.0);
+	var distanceGap = (g / t) * distance;
+	return {v:distanceGap, f:FormatDistanceGap(distanceGap, distanceUnit)};
+}
+function GetPlace( bib ) {
+	for( var i = 0; i < categoryCur.pos.length; ++i )
+		if( categoryCur.pos[i] == bib )
+			return {v:i, f:(i+1) + '/' + categoryCur.pos.length};
+	return '';
+}
+function GetTime( bib ) {
+	var d = data[bib];
+	if( !d || !d.raceTimes || !d.raceTimes.length )
+		return {v:0, f:''};
+	var t = d.raceTimes.back() - d.raceTimes[0];
+	return {v:t, f:FormatTime(t, true) };
+}
+
+function GetEstimatedLapTime( bib ) {
+	var d = data[bib];
+	if( !d || !d.raceTimes || d.raceTimes.length < 2 )
+		return 99999999999;
+	if( d.raceTimes > 2 )
+		return (d.raceTimes.back() - d.raceTimes[1]) / (d.raceTimes.length-2);
+	return (d.raceTimes.back() - d.raceTimes[0]) / (d.raceTimes.length-1);
+}
+
+function GetPercentComparison( bib, bibRef ) {
+	var d = data[bib], dRef = data[bibRef];
+	if( !d || !dRef || !d.raceTimes || !dRef.raceTimes || d.raceTimes.length < 2 || dRef.raceTimes.length < 2 )
+		return {v:0, f:''};
+	var t = d.raceTimes.back() - d.raceTimes[0], tRef = dRef.raceTimes.back() - dRef.raceTimes[0];
+	if( d.raceTimes.length < dRef.raceTimes.length )
+		t += GetEstimatedLapTime(bib) * (dRef.raceTimes.length - d.raceTimes.length);
+	else if( d.raceTimes.length > dRef.raceTimes.length )
+		tRef += GetEstimatedLapTime(bibRef) * (d.raceTimes.length - dRef.raceTimes.length);
+	var p = 1.0 - t/tRef;
+	return {v:p, f:(p == 0 ? '' : (Math.abs(p)*100).toFixed(1) + (p<0 ? '% slower' : p>0 ? '% faster' : ''))};
+}
+
+function updateInfoTable() {
+	var container = document.getElementById( 'idInfoTable' );
+	if( !container.table )
+		container.table = new google.visualization.Table( container );
+	
+	var d = data[bib];
+	
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn( 'string', 'Name' );
+	dataTable.addColumn( 'number', 'Place' );
+	dataTable.addColumn( 'number', 'Time' );
+	dataTable.addColumn( 'number', 'Gap' );
+	if( d.speed ) {
+		dataTable.addColumn( 'number', 'Est. Distance' );
+		dataTable.addColumn( 'number', 'Avg Speed' + ' (' + d.speed.split(' ')[1] + ')' );
+	}
+	dataTable.addColumn( 'number', 'Comparison' );
+	
+	for( var i = 0; i < 2; ++i ) {
+		var bibCur = (i == 0 ? bib : bibRef);
+		var gap = (i != 0 ? {v:0,f:''} : GetGap(bib, bibRef));
+		var riderName = GetName(bibCur);
+		var d = data[bibCur];
+		var row = [ GetName(bibCur), GetPlace(bibCur), GetTime(bibCur), gap];
+		if( d.speed ) {
+			row.push( i != 0 ? {v:0,f:''} : GetGapDistance(bib, bibRef) );
+			var s = parseFloat(d.speed.split(' ')[0]);
+			row.push( {v:s, f:s.toFixed(2)} );
+		}
+		row.push( GetPercentComparison(bibCur, bibRef) );
+		dataTable.addRow( row );
+	}
+
+	container.table.draw( dataTable );
+}
+
+function updateGanttChart() {
+	var container = document.getElementById( 'idGanttChart' );
+	if( !container.chart )
+		container.chart = new google.visualization.Timeline( container );
+	
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn( 'string', 'Rider' );
+	dataTable.addColumn( 'string', 'Lap' );
+	dataTable.addColumn( 'date', 'Start' );
+	dataTable.addColumn( 'date', 'End' );
+	
+	var maxLaps = 0;
+	for( var i = 0; i < 2; ++i ) {
+		var bibCur = (i == 0 ? bib : bibRef);
+		var riderName = GetName(bibCur);
+		var d = data[bibCur];
+		if( !d.raceTimes )
+			continue;
+		var tLast = 0.0
+		maxLaps = Math.max( maxLaps, d.raceTimes.length );
+		for( var r = 1; r < d.raceTimes.length; ++r ) {
+			var tNext = tLast + d.raceTimes[r] - d.raceTimes[r-1];
+			dataTable.addRow( [
+				riderName,
+				'Lap ' + r,
+				GetDateFromSecs(tLast),
+				GetDateFromSecs(tNext)] );
+			tLast = tNext;
+		}
+	}
+	
+	var options = {
+		colors: colors.slice( maxLaps+1 ),
+	};
+	container.chart.draw( dataTable, options );
+}
+
+var numLabels = 4;
+function getTimeTicks( tMin, tMax, tFormat ) {
+	var d = (tMax - tMin) / numLabels;
+	var intervals = [0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 20, 30, 1*60, 2*60, 5*60, 10*60, 15*60, 20*60, 30*60, 1*60*60, 2*60*60, 4*60*60, 8*60*60, 12*60*60, 24*60*60, 2*24*60*60, 5*24*60*60, 10*24*60*60, 20*24*60*60, 50*24*60*60 ];
+	d = intervals[intervals.binSearch(d)];
+	var dMin = Math.floor(tMin / d) * d, dMax = Math.floor(tMax / d + 1) * d;
+	var ticks = [];
+	for( var t = dMin; t <= dMax; t += d )
+		ticks.push( {v:t, f:tFormat=='hms' ? FormatTimeHMS(t, d<1) : tFormat=='gap' ? FormatTimeGap(t, d<1) : FormatTime(t,d<1)} );
+	return ticks;
+}
+
+function getPositionTicks( pMin, pMax ) {
+	var d = (pMax - pMin) / numLabels;
+	var intervals = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+	d = intervals[intervals.binSearch(d)];
+	var dMin = Math.max(1, Math.floor(pMin / d) * d), dMax = Math.floor(pMax / d) * d;
+	if( dMax < pMax )
+		dMax += d;
+	var ticks = [];
+	for( var p = dMin; p <= dMax; p += d )
+		ticks.push( {v:p, f:getOrdinal(p)} );
+	return ticks;
+}
+
+function updateLapTimesChart() {
+	var container = document.getElementById( 'idLapTimesChart' );
+	if( !container.chart )
+		container.chart = new google.visualization.LineChart( container );
+	
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn( 'string', 'Lap' );
+	dataTable.addColumn( 'number', GetName(bib) );
+	if( bibRef )
+		dataTable.addColumn( 'number', GetName(bibRef) );
+	
+	var dRef = data[bibRef];
+	var d = data[bib];
+	var tMin = 999999999, tMax = 0.0;
+	var rMax = Math.min(dRef.raceTimes.length, d.raceTimes.length);
+	for( var r = 1; r < rMax; ++r ) {
+		var row = [
+			'' + r,
+			{	v:r < d.raceTimes.length ? d.raceTimes[r] - d.raceTimes[r-1] : 0,
+				f:FormatTimeHMS(r < d.raceTimes.length ? d.raceTimes[r] - d.raceTimes[r-1] : 0)
+			}
+		];
+		if( bibRef )
+			row.push( {	v:dRef.raceTimes[r] - dRef.raceTimes[r-1],
+						f:FormatTimeHMS(dRef.raceTimes[r] - dRef.raceTimes[r-1]) } );
+		for( var k = 1; k < row.length; ++k ) {
+			tMin = Math.min( tMin, row[k].v );
+			tMax = Math.max( tMax, row[k].v );
+		}
+		dataTable.addRow( row );
+	}
+	var timeTicks = getTimeTicks( tMin, tMax, 'hms' );
+	var options = {
+		title: 'Lap Times',
+		vAxis: {
+			title: "lap time",
+			ticks:timeTicks,
+			viewWindow:{ min:timeTicks[0].v, max:timeTicks.back().v }
+		},
+		hAxis: {title: "lap"},
+		colors: ['blue', '#8888FF'],
+		pointSize: 5,
+		chartArea: {left: '10%', width: '70%'},
+		animation: {duration: 250},
+	};
+	container.chart.draw( dataTable, options );
+}
+
+function updateGapChart() {
+	var container = document.getElementById( 'idGapChart' );
+	if( !container.chart )
+		container.chart = new google.visualization.LineChart( container );
+	
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn( 'string', 'Lap' );
+	dataTable.addColumn( 'number', 'Gap' );
+	
+	var dRef = data[bibRef];
+	var d = data[bib];
+	var tMin = 999999999, tMax = 0.0;
+	var rMax = Math.min(dRef.raceTimes.length, d.raceTimes.length);
+	for( var r = 1; r < rMax; ++r ) {
+		var ab = bibRef ? (d.raceTimes[r] - d.raceTimes[0]) - (dRef.raceTimes[r] - dRef.raceTimes[0]) : 0.0;
+		tMin = Math.min( tMin, ab );
+		tMax = Math.max( tMax, ab );
+		dataTable.addRow( [ '' + r, {v: ab, f: FormatTimeHMS(ab)} ] );
+	}
+	var timeTicks = getTimeTicks( tMin, tMax, 'gap' );
+	var options = {
+		title: 'Gap: ' + GetName(bib) + ' \u21E8 ' + GetName(bibRef),
+		vAxis: {
+			title: "gap",
+			ticks:timeTicks,
+			viewWindow:{min:timeTicks[0].v, max:timeTicks.back().v}
+		},
+		hAxis: {title: "lap"},
+		colors: ['blue'],
+		legend: 'none',
+		pointSize: 5,
+		chartArea: {left: '10%', width: '70%'},
+		animation: {duration: 250},
+	};
+	container.chart.draw( dataTable, options );
+}
+
+function updateLapPositionChart() {
+	var container = document.getElementById( 'idLapPositionChart' );
+	if( !container.chart )
+		container.chart = new google.visualization.LineChart( container );
+	
+	var pos1 = getPositionByLap( bib );
+	var pos2 = bibRef ? getPositionByLap( bibRef ) : [];
+	
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn( 'string', 'Lap' );
+	dataTable.addColumn( 'number', GetName(bib) );
+	if( bibRef )
+		dataTable.addColumn( 'number', GetName(bibRef) );
+	
+	var dLeader = data[bibRef];
+	var d = data[bib];
+	var positionMin = 999999, positionMax = 0;
+	var iMax = Math.min(pos1.length, pos2.length);
+	for( var i = 0; i < iMax; ++i ) {
+		var row = [ '' + (i+1), pos1[i]];
+		positionMin = Math.min(positionMin, pos1[i]);
+		positionMax = Math.max(positionMax, pos1[i]);
+		if( bibRef ) {
+			row.push( pos2[i] );
+			positionMin = Math.min(positionMin, pos2[i]);
+			positionMax = Math.max(positionMax, pos2[i]);
+		}
+		dataTable.addRow( row );
+	}
+	tickMarks = getPositionTicks( positionMin, positionMax );
+	var options = {
+		title: 'Race Position by Lap',
+		vAxis: {
+				title: "position",
+				direction:-1,
+				ticks:tickMarks,
+				minValue:positionMin,
+				maxValue:positionMax,
+				viewWindow:{ min:tickMarks[0], max:tickMarks.back() }
+		},
+		hAxis: {title: "lap"},
+		colors: ['blue', '#8888FF'],
+		pointSize: 5,
+		chartArea: {left: '10%', width: '70%'},
+		animation: {duration: 250},
+	};
+	container.chart.draw( dataTable, options );
+}
+
+function updateCompareDisplays() {
+	updateInfoTable();
+	updateGanttChart();
+	updateLapTimesChart();
+	updateGapChart();
+	updateLapPositionChart();
+}
+{% endblock javascript %}
+
+{% block onload %}
+	dataProlog();
+	var d = data[bib];
+	document.getElementById('idHeader').innerHTML = GetBibName(bib) + (d.Team ? ' (' + d.Team + ')' : '');
+	updateCategoryResults();
+	updateCategories();
+	updateLapTable();
+	updateCompareDisplays();
+{% endblock onload %}
+
+{% block content %}
+
+<h1 id="idHeader"></h1>
+<h4 id="idRaceName">Race Name</h4>
+<p id="idCategoryResults">Category Results</p>
+<div id="idLapTable" style="height: 190px;"></div>
+<br/>
+Compare&nbsp;to:&nbsp;<select id="idCompareSelect" onchange="compareSelectChange(this)"></select>&nbsp;&nbsp;&nbsp;&nbsp;Category:&nbsp;<select id="idCategorySelect" onchange="categorySelectChange(this)"></select>
+<br/><br/>
+<div id="idInfoTable" style="height: 80px;"></div>
+<br/>
+<div id="idGanttChart" style="width: 720px; height: 136px;"></div>
+<div id="idLapTimesChart" style="width: 900px; height: 180px;"></div>
+<div id="idGapChart" style="width: 900px; height: 180px;"></div>
+<div id="idLapPositionChart" style="width: 900px; height: 180px;"></div>
+{% endblock content %}
+

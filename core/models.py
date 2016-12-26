@@ -1145,6 +1145,12 @@ class Event( models.Model ):
 			categories |= set( w.categories.all() )
 		return sorted( categories, key = lambda c: c.sequence )
 	
+	def get_wave_for_category( self, category ):
+		for w in self.get_wave_set().all():
+			if category in list( w.categories.all() ):
+				return w
+		return None
+	
 	def get_result_class( self ):
 		raise NotImplementedError("Please Implement this method")
 			
@@ -1477,6 +1483,9 @@ class WaveBase( models.Model ):
 			).count()
 		else:
 			return self.get_participant_options().count()
+	
+	def get_participants( self ):
+		return self.get_participants_unsorted().order_by('bib')
 	
 	def get_results( self ):
 		return self.event.get_results().filter(participant__category__in=self.categories.all())
@@ -1962,6 +1971,17 @@ class LicenseHolder(models.Model):
 			license_holder=self, role=Participant.Competitor, category__isnull=False
 		).order_by( '-competition__start_date' )
 	
+	def get_results( self, past_event_date_time_max = None ):
+		results = []
+		select_related = ('event', 'event__competition', 'participant', 'participant__team', 'participant__category')
+		q = Q( participant__license_holder=self )
+		if past_event_date_time_max:
+			q &= Q( event__date_time__ge=past_event_date_time_max )
+		for ResultClass in (ResultMassStart, ResultTT):
+			results.extend( list(ResultClass.objects.select_related(*select_related).filter(q)) )
+		results.sort( key=operator.attrgetter('event.date_time'), reverse=True )
+		return results
+	
 	def get_tt_metric( self, ref_date ):
 		years = (ref_date - self.date_of_birth).days / 365.26
 		dy = years - 24.0	# Fastest estimated year.
@@ -2087,6 +2107,10 @@ class Result(models.Model):
 	def adjusted_finish_time( self ):
 		return DurationField.formatted_timedelta(seconds=self.finish_time.total_seconds() + self.adjustment_time.total_seconds()) if self.finish_time is not None else None
 	
+	@property
+	def status_text( self ):
+		return self.STATUS_CODE_NAMES[self.status][1]
+	
 	def get_race_time_class( self ):
 		raise NotImplementedError("Please Implement this method")
 		
@@ -2098,6 +2122,28 @@ class Result(models.Model):
 		if self.status != 0:
 			return self.get_status_display()
 		return mark_safe(u'{}.'.format(self.wave_rank))
+	
+	@property
+	def category_result_html( self ):
+		if self.status == 0:
+			rank = self.category_rank
+			gap = u' ({})'.format(self.category_gap) if self.category_gap else ''
+		else:
+			rank = self.get_status_display()
+			gap = ''
+		rank = self.category_rank if self.status == 0 else self.get_status_display()
+		return mark_safe(u'{}/{}{}'.format(rank, self.category_starters, gap))	
+	
+	@property
+	def wave_result_html( self ):
+		if self.status == 0:
+			rank = self.wave_rank
+			gap = u' ({})'.format(self.wave_gap) if self.wave_gap else ''
+		else:
+			rank = self.get_status_display()
+			gap = ''
+		rank = self.wave_rank if self.status == 0 else self.get_status_display()
+		return mark_safe(u'{}/{}{}'.format(rank, self.wave_starters, gap))
 	
 	@property
 	def category_rank_html( self ):
@@ -2132,7 +2178,7 @@ class Result(models.Model):
 		self.get_race_time_query().delete()
 		
 	def get_race_times( self ):
-		return tuple( rt for rt in self.get_race_time_query().values_list('race_time',flat=True) )
+		return [ rt for rt in self.get_race_time_query().values_list('race_time',flat=True) ]
 		
 	def get_race_time( self, lap ):
 		return self.get_race_time_query()[lap]

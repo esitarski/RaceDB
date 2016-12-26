@@ -63,9 +63,9 @@
 	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Nations" %}: {{w.get_results_num_nationalities}}, {% trans "Strs" %}: {{w.get_results_num_starters}}
 <br/>
 </h4>
-<h5 style="margin-top: 8px">{% trans "Categories" %}:
+<h5 class='hidden-print' style="margin-top: 8px">{% trans "Categories" %}:
 {% for cat, cnt in w.get_results_category_count %}
-	&nbsp;<a class="btn btn-primary hidden-print" href="{{path}}ResultsMassStartCategory/{{event.id}}/{{cat.id}}">{{cat.code_gender}} ({{cnt}})</a>
+	&nbsp;<a class="btn btn-primary" href="{{path}}ResultsMassStartCategory/{{event.id}}/{{cat.id}}">{{cat.code_gender}} ({{cnt}})</a>
 {% endfor %}
 </h5>
 {% spaceless %}
