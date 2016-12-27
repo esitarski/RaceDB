@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% load to_js %}
+{% load i18n %}
+{% load static %}
+{% load staticfiles %}
 
 {% block srcjavascript %}
 <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
@@ -8,8 +11,6 @@
 {% endblock srcjavascript %}
 
 {% block style %}
-body { font-family: sans-serif; }
-
 .hidden { display: none; }
 
 div label input {
@@ -679,7 +680,15 @@ function updateCompareDisplays() {
 
 <h1 id="idHeader"></h1>
 <h4 id="idRaceName">Race Name</h4>
-<p id="idCategoryResults">Category Results</p>
+
+<div class="hidden-print">
+<hr/>
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<button class="btn btn-primary" id="focus" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
+<hr/>
+</div>
+<h4 id="idCategoryResults">Category Results</h4>
 <div id="idLapTable" style="height: 190px;"></div>
 <br/>
 Compare&nbsp;to:&nbsp;<select id="idCompareSelect" onchange="compareSelectChange(this)"></select>&nbsp;&nbsp;&nbsp;&nbsp;Category:&nbsp;<select id="idCategorySelect" onchange="categorySelectChange(this)"></select>

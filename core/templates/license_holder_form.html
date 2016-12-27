@@ -47,6 +47,7 @@ $("form").submit(function(event) {
 		<th>{% trans "Cat. Result" %}</th>
 		<th>{% trans "Wave Result" %}</th>
 		<th></th>
+		<th></th>
 	</tr>
 </thead>
 <tbody>
@@ -61,7 +62,8 @@ $("form").submit(function(event) {
 		<td>{{rr.event.competition.discipline.name}}</td>
 		<td>{{rr.category_result_html}}</td>
 		<td>{% if rr.wave_starters != rr.category_starters %}{{rr.wave_result_html}}{% endif %}</td>
-		<td><a class="btn btn-success btn-xs" href="./ResultMassStartRiderDashboard/{{rr.id}}/">{% trans "Analysis" %}</a>
+		<td><a class="btn btn-primary btn-xs" href="./ResultsMassStartCategory/{{rr.event.id}}/{{rr.participant.category.id}}/">{% trans "Results" %}</a>
+		<td><a class="btn btn-primary btn-xs" href="./ResultMassStartRiderAnaysis/{{rr.id}}/">{% trans "Analysis" %}</a>
 	</tr>
 	{% endfor %}
 </tbody>

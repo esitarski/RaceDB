@@ -88,15 +88,12 @@ def ResultsMassStartCategory( request, eventId, categoryId ):
 	num_starters = results.exclude( status=Result.cDNS ).count()
 	return render( request, 'results_mass_start_category_list.html', locals() )
 
-def ResultsMassStartDashboard( request, eventId, participantId, categoryId = None ):
-	event = get_object_or_404( EventMassStart, pk=eventId )
-	participant = get_object_or_404( Participant, participantId )
-	category = get_object_or_404( Category, categoryId ) if categoryId else None
-
-def ResultMassStartRiderDashboard( request, resultId, by_wave=False ):
+def ResultMassStartRiderAnaysis( request, resultId, by_wave=False ):
 	result = get_object_or_404( ResultMassStart, pk=resultId )
 	payload = get_payload_for_result( result, by_wave )
 	return render( request, 'RiderDashboard.html', locals() )
+
+#---------------------------------------------------------------------------------------------
 	
 def ResultsTT( request, eventId ):
 	time_stamp = datetime.datetime.now()
