@@ -21,6 +21,7 @@
 				<th></th>
 				<th>{% trans "Wave" %}</th>
 				<th>{% trans "Categories" %}</th>
+				<th>{% trans "Rank Together" %}</th>
 				<th>{% trans "Gap Rules" %}</th>
 				<th>{% trans "Nat." %}</th>
 				<th>{% trans "Strs" %}</th>
@@ -35,6 +36,7 @@
 					<td class="text-right">{{forloop.counter}}</td>
 					<td>{{w.name}}</td>
 					<td>{{w.category_text_html|safe}}</td>
+					<td>{{w.rank_categories_together}}</td>
 					<td>{{w.gap_rules_html|safe}}</td>
 					<td>{{w.get_num_nationalities}}</td>
 					<td>{{w.get_participants|length}}</td>

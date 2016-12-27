@@ -92,6 +92,7 @@ function dataProlog() {
 	
 	// Find all the categories that this rider was ranked in.
 	categoryCur = null;
+	catList = [];
 	for( var i = 0; i < catDetails.length; ++i ) {
 		if( catDetails[i].name == 'All' )
 			continue;

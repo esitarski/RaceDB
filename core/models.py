@@ -1134,10 +1134,7 @@ class Event( models.Model ):
 			ParticipantOption.set_event_option_id( self.competition, self )
 	
 	def get_wave_set( self ):
-		try:
-			return self.wave_set
-		except AttributeError:
-			return self.wavett_set
+		return self.wave_set if self.event_type == 0 else self.wavett_set
 	
 	def get_categories( self ):
 		categories = set()
@@ -1146,10 +1143,7 @@ class Event( models.Model ):
 		return sorted( categories, key = lambda c: c.sequence )
 	
 	def get_wave_for_category( self, category ):
-		for w in self.get_wave_set().all():
-			if category in list( w.categories.all() ):
-				return w
-		return None
+		return self.get_wave_set().filter(categories=category).first()
 	
 	def get_result_class( self ):
 		raise NotImplementedError("Please Implement this method")
@@ -1411,6 +1405,10 @@ class WaveBase( models.Model ):
 	
 	max_participants = models.PositiveIntegerField( null = True, blank = True, verbose_name = _('Max Participants') )
 	
+	rank_categories_together = models.BooleanField( default=False, verbose_name = _("Rank Categories Together"),
+		help_text=_('If False, Categories in the Wave will be ranked seperately.  If True, all Categories in the Wave will be ranked together.')
+	)
+	
 	@property
 	def distance_unit( self ):
 		return self.event.competition.get_distance_unit_display() if self.event else ''
@@ -1486,6 +1484,10 @@ class WaveBase( models.Model ):
 	
 	def get_participants( self ):
 		return self.get_participants_unsorted().order_by('bib')
+	
+	def get_num_nationalities( self ):
+		return self.get_participants_unsorted().exclude(
+			license_holder__nation_code='').values_list('license_holder__nation_code').distinct().count()
 	
 	def get_results( self ):
 		return self.event.get_results().filter(participant__category__in=self.categories.all())
@@ -2099,6 +2101,8 @@ class Result(models.Model):
 	adjustment_time = DurationField.DurationField( default=0.0, null=True, blank=True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length=128, default='', blank=True, verbose_name=_('Adjustment Note') )
 	
+	ave_kmh = models.FloatField( default=0.0, null=True, blank=True, verbose_name=_('Ave km/h') )
+	
 	@property
 	def time_html( self ):
 		return mark_safe()
@@ -2151,35 +2155,70 @@ class Result(models.Model):
 			return self.get_status_display()
 		return mark_safe(u'{}.'.format(self.category_rank))
 	
+	@property
+	def result_html( self ):
+		wave = self.event.get_wave_for_category( self.participant.category )
+		return self.wave_result_html if wave.rank_categories_together else self.category_result_html
+	
 	def has_race_times( self ):
 		return self.get_race_time_query().exists()
 	
-	def set_race_times( self, race_times ):
+	def set_race_times( self, race_times, lap_speeds=[] ):
 		self.delete_race_times()
+		if len(lap_speeds) < len(race_times)-1:
+			lap_speeds.extend( [0.0] * (len(race_times) - 1 - len(lap_speeds) ) )
 		if len(race_times) >= 2:
 			RTC = self.get_race_time_class()
-			RTC.objects.bulk_create( [RTC(result=self, race_time=DurationField.formatted_timedelta(seconds=rt)) for rt in race_times] )
+			RTC.objects.bulk_create( [
+				RTC(
+					result=self,
+					race_time=DurationField.formatted_timedelta(seconds=rt),
+					lap_kmh=lap_speeds[i-1] if i > 0 else 0.0,
+				) for i, rt in enumerate(race_times)
+			])
 			
-	def set_lap_times( self, lap_times ):
+	def set_lap_times( self, lap_times, lap_speeds=[] ):
 		race_times = [0.0]
 		for lt in lap_times:
 			race_times.append( race_times[-1] + lt )
-		self.set_race_times( race_times )
+		self.set_race_times( race_times, lap_speeds )
 	
-	def add_race_time( self, rt ):
-		self.get_race_time_class()( result=self, race_time=DurationField.formatted_timedelta(seconds=rt) ).save()
+	def add_race_time( self, rt, lk=0.0 ):
+		self.get_race_time_class()( result=self, race_time=DurationField.formatted_timedelta(seconds=rt), lap_kmh=lk ).save()
 		
-	def add_lap_time( self, lt ):
+	def add_lap_time( self, lt, lk=0.0 ):
 		rt = self.get_race_query().order_by('-race_time').first()
 		rt_last = rt.race_time if rt else 0.0
-		self.add_race_time( rt_last + lt )
+		self.add_race_time( rt_last + lt, lap_kmh=lk )
 	
 	def delete_race_times( self ):
 		self.get_race_time_query().delete()
 		
 	def get_race_times( self ):
-		return [ rt for rt in self.get_race_time_query().values_list('race_time',flat=True) ]
+		return [ rt.total_seconds() for rt in self.get_race_time_query().values_list('race_time',flat=True) ]
+	
+	def get_lap_kmh( self ):
+		lap_kmh = []
+		for lk in self.get_race_time_query().values_list('lap_kmh',flat=True)[1:]:
+			if not lk:
+				return []
+			lap_kmh.append( lk )
+		return lap_kmh
 		
+	def get_lap_km( self ):
+		lap_km = []
+		t_last = None
+		for rt in self.get_race_time_query():
+			t_cur = rt.race_time.total_seconds()
+			if t_last is None:
+				t_last = t_cur
+				continue
+			if not rt.lap_kmh:
+				return []
+			lap_km.append( rt.lap_km * (t_cur - t_last)/(60.0*60.0) )
+			t_last = t_cur
+		return lap_km
+	
 	def get_race_time( self, lap ):
 		return self.get_race_time_query()[lap]
 	
@@ -2226,6 +2265,7 @@ class ResultTT(Result):
 
 class RaceTime(models.Model):
 	race_time = DurationField.DurationField( verbose_name=_('Race Time') )
+	lap_kmh = models.FloatField( blank=True, default=0.0, verbose_name=_('Lap km/h') )
 	
 	class Meta:
 		verbose_name = _('RaceTime')

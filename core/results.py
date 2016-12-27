@@ -3,16 +3,17 @@ import datetime
 from django.utils.translation import ugettext_lazy as _
 from views import license_holders_from_search_text
 
-def get_payload_for_result( result, by_wave = False ):
+def get_payload_for_result( result ):
 	category = result.participant.category
 	event = result.event
-	if by_wave:
-		wave = result.event.get_wave_for_category(category)
+	competition = event.competition
+	wave = event.get_wave_for_category( category )
+	if wave.rank_categories_together:
 		results = wave.get_results()
 		cat_name = wave.name
 		cat_type = 'Start Wave'
 	else:
-		results = result.event.get_results().filter( participant__category=category ).order_by('status','category_rank')
+		results = event.get_results().filter( participant__category=category ).order_by('status','category_rank')
 		cat_name = category.code_gender
 		cat_type = 'Component'
 	
@@ -28,11 +29,20 @@ def get_payload_for_result( result, by_wave = False ):
 	data = {}
 	race_times_all = []
 	pos = []
+	raceDistance = None
+	distance = None
+	firstLapDistance = None
+	lapDistance = None
+	
+	units_conversion = 1.0 if competition.distance_unit == 0 else 0.621371
+	speed_unit = 'km/h' if competition.distance_unit == 0 else 'mph'
+	distance_unit = 'km' if competition.distance_unit == 0 else 'miles'
+	
 	for rr in results:
 		p = rr.participant
 		h = p.license_holder
-		race_times = [rt.total_seconds() for rt in rr.get_race_times()]
-		data[rr.participant.bib] = {
+		race_times = rr.get_race_times()
+		d = {
 			'LastName': h.last_name,
 			'FirstName': h.first_name,
 			'Team':		p.team.name if p.team else u'',
@@ -49,8 +59,29 @@ def get_payload_for_result( result, by_wave = False ):
 			'lastTimeOrig': race_times[-1] if race_times else 0.0,
 			'status':	rr.status_text,
 		}
-		race_times_all.append( race_times )
+		if rr.ave_kmh:
+			d['speed'] = u'{:.2f} {}'.format(rr.ave_kmh*units_conversion, speed_unit)
+			if raceDistance is None and race_times:
+				raceDistance = units_conversion * rr.ave_kmh * (race_times[-1] - race_times[0])/(60.0*60.0)
+		
+		lap_speeds = rr.get_lap_kmh()
+		if lap_speeds:
+			if units_conversion != 1.0:
+				lap_speeds = [s*units_conversion for s in lap_speeds]
+			d['lapSpeeds'] = lap_speeds
+			if firstLapDistance is None:
+				try:
+					firstLapDistance = lap_speeds[0] * (race_times[1] - race_times[0])/(60.0*60.0)
+				except:
+					pass
+				try:
+					lapDistance = lap_speeds[1] * (race_times[2] - race_times[1])/(60.0*60.0)
+				except:
+					pass
+				
+		data[p.bib] = d
 		pos.append( p.bib )
+		race_times_all.append( race_times )
 		
 	gapValue = []
 	winner_finish = race_times_all[0][-1]
@@ -61,16 +92,21 @@ def get_payload_for_result( result, by_wave = False ):
 		else:
 			gapValue.append( rt[-1] - winner_finish )
 	
-	payload['catDetails'] = [
-		{
-			'name':	cat_name,
-			'catType':cat_type,
-			'pos': pos,
-			'gapValue': gapValue,
-			'laps':	winner_laps,
-			'startOffset': 0,
-		},
-	]
+	catDetails = {
+		'name':	cat_name,
+		'catType':cat_type,
+		'pos': pos,
+		'gapValue': gapValue,
+		'laps':	winner_laps,
+		'startOffset': 0,
+	}
+	if raceDistance:
+		catDetails['raceDistance'] = raceDistance
+	if firstLapDistance and firstLapDistance != lapDistance:
+		catDetails['firstLapDistance'] = firstLapDistance
+	if lapDistance:
+		catDetails['lapDistance'] = lapDistance
+	payload['catDetails'] = [catDetails]
 	payload['data'] = data
 	return payload
 
@@ -80,17 +116,21 @@ def ResultsMassStart( request, eventId ):
 	return render( request, 'results_mass_start_list.html', locals() )
 
 def ResultsMassStartCategory( request, eventId, categoryId ):
-	time_stamp = datetime.datetime.now()
 	event = get_object_or_404( EventMassStart, pk=eventId )
 	category = get_object_or_404( Category, pk=categoryId )
-	results = event.get_results().filter( participant__category=category ).order_by('status','category_rank')
+	wave = event.get_wave_for_category( category )
+	if wave.rank_categories_together:
+		results = wave.get_results()
+	else:
+		results = event.get_results().filter( participant__category=category ).order_by('status','category_rank')
 	num_nationalities = results.exclude(participant__license_holder__nation_code='').values('participant__license_holder__nation_code').distinct().count()
 	num_starters = results.exclude( status=Result.cDNS ).count()
+	time_stamp = datetime.datetime.now()
 	return render( request, 'results_mass_start_category_list.html', locals() )
 
-def ResultMassStartRiderAnaysis( request, resultId, by_wave=False ):
+def ResultMassStartRiderAnaysis( request, resultId ):
 	result = get_object_or_404( ResultMassStart, pk=resultId )
-	payload = get_payload_for_result( result, by_wave )
+	payload = get_payload_for_result( result )
 	return render( request, 'RiderDashboard.html', locals() )
 
 #---------------------------------------------------------------------------------------------

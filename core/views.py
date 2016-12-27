@@ -1607,6 +1607,7 @@ def GetWaveForm( event_mass_start, wave = None ):
 				),
 				Row(
 					Col(Field('categories', size=12, css_class='hidden-print'), 6),
+					Col(Field('rank_categories_together'), 3),
 				),
 			)
 			addFormButtons( self, button_mask )

@@ -100,6 +100,8 @@ def read_results_crossmgr( payload ):
 		if cd['catType'] != 'Start Wave' or cd['name'] == 'All':
 			continue
 		
+		distance_unit = cd.get('distanceUnit', 'km')
+		unit_conversion = 1.0 if distance_unit == 'km' else 1.609344
 		wave_starters = cd['starters']
 		for wave_rank, bib in enumerate(cd['pos'], 1):
 			try:
@@ -123,6 +125,17 @@ def read_results_crossmgr( payload ):
 			if len(race_times) < 2:
 				race_times = []
 			
+			lap_speeds = [ls*unit_conversion for ls in d.get('lapSpeeds',[])]
+			
+			ave_kmh = None
+			speed = d.get('speed',0.0)
+			if speed:
+				try:
+					s, u = speed.split()
+					ave_kmh = float(s) * unit_conversion
+				except:
+					pass
+			
 			fields = dict(
 				event=event,
 				participant=participant,
@@ -135,13 +148,15 @@ def read_results_crossmgr( payload ):
 				
 				wave_rank=wave_rank,
 				wave_starters=wave_starters,
-				wave_gap = format_gap( cd, wave_rank )
+				wave_gap = format_gap( cd, wave_rank ),
 			)
 			add_if_exists( fields, 'adjustment_time', d, 'ttPenalty' )
 			add_if_exists( fields, 'adjustment_note', d, 'ttNote' )
+			if ave_kmh:
+				fields['ave_kmh'] = ave_kmh
 
 			result = Result( **fields )
 			result.save()			
-			result.set_race_times( race_times )
+			result.set_race_times( race_times, lap_speeds )
 		
 	return {'errors': errors, 'warnings': warnings}
