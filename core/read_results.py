@@ -122,7 +122,7 @@ def read_results_crossmgr( payload ):
 				participant = competition.participant_set.filter( bib=bib, category=category ).first()
 			if not participant and d.get('LastName', ''):
 				participant = competition.participant_set.filter(
-					license_holder__startswith=utils.get_search_text( [d.get('LastName',''), d.get('FirstName','')] ),
+					license_holder__search_text__startswith=utils.get_search_text( [d.get('LastName',''), d.get('FirstName','')] ),
 					category=category
 				).first()
 			
