@@ -46,7 +46,7 @@ table.participant_table tr th {
 	{% for rr in results %}
 		{% with p=rr.participant h=rr.participant.license_holder %}
 		<tr>
-			<td class="text-right">{% if wave.rank_categories_together %}{{rr.wave_rank}}{% else %}{{rr.category_rank}}{% endif %}</td>
+			<td class="text-right">{% if wave.rank_categories_together %}{{rr.wave_rank_html}}{% else %}{{rr.category_rank_html}}{% endif %}</td>
 			<td class="text-right">{{p.bib}}</td>
 			<td><a href="{{cancelUrl}}LicenseHolderEdit/{{h.id}}">{{h.full_name}}</a></td>
 			<td>{% if p.team %}<a href="./TeamEdit/{{p.team.id}}">{{p.team.name}}</a>{% endif %}</td>

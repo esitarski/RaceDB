@@ -1562,6 +1562,7 @@ def UploadCrossMgr( request ):
 	
 	if payload:
 		response = read_results.read_results_crossmgr( payload )
+	print 'UploadCrossMgr', response
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------

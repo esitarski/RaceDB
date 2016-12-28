@@ -37,7 +37,7 @@ def read_results_crossmgr( payload ):
 	event = get_event_from_payload( payload )
 	if not event:
 		errors.append( 'Cannot find Event "{}", "{}"'.format(payload['raceNameText'], payload['raceScheduledStart']) )
-		return errors, warnings
+		return { 'errors': errors, 'warnings': warnings }
 		
 	competition = event.competition
 	
@@ -118,7 +118,7 @@ def read_results_crossmgr( payload ):
 			try:
 				participant = competition.participant_set.get(bib=bib, category=category)
 			except Exception as e:
-				warnings.append( 'Problem finding participant bib={}, category="{}": {}'.format(bib, category.full_name, e) )
+				warnings.append( 'Problem finding participant bib={}, category="{}": {}'.format(bib, category.full_name(), e) )
 				continue
 			
 			race_times = d.get('raceTimes',[] )
@@ -159,4 +159,4 @@ def read_results_crossmgr( payload ):
 			result.save()			
 			result.set_race_times( race_times, lap_speeds )
 		
-	return {'errors': errors, 'warnings': warnings}
+	return {'errors': errors, 'warnings': warnings, 'name':u'{} - {}'.format(competition.name, event.name)}

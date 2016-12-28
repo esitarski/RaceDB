@@ -2129,11 +2129,11 @@ class Result(models.Model):
 	
 	def format_result_html( self, rank, gap, starters ):
 		if self.status == 0:
-			gap = u'&nbsp;gap:{}'.format(gap) if gap else ''
+			gap = u' gap:{}'.format(gap) if gap else ''
 		else:
 			rank = self.get_status_display()
 			gap = ''
-		return mark_safe(u'{}/{}{}'.format(rank, starters, gap))	
+		return mark_safe(u'{}/{}{}'.format(rank, starters, gap).replace(' ', '&nbsp;'))
 	
 	@property
 	def category_result_html( self ):
