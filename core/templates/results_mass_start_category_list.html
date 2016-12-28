@@ -18,12 +18,13 @@
 </div>
 <h2>&nbsp;</h2>
 <style>
-	table.participant_table tr td {
-		font-size: 75%;
-	}
-	table.participant_table tr th {
-		font-size: 75%;
-	}
+table.participant_table tr td {
+	font-size: 75%;
+}
+table.participant_table tr th {
+	font-size: 75%;
+}
+
 </style>
 </h4>
 {% spaceless %}
@@ -46,8 +47,8 @@
 		<tr>
 			<td class="text-right">{{rr.category_rank_html}}</td>
 			<td class="text-right">{{p.bib}}</td>
-			<td>{{p.license_holder.full_name}}</td>
-			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+			<td><a href="{{cancelUrl}}LicenseHolderEdit/{{h.id}}">{{h.full_name}}</a></td>
+			<td>{% if p.team %}<a href="./TeamEdit/{{p.team.id}}">{{p.team.name}}</a>{% endif %}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
 			<td class="text-right">{{rr.adjusted_finish_time.format_no_decimals}}</td>

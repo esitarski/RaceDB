@@ -53,6 +53,11 @@ h2, h3, h4, h5 { margin: 1px; }
 	content: url({% static "images/warning.png" %});
 	width:20px; height:20px; 
 }
+@media print {
+	a[href]:after {
+	content: none !important;
+	}
+}
 {% block style %}
 {% endblock style %}
 </style>
