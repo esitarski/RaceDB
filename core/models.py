@@ -2127,27 +2127,21 @@ class Result(models.Model):
 			return self.get_status_display()
 		return mark_safe(u'{}.'.format(self.wave_rank))
 	
-	@property
-	def category_result_html( self ):
+	def format_result_html( self, rank, gap, starters ):
 		if self.status == 0:
-			rank = self.category_rank
-			gap = u' ({})'.format(self.category_gap) if self.category_gap else ''
+			gap = u'&nbsp;gap:{}'.format(gap) if gap else ''
 		else:
 			rank = self.get_status_display()
 			gap = ''
-		rank = self.category_rank if self.status == 0 else self.get_status_display()
-		return mark_safe(u'{}/{}{}'.format(rank, self.category_starters, gap))	
+		return mark_safe(u'{}/{}{}'.format(rank, starters, gap))	
+	
+	@property
+	def category_result_html( self ):
+		return self.format_result_html( self.category_rank, self.category_gap, self.category_starters )
 	
 	@property
 	def wave_result_html( self ):
-		if self.status == 0:
-			rank = self.wave_rank
-			gap = u' ({})'.format(self.wave_gap) if self.wave_gap else ''
-		else:
-			rank = self.get_status_display()
-			gap = ''
-		rank = self.wave_rank if self.status == 0 else self.get_status_display()
-		return mark_safe(u'{}/{}{}'.format(rank, self.wave_starters, gap))
+		return self.format_result_html( self.wave_rank, self.wave_gap, self.wave_starters )
 	
 	@property
 	def category_rank_html( self ):
@@ -2218,6 +2212,22 @@ class Result(models.Model):
 			lap_km.append( rt.lap_km * (t_cur - t_last)/(60.0*60.0) )
 			t_last = t_cur
 		return lap_km
+	
+	def get_info_by_lap( self ):
+		race_times = []
+		lap_kmh = []
+		lap_km = []
+		t_last = None
+		for rt in self.get_race_time_query():
+			t_cur = rt.race_time.total_seconds()
+			race_times.append( t_cur )
+			if t_last is None:
+				t_last = t_cur
+				continue
+			lap_kmh.append( rt.lap_kmh or 0.0 )
+			lap_km.append( lap_kmh[-1] * (t_cur - t_last)/(60.0*60.0) )
+				
+		return {'race_times':race_times, 'lap_kmh':lap_kmh if any(lap_kmh) else None, 'lap_km':lap_km if any(lap_km) else None}
 	
 	def get_race_time( self, lap ):
 		return self.get_race_time_query()[lap]

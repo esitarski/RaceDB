@@ -41,7 +41,9 @@ def get_payload_for_result( result ):
 	for rr in results:
 		p = rr.participant
 		h = p.license_holder
-		race_times = rr.get_race_times()
+		
+		info = rr.get_info_by_lap()
+		race_times, lap_kmh, lap_km = info['race_times'], info['lap_kmh'], info['lap_km']
 		d = {
 			'LastName': h.last_name,
 			'FirstName': h.first_name,
@@ -61,21 +63,16 @@ def get_payload_for_result( result ):
 		}
 		if rr.ave_kmh:
 			d['speed'] = u'{:.2f} {}'.format(rr.ave_kmh*units_conversion, speed_unit)
+			# Get raceDistance from leader.
 			if raceDistance is None and race_times:
 				raceDistance = units_conversion * rr.ave_kmh * (race_times[-1] - race_times[0])/(60.0*60.0)
 		
-		lap_speeds = rr.get_lap_kmh()
-		if lap_speeds:
-			if units_conversion != 1.0:
-				lap_speeds = [s*units_conversion for s in lap_speeds]
-			d['lapSpeeds'] = lap_speeds
+		if lap_kmh:
+			d['lapSpeeds'] = [s*units_conversion for s in lap_kmh]
 			if firstLapDistance is None:
 				try:
-					firstLapDistance = lap_speeds[0] * (race_times[1] - race_times[0])/(60.0*60.0)
-				except:
-					pass
-				try:
-					lapDistance = lap_speeds[1] * (race_times[2] - race_times[1])/(60.0*60.0)
+					firstLapDistance = units_conversion * lap_km[0]
+					lapDistance = units_conversion * lap_km[1]
 				except:
 					pass
 				
@@ -85,7 +82,7 @@ def get_payload_for_result( result ):
 		
 	gapValue = []
 	winner_finish = race_times_all[0][-1]
-	winner_laps = len(race_times_all[0])
+	winner_laps = max(len(race_times_all[0]), 1)
 	for rt in race_times_all:
 		if len(race_times_all[0]) != len(rt):
 			gapValue.append( len(rt) - winner_laps )
@@ -93,12 +90,12 @@ def get_payload_for_result( result ):
 			gapValue.append( rt[-1] - winner_finish )
 	
 	catDetails = {
-		'name':	cat_name,
-		'catType':cat_type,
-		'pos': pos,
-		'gapValue': gapValue,
-		'laps':	winner_laps,
-		'startOffset': 0,
+		'name':		cat_name,
+		'catType':	cat_type,
+		'pos':		pos,
+		'gapValue':	gapValue,
+		'laps':		winner_laps,
+		'startOffset':	0,
 	}
 	if raceDistance:
 		catDetails['raceDistance'] = raceDistance
