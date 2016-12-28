@@ -134,6 +134,25 @@ def ResultMassStartRiderAnaysis( request, resultId ):
 	
 def ResultsTT( request, eventId ):
 	time_stamp = datetime.datetime.now()
-	event = get_object_or_404( EventMassStart, pk=eventId )
-	return render( request, 'results_tt_list.html', locals() )
+	event = get_object_or_404( EventTT, pk=eventId )
+	return render( request, 'results_mass_start_list.html', locals() )
+
+
+def ResultsTTCategory( request, eventId, categoryId ):
+	event = get_object_or_404( EventTT, pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	if wave.rank_categories_together:
+		results = wave.get_results()
+	else:
+		results = event.get_results().filter( participant__category=category ).order_by('status','category_rank')
+	num_nationalities = results.exclude(participant__license_holder__nation_code='').values('participant__license_holder__nation_code').distinct().count()
+	num_starters = results.exclude( status=Result.cDNS ).count()
+	time_stamp = datetime.datetime.now()
+	return render( request, 'results_mass_start_category_list.html', locals() )
+
+def ResultTTRiderAnaysis( request, resultId ):
+	result = get_object_or_404( ResultTT, pk=resultId )
+	payload = get_payload_for_result( result )
+	return render( request, 'RiderDashboard.html', locals() )
 
