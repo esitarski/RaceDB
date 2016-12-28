@@ -1560,9 +1560,10 @@ def UploadCrossMgr( request ):
 	else:
 		response['errors'].append( u'Request must be of type POST with json payload.' )
 	
+	print 'UploadCrossMgr: processing...'
 	if payload:
 		response = read_results.read_results_crossmgr( payload )
-	print 'UploadCrossMgr', response
+	print 'UploadCrossMgr: Done.'
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------

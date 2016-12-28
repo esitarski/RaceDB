@@ -115,10 +115,20 @@ def read_results_crossmgr( payload ):
 				warnings.append( 'Cannot find category for bib={}'.format(bib) )
 				continue
 				
-			try:
-				participant = competition.participant_set.get(bib=bib, category=category)
-			except Exception as e:
-				warnings.append( 'Problem finding participant bib={}, category="{}": {}'.format(bib, category.full_name(), e) )
+			participant = None
+			if not participant and d.get('License', ''):
+				participant = competition.participant_set.filter( license_holder__license_code=d['License'], category=category ).first()
+			if not participant:
+				participant = competition.participant_set.filter( bib=bib, category=category ).first()
+			if not participant and d.get('LastName', ''):
+				participant = competition.participant_set.filter(
+					license_holder__startswith=utils.get_search_text( [d.get('LastName',''), d.get('FirstName','')] ),
+					category=category
+				).first()
+			
+			if not participant:
+				warnings.append( 'Cannot find Participant bib={} name="{}, {}", category="{}"'.format(
+					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name()) )
 				continue
 			
 			race_times = d.get('raceTimes',[] )
