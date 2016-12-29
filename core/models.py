@@ -619,6 +619,10 @@ class Competition(models.Model):
 	@property
 	def report_labels_text( self ):
 		return u', '.join( r.name for r in self.report_labels.all() )
+		
+	@property
+	def has_results( self ):
+		return ResultMassStart.objects.filter(event__competition=self).exists() or ResultTT.objects.filter(event__competition=self).exists()
 	
 	@property
 	def event_types_text( self ):
@@ -705,6 +709,18 @@ class Competition(models.Model):
 		if sd.year == ed.year:
 			return u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%b %d, %Y') )
 		return u'{}-{}'.format( sd.strftime('%b %d, %Y'), ed.strftime('%b %d, %Y') )
+	
+	@property
+	def date_range_year_str( self ):
+		sd = self.start_date
+		ed = self.finish_date
+		if sd == ed:
+			return sd.strftime('%Y %b %d')
+		if sd.month == ed.month and sd.year == ed.year:
+			return u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%d') )
+		if sd.year == ed.year:
+			return u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%b %d') )
+		return u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%Y %b %d') )
 	
 	@property
 	def has_optional_events( self ):
@@ -1484,7 +1500,7 @@ class WaveBase( models.Model ):
 	
 	def get_participants( self ):
 		return self.get_participants_unsorted().order_by('bib')
-	
+		
 	def get_num_nationalities( self ):
 		return self.get_participants_unsorted().exclude(
 			license_holder__nation_code='').values_list('license_holder__nation_code').distinct().count()
@@ -1847,8 +1863,11 @@ class LicenseHolder(models.Model):
 		if not self.uci_id.isdigit():
 			return _(u'uci id must be all digits')
 		
+		if not self.uci_id.startswith('0'):
+			return _(u'uci id must not start with zero')
+		
 		if len(self.uci_id) != 11:
-			return _(u'invalid length for uci id (must be 11 digits)')
+			return _(u'uci id must be 11 digits in length')
 			
 		if int(self.uci_id[:-2]) % 97 != int(self.uci_id[-2:]):
 			return _(u'uci id check digit error')

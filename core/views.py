@@ -345,6 +345,10 @@ class LicenseHolderForm( ModelForm ):
 		addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
 
 reUCICode = re.compile( '^[A-Z]{3}[0-9]{8}$', re.IGNORECASE )
+def is_uci_id( uci_id ):
+	uci_id = uci_id.replace(' ','')
+	return uci_id.isdigit() and not uci_id.startswith('0') and len(uci_id) == 11 and int(uci_id[:-2]) % 97 == int(uci_id[-2:])
+
 def license_holders_from_search_text( search_text ):
 	search_text = utils.normalizeSearch(search_text)
 	license_holders = []
@@ -362,7 +366,7 @@ def license_holders_from_search_text( search_text ):
 		if search_text.startswith( 'scan=' ):
 			try:
 				arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
-				license_holders = [LicenseHolder.objects.get(Q(license_code=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))]
+				license_holders = [LicenseHolder.objects.get(Q(license_code=arg) | Q(uci_id=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))]
 				break
 			except (IndexError, LicenseHolder.DoesNotExist):
 				break
@@ -372,6 +376,13 @@ def license_holders_from_search_text( search_text ):
 		if reUCICode.match(search_text):
 			try:
 				license_holders = [LicenseHolder.objects.get(uci_code = search_text.upper())]
+				break
+			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
+				pass
+				
+		if is_uci_id( search_text ):
+			try:
+				license_holders = [LicenseHolder.objects.get(uci_id = search_text.replace(' ',''))]
 				break
 			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
 				pass

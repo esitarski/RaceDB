@@ -19,6 +19,7 @@ from core.LLRPClientServer import runServer
 from core.models import SystemInfo, models_fix_data
 from core.create_users import create_users
 from core.print_bib import reset_font_cache
+from core.views_common import set_hub_mode
 
 class KWArgs( object ):
 	def __init__( self ):
@@ -95,8 +96,12 @@ def launch_server( command, **options ):
 			options[arg] = config_value
 			print '    {}={}'.format( arg, config_value )
 
+	if options['hub']:
+		set_hub_mode( True )
+		print 'Hub mode.'
+		
 	# Start the rfid server.
-	if any([options['rfid_reader'], options['rfid_reader_host'], options['rfid_transmit_power'] > 0, options['rfid_receiver_sensitivity'] > 0]):
+	if not options['hub'] and any([options['rfid_reader'], options['rfid_reader_host'], options['rfid_transmit_power'] > 0, options['rfid_receiver_sensitivity'] > 0]):
 		kwargs = {
 			'llrp_host': options['rfid_reader_host'],
 		}
@@ -175,6 +180,11 @@ class Command(BaseCommand):
 			type=str,
 			default='',
 			help='Database file to use')
+		parser.add_argument('--hub',
+			dest='hub',
+			action='store_true',
+			default=False,
+			help='Launch in Hub mode.')
 		parser.add_argument('--config',
 			dest='config',
 			type=str,

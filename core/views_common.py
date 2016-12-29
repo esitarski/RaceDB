@@ -54,13 +54,25 @@ from functools import wraps
 
 #-----------------------------------------------------------------------
 
+hub_mode = False
+def set_hub_mode( hm = True ):
+	global hub_mode
+	hub_mode = hm
+def get_hub_mode():
+	return hub_mode
+	
 def access_validation( selfserve_ok=False, no_cache=True ):
 	def decorator( decorated_func ):
-		decorated_func = logCall(login_required(decorated_func))
+		if not hub_mode:
+			decorated_func = login_required(decorated_func)
+		
+		decorated_func = logCall(decorated_func)
 		
 		@wraps( decorated_func )
 		def wrap( request, *args, **kwargs ):
-			if request.user.username == 'serve' and not selfserve_ok:
+			if hub_mode and '/RaceDB/Hub' not in request.path:
+				response = HttpResponseRedirect('/RaceDB/Hub/SearchCompetitions/')
+			elif request.user.username == 'serve' and not selfserve_ok:
 				response = HttpResponseRedirect('/RaceDB/SelfServe')
 			else:
 				response = decorated_func( request, *args, **kwargs )

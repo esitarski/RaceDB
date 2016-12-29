@@ -13,6 +13,7 @@ from core import category
 from core import category_numbers
 from core import team
 from core import results
+from core import hub
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -21,6 +22,19 @@ urlpatterns = [
 	url(r'^$', views.home, name='home'),
 	url(r'^(?P<rfid_antenna>\d+)/$', views.home),
 	url(r'^(?i)Home/$', views.home),
+	
+	url(r'^(?i).*Hub/SearchCompetitions/$', hub.SearchCompetitions),
+	url(r'^(?i).*Hub/CompetitionResults/(?P<competitionId>\d+)/$', hub.CompetitionResults),
+	url(r'^(?i).*Hub/CategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.CategoryResults),
+	
+	#url(r'^(?i).*Hub/SearchLicenseHolders/$', hub.SearchLicenseHolders),
+	#url(r'^(?i).*Hub/LicenseHolderResults/(?P<licenseHolderId>\d+)/$', hub.LicenseHolderResults),
+	#
+	#url(r'^(?i).*Hub/ResultAnalysis/(?P<eventType>)/(?P<resultId>\d+)/$', hub.ResultAnalysis),
+	
+	url(r'^(?i).*SelfServe/$', self_serve.SelfServe),
+	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
+	url(r'^(?i).*SelfServe/SelfServeQR/$', self_serve.SelfServeQRCode),
 	
 	url(r'^(?i).*Competitions/$', views.CompetitionsDisplay),
 	url(r'^(?i).*CompetitionNew/$', views.CompetitionNew),
@@ -248,10 +262,6 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantReport/$', views.ParticipantReport),
 	url(r'^(?i).*YearOnYearAnalytics/$', views.YearOnYearAnalytics),
 	url(r'^(?i).*QRCode/$', views.QRCode),
-	
-	url(r'^(?i).*SelfServe/$', self_serve.SelfServe),
-	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
-	url(r'^(?i).*SelfServe/SelfServeQR/$', self_serve.SelfServeQRCode),
 	
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}, name='login'),
 	url(r'^(?i).*logout/$', views.Logout),
