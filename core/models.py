@@ -39,6 +39,9 @@ from WriteLog import writeLog
 
 invalid_date_of_birth = datetime.date(1900,1,1)
 
+def ordinal( n ):
+	return "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
+
 def fixNullUpper( s ):
 	if not s:
 		return None
@@ -1172,6 +1175,14 @@ class Event( models.Model ):
 	
 	def get_results_num_starters( self ):
 		return self.get_results().exclude(status=Result.cDNS).count()
+		
+	def get_type_abbrev( self ):
+		if self.event_type == 0:
+			return ''
+		elif self.event_type == 1:
+			return _('(TT)')
+		else:
+			return ''
 	
 	def get_results_num_nationalities( self ):
 		return self.get_results().exclude(
@@ -2153,9 +2164,9 @@ class Result(models.Model):
 	def format_result_html( self, rank, gap, starters ):
 		if self.status == 0:
 			if rank == 1:
-				gap = u' win'
+				gap = u', winner'
 			else:
-				gap = u' gap:{}'.format(gap) if gap else ''
+				gap = u', gap:{}'.format(gap) if gap else ''
 		else:
 			rank = self.get_status_display()
 			gap = ''

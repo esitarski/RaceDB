@@ -113,6 +113,12 @@ def CompetitionResults( request, competitionId ):
 	category_results = [(k,v) for k,v in category_results.iteritems()]
 	category_results.sort( key=lambda p:(p[0].gender, p[0].sequence) )
 	
+	gender_category_results = [[],[],[]]
+	for v in category_results:
+		gender_category_results[v[0].gender].append( v )
+	gender_category_results = [(gr[0][0], gr) for gr in gender_category_results if gr]
+	col_gender = 12 // (len(gender_category_results) if gender_category_results else 1)
+	
 	exclude_breadcrumbs = True
 	return render( request, 'hub_events_list.html', locals() )
 

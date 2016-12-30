@@ -12,32 +12,37 @@
 		{% trans "by" %} {{competition.organizer}}
 	</span>
 </h1>
-<p/>
+<p><br/><p>
 
-{% spaceless %}
-<table class="table table-condensed table-striped table-hover" style="width: auto;">
-<thead>
-	<tr>
-		<th>{% trans "Gender" %}</th>
-		<th>{% trans "Category" %}</th>
-		{% for ed in event_days %}<th>{{ed}}</th>{% endfor %}
-	</tr>
-</thead>
-<tbody>
-	{% for category, day_event_waves in category_results %}
-		<tr>
-			<td>{{category.get_gender_display}}</td>
-			<td>{{category.code}}</td>
-			{% for event_waves in day_event_waves %}
-			<td>
-				{% for e, w in event_waves %}
-					<a href="/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/"><strong>{{e.name}}</strong></a><br/>
-				{% endfor %}
-			</td>
+<div class="row">
+{% for cat_gender, category_results in gender_category_results %}
+	<div class="col-md-{{col_gender}}">
+		<h3>{{cat_gender.get_gender_display}}</h3>
+		{% spaceless %}
+		<table class="table table-condensed table-striped table-hover" style="width: auto;">
+		<thead>
+			<tr>
+				<th>{% trans "Category" %}</th>
+				{% for ed in event_days %}<th>{{ed}}</th>{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for category, day_event_waves in category_results %}
+				<tr>
+					<td>{{category.code}}</td>
+					{% for event_waves in day_event_waves %}
+					<td>
+						{% for e, w in event_waves %}
+							<a href="/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/"><strong>{{e.name}} {{e.get_type_abbrev}}</strong></a><br/>
+						{% endfor %}
+					</td>
+					{% endfor %}
+				</tr>
 			{% endfor %}
-		</tr>
-	{% endfor %}
-</tbody>
-</table>
-{% endspaceless %}
+		</tbody>
+		</table>
+		{% endspaceless %}
+	</div>
+{% endfor %}
+</div>
 {% endblock content %}
