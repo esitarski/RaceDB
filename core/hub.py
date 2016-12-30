@@ -1,12 +1,15 @@
 import datetime
 import operator
+from collections import defaultdict
 from django.utils.translation import ugettext_lazy as _
+from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from views_common import *
 from models import *
 
 from views import license_holders_from_search_text
+from results import get_payload_for_result
 
 ItemsPerPage = 25
 
@@ -94,6 +97,24 @@ def CompetitionResults( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	events = competition.get_events()
 	events.sort( key=operator.attrgetter('date_time') )
+	
+	event_day = set()
+	for e in events:
+		event_day.add( timezone.localtime(e.date_time).strftime('%Y-%m-%d') )
+		
+	event_days = sorted( event_day )
+	get_day = {d:i for i, d in enumerate(event_days)}
+	
+	category_results = defaultdict(lambda: [[] for i in xrange(len(event_days))])
+	for e in events:
+		day = get_day[timezone.localtime(e.date_time).strftime('%Y-%m-%d')]
+		for w in e.get_wave_set().all():
+			for c in set( rr.participant.category for rr in w.get_results().select_related('participant','participant__category') ):
+				category_results[c][day].append( (e, w) )
+				
+	category_results = [(k,v) for k,v in category_results.iteritems()]
+	category_results.sort( key=lambda p:(p[0].gender, p[0].sequence) )
+	
 	exclude_breadcrumbs = True
 	return render( request, 'hub_events_list.html', locals() )
 
@@ -115,3 +136,16 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 
 	exclude_breadcrumbs = True
 	return render( request, 'hub_results_list.html', locals() )
+
+def LicenseHolderResults( request, licenseHolderId ):
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	exclude_breadcrumbs = True
+	return render( request, 'hub_license_holder_results.html', locals() )
+
+def ResultAnalysis( request, eventId, eventType, resultId ):
+	event = get_object_or_404( (EventMassStart,EventTT)[int(eventType)], pk=eventId )
+	result = get_object_or_404( event.get_result_class(), pk=resultId )
+	payload = get_payload_for_result( result )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	return render( request, 'RiderDashboard.html', locals() )

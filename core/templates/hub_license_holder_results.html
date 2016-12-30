@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load staticfiles %}
+
+{% block content %}
+{% with h=license_holder results=license_holder.get_results %}
+<h1>
+	<a href="/RaceDB/Hub/SearchCompetitions/"><img src="{% static "images/RaceDB_small.png" %}" alt="RaceDB"></img></a>
+	{{h.last_name}}, {{h.first_name}}
+</h1>
+<h2>{{h.city}}, {{h.state_prov}} {{h.}}</h2>
+<h2>{{h.get_gender_display}}: {{h.license_code_trunc}}, {{h.get_flag_uci_id_html}}</h2>
+<div class="hidden-print">
+<p/>
+<a class="btn btn-primary" href="{{pop2Url}}">{% trans "OK" %}</a>
+<p/>
+</div>
+<h2>{% trans "Results" %}</h2>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Date" %}</th>
+		<th>{% trans "Category" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Competition - Event" %}</th>
+		<th>{% trans "Class" %}</th>
+		<th>{% trans "Discipline" %}</th>
+		<th>{% trans "Result" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for rr in results %}
+	<tr>
+		<td class="text-right">{{forloop.counter}}.</td>
+		<td style="white-space: nowrap;">{{rr.event.date_time|date:"Y-m-d h:ia"}}</td>
+		<td>{{rr.participant.category.code_gender}}</td>
+		<td>{{rr.participant.team.name}}</td>
+		<td>{{rr.event.competition.name}} - {{rr.event.name}}</td>
+		<td>{{rr.event.competition.race_class.name}}</td>
+		<td>{{rr.event.competition.discipline.name}}</td>
+		<td>{{rr.result_html}}</td>
+		<td><a class="btn btn-primary btn-xs" href="./Hub/CategoryResults/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.participant.category.id}}/">{% trans "Results" %}</a>&nbsp;<a class="btn btn-primary btn-xs" href="./Hub/ResultAnalysis/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.id}}/">{% trans "Analysis" %}</a>
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+{% endwith %}
+{% endblock content %}

@@ -684,7 +684,7 @@ function updateCompareDisplays() {
 
 <div class="hidden-print">
 <hr/>
-<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+<a class="btn btn-primary" {% if hub_mode %}href="{{pop2Url}}"{% else %}href="{{cancelUrl}}"{% endif %}>{% trans "OK" %}</a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <button class="btn btn-primary" id="focus" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
 <hr/>

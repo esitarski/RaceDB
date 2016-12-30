@@ -4,44 +4,38 @@
 {% block content %}
 
 <h1>
-	<img src="{% static "images/RaceDB_small.png" %}" alt="RaceDB"></img>
+	<a href="/RaceDB/Hub/SearchCompetitions/"><img src="{% static "images/RaceDB_small.png" %}" alt="RaceDB"></img></a>
 	{{competition.date_range_year_str}}: {{competition.name}}
-</h2>
+</h1>
+<div class="hidden-print">
+<a class="btn btn-primary" href="{{pop2Url}}">{% trans "OK" %}</a>
+</div>
+<p/>
 
 {% spaceless %}
-<table class="table table-compressed table-no-border table-hover">
+<table class="table table-condensed table-striped table-hover" style="width: auto;">
+<thead>
+	<tr>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Category" %}</th>
+		{% for ed in event_days %}<th>{{ed}}</th>{% endfor %}
+	</tr>
+</thead>
 <tbody>
-	{% for e in events %}
+	{% for category, day_event_waves in category_results %}
 		<tr>
+			<td>{{category.get_gender_display}}</td>
+			<td>{{category.code}}</td>
+			{% for event_waves in day_event_waves %}
 			<td>
-				<div class="panel panel-info">
-					<div class="panel-heading">
-						<h3>{{e.name}}, <span style="font-size:75%">{{e.date_time}}</span>
-						</h3>
-					</div>
-					<div class="panel-body">
-						<div class="row">
-							<div class="col-md-1">{% trans "Waves" %}:</div>
-							<div class="col-md-11">
-							<ol>
-								{% for w in e.get_wave_set.all %}
-									<strong>{{w.name}}{% if w.start_offset %}, +{{w.start_offset}}{% endif %}</strong>:
-									<span style="font-size: 125%;">&nbsp;</span>
-									{% for c in w.categories.all %}
-										<a href="./Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{c.id}}" class="btn btn-primary btn-xs">{{c.code_gender}}</a>&nbsp;
-									{% endfor %}
-									<br/>
-								{% endfor %}
-							</ol>
-							</div>
-						</div>
-					</div>
-				</div>
+				{% for e, w in event_waves %}
+					<a href="./Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/">{{e.name}}</a><br/>
+				{% endfor %}
 			</td>
+			{% endfor %}
 		</tr>
 	{% endfor %}
 </tbody>
 </table>
 {% endspaceless %}
-{% if not events_mass_start.exists %}</div>{% endif %}
 {% endblock content %}

@@ -27,10 +27,10 @@ urlpatterns = [
 	url(r'^(?i).*Hub/CompetitionResults/(?P<competitionId>\d+)/$', hub.CompetitionResults),
 	url(r'^(?i).*Hub/CategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.CategoryResults),
 	
+	url(r'^(?i).*Hub/LicenseHolderResults/(?P<licenseHolderId>\d+)/$', hub.LicenseHolderResults),
+	url(r'^(?i).*Hub/ResultAnalysis/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<resultId>\d+)/$', hub.ResultAnalysis),
+	
 	#url(r'^(?i).*Hub/SearchLicenseHolders/$', hub.SearchLicenseHolders),
-	#url(r'^(?i).*Hub/LicenseHolderResults/(?P<licenseHolderId>\d+)/$', hub.LicenseHolderResults),
-	#
-	#url(r'^(?i).*Hub/ResultAnalysis/(?P<eventType>)/(?P<resultId>\d+)/$', hub.ResultAnalysis),
 	
 	url(r'^(?i).*SelfServe/$', self_serve.SelfServe),
 	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),

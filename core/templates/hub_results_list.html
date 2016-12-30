@@ -6,7 +6,10 @@
 {% load staticfiles %}
 
 <h2 class="hidden-print">{{title}}</h2>
-<h2><strong>{{category.code_gender}} {{wave.name}}</strong></h2>
+<h2>
+	<a href="/RaceDB/Hub/SearchCompetitions/"><img src="{% static "images/RaceDB_small.png" %}" alt="RaceDB"></img></a>
+	<strong>{{category.code_gender}} {{wave.name}}</strong>
+</h2>
 <h2><strong>{{event.competition.name}}: {{event.name}}:</strong> {{event.date_time}}, {% trans "Nations" %}: {{num_nationalities}}, {% trans "Strs" %}: {{num_starters}}</h2>
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 <div class="hidden-print">
@@ -48,7 +51,7 @@ table.participant_table tr th {
 			<td class="text-right">{% if wave.rank_categories_together %}{{rr.wave_rank_html}}{% else %}{{rr.category_rank_html}}{% endif %}</td>
 			<td class="text-right">{{p.bib}}</td>
 			<td><a href="{{cancelUrl}}LicenseHolderResults/{{h.id}}">{{h.full_name}}</a></td>
-			<td>{% if p.team %}<a href="./TeamEdit/{{p.team.id}}">{{p.team.name}}</a>{% endif %}</td>
+			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			{% if wave.rank_categories_together %}<td>{{p.category.code_gender}}</td>{% endif %}
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
