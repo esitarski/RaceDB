@@ -678,17 +678,22 @@ function updateCompareDisplays() {
 {% endblock onload %}
 
 {% block content %}
+{% if hub_mode %}
+{% include "hub_nav.html" %}
+{% endif %}
 
 <h1 id="idHeader"></h1>
 <h4 id="idRaceName">Race Name</h4>
 
+{% if not hub_mode %}
 <div class="hidden-print">
 <hr/>
-<a class="btn btn-primary" {% if hub_mode %}href="{{pop2Url}}"{% else %}href="{{cancelUrl}}"{% endif %}>{% trans "OK" %}</a>
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 &nbsp;&nbsp;&nbsp;&nbsp;
 <button class="btn btn-primary" id="focus" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
 <hr/>
 </div>
+{% endif %}
 <h4 id="idCategoryResults">Category Results</h4>
 <div id="idLapTable" style="height: 190px;"></div>
 <br/>

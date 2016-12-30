@@ -8,7 +8,8 @@
 <h2>
 	<strong>{{category.code_gender}} {{wave.name}}</strong>
 </h2>
-<h2><strong>{{event.competition.name}}: {{event.name}}:</strong> {{event.date_time}}, {% trans "Nations" %}: {{num_nationalities}}, {% trans "Strs" %}: {{num_starters}}</h2>
+<h2><strong>{{event.competition.name}}: {{event.name}}</strong><br/>
+{{event.date_time}}, {% trans "Nations" %}: {{num_nationalities}}, {% trans "Strs" %}: {{num_starters}}</h2>
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 <h2>&nbsp;</h2>
 <style>

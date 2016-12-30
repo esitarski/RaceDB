@@ -22,12 +22,12 @@
 </thead>
 <tbody>
 	{% for c in competitions %}
-		<tr onclick="jump('{{popUrl}}CompetitionResults/{{c.id}}/');">
+		<tr onclick="jump('/RaceDB/Hub/CompetitionResults/{{c.id}}/');">
 			<td class="text-right">
 				{{forloop.counter1}}.
 			</td>
 			<td>{{c.date_range_year_str}}</td>
-			<td>{{c.name}}</td>
+			<td><a href="/RaceDB/Hub/CompetitionResults/{{c.id}}/"><strong>{{c.name}}</strong></a></td>
 			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
 			<td>{{c.organizer}}</td>
 		</tr>

@@ -152,8 +152,8 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 
 @autostrip
 class LicenseHolderSearchForm( Form ):
-	last_name = forms.CharField( required=False, label = _('Last Name') )
-	first_name = forms.CharField( required=False, label = _('First Name') )
+	search_type = forms.ChoiceField( required=False, choices = ((0,_('Search by Name (Last, First)')),(1,_('Search by License')),(2,_('Search by UCIID'))) ) 
+	search_text = forms.CharField( required=False, label = _('Search Text') )
 	
 	def __init__(self, *args, **kwargs):
 		super(LicenseHolderSearchForm, self).__init__(*args, **kwargs)
@@ -167,9 +167,9 @@ class LicenseHolderSearchForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			Row( HTML('<span style="font-size: 180%;">'), HTML(_('Search Athletes')), HTML("</span>&nbsp;&nbsp;"),
-				Field('last_name', size=20, autofocus=True ), HTML('&nbsp;'*4),
-				Field('first_name', size=20 ), HTML('&nbsp;'*4),
+			Row( HTML('<span style="font-size: 180%; vertical-align:middle;">'), HTML(_('Search Athletes')), HTML("</span>&nbsp;&nbsp;"),
+				Field('search_text', size=20, autofocus=True  ), HTML('&nbsp;'*4),
+				Field('search_type'), HTML('&nbsp;'*4),
 				button_args[0]),
 		)
 
@@ -191,16 +191,20 @@ def SearchLicenseHolders( request ):
 	else:
 		form = LicenseHolderSearchForm( initial = license_holder_filter )
 	
-	search_fields = []
-	if license_holder_filter.get('last_name','').strip():
-		search_fields.append( license_holder_filter.get('last_name','').strip() )
-	if search_fields and license_holder_filter.get('first_name','').strip():
-		search_fields.append( license_holder_filter.get('first_name','').strip() )
-		
-	if search_fields:
-		license_holders = LicenseHolder.objects.filter( search_text__startswith=utils.get_search_text(search_fields) )
+	search_text = license_holder_filter.get('search_text','').strip()
+	search_type = int(license_holder_filter.get('search_type',0))
+	
+	if search_text:
+		license_holders = LicenseHolder.objects.all()
+		if search_type == 0:
+			search_fields = search_text.split(',')[:2]
+			license_holders = license_holders.filter( search_text__startswith=utils.get_search_text([f.strip() for f in search_fields]) )
+		elif search_type == 1:
+			license_holders = license_holders.filter( license_code=search_text.upper() )
+		elif search_type == 2:
+			license_holders = license_holders.filter( uci_code=search_text.replace(' ', '') )
 	else:
-		license_holders = LicenseHolder.objects.filter( license_code__isnull=True )
+		license_holders = LicenseHolder.objects.none()
 	
 	license_holders, paginator = getPaginator( request, page_key, license_holders )
 	exclude_breadcrumbs = True

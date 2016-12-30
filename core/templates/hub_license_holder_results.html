@@ -22,7 +22,7 @@
 		<th>{% trans "Date" %}</th>
 		<th>{% trans "Category" %}</th>
 		<th>{% trans "Team" %}</th>
-		<th>{% trans "Competition - Event" %}</th>
+		<th>{% trans "Competition/Event" %}</th>
 		<th>{% trans "Discipline" %}</th>
 		<th>{% trans "Class" %}</th>
 		<th>{% trans "Result" %}</th>
@@ -31,16 +31,16 @@
 </thead>
 <tbody>
 	{% for rr in results %}
-	<tr>
+	<tr onclick="jump('/RaceDB/Hub/CategoryResults/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.participant.category.id}}/')">
 		<td class="text-right">{{forloop.counter}}.</td>
-		<td style="white-space: nowrap;">{{rr.event.date_time|date:"Y-m-d h:ia"}}</td>
+		<td>{{rr.event.date_time|date:"Y-m-d h:ia"}}</td>
 		<td>{{rr.participant.category.code_gender}}</td>
 		<td>{{rr.participant.team.name}}</td>
-		<td>{{rr.event.competition.name}} - {{rr.event.name}}</td>
+		<td><span style="white-space: nowrap;">{{rr.event.competition.name}}</span><br/><span style="white-space: nowrap;">{{rr.event.name}}</span></td>
 		<td>{{rr.event.competition.discipline.name}}</td>
 		<td>{{rr.event.competition.race_class.name}}</td>
 		<td>{{rr.result_html}}</td>
-		<td><a class="btn btn-primary btn-xs" href="./Hub/CategoryResults/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.participant.category.id}}/">{% trans "Results" %}</a>&nbsp;<a class="btn btn-primary btn-xs" href="./Hub/ResultAnalysis/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.id}}/">{% trans "Analysis" %}</a>
+		<td style="white-space: nowrap;"><a class="btn btn-primary btn-xs" href="/RaceDB/Hub/CategoryResults/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.participant.category.id}}/">{% trans "Full" %}</a>&nbsp;<a class="btn btn-primary btn-xs" href="/RaceDB/Hub/ResultAnalysis/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.id}}/">{% trans "Analysis" %}</a>
 	</tr>
 	{% endfor %}
 </tbody>

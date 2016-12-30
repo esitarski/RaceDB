@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load paginate_html %}
+{% load good_err_icon %}
+
 {% block content %}
 
 {% include "hub_nav.html" %}
@@ -18,19 +20,21 @@
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
 		<th>{% trans "UCIID" %}</th>
+		<th>{% trans "Has Results" %}</th>
 	</tr>
 </thead>
 <tbody>
 	{% for h in license_holders %}
-		<tr onclick="jump('./RaceDB/Hub/LicenseHolderResults/{{h.id}}/');">
-			<td class="text-right">
-				{{forloop.counter1}}.
-			</td>
-			<td>{{h.full_name}}</td>
+		{% with has_results=h.has_results %}
+		<tr {% if has_results %}onclick="jump('./RaceDB/Hub/LicenseHolderResults/{{h.id}}/');"{% endif %}>
+			<td class="text-right">{{forloop.counter1}}.</td>
+			<td>{% if has_results %}<a href="./RaceDB/Hub/LicenseHolderResults/{{h.id}}/">{% endif %}{{h.full_name}}{% if has_results %}</a>{% endif %}</td>
 			<td>{{h.get_location}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
+			<td class="text-center">{% if has_results %}{{has_results|good_err_icon}}{% endif %}</td>
 		</tr>
+		{% endwith %}
 	{% endfor %}
 </tbody>
 </table>

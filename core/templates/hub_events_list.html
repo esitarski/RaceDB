@@ -5,11 +5,13 @@
 {% block content %}
 {% include "hub_nav.html" %}
 <h1>
-	{{competition.date_range_year_str}}: {{competition.name}}
+	{{competition.name}}:
+	<span style="font-size: 75%">
+		{{competition.date_range_year_str}},
+		{{competition.city}} {{competition.stateProv}}, {{competition.country}}<br/>
+		{% trans "by" %} {{competition.organizer}}
+	</span>
 </h1>
-<div class="hidden-print">
-<a class="btn btn-primary" href="{{pop2Url}}">{% trans "OK" %}</a>
-</div>
 <p/>
 
 {% spaceless %}
@@ -29,7 +31,7 @@
 			{% for event_waves in day_event_waves %}
 			<td>
 				{% for e, w in event_waves %}
-					<a href="./Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/">{{e.name}}</a><br/>
+					<a href="/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/"><strong>{{e.name}}</strong></a><br/>
 				{% endfor %}
 			</td>
 			{% endfor %}

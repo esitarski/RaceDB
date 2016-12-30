@@ -1834,7 +1834,11 @@ class LicenseHolder(models.Model):
 	@property
 	def license_code_trunc( self ):
 		return self.license_code if len(self.license_code) <= 11 else u'{}...'.format(self.license_code[:11])
-	
+
+	@property
+	def has_results( self ):
+		return ResultMassStart.objects.filter(participant__license_holder=self).exists() or ResultTT.objects.filter(participant__license_holder=self).exists()
+		
 	@property
 	def uci_country( self ):
 		if not self.uci_code:
