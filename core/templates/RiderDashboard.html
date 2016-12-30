@@ -123,7 +123,11 @@ function GetName( bib ) {
 }
 
 function GetBibName( bib ) {
+{% if hub_mode %}
+	return bib + ': ' + '<a href="/RaceDB/Hub/LicenseHolderResults/{{license_holder.id}}/">' + GetName(bib) + '</a>';
+{% else %}
 	return bib + ': ' + GetName(bib);
+{% endif %}
 }
 
 function GetDateFromSecs( t ) {

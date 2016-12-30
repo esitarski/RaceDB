@@ -149,6 +149,7 @@ def LicenseHolderResults( request, licenseHolderId ):
 def ResultAnalysis( request, eventId, eventType, resultId ):
 	event = get_object_or_404( (EventMassStart,EventTT)[int(eventType)], pk=eventId )
 	result = get_object_or_404( event.get_result_class(), pk=resultId )
+	license_holder = result.participant.license_holder
 	payload = get_payload_for_result( result )
 	exclude_breadcrumbs = True
 	hub_mode = True
