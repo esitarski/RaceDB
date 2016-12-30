@@ -1,10 +1,29 @@
 [TOC]
 
-# Hub
+# Hub Mode
 
 RaceDB supports a fully indexed results capability accessible by Competition and Athlete.
 
+Hub mode is intended to be accessed by external users.  When in Hub mode, RaceDB is completely read-only and it is impossible to change data.
+
 ## Uploading Results from CrossMgr
 
+Hub Mode displays results.  These must be uploaded from CrossMgr.
+
 ## Launching Hub Mode
+
+Hub Mode can be lauched.
+
+## Searching by Competition and Athlete
+
+
+
+## Showing Combined Results by Start Wave
+
+Sometimes all riders in a Start Wave are ranked separately by Category.
+Sometimes they should be ranked together.
+
+Tell RaceDB what you want by setting __Rank Categories Together__ in the Wave.
+
+If you wish the categories in the wave to be ranked individually, leave this unset.
 

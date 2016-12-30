@@ -201,14 +201,14 @@ def SearchLicenseHolders( request ):
 	search_type = int(license_holder_filter.get('search_type',0))
 	
 	if search_text:
-		license_holders = LicenseHolder.objects.all()
 		if search_type == 0:
 			search_fields = search_text.split(',')[:2]
-			license_holders = license_holders.filter( search_text__startswith=utils.get_search_text([f.strip() for f in search_fields]) )
+			st = utils.get_search_text([f.strip() for f in search_fields])[:-1]
+			license_holders = LicenseHolder.objects.filter( search_text__startswith=st )
 		elif search_type == 1:
-			license_holders = license_holders.filter( license_code=search_text.upper() )
+			license_holders = LicenseHolder.objects.filter( license_code=search_text.upper() )
 		elif search_type == 2:
-			license_holders = license_holders.filter( uci_code=search_text.replace(' ', '') )
+			license_holders = LicenseHolder.objects.filter( uci_code=search_text.replace(' ', '') )
 	else:
 		license_holders = LicenseHolder.objects.none()
 	
