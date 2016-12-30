@@ -40,10 +40,10 @@ table.participant_table tr th {
 <tbody>
 	{% for rr in results %}
 		{% with p=rr.participant h=rr.participant.license_holder %}
-		<tr>
+		<tr onclick="jump('/RaceDB/Hub/LicenseHolderResults/{{h.id}}')">
 			<td class="text-right">{% if wave.rank_categories_together %}{{rr.wave_rank_html}}{% else %}{{rr.category_rank_html}}{% endif %}</td>
 			<td class="text-right">{{p.bib}}</td>
-			<td><a href="{{cancelUrl}}LicenseHolderResults/{{h.id}}">{{h.full_name}}</a></td>
+			<td><a href="/RaceDB/Hub/LicenseHolderResults/{{h.id}}">{{h.full_name}}</a></td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			{% if wave.rank_categories_together %}<td>{{p.category.code_gender}}</td>{% endif %}
 			<td>{{h.license_code_trunc}}</td>

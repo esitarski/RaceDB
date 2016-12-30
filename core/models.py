@@ -2152,7 +2152,10 @@ class Result(models.Model):
 	
 	def format_result_html( self, rank, gap, starters ):
 		if self.status == 0:
-			gap = u' gap:{}'.format(gap) if gap else ''
+			if rank == 1:
+				gap = u' win'
+			else:
+				gap = u' gap:{}'.format(gap) if gap else ''
 		else:
 			rank = self.get_status_display()
 			gap = ''
