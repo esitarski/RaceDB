@@ -36,7 +36,7 @@
 		<td>{{rr.event.date_time|date:"Y-m-d h:ia"}}</td>
 		<td>{{rr.participant.category.code_gender}}</td>
 		<td>{{rr.participant.team.name}}</td>
-		<td><span style="white-space: nowrap;">{{rr.event.competition.name}}</span><br/><span style="white-space: nowrap;">{{rr.event.name}}</span></td>
+		<td><a href="/RaceDB/Hub/CompetitionResults/{{rr.event.competition.id}}/"><span style="white-space: nowrap;">{{rr.event.competition.name}}</span></a><br/><span style="white-space: nowrap;">{{rr.event.name}}</span></td>
 		<td>{{rr.event.competition.discipline.name}}</td>
 		<td>{{rr.event.competition.race_class.name}}</td>
 		<td>{{rr.result_html}}</td>
