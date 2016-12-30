@@ -23,3 +23,4 @@
 [Users and Roles]:	UsersAndRoles.html
 
 [Commands]:			Commands.html
+[Hub]:				Hub.html

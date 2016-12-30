@@ -1,0 +1,10 @@
+[TOC]
+
+# Hub
+
+RaceDB supports a fully indexed results capability accessible by Competition and Athlete.
+
+## Uploading Results from CrossMgr
+
+## Launching Hub Mode
+

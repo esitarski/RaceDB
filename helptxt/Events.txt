@@ -5,10 +5,13 @@
 An event is a race within a competition.
 Currently RaceDB supports __Mass Start__ and __Time Trial__ events.
 
-Each event has one or more Start Waves.  In a Mass Stat event, a Start Wave corresponds to a (potentially multi-category) start.
+Each event has one or more Start Waves.  In a Mass Start event, a Start Wave corresponds to a (potentially multi-category) start.
 In a Time Trial event, a Start Wave corresponds to a group of Categories that will be seeded together.
 
 All riders in a Start Wave do the same distance or race for the same minutes.
+
+A Mass Start Wave has an option called __Rank Categories Together__.  If this option is set, all categories in this wave
+will be ranked together and not split apart.
 
 ## Apply Select by Default to Existing Participants
 
