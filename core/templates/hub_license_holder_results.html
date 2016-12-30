@@ -31,7 +31,7 @@
 </thead>
 <tbody>
 	{% for rr in results %}
-	<tr onclick="jump('/RaceDB/Hub/CategoryResults/{{rr.event.id}}/{{rr.event.event_type}}/{{rr.participant.category.id}}/')">
+	<tr>
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{rr.event.date_time|date:"Y-m-d h:ia"}}</td>
 		<td>{{rr.participant.category.code_gender}}</td>
