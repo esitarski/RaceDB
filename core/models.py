@@ -700,30 +700,34 @@ class Competition(models.Model):
 	@property
 	def finish_date( self ):
 		return self.start_date + datetime.timedelta( days = self.number_of_days - 1 )
-		
+	
+	reMatchLeadingZeros = re.compile( '^0| 0')
+	def fix_date_leading_zeros( self, s ):
+		return self.reMatchLeadingZeros.sub(' ', s).strip()
+	
 	@property
 	def date_range_str( self ):
 		sd = self.start_date
 		ed = self.finish_date
 		if sd == ed:
-			return sd.strftime('%b %d, %Y')
+			return self.fix_date_leading_zeros(sd.strftime('%b %d, %Y'))
 		if sd.month == ed.month and sd.year == ed.year:
-			return u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%d, %Y') )
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%d, %Y') ))
 		if sd.year == ed.year:
-			return u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%b %d, %Y') )
-		return u'{}-{}'.format( sd.strftime('%b %d, %Y'), ed.strftime('%b %d, %Y') )
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%b %d, %Y') ))
+		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d, %Y'), ed.strftime('%b %d, %Y') ))
 	
 	@property
 	def date_range_year_str( self ):
 		sd = self.start_date
 		ed = self.finish_date
 		if sd == ed:
-			return sd.strftime('%Y %b %d')
+			return self.fix_date_leading_zeros(sd.strftime('%Y %b %d'))
 		if sd.month == ed.month and sd.year == ed.year:
-			return u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%d') )
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%d') ))
 		if sd.year == ed.year:
-			return u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%b %d') )
-		return u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%Y %b %d') )
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%b %d') ))
+		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%Y %b %d') ))
 	
 	@property
 	def has_optional_events( self ):

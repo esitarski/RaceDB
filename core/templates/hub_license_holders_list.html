@@ -28,7 +28,7 @@
 		{% with has_results=h.has_results %}
 		<tr {% if has_results %}onclick="jump('./RaceDB/Hub/LicenseHolderResults/{{h.id}}/');"{% endif %}>
 			<td class="text-right">{{forloop.counter1}}.</td>
-			<td>{% if has_results %}<a href="./RaceDB/Hub/LicenseHolderResults/{{h.id}}/">{% endif %}{{h.full_name}}{% if has_results %}</a>{% endif %}</td>
+			<td>{% if has_results %}<strong><a href="./RaceDB/Hub/LicenseHolderResults/{{h.id}}/">{% endif %}{{h.full_name}}{% if has_results %}</a></strong>{% endif %}</td>
 			<td>{{h.get_location}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
