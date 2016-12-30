@@ -1612,13 +1612,15 @@ class WaveBase( models.Model ):
 				distance = self.distance * self.laps
 			else:
 				distance = self.distance
-		return u', '.join( v for v in [
-			u'{}:&nbsp;{}'.format(_('Offset'), self.start_offset) if include_starters and hasattr(self,'start_offset') else None,
+		s = u', '.join( v for v in (
+			u'{}:&nbsp;{}'.format(u'Offset', self.start_offset) if include_starters and hasattr(self,'start_offset') else None,
 			u'{:.2f}&nbsp;{}'.format(distance, self.distance_unit) if distance else None,
-			u'{}&nbsp;{}'.format(self.laps, _('laps') if self.laps != 1 else _('lap')) if self.laps else None,
-			u'{}&nbsp;{}'.format(self.minutes, _('min')) if getattr(self, 'minutes', None) else None,
-			u'{}:&nbsp;{}'.format(_('Strs'), self.get_starters_str().replace(' ', '&nbsp;')) if include_starters else None,
-		] if v )
+			u'{}&nbsp;{}'.format(self.laps, u'laps' if self.laps != 1 else u'lap') if self.laps else None,
+			u'{}&nbsp;{}'.format(self.minutes, u'min') if getattr(self, 'minutes', None) else None,
+			u'Rank&nbsp;Together' if getattr(self, 'rank_categories_together', False) else None,
+			u'{}:&nbsp;{}'.format(u'Strs', self.get_starters_str().replace(' ', '&nbsp;')) if include_starters else None,
+		) if v )
+		return s
 	
 	class Meta:
 		verbose_name = _('Wave Base')
