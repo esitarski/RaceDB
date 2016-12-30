@@ -1,0 +1,18 @@
+{% load i18n %}
+{% load static %}
+{% load staticfiles %}
+
+<nav class="navbar navbar-default navbar-fixed-top hidden-print">
+	<div class="container-fluid">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="/RaceDB/Hub/SearchCompetitions/">
+				<img alt="RaceDB" src="{% static "images/RaceDB_xsmall.png" %}">
+			</a>
+			<ul class="nav navbar-nav">
+				<li><a href="/RaceDB/Hub/SearchCompetitions/">{% trans "Search Competitions" %}</a></li>
+				<li><a href="/RaceDB/Hub/SearchLicenseHolders/">{% trans "Search Athletes" %}</a></li>
+			</ul>
+		</div>
+	</div>
+</nav>
+<p class="hidden-print"><br/><br/></p>

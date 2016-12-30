@@ -1,23 +1,15 @@
 {% extends "base.html" %}
-
-{% block content %}
 {% load i18n %}
 {% load static %}
 {% load staticfiles %}
 
-<h2 class="hidden-print">{{title}}</h2>
+{% block content %}
+{% include "hub_nav.html" %}
 <h2>
-	<a href="/RaceDB/Hub/SearchCompetitions/"><img src="{% static "images/RaceDB_small.png" %}" alt="RaceDB"></img></a>
 	<strong>{{category.code_gender}} {{wave.name}}</strong>
 </h2>
 <h2><strong>{{event.competition.name}}: {{event.name}}:</strong> {{event.date_time}}, {% trans "Nations" %}: {{num_nationalities}}, {% trans "Strs" %}: {{num_starters}}</h2>
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
-<div class="hidden-print">
-<hr/>
-<a class="btn btn-primary" href="{{pop2Url}}">{% trans "OK" %}</a>
-&nbsp;&nbsp;&nbsp;&nbsp;
-<button class="btn btn-primary" id="focus" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
-</div>
 <h2>&nbsp;</h2>
 <style>
 table.participant_table tr td {

@@ -41,8 +41,8 @@ class CompetitionSearchForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			Row( HTML('<img src="{}"/>'.format(static('images/RaceDB_small.png'))), HTML('&nbsp;'*4),
-			Field('name_text', size=20, autofocus=True ), HTML('&nbsp;'*4), Field('year'), HTML('&nbsp;'*4), button_args[0]),
+			Row( HTML('<span style="font-size: 180%;">'), HTML(_('Search Competitions')), HTML("</span>&nbsp;&nbsp;"),
+				Field('name_text', size=20, autofocus=True ), HTML('&nbsp;'*4), Field('year'), HTML('&nbsp;'*4), button_args[0]),
 		)
 
 def getPaginator( request, page_key, items ):
@@ -62,8 +62,6 @@ def getPaginator( request, page_key, items ):
 	return items, paginator
 	
 def SearchCompetitions( request ):
-	competitions = Competition.objects.all()
-
 	key = 'hub_competitions'
 	page_key = key + '_page'
 
@@ -149,3 +147,63 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 	exclude_breadcrumbs = True
 	hub_mode = True
 	return render( request, 'RiderDashboard.html', locals() )
+	
+#---------------------------------------------------------------------------------------------------
+
+@autostrip
+class LicenseHolderSearchForm( Form ):
+	last_name = forms.CharField( required=False, label = _('Last Name') )
+	first_name = forms.CharField( required=False, label = _('First Name') )
+	
+	def __init__(self, *args, **kwargs):
+		super(LicenseHolderSearchForm, self).__init__(*args, **kwargs)
+
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline search'
+		
+		button_args = [
+			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
+		]
+		
+		self.helper.layout = Layout(
+			Row( HTML('<span style="font-size: 180%;">'), HTML(_('Search Athletes')), HTML("</span>&nbsp;&nbsp;"),
+				Field('last_name', size=20, autofocus=True ), HTML('&nbsp;'*4),
+				Field('first_name', size=20 ), HTML('&nbsp;'*4),
+				button_args[0]),
+		)
+
+def SearchLicenseHolders( request ):
+	key = 'hub_license_holders'
+	page_key = key + '_page'
+
+	license_holder_filter = request.session.get(key, {})
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = LicenseHolderSearchForm( request.POST )
+		if form.is_valid():
+			license_holder_filter = form.cleaned_data
+			request.session[key] = license_holder_filter
+			request.session[page_key] = None
+	else:
+		form = LicenseHolderSearchForm( initial = license_holder_filter )
+	
+	search_fields = []
+	if license_holder_filter.get('last_name','').strip():
+		search_fields.append( license_holder_filter.get('last_name','').strip() )
+	if search_fields and license_holder_filter.get('first_name','').strip():
+		search_fields.append( license_holder_filter.get('first_name','').strip() )
+		
+	if search_fields:
+		license_holders = LicenseHolder.objects.filter( search_text__startswith=utils.get_search_text(search_fields) )
+	else:
+		license_holders = LicenseHolder.objects.filter( license_code__isnull=True )
+	
+	license_holders, paginator = getPaginator( request, page_key, license_holders )
+	exclude_breadcrumbs = True
+	return render( request, 'hub_license_holders_list.html', locals() )
+
+
