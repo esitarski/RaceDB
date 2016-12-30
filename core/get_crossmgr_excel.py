@@ -35,6 +35,9 @@ category_headers = (
 	'Race Laps',
 	'Race Distance',
 	'Race Minutes',
+	'Publish',
+	'Upload',
+	'Series',
 )
 
 property_headers = (
@@ -140,6 +143,9 @@ def add_categories_page( wb, title_format, event ):
 		categories = sorted( categories, key = lambda c: c.sequence )
 		if not categories:
 			continue
+			
+		wave_flag = getattr( wave, 'rank_categories_together', False )
+		component_flag = not wave_flag
 		
 		participants = list( p for p in wave.get_participants_unsorted() if p.license_holder.eligible )
 		if len(categories) == 1 or event.event_type == 1:	# If only one category, or if this is a time trial, do not output Component waves.
@@ -154,6 +160,7 @@ def add_categories_page( wb, title_format, event ):
 					wave.laps if wave.laps else u'',
 					wave.distance if wave.distance else u'',
 					getattr(wave, 'minutes', None) or u'',
+					True, True, True,
 				]
 				row = write_row_data( ws, row, row_data )
 		else:
@@ -167,6 +174,7 @@ def add_categories_page( wb, title_format, event ):
 				wave.laps if wave.laps else u'',
 				wave.distance if wave.distance else u'',
 				getattr(wave, 'minutes', None) or u'',
+				wave_flag, wave_flag, wave_flag,
 			]
 			row = write_row_data( ws, row, row_data )
 			
@@ -181,6 +189,7 @@ def add_categories_page( wb, title_format, event ):
 					u'',
 					u'',
 					u'',
+					component_flag, component_flag, component_flag,
 				]
 				row = write_row_data( ws, row, row_data )
 
