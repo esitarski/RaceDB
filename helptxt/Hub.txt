@@ -12,18 +12,24 @@ Hub Mode displays results.  These must be uploaded from CrossMgr.
 
 ## Launching Hub Mode
 
-Hub Mode can be lauched.
+Hub Mode can be lauched by adding the __--hub__ parameters to the launch command.  For example:
+
+    python manage.py launch --hub
+
+All other parameters work as usual, except rfid parameters are ignored.
+
+This will start RaceDB in hub mode.  Attempts to access other parts of the system will be routed to the Hub search page.
 
 ## Searching by Competition and Athlete
 
-
+Hub mode is pretty straight-forward.  Search by Competitions or Athletes.  Click on the links to explore the results.
 
 ## Showing Combined Results by Start Wave
 
-Sometimes all riders in a Start Wave are ranked separately by Category.
-Sometimes they should be ranked together.
+Most of the time, riders in a Start Wave are ranked separately by Category.
 
-Tell RaceDB what you want by setting __Rank Categories Together__ in the Wave.
+But, sometimes all categories in a Wave should be ranked together (for example, a combined Women's Master's race).
 
-If you wish the categories in the wave to be ranked individually, leave this unset.
+If this is the case, set __Rank Categories Together__ in the Wave edit screen (accessible from the __Competition Dashboard__).
+
 
