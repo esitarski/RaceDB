@@ -29,42 +29,10 @@ $("form").submit(function(event) {
 {% crispy form %}
 <div style="text-align:center">
 </div>
-{% with results=instance.get_results participation=instance.get_participation_as_competitor %}
-{% if results %}
+{% with participation=instance.get_participation_as_competitor %}
+{% if instance.has_results %}
 <hr/>
-<h2>{% trans "Results" %}</h2>
-{% spaceless %}
-<table class="table table-striped table-hover table-condensed">
-<thead>
-	<tr>
-		<th></th>
-		<th>{% trans "Date" %}</th>
-		<th>{% trans "Category" %}</th>
-		<th>{% trans "Team" %}</th>
-		<th>{% trans "Competition - Event" %}</th>
-		<th>{% trans "Class" %}</th>
-		<th>{% trans "Discipline" %}</th>
-		<th>{% trans "Result" %}</th>
-		<th></th>
-	</tr>
-</thead>
-<tbody>
-	{% for rr in results %}
-	<tr>
-		<td class="text-right">{{forloop.counter}}.</td>
-		<td>{{rr.event.date_time}}</td>
-		<td>{{rr.participant.category.code_gender}}</td>
-		<td>{{rr.participant.team.name}}</td>
-		<td>{{rr.event.competition.name}} - {{rr.event.name}}</td>
-		<td>{{rr.event.competition.race_class.name}}</td>
-		<td>{{rr.event.competition.discipline.name}}</td>
-		<td>{{rr.result_html}}</td>
-		<td><a class="btn btn-primary btn-xs" href="./ResultsMassStartCategory/{{rr.event.id}}/{{rr.participant.category.id}}/">{% trans "Results" %}</a>&nbsp;<a class="btn btn-primary btn-xs" href="./ResultMassStartRiderAnaysis/{{rr.id}}/">{% trans "Analysis" %}</a>
-	</tr>
-	{% endfor %}
-</tbody>
-</table>
-{% endspaceless %}
+<a class="btn btn-primary hidden-print" target="_blank" href="/RaceDB/Hub/LicenseHolderResults/{{instance.id}}/">{% trans "Results Hub" %}</a>
 {% endif %}
 {% if participation %}
 <hr/>

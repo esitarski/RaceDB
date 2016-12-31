@@ -41,8 +41,13 @@ class CompetitionSearchForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			Row( HTML('<span style="font-size: 180%;">'), HTML(_('Search Competitions')), HTML("</span>&nbsp;&nbsp;"),
-				Field('name_text', size=20, autofocus=True ), HTML('&nbsp;'*4), Field('year'), HTML('&nbsp;'*4), button_args[0]),
+			Row(
+				HTML('<span style="font-size: 180%;">'),
+				HTML(_('Search Competitions')), HTML("</span>&nbsp;&nbsp;"),
+				Field('year'), HTML('&nbsp;'*4),
+				Field('name_text', size=20, autofocus=True ), HTML('&nbsp;'*4),
+				Field( button_args[0] ),
+			),
 		)
 
 def getPaginator( request, page_key, items ):

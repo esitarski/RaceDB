@@ -107,13 +107,14 @@ def get_payload_for_result( result ):
 	payload['data'] = data
 	return payload
 
-def ResultsMassStart( request, eventId ):
+'''
+def Results( request, eventId, eventType ):
 	time_stamp = datetime.datetime.now()
-	event = get_object_or_404( EventMassStart, pk=eventId )
-	return render( request, 'results_mass_start_list.html', locals() )
+	event = get_object_or_404( (EventMassStart, EventTT)[int(eventType)], pk=eventId )
+	return render( request, 'results_list.html', locals() )
 
-def ResultsMassStartCategory( request, eventId, categoryId ):
-	event = get_object_or_404( EventMassStart, pk=eventId )
+def ResultsCategory( request, eventId, eventType, categoryId ):
+	event = get_object_or_404( (EventMassStart, EventTT)[int(eventType)], pk=eventId )
 	category = get_object_or_404( Category, pk=categoryId )
 	wave = event.get_wave_for_category( category )
 	if wave.rank_categories_together:
@@ -123,36 +124,11 @@ def ResultsMassStartCategory( request, eventId, categoryId ):
 	num_nationalities = results.exclude(participant__license_holder__nation_code='').values('participant__license_holder__nation_code').distinct().count()
 	num_starters = results.exclude( status=Result.cDNS ).count()
 	time_stamp = datetime.datetime.now()
-	return render( request, 'results_mass_start_category_list.html', locals() )
+	return render( request, 'results_category_list.html', locals() )
 
-def ResultMassStartRiderAnaysis( request, resultId ):
-	result = get_object_or_404( ResultMassStart, pk=resultId )
+def ResultAnaysis( request, eventId, eventType, resultId ):
+	event = get_object_or_404( (EventMassStart, EventTT)[int(eventType)], pk=eventId )
+	result = get_object_or_404( event.get_result_class(), pk=resultId )
 	payload = get_payload_for_result( result )
 	return render( request, 'RiderDashboard.html', locals() )
-
-#---------------------------------------------------------------------------------------------
-	
-def ResultsTT( request, eventId ):
-	time_stamp = datetime.datetime.now()
-	event = get_object_or_404( EventTT, pk=eventId )
-	return render( request, 'results_mass_start_list.html', locals() )
-
-
-def ResultsTTCategory( request, eventId, categoryId ):
-	event = get_object_or_404( EventTT, pk=eventId )
-	category = get_object_or_404( Category, pk=categoryId )
-	wave = event.get_wave_for_category( category )
-	if wave.rank_categories_together:
-		results = wave.get_results()
-	else:
-		results = event.get_results().filter( participant__category=category ).order_by('status','category_rank')
-	num_nationalities = results.exclude(participant__license_holder__nation_code='').values('participant__license_holder__nation_code').distinct().count()
-	num_starters = results.exclude( status=Result.cDNS ).count()
-	time_stamp = datetime.datetime.now()
-	return render( request, 'results_mass_start_category_list.html', locals() )
-
-def ResultTTRiderAnaysis( request, resultId ):
-	result = get_object_or_404( ResultTT, pk=resultId )
-	payload = get_payload_for_result( result )
-	return render( request, 'RiderDashboard.html', locals() )
-
+'''

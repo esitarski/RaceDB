@@ -53,12 +53,6 @@ urlpatterns = [
 	url(r'^(?i).*StartLists/(?P<competitionId>\d+)/$', views.StartLists),
 	url(r'^(?i).*StartList/(?P<eventId>\d+)/$', views.StartList),
 	
-	url(r'^(?i).*ResultsMassStart/(?P<eventId>\d+)/$', results.ResultsMassStart),
-	url(r'^(?i).*ResultsMassStartCategory/(?P<eventId>\d+)/(?P<categoryId>\d+)/$', results.ResultsMassStartCategory),
-	url(r'^(?i).*ResultsTT/(?P<eventId>\d+)/$', results.ResultsTT),
-	
-	url(r'^(?i).*ResultMassStartRiderAnaysis/(?P<resultId>\d+)/$', results.ResultMassStartRiderAnaysis),
-	
 	url(r'^(?i).*ApplyNumberSet/(?P<competitionId>\d+)/$', views.ApplyNumberSet),
 	url(r'^(?i).*InitializeNumberSet/(?P<competitionId>\d+)/$', views.InitializeNumberSet),
 	
