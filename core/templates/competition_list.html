@@ -29,7 +29,7 @@
 </thead>
 <tbody>
 	{% for c in competitions %}
-		<tr onclick="jump('{{path}}CompetitionDashboard/{{c.id}}');">
+		<tr onclick="jump('{{path}}CompetitionDashboard/{{c.id}}/');">
 			<td>{{c.name}}</td>
 			<td style="text-align:right">{{c.get_participants.count}}</td>
 			<td>{{c.organizer}}</td>
@@ -39,14 +39,14 @@
 			<td>{{c.report_labels_text}}</td>
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
-					<a class="btn btn-warning" href="{{path}}CompetitionDelete/{{c.id}}">{% trans "Delete" %}</a>
+					<a class="btn btn-warning btn-md" href="{{path}}CompetitionDelete/{{c.id}}/">{% trans "Delete" %}</a>
 					&nbsp;
-					<a class="btn btn-primary" href="{{path}}CompetitionCopy/{{c.id}}">{% trans "Copy" %}</a>
+					<a class="btn btn-primary btn-md" href="{{path}}CompetitionCopy/{{c.id}}/">{% trans "Copy" %}</a>
 					&nbsp;
-					<a class="btn btn-primary" href="{{path}}CompetitionExport/{{c.id}}">{% trans "Export" %}</a>
+					<a class="btn btn-primary btn-md" href="{{path}}CompetitionExport/{{c.id}}/">{% trans "Export" %}</a>
 					&nbsp;&nbsp;
 				{% endif %}
-				<a class="btn btn-success" href="{{path}}CompetitionDashboard/{{c.id}}">{% trans "Dashboard" %}</a>
+				<a class="btn btn-success btn-md" href="{{path}}CompetitionDashboard/{{c.id}}/">{% trans "Dashboard" %}</a>
 			</td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
