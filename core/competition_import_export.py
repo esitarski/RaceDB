@@ -38,8 +38,10 @@ class processing_status( object ):
 		if self.instance_count % self.update_frequency == 0:
 			t_cur = datetime.datetime.now()
 			rate = self.update_frequency / ((t_cur - self.t_last).total_seconds() + 0.000001 )
-			s_remaining = (self.instance_total - self.instance_count) / rate
-			print '{:.1f}%, {:.1f} objs/sec, {:.0f} secs remaining.'.format((100.0*self.instance_count)/self.instance_total, rate, s_remaining)
+			ave_rate = self.instance_count / ((t_cur - self.t_start).total_seconds() + 0.000001 )
+			
+			s_remaining = (self.instance_total - self.instance_count) / ave_rate
+			print '{:4.1f}%   {:7.1f} objs/sec   {:.0f} secs remaining.'.format((100.0*self.instance_count)/self.instance_total, rate, s_remaining)
 			self.t_last = t_cur
 			
 def get_key( Model, pk ):
