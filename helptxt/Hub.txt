@@ -24,6 +24,8 @@ This will start RaceDB in hub mode.  Hub mode restricts access to the Hub screen
 All other parameters work as usual, except the rfid parameters which are ignored.
 The example command above launches the Hub server on port 8100.  If you are also launching regular RaceDB, it is necessary to launch Hub mode on a different ports.
 
+It is possible to Upload CrossMgr results to a web server in hub mode.
+
 ## Searching by Competition and Athlete
 
 Hub mode is straight-forward.  Search by Competitions or Athletes.  Click on the links and explore the results.

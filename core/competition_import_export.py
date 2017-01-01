@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import datetime
 from collections import defaultdict, deque
 
 from django.apps import apps
@@ -10,6 +11,7 @@ from django.core.serializers import base
 from django.db import DEFAULT_DB_ALIAS, models
 from django.utils import six
 from django.utils.encoding import force_text
+from django.db import transaction
 
 from utils import get_search_text
 
@@ -21,12 +23,61 @@ def merge( *args ):
 		merged.update( v )
 	return merged
 
+class processing_status( object ):
+	def __init__( self, instance_total ):
+		self.reset( instance_total )
+	
+	def reset( self, instance_total ):
+		self.instance_count = 0
+		self.instance_total = max( instance_total, 1 )
+		self.t_last = self.t_start = datetime.datetime.now()
+		self.update_frequency = 500
+		
+	def inc( self, model_name ):
+		self.instance_count += 1
+		if self.instance_count % self.update_frequency == 0:
+			t_cur = datetime.datetime.now()
+			ops = self.update_frequency / ((t_cur - self.t_last).total_seconds() + 0.000001 )
+			print '{:.1f}%, {:.1f} objs/sec, {}'.format((100.0*self.instance_count)/self.instance_total, ops, model_name)
+			self.t_last = t_cur
+			
+def get_key( Model, pk ):
+	return Model._meta.db_table, int(pk)
+
+class transaction_save( object ):
+	MaxTransactionRecords = 999
+	def __init__( self, old_new ):
+		self.model = None
+		self.old_new = old_new
+		self.pending = []
+		
+	def save( self, model, db_object, instance, pk_old ):
+		if model != self.model:
+			self.flush()
+			self.model = model
+			
+		self.pending.append( (db_object, instance, pk_old) )
+		if len(self.pending) >= self.MaxTransactionRecords:
+			self.flush()
+		
+	def flush( self, model=None ):
+		if model != self.model and self.pending:
+			for i in xrange(0, len(self.pending), self.MaxTransactionRecords):
+				with transaction.atomic():
+					for dbo, inst, pko in self.pending[i:i+self.MaxTransactionRecords]:
+						dbo.save()
+						self.old_new[get_key(self.model, pko)] = inst.pk
+			del self.pending[:]
+			
+processing = processing_status( 1 )
 def _build_instance(Model, data, db, field_names, existing_license_codes):
 	"""
 	Build a model instance.
 	Attempt to find an existing database record based on existing related fields as well as important data fields.
 	Returns new instance and a flag, True an update to an existing record, False if this is a new record.
 	"""
+	
+	processing.inc(Model.__name__)
 	
 	instance = Model( **data )
 	
@@ -104,6 +155,11 @@ def _build_instance(Model, data, db, field_names, existing_license_codes):
 	instance.pk = existing_instance.pk if existing_instance else None
 	return instance, existing_instance
 
+def instance_changed( instance, existing_instance ):
+	if not existing_instance:
+		return True
+	return instance.__dict__ != existing_instance.__dict__
+	
 def competition_deserializer( object_list, **options ):
 	"""
 	Deserialize complex Python objects back into Django ORM instances.
@@ -114,6 +170,8 @@ def competition_deserializer( object_list, **options ):
 	Links between objects are patched to newly created instances,
 	or existing records in the database.
 	"""
+	processing.reset( len(object_list) )
+	
 	db = options.pop('using', DEFAULT_DB_ALIAS)
 	field_names_cache = {}  # Model: <list of field_names>
 	
@@ -124,19 +182,17 @@ def competition_deserializer( object_list, **options ):
 	
 	existing_license_codes = set( LicenseHolder.objects.all().values_list('license_code',flat=True) )
 	
-	def get_key( Model, pk ):
-		return Model._meta.db_table, int(pk)
-	
+	ts = transaction_save( old_new )
 	while object_list:
 		d = object_list.popleft()
 
 		# Look up the model and starting build a dict of data for it.
 		Model = _get_model(d["model"])
+		ts.flush( Model )
 		
 		#print "**", Model._meta.db_table
-		#if 'core_category' in Model._meta.db_table:
+		#if 'core_legal' in Model._meta.db_table or 'core_competition' in Model._meta.db_table:
 		#	import pdb; pdb.set_trace()
-		#	print 'core_category:'
 			
 		data = {}
 		if 'pk' in d:
@@ -185,7 +241,6 @@ def competition_deserializer( object_list, **options ):
 						try:
 							m2m_data[field.name][-1] = old_new[key]
 						except KeyError:
-							import pdb; pdb.set_trace()
 							dependencies[key].append( d )
 							has_dependency = True
 							break
@@ -204,7 +259,6 @@ def competition_deserializer( object_list, **options ):
 						try:
 							data[field.attname] = old_new[get_key(model, data[field.attname])]
 						except KeyError:
-							import pdb; pdb.set_trace()
 							dependencies[get_key(model, data[field.attname])].append( d )
 							has_dependency = True
 
@@ -235,18 +289,18 @@ def competition_deserializer( object_list, **options ):
 					)
 			
 			db_object = base.DeserializedObject(instance, m2m_data)
-			if existing_instance:	# This is an update as there is no existing instance.
+			if existing_instance:	# This is an update as there is an existing instance.
 				# Check whether the existing record is more recent and should not be preserved.
 				if Model == LicenseHolder:
 					if instance.id not in more_recently_updated_license_holders:
-						db_object.save()
+						ts.save( Model, db_object, instance, pk_old )
 				elif Model == Waiver:
 					if instance.license_holder.id not in more_recently_updated_waivers:
-						db_object.save()
+						ts.save( Model, db_object, instance, pk_old )
 				elif Model == LegalEntity:
 					existing_legal_entity = LegalEntity.objects.get(id=instance.id)
-					if existing_legal_entity.waiver_expiry_date < instance.waiver_expiry_date:
-						db_object.save()
+					instance.waiver_expiry_date = max( instance.waiver_expiry_date, existing_legal_entity.waiver_expiry_date )
+					ts.save( Model, db_object, instance, pk_old )
 				elif Model == NumberSetEntry:
 					if instance.id not in more_recently_updated_license_holders:
 						if instance.date_lost:
@@ -256,7 +310,7 @@ def competition_deserializer( object_list, **options ):
 							if existing_instance.bib != instance.bib:
 								competition.number_set.assign_bib(instance.license_holder, instance.bib)
 				else:
-					db_object.save()
+					ts.save( Model, db_object, instance, pk_old )
 			else:
 				if Model == NumberSetEntry:
 					if instance.date_lost:
@@ -264,11 +318,14 @@ def competition_deserializer( object_list, **options ):
 					else:
 						competition.number_set.assign_bib(instance.license_holder, instance.bib)
 				else:
-					db_object.save()
+					ts.save( Model, db_object, instance, pk_old )
 			
 			key = get_key(Model, pk_old)
 			object_list.extend( dependencies.pop(key, []) )
-			old_new[key] = instance.pk
+			if instance.pk:
+				old_new[key] = instance.pk
+			
+	ts.flush()
 
 def _get_model(model_identifier):
     """
@@ -288,7 +345,7 @@ def get_competition_name_start_date( stream=None, pydata=[],
 		pydata = json.load( stream )
 	
 	if import_as_template:
-		pydata = [d for d in pydata if not (d['model'] in ('core.licenceholder' or 'core.team') or 'license_holder' in d['fields']) ]
+		pydata = [d for d in pydata if not (d['model'] in ('core.licenceholder' or 'core.team') or 'license_holder' in d['fields'] or 'participant' in d['fields']) ]
 			
 	for d in pydata:
 		if d['model'] == 'core.competition':
