@@ -37,8 +37,9 @@ class processing_status( object ):
 		self.instance_count += 1
 		if self.instance_count % self.update_frequency == 0:
 			t_cur = datetime.datetime.now()
-			ops = self.update_frequency / ((t_cur - self.t_last).total_seconds() + 0.000001 )
-			print '{:.1f}%, {:.1f} objs/sec, {}'.format((100.0*self.instance_count)/self.instance_total, ops, model_name)
+			rate = self.update_frequency / ((t_cur - self.t_last).total_seconds() + 0.000001 )
+			s_remaining = (self.instance_total - self.instance_count) / rate
+			print '{:.1f}%, {:.1f} objs/sec, {:.0f} secs remaining.'.format((100.0*self.instance_count)/self.instance_total, rate, s_remaining)
 			self.t_last = t_cur
 			
 def get_key( Model, pk ):
@@ -299,8 +300,8 @@ def competition_deserializer( object_list, **options ):
 						ts.save( Model, db_object, instance, pk_old )
 				elif Model == LegalEntity:
 					existing_legal_entity = LegalEntity.objects.get(id=instance.id)
-					instance.waiver_expiry_date = max( instance.waiver_expiry_date, existing_legal_entity.waiver_expiry_date )
-					ts.save( Model, db_object, instance, pk_old )
+					if instance.waiver_expiry_date > existing_legal_entity.waiver_expiry_date:
+						ts.save( Model, db_object, instance, pk_old )
 				elif Model == NumberSetEntry:
 					if instance.id not in more_recently_updated_license_holders:
 						if instance.date_lost:
