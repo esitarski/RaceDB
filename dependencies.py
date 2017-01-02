@@ -12,6 +12,7 @@ dependencies = [
 	'django==1.9.9',
 	'django-crispy-forms==1.6',
 	'django-extensions',
+	'requests',
 	'dj_static',
 	'waitress',
 	'xlsxwriter',

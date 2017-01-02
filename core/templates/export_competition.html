@@ -8,6 +8,32 @@
 {% crispy form %}
 <hr/>
 <p>
+{% if response %}
+	<h2>Response:</h2>
+	{% spaceless %}
+	{% if reponse.message %}
+		<pre>{{response.message}}</pre>
+	{% endif %}
+	{% if response.errors %}
+		<h3>{% trans "Errors" %}</h3>
+		<ul>
+		{% for e in response.errors %}
+			<li>{{e}}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+	{% if response.warnings %}
+		<h3>{% trans "Warnings" %}</h3>
+		<ul>
+		{% for w in response.warnings %}
+			<li>{{w}}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+	{% endspaceless %}
+	<hr/>
+	<p>
+{% endif %}
 <h3>Export a Competition (and all its Dependencies)</h3>
 <p>
 Exports the Competition and all its Dependent Data including:

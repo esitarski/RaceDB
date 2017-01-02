@@ -53,6 +53,8 @@ urlpatterns = [
 	url(r'^(?i).*StartLists/(?P<competitionId>\d+)/$', views.StartLists),
 	url(r'^(?i).*StartList/(?P<eventId>\d+)/$', views.StartList),
 	
+	url(r'^(?i).*CompetitionCloudUpload/$', views.CompetitionCloudUpload),
+	
 	url(r'^(?i).*ApplyNumberSet/(?P<competitionId>\d+)/$', views.ApplyNumberSet),
 	url(r'^(?i).*InitializeNumberSet/(?P<competitionId>\d+)/$', views.InitializeNumberSet),
 	

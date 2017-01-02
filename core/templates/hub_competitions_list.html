@@ -15,6 +15,7 @@
 	<tr>
 		<th></th>
 		<th>{% trans "Date" %}</th>
+		<th>{% trans "Discipline" %}</th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "Organizer" %}</th>
@@ -25,6 +26,7 @@
 		<tr onclick="jump('/RaceDB/Hub/CompetitionResults/{{c.id}}/');">
 			<td class="text-right">{{forloop.counter1}}</td>
 			<td>{{c.date_range_year_str}}</td>
+			<td>{{c.discipline.name}}</td>
 			<td><a href="/RaceDB/Hub/CompetitionResults/{{c.id}}/"><strong>{{c.name}}</strong></a></td>
 			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
 			<td>{{c.organizer}}</td>

@@ -13,39 +13,52 @@ from results import get_payload_for_result
 
 ItemsPerPage = 25
 
-def comptitions_with_results():
-	non_empty = []
-	non_empty.extend( ResultMassStart.objects.all().values_list('event__competition__pk',flat=True).distinct() )
-	non_empty.extend( ResultTT.objects.all().values_list('event__competition__pk',flat=True).distinct() )	
-	return Competition.objects.filter(pk__in=non_empty)
+def competitions_with_results( competitions=None ):
+	if competitions is None:
+		competitions = Competition.objects.all()
+	non_empty  = (
+		set( ResultMassStart.objects.values_list('event__competition__pk',flat=True).distinct() ) |
+		set( ResultTT.objects.values_list('event__competition__pk',flat=True).distinct() )
+	)
+	return competitions.filter(pk__in=non_empty)
 
 @autostrip
 class CompetitionSearchForm( Form ):
-	name_text = forms.CharField( required=False, label = _('Name Text') )
 	year = forms.ChoiceField( required=False, label=_('Year') )
+	discipline = forms.ChoiceField( required=False, label=('Discipline') )
+	name_text = forms.CharField( required=False, label = _('Name Text') )
 	
 	def __init__(self, *args, **kwargs):
 		super(CompetitionSearchForm, self).__init__(*args, **kwargs)
 		
+		competitions = competitions_with_results()
+		
 		year_cur = datetime.datetime.now().year
-		competition =comptitions_with_results().order_by('start_date').first()
+		
+		competition = competitions.order_by('start_date').first()
 		year_min = competition.start_date.year if competition else year_cur
-		self.fields['year'].choices =  [(-1, '----')] + [(y, u'{:04d}'.format(y)) for y in xrange(year_cur, year_min-1, -1)]
-			
+		competition = competitions.order_by('-start_date').first()
+		year_max = competition.start_date.year if competition else year_cur
+		self.fields['year'].choices =  [(-1, '----')] + [(y, u'{:04d}'.format(y)) for y in xrange(year_max, year_min-1, -1)]
+		
+		disciplines = Discipline.objects.filter( pk__in=competitions.values_list('discipline', flat=True).distinct() )
+		self.fields['discipline'].choices =  [(-1, '----')] + [(d.pk, d.name) for d in disciplines]
+		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline search'
 		
 		button_args = [
-			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
+			Submit( 'search-submit', _('Search'), css_class='btn btn-primary' ),
 		]
 		
 		self.helper.layout = Layout(
 			Row(
 				HTML('<span style="font-size: 180%;">'),
 				HTML(_('Search Competitions')), HTML("</span>&nbsp;&nbsp;"),
-				Field('year'), HTML('&nbsp;'*4),
-				Field('name_text', size=20, autofocus=True ), HTML('&nbsp;'*4),
+				Field('year'), HTML('&nbsp;'*2),
+				Field('discipline'), HTML('&nbsp;'*2),
+				Field('name_text', size=20, autofocus=True ), HTML('&nbsp;'*2),
 				Field( button_args[0] ),
 			),
 		)
@@ -84,13 +97,24 @@ def SearchCompetitions( request ):
 	else:
 		form = CompetitionSearchForm( initial = competition_filter )
 	
-	competitions = comptitions_with_results()
+	competitions = Competition.objects.all()
+	
+	search_year = int( competition_filter.get('year',-1) )
+	if search_year > 0:
+		date_min = datetime.date( search_year, 1, 1 )
+		date_max = datetime.date( search_year+1, 1, 1 ) - datetime.timedelta(days=1)
+		competitions = competitions.filter( start_date__range=(date_min, date_max) )
+	
+	dpk = int( competition_filter.get('discipline',-1) )
+	if dpk >= 0:
+		competitions = competitions.filter( discipline__pk=dpk )
 	
 	if competition_filter.get('name_text','').strip():
 		name_text = competition_filter.get('name_text','').strip()
 		for n in name_text.split():
 			competitions = competitions.filter( name__icontains=n )
-	competitions = competitions.order_by('-start_date')
+	
+	competitions = competitions_with_results( competitions ).order_by('-start_date')
 	
 	competitions, paginator = getPaginator( request, page_key, competitions )
 	exclude_breadcrumbs = True

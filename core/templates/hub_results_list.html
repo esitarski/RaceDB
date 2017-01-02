@@ -5,11 +5,13 @@
 
 {% block content %}
 {% include "hub_nav.html" %}
-<h2>
+<h1>
 	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.name}}</a>: {{event.name}}</strong><br/>
-	<strong>{{category.code_gender}} {{wave.name}}</strong><br/>
-	{{event.date_time}}, {% trans "Nations" %}: {{num_nationalities}}, {% trans "Strs" %}: {{num_starters}}
-</h2>
+	<span style="font-size: 75%">
+		<strong>{{category.code_gender}} - {{wave.name}}</strong> ({{event.competition.discipline.name}})<br/>
+		{{event.date_time}}, {% trans "Nations" %}: {{num_nationalities}}, {% trans "Strs" %}: {{num_starters}}
+	</span>
+</h1>
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 <h2>&nbsp;</h2>
 <style>
@@ -19,7 +21,6 @@ table.participant_table tr td {
 table.participant_table tr th {
 	font-size: 85%;
 }
-
 </style>
 </h4>
 {% spaceless %}

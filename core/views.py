@@ -1577,7 +1577,6 @@ def UploadCrossMgr( request ):
 	print 'UploadCrossMgr: Done.'
 	return JsonResponse( response )
 
-
 #-----------------------------------------------------------------------
 
 def GetWaveForm( event_mass_start, wave = None ):
@@ -3510,6 +3509,9 @@ class SystemInfoForm( ModelForm ):
 			Row(
 				Col(Field('license_code_regex', size=80), 6),
 			),
+			Row(
+				Col(Field('cloud_server_url', size=80), 6),
+			),
 			HTML( '<hr/>' ),
 			Field( 'rfid_server_host', type='hidden' ),
 			Field( 'rfid_server_port', type='hidden' ),
@@ -3854,6 +3856,7 @@ from wsgiref.util import FileWrapper
 import json
 import gzip
 import shutil
+import requests
 from django.http import StreamingHttpResponse
 
 @autostrip
@@ -3867,55 +3870,49 @@ class ExportCompetitionForm( Form ):
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
 		
+		url = SystemInfo.get_singleton().cloud_server_url
 		self.helper.layout = Layout(
 			Row(Field('export_as_template')),
 			Row(Field('remove_ftp_info')),
+			Row(HTML('<h3>' + url + '</h3>'))
 		)
 		
-		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+		self.additional_buttons = []
+		if url:
+			self.additional_buttons.append( ('ok-cloud-submit', _('Export to Cloud Server'), 'btn btn-primary'), )
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done'), additional_buttons=self.additional_buttons )
 
-def gzip_response_from_tmp_file( f, fname ):
-	# Use cStringIO to create the file on the fly
-	gzip_stream = StringIO.StringIO()
-
-	# Create the Gzip file handler, with the StringIO in the fileobj
-	gzip_handler = gzip.GzipFile( fileobj=gzip_stream, filename=fname, mode='wb' )
-
-	# Write the tmp data into the gziped handler.
-	f.seek( 0 )
-	shutil.copyfileobj( f, gzip_handler )
+def get_compressed_competition_json( competition, export_as_template=False, remove_ftp_info=False ):
+	# Create a temp file.
+	gzip_stream = tempfile.TemporaryFile()
+	# Create a gzip and connect it to the temp file.
+	gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode="wb", filename='{}.json'.format(competition.get_filename_base()) )
+	# Write the competition json to the gzip obj, which compresses it and writes it to the temp file.
+	competition_export( competition, gzip_handler, export_as_template=export_as_template, remove_ftp_info=remove_ftp_info )
+	# Make sure gzip flushes all its buffers.
 	gzip_handler.flush()
-	gzip_handler.close()
+	gzip_handler.close()	# Does not close underlying fileobj.
+	return gzip_stream
 
+def handle_export_competition( competition, export_as_template=False, remove_ftp_info=False ):
+	gzip_stream = get_compressed_competition_json( competition, export_as_template=export_as_template, remove_ftp_info=remove_ftp_info )
+		
 	# Generate the response using the file wrapper, content type: x-gzip
 	# Since this file can be big, best to use the StreamingHTTPResponse
 	# that way we can guarantee that the file will be sent entirely.
-	response = StreamingHttpResponse( gzip_stream.getvalue(), content_type='application/x-gzip' )
-
-	# Add content disposition so the browser will download the file, don't use mime type !
-	response['Content-Disposition'] = ('attachment; filename=' + os.path.splitext(fname)[0] + '.gzip')
+	response = StreamingHttpResponse( gzip_stream, content_type='application/x-gzip' )
 
 	# Content size
-	gzip_stream.seek(0, os.SEEK_END)
+	gzip_stream.seek(0, 2)
 	response['Content-Length'] = gzip_stream.tell()
+	gzip_stream.seek( 0 )
 
-	# Send back the response to the request, don't close the StringIO handler !
+	# Add content disposition so the browser will download the file.
+	response['Content-Disposition'] = 'attachment; filename={}.gzip'.format(competition.get_filename_base())
+
+	# Send back the response to the request.
 	return response	
-
-def handle_export_competition( competition, export_as_template=False, remove_ftp_info=False ):
-	def get_tmp_length( tmp ):
-		tmp.seek(0, 2)
-		tmp_length = tmp.tell()
-		tmp.seek(0)
-		return tmp_length
-	
-	json_tmp = tempfile.TemporaryFile()
-	competition_export( competition, json_tmp, export_as_template=export_as_template, remove_ftp_info=remove_ftp_info )
-	json_tmp.flush()
-	json_tmp_length = get_tmp_length( json_tmp )
-	json_tmp.seek( 0 )
-	
-	return gzip_response_from_tmp_file( json_tmp, '{}.json'.format(competition.get_filename_base()) )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -3924,45 +3921,43 @@ def CompetitionExport( request, competitionId ):
 	
 	title = string_concat( _('Export'), u': ', competition.name )
 	
+	response = {}
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 		form = ExportCompetitionForm(request.POST)
 		if form.is_valid():
-			return handle_export_competition(
-				competition,
-				form.cleaned_data['export_as_template'],
-				form.cleaned_data['remove_ftp_info'],
-			)
+			url = SystemInfo.get_singleton().cloud_server_url
+			if not url.endswith('/'):
+				url += '/'
+			if 'CompetitionCloudUpload' not in url:
+				url += 'CompetitionCloudUpload/'
+
+			if 'ok-cloud-submit' in request.POST:
+				gzip_stream = get_compressed_competition_json(
+					competition,
+					form.cleaned_data['export_as_template'],
+					form.cleaned_data['remove_ftp_info'],
+				)
+				gzip_stream.seek(0, 2)
+				headers = {
+					'Content-Length': gzip_stream.tell(),
+					'Content-Type': 'application/octet-stream',
+				}
+				gzip_stream.seek(0, 0)
+				response = session.post(url, data=gzip_stream, headers=headers)
+			else:
+				return handle_export_competition(
+					competition,
+					form.cleaned_data['export_as_template'],
+					form.cleaned_data['remove_ftp_info'],
+				)
 	else:
 		form = ExportCompetitionForm()
 	
 	return render( request, 'export_competition.html', locals() )
-
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CompetitionExportToUpload( request, competitionId ):
-	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	title = string_concat( _('Export'), u': ', competition.name )
-	
-	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-		form = ExportCompetitionForm(request.POST)
-		if form.is_valid():
-			return handle_export_competition(
-				competition,
-				form.cleaned_data['export_as_template'],
-				form.cleaned_data['remove_ftp_info'],
-			)
-	else:
-		form = ExportCompetitionForm()
-	
-	return render( request, 'export_competition.html', locals() )
-
 @autostrip
 class ImportCompetitionForm( Form ):
 	json_file = forms.FileField( required=True, label=_('Competition File (*.gzip|*.json)') )
@@ -3986,9 +3981,12 @@ class ImportCompetitionForm( Form ):
 		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_import_competition( json_file_request, import_as_template, name, start_date ):
-	if json_file_request.name.endswith('.gzip') or json_file_request.name.endswith('.gz'):
-		json_file_request = gzip.GzipFile(filename=json_file_request.name, fileobj=json_file_request, mode='rb')
+def handle_import_competition( json_file_request, import_as_template=False, name=None, start_date=None, replace=False ):
+	try:
+		if json_file_request.name.endswith('.gzip') or json_file_request.name.endswith('.gz'):
+			json_file_request = gzip.GzipFile(filename=json_file_request.name, fileobj=json_file_request, mode='rb')
+	except Exception as e:
+		pass
 		
 	message_stream = StringIO.StringIO()
 		
@@ -4000,16 +3998,17 @@ def handle_import_competition( json_file_request, import_as_template, name, star
 			start_date=start_date,
 		 )
 		if name is None:
-			message_stream.write( 'Error: File is Missing Competition Name and Start Date.\n' )
-			message_stream.write( 'Filename: "{}"'.format(file_names[0]) )
+			message_stream.write( 'Error: Missing Competition Name and Start Date.\n' )
 			return message_stream.getvalue()
 		
 	except Exception as e:
-		message_stream.write( 'Error: Missing Competition Name and Start Date.\n' )
+		message_stream.write( 'Error: Cannot find Competition Name and Start Date.\n' )
 		message_stream.write( 'Error: "{}".\n'.format(e) )
 		return message_stream.getvalue()
 			
-	if Competition.objects.filter( name=name, start_date=start_date ).exists():
+	if replace:
+		Competition.objects.filter( name=name, start_date=start_date ).delete()
+	elif Competition.objects.filter( name=name, start_date=start_date ).exists():
 		message_stream.write( 'Error: Competition "{}" "{}" exists already.\n'.format(name, start_date.strftime('%Y-%m-%d')) )
 		message_stream.write( 'Rename or Delete the existing Competition before importing.' )
 		return message_stream.getvalue()
@@ -4040,40 +4039,23 @@ def CompetitionImport( request ):
 		form = ImportCompetitionForm()
 	
 	return render( request, 'import_competition.html', locals() )
-#-----------------------------------------------------------------------
-
+	
 @csrf_exempt
-def CompetitionUploadFromExport( request ):
-	response = None, {'errors':[], 'warnings':[]}
+def CompetitionCloudUpload( request ):
+	print 'CompetitionCloudUpload: processing...'
+	response = None, {'errors':[], 'warnings':[], 'message':''}
 	if request.method == "POST":
 		try:
-			stream = StringIO.StringIO( request.body )
-			fs = gzip.GzipFile( filename='Competition_JSON_GZip', fileobj=stream, mode='rb' )
+			gzip_handler = gzip.GzipFile(fileobj=StringIO.StringIO(request.body), mode='rb')
+			response['message'] = handle_import_competition( gzip_handler, import_as_template=False, replace=True )
 		except Exception as e:
-			response['errors'].append( unicode(e) )
+			response['errors'].append( 'Competition Upload Error: {}'.format(e) )
 	else:
 		response['errors'].append( u'Request must be of type POST with gzip json payload.' )
-	
-	if response['errors']:
-		return JsonResponse( response )
-	
-	try:
-		name, start_date, pydata = get_competition_name_start_date( stream=fs )
-	except Exception as e:
-		print 'Error: Cannot read Competition "{}" ({})'.format(options['competition_file'], e)
-		return			
-
-	# Replace the existing Competition.
-	try:
-		competition = Competition.objects.get( name=name, start_date=start_date )
-	except Exception as e:
-		competition = None
-	
-	if competition:
-		competition.delete()
-		
-	competition_import( pydata=pydata )
+	print 'CompetitionCloudUpload: done.'
 	return JsonResponse( response )
+
+#-----------------------------------------------------------------------
 
 def Logout( request ):
 	return logout( request, next_page=getContext(request, 'cancelUrl') )

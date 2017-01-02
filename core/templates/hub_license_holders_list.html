@@ -20,7 +20,6 @@
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
 		<th>{% trans "UCIID" %}</th>
-		<th>{% trans "Has Results" %}</th>
 	</tr>
 </thead>
 <tbody>
@@ -32,7 +31,6 @@
 			<td>{{h.get_location}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
-			<td class="text-center">{% if has_results %}{{has_results|good_err_icon}}{% endif %}</td>
 		</tr>
 		{% endwith %}
 	{% endfor %}
