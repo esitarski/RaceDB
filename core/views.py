@@ -1577,6 +1577,7 @@ def UploadCrossMgr( request ):
 	print 'UploadCrossMgr: Done.'
 	return JsonResponse( response )
 
+
 #-----------------------------------------------------------------------
 
 def GetWaveForm( event_mass_start, wave = None ):
@@ -3939,6 +3940,29 @@ def CompetitionExport( request, competitionId ):
 	
 	return render( request, 'export_competition.html', locals() )
 
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CompetitionExportToUpload( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	title = string_concat( _('Export'), u': ', competition.name )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = ExportCompetitionForm(request.POST)
+		if form.is_valid():
+			return handle_export_competition(
+				competition,
+				form.cleaned_data['export_as_template'],
+				form.cleaned_data['remove_ftp_info'],
+			)
+	else:
+		form = ExportCompetitionForm()
+	
+	return render( request, 'export_competition.html', locals() )
+
 @autostrip
 class ImportCompetitionForm( Form ):
 	json_file = forms.FileField( required=True, label=_('Competition File (*.gzip|*.json)') )
@@ -4017,6 +4041,39 @@ def CompetitionImport( request ):
 	
 	return render( request, 'import_competition.html', locals() )
 #-----------------------------------------------------------------------
+
+@csrf_exempt
+def CompetitionUploadFromExport( request ):
+	response = None, {'errors':[], 'warnings':[]}
+	if request.method == "POST":
+		try:
+			stream = StringIO.StringIO( request.body )
+			fs = gzip.GzipFile( filename='Competition_JSON_GZip', fileobj=stream, mode='rb' )
+		except Exception as e:
+			response['errors'].append( unicode(e) )
+	else:
+		response['errors'].append( u'Request must be of type POST with gzip json payload.' )
+	
+	if response['errors']:
+		return JsonResponse( response )
+	
+	try:
+		name, start_date, pydata = get_competition_name_start_date( stream=fs )
+	except Exception as e:
+		print 'Error: Cannot read Competition "{}" ({})'.format(options['competition_file'], e)
+		return			
+
+	# Replace the existing Competition.
+	try:
+		competition = Competition.objects.get( name=name, start_date=start_date )
+	except Exception as e:
+		competition = None
+	
+	if competition:
+		competition.delete()
+		
+	competition_import( pydata=pydata )
+	return JsonResponse( response )
 
 def Logout( request ):
 	return logout( request, next_page=getContext(request, 'cancelUrl') )
