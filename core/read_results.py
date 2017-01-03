@@ -23,14 +23,20 @@ def get_event_from_payload( payload ):
 	
 	EventClass = EventTT if payload.get('isTimeTrial', False) else EventMassStart
 	
+	events = EventClass.objects.filter(date_time=raceScheduledStart)
+	if not events.exists():
+		print "Cannot find any Events starting at {}".format( raceScheduledStart.strftime('%Y-%m-%d %H:%M %z') )
+	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
 		raceNameTextCur = u'-'.join( [event.competition.name, event.name] )
+		print 'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur)
 		if raceNameText == raceNameTextCur:
 			return event
 	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
 		for wave in event.get_wave_set().all():
 			raceNameTextCur = u'-'.join( [event.competition.name, wave.name] )
+			print 'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur)
 			if raceNameText == raceNameTextCur:
 				return event	
 	
@@ -172,7 +178,12 @@ def read_results_crossmgr( payload ):
 				fields['ave_kmh'] = ave_kmh
 
 			result = Result( **fields )
-			result.save()			
-			result.set_race_times( race_times, lap_speeds )
+			try:
+				result.save()
+				result.set_race_times( race_times, lap_speeds )
+			except Exception as e:
+				warnings.append( 'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(
+					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name(), e) )
+
 		
 	return {'errors': errors, 'warnings': warnings, 'name':u'{} - {}'.format(competition.name, event.name)}

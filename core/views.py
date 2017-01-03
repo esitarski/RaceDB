@@ -758,6 +758,65 @@ def InitializeNumberSet( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	competition.initialize_number_set()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+@autostrip
+class CompetitionSearchForm( Form ):
+	year = forms.ChoiceField( required=False, label = _('Year') )
+	discipline = forms.ChoiceField( required=False, label = _('Discipline') )
+	search_text = forms.CharField( required=False, label = _('Search Text') )
+	
+	def __init__(self, *args, **kwargs):
+		request = kwargs.pop('request', None)
+		is_superuser = (request and request.user.is_superuser)
+		
+		super(CompetitionSearchForm, self).__init__(*args, **kwargs)
+		
+		if is_superuser:
+			year_cur = datetime.datetime.now().year
+			competitions = Competition.objects.all().order_by('start_date')
+			competition = competitions.first()
+			year_min = competition.start_date.year if competition else year_cur
+			competition = competitions.last()
+			year_max = competition.start_date.year if competition else year_cur
+			self.fields['year'].choices = [(-1, '---')] + [(y,'{}'.format(y)) for y in xrange(year_max, year_min-1, -1)]
+			
+			disciplines = Discipline.objects.filter(
+				pk__in=competitions.values_list('discipline',flat=True).distinct() ).order_by('sequence')
+			self.fields['discipline'].choices = [(-1, '---')] + [(d.pk,d.name) for d in disciplines]
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline search'
+		
+		button_args = [
+			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
+			Submit( 'cancel-submit', _('OK'), css_class = 'btn btn-warning' ),
+		]
+		
+		if is_superuser:
+			button_args.extend(	[
+				Submit('new-submit', _('New Competition'), css_class = 'btn btn-success'),
+				Submit('import-submit', _('Import Competition'), css_class = 'btn btn-primary'),
+			] )
+		
+			self.helper.layout = Layout(
+				Row(
+					Field('year' ), HTML('&nbsp;'*2),
+					Field('discipline' ), HTML('&nbsp;'*2),
+					Field('search_text' ), HTML('&nbsp;'*2),
+				),
+				Row( *(button_args[:2] + [HTML('&nbsp;'*8)] + button_args[2:]) ),
+			)
+		else:
+			self.helper.layout = Layout(
+				Row(
+					Field( 'year', type='hidden' ),
+					Field( 'discipline', type='hidden' ),
+					Field('search_text' ), HTML('&nbsp;'*4),
+				),
+				Row( *button_args[:2] ),
+			)
+
 	
 def GetCompetitionForm( competition_cur = None ):
 	@autostrip
@@ -892,11 +951,9 @@ def GetCompetitionForm( competition_cur = None ):
 @access_validation()
 def CompetitionsDisplay( request ):
 	form = None
-	search_text = request.session.get('competition_filter', '')
-	btns = []
-	if request.user.is_superuser:
-		btns.append( ('new-submit', _('New Competition'), 'btn btn-success') )
-		btns.append( ('import-submit', _('Import Competition'), 'btn btn-primary') )
+	search_fields = request.session.get('competition_filter', {})
+	if not isinstance(search_fields, dict):
+		search_fields = {}
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -908,26 +965,35 @@ def CompetitionsDisplay( request ):
 			return HttpResponseRedirect( pushUrl(request,'CompetitionImport') )
 		
 		if request.user.is_superuser:
-			form = SearchForm( btns, request.POST )
+			form = CompetitionSearchForm( request.POST, request=request )
 			if form.is_valid():
-				search_text = form.cleaned_data['search_text']
-				request.session['competition_filter'] = search_text
+				request.session['competition_filter'] = search_fields = form.cleaned_data
 	else:
 		if request.user.is_superuser:
-			form = SearchForm( btns, initial = {'search_text': search_text} )
+			form = CompetitionSearchForm( initial=search_fields, request=request )
 	
 	competitions = Competition.objects.all()
 	
-	# If not super user, only show the competitions for today and after.
-	if not request.user.is_superuser:
+	if request.user.is_superuser:
+		year = int( search_fields.get( 'year', -1 ) )
+		if year >= 0:
+			date_min = datetime.date( int(search_fields['year']), 1, 1 )
+			date_max = datetime.date( int(search_fields['year'])+1, 1, 1 ) - datetime.timedelta(days=1)
+			competitions = competitions.filter( start_date__range=(date_min, date_max) )
+		
+		dpk = int( search_fields.get( 'discipline', -1 ) )
+		if dpk >= 0:
+			competitions = competitions.filter( discipline__pk=dpk )
+		
+		if search_fields.get( 'search_text', None ):
+			competitions = applyFilter( search_fields['search_text'], competitions, Competition.get_search_text )
+	else:	
+		# If not super user, only show the competitions for today and after.
 		dNow = timezone.now().date()
 		competitions = competitions.filter(start_date__gte = dNow - datetime.timedelta(days=365) )
 		competitions = [c for c in competitions
 			if c.start_date + datetime.timedelta(days=(c.number_of_days or 1)) > dNow
 		]
-		
-	if form:
-		competitions = applyFilter( search_text, competitions, Competition.get_search_text )
 	
 	competitions = sorted( competitions, key = operator.attrgetter('start_date'), reverse=True )
 	return render( request, 'competition_list.html', locals() )
