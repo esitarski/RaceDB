@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='systeminfo',
             name='cloud_server_url',
-            field=models.CharField(default=b'', max_length=160, verbose_name='Cloud Server Url'),
+            field=models.CharField(default=b'', max_length=160, blank=True, verbose_name='Cloud Server Url'),
         ),
     ]

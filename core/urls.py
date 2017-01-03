@@ -1,5 +1,6 @@
 from django.conf.urls import url
 from django.contrib.auth.views import login
+from django.views.generic import RedirectView
 
 from core import views
 from core import self_serve
@@ -23,6 +24,7 @@ urlpatterns = [
 	url(r'^(?P<rfid_antenna>\d+)/$', views.home),
 	url(r'^(?i)Home/$', views.home),
 	
+	url(r'^(?i).*Hub/$', RedirectView.as_view(url='/RaceDB/Hub/SearchCompetitions/')),
 	url(r'^(?i).*Hub/SearchCompetitions/$', hub.SearchCompetitions),
 	url(r'^(?i).*Hub/CompetitionResults/(?P<competitionId>\d+)/$', hub.CompetitionResults),
 	url(r'^(?i).*Hub/CategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.CategoryResults),

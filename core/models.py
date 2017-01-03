@@ -128,7 +128,7 @@ class SystemInfo(models.Model):
 	)
 	server_print_tag_cmd = models.CharField( max_length = 160, default = 'lpr "$1"', verbose_name = _('Cmd used to print Bib Tag (parameter is the PDF file)')  )
 	
-	cloud_server_url = models.CharField( max_length = 160, default = '', verbose_name = _('Cloud Server Url')  )
+	cloud_server_url = models.CharField( max_length = 160, blank = True, default = '', verbose_name = _('Cloud Server Url')  )
 	
 	@classmethod
 	def get_tag_template_default( cls ):

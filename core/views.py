@@ -3874,7 +3874,7 @@ class ExportCompetitionForm( Form ):
 		self.helper.layout = Layout(
 			Row(Field('export_as_template')),
 			Row(Field('remove_ftp_info')),
-			Row(HTML('<h3>' + url + '</h3>'))
+			Row(HTML('Cloud Server URL: <strong>' + url + '</strong>') if url else HTML(_('To Export to Cloud Race, configure Cloud Server URL in SystemInfo')) )
 		)
 		
 		self.additional_buttons = []
@@ -3946,7 +3946,7 @@ def CompetitionExport( request, competitionId ):
 					'Content-Type': 'application/octet-stream',
 				}
 				gzip_stream.seek(0, 0)
-				response = session.post(url, data=gzip_stream, headers=headers)
+				response = requests.post(url, data=gzip_stream, headers=headers)
 			else:
 				return handle_export_competition(
 					competition,
@@ -4043,7 +4043,7 @@ def CompetitionImport( request ):
 @csrf_exempt
 def CompetitionCloudUpload( request ):
 	print 'CompetitionCloudUpload: processing...'
-	response = None, {'errors':[], 'warnings':[], 'message':''}
+	response = {'errors':[], 'warnings':[], 'message':''}
 	if request.method == "POST":
 		try:
 			gzip_handler = gzip.GzipFile(fileobj=StringIO.StringIO(request.body), mode='rb')
