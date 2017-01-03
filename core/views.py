@@ -3929,6 +3929,11 @@ def CompetitionExport( request, competitionId ):
 		form = ExportCompetitionForm(request.POST)
 		if form.is_valid():
 			url = SystemInfo.get_singleton().cloud_server_url
+			
+			i = url.find( 'RaceDB' )
+			if i > 0:
+				url = url[:i+len('RaceDB')]
+				
 			if not url.endswith('/'):
 				url += '/'
 			if 'CompetitionCloudUpload' not in url:

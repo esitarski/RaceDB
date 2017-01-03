@@ -8,8 +8,8 @@
 	<strong>{{competition.name}}</strong><br/>
 	<span style="font-size: 75%">
 		{{competition.date_range_year_str}},
-		{{competition.city}} {{competition.stateProv}}, {{competition.country}} ({{competition.discipline.name}})<br/>
-		{% trans "by" %} {{competition.organizer}}
+		{{competition.city}} {{competition.stateProv}}, {{competition.country}}<br/>
+		{% trans "by" %} {{competition.organizer}}, {{competition.discipline.name}} {{competition.race_class.name}}
 	</span>
 </h1>
 <p><br/><p>

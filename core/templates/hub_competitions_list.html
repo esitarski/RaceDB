@@ -19,6 +19,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "Organizer" %}</th>
+		<th>{% trans "Class" %}</th>
 	</tr>
 </thead>
 <tbody>
@@ -30,6 +31,7 @@
 			<td><a href="/RaceDB/Hub/CompetitionResults/{{c.id}}/"><strong>{{c.name}}</strong></a></td>
 			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
 			<td>{{c.organizer}}</td>
+			<td>{{c.race_class.name}}</td>
 		</tr>
 	{% endfor %}
 </tbody>
