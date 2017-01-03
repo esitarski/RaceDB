@@ -28,6 +28,12 @@ def get_event_from_payload( payload ):
 		if raceNameText == raceNameTextCur:
 			return event
 	
+	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
+		for wave in event.get_wave_set().all():
+			raceNameTextCur = u'-'.join( [event.competition.name, wave.name] )
+			if raceNameText == raceNameTextCur:
+				return event	
+	
 	return None
 	
 def read_results_crossmgr( payload ):
