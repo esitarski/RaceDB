@@ -2202,19 +2202,24 @@ class Result(models.Model):
 	def has_race_times( self ):
 		return self.get_race_time_query().exists()
 	
-	def set_race_times( self, race_times, lap_speeds=[] ):
+	def set_race_times( self, race_times, lap_speeds=[], do_create=True ):
 		self.delete_race_times()
 		if len(lap_speeds) < len(race_times)-1:
 			lap_speeds.extend( [0.0] * (len(race_times) - 1 - len(lap_speeds) ) )
 		if len(race_times) >= 2:
 			RTC = self.get_race_time_class()
-			RTC.objects.bulk_create( [
+			rtcs = [
 				RTC(
 					result=self,
 					race_time=DurationField.formatted_timedelta(seconds=rt),
 					lap_kmh=lap_speeds[i-1] if i > 0 else 0.0,
 				) for i, rt in enumerate(race_times)
-			])
+			]
+			if do_create:
+				RTC.objects.bulk_create( rtcs )
+			else:
+				return rtcs
+		return None
 			
 	def set_lap_times( self, lap_times, lap_speeds=[] ):
 		race_times = [0.0]

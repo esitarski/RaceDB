@@ -1,6 +1,7 @@
 import pytz
 import re
 import datetime
+from collections import defaultdict
 
 from models import *
 import DurationField
@@ -108,6 +109,12 @@ def read_results_crossmgr( payload ):
 	# Record results by start wave.
 	# To get results by wave, select all category in the wave and order by rank.
 	# To get results by category, select by that category and order by rank.
+	rtcs_cache = defaultdict( list )
+	def flush_cache():
+		for cls, objs in rtcs_cache.iteritems():
+			cls.objects.bulk_create( objs )
+			del objs[:]
+	
 	for cd in payload['catDetails']:
 		if cd['catType'] != 'Start Wave' or cd['name'] == 'All':
 			continue
@@ -180,10 +187,15 @@ def read_results_crossmgr( payload ):
 			result = Result( **fields )
 			try:
 				result.save()
-				result.set_race_times( race_times, lap_speeds )
+				rtcs = result.set_race_times( race_times, lap_speeds, do_create=False )
+				if rtcs:
+					rtcs_cache[type(rtcs[0])].extend( rtcs )
+					if any( len(objs) >= 999 for objs in rtcs_cache.itervalues() ):
+						flush_cache()
 			except Exception as e:
 				warnings.append( 'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(
 					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name(), e) )
+				continue
 
-		
-	return {'errors': errors, 'warnings': warnings, 'name':u'{} - {}'.format(competition.name, event.name)}
+	flush_cache()		
+	return {'errors': errors, 'warnings': warnings, 'name':u'{}-{}'.format(competition.name, event.name)}
