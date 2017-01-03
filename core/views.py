@@ -4053,6 +4053,11 @@ def CompetitionCloudUpload( request ):
 	else:
 		response['errors'].append( u'Request must be of type POST with gzip json payload.' )
 	print 'CompetitionCloudUpload: done.'
+	print response['message']
+	for e in response['errors']:
+		print 'Error:', e
+	for w in response['warnings']:
+		print 'Error:', w
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------

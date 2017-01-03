@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 {% load i18n %}
+{% load good_err_icon %}
 {% load crispy_forms_tags %}
 <h2>{{title}}</h2>
 <hr/>
@@ -23,6 +24,7 @@
 		<th style="text-align:center">{% trans "#" %}</th>
 		<th>{% trans "Organizer" %}</th>
 		<th>{% trans "Class" %}</th>
+		<th>{% trans "Results" %}</th>
 		<th>{% trans "Labels" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
@@ -36,6 +38,7 @@
 			<td style="text-align:right">{{c.get_participants.count}}</td>
 			<td>{{c.organizer}}</td>
 			<td>{{c.race_class.name}}</td>
+			<td class="text-center">{% if c.has_results %}{{c.has_results|good_err_icon}}{% endif %}</td>
 			<td>{{c.report_labels_text}}</td>
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
