@@ -64,36 +64,29 @@ class EventResult( object ):
 	rankDNF = 999998
 	rankDNS = 999999
 	
-	def __init__( self, result, rank, tFinish=None, tProjected=None ):
+	slots__ = ('result', 'rank', 'points_for_rank', 'category', 'upgrade_factor', 'upgraded')
+	
+	def __init__( self, result, rank, points_for_rank ):
 		self.result = result
 		self.rank = rank
+		
+		self.points_for_rank
 		self.category = rank.participant.category
 		
-		self.tFinish = tFinish
-		self.tProjected = tProjected if tProjected else tFinish
+		self.upgrade_factor = 1.0
+		self.upgraded = False
 		
-		self.upgradeFactor = 1
-		self.upgradeResult = False
-			
-	def keySort( self ):
-		return tuple( self.category.sequence, self.rank.participant.license_holder.search_text, self.result.event.date_time )
+	@property:
+	def status( self ):
+		return rank.status
 		
-	def keyMatch( self ):
-		return tuple( self.category, self.rank.participant.license_holder )
+	@property:
+	def participant( self ):
+		return self.result.participant
 		
-	def key( self ):
-		return self.rank.participant.license_holder
-
-def toInt( n ):
-	if n == 'DNF':
-		return EventResult.rankDNF
-	if n == 'DNS':
-		return EventResult.rankDNS
-	
-	try:
-		return int(n.split()[0])
-	except:
-		return n
+	@property:
+	def license_holder( self ):
+		return self.result.participant.license_holder
 
 def extract_event_results( sce ):
 	series = sce.series
@@ -101,10 +94,13 @@ def extract_event_results( sce ):
 	points_structure = sce.points_structure if series.ranking_criteria == 0 else None
 	status_keep = [Result.cFinisher, Result.cPUL]
 	if points_structure:
+		get_points = points_structure.get_points_getter()
 		if points_structure.dnf_points:
 			status_keep.append( Result.cDNF )
 		if points_structure.dnf_points:
 			status_keep.append( Result.cDNS )
+	else:
+		get_points = None
 	
 	def get_rank( w, rr ):
 		if rr.status in (Result.cDNF, Result.cOTB):
@@ -115,56 +111,85 @@ def extract_event_results( sce ):
 			return rr.wave_rank
 		else:
 			return rr.category_rank
+			
+	def get_points_for_rank( w, rr, rank, rrWinner ):
+		if get_points:
+			return get_points( rr, rr.status )
+		if   series.ranking_criteria == 1:	# Time
+			try:
+				return -rr.finish_time.total_seconds()
+			except:
+				return 24.0*60.0*60.0
+		elif series.ranking_criteria == 2:	# % Winner / Time
+			try:
+				return 100.0 * rrWinner.finish_time.total_seconds() / rr.finish_time.total_seconds()
+			except:
+				return 0
+		assert False, 'Unnown ranking criteria'
 	
 	eventResults = []
 	for w in sce.event.get_wave_set().all():
+		rr_winner = None
 		for rr in w.get_results().filter(
 				participant__category__in=series.get_category_pk() ).filter(
 				status__in=status_keep ).select_related(
 				'participant', 'participant__license_holder'
-			):
-			eventResults.append( EventResult(rr, get_rank(w, rr), rr.finish_time) )
+			).order_by('wave_rank'):
+			if w.rank_categories_together:
+				if not rr_winnner:
+					rr_winner = rr
+			else:
+				if not rr_winner or rr_winner.participant.category != rr.participant.category:
+					rr_winner = rr
+
+			rank = get_rank( w, rr )
+			points_for_rank = get_points_for_rank(w, rr, rank, rr_winner)
+			if points_for_rank:
+				eventResults.append( EventResult(rr, rank, points_for_rank ) )
 
 	return eventResults
 
-def AdjustForUpgrades( eventResults ):
-	upgradePaths = []
-	for path in SeriesModel.model.upgradePaths:
-		upgradePaths.append( [p.strip() for p in path.split(',')] )
-	upgradeFactors = SeriesModel.model.upgradeFactors
-	
+def adjust_for_upgrades( series, eventResults ):
+	upgradeCategoriesAll = set()
+	factorPathPositions = []
+	for sup in series.seriesupgradeprogression_set.all():
+		if sup.factor == 0.0:
+			continue
+		path = list( suc.category for suc in sup.seriesupgradecategory_set.all() )
+		position = {cat:i for i, cat in enumerate(path)}
+		path = set( path )
+		upgradeCategoriesAll |= path
+		factorPathPositions.append( [sup.factor, path, position] )
+
+	if not factorPathPositions:
+		return
+		
 	competitionCategories = defaultdict( lambda: defaultdict(list) )
 	for rr in eventResults:
-		competitionCategories[rr.key()][rr.categoryName].append( rr )
+		if rr.category in upgradeCategoriesAll:
+			competitionCategories[rr.license_holder][rr.category].append( rr )
 	
-	for key, categories in competitionCategories.iteritems():
+	for categories in competitionCategories.itervalues():
 		if len(categories) == 1:
 			continue
 		
-		for i, path in enumerate(upgradePaths):
-			upgradeCategories = { cName: rrs for cName, rrs in categories.iteritems() if cName in path }
+		for factor, path, position in factorPathPositions:
+			upgradeCategories = { cat: rrs for cat, rrs in categories.iteritems() if cat in path }
 			if len(upgradeCategories) <= 1:
 				continue
 			
-			try:
-				upgradeFactor = upgradeFactors[i]
-			except:
-				upgradeFactor = 0.5
-			
-			categoryPosition = {}
-			highestCategoryPosition, highestCategoryName = -1, None
-			for cName in upgradeCategories.iterkeys():
-				pos = path.index( cName )
-				categoryPosition[cName] = pos
-				if pos > highestCategoryPosition:
-					highestCategoryPosition, highestCategoryName = pos, cName
-			
-			for cName, rrs in upgradeCategories.iteritems():
+			highestposition, highestCategory = -1, None
+			for cat in upgradeCategories.iterkeys():
+				pos = position[cat]
+				if pos > highestposition:
+					highestposition, highestCategory = pos, cat
+		
+			for cat, rrs in upgradeCategories.iteritems():
 				for rr in rrs:
-					if rr.categoryName != highestCategoryName:
-						rr.categoryName = highestCategoryName
-						rr.upgradeFactor = upgradeFactor ** (highestCategoryPosition - categoryPosition[cName])
-						rr.upgradeResult = True
+					if rr.category != highestCategory:
+						rr.category = highestCategory
+						rr.factor = factor ** (highestposition - position[cat])
+						rr.upgraded = True
 		
 			break
 

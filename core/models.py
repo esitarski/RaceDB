@@ -3625,7 +3625,6 @@ class Series( Sequence ):
 		(0, _('Points')),
 		(1, _('Time')),
 		(2, _("% Finish/Winning Time")),
-		(3, _("TrueSkill")),
 	)
 	ranking_criteria = models.PositiveSmallIntegerField( default=0, verbose_name = _('Ranking Criteria'), choices=RANKING_CRITERIA )
 	
@@ -3664,7 +3663,7 @@ class SeriesPointsStructure( Sequence ):
 		return self.points_for_place.count(',') + 1 if self.points_for_place else 0
 
 	def get_points_getter( self ):
-		pfp = [int(v) for f in self.points_for_place.split(',')]
+		pfp = [int(v) for f in self.points_for_place.split()]
 		def points_getter( rank, status=0 ):
 			if not status:
 				return pfp[rank-1] if rank <= len(pfp) else self.finish_points
