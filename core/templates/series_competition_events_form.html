@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block content %}
+
+<h2>{{title}}</h2>
+<h2>{{competition.date_range_year_str}}: {{competition.name}}</h2>
+<p></p>
+<form action="." method="post">
+    {% csrf_token %}
+	<hr/>
+	<p>Choose the Events in this Competition to use in the Series.</p>
+	{{ form_set.management_form }}
+	<table class="table table-hover table-condensed" style="width: auto;">
+	<tbody>
+		{% for form in form_set %}
+		<tr>
+			<td>{{form.select.errors}} {{form.select}}</td>
+			<td>{{form.name.value}}</td>
+			<td>{{form.points_structure.errors}} {{form.points_structure}} {{form.et}} {{form.pk}}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+	</table>
+  <p></p>
+  <p></p>
+ <input type="submit"
+    name="ok-submit"
+    value='{% trans "OK" %}'
+    class="btn btn-success hidden-print"
+    id="submit-id-ok-submit"
+    />
+ <input type="submit"
+    name="cancel-submit"
+    value='{% trans "Cancel" %}'
+    class="btn btn-warning hidden-print"
+    id="submit-id-ok-submit"
+    />
+</form>
+{% endblock content %}

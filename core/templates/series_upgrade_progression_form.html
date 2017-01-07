@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block content %}
+
+<h2>{{title}}</h2>
+<p></p>
+<form action="." method="post">
+    {% csrf_token %}
+	<hr/>
+    {{ form.as_p }}
+	<hr/>
+	<p><strong>{% trans "Set Upgrade Sequence from Top to Bottom." %}</strong></p>
+	<p></p>
+	{{ form_set.management_form }}
+	<ol>
+		{% for form in form_set %}
+		<li>{{form.category.errors}} {{form.category}}</li>
+		{% endfor %}
+	</ol>
+  <p></p>
+  <p></p>
+ <input type="submit"
+    name="ok-submit"
+    value='{% trans "OK" %}'
+    class="btn btn-success hidden-print"
+    id="submit-id-ok-submit"
+    />
+ <input type="submit"
+    name="save-submit"
+    value='{% trans "Save (also creates more rows)" %}'
+    class="btn btn-primary hidden-print"
+    id="submit-id-save-submit"
+    />
+ <input type="submit"
+    name="cancel-submit"
+    value='{% trans "Cancel" %}'
+    class="btn btn-warning hidden-print"
+    id="submit-id-ok-submit"
+    />
+</form>
+{% endblock content %}

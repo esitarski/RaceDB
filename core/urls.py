@@ -15,6 +15,7 @@ from core import category_numbers
 from core import team
 from core import results
 from core import hub
+from core import series
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -260,6 +261,44 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantReport/$', views.ParticipantReport),
 	url(r'^(?i).*YearOnYearAnalytics/$', views.YearOnYearAnalytics),
 	url(r'^(?i).*QRCode/$', views.QRCode),
+	
+	url(r'^(?i).*Series/$', series.SeriesList),
+	url(r'^(?i).*Series/(?P<moveDirection>\d+)/(?P<seriesId>\d+)/$', series.SeriesList),
+	
+	url(r'^(?i).*SeriesNew/$', series.SeriesNew),
+	url(r'^(?i).*SeriesNew/(?P<categoryFormatId>\d+)/$', series.SeriesNew),
+	url(r'^(?i).*SeriesEdit/(?P<seriesId>\d+)/$', series.SeriesEdit),
+	url(r'^(?i).*SeriesDelete/(?P<seriesId>\d+)/$', series.SeriesDelete),
+	url(r'^(?i).*SeriesDelete/(?P<seriesId>\d+)/(?P<confirmed>\d+)/$', series.SeriesDelete),
+	
+	url(r'^(?i).*SeriesPointsStructureNew/(?P<seriesId>\d+)/$', series.SeriesPointsStructureNew),
+	url(r'^(?i).*SeriesPointsStructureEdit/(?P<seriesPointsStructureId>\d+)/$', series.SeriesPointsStructureEdit),
+	
+	url(r'^(?i).*SeriesCategoriesChange/(?P<seriesId>\d+)/$', series.SeriesCategoriesChange),
+	
+	url(r'^(?i).*SeriesPointsStructureDelete/(?P<seriesPointsStructureId>\d+)/$', series.SeriesPointsStructureDelete),
+	url(r'^(?i).*SeriesPointsStructureDelete/(?P<seriesPointsStructureId>\d+)/(?P<confirmed>\d+)/$', series.SeriesPointsStructureDelete),
+	
+	url(r'^(?i).*SeriesPointsStructureMove/(?P<moveDirection>\d+)/(?P<seriesPointsStructureId>\d+)/$', series.SeriesPointsStructureMove),
+	url(r'^(?i).*SeriesUpgradeProgressionMove/(?P<moveDirection>\d+)/(?P<seriesUpgradeProgressionId>\d+)/$', series.SeriesUpgradeProgressionMove),
+	
+	url(r'^(?i).*SeriesUpgradeProgressionNew/(?P<seriesId>\d+)/$', series.SeriesUpgradeProgressionNew),
+	url(r'^(?i).*SeriesUpgradeProgressionDelete/(?P<seriesUpgradeProgressionId>\d+)/$', series.SeriesUpgradeProgressionDelete),
+	url(r'^(?i).*SeriesUpgradeProgressionDelete/(?P<seriesUpgradeProgressionId>\d+)/(?P<confirmed>\d+)/$', series.SeriesUpgradeProgressionDelete),
+	url(r'^(?i).*SeriesUpgradeProgressionEdit/(?P<seriesUpgradeProgressionId>\d+)/$', series.SeriesUpgradeProgressionEdit),
+	
+	url(r'^(?i).*SeriesCompetitionAdd/(?P<seriesId>\d+)/$', series.SeriesCompetitionAdd),
+	url(r'^(?i).*SeriesCompetitionAdd/(?P<seriesId>\d+)/(?P<competitionId>\d+)/$', series.SeriesCompetitionAdd),
+	
+	url(r'^(?i).*SeriesCompetitionRemove/(?P<seriesId>\d+)/(?P<competitionId>\d+)/$', series.SeriesCompetitionRemove),
+	url(r'^(?i).*SeriesCompetitionRemove/(?P<seriesId>\d+)/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', series.SeriesCompetitionRemove),
+	url(r'^(?i).*SeriesCompetitionEdit/(?P<seriesId>\d+)/(?P<competitionId>\d+)/$', series.SeriesCompetitionEdit),
+	
+	url(r'^(?i).*SeriesCategoryGroupNew/(?P<seriesId>\d+)/$', series.SeriesCategoryGroupNew),	
+	url(r'^(?i).*SeriesCategoryGroupDelete/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupDelete),
+	url(r'^(?i).*SeriesCategoryGroupDelete/(?P<categoryGroupId>\d+)/(?P<confirmed>\d+)/$', series.SeriesCategoryGroupDelete),
+	url(r'^(?i).*SeriesCategoryGroupMove/(?P<moveDirection>\d+)/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupMove),
+	url(r'^(?i).*SeriesCategoryGroupEdit/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupEdit),
 	
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}, name='login'),
 	url(r'^(?i).*logout/$', views.Logout),

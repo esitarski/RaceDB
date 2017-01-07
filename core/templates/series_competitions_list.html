@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load paginate_html %}
+{% block content %}
+
+{{competitions|paginate_html}}
+
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Date" %}</th>
+		<th>{% trans "Discipline" %}</th>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Location" %}</th>
+		<th>{% trans "Organizer" %}</th>
+		<th>{% trans "Class" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for c in competitions %}
+		<tr onclick="jump('{{popUrl}}SeriesCompetitionAdd/{{series.id}}/{{c.id}}');">
+			<td class="text-right">{{forloop.counter1}}</td>
+			<td>{{c.date_range_year_str}}</td>
+			<td>{{c.discipline.name}}</td>
+			<td>{{c.name}}</td>
+			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
+			<td>{{c.organizer}}</td>
+			<td>{{c.race_class.name}}</td>
+			<td>
+				<a class="btn btn-success hidden-print" href="{{popUrl}}SeriesCompetitionAdd/{{series.id}}/{{c.id}}/">{% trans "Add" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{{competitions|paginate_html}}
+{% endspaceless %}
+{% endblock content %}

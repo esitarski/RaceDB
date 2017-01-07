@@ -3469,6 +3469,332 @@ class ParticipantOption( models.Model ):
 		verbose_name_plural = _("Participant Options")
 
 #-------------------------------------------------------------------------------------
+# Series
+#
+class Sequence( models.Model ):
+	sequence = models.PositiveSmallIntegerField( default=32767, blank=True, verbose_name=_('Sequence') )
+
+	def get_container( self ):
+		assert False, 'Please implement function get_container().'
+
+	def normalize_elements( self, elements ):
+		for seq, e in enumerate(elements):
+			if e.sequence != seq:
+				e.sequence = seq
+				e.save()
+
+	def normalize( self ):
+		self.normalize_elements( self.get_container() )
+				
+	def prev( self ):
+		return self.get_container().filter( sequence=self.sequence-1 ).first()
+	
+	def next( self ):
+		return self.get_container().filter( sequence=self.sequence+1 ).first()
+	
+	def first( self ):
+		return self.get_container().order_by('sequence').first()
+		
+	def last( self ):
+		return self.get_container().order_by('sequence').last()
+
+	def move_to( self, i ):
+		elements = list( self.get_container() )
+		i = max( 0, min( i, len(elements) ) )
+		elements.remove( self )
+		elements.insert( i, self )
+		self.normalize_elements( elements )
+		
+	def move_lower( self ):
+		self.move_to( self.sequence-1 )
+
+	def move_higher( self ):
+		self.move_to( self.sequence+1 )
+
+	def move_to_head( self ):
+		self.move_to( 0 )
+
+	def move_to_tail( self ):
+		self.move_to( 32767 )
+		
+	def move( self, move_direction ):
+		if move_direction == 0:
+			self.move_to( 0 )
+		elif move_direction == 1:
+			self.move_higher()
+		elif move_direction == -1:
+			self.move_lower()
+		else:
+			 self.move_to_tail()
+
+	def get_sequence_max( self ):
+		return self.get_container().count()
+	
+	def save( self, *args, **kwargs ):
+		super( Sequence, self ).save( args, kwargs )
+	
+	class Meta:
+		ordering = ['sequence']
+		abstract = True
+
+def categories_from_pks( pks ):
+	return sorted( (c for c in Category.objects.in_bulk(pks).itervalues()), key=operator.attrgetter('sequence') )
+
+class Series( Sequence ):
+	name = models.CharField( max_length=32, default = 'MySeries', verbose_name=_('Name') )
+	description = models.CharField( max_length=80, blank=True, default='', verbose_name=_('Description') )
+
+	category_format = models.ForeignKey( CategoryFormat, db_index=True )
+	
+	TIE_BREAKING_RULE_CHOICES = (
+		(5, _('Number of 1st, 2nd, 3rd, 4th then 5th place finishes')),
+		(4, _('Number of 1st, 2nd, 3rd then 4th place finishes')),
+		(3, _('Number of 1st, 2nd then 3rd place finishes')),
+		(2, _('Number of 1st then 2nd place finishes')),
+		(1, _('Number of 1st place finishes')),
+		(0, _('Do not consider place finishes')),
+	)
+	tie_breaking_rule = models.PositiveSmallIntegerField( default=5, choices=TIE_BREAKING_RULE_CHOICES,
+		verbose_name=_('Tie-breaking Rule')
+	)
+	
+	BEST_RESULTS_CHOICES = [(0, _('All Results')), (1, _('Best Result Only'))] + [
+		(i, string_concat('{} '.format(i), _('Best Results Only'))) for i in xrange(2,31)
+	]
+	best_results_to_consider = models.PositiveSmallIntegerField( default=0, choices=BEST_RESULTS_CHOICES,
+		verbose_name=_('Consider')
+	)
+	
+	MUST_HAVE_COMPLETED_CHOICES = [(i, string_concat('{} '.format(i), _('or more Events'))) for i in xrange(31)]
+	must_have_completed = models.PositiveSmallIntegerField( default=0, choices=MUST_HAVE_COMPLETED_CHOICES,
+		verbose_name=_('Must have completed')
+	)
+	
+	def get_container( self ):
+		return Series.objects.all()
+		
+	def get_category_pk( self ):
+		return self.seriesincludecategory_set.all().values_list('category',flat=True)
+		
+	def get_categories( self ):
+		return categories_from_pks( self.get_category_pk() )
+		
+	def get_categories_in_groups( self ):
+		pks = []
+		for g in self.categorygroup_set.all():
+			pks.extend( g.get_category_pk() )
+		return categories_from_pks( list(set(pks)) )
+		
+	def get_categories_not_in_groups( self ):
+		pks = []
+		for g in self.categorygroup_set.all():
+			pks.extend( g.get_category_pk() )
+		return categories_from_pks( list(set(self.get_category_pk()) - set(pks)) )
+		
+	def normalize( self ):
+		for i in self.seriesupgradeprogression_set.all():
+			i.normalize()
+		for i in self.categorygroup_set.all():
+			i.normalize()
+		
+		ce_to_delete = []
+		category_pk = set( self.get_category_pk() )
+		for ce in self.seriescompetitionevent_set.all():
+			if set( c.pk for c in ce.event.get_categories() ).isdisjoint( category_pk ):
+				ce_to_delete.append( ce )
+		for ce in ce_to_delete:
+			ce.delete()
+	
+	def get_events_for_competition( self, competition ):
+		events = [ce.event for ce in self.seriescompetitionevent_set.all() if ce.competition == competition]
+		events.sort( key=operator.attrgetter('date_time') )
+		return events
+	
+	def remove_competition( self, competition ):
+		for ce in [ce for ce in self.seriescompetitionevent_set.all() if ce.competition == competition]:
+			ce.delete()
+			
+	def get_default_points_structure( self ):
+		ps = self.seriespointsstructure_set.all().first()
+		if not ps:
+			ps = SeriesPointsStructure( series=series, name='SeriesPointsDefault' )
+			ps.save()
+		return ps
+			
+	RANKING_CRITERIA = (
+		(0, _('Points')),
+		(1, _('Time')),
+		(2, _("% Finish/Winning Time")),
+		(3, _("TrueSkill")),
+	)
+	ranking_criteria = models.PositiveSmallIntegerField( default=0, verbose_name = _('Ranking Criteria'), choices=RANKING_CRITERIA )
+	
+	class Meta:
+		verbose_name = _("Series")
+		verbose_name_plural = _("Series")
+		ordering = ['sequence']
+		
+#-----------------------------------------------------------------------
+class SeriesPointsStructure( Sequence ):
+	series = models.ForeignKey( Series, db_index=True )
+	name = models.CharField( max_length=32, default='SeriesPoints', verbose_name=_('Name') )
+	
+	points_for_place = models.CharField( max_length=512, default='30,25,20,15,10,5,3,1,1,1', verbose_name=_('Points for Place') )
+	finish_points = models.PositiveSmallIntegerField( default=0, verbose_name=_('Finish Points') )
+	dnf_points = models.PositiveSmallIntegerField( default=0, verbose_name=_('DNF Points') )
+	dns_points = models.PositiveSmallIntegerField( default=0, verbose_name=_('DNS Points') )
+
+	def get_container( self ):
+		return self.series.seriespointsstructure_set.all()
+	
+	def save( self, *args, **kwargs ):
+		pfp_text = re.sub( r'[^\d,]', '', self.points_for_place )
+		pfp = [d for d in sorted((int(v) for v in pfp_text.split(',') if v), reverse=True) if d]
+		self.points_for_place = u','.join( '{}'.format(d) for d in pfp )
+		if pfp:
+			lowest_pfp = pfp[-1]
+			for a in ('finish_points', 'dnf_points', 'dns_points'):
+				setattr( self, a, min( getattr(self, a), lowest_pfp ) )
+		self.dnf_points = min( self.dnf_points, self.finish_points )
+		self.dns_points = min( self.dns_points, self.dnf_points )
+		super( SeriesPointsStructure, self ).save( args, kwargs )
+
+	@property
+	def points_deep( self ):
+		return self.points_for_place.count(',') + 1 if self.points_for_place else 0
+
+	def get_points_getter( self ):
+		pfp = [int(v) for f in self.points_for_place.split(',')]
+		def points_getter( rank, status=0 ):
+			if not status:
+				return pfp[rank-1] if rank <= len(pfp) else self.finish_points
+			elif status == Result.cDNF:
+				return self.dnf_points
+			elif status == Result.cDNS:
+				return self.dns_points
+			return 0
+		return points_getter
+
+	class Meta:
+		verbose_name = _("PointsStructure")
+		verbose_name_plural = _("PointsStructures")
+		ordering = ['name']
+
+#-----------------------------------------------------------------------
+class SeriesCompetitionEvent( models.Model ):
+	series = models.ForeignKey( Series, db_index=True )
+	event_mass_start = models.ForeignKey( EventMassStart, models.CASCADE, blank=True, null=True, default=None, db_index=True )
+	event_tt = models.ForeignKey( EventTT, models.CASCADE, blank=True, null=True, default=None, db_index=True )
+	
+	points_structure = models.ForeignKey( SeriesPointsStructure, blank=True, null=True, db_index=True )
+	
+	@property
+	def event( self ):
+		return self.event_mass_start or self.event_tt
+
+	@event.setter
+	def event( self, e ):
+		if e.event_type == 0:
+			self.event_mass_start, self.event_tt = e, None
+		else:
+			self.event_mass_start, self.event_tt = None, e
+
+	@property
+	def competition( self ):
+		return self.event.competition
+
+	class Meta:
+		verbose_name = _("SeriesCompetitionEvent")
+		verbose_name_plural = _("SeriesCompetitionEvents")
+	
+#-----------------------------------------------------------------------
+class SeriesIncludeCategory( models.Model ):
+	# Selects which Categories are to be part of the Series.
+	series = models.ForeignKey( Series, db_index=True )
+	category = models.ForeignKey( Category, db_index=True )
+	
+	class Meta:
+		verbose_name = _("SeriesIncludeCategory")
+		verbose_name_plural = _("SeriesIncludeCategories")
+		ordering = ['category__sequence']
+
+class CategoryGroup( Sequence ):
+	# Used to create Category groups for a combined category Series.
+	name = models.CharField( max_length=32, default='MyGroup', verbose_name=_('Name') )
+	series = models.ForeignKey( Series, db_index=True )
+	
+	def get_container( self ):
+		return self.series.categorygroup_set.all()
+	
+	def normalize( self ):
+		self.categorygroupelement_set.exclude( category__in=self.series.get_category_pk() ).delete()
+	
+	def get_category_pk( self ):
+		return self.categorygroupelement_set.all().values_list('category',flat=True)
+	
+	def get_categories( self ):
+		return sorted( (c for c in Category.objects.in_bulk( self.get_category_pk() ).itervalues()), key=operator.attrgetter('sequence') )
+	
+	def get_text( self ):
+		text = []
+		for cge in self.categorygroupelement_set.all():
+			text.extend( [cge.category.code_gender, ', '] )
+		if text:
+			text = text[:-1]
+		return string_concat( *text )
+	
+	class Meta:
+		verbose_name = _("CategoryGroup")
+		verbose_name_plural = _("CategoryGroups")
+
+class CategoryGroupElement( models.Model ):
+	category_group = models.ForeignKey( CategoryGroup, db_index=True )
+	category = models.ForeignKey( Category, db_index=True )
+	
+	class Meta:
+		verbose_name = _("CategoryGroupElement")
+		verbose_name_plural = _("CategoryGroupElements")
+		ordering = ['category__sequence']
+
+#-----------------------------------------------------------------------
+class SeriesUpgradeProgression( Sequence ):
+	series = models.ForeignKey( Series, db_index=True )
+	factor = models.FloatField( default=0.5, verbose_name = _('Factor') )
+
+	def get_container( self ):
+		return self.series.seriesupgradeprogression_set.all()
+	
+	def get_text( self ):
+		s = []
+		for uc in self.seriesupgradecategory_set.all():
+			c = uc.category
+			s.extend( [c.get_gender_display(), '-', c.code, ',  '] )
+		
+		if not s:
+			return _('Empty')
+		s = s[:-1]
+		return string_concat( *s )
+		
+	def normalize( self ):
+		self.seriesupgradecategory_set.exclude( category__in=self.series.get_category_pk() ).delete()
+	
+	class Meta:
+		verbose_name = _("SeriesUpgradeProgression")
+		verbose_name_plural = _("SeriesUpgradeProgressions")
+	
+class SeriesUpgradeCategory( Sequence ):
+	upgrade_progression = models.ForeignKey( SeriesUpgradeProgression, db_index=True )
+	category = models.ForeignKey( Category, db_index=True )
+	
+	def get_container( self ):
+		return self.upgrade_progression.seriesupgradecategory_set.all()
+	
+	class Meta:
+		verbose_name = _("SeriesUpgradeCategory")
+		verbose_name_plural = _("SeriesUpgradeCategories")
+	
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 @receiver( pre_delete, sender=EventMassStart )
 @receiver( pre_delete, sender=EventTT )
