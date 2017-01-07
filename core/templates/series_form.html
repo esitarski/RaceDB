@@ -8,18 +8,6 @@
 <h1>{{title}}</h1>
 <hr/>
 {% crispy form %}
-<hr/>
-<h3>{% trans "Category Format:" %} <strong>{{series.category_format.name}}</strong> ({{series.category_format.description}})</h3>
-<h4>{% trans "Include Categories" %} <a class="btn btn-primary" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
-<div class="well">
-	{% for c in included_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
-</div>
-{% if excluded_categories %}
-	<h4>{% trans "Exclude Categories" %} <a class="btn btn-primary" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
-	<div class="well">
-		{% for c in excluded_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
-	</div>
-{% endif %}
 
 <hr/>
 <h3>{% trans "Competitions" %} <a class="btn btn-primary" href="{{path}}SeriesCompetitionAdd/{{series.id}}/">{% trans "Add Competition" %}</a></h3>
@@ -49,7 +37,11 @@
 		<td>
 			<ul>
 			{% for e in events %}
-				<li>{{e.date_time|date:"D H:i"}}: {{e.name}} {% if series.ranking_criteria == 0 %}{{series.get_ranking_criter_display_name}}{% endif %}</li>
+				<li>
+					{{e.date_time|date:"D H:i"}}<br/>
+					{{e.name}}
+					{% if series.ranking_criteria == 0 %}{{series.get_ranking_criteria_display}}{% endif %}
+				</li>
 			{% endfor %}
 			</ul>
 		</td>
@@ -62,6 +54,20 @@
 </tbody>
 </table>
 {% endspaceless %}
+
+
+<hr/>
+<h3>{% trans "Category Format:" %} <strong>{{series.category_format.name}}</strong> ({{series.category_format.description}})</h3>
+<h4>{% trans "Include Categories" %} <a class="btn btn-primary" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
+<div class="well">
+	{% for c in included_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
+</div>
+{% if excluded_categories %}
+	<h4>{% trans "Exclude Categories" %} <a class="btn btn-primary" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
+	<div class="well">
+		{% for c in excluded_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
+	</div>
+{% endif %}
 
 
 {% if series.ranking_criteria == 0 %}
@@ -115,6 +121,9 @@
 {% endspaceless %}
 {% endif %}
 {% endif %}
+
+
+
 <hr/>
 <h3>{% trans "Upgrade Progressions" %} <a class="btn btn-primary" href="{{path}}SeriesUpgradeProgressionNew/{{series.id}}/">{% trans "New Upgrade Progression" %}</a></h3>
 {% if series.seriesupgradeprogression_set.exists %}
@@ -156,6 +165,8 @@
 </table>
 {% endspaceless %}
 {% endif %}
+
+
 
 <hr/>
 <h3>{% trans "Catgory Groups" %} <a class="btn btn-primary" href="{{path}}SeriesCategoryGroupNew/{{series.id}}/">{% trans "New Category Group" %}</a></h3>
