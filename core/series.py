@@ -96,14 +96,14 @@ def SeriesEdit( request, seriesId ):
 	included_categories = [ic.category for ic in series.seriesincludecategory_set.all()]
 	excluded_categories = series.category_format.category_set.exclude( pk__in=[c.pk for c in included_categories] )
 
-	events = list( ce.event for ce in series.seriescompetitionevent_set.all() )
+	ces = list( series.seriescompetitionevent_set.all() )
 	competitions = defaultdict( list )
-	for e in events:
-		competitions[e.competition].append( e )
-	competitions = [(c, e) for c, e in competitions.iteritems()]
+	for ce in ces:
+		competitions[ce.event.competition].append( ce )
+	competitions = [(c, ces) for c, ces in competitions.iteritems()]
 	competitions.sort( key=lambda ce: ce[0].start_date, reverse=True )
-	for c, e in competitions:
-		e.sort( key=operator.attrgetter('date_time') )
+	for c, ces in competitions:
+		ces.sort( key=lambda ce:ce.event.date_time )
 
 	return GenericEdit( Series, request, series.id, SeriesForm, 'series_form.html', locals() )
 	

@@ -18,29 +18,26 @@
 		<th></th>
 		<th>{% trans "Date" %}</th>
 		<th>{% trans "Discipline" %}</th>
-		<th>{% trans "Name" %}</th>
-		<th>{% trans "Location" %}</th>
+		<th>{% trans "Name/Location" %}</th>
 		<th>{% trans "Class" %}</th>
 		<th class='text-center'>{% trans "Events" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
 <tbody>
-{% for c, events in competitions %}
+{% for c, ces in competitions %}
 	<tr onclick="jump('{{path}}SeriesCompetitionEdit/{{series.id}}/{{c.id}}/')">
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{c.date_range_year_str}}</td>
 		<td>{{c.discipline.name}}</td>
-		<td>{{c.name}}</td>
-		<td>{{c.city}}, {{c.stateProv}}, {{c.country}}</td>
+		<td>{{c.name}}, {{c.city}}, {{c.stateProv}}, {{c.country}}</td>
 		<td>{{c.race_class.name}}</td>
 		<td>
 			<ul>
-			{% for e in events %}
+			{% for ce in ces %}
 				<li>
-					{{e.date_time|date:"D H:i"}}<br/>
-					{{e.name}}
-					{% if series.ranking_criteria == 0 %}{{series.get_ranking_criteria_display}}{% endif %}
+					{{ce.event.date_time|date:"D H:i"}}, {{ce.event.name}}
+					{% if series.ranking_criteria == 0 %}({{ce.points_structure.name}}){% endif %}
 				</li>
 			{% endfor %}
 			</ul>

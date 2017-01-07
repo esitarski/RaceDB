@@ -3648,9 +3648,9 @@ class SeriesPointsStructure( Sequence ):
 		return self.series.seriespointsstructure_set.all()
 	
 	def save( self, *args, **kwargs ):
-		pfp_text = re.sub( r'[^\d,]', '', self.points_for_place )
-		pfp = [d for d in sorted((int(v) for v in pfp_text.split(',') if v), reverse=True) if d]
-		self.points_for_place = u','.join( '{}'.format(d) for d in pfp )
+		pfp_text = re.sub( r'[^\d]', ' ', self.points_for_place )
+		pfp = [d for d in sorted((int(v) for v in pfp_text.split() if v), reverse=True) if d]
+		self.points_for_place = u', '.join( '{}'.format(d) for d in pfp )
 		if pfp:
 			lowest_pfp = pfp[-1]
 			for a in ('finish_points', 'dnf_points', 'dns_points'):
