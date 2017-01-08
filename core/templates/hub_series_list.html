@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load paginate_html %}
+{% block content %}
+
+{% include "hub_nav.html" %}
+{% crispy form %}
+
+{{series|paginate_html}}
+
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Description" %}</th>
+		<th>{% trans "Category Format" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for s in series %}
+		<tr onclick="jump('/RaceDB/Hub/SeriesCategories/{{s.id}}/');">
+			<td class="text-right">{{forloop.counter1}}</td>
+			<td><a href='/RaceDB/Hub/SeriesCategories/{{s.id}}/'>{{s.name}}</a></td>
+			<td>{{s.description}}</td>
+			<td>{{s.category_format.name}}, {{s.category_format.description}}</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{{series|paginate_html}}
+{% endspaceless %}
+{% endblock content %}

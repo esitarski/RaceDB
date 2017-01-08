@@ -70,13 +70,24 @@ class SeriesForm( ModelForm ):
 		self.helper.layout = Layout(
 			Row(
 				Field('name', size=20),
-				Field('description', size=60),
+				Field('description', size=40),
 				Field('ranking_criteria'),
+				Field('show_last_to_first'),
 			),
 			Row(
-				Field('tie_breaking_rule'),
 				Field('best_results_to_consider'),
 				Field('must_have_completed'),
+			),
+			Row(
+				HTML( '<strong>' ), HTML( _('Break Ties as follows:') ), HTML( '</strong>' ),
+			),
+			Row(
+				Field('consider_most_events_completed'),
+				HTML('&nbsp;'*6 + '<strong>' ), HTML( _('then consider') ), HTML( '</strong>' + '&nbsp;'*6),
+				Field('tie_breaking_rule'),
+			),
+			Row(
+				HTML( _('Finally, break remaining ties with the most recent result.') ),
 			),
 			Field('category_format', type='hidden'),
 			Field('sequence', type='hidden'),

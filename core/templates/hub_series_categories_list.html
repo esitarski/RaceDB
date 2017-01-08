@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block content %}
+{% include "hub_nav.html" %}
+<h1>
+	<strong>{{series.name}}</strong><br/>
+	<span style="font-size: 75%">
+		{{series.description}}
+	</span>
+</h1>
+<p>&nbsp;</p>
+
+<div class="row">
+{% for cat_gender, categories in gender_categories %}
+	<div class="col-md-{{col_gender}}">
+		<h3>{{cat_gender.get_gender_display}}</h3>
+		{% spaceless %}
+		<table class="table table-condensed table-striped table-hover" style="width: auto;">
+		<thead>
+			<tr>
+				<th>{% trans "Category" %}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for category in categories %}
+				<tr>
+					<td<a href='/RaceDB/Hub/SeriesCategoryResults/{{series.id}}/{{category.id}}/'>>{{category.code}}</a></td>
+				</tr>
+			{% endfor %}
+		</tbody>
+		</table>
+		{% endspaceless %}
+	</div>
+{% endfor %}
+</div>
+{% endblock content %}

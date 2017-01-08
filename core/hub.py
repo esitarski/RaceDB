@@ -247,4 +247,30 @@ def SearchLicenseHolders( request ):
 	exclude_breadcrumbs = True
 	return render( request, 'hub_license_holders_list.html', locals() )
 
+#-------------------------------------------------------------------------
 
+def Series( request ):
+	page_key = 'hub_series'
+	series = Series.objects.all()
+	getPaginator( request, page_key, series )
+	return render( request, 'hub_series.html', locals() )
+
+def SeriesCategories( request, seriesId ):
+	series = get_object_or_404( Series, pk=seriesId )
+	
+	gender_categories = [[],[],[]]
+	for c in series.get_categories():
+		gender_categories[c.gender].append( c )
+	gender_categories = [(gc[0], gc) for gc in gender_categories if gc]
+	col_gender = 12 // (len(gender_categories) if gender_categories else 1)
+	
+	exclude_breadcrumbs = True
+	return render( request, 'hub_series_categories_list.html', locals() )
+
+from series_results import 
+def SeriesCategoryResults( request, seriesId, categoryId ):
+	series = get_object_or_404( Series, pk=seriesId )
+	category = get_object_or_404( Category, pk=categoryId )
+	
+	categories = get_associated_categories( category )
+	return render( request, 'hub_series_results.html', locals() )
