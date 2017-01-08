@@ -7,7 +7,33 @@
 {% block content %}
 <h1>{{title}}</h1>
 <hr/>
-{% crispy form %}
+<h2>
+	{{series.name}} {% if series.description %}, {{series.description}}{% endif %}
+	<a class="btn btn-primary" href="{{path}}SeriesDetailEdit/{{series.id}}/">{% trans "Edit Details" %}</a>
+</h2>
+<h3>{% trans "Category Format:" %} <strong>{{series.category_format.name}}</strong> ({{series.category_format.description}})</h3>
+<br/>
+<h3>
+{% if series.ranking_criteria == 0 %}
+	{% trans "Ranked by Points" %}
+{% elif series.ranking_criteria == 1 %}
+	{% trans "Ranked by Time" %}
+{% elif series.ranking_criteria == 2 %}
+	{% trans "Ranked by % Winning Time / Finish Time" %}
+{% endif %}
+</h3>
+<p/>
+<h4>{% trans "Tie-breaking Rules" %}</h4>
+<ol>
+{% if series.ranking_criteria != 1 and series.consider_most_events_completed %}
+	<li>{% trans "Number of Events participated." %}  {% trans "Then, if still a tie:" %}</li>
+{% endif %}
+{% if series.tie_breaking_rule %}
+	<li>{{series.get_tie_breaking_rule_display}}.  {% trans "Then, if still a tie:" %}</li>
+{% endif %}
+	<li>{% trans "Most recent result." %}</li>
+</ol>
+<h4>{% trans "Show last to first" %}: {{series.show_last_to_first}}</h4>
 
 <hr/>
 <h3>{% trans "Competitions" %} <a class="btn btn-primary" href="{{path}}SeriesCompetitionAdd/{{series.id}}/">{% trans "Add Competition" %}</a></h3>
@@ -20,7 +46,7 @@
 		<th>{% trans "Discipline" %}</th>
 		<th>{% trans "Name/Location" %}</th>
 		<th>{% trans "Class" %}</th>
-		<th class='text-center'>{% trans "Events" %}</th>
+		<th>{% trans "Events" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -30,17 +56,20 @@
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{c.date_range_year_str}}</td>
 		<td>{{c.discipline.name}}</td>
-		<td>{{c.name}}, {{c.city}}, {{c.stateProv}}, {{c.country}}</td>
+		<td>{{c.name}}<br/>{{c.city}}, {{c.stateProv}}, {{c.country}}</td>
 		<td>{{c.race_class.name}}</td>
 		<td>
-			<ul>
+			<table>
+			<tbody>
 			{% for ce in ces %}
-				<li>
-					{{ce.event.date_time|date:"D H:i"}}, {{ce.event.name}}
-					{% if series.ranking_criteria == 0 %}({{ce.points_structure.name}}){% endif %}
-				</li>
+				<tr>
+					<td>{{ce.event.date_time|date:"D H:i"}}:</td>
+					<td>&nbsp;{{ce.event.name}}</td>
+					{% if series.ranking_criteria == 0 %}<td>&nbsp;{{ce.points_structure.name}}</td>{% endif %}
+				</tr>
 			{% endfor %}
-			</ul>
+			</tbody>
+			</table>
 		</td>
 		<td class="hidden-print">
 			<a class="btn btn-success" href="{{path}}SeriesCompetitionEdit/{{series.id}}/{{c.id}}/">{% trans "Edit" %}</a>

@@ -71,10 +71,9 @@ class SeriesForm( ModelForm ):
 			Row(
 				Field('name', size=20),
 				Field('description', size=40),
-				Field('ranking_criteria'),
-				Field('show_last_to_first'),
 			),
 			Row(
+				Field('ranking_criteria'),
 				Field('best_results_to_consider'),
 				Field('must_have_completed'),
 			),
@@ -88,6 +87,9 @@ class SeriesForm( ModelForm ):
 			),
 			Row(
 				HTML( _('Finally, break remaining ties with the most recent result.') ),
+			),
+			Row(
+				Field('show_last_to_first'),
 			),
 			Field('category_format', type='hidden'),
 			Field('sequence', type='hidden'),
@@ -117,6 +119,12 @@ def SeriesEdit( request, seriesId ):
 		ces.sort( key=lambda ce:ce.event.date_time )
 
 	return GenericEdit( Series, request, series.id, SeriesForm, 'series_form.html', locals() )
+
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def SeriesDetailEdit( request, seriesId ):
+	return GenericEdit( Series, request, seriesId, SeriesForm, 'generic_form.html', locals() )
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )

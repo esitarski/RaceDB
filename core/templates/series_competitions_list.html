@@ -23,7 +23,7 @@
 <tbody>
 	{% for c in competitions %}
 		<tr onclick="jump('{{popUrl}}SeriesCompetitionAdd/{{series.id}}/{{c.id}}');">
-			<td class="text-right">{{forloop.counter1}}</td>
+			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{c.date_range_year_str}}</td>
 			<td>{{c.discipline.name}}</td>
 			<td>{{c.name}}</td>

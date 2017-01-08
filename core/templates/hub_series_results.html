@@ -40,7 +40,7 @@ table.results-table tr th {
 <tbody>
 	{% for lh, team, totalValue, gap, event_results in results %}
 		<tr>
-			<td class="text-right">{{forloop.counter1}}</td>
+			<td class="text-right">{{forloop.counter}}</td>
 			<td><a href='/RaceDB/Hub/Hub/LicenseHolderResults/{{lh.id}}/'>{{lh.full_name}}</a></td>
 			<td>{{team}}</td>
 			<td class='text-right'>{{totalValue}}</td>
@@ -65,12 +65,12 @@ table.results-table tr th {
 {% endspaceless %}
 {% if series.best_results_to_consider > 0 %}
 	<p>
-		&#x2021; - {% trans "Result ignored: better result available" %}
+		&#x2021; - {% trans "Result ignored: better result available." %}
 	</p>
 {% endif %}
 {% if has_upgrades %}
 	<p>
-		&#x2021;&#x2021; - {% trans "Result carried forward from upgrade." %}
+		&#x2021;&#x2021; - {% trans "Result from upgrade." %}
 	</p>
 {% endif %}
 {% if series.must_have_completed > 0 %}
@@ -80,7 +80,7 @@ table.results-table tr th {
 {% endif %}
 {% if series.best_results_to_consider > 0 %}
 	<p>
-	{% trans "Best" %} {{series.best_results_to_consider}} {% trans "Events considered." %}
+	{% trans "Best" %} {{series.best_results_to_consider}} {% trans "results considered." %}
 	</p>
 {% endif %}
 <h3>
@@ -92,6 +92,16 @@ table.results-table tr th {
 	{% trans "Ranked by % Winning Time / Finish Time" %}
 {% endif %}
 </h3>
-<h3>{% trans "Tie-breaking Rules" %}</h3>
+<p/>
+<h4>{% trans "Tie-breaking Rules" %}</h4>
+<ol>
+{% if series.ranking_criteria != 1 and series.consider_most_events_completed %}
+	<li>{% trans "Number of Events participated." %}  {% trans "Then, if still a tie:" %}</li>
+{% endif %}
+{% if series.tie_breaking_rule %}
+	<li>{{series.get_tie_breaking_rule_display}}.  {% trans "Then, if still a tie:" %}</li>
+{% endif %}
+	<li>{% trans "Most recent result." %}</li>
+</ol>
 
 {% endblock content %}

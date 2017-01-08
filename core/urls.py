@@ -272,6 +272,7 @@ urlpatterns = [
 	url(r'^(?i).*SeriesNew/$', series.SeriesNew),
 	url(r'^(?i).*SeriesNew/(?P<categoryFormatId>\d+)/$', series.SeriesNew),
 	url(r'^(?i).*SeriesEdit/(?P<seriesId>\d+)/$', series.SeriesEdit),
+	url(r'^(?i).*SeriesDetailEdit/(?P<seriesId>\d+)/$', series.SeriesDetailEdit),
 	url(r'^(?i).*SeriesDelete/(?P<seriesId>\d+)/$', series.SeriesDelete),
 	url(r'^(?i).*SeriesDelete/(?P<seriesId>\d+)/(?P<confirmed>\d+)/$', series.SeriesDelete),
 	

@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='series',
             name='consider_most_events_completed',
-            field=models.BooleanField(default=True, verbose_name='Consider Most Events Completed'),
+            field=models.BooleanField(default=False, verbose_name='Consider Most Events Completed'),
         ),
         migrations.AddField(
             model_name='series',

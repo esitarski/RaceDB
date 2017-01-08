@@ -16,6 +16,7 @@
 {% for cat_gender, categories in gender_categories %}
 	<div class="col-md-{{col_gender}}">
 		<h3>{{cat_gender.get_gender_display}}</h3>
+		<p/>
 		{% spaceless %}
 		<table class="table table-condensed table-striped table-hover" style="width: auto;">
 		<tbody>
@@ -47,8 +48,8 @@
 </thead>
 <tbody>
 	{% for c in series.get_competitions %}
-		<tr onclick="jump('/RaceDB/Hub/CompetitionResults/{{c.id}}/');">
-			<td class="text-right">{{forloop.counter1}}</td>
+		<tr>
+			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{c.date_range_year_str}}</td>
 			<td>{{c.discipline.name}}</td>
 			<td><a href="/RaceDB/Hub/CompetitionResults/{{c.id}}/"><strong>{{c.name}}</strong></a></td>

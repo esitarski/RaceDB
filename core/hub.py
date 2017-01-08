@@ -252,7 +252,12 @@ def SearchLicenseHolders( request ):
 def SeriesList( request ):
 	page_key = 'hub_series'
 	series = Series.objects.all()
-	series, paginator = getPaginator( request, page_key, series )
+	paginator = None
+	if series.count() > ItemsPerPage:
+		series, paginator = getPaginator( request, page_key, series )
+		series_exists = True
+	else:
+		series_exists = series.exists()
 	return render( request, 'hub_series_list.html', locals() )
 
 def SeriesCategories( request, seriesId ):

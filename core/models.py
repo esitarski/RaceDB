@@ -3559,7 +3559,7 @@ class Series( Sequence ):
 	tie_breaking_rule = models.PositiveSmallIntegerField( default=5, choices=TIE_BREAKING_RULE_CHOICES,
 		verbose_name=_('Tie-breaking Rule')
 	)
-	consider_most_events_completed = models.BooleanField( default=True, verbose_name=_('Consider Most Events Completed') )
+	consider_most_events_completed = models.BooleanField( default=False, verbose_name=_('Consider Most Events Completed') )
 	
 	BEST_RESULTS_CHOICES = [(0, _('All Results')), (1, _('Best Result Only'))] + [
 		(i, string_concat('{} '.format(i), _('Best Results Only'))) for i in xrange(2,31)
