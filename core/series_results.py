@@ -12,13 +12,13 @@ class EventResult( object ):
 
 	slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'upgrade_factor', 'upgraded', 'ignored')
 	
-	def __init__( self, result, rank, value_for_rank ):
+	def __init__( self, result, rank, starters, value_for_rank ):
 		self.result = result
 		self.rank = rank
 		self.starters = starters
 		
 		self.value_for_rank = value_for_rank
-		self.category = rank.participant.category
+		self.category = result.participant.category
 		
 		self.upgrade_factor = 1.0
 		self.upgraded = False
@@ -64,6 +64,8 @@ def extract_event_results( sce, filter_categories=None ):
 	series = sce.series
 	if not filter_categories:
 		filter_categories = series.get_categories()
+		
+	filter_categories = set( filter_categories )
 	
 	points_structure = sce.points_structure if series.ranking_criteria == 0 else None
 	status_keep = [Result.cFinisher, Result.cPUL]
@@ -76,39 +78,40 @@ def extract_event_results( sce, filter_categories=None ):
 	else:
 		get_points = None
 	
-	def get_rank( w, rr ):
-		if w.rank_categories_together:
-			return rr.wave_rank
-		else:
-			return rr.category_rank
-			
-	def get_starters( w, rr ):
-		if w.rank_categories_together:
-			return rr.wave_starters
-		else:
-			return rr.category_starters
-			
-	def get_value_for_rank( w, rr, rank, rrWinner ):
-		if get_points:
-			return get_points( rr, rr.status )
-		if   series.ranking_criteria == 1:	# Time
+	if get_points:
+		def get_value_for_rank( rr, rank, rrWinner ):
+			return get_points( rank, rr.status )
+	elif series.ranking_criteria == 1:	# Time
+		def get_value_for_rank( rr, rank, rrWinner ):
 			try:
 				return rr.finish_time.total_seconds()
 			except:
 				return 24.0*60.0*60.0
-		elif series.ranking_criteria == 2:	# % Winner / Time
+	elif series.ranking_criteria == 2:	# % Winner / Time
+		def get_value_for_rank( rr, rank, rrWinner ):
 			try:
 				return 100.0 * rrWinner.finish_time.total_seconds() / rr.finish_time.total_seconds()
 			except:
 				return 0
+	else:
 		assert False, 'Unknown ranking criteria'
 	
 	eventResults = []
 	for w in sce.event.get_wave_set().all():
+		if filter_categories.isdisjoint( w.categories.all() ):
+			continue
+			
+		if w.rank_categories_together:
+			get_rank     = lambda rr: rr.wave_rank
+			get_starters = lambda rr: rr.wave_starters
+		else:
+			get_rank     = lambda rr: rr.category_rank
+			get_starters = lambda rr: rr.category_starters
+	
 		rr_winner = None
 		wave_results = w.get_results().filter(
 				participant__category__in=filter_categories, status__in=status_keep ).select_related(
-				'participant', 'participant__license_holder'
+				'participant',
 			).order_by('wave_rank')
 		for rr in wave_results:
 			if w.rank_categories_together:
@@ -118,10 +121,10 @@ def extract_event_results( sce, filter_categories=None ):
 				if not rr_winner or rr_winner.participant.category != rr.participant.category:
 					rr_winner = rr
 
-			rank = get_rank( w, rr )
-			value_for_rank = get_value_for_rank(w, rr, rank, rr_winner)
+			rank = get_rank( rr )
+			value_for_rank = get_value_for_rank(rr, rank, rr_winner)
 			if value_for_rank:
-				eventResults.append( EventResult(rr, rank, value_for_rank) )
+				eventResults.append( EventResult(rr, rank, get_starters(rr), value_for_rank) )
 
 	return eventResults
 
@@ -186,7 +189,7 @@ def series_results( series, categories, eventResults ):
 	eventResults = [rr for rr in eventResults if rr.category in categories]
 	if not eventResults:
 		return [], []
-	eventResults.sort( key=operator.attrgetter('event.date_time', 'rank') )
+	eventResults.sort( key=operator.attrgetter('event.date_time', 'event.name', 'rank') )
 	
 	# Assign a sequence number to the events.
 	events = sorted( set(rr.result.event for rr in eventResults), key=operator.attrgetter('date_time') )
@@ -198,18 +201,21 @@ def series_results( series, categories, eventResults ):
 	lhUpgrades = defaultdict( lambda : [False] * len(events) )
 	lhNameLicense = {}
 		
-	lhResults = defaultdict( lambda : [None] * len(races) )
-	lhFinishes = defaultdict( lambda : [None] * len(races) )
+	lhResults = defaultdict( lambda : [None] * len(events) )
+	lhFinishes = defaultdict( lambda : [None] * len(events) )
 	
 	lhValue = defaultdict( float )
 	
 	percentFormat = u'{:.2f}'
 	floatFormat = u'{:0.2f}'
 	
+	# Pull all the license holders into the cache in one call.
+	LicenseHolder.objects.in_bulk( list(set(rr.result.participant.license_holder_id for rr in eventResults)) )
+	
 	# Get the individual results for each lh, and the total value.
 	for rr in eventResults:
 		lh = rr.license_holder
-		lhTeam[lh] = rr.team
+		lhTeam[lh] = rr.participant.team.name if rr.participant.team else u''
 		lhResults[lh][eventSequence[rr.event]] = rr
 		lhValue[lh] += rr.value_for_rank
 		lhPlaceCount[lh][rr.rank] += 1
