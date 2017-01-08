@@ -249,11 +249,11 @@ def SearchLicenseHolders( request ):
 
 #-------------------------------------------------------------------------
 
-def Series( request ):
+def SeriesList( request ):
 	page_key = 'hub_series'
 	series = Series.objects.all()
-	getPaginator( request, page_key, series )
-	return render( request, 'hub_series.html', locals() )
+	series, paginator = getPaginator( request, page_key, series )
+	return render( request, 'hub_series_list.html', locals() )
 
 def SeriesCategories( request, seriesId ):
 	series = get_object_or_404( Series, pk=seriesId )
@@ -267,10 +267,121 @@ def SeriesCategories( request, seriesId ):
 	exclude_breadcrumbs = True
 	return render( request, 'hub_series_categories_list.html', locals() )
 
-from series_results import 
+#------------------------------------------------------------------------------------
+
+import series_results
+
+def formatTime( secs, highPrecision = False ):
+	if secs is None:
+		secs = 0
+	if secs < 0:
+		sign = '-'
+		secs = -secs
+	else:
+		sign = ''
+	f, ss = math.modf(secs)
+	secs = int(ss)
+	hours = int(secs // (60*60))
+	minutes = int( (secs // 60) % 60 )
+	secs = secs % 60
+	if highPrecision:
+		secStr = '{:05.2f}'.format( secs + f )
+	else:
+		secStr = '{:02d}'.format( secs )
+	
+	if hours > 0:
+		return "{}{}:{:02d}:{}".format(sign, hours, minutes, secStr)
+	if minutes > 0:
+		return "{}{}:{}".format(sign, minutes, secStr)
+	return "{}{}".format(sign, secStr)
+	
+def formatTimeGap( secs, highPrecision = False ):
+	if secs is None:
+		secs = 0
+	if secs < 0:
+		sign = '-'
+		secs = -secs
+	else:
+		sign = ''
+	f, ss = math.modf(secs)
+	secs = int(ss)
+	hours = int(secs // (60*60))
+	minutes = int( (secs // 60) % 60 )
+	secs = secs % 60
+	if highPrecision:
+		decimal = '.%02d' % int( f * 100 )
+	else:
+		decimal = ''
+	if hours > 0:
+		return "%s%dh%d'%02d%s\"" % (sign, hours, minutes, secs, decimal)
+	else:
+		return "%s%d'%02d%s\"" % (sign, minutes, secs, decimal)
+
+def format_column_float( values ):
+	values = list( values )
+	all_int = True
+	for v in values:
+		if v is not None and float(v) != int(v):
+			all_int = False
+			break
+	f = '{}' if all_int else '{:.2f}'
+	return [f.format(v) if v is not None else None for v in values]
+	
+def format_column_time( values ):
+	values = list( values )
+	all_int = True
+	for v in values:
+		if v is not None and float(v) != int(v):
+			all_int = False
+			break
+	f = '{}' if all_int else '{:.2f}'
+	return [f.format(v) if v is not None else None for v in values]
+	
+def format_column_gap( values ):
+	values = list( values )
+	all_int = True
+	for v in values:
+		if v is not None and float(v) != int(v):
+			all_int = False
+			break
+	f = '{}' if all_int else '{:.2f}'
+	return [f.format(v) if v is not None else None for v in values]
+
 def SeriesCategoryResults( request, seriesId, categoryId ):
 	series = get_object_or_404( Series, pk=seriesId )
 	category = get_object_or_404( Category, pk=categoryId )
 	
-	categories = get_associated_categories( category )
+	results, events = series_results.get_results_for_category( series, category )
+	group_categories = series.get_group_related_categories( category )
+	
+	# Format the results based on the ranking criteria.
+	total_values = []
+	gaps = []
+	event_results_values = defaultdict( list )
+	
+	for lh, team, totalValue, gap, event_results in results:
+		total_values.append( totalValue )
+		gaps.append( gap )
+		for i, er in enumerate(event_results):
+			event_results_values[i].append( er.value_for_rank if er is not None else None )
+	
+	if series.ranking_criteria == 1:
+		total_values = format_column_time( total_values )
+		gaps = format_column_time_gap( gaps )
+		for erv in event_results_values.itervalues():
+			erv[:] = format_column_time( erv )
+	else:
+		total_values = format_column_float( total_values )
+		gaps = format_column_float( gaps )
+		for erv in event_results_values.itervalues():
+			erv[:] = format_column_float( erv )
+
+	for row, r in enumerate(results):
+		# Skip lh and team.
+		r[2] = total_values[row]
+		r[3] = gaps[row]
+		for i, er in r[4]:
+			if event_results_values[i][row] is not None:
+				er.value_for_rank = event_results_values[i][row]
+
 	return render( request, 'hub_series_results.html', locals() )

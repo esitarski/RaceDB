@@ -35,9 +35,9 @@ urlpatterns = [
 	
 	url(r'^(?i).*Hub/SearchLicenseHolders/$', hub.SearchLicenseHolders),
 	
-	url(r'^(?i).*Hub/Series/$', hub.Series),
+	url(r'^(?i).*Hub/Series/$', hub.SeriesList),
 	url(r'^(?i).*Hub/SeriesCategories/(?P<seriesId>\d+)/$', hub.SeriesCategories),
-	url(r'^(?i).*Hub/SeriesCategoryResults/(?P<seriesId>\d+)/(?P<categoryId>\d+)$', hub.SeriesCategoryResults),
+	url(r'^(?i).*Hub/SeriesCategoryResults/(?P<seriesId>\d+)/(?P<categoryId>\d+)/$', hub.SeriesCategoryResults),
 	
 	url(r'^(?i).*SelfServe/$', self_serve.SelfServe),
 	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),

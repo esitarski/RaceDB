@@ -3559,7 +3559,6 @@ class Series( Sequence ):
 	tie_breaking_rule = models.PositiveSmallIntegerField( default=5, choices=TIE_BREAKING_RULE_CHOICES,
 		verbose_name=_('Tie-breaking Rule')
 	)
-	show_last_to_first = models.BooleanField( default=True, verbose_name=_('Show Events Last to First') )
 	consider_most_events_completed = models.BooleanField( default=True, verbose_name=_('Consider Most Events Completed') )
 	
 	BEST_RESULTS_CHOICES = [(0, _('All Results')), (1, _('Best Result Only'))] + [
@@ -3613,6 +3612,9 @@ class Series( Sequence ):
 		events = [ce.event for ce in self.seriescompetitionevent_set.all() if ce.competition == competition]
 		events.sort( key=operator.attrgetter('date_time') )
 		return events
+		
+	def get_competitions( self ):
+		return sorted( set(ce.competition for ce in self.seriescompetitionevent_set.all()), key=operator.attrgetter('start_date'), reverse=True )
 	
 	def remove_competition( self, competition ):
 		for ce in [ce for ce in self.seriescompetitionevent_set.all() if ce.competition == competition]:
@@ -3624,7 +3626,30 @@ class Series( Sequence ):
 			ps = SeriesPointsStructure( series=series, name='SeriesPointsDefault' )
 			ps.save()
 		return ps
-			
+	
+	def get_group_related_categories( self, category ):
+		# If this category is part of a group, add all the group categories.
+		for g in self.categorygroup_set.all():
+			g_categories = g.get_categories()
+			if category in g_categories:
+				return g_categories
+		return [category]
+	
+	def get_related_categories( self, category ):
+		categories = self.get_categories()
+		if category not in categories:
+			return set()
+		
+		related_categories = set( self.get_group_related_categories(category) )
+		
+		# If any of these categories are in a progression, add all the progression categories.
+		for p in self.seriesupgradeprogression_set.all():
+			p_categories = set( p.get_categories() )
+			if not related_categories.isdisjoint(p_categories):
+				related_categories |= p_categories
+		
+		return related_categories
+	
 	RANKING_CRITERIA = (
 		(0, _('Points')),
 		(1, _('Time')),
@@ -3650,9 +3675,9 @@ class SeriesPointsStructure( Sequence ):
 	def get_container( self ):
 		return self.series.seriespointsstructure_set.all()
 	
+	reNonDigit = re.compile( r'[^\d]' )
 	def save( self, *args, **kwargs ):
-		pfp_text = re.sub( r'[^\d]', ' ', self.points_for_place )
-		pfp = [d for d in sorted((int(v) for v in pfp_text.split() if v), reverse=True) if d]
+		pfp = [d for d in sorted((int(v) for v in self.reNonDigit.sub(' ', self.points_for_place).split() if v), reverse=True) if d]
 		self.points_for_place = u', '.join( '{}'.format(d) for d in pfp )
 		if pfp:
 			lowest_pfp = pfp[-1]
@@ -3667,7 +3692,7 @@ class SeriesPointsStructure( Sequence ):
 		return self.points_for_place.count(',') + 1 if self.points_for_place else 0
 
 	def get_points_getter( self ):
-		pfp = [int(v) for f in self.points_for_place.split()]
+		pfp = [int(v) for v in self.reNonDigit.sub(' ', self.points_for_place).split()]
 		def points_getter( rank, status=0 ):
 			if not status:
 				return pfp[rank-1] if rank <= len(pfp) else self.finish_points

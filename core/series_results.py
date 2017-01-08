@@ -8,55 +8,9 @@ import utils
 from collections import defaultdict
 from django.utils.safestring import mark_safe
 
-def formatTime( secs, highPrecision = False ):
-	if secs is None:
-		secs = 0
-	if secs < 0:
-		sign = '-'
-		secs = -secs
-	else:
-		sign = ''
-	f, ss = math.modf(secs)
-	secs = int(ss)
-	hours = int(secs // (60*60))
-	minutes = int( (secs // 60) % 60 )
-	secs = secs % 60
-	if highPrecision:
-		secStr = '{:05.2f}'.format( secs + f )
-	else:
-		secStr = '{:02d}'.format( secs )
-	
-	if hours > 0:
-		return "{}{}:{:02d}:{}".format(sign, hours, minutes, secStr)
-	if minutes > 0:
-		return "{}{}:{}".format(sign, minutes, secStr)
-	return "{}{}".format(sign, secStr)
-	
-def formatTimeGap( secs, highPrecision = False ):
-	if secs is None:
-		secs = 0
-	if secs < 0:
-		sign = '-'
-		secs = -secs
-	else:
-		sign = ''
-	f, ss = math.modf(secs)
-	secs = int(ss)
-	hours = int(secs // (60*60))
-	minutes = int( (secs // 60) % 60 )
-	secs = secs % 60
-	if highPrecision:
-		decimal = '.%02d' % int( f * 100 )
-	else:
-		decimal = ''
-	if hours > 0:
-		return "%s%dh%d'%02d%s\"" % (sign, hours, minutes, secs, decimal)
-	else:
-		return "%s%d'%02d%s\"" % (sign, minutes, secs, decimal)
-
 class EventResult( object ):
 
-	slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'ranking_criteria', 'upgrade_factor', 'upgraded', 'ignored')
+	slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'upgrade_factor', 'upgraded', 'ignored')
 	
 	def __init__( self, result, rank, value_for_rank ):
 		self.result = result
@@ -65,13 +19,12 @@ class EventResult( object ):
 		
 		self.value_for_rank = value_for_rank
 		self.category = rank.participant.category
-		self.ranking_criteria = ranking_criteria
 		
 		self.upgrade_factor = 1.0
 		self.upgraded = False
 		self.ignored = False
 		
-	@property:
+	@property
 	def status( self ):
 		return self.result.status
 		
@@ -101,27 +54,16 @@ class EventResult( object ):
 	def get_rank_text( self ):
 		if self.result.status != Result.cFinisher:
 			return self.result.get_status_display()
-		if self.ranking_criteria == 0:
-			i = int(self.value_for_rank)
-			if i == self.value_for_rank:
-				return u'{}'.format(i)
-			else:
-				return u'{:.2f}'.format(self.value_for_rank)
-		elif self.ranking_criteria == 1:
-			return formatTime(self.value_for_rank)
-		else:
-			return u'{:.2f}'.format(self.value_for_rank)
-	
-	def get_format( self ):
-		return (
-			'{}'.format(self.get_rank_text()),
-			'{}/{}'.format(self.rank, self.starters),
-			self.upgraded,
-			self.ignored,
-		)
+		return self.value_for_rank
+		
+	@property
+	def starters_text( self ):
+		return u'{}/{}'.format(self.get_rank_text(), self.starters) if self.starters else u'',
 
-def extract_event_results( sce ):
+def extract_event_results( sce, filter_categories=None ):
 	series = sce.series
+	if not filter_categories:
+		filter_categories = series.get_categories()
 	
 	points_structure = sce.points_structure if series.ranking_criteria == 0 else None
 	status_keep = [Result.cFinisher, Result.cPUL]
@@ -164,11 +106,11 @@ def extract_event_results( sce ):
 	eventResults = []
 	for w in sce.event.get_wave_set().all():
 		rr_winner = None
-		for rr in w.get_results().filter(
-				participant__category__in=series.get_category_pk() ).filter(
-				status__in=status_keep ).select_related(
+		wave_results = w.get_results().filter(
+				participant__category__in=filter_categories, status__in=status_keep ).select_related(
 				'participant', 'participant__license_holder'
-			).order_by('wave_rank'):
+			).order_by('wave_rank')
+		for rr in wave_results:
 			if w.rank_categories_together:
 				if not rr_winnner:
 					rr_winner = rr
@@ -179,11 +121,14 @@ def extract_event_results( sce ):
 			rank = get_rank( w, rr )
 			value_for_rank = get_value_for_rank(w, rr, rank, rr_winner)
 			if value_for_rank:
-				eventResults.append( EventResult(rr, rank, value_for_rank, series.ranking_criteria) )
+				eventResults.append( EventResult(rr, rank, value_for_rank) )
 
 	return eventResults
 
 def adjust_for_upgrades( series, eventResults ):
+	if series.ranking_criteria != 0:
+		return
+
 	upgradeCategoriesAll = set()
 	factorPathPositions = []
 	for sup in series.seriesupgradeprogression_set.all():
@@ -229,7 +174,6 @@ def adjust_for_upgrades( series, eventResults ):
 			break
 
 def series_results( series, categories, eventResults ):
-	categories = set( list(categories) )
 	scoreByTime = (series.ranking_criteria == 1)
 	scoreByPercent = (series.ranking_criteria == 2)
 	bestResultsToConsider = series.best_results_to_consider
@@ -238,9 +182,10 @@ def series_results( series, categories, eventResults ):
 	considerMostEventsCompleted = series.consider_most_events_completed
 	
 	# Get all results for this category.
+	categories = set( list(categories) )
 	eventResults = [rr for rr in eventResults if rr.category in categories]
 	if not eventResults:
-		return [], [], set()
+		return [], []
 	eventResults.sort( key=operator.attrgetter('event.date_time', 'rank') )
 	
 	# Assign a sequence number to the events.
@@ -270,23 +215,24 @@ def series_results( series, categories, eventResults ):
 		lhPlaceCount[lh][rr.rank] += 1
 		lhEventsCompleted[lh] += 1
 	
-	# Adjust for the best times.
+	# Remove if minimum events not completed.
+	if mustHaveCompleted > 0:
+		lhOrder = [lh for lh, results in lhResults.iteritems() if lhEventsCompleted[lh] >= mustHaveCompleted]
+	
+	# Adjust for the best results.
 	if bestResultsToConsider > 0:
 		for lh, rrs in lhResults.iteritems():
 			iResults = [(i, rr) for i, rr in enumerate(rrs) if rr is not None]
 			if len(iResults) > bestResultsToConsider:
 				if scoreByTime:
-					iResults.sort( key=lambda x: x[1].value_for_rank, x[0] )
+					iResults.sort( key=(lambda x: x[1].value_for_rank, x[0]) )
 				else:
-					iResults.sort( key=lambda x: -x[1].value_for_rank, x[0] )
+					iResults.sort( key=(lambda x: -x[1].value_for_rank, x[0]) )
 				for i, t in iResults[bestResultsToConsider:]:
 					lhValue[lh] -= t
 					rrs[i].ignored = True
 				lhEventsCompleted[lh] = bestResultsToConsider
 
-	# Filter out if minimal events are not completed.
-	lhOrder = [lh for lh, results in lhResults.iteritems() if lhEventsCompleted[lh] >= mustHaveCompleted]
-	
 	# Sort by decreasing events completed, then increasing lh time.
 	lhGap = {}
 	if scoreByTime:
@@ -303,7 +249,6 @@ def series_results( series, categories, eventResults ):
 			leaderValue = lhValue[leader]
 			leaderEventsCompleted = lhEventsCompleted[leader]
 			lhGap = { r : lhValue[r] - leaderValue if lhEventsCompleted[r] == leaderEventsCompleted else None for r in lhOrder }
-			lhGap = { r : formatTime_gap(gap) if gap else u'' for r, gap in lhGap.iteritems() }
 	
 	else:
 		# Sort by decreasing value.
@@ -321,10 +266,6 @@ def series_results( series, categories, eventResults ):
 			leader = lhOrder[0]
 			leaderValue = lhValue[leader]
 			lhGap = { r : leaderValue - lhValue[r] for r in lhOrder }
-			if scoreByPercent:
-				lhGap = { r : percentFormat.format(gap) if gap else u'' for r, gap in lhGap.iteritems() }
-			else:
-				lhGap = { r : floatFormat.format(gap) if gap else u'' for r, gap in lhGap.iteritems() }
 				
 	# List of:
 	# license_holder, team, totalValue, gap, [list of results for each event in series]
@@ -337,19 +278,12 @@ def series_results( series, categories, eventResults ):
 	return categoryResult, events
 
 def get_results_for_category( series, category ):
+	related_categories = series.get_related_categories( category )
+	
 	eventResults = []
 	for sce in series.seriescompetitionevent_set.all():
-		eventResults.extend( extract_event_results(sce) )
+		eventResults.extend( extract_event_results(sce, related_categories) )
 	adjust_for_upgrades( series, eventResults )
 	
-	categories = None
-	for g in series.categorygroup_set.all():
-		category_pks = set( g.get_category_pk() )
-		if category_pk in category_pks:
-			categories = set( categories_from_pks(category_pks) )
-			break
-	if not categories:
-		categories = [category]
-	eventResults = [rr for rr in eventResults if rr.result.category in categories]
-	return [category]
+	return series_results( series, series.get_group_related_categories(category), eventResults )
 		
