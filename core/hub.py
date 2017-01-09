@@ -380,5 +380,12 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 			if event_results_values[i][row] is not None:
 				er.value_for_rank = event_results_values[i][row]
 
+	points_structure_summary = defaultdict( list )
+	if series.ranking_criteria == 0:
+		for ce in series.seriescompetitionevent_set.all():
+			points_structure_summary[ce.points_structure].append( ce.event )
+		points_structure_summary = [(k, v) for k, v in points_structure_summary.iteritems()]
+		points_structure_summary.sort( key=lambda v: v[0].sequence )
+				
 	exclude_breadcrumbs = True
 	return render( request, 'hub_series_results.html', locals() )

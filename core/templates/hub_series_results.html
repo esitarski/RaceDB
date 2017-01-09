@@ -25,7 +25,6 @@ table.results-table tr th {
 		{% for c in group_categories %}{% if not forloop.last %}, {% endif %}{{c.code_gender}}{% endfor %}
 	</span>
 </h1>
-<p>&nbsp;</p>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed results-table" style="width: auto;">
 <thead>
@@ -112,5 +111,20 @@ table.results-table tr th {
 {% endif %}
 	<li>{% trans "Most recent result." %}</li>
 </ol>
+{% if series.ranking_criteria == 0 and points_structure_summary %}
+	<p/>
+	<h4>{% trans "Points Structures" %}</h4>
+	{% if points_structure_summary|length == 1 %}
+		{% for ps, evts in points_structure_summary %}
+			{{ps}}
+		{% endfor %}
+	{% else %}
+		<ol>
+		{% for ps, evts in points_structure_summary %}
+			{{ps}}: {% for e in evts %}{% if not forloop.first %}, {% endif %}{{e.name}}{% endfor %}
+		{% endfor %}
+		</ol>
+	{% endif %}
+{% endif %}
 
 {% endblock content %}

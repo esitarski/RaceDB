@@ -3678,7 +3678,7 @@ class SeriesPointsStructure( Sequence ):
 	reNonDigit = re.compile( r'[^\d]' )
 	def save( self, *args, **kwargs ):
 		pfp = [d for d in sorted((int(v) for v in self.reNonDigit.sub(' ', self.points_for_place).split() if v), reverse=True) if d]
-		self.points_for_place = u', '.join( '{}'.format(d) for d in pfp )
+		self.points_for_place = u','.join( '{}'.format(d) for d in pfp )
 		if pfp:
 			lowest_pfp = pfp[-1]
 			for a in ('finish_points', 'dnf_points', 'dns_points'):
@@ -3703,6 +3703,16 @@ class SeriesPointsStructure( Sequence ):
 			return 0
 		return points_getter
 
+	def __unicode__( self ):
+		f = [u'{}: Points for place: {}'.format( self.name, self.points_for_place )]
+		if self.dnf_points:
+			f.append( u' finish={}'.format(self.finish_points) )
+		if self.dnf_points:
+			f.append(  u' dnf={}'.format(self.dnf_points) )
+		if self.dns_points:
+			f.append(  u' dns={}'.format(self.dns_points) )
+		return u', '.join( f )
+		
 	class Meta:
 		verbose_name = _("PointsStructure")
 		verbose_name_plural = _("PointsStructures")
