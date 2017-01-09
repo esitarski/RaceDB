@@ -258,6 +258,8 @@ def SeriesList( request ):
 		series_exists = True
 	else:
 		series_exists = series.exists()
+		
+	exclude_breadcrumbs = True
 	return render( request, 'hub_series_list.html', locals() )
 
 def SeriesCategories( request, seriesId ):
@@ -347,14 +349,17 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 	gaps = []
 	event_results_values = defaultdict( list )
 	
-	has_upgrades = False
+	has_upgrades, has_ignored = False, False
 	for lh, team, totalValue, gap, event_results in results:
 		total_values.append( totalValue )
 		gaps.append( gap )
 		for i, er in enumerate(event_results):
-			event_results_values[i].append( er.value_for_rank if er is not None else None )
-			if er and not has_upgrades:
-				has_upgrades = er.upgraded
+			if er:
+				event_results_values[i].append( er.value_for_rank )
+				has_upgrades |= er.upgraded
+				has_ignored  |= er.ignored
+			else:
+				event_results_values[i].append( None )
 	
 	if series.ranking_criteria == 1:
 		total_values = format_column_time( total_values )
@@ -375,4 +380,5 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 			if event_results_values[i][row] is not None:
 				er.value_for_rank = event_results_values[i][row]
 
+	exclude_breadcrumbs = True
 	return render( request, 'hub_series_results.html', locals() )

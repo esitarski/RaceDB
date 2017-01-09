@@ -2,7 +2,6 @@
 {% load i18n %}
 {% block content %}
 
-{% include "hub_nav.html" %}
 <style>
 table.results-table tr td {
 	font-size: 85%;
@@ -18,6 +17,15 @@ table.results-table tr th {
 	color: #080808; 
 }
 </style>
+
+{% include "hub_nav.html" %}
+<h1>
+	<strong>{{series.name}}</strong> <span style="font-size: 75%">{{series.description}}</span><br/>
+	<span style="font-size: 75%">
+		{% for c in group_categories %}{% if not forloop.last %}, {% endif %}{{c.code_gender}}{% endfor %}
+	</span>
+</h1>
+<p>&nbsp;</p>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed results-table" style="width: auto;">
 <thead>
@@ -36,7 +44,7 @@ table.results-table tr th {
 		{% for e in events %}
 			<th colspan="2" class="text-center col-border-right">
 				{{e.competition.name}}<br/>
-				{{e.date_time|date:"D N d, Y"}}<br/>
+				{{e.date_time|date:"N d, Y"}}<br/>
 				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>{{e.name}}</a><br/>
 			</th>
 		{% endfor %}
@@ -68,15 +76,11 @@ table.results-table tr th {
 </tbody>
 </table>
 {% endspaceless %}
-{% if series.best_results_to_consider > 0 %}
-	<p>
-		&#x2021; - {% trans "Result ignored: better result available." %}
-	</p>
+{% if has_ignored %}
+	<p>&#x2021; - {% trans "Result ignored: better result available." %}</p>
 {% endif %}
 {% if has_upgrades %}
-	<p>
-		&#x2021;&#x2021; - {% trans "Result from upgrade." %}
-	</p>
+	<p>&#x2021;&#x2021; - {% trans "Result from upgrade." %}</p>
 {% endif %}
 {% if series.must_have_completed > 0 %}
 	<p>
