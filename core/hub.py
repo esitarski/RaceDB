@@ -324,33 +324,16 @@ def formatTimeGap( secs, highPrecision = False ):
 
 def format_column_float( values ):
 	values = list( values )
-	all_int = True
-	for v in values:
-		if v is not None and float(v) != int(v):
-			all_int = False
-			break
-	f = '{}' if all_int else '{:.2f}'
-	return [f.format(v) if v is not None else None for v in values]
+	if all( v is None or float(v) == int(v) for v in values ):
+		return ['{}'.format(int(v)) if v is not None else None for v in values]
+	else:
+		return ['{:.2f}'.format(v) if v is not None else None for v in values]
 	
 def format_column_time( values ):
-	values = list( values )
-	all_int = True
-	for v in values:
-		if v is not None and float(v) != int(v):
-			all_int = False
-			break
-	f = '{}' if all_int else '{:.2f}'
-	return [f.format(v) if v is not None else None for v in values]
+	return [formatTime(v) if v is not None else None for v in values]
 	
 def format_column_gap( values ):
-	values = list( values )
-	all_int = True
-	for v in values:
-		if v is not None and float(v) != int(v):
-			all_int = False
-			break
-	f = '{}' if all_int else '{:.2f}'
-	return [f.format(v) if v is not None else None for v in values]
+	return [formatTimeGap(v) if v is not None else None for v in values]
 
 def SeriesCategoryResults( request, seriesId, categoryId ):
 	series = get_object_or_404( Series, pk=seriesId )
@@ -364,11 +347,14 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 	gaps = []
 	event_results_values = defaultdict( list )
 	
+	has_upgrades = False
 	for lh, team, totalValue, gap, event_results in results:
 		total_values.append( totalValue )
 		gaps.append( gap )
 		for i, er in enumerate(event_results):
 			event_results_values[i].append( er.value_for_rank if er is not None else None )
+			if er and not has_upgrades:
+				has_upgrades = er.upgraded
 	
 	if series.ranking_criteria == 1:
 		total_values = format_column_time( total_values )
@@ -385,7 +371,7 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 		# Skip lh and team.
 		r[2] = total_values[row]
 		r[3] = gaps[row]
-		for i, er in r[4]:
+		for i, er in enumerate(r[4]):
 			if event_results_values[i][row] is not None:
 				er.value_for_rank = event_results_values[i][row]
 

@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% load crispy_forms_tags %}
-{% load paginate_html %}
 {% block content %}
 
 {% include "hub_nav.html" %}
@@ -12,27 +10,34 @@ table.results-table tr td {
 table.results-table tr th {
 	font-size: 85%;
 }
+.col-border-right {
+    border-right: 1px solid #aaaaaa;
+}
+.result-detail {
+	font-style: italic;
+	color: #080808; 
+}
 </style>
 {% spaceless %}
-<table class="table table-striped table-hover table-condensed results-table">
+<table class="table table-striped table-hover table-condensed results-table" style="width: auto;">
 <thead>
 	<tr>
 		<th></th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th class='text-right'>
-			{% if series.ranking_criteria == 0 %}
+			{% if series.ranking_criteria == 1 %}
 				{% trans "Time" %}
 			{% else %}
 				{% trans "Points" %}
 			{% endif %}
 		</th>
-		<th class='text-right'>{% trans "Gap" %}</th>
+		<th class='text-right col-border-right'>{% trans "Gap" %}</th>
 		{% for e in events %}
-			<th colspan="2" class="text-center">
-				{{e.event.date_time|date:"D b d, Y"}}<br/>
+			<th colspan="2" class="text-center col-border-right">
 				{{e.competition.name}}<br/>
-				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>{{e.event.name}}</a><br/>
+				{{e.date_time|date:"D N d, Y"}}<br/>
+				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>{{e.name}}</a><br/>
 			</th>
 		{% endfor %}
 	</tr>
@@ -44,18 +49,18 @@ table.results-table tr th {
 			<td><a href='/RaceDB/Hub/Hub/LicenseHolderResults/{{lh.id}}/'>{{lh.full_name}}</a></td>
 			<td>{{team}}</td>
 			<td class='text-right'>{{totalValue}}</td>
-			<td class='text-right'>{{gap}}</td>
+			<td class='text-right col-border-right'>{{gap}}</td>
 			{% for er in event_results %}
 				{% if er %}
 					<td class='text-right {% if er.ignored %}ignored{% endif %}'>
 						{{er.value_for_rank}}{% if er.ignored %}&nbsp;&#x2021;{% endif %}
 					</td>
-					<td class='text-right'>
-						{{er.starters_text}}{% if er.upgraded %}&nbsp;&#x2021;&#x2021;{% endif %}
+					<td class='text-right col-border-right result-detail'>
+						{{er.rank_text}}{% if er.upgraded %}&nbsp;&#x2021;&#x2021;{% endif %}
 					</td>
 				{% else %}
 					<td></td>
-					<td></td>
+					<td class='col-border-right'></td>
 				{% endif %}
 			{% endfor %}
 		</tr>

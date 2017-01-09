@@ -8,6 +8,8 @@ import utils
 from collections import defaultdict
 from django.utils.safestring import mark_safe
 
+ordinal = lambda n: "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
+
 class EventResult( object ):
 
 	slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'upgrade_factor', 'upgraded', 'ignored')
@@ -51,14 +53,11 @@ class EventResult( object ):
 			return self.rank
 		return 999999
 	
-	def get_rank_text( self ):
+	@property
+	def rank_text( self ):
 		if self.result.status != Result.cFinisher:
 			return self.result.get_status_display()
-		return self.value_for_rank
-		
-	@property
-	def starters_text( self ):
-		return u'{}/{}'.format(self.get_rank_text(), self.starters) if self.starters else u'',
+		return ordinal( self.rank )
 
 def extract_event_results( sce, filter_categories=None ):
 	series = sce.series
@@ -183,6 +182,7 @@ def series_results( series, categories, eventResults ):
 	mustHaveCompleted = series.must_have_completed
 	showLastToFirst = series.show_last_to_first
 	considerMostEventsCompleted = series.consider_most_events_completed
+	numPlacesTieBreaker = series.tie_breaking_rule
 	
 	# Get all results for this category.
 	categories = set( list(categories) )
@@ -198,8 +198,6 @@ def series_results( series, categories, eventResults ):
 	lhEventsCompleted = defaultdict( int )
 	lhPlaceCount = defaultdict( lambda : defaultdict(int) )
 	lhTeam = defaultdict( unicode )
-	lhUpgrades = defaultdict( lambda : [False] * len(events) )
-	lhNameLicense = {}
 		
 	lhResults = defaultdict( lambda : [None] * len(events) )
 	lhFinishes = defaultdict( lambda : [None] * len(events) )
@@ -222,8 +220,7 @@ def series_results( series, categories, eventResults ):
 		lhEventsCompleted[lh] += 1
 	
 	# Remove if minimum events not completed.
-	if mustHaveCompleted > 0:
-		lhOrder = [lh for lh, results in lhResults.iteritems() if lhEventsCompleted[lh] >= mustHaveCompleted]
+	lhOrder = [lh for lh, results in lhResults.iteritems() if lhEventsCompleted[lh] >= mustHaveCompleted]
 	
 	# Adjust for the best results.
 	if bestResultsToConsider > 0:
