@@ -165,7 +165,7 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	
 	num_nationalities = results.exclude(participant__license_holder__nation_code='').values('participant__license_holder__nation_code').distinct().count()
 	num_starters = results.exclude( status=Result.cDNS ).count()
-	time_stamp = datetime.datetime.now()
+	time_stamp = timezone.datetime.now()
 
 	exclude_breadcrumbs = True
 	return render( request, 'hub_results_list.html', locals() )
@@ -387,5 +387,6 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 		points_structure_summary = [(k, v) for k, v in points_structure_summary.iteritems()]
 		points_structure_summary.sort( key=lambda v: v[0].sequence )
 				
+	time_stamp = timezone.datetime.now()
 	exclude_breadcrumbs = True
 	return render( request, 'hub_series_results.html', locals() )

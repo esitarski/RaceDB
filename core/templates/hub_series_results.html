@@ -25,6 +25,7 @@ table.results-table tr th {
 		{% for c in group_categories %}{% if not forloop.last %}, {% endif %}{{c.code_gender}}{% endfor %}
 	</span>
 </h1>
+{% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed results-table" style="width: auto;">
 <thead>
@@ -56,7 +57,7 @@ table.results-table tr th {
 			<td><a href='/RaceDB/Hub/Hub/LicenseHolderResults/{{lh.id}}/'>{{lh.full_name}}</a></td>
 			<td>{{team}}</td>
 			<td class='text-right'>{{totalValue}}</td>
-			<td class='text-right col-border-right'>{{gap}}</td>
+			<td class='text-right col-border-right'>{% if forloop.counter != 1 %}{{gap}}{% endif %}</td>
 			{% for er in event_results %}
 				{% if er %}
 					<td class='text-right {% if er.ignored %}ignored{% endif %}'>

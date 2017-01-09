@@ -114,7 +114,7 @@ def extract_event_results( sce, filter_categories=None ):
 			).order_by('wave_rank')
 		for rr in wave_results:
 			if w.rank_categories_together:
-				if not rr_winnner:
+				if not rr_winner:
 					rr_winner = rr
 			else:
 				if not rr_winner or rr_winner.participant.category != rr.participant.category:
