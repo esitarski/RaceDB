@@ -45,7 +45,9 @@ table.results-table tr th {
 			<th colspan="2" class="text-center col-border-right">
 				{{e.competition.name}}<br/>
 				{{e.date_time|date:"N d, Y"}}<br/>
-				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>{{e.name}}</a><br/>
+				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>
+					<span style="white-space: nowrap;">{{e.name}}</span>
+				</a><br/>
 			</th>
 		{% endfor %}
 	</tr>
@@ -96,7 +98,7 @@ table.results-table tr th {
 {% if series.ranking_criteria == 0 %}
 	{% trans "Ranked by Points" %}
 {% elif series.ranking_criteria == 1 %}
-	{% trans "Ranked by Time" %}
+	{% trans "Ranked by Time" %} <span style="font-size: 70%">({% trans "After number of Events Finished" %})</span>
 {% elif series.ranking_criteria == 2 %}
 	{% trans "Ranked by % Winning Time / Finish Time" %}
 {% endif %}

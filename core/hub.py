@@ -332,10 +332,10 @@ def format_column_float( values ):
 		return ['{:.2f}'.format(v) if v is not None else None for v in values]
 	
 def format_column_time( values ):
-	return [formatTime(v) if v is not None else None for v in values]
+	return [None if v is None else formatTime(v) for v in values]
 	
 def format_column_gap( values ):
-	return [formatTimeGap(v) if v is not None else None for v in values]
+	return [None if v is None else formatTimeGap(v) for v in values]
 
 def SeriesCategoryResults( request, seriesId, categoryId ):
 	series = get_object_or_404( Series, pk=seriesId )
@@ -363,7 +363,7 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 	
 	if series.ranking_criteria == 1:
 		total_values = format_column_time( total_values )
-		gaps = format_column_time_gap( gaps )
+		gaps = [(v or u'') for v in format_column_gap(gaps)]
 		for erv in event_results_values.itervalues():
 			erv[:] = format_column_time( erv )
 	else:
