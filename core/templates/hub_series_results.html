@@ -104,10 +104,10 @@ table.results-table tr th {
 <h4>{% trans "Tie-breaking Rules" %}</h4>
 <ol>
 {% if series.ranking_criteria != 1 and series.consider_most_events_completed %}
-	<li>{% trans "Number of Events participated." %}  {% trans "Then, if still a tie:" %}</li>
+	<li>{% trans "Number of Events participated." %}  {% trans "If still a tie:" %}</li>
 {% endif %}
 {% if series.tie_breaking_rule %}
-	<li>{{series.get_tie_breaking_rule_display}}.  {% trans "Then, if still a tie:" %}</li>
+	<li>{{series.get_tie_breaking_rule_display}}.  {% trans "If still a tie:" %}</li>
 {% endif %}
 	<li>{% trans "Most recent result." %}</li>
 </ol>
