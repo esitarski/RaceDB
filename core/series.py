@@ -27,9 +27,7 @@ def getPaginator( request, page_key, items ):
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesList( request, moveDirection=None, seriesId=None ):
-	series = Series.objects.first()
-	if series:
-		series.normalize()
+	noramlize_sequence( Series.objects.all() )
 		
 	if moveDirection is not None:
 		moveDirection = int(moveDirection) - 100
@@ -308,7 +306,7 @@ class SeriesPointsStructureForm( ModelForm ):
 				Field('dnf_points'),
 				Field('dns_points'),
 			),
-			Field('category_format', type='hidden'),
+			Field('series', type='hidden'),
 			Field('sequence', type='hidden'),
 		)
 		addFormButtons( self, button_mask )
@@ -317,7 +315,7 @@ class SeriesPointsStructureForm( ModelForm ):
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesPointsStructureNew( request, seriesId ):
 	series = get_object_or_404( Series, pk=seriesId )
-	SeriesPointsStructure( series=series, name=datetime.datetime.now().strftime('Points Structure %H:%M:%S') ).save()
+	SeriesPointsStructure( series=series, name=timezone.now().strftime('Points Structure %H:%M:%S') ).save()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
 @access_validation()

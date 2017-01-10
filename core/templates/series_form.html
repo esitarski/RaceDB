@@ -5,17 +5,21 @@
 {% load staticfiles %}
 
 {% block content %}
-<h1>{{title}}</h1>
+<h1>
+	{{title}}
+	<a class='btn btn-success' href='/RaceDB/Hub/SeriesCategories/{{series.id}}/' target="SeriesHub">{% trans "Show Hub" %}</a>
+	<span style="font-size: 60%">({% trans "refresh the Hub page to see changes" %})</span>
+</h1>
 <hr/>
 <h2>
 	{{series.name}} {% if series.description %}, {{series.description}}{% endif %}
-	<a class="btn btn-primary" href="{{path}}SeriesDetailEdit/{{series.id}}/">{% trans "Edit Details" %}</a>
+	<a class="btn btn-success" href="{{path}}SeriesDetailEdit/{{series.id}}/">{% trans "Edit Details" %}</a>
 </h2>
 <h3>{% trans "Category Format:" %} <strong>{{series.category_format.name}}</strong> ({{series.category_format.description}})</h3>
 <br/>
 <h3>
 {% if series.ranking_criteria == 0 %}
-	{% trans "Ranked by Points" %} ({% trans "see below" %})
+	{% trans "Ranked by Points" %} <span style="font-size: 75%">({% trans "see Points Structures below for details" %})</span>
 {% elif series.ranking_criteria == 1 %}
 	{% trans "Ranked by Time" %}
 {% elif series.ranking_criteria == 2 %}
@@ -23,7 +27,7 @@
 {% endif %}
 </h3>
 <p/>
-<h4>{% trans "Tie-breaking Rules" %}</h4>
+<h5>{% trans "Tie-Breaking Rules" %}:</h5>
 <ol>
 {% if series.ranking_criteria != 1 and series.consider_most_events_completed %}
 	<li>{% trans "Number of Events participated." %}  {% trans "Then, if still a tie:" %}</li>
@@ -33,63 +37,39 @@
 {% endif %}
 	<li>{% trans "Most recent result." %}</li>
 </ol>
-<h4>{% trans "Show last to first" %}: {{series.show_last_to_first}}</h4>
-
-<hr/>
-<h3>{% trans "Competitions" %} <a class="btn btn-primary" href="{{path}}SeriesCompetitionAdd/{{series.id}}/">{% trans "Add Competition" %}</a></h3>
-{% spaceless %}
-<table class="table table-striped table-hover table-condensed">
-<thead>
-	<tr>
-		<th></th>
-		<th>{% trans "Date" %}</th>
-		<th>{% trans "Discipline" %}</th>
-		<th>{% trans "Name/Location" %}</th>
-		<th>{% trans "Class" %}</th>
-		<th>{% trans "Events" %}</th>
-		<th class="hidden-print"></th>
-	</tr>
-</thead>
-<tbody>
-{% for c, ces in competitions %}
-	<tr onclick="jump('{{path}}SeriesCompetitionEdit/{{series.id}}/{{c.id}}/')">
-		<td class="text-right">{{forloop.counter}}.</td>
-		<td>{{c.date_range_year_str}}</td>
-		<td>{{c.discipline.name}}</td>
-		<td>{{c.name}}<br/>{{c.city}}, {{c.stateProv}}, {{c.country}}</td>
-		<td>{{c.race_class.name}}</td>
-		<td>
-			<table>
-			<tbody>
-			{% for ce in ces %}
-				<tr>
-					<td>{{ce.event.date_time|date:"D H:i"}}:</td>
-					<td>&nbsp;{{ce.event.name}}</td>
-					{% if series.ranking_criteria == 0 %}<td>&nbsp;{{ce.points_structure.name}}</td>{% endif %}
-				</tr>
-			{% endfor %}
-			</tbody>
-			</table>
-		</td>
-		<td class="hidden-print">
-			<a class="btn btn-success" href="{{path}}SeriesCompetitionEdit/{{series.id}}/{{c.id}}/">{% trans "Edit" %}</a>
-			<a class="btn btn-warning" href="{{path}}SeriesCompetitionRemove/{{series.id}}/{{c.id}}/">{% trans "Remove" %}</a>
-		</td>
-	</tr>
-{% endfor %}
-</tbody>
-</table>
-{% endspaceless %}
+<h5>
+{% if series.show_last_to_first %}
+	{% trans "Show Events Last to First in Series Results" %}
+{% else %}
+	{% trans "Show Events Earliest to Latest in Series Results" %}
+{% endif %}
+</h5>
 
 
 <hr/>
-<h3>{% trans "Category Format:" %} <strong>{{series.category_format.name}}</strong> ({{series.category_format.description}})</h3>
-<h4>{% trans "Include Categories" %} <a class="btn btn-primary" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
+<h3>
+	{% trans "Category Format:" %} <strong>{{series.category_format.name}}</strong> ({{series.category_format.description}})
+	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#categoryHelp" aria-expanded="false" aria-controls="categoryHelp">
+		Help
+	</button>
+</h3>
+<div class="collapse" id="categoryHelp">
+  <div class="well well-sm">
+    <p>
+		By default, the Series will apply to all the Categories in the Category Format.<br/>
+		Sometimes, there are some Categories that you do not wish to be part of the Series (for example, Beginners or kids).<br/>
+		You can control this here by pressing <strong>Change</strong> and selecting the Categories you want.
+	</p>
+  </div>
+</div>
+
+</h3>
+<h4>{% trans "Include Categories" %} <a class="btn btn-success" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
 <div class="well">
 	{% for c in included_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
 </div>
 {% if excluded_categories %}
-	<h4>{% trans "Exclude Categories" %} <a class="btn btn-primary" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
+	<h4>{% trans "Exclude Categories" %} <a class="btn btn-success" href="{{path}}SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
 	<div class="well">
 		{% for c in excluded_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
 	</div>
@@ -98,7 +78,28 @@
 
 {% if series.ranking_criteria == 0 %}
 <hr/>
-<h3>{% trans "Points Structures" %} <a class="btn btn-primary" href="{{path}}SeriesPointsStructureNew/{{series.id}}/">{% trans "New Points Structure" %}</a></h3>
+<h3>
+	{% trans "Points Structures" %} <a class="btn btn-success" href="{{path}}SeriesPointsStructureNew/{{series.id}}/">{% trans "New Points Structure" %}</a>
+	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#pointsStructuresHelp" aria-expanded="false" aria-controls="pointsStructuresHelp">
+		Help
+	</button>
+</h3>
+<div class="collapse" id="pointsStructuresHelp">
+  <div class="well well-sm">
+    <p>
+		Here you can define the Points for Place (points for 1st, 2nd, 3rd, etc.), Points for Finish (points for finishing a race), Points for DNF and Points for DNS.<br/>
+		<br/>
+		You can have multiple Points Structures and assign different ones to different Events.<br/>
+		For example, say you have a hill climb TT and you want to assign double points.  Or, say you wish to have more points for you regional championship.<br/>
+		Define the Points Structures here, then select the one you with to use in the Compositions section.<br/>
+		<br/>
+		Points are constrained so that: Smallest Points for Place >= Finish Points >= DNF Points >= DNS Points.<br/>
+		Be careful with DNF and DNS points (recommend these be zero) - they can encourage riders not to try.<br/>
+		<br/>
+		Points Structures do not apply if you are rank your Series by Time or % Winner / Finish Time.
+	</p>
+  </div>
+</div>
 {% if series.seriespointsstructure_set.exists %}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">
@@ -106,7 +107,6 @@
 	<tr>
 		<th></th>
 		<th>{% trans "Name" %}</th>
-		<th class="text-right">{% trans "Deep" %}</th>
 		<th>{% trans "Points for Place" %}</th>
 		<th class="text-right">{% trans "Points for Finisher" %}</th>
 		<th class="text-right">{% trans "Points for DNF" %}</th>
@@ -120,8 +120,7 @@
 	<tr onclick="jump('{{path}}SeriesPointsStructureEdit/{{p.id}}/')">
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{p.name}}</td>
-		<td class="text-right">{{p.points_deep}}</td>
-		<td>{{p.points_for_place}}</td>
+		<td>{{p.points_for_place}}&nbsp;&nbsp;&nbsp;({{p.points_deep}} {% trans "deep" %})</td>
 		<td class="text-right">{{p.finish_points}}</td>
 		<td class="text-right">{{p.dnf_points}}</td>
 		<td class="text-right">{{p.dns_points}}</td>
@@ -151,7 +150,30 @@
 
 
 <hr/>
-<h3>{% trans "Upgrade Progressions" %} <a class="btn btn-primary" href="{{path}}SeriesUpgradeProgressionNew/{{series.id}}/">{% trans "New Upgrade Progression" %}</a></h3>
+<h3>
+	{% trans "Upgrade Progressions" %} <a class="btn btn-success" href="{{path}}SeriesUpgradeProgressionNew/{{series.id}}/">{% trans "New Upgrade Progression" %}</a>
+	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#upgradeProgressionsHelp" aria-expanded="false" aria-controls="upgradeProgressionsHelp">
+		Help
+	</button>
+</h3>
+<div class="collapse" id="upgradeProgressionsHelp">
+  <div class="well well-sm">
+    <p>
+		When a rider gets upgraded, does he/she carry-forward points from the previous category to the new category?<br/>
+		<br/>
+		If so, then you need specify <strong>upgrade progressions</strong>.  These tell RaceDB the sequence of upgrade categories (lowest category to highest category).<br/>
+		You also need to specify what factor of the previous categories points can be carried forward to the upgrade.<br/>
+		<br/>
+		For example, say you had an ability-based category system Men/Women, "Beginner", "Intermediate", "Elite" and you wanted riders to be able to carry 0.5 of their points whem upgraded to the next category (Beginner --> Intermediate, Intermediat --> Elite).<br/>
+		Set the upgrade progression for both Men and women to "Beginner", "Intermediate", "Elite" factor=0.5<br/>
+		<br/>
+		Multiple upgrades to the same athlete are supported.  The Factor is applied each time a conversion is made.<br/>
+		In the above example, say an athlete earned points as follows:  10 Beginner, 20 Intermediate and 15 Elite.<br/>
+		The total Elite points would be 27.5 = 15 as Elite + 10 (20*0.5=10, Intermediate --> Elite) + 2.5 (10*0.5=5 Beginner --> Intermediate, 5*0.5=2.5 Intermediate --> Elite).
+	</p>
+  </div>
+</div>
+
 {% if series.seriesupgradeprogression_set.exists %}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">
@@ -195,8 +217,22 @@
 
 
 <hr/>
-<h3>{% trans "Catgory Groups" %} <a class="btn btn-primary" href="{{path}}SeriesCategoryGroupNew/{{series.id}}/">{% trans "New Category Group" %}</a></h3>
-{% if series.categorygroup_set.exists %}
+<h3>
+	{% trans "Category Groups" %} <a class="btn btn-success" href="{{path}}SeriesCategoryGroupNew/{{series.id}}/">{% trans "New Category Group" %}</a>
+	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#categoryGroupsHelp" aria-expanded="false" aria-controls="categoryGroupsHelp">
+		Help
+	</button>
+</h3>
+<div class="collapse" id="categoryGroupsHelp">
+  <div class="well well-sm">
+    <p>
+		Sometimes you want to rank a group of Categories together in the Series.<br/>
+		For example, you may wish all categories of Master Women to be ranked together.<br/>
+		Or perhaps, rank all Men 50-59, 60-69 and 70+ to be ranked together.<br/>
+		Specify this here by defining <strong>Category Groups</strong>.<br/>
+	</p>
+  </div>
+</div>{% if series.categorygroup_set.exists %}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
@@ -235,4 +271,71 @@
 </table>
 {% endspaceless %}
 {% endif %}
+
+
+
+
+<hr/>
+<h3>
+	{% trans "Competitions" %} <a class="btn btn-success" href="{{path}}SeriesCompetitionAdd/{{series.id}}/">{% trans "Add Competition" %}</a>
+	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#competitionHelp" aria-expanded="false" aria-controls="competitionHelp">
+		Help
+	</button>
+</h3>
+<div class="collapse" id="competitionHelp">
+  <div class="well well-sm">
+    <p>
+		Add Competitions to be scored in the Series.<br/>
+		<br/>
+		Only Competitions sharing the same Category Format as the Series can be added and scored by the Series.<br/>
+		By default, all Events of the Competition are added to the Series.<br/>
+		If you wish to exclude some, <strong>Edit</strong> the added Competition and choose which Events apply.<br/>
+		If you are scoring the Series by Points, you can also change the Points Structure used to score each Event (see the Points Structure section below).
+	</p>
+  </div>
+</div>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Date" %}</th>
+		<th>{% trans "Discipline" %}</th>
+		<th>{% trans "Name/Location" %}</th>
+		<th>{% trans "Class" %}</th>
+		<th>{% trans "Events" %}</th>
+		<th class="hidden-print"></th>
+	</tr>
+</thead>
+<tbody>
+{% for c, ces in competitions %}
+	<tr onclick="jump('{{path}}SeriesCompetitionEdit/{{series.id}}/{{c.id}}/')">
+		<td class="text-right">{{forloop.counter}}.</td>
+		<td>{{c.date_range_year_str}}</td>
+		<td>{{c.discipline.name}}</td>
+		<td>{{c.name}}<br/>{{c.city}}, {{c.stateProv}}, {{c.country}}</td>
+		<td>{{c.race_class.name}}</td>
+		<td>
+			<table>
+			<tbody>
+			{% for ce in ces %}
+				<tr>
+					<td>{{ce.event.date_time|date:"D H:i"}}:</td>
+					<td>&nbsp;{{ce.event.name}} {% if ce.event.event_type == 0 %}(MS){% else %}(TT){% endif %}</td>
+					{% if series.ranking_criteria == 0 %}<td>&nbsp;{{ce.points_structure.name}}</td>{% endif %}
+				</tr>
+			{% endfor %}
+			</tbody>
+			</table>
+		</td>
+		<td class="hidden-print">
+			<a class="btn btn-success" href="{{path}}SeriesCompetitionEdit/{{series.id}}/{{c.id}}/">{% trans "Edit" %}</a>
+			<a class="btn btn-warning" href="{{path}}SeriesCompetitionRemove/{{series.id}}/{{c.id}}/">{% trans "Remove" %}</a>
+		</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+
 {% endblock content %}

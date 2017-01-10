@@ -3471,20 +3471,21 @@ class ParticipantOption( models.Model ):
 #-------------------------------------------------------------------------------------
 # Series
 #
+def normalize_sequence( elements ):
+	with transaction.atomic():
+		for seq, e in enumerate(elements):
+			if e.sequence != seq:
+				e.sequence = seq
+				e.save()
+	
 class Sequence( models.Model ):
 	sequence = models.PositiveSmallIntegerField( default=32767, blank=True, verbose_name=_('Sequence') )
 
 	def get_container( self ):
 		assert False, 'Please implement function get_container().'
 
-	def normalize_elements( self, elements ):
-		for seq, e in enumerate(elements):
-			if e.sequence != seq:
-				e.sequence = seq
-				e.save()
-
 	def normalize( self ):
-		self.normalize_elements( self.get_container() )
+		noramlize_sequence( self.get_container().order_by('sequence') )
 				
 	def prev( self ):
 		return self.get_container().filter( sequence=self.sequence-1 ).first()
@@ -3501,9 +3502,10 @@ class Sequence( models.Model ):
 	def move_to( self, i ):
 		elements = list( self.get_container() )
 		i = max( 0, min( i, len(elements) ) )
-		elements.remove( self )
-		elements.insert( i, self )
-		self.normalize_elements( elements )
+		if self.sequence != i:
+			elements.remove( self )
+			elements.insert( i, self )
+			noramlize_sequence( elements )
 		
 	def move_lower( self ):
 		self.move_to( self.sequence-1 )
@@ -3525,13 +3527,10 @@ class Sequence( models.Model ):
 		elif move_direction == -1:
 			self.move_lower()
 		else:
-			 self.move_to_tail()
+			self.move_to_tail()
 
 	def get_sequence_max( self ):
 		return self.get_container().count()
-	
-	def save( self, *args, **kwargs ):
-		super( Sequence, self ).save( args, kwargs )
 	
 	class Meta:
 		ordering = ['sequence']
@@ -3595,10 +3594,17 @@ class Series( Sequence ):
 		return categories_from_pks( list(set(self.get_category_pk()) - set(pks)) )
 		
 	def normalize( self ):
-		for i in self.seriesupgradeprogression_set.all():
-			i.normalize()
-		for i in self.categorygroup_set.all():
-			i.normalize()
+		for collection in (
+				self.seriespointsstructure_set.all(),
+				self.seriesupgradeprogression_set.all(),
+				self.categorygroup_set.all(),
+				):
+			normalize_sequence( collection )
+			for i, element in enumerate(collection):
+				try:
+					element.harmonize_categories()
+				except AttributeError:
+					break
 		
 		ce_to_delete = []
 		category_pk = set( self.get_category_pk() )
@@ -3716,7 +3722,6 @@ class SeriesPointsStructure( Sequence ):
 	class Meta:
 		verbose_name = _("PointsStructure")
 		verbose_name_plural = _("PointsStructures")
-		ordering = ['name']
 
 #-----------------------------------------------------------------------
 class SeriesCompetitionEvent( models.Model ):
@@ -3764,7 +3769,7 @@ class CategoryGroup( Sequence ):
 	def get_container( self ):
 		return self.series.categorygroup_set.all()
 	
-	def normalize( self ):
+	def harmonize_categories( self ):
 		self.categorygroupelement_set.exclude( category__in=self.series.get_category_pk() ).delete()
 	
 	def get_category_pk( self ):
@@ -3813,8 +3818,16 @@ class SeriesUpgradeProgression( Sequence ):
 		s = s[:-1]
 		return string_concat( *s )
 		
-	def normalize( self ):
+	def harmonize_categories( self ):
 		self.seriesupgradecategory_set.exclude( category__in=self.series.get_category_pk() ).delete()
+		
+	def get_categories( self ):
+		return sorted( (ce.category for ce in self.seriesupgradecategory_set.all()), key=operator.attrgetter('sequence') )
+	
+	def save( self, *args, **kwargs ):
+		if self.factor > 1.0 or self.factor < 0.001:
+			self.factor = 0.5
+		super( SeriesUpgradeProgression, self ).save( *args, **kwargs )
 	
 	class Meta:
 		verbose_name = _("SeriesUpgradeProgression")

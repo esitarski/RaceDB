@@ -10,7 +10,10 @@ table.results-table tr th {
 	font-size: 85%;
 }
 .col-border-right {
-    border-right: 1px solid #aaaaaa;
+    border-right: 1px solid #ccc;
+}
+.col-border-right-gap {
+    border-right: 1px solid #ccc;
 }
 .result-detail {
 	font-style: italic;
@@ -20,7 +23,7 @@ table.results-table tr th {
 
 {% include "hub_nav.html" %}
 <h1>
-	<strong>{{series.name}}</strong> <span style="font-size: 75%">{{series.description}}</span><br/>
+	<strong><a href='/RaceDB/Hub/SeriesCategories/{{series.id}}/'>{{series.name}}</strong></a> <span style="font-size: 75%">{{series.description}}</span><br/>
 	<span style="font-size: 75%">
 		{% for c in group_categories %}{% if not forloop.last %}, {% endif %}{{c.code_gender}}{% endfor %}
 	</span>
@@ -30,19 +33,19 @@ table.results-table tr th {
 <table class="table table-striped table-hover table-condensed results-table" style="width: auto;">
 <thead>
 	<tr>
-		<th></th>
+		<th>Rank</th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
-		<th class='text-right'>
+		<th class='text-right col-border-right'>
 			{% if series.ranking_criteria == 1 %}
 				{% trans "Time" %}
 			{% else %}
 				{% trans "Points" %}
 			{% endif %}
 		</th>
-		<th class='text-right col-border-right'>{% trans "Gap" %}</th>
+		<th class='text-right col-border-right-gap'>{% trans "Gap" %}</th>
 		{% for e in events %}
-			<th colspan="2" class="text-center col-border-right">
+			<th colspan="2" class="text-center col-border-right hidden-print">
 				{{e.competition.name}}<br/>
 				{{e.date_time|date:"N d, Y"}}<br/>
 				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>
@@ -55,22 +58,22 @@ table.results-table tr th {
 <tbody>
 	{% for lh, team, totalValue, gap, event_results in results %}
 		<tr>
-			<td class="text-right">{{forloop.counter}}</td>
+			<td class="text-right">{{forloop.counter}}.</td>
 			<td><a href='/RaceDB/Hub/Hub/LicenseHolderResults/{{lh.id}}/'>{{lh.full_name}}</a></td>
 			<td>{{team}}</td>
-			<td class='text-right'>{{totalValue}}</td>
-			<td class='text-right col-border-right'>{% if forloop.counter != 1 %}{{gap}}{% endif %}</td>
+			<td class='text-right col-border-right'>{{totalValue}}</td>
+			<td class='text-right col-border-right-gap'>{% if forloop.counter != 1 %}{{gap}}{% endif %}</td>
 			{% for er in event_results %}
 				{% if er %}
-					<td class='text-right {% if er.ignored %}ignored{% endif %}'>
-						{{er.value_for_rank}}{% if er.ignored %}&nbsp;&#x2021;{% endif %}
+					<td class='hidden-print text-right{% if er.ignored %} ignored{% endif %}'>
+						{{er.value_for_rank}}{% if er.ignored %}&nbsp;&#x2717;{% endif %}
 					</td>
-					<td class='text-right col-border-right result-detail'>
-						{{er.rank_text}}{% if er.upgraded %}&nbsp;&#x2021;&#x2021;{% endif %}
+					<td class='hidden-print text-right col-border-right result-detail'>
+						{{er.rank_text}}{% if er.upgraded %}&nbsp;&#x2191;{% endif %}
 					</td>
 				{% else %}
-					<td></td>
-					<td class='col-border-right'></td>
+					<td class='hidden-print'></td>
+					<td class='hidden-print col-border-right'></td>
 				{% endif %}
 			{% endfor %}
 		</tr>
@@ -79,10 +82,10 @@ table.results-table tr th {
 </table>
 {% endspaceless %}
 {% if has_ignored %}
-	<p>&#x2021; - {% trans "Result ignored: better result available." %}</p>
+	<p class="hidden-print">&#x2717; - {% trans "Result ignored: better result used." %}</p>
 {% endif %}
 {% if has_upgrades %}
-	<p>&#x2021;&#x2021; - {% trans "Result from upgrade." %}</p>
+	<p class="hidden-print">&#x2191; - {% trans "Result from upgrade." %}</p>
 {% endif %}
 {% if series.must_have_completed > 0 %}
 	<p>
@@ -94,7 +97,9 @@ table.results-table tr th {
 	{% trans "Best" %} {{series.best_results_to_consider}} {% trans "results considered." %}
 	</p>
 {% endif %}
-<h3>
+
+<hr/>
+<h4>
 {% if series.ranking_criteria == 0 %}
 	{% trans "Ranked by Points" %}
 {% elif series.ranking_criteria == 1 %}
@@ -102,7 +107,49 @@ table.results-table tr th {
 {% elif series.ranking_criteria == 2 %}
 	{% trans "Ranked by % Winning Time / Finish Time" %}
 {% endif %}
-</h3>
+</h4>
+{% if series.ranking_criteria == 0 %}
+	{% if points_structure_summary %}
+		<p/>
+		<h4>{% trans "Points Structures" %}</h4>
+		{% if points_structure_summary|length == 1 %}
+			{% for ps, evts in points_structure_summary %}
+				{{ps}}
+			{% endfor %}
+		{% else %}
+			<ol>
+			{% for ps, evts in points_structure_summary %}
+				{{ps}}: {% for e in evts %}{% if not forloop.first %}, {% endif %}{{e.name}}{% endfor %}
+			{% endfor %}
+			</ol>
+		{% endif %}
+	{% endif %}
+	
+	{% if has_upgrades and series.seriesupgradeprogression_set.exists %}
+		<p/>
+		<h4>{% trans "Upgrade Progressions" %}</h4>
+		<table class="table table-condensed" style="width: auto;" >
+			<thead>
+				<th>{% trans 'Progression' %}</th>
+				<th class="text-right">{% trans 'Points Factor' %}</th>
+			</thead>
+			<tbody>
+				{% for s in series.seriesupgradeprogression_set.all %}
+				<tr>
+					<td>{{s.get_text}}</td>
+					<td class="text-right">{{s.factor}}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		<p>
+			{% trans "Lower Category Points converted to Higher Category Points by multiplying by Factor." %}
+		</p>
+	{% endif %}
+{% endif %}
+
+
+
 <p/>
 <h4>{% trans "Tie-breaking Rules" %}</h4>
 <ol>
@@ -114,20 +161,5 @@ table.results-table tr th {
 {% endif %}
 	<li>{% trans "Most recent result." %}</li>
 </ol>
-{% if series.ranking_criteria == 0 and points_structure_summary %}
-	<p/>
-	<h4>{% trans "Points Structures" %}</h4>
-	{% if points_structure_summary|length == 1 %}
-		{% for ps, evts in points_structure_summary %}
-			{{ps}}
-		{% endfor %}
-	{% else %}
-		<ol>
-		{% for ps, evts in points_structure_summary %}
-			{{ps}}: {% for e in evts %}{% if not forloop.first %}, {% endif %}{{e.name}}{% endfor %}
-		{% endfor %}
-		</ol>
-	{% endif %}
-{% endif %}
 
 {% endblock content %}

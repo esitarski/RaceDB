@@ -15,6 +15,8 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Description" %}</th>
 		<th>{% trans "Category Format" %}</th>
+		<th class="text-right">{% trans "# Competitions" %}</th>
+		<th class="text-right">{% trans "# Events" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -25,6 +27,8 @@
 			<td>{{s.name}}</td>
 			<td>{{s.description}}</td>
 			<td>{{s.category_format.name}}</td>
+			<td class="text-right">{{s.get_competitions|length}}</td>
+			<td class="text-right">{{s.seriescompetitionevent_set.all.count}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-success" href="{{path}}SeriesEdit/{{s.id}}/">{% trans "Edit" %}</a>
 				<div class="btn-group">

@@ -12,7 +12,7 @@ ordinal = lambda n: "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
 
 class EventResult( object ):
 
-	slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'upgrade_factor', 'upgraded', 'ignored')
+	slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'upgrade_factor', 'ignored')
 	
 	def __init__( self, result, rank, starters, value_for_rank ):
 		self.result = result
@@ -23,12 +23,15 @@ class EventResult( object ):
 		self.category = result.participant.category
 		
 		self.upgrade_factor = 1.0
-		self.upgraded = False
 		self.ignored = False
 		
 	@property
 	def status( self ):
 		return self.result.status
+		
+	@property
+	def upgraded( self ):
+		return self.category != self.result.participant.category
 		
 	@property
 	def event( self ):
@@ -160,18 +163,20 @@ def adjust_for_upgrades( series, eventResults ):
 			if len(upgradeCategories) <= 1:
 				continue
 			
-			highestposition, highestCategory = -1, None
+			highestPos, highestCategory = -1, None
 			for cat in upgradeCategories.iterkeys():
 				pos = position[cat]
-				if pos > highestposition:
-					highestposition, highestCategory = pos, cat
+				if pos > highestPos:
+					highestPos, highestCategory = pos, cat
 		
 			for cat, rrs in upgradeCategories.iteritems():
+				if cat == highestCategory:
+					continue
+				power = highestPos - position[cat]
 				for rr in rrs:
-					if rr.category != highestCategory:
-						rr.category = highestCategory
-						rr.factor = factor ** (highestposition - position[cat])
-						rr.upgraded = True
+					rr.category = highestCategory
+					rr.factor = factor ** power
+					rr.value_for_rank *= rr.factor
 		
 			break
 
