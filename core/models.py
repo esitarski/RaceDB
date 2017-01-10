@@ -3825,7 +3825,7 @@ class SeriesUpgradeProgression( Sequence ):
 		return sorted( (ce.category for ce in self.seriesupgradecategory_set.all()), key=operator.attrgetter('sequence') )
 	
 	def save( self, *args, **kwargs ):
-		if self.factor > 1.0 or self.factor < 0.001:
+		if self.factor > 1.0 or self.factor < 0.0:
 			self.factor = 0.5
 		super( SeriesUpgradeProgression, self ).save( *args, **kwargs )
 	

@@ -14,7 +14,7 @@ ordinal = lambda n: "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
 
 class EventResult( object ):
 
-	slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'upgrade_factor', 'ignored')
+	__slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'ignored')
 	
 	def __init__( self, result, rank, starters, value_for_rank ):
 		self.result = result
@@ -24,7 +24,6 @@ class EventResult( object ):
 		self.value_for_rank = value_for_rank
 		self.category = result.participant.category
 		
-		self.upgrade_factor = 1.0
 		self.ignored = False
 		
 	@property
@@ -136,11 +135,12 @@ def adjust_for_upgrades( series, eventResults ):
 	if series.ranking_criteria != 0:
 		return
 
+	has_zero_factor = False
 	upgradeCategoriesAll = set()
 	factorPathPositions = []
 	for sup in series.seriesupgradeprogression_set.all():
 		if sup.factor == 0.0:
-			continue
+			has_zero_factor = True
 		path = list( suc.category for suc in sup.seriesupgradecategory_set.all() )
 		position = {cat:i for i, cat in enumerate(path)}
 		path = set( path )
@@ -177,11 +177,14 @@ def adjust_for_upgrades( series, eventResults ):
 				power = highestPos - position[cat]
 				for rr in rrs:
 					rr.category = highestCategory
-					rr.factor = factor ** power
-					rr.value_for_rank *= rr.factor
+					rr.value_for_rank *= (factor ** power)
 		
 			break
 
+	# Remove any trace of previous results if the factor was zero.
+	if has_zero_factor:
+		eventResults[:] = [rr for rr in eventResults if rr.value_for_rank > 0.0]
+		
 def series_results( series, categories, eventResults ):
 	scoreByTime = (series.ranking_criteria == 1)
 	scoreByPercent = (series.ranking_criteria == 2)
