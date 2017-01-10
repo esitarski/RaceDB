@@ -248,7 +248,7 @@ def series_results( series, categories, eventResults ):
 		lhOrder.sort( key = lambda r: (
 				[-lhEventsCompleted[r], lhValue[r]] +
 				[-lhPlaceCount[r][k] for k in xrange(1, numPlacesTieBreaker+1)] +
-				[rr.status_rank if rr else 999999 for rr in lhResults[r]]
+				[rr.status_rank if rr else 999999 for rr in reversed(lhResults[r])]
 			)
 		)
 		# Compute the time gap.
@@ -264,7 +264,7 @@ def series_results( series, categories, eventResults ):
 				[-lhValue[r]] +
 				([-lhEventsCompleted[r]] if considerMostEventsCompleted else []) +
 				[-lhPlaceCount[r][k] for k in xrange(1, numPlacesTieBreaker+1)] +
-				[rr.status_rank if rr else 999999 for rr in lhResults[r]]
+				[rr.status_rank if rr else 999999 for rr in reversed(lhResults[r])]
 			)
 		)
 		
