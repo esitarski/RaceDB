@@ -3485,7 +3485,7 @@ class Sequence( models.Model ):
 		assert False, 'Please implement function get_container().'
 
 	def normalize( self ):
-		noramlize_sequence( self.get_container().order_by('sequence') )
+		normalize_sequence( self.get_container().order_by('sequence') )
 				
 	def prev( self ):
 		return self.get_container().filter( sequence=self.sequence-1 ).first()
@@ -3505,7 +3505,7 @@ class Sequence( models.Model ):
 		if self.sequence != i:
 			elements.remove( self )
 			elements.insert( i, self )
-			noramlize_sequence( elements )
+			normalize_sequence( elements )
 		
 	def move_lower( self ):
 		self.move_to( self.sequence-1 )

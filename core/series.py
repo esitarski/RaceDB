@@ -27,7 +27,7 @@ def getPaginator( request, page_key, items ):
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesList( request, moveDirection=None, seriesId=None ):
-	noramlize_sequence( Series.objects.all() )
+	normalize_sequence( Series.objects.all() )
 		
 	if moveDirection is not None:
 		moveDirection = int(moveDirection) - 100

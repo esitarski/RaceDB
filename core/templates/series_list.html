@@ -7,6 +7,22 @@
 <h2>{{title}}</h2>
 <a class="btn btn-success" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <a class="btn btn-primary" href="{{path}}SeriesNew/">{% trans "New Series" %}</a>
+	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#newSeriesHelp" aria-expanded="false" aria-controls="newSeriesHelp">
+		Help
+	</button>
+<div class="collapse" id="newSeriesHelp">
+  <div class="well well-sm">
+    <p>
+		A Series scores a number of Events by Points or Time based on the results of each event.<br/>
+		When you create a new Series, you will be asked to select the CategoryFormat of the Events you want to score.<br/>
+		All the Events in the Series must share the same CategoryFormat.<br/>
+		Once you create the Series, click on it to edit its particulars.<br/>
+		Be careful if you are running RaceDB Hub - the Series will be visible from the Hub<br/>
+		<br/>
+		Of course, a Series can only show results if you have uploaded them from CrossMgr.<br/>
+	</p>
+  </div>
+</div>
 <hr/>
 <table class="table table-striped table-hover table-condensed">
 <thead>
@@ -39,7 +55,7 @@
 						<a class="btn btn-primary" href="{{cancelUrl}}Series/101/{{s.id}}/"><img src="{% static "images/glyphicons_212_down_arrow.png" %}"></a>
 					{% endif %}
 				</div>
-				<a class="btn btn-warning" href="{{cancelUrl}}SeriesDelete/{{s.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-warning" href="{{path}}SeriesDelete/{{s.id}}/">{% trans "Delete" %}</a>
 			</td>
 		</tr>
 	{% endfor %}
