@@ -159,10 +159,13 @@
 <div class="collapse" id="upgradeProgressionsHelp">
   <div class="well well-sm">
     <p>
-		When a rider gets upgraded, does he/she carry-forward points from the previous category to the new category?<br/>
+		<strong>Upgrade Progressions</strong> specify what happens to an athlete's existing points when the athlete is upgraded.<br/>
+		You can some of the points forward to the upgraded category after applying a Factor.<br/>
+		You can also "burn" the points by setting the Factor to zero.<br/>
 		<br/>
-		If so, then you need specify <strong>upgrade progressions</strong>.  These tell RaceDB the sequence of upgrade categories (lowest category to highest category).<br/>
-		You also need to specify what factor of the previous categories points can be carried forward to the upgrade.<br/>
+		First, in the Upgrade Progression, tell RaceDB the sequence of upgrade categories (lowest category to highest category).<br/>
+		Then specify what factor of the previous category's points is to be carried forward to the upgrade category with a Factor.<br/>
+		To "burn" the points, set the Factor to zero.<br/>
 		<br/>
 		For example, say you had an ability-based category system Men/Women, "Beginner", "Intermediate", "Elite" and you wanted riders to be able to carry 0.5 of their points whem upgraded to the next category (Beginner --> Intermediate, Intermediat --> Elite).<br/>
 		Set the upgrade progression for both Men and women to "Beginner", "Intermediate", "Elite" factor=0.5<br/>
