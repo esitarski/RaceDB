@@ -2,8 +2,10 @@ from models import *
 
 import os
 import math
-import datetime
 import operator
+import datetime
+import itertools
+
 import utils
 from collections import defaultdict
 from django.utils.safestring import mark_safe
@@ -245,11 +247,11 @@ def series_results( series, categories, eventResults ):
 	lhGap = {}
 	if scoreByTime:
 		# Sort by increasing time..
-		lhOrder.sort( key = lambda r: (
-				[-lhEventsCompleted[r], lhValue[r]] +
-				[-lhPlaceCount[r][k] for k in xrange(1, numPlacesTieBreaker+1)] +
-				[rr.status_rank if rr else 999999 for rr in reversed(lhResults[r])]
-			)
+		lhOrder.sort( key = lambda r: tuple(itertools.chain(
+				[-lhEventsCompleted[r], lhValue[r]],
+				[-lhPlaceCount[r][k] for k in xrange(1, numPlacesTieBreaker+1)],
+				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
+			))
 		)
 		# Compute the time gap.
 		if lhOrder:
@@ -260,12 +262,12 @@ def series_results( series, categories, eventResults ):
 	
 	else:
 		# Sort by decreasing value.
-		lhOrder.sort( key = lambda r: (
-				[-lhValue[r]] +
-				([-lhEventsCompleted[r]] if considerMostEventsCompleted else []) +
-				[-lhPlaceCount[r][k] for k in xrange(1, numPlacesTieBreaker+1)] +
-				[rr.status_rank if rr else 999999 for rr in reversed(lhResults[r])]
-			)
+		lhOrder.sort( key = lambda r: tuple(itertools.chain(
+				[-lhValue[r]],
+				([-lhEventsCompleted[r]] if considerMostEventsCompleted else []),
+				[-lhPlaceCount[r][k] for k in xrange(1, numPlacesTieBreaker+1)],
+				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
+			))
 		)
 		
 		# Compute the gap.
