@@ -299,4 +299,54 @@ def get_results_for_category( series, category ):
 	adjust_for_upgrades( series, eventResults )
 	
 	return series_results( series, series.get_group_related_categories(category), eventResults )
+
+def get_callups_for_wave( series, wave ):
+	event = wave.event
+	competition = event.competition
+	RC = event.get_result_class()
+	
+	participants = set( wave.get_participants_unsorted().select_related('license_holder') )
+	license_holders = set( p.license_holder for p in participants )
+
+	callups = []
+	
+	categories_seen = set()
+	for c in wave.categories.all():
+		if c in categories_seen:
+			continue
+		group_categories = set( series.get_group_related_categories(c) )
+		categories_seen |= group_categories
 		
+		related_categories = series.get_related_categories( category )
+	
+		eventResults = []
+		for sce in series.seriescompetitionevent_set.all():
+			if sce.event.date_time >= event.date_time:
+				continue
+			eventResults.extend( extract_event_results(sce, related_categories) )
+		
+		# Filter the event results to the participants in this wave.
+		eventResults = [er for er in eventResults if er.result.participant.license_holder in license_holders]
+		
+		# Add "fake" Results for all participants in the current event with 1.0 as value_for_rank.
+		for p in participants:
+			if p.category in group_categories:
+				result = RC( event=event, participant=p, status=0 )
+				eventResults.append( EventResult(result, 1, 1, 1.0) )
+
+		# The fake results ensure any upgraded athletes's points will be considered is this is their first upgraded race.
+		adjust_for_upgrades( series, eventResults )
+		
+		# Compute the series standings.
+		categoryResult, events = series_results( series, group_categories, eventResults )
+		
+		# Subtract the fake value_for_rank from the callup order points.
+		callups.append( (
+				sorted(group_categories, key=operator.attrgetter('sequence')),
+				[(lh, value-1.0) for lh, team, value, gap, results in categoryResult]
+			)
+		)
+	
+	# Returns a list of tuples (list of categories, list of (license_holders, points))
+	return callups
+

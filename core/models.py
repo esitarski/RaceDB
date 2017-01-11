@@ -3711,7 +3711,7 @@ class SeriesPointsStructure( Sequence ):
 
 	def __unicode__( self ):
 		f = [u'{}: Points for place: {}'.format( self.name, self.points_for_place )]
-		if self.dnf_points:
+		if self.finish_points:
 			f.append( u' finish={}'.format(self.finish_points) )
 		if self.dnf_points:
 			f.append(  u' dnf={}'.format(self.dnf_points) )
