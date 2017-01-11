@@ -1422,6 +1422,12 @@ class EventMassStart( Event ):
 	
 	def get_result_class( self ):
 		return ResultMassStart
+		
+	def get_series( self ):
+		for ce in SeriesCompetitionEvent.objects.filter( event_mass_start=self ).exclude( series__callup_max=0 ).order_by('series__sequence'):
+			if ce and not set( self.get_categories() ).isdisjoint( ce.series.get_categories() ):
+				return ce.series
+		return None
 	
 	win_and_out = models.BooleanField( default = False, verbose_name = _("Win and Out") )
 
@@ -3545,6 +3551,13 @@ class Series( Sequence ):
 
 	category_format = models.ForeignKey( CategoryFormat, db_index=True )
 	
+	RANKING_CRITERIA = (
+		(0, _('Points')),
+		(1, _('Time')),
+		(2, _("% Finish/Winning Time")),
+	)
+	ranking_criteria = models.PositiveSmallIntegerField( default=0, verbose_name = _('Ranking Criteria'), choices=RANKING_CRITERIA )
+	
 	show_last_to_first = models.BooleanField( default=True, verbose_name=_('Show Events Last to First') )
 	
 	TIE_BREAKING_RULE_CHOICES = (
@@ -3571,6 +3584,9 @@ class Series( Sequence ):
 	must_have_completed = models.PositiveSmallIntegerField( default=0, choices=MUST_HAVE_COMPLETED_CHOICES,
 		verbose_name=_('Must have completed')
 	)
+	
+	callup_max = models.PositiveSmallIntegerField( default=0, verbose_name=_('Callup Maximum') )
+	randomize_if_no_results = models.BooleanField( default=False, verbose_name=_("Randomize callups if no results") )
 	
 	def get_container( self ):
 		return Series.objects.all()
@@ -3655,13 +3671,6 @@ class Series( Sequence ):
 				related_categories |= p_categories
 		
 		return related_categories
-	
-	RANKING_CRITERIA = (
-		(0, _('Points')),
-		(1, _('Time')),
-		(2, _("% Finish/Winning Time")),
-	)
-	ranking_criteria = models.PositiveSmallIntegerField( default=0, verbose_name = _('Ranking Criteria'), choices=RANKING_CRITERIA )
 	
 	class Meta:
 		verbose_name = _("Series")

@@ -172,6 +172,10 @@
 				</a>
 				<br/>&nbsp;<br/>
 				<a class="btn btn-success btn-sm hidden-print" href="{{path}}StartList/{{e.id}}/">{% trans "Start List" %}</a>
+				{% with series=e.get_series %}{% if series %}
+				<br/>&nbsp;<br/>
+				<a class="btn btn-primary btn-sm hidden-print" href="{{path}}Callups/{{e.id}}/{{e.event_type}}/{{series.id}}/">{% trans "Callups" %}</a>
+				{% endif %}{% endwith %}
 			</td>
 		</tr>
 	{% endfor %}

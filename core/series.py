@@ -75,6 +75,7 @@ class SeriesForm( ModelForm ):
 				Field('best_results_to_consider'),
 				Field('must_have_completed'),
 			),
+			Row( HTML('<hr/>') ),
 			Row(
 				HTML( '<strong>' ), HTML( _('Break Ties as follows:') ), HTML( '</strong>' ),
 			),
@@ -86,6 +87,18 @@ class SeriesForm( ModelForm ):
 			Row(
 				HTML( _('Finally, break remaining ties with the most recent result.') ),
 			),
+			Row( HTML('<hr/>') ),
+			Row(
+				Field('callup_max'), HTML( _('Specifies the maximum number of Start Wave Callups.  If zero, this Series will not be used for Callups.') ),
+			),
+			Row(
+				Field('randomize_if_no_results'),
+			),
+			Row(
+				HTML( _('If False, athletes without Series results will not be included in Callups.') ), HTML('<br/>'),
+				HTML( _('If True, athletes without Series results will be assigned a random callup.') ),
+			),
+			Row( HTML('<hr/>') ),
 			Row(
 				Field('show_last_to_first'),
 			),

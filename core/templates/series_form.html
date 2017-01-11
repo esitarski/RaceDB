@@ -38,11 +38,28 @@
 	<li>{% trans "Most recent result." %}</li>
 </ol>
 <h5>
-{% if series.show_last_to_first %}
-	{% trans "Show Events Last to First in Series Results" %}
-{% else %}
-	{% trans "Show Events Earliest to Latest in Series Results" %}
-{% endif %}
+{% trans "Callups" %}:
+<ul>
+	<li>
+	{% trans "Callup Max" %}: {{series.callup_max}}
+	{% if series.callup_max == 0 %}
+		{% trans "(not used for callups)" %}
+	{% endif %}
+	</li>
+	{% if series.callup_max > 0 and series.randomize_if_no_results %}
+		<li>{% trans "Randomize riders with no results in Callups." %}</li>
+	{% endif %}
+</ul>
+{% trans "Display" %}:
+<ul>
+	<li>
+	{% if series.show_last_to_first %}
+		{% trans "Show Events Lastest to Earliest in Series Results" %}
+	{% else %}
+		{% trans "Show Events Earliest to Latest in Series Results" %}
+	{% endif %}
+	</li>
+</ul>
 </h5>
 
 

@@ -16,6 +16,7 @@ from core import team
 from core import results
 from core import hub
 from core import series
+from core import callups
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -100,7 +101,6 @@ urlpatterns = [
 	
 	url(r'^(?i).*EventApplyToExistingParticipants/(?P<eventId>\d+)/$', views.EventApplyToExistingParticipants),
 	url(r'^(?i).*EventApplyToExistingParticipants/(?P<eventId>\d+)/(?P<confirmed>\d+)/$', views.EventApplyToExistingParticipants),
-
 	
 	url(r'^(?i).*SeedingEdit/(?P<eventTTId>\d+)/$', views.SeedingEdit),
 	url(r'^(?i).*GenerateStartTimes/(?P<eventTTId>\d+)/$', views.GenerateStartTimes),
@@ -110,6 +110,8 @@ urlpatterns = [
 	url(r'^(?i).*WaveTTDelete/(?P<waveTTId>\d+)/$', views.WaveTTDelete),
 	url(r'^(?i).*WaveTTUp/(?P<waveTTId>\d+)/$', views.WaveTTUp),
 	url(r'^(?i).*WaveTTDown/(?P<waveTTId>\d+)/$', views.WaveTTDown),
+	
+	url(r'^(?i).*Callups/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<seriesId>\d+)/$', callups.Callups),
 	
 	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', views.Participants),
 	url(r'^(?i).*ParticipantsInEvents/(?P<competitionId>\d+)/$', views.ParticipantsInEvents),

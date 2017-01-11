@@ -384,3 +384,67 @@ def formChangedObject( obj_original, obj, form ):
 			return True
 	return False
 
+#-----------------------------------------------------------------------
+
+def formatTime( secs, highPrecision = False ):
+	if secs is None:
+		secs = 0
+	if secs < 0:
+		sign = '-'
+		secs = -secs
+	else:
+		sign = ''
+	f, ss = math.modf(secs)
+	secs = int(ss)
+	hours = int(secs // (60*60))
+	minutes = int( (secs // 60) % 60 )
+	secs = secs % 60
+	if highPrecision:
+		secStr = '{:05.2f}'.format( secs + f )
+	else:
+		secStr = '{:02d}'.format( secs )
+	
+	if hours > 0:
+		return "{}{}:{:02d}:{}".format(sign, hours, minutes, secStr)
+	if minutes > 0:
+		return "{}{}:{}".format(sign, minutes, secStr)
+	return "{}{}".format(sign, secStr)
+	
+def formatTimeGap( secs, highPrecision = False ):
+	if secs is None:
+		secs = 0
+	if secs < 0:
+		sign = '-'
+		secs = -secs
+	else:
+		sign = ''
+	f, ss = math.modf(secs)
+	secs = int(ss)
+	hours = int(secs // (60*60))
+	minutes = int( (secs // 60) % 60 )
+	secs = secs % 60
+	if highPrecision:
+		decimal = '.{:02d}'.format(int(f * 100))
+	else:
+		decimal = ''
+	if hours > 0:
+		return "{}{}h{}'{:2d}{}\"".format(sign, hours, minutes, secs, decimal)
+	else:
+		return "{}{}'{:02d}{}\"".format(sign, minutes, secs, decimal)
+
+def format_column_float( values ):
+	values = list( values )
+	if all( v is None or float(v) == int(v) for v in values ):
+		return ['{}'.format(int(v)) if v is not None else None for v in values]
+	elif all( v is None or float(v*10) == int(v*10) for v in values ):
+		return ['{:.1f}'.format(v) if v is not None else None for v in values]
+	else:
+		return ['{:.2f}'.format(v) if v is not None else None for v in values]
+	
+def format_column_time( values ):
+	return [None if v is None else formatTime(v) for v in values]
+	
+def format_column_gap( values ):
+	return [None if v is None else formatTimeGap(v) for v in values]
+
+

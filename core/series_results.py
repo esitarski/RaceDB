@@ -5,6 +5,7 @@ import math
 import operator
 import datetime
 import itertools
+import random
 
 import utils
 from collections import defaultdict
@@ -305,10 +306,16 @@ def get_callups_for_wave( series, wave ):
 	competition = event.competition
 	RC = event.get_result_class()
 	
-	participants = set( wave.get_participants_unsorted().select_related('license_holder') )
+	randomize = series.randomize_if_no_results
+	
+	series_categories = set( series.get_categories() )
+	participants = set( wave.get_participants_unsorted().exclude(bib__isnull=True).select_related('license_holder') )
 	license_holders = set( p.license_holder for p in participants )
+	p_from_lh = {p.license_holder:p for p in participants}
 
 	callups = []
+	
+	FakeFinishValue = 1.0
 	
 	categories_seen = set()
 	for c in wave.categories.all():
@@ -317,7 +324,7 @@ def get_callups_for_wave( series, wave ):
 		group_categories = set( series.get_group_related_categories(c) )
 		categories_seen |= group_categories
 		
-		related_categories = series.get_related_categories( category )
+		related_categories = series.get_related_categories( c )
 	
 		eventResults = []
 		for sce in series.seriescompetitionevent_set.all():
@@ -330,23 +337,44 @@ def get_callups_for_wave( series, wave ):
 		
 		# Add "fake" Results for all participants in the current event with 1.0 as value_for_rank.
 		for p in participants:
-			if p.category in group_categories:
+			if p.category in series_categories and p.category in group_categories:
 				result = RC( event=event, participant=p, status=0 )
-				eventResults.append( EventResult(result, 1, 1, 1.0) )
+				eventResults.append( EventResult(result, 1, 1, FakeFinishValue) )
 
-		# The fake results ensure any upgraded athletes's points will be considered event if this is their first upgraded race.
+		# The fake results ensure any upgraded athletes's points will be considered properly if this is their first upgraded race.
 		adjust_for_upgrades( series, eventResults )
 		
 		# Compute the series standings.
 		categoryResult, events = series_results( series, group_categories, eventResults )
 		
+		# Remove entries beyond the callup max.
+		del categoryResult[series.callup_max:]
+		
+		# Get the values we need and correct for the FakeFinishValue.
+		p_values = [[p_from_lh[lh], value-FakeFinishValue] for lh, team, value, gap, results in categoryResult]
+			
 		# Subtract the fake value_for_rank from the callup order points.
-		callups.append( (
-				sorted(group_categories, key=operator.attrgetter('sequence')),
-				[(lh, value-1.0) for lh, team, value, gap, results in categoryResult]
+		# Return the participant and the points value.
+		if randomize:
+			# Randomize athletes with no results.
+			random.seed( (competition.id, series.id, c.id, wave.id) )
+			for p_start, (p, value) in enumerate(p_values):
+				if value == 0.0:
+					r = p_values[p_start:]
+					random.shuffle( r )
+					p_values[p_start:] = r
+					break
+		else:
+			# Remove athletes with no results.
+			p_values = [[p, value] for p, value in p_values if value]
+		
+		if p_values:
+			callups.append( (
+					sorted(group_categories, key=operator.attrgetter('sequence')),
+					p_values,
+				)
 			)
-		)
 	
-	# Returns a list of tuples (list of categories, list of (license_holders, points))
+	# Returns a list of tuples (list of categories, list of (participants, points))
 	return callups
 
