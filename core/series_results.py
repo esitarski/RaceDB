@@ -334,7 +334,7 @@ def get_callups_for_wave( series, wave ):
 				result = RC( event=event, participant=p, status=0 )
 				eventResults.append( EventResult(result, 1, 1, 1.0) )
 
-		# The fake results ensure any upgraded athletes's points will be considered is this is their first upgraded race.
+		# The fake results ensure any upgraded athletes's points will be considered event if this is their first upgraded race.
 		adjust_for_upgrades( series, eventResults )
 		
 		# Compute the series standings.
