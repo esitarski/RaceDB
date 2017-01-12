@@ -51,6 +51,13 @@ def SeriesNew( request, categoryFormatId=None ):
 	
 	return HttpResponseRedirect(getContext(request,'cancelUrl') + 'SeriesEdit/{}/'.format(series.id) )
 
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def SeriesCopy( request, seriesId ):
+	series = get_object_or_404( Series, pk=seriesId )
+	series.make_copy()
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
 @autostrip
 class SeriesForm( ModelForm ):
 	class Meta:
@@ -208,6 +215,18 @@ def SeriesCompetitionRemove( request, seriesId, competitionId, confirmed=0 ):
 		series.remove_competition( competition )
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	message = string_concat( _('Remove: '), competition.date_range_year_str, u': ', competition.name )
+	cancel_target = getContext(request,'cancelUrl')
+	target = getContext(request,'path') + '1/'
+	return render( request, 'are_you_sure.html', locals() )
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def SeriesCompetitionRemoveAll( request, seriesId, confirmed=0 ):
+	series = get_object_or_404( Series, pk=seriesId )
+	if int(confirmed):
+		series.seriescompetitionevent_set.all().delete()
+		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	message = string_concat( _('Remove All Events from this Series'), u': ', series.name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )

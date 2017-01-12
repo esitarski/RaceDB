@@ -3518,10 +3518,9 @@ class Sequence( models.Model ):
 	def move_to( self, i ):
 		elements = list( self.get_container() )
 		i = max( 0, min( i, len(elements) ) )
-		if self.sequence != i:
-			elements.remove( self )
-			elements.insert( i, self )
-			normalize_sequence( elements )
+		elements.remove( self )
+		elements.insert( i, self )
+		normalize_sequence( elements )
 		
 	def move_lower( self ):
 		self.move_to( self.sequence-1 )
@@ -3597,6 +3596,28 @@ class Series( Sequence ):
 	
 	callup_max = models.PositiveSmallIntegerField( default=0, verbose_name=_('Callup Maximum') )
 	randomize_if_no_results = models.BooleanField( default=False, verbose_name=_("Randomize callups if no results") )
+	
+	def make_copy( self ):
+		self_pk = self.pk
+		collections = (
+			self.seriesincludecategory_set.all(),
+			self.seriespointsstructure_set.all(),
+			self.seriesupgradeprogression_set.all(),
+			self.categorygroup_set.all(),
+			self.seriescompetitionevent_set.all(),	# This must be last.
+		)
+		
+		series_new = self
+		series_new.pk = None
+		series_new.name += timezone.now().strftime(' %Y-%m-%d %H:%M:%S')
+		series_new.save()
+		
+		for collection in collections:
+			for c in collection:
+				c.make_copy( series_new )
+		
+		series_new.move_to( self.sequence )
+		return series_new
 	
 	def get_container( self ):
 		return Series.objects.all()
@@ -3681,6 +3702,9 @@ class Series( Sequence ):
 				related_categories |= p_categories
 		
 		return related_categories
+		
+	def __unicode__( self ):
+		return self.name
 	
 	class Meta:
 		verbose_name = _("Series")
@@ -3696,6 +3720,14 @@ class SeriesPointsStructure( Sequence ):
 	finish_points = models.PositiveSmallIntegerField( default=0, verbose_name=_('Finish Points') )
 	dnf_points = models.PositiveSmallIntegerField( default=0, verbose_name=_('DNF Points') )
 	dns_points = models.PositiveSmallIntegerField( default=0, verbose_name=_('DNS Points') )
+
+	def make_copy( self, series_new ):
+		self_pk = self.pk
+		o_new = self
+		o_new.pk = None
+		o_new.series = series_new
+		o_new.save()
+		return o_new
 
 	def get_container( self ):
 		return self.series.seriespointsstructure_set.all()
@@ -3750,6 +3782,20 @@ class SeriesCompetitionEvent( models.Model ):
 	
 	points_structure = models.ForeignKey( SeriesPointsStructure, blank=True, null=True, db_index=True )
 	
+	def make_copy( self, series_new ):
+		points_structure_new = (
+			series_new.seriespointsstructure_set.filter( name=self.points_structure.name ).first()
+			if self.points_structure else None
+		)
+		
+		self_pk = self.pk
+		o_new = self
+		o_new.pk = None
+		o_new.series = series_new
+		o_new.points_structure = points_structure_new
+		o_new.save()
+		return o_new
+
 	@property
 	def event( self ):
 		return self.event_mass_start or self.event_tt
@@ -3775,6 +3821,14 @@ class SeriesIncludeCategory( models.Model ):
 	series = models.ForeignKey( Series, db_index=True )
 	category = models.ForeignKey( Category, db_index=True )
 	
+	def make_copy( self, series_new ):
+		self_pk = self.pk
+		o_new = self
+		o_new.pk = None
+		o_new.series = series_new
+		o_new.save()
+		return o_new
+
 	class Meta:
 		verbose_name = _("SeriesIncludeCategory")
 		verbose_name_plural = _("SeriesIncludeCategories")
@@ -3785,6 +3839,18 @@ class CategoryGroup( Sequence ):
 	name = models.CharField( max_length=32, default='MyGroup', verbose_name=_('Name') )
 	series = models.ForeignKey( Series, db_index=True )
 	
+	def make_copy( self, series_new ):
+		categories = self.get_categories()
+		
+		self_pk = self.pk
+		o_new = self
+		o_new.pk = None
+		o_new.series = series_new
+		o_new.save()
+		
+		CategoryGroupElement.objects.bulk_create( [CategoryGroupElement(category_group=o_new, category=c) for c in categories] )
+		return o_new
+
 	def get_container( self ):
 		return self.series.categorygroup_set.all()
 	
@@ -3822,6 +3888,20 @@ class CategoryGroupElement( models.Model ):
 class SeriesUpgradeProgression( Sequence ):
 	series = models.ForeignKey( Series, db_index=True )
 	factor = models.FloatField( default=0.5, verbose_name = _('Factor') )
+
+	def make_copy( self, series_new ):
+		categories = self.get_categories()
+		
+		self_pk = self.pk
+		o_new = self
+		o_new.pk = None
+		o_new.series = series_new
+		o_new.save()
+		
+		SeriesUpgradeCategory.objects.bulk_create( [		
+			SeriesUpgradeCategory(upgrade_progression=o_new, category=c, sequence=i) for i, c in enumerate(categories)
+		] )
+		return o_new
 
 	def get_container( self ):
 		return self.series.seriesupgradeprogression_set.all()

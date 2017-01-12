@@ -299,7 +299,8 @@
 <hr/>
 <h3>
 	{% trans "Competitions" %} <a class="btn btn-success" href="{{path}}SeriesCompetitionAdd/{{series.id}}/">{% trans "Add Competition" %}</a>
-	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#competitionHelp" aria-expanded="false" aria-controls="competitionHelp">
+	&nbsp;&nbsp;&nbsp;&nbsp;<a class="btn btn-warning" href="{{path}}SeriesCompetitionRemoveAll/{{series.id}}/">{% trans "Remove All" %}</a>
+	&nbsp;&nbsp;&nbsp;&nbsp;<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#competitionHelp" aria-expanded="false" aria-controls="competitionHelp">
 		Help
 	</button>
 </h3>

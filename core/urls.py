@@ -273,6 +273,7 @@ urlpatterns = [
 	
 	url(r'^(?i).*SeriesNew/$', series.SeriesNew),
 	url(r'^(?i).*SeriesNew/(?P<categoryFormatId>\d+)/$', series.SeriesNew),
+	url(r'^(?i).*SeriesCopy/(?P<seriesId>\d+)/$', series.SeriesCopy),
 	url(r'^(?i).*SeriesEdit/(?P<seriesId>\d+)/$', series.SeriesEdit),
 	url(r'^(?i).*SeriesDetailEdit/(?P<seriesId>\d+)/$', series.SeriesDetailEdit),
 	url(r'^(?i).*SeriesDelete/(?P<seriesId>\d+)/$', series.SeriesDelete),
@@ -296,6 +297,9 @@ urlpatterns = [
 	
 	url(r'^(?i).*SeriesCompetitionAdd/(?P<seriesId>\d+)/$', series.SeriesCompetitionAdd),
 	url(r'^(?i).*SeriesCompetitionAdd/(?P<seriesId>\d+)/(?P<competitionId>\d+)/$', series.SeriesCompetitionAdd),
+	
+	url(r'^(?i).*SeriesCompetitionRemoveAll/(?P<seriesId>\d+)/$', series.SeriesCompetitionRemoveAll),
+	url(r'^(?i).*SeriesCompetitionRemoveAll/(?P<seriesId>\d+)/(?P<confirmed>\d+)/$', series.SeriesCompetitionRemoveAll),
 	
 	url(r'^(?i).*SeriesCompetitionRemove/(?P<seriesId>\d+)/(?P<competitionId>\d+)/$', series.SeriesCompetitionRemove),
 	url(r'^(?i).*SeriesCompetitionRemove/(?P<seriesId>\d+)/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', series.SeriesCompetitionRemove),

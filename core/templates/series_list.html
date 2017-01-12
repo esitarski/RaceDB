@@ -56,6 +56,8 @@
 					{% endif %}
 				</div>
 				<a class="btn btn-warning" href="{{path}}SeriesDelete/{{s.id}}/">{% trans "Delete" %}</a>
+				&nbsp;
+				<a class="btn btn-primary" href="{{path}}SeriesCopy/{{s.id}}/">{% trans "Copy" %}</a>
 			</td>
 		</tr>
 	{% endfor %}

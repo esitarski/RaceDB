@@ -24,27 +24,23 @@ table.participant_table tr th {
 		{% endif %}
 	</span>
 </h3>
+<br/>
 
+{% spaceless %}
 {% for wave, category_cols, callups in wave_callups %}
-<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-	<div class="panel panel-info">
-		<div class="panel-heading" role="tab" id="headingWave{{forloop.counter}}">
-			<h4 class="panel-title">
-				<a role="button" class="collapsed" data-toggle="collapse" data-parent="#accordion" href="#wave{{forloop.counter}}"
-					aria-expanded="false" aria-controls="wave{{forloop.counter}}" >
-					{% trans 'Wave' %}&nbsp;{{forloop.counter}}: {{wave.name}}
-				</a>
-			</h4>
+<div class="accordion" id="wave-accordion">
+	<div class="accordion-group panel panel-default">
+		<div class="accordion-heading panel-heading" onclick="$('#wave{{forloop.counter}}').collapse('toggle');">
+			<a class="accordion-toggle" data-toggle="collapse" data-parent="#wave-accordion" href="#wave{{forloop.counter}}">
+				{% trans 'Wave' %} {{forloop.counter}}: {{wave.name}}
+			</a>
 		</div>
-		<div id="wave{{forloop.counter}}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingWave{{forloop.counter}}">
-			<div class="panel-body">
+		<div id="wave{{forloop.counter}}" class="accordion-body collapse">
+			<div class="accordion-inner panel-body">
 				<div class="row">
 				{% for categories, participant_points in callups %}
 					<div class='col-md-{{category_cols}}'>
-						<h4>
-							{% for c in categories %}{% if forloop.counter != 1 %}, {% endif %}{{c.code_gender}}{% endfor %}
-						</h4>
-						{% spaceless %}
+						<h4>{% for c in categories %}{% if forloop.counter != 1 %}, {% endif %}{{c.code_gender}}{% endfor %}</h4>
 						<table class="table table-striped table-hover" style="width: auto;">
 							<thead>
 								<tr>
@@ -65,7 +61,6 @@ table.participant_table tr th {
 								{% endfor %}
 							</tbody>
 						</table>
-						{% endspaceless %}
 					</div>
 				{% endfor %}
 				</div>
@@ -74,5 +69,6 @@ table.participant_table tr th {
 	</div>
 </div>
 {% endfor %}
+{% endspaceless %}
 
 {% endblock content %}
