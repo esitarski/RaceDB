@@ -1,11 +1,17 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load good_bad_icon %}
 {% load crispy_forms_tags %}
 {% load paginate_html %}
 {% block content %}
 
-{{competitions|paginate_html}}
+<h2>
+	{{title}}
+	<a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "OK" %}</a>
+</h2>
+<hr/>
 
+{{competitions|paginate_html}}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
@@ -17,6 +23,7 @@
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "Organizer" %}</th>
 		<th>{% trans "Class" %}</th>
+		<th>{% trans "Results" %}</th>
 		<th></th>
 	</tr>
 </thead>
@@ -30,9 +37,16 @@
 			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
 			<td>{{c.organizer}}</td>
 			<td>{{c.race_class.name}}</td>
-			<td>
-				<a class="btn btn-success hidden-print" href="{{popUrl}}SeriesCompetitionAdd/{{series.id}}/{{c.id}}/">{% trans "Add" %}</a>
-			</td>
+			<td>{% with has_results=c.has_results %}{% if has_results %}{{has_results|good_bad_icon}}{% endif %}{% endwith %}</td>
+			{% if c not in existing_competitions %}
+				<td>
+					<a class="btn btn-success hidden-print" href="{{popUrl}}SeriesCompetitionAdd/{{series.id}}/{{c.id}}/">{% trans "Add" %}</a>
+				</td>
+			{% else %}
+				<td>
+					{% trans "Added" %}
+				</td>
+			{% endif %}
 		</tr>
 	{% endfor %}
 </tbody>

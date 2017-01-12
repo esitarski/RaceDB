@@ -193,16 +193,15 @@ def SeriesCompetitionAdd( request, seriesId, competitionId=None ):
 				sce = SeriesCompetitionEvent( series=series, points_structure=default_points_structure )
 				sce.event = e
 				sce.save()
-		return HttpResponseRedirect( getContext(request,'cancelUrl') )
 				
-	existing_competition_pk = set( ce.event.competition.pk for ce in series.seriescompetitionevent_set.all() )
-	competitions = Competition.objects.filter( category_format=series.category_format ).exclude( pk__in=existing_competition_pk ).order_by('-start_date')
+	existing_competitions = set( series.get_competitions() )
+	competitions = Competition.objects.filter( category_format=series.category_format ).order_by('-start_date')
 	competitions, paginator = getPaginator( request, page_key, competitions )
 	return render( request, 'series_competitions_list.html', locals() )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
-def SeriesCompetitionRemove( request, seriesId, competitionId, comfirmed=0 ):
+def SeriesCompetitionRemove( request, seriesId, competitionId, confirmed=0 ):
 	series = get_object_or_404( Series, pk=seriesId )
 	competition = get_object_or_404( Competition, pk=competitionId )
 	if int(confirmed):
