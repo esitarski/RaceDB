@@ -1207,17 +1207,27 @@ class Event( models.Model ):
 		).replace(tzinfo = get_default_timezone())
 		waves = self.get_wave_set().all()
 		
-		event_mass_start_new = self
-		event_mass_start_new.pk = None
-		event_mass_start_new.competition = competition_new
-		event_mass_start_new.date_time = datetime.datetime.combine(
+		self_pk = self.pk
+		
+		event_new = self
+		event_new.pk = None
+		event_new.competition = competition_new
+		event_new.date_time = datetime.datetime.combine(
 			start_date_new, datetime.time(0,0,0)).replace(tzinfo = get_default_timezone()) + time_diff
-		event_mass_start_new.option_id = 0		# Ensure the option_id gets reset if necessary.
-		event_mass_start_new.save()
+		event_new.option_id = 0		# Ensure the option_id gets reset if necessary.
+		event_new.save()
 		
 		for w in waves:
-			w.make_copy( event_mass_start_new )
-		return event_mass_start_new
+			w.make_copy( event_new )
+			
+		# If this event is in a series, add the new event to the series also.
+		q = Q(event_mass_start__pk=self_pk) if self.event_type == 0 else Q(event_tt__pk=self_pk)
+		for ce in SeriesCompetitionEvent.objects.filter( q ):
+			ce.pk = None
+			ce.event = event_new
+			ce.save()
+		
+		return event_new
 	
 	def get_duplicate_bibs( self ):
 		duplicates = []
