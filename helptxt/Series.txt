@@ -19,7 +19,7 @@ A Series can be scored by 3 Ranking Criteria:
 
 A __Points Structure__ is a list of points-for-place in the finish.  A points structure can also specify points for finishing a race, points for DNF and points for DNS (see below).
 
-Time is simply the finish time.  A series scored by time is always first scored by events completed, then by the total time.
+Time ranks by the finish time.  A series scored by time is always first scored by events completed, then by the total time.  There is no score considered for DNF, DNS or lapped riders.
 
 Percent Winner / Finish time is a points system computed as follows Points = Winner's Time / Athlete's Time * 100.  This means that the winner gets 100 points.  All other athletes are awarded pointed based on a ratio of the winner's time.
 
@@ -35,14 +35,23 @@ Number of athletes to list in Callups.  If zero, this Series will not be used fo
 If non-zero, the first Series with non-zero Callup Max will be used for Callups.
 A reasonable number might be 16 - the first two rows of a CycloCross Race start.
 
-If you wish all riders to be included in the Callups, set the Callup Max to a large number, like 200.
+If you wish all athletes in each start Wave to be included in the Callups, set the __Callup Max__ to a large number, like 500.
+
+Start Waves with Callups will be displayed with a __Callups__ button in the Competition Dashboard.
 
 ### Randomize if no Results
 
-If a Rider has no results, he/she is not included in the callup by default.  This option randomizes riders with no results in the callups.
+If a Rider has no results, he/she is not included in the callup by default.  This option includes riders up to __Callup Max__, but randomizes riders with no results.
 
 ## Points Structures
+
+Specify the Points-for-place, Finisher, DNF and DNS points.  You can specify multiple structures and configure them by event.
+The default Points-for-place is the first one.
 
 ## Upgrade Progressions
 
 ## Combined Categories
+
+## Competitions
+
+The Competitions in this Series.  You can configure different Points Structure by event in each Competition.
