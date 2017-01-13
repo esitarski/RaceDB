@@ -8,6 +8,7 @@ Get started with RaceDB
 * [License Holders][]
 * [Teams][]
 * [Legal Entities][]
+* [Series][]
 
 ## Structure Data
 

@@ -28,6 +28,11 @@
 {% endif %}
 </h3>
 <p/>
+<h5>{% trans "Consider" %}:</h5>
+<ol>
+	<li>{{series.get_best_results_to_consider_display}} {% trans "Count" %}</li>
+	<li>{% trans "Must have completed" %} {{series.get_must_have_completed_display}}</li>
+</ol>
 <h5>{% trans "Tie-Breaking Rules" %}:</h5>
 <ol>
 {% if series.ranking_criteria != 1 and series.consider_most_events_completed %}

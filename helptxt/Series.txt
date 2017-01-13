@@ -1,0 +1,46 @@
+[TOC]
+
+# Series
+
+Series allow you to compute a combined result from a number of races.
+
+## Category Format
+
+When creating a new Series, you must choose a Category Format.  Only Competitions with the same CategoryFormat can be added to the Series.
+It is important to get this right.
+
+## Ranking Criteria
+
+A Series can be scored by 3 Ranking Criteria:
+
+1. Points Structure
+1. Time
+1. Percent Winner / Finish time
+
+A __Points Structure__ is a list of points-for-place in the finish.  A points structure can also specify points for finishing a race, points for DNF and points for DNS (see below).
+
+Time is simply the finish time.  A series scored by time is always first scored by events completed, then by the total time.
+
+Percent Winner / Finish time is a points system computed as follows Points = Winner's Time / Athlete's Time * 100.  This means that the winner gets 100 points.  All other athletes are awarded pointed based on a ratio of the winner's time.
+
+For example, say the Winner's time was 52 minutes, and an Athlete's time was 56 minutes.  The points awarded for this finish would be:
+
+    Points = 100.0 * 52 / 56 = 92.86
+	
+## Callup Max
+
+Number of athletes to list in Callups.  If zero, this Series will not be used for Callups.
+If non-zero, the first Series with non-zero Callup Max will be used for Callups.
+A reasonable number might be 16 - the first two rows of a CycloCross Race start.
+
+If you wish all riders to be included in the Callups, set the Callup Max to a large number, like 200.
+
+### Randomize if no Results
+
+If a Rider has no results, he/she is not included in the callup by default.  This option randomizes riders with no results in the callups.
+
+## Points Structures
+
+## Upgrade Progressions
+
+## Combined Categories

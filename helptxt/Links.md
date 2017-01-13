@@ -24,3 +24,5 @@
 
 [Commands]:			Commands.html
 [Hub]:				Hub.html
+
+[Series]:			Series.html
