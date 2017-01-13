@@ -23,10 +23,12 @@ Time is simply the finish time.  A series scored by time is always first scored 
 
 Percent Winner / Finish time is a points system computed as follows Points = Winner's Time / Athlete's Time * 100.  This means that the winner gets 100 points.  All other athletes are awarded pointed based on a ratio of the winner's time.
 
-For example, say the Winner's time was 52 minutes, and an Athlete's time was 56 minutes.  The points awarded for this finish would be:
+For example, say the Winner's time was 52 minutes, and another Athlete's time was 56 minutes.  The points awarded for this event would be:
 
     Points = 100.0 * 52 / 56 = 92.86
-	
+
+For this option, there are no DNF or DNS points.  There are also no points for lapped riders.
+
 ## Callup Max
 
 Number of athletes to list in Callups.  If zero, this Series will not be used for Callups.
