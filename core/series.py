@@ -75,6 +75,9 @@ class SeriesForm( ModelForm ):
 		self.helper.layout = Layout(
 			Row(
 				Field('name', size=20),
+				HTML(_('To hide this Series from all users except Super, start the name an underscore (_)') )
+			),
+			Row(
 				Field('description', size=40),
 			),
 			Row(

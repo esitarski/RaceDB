@@ -252,6 +252,9 @@ def SearchLicenseHolders( request ):
 def SeriesList( request ):
 	page_key = 'hub_series'
 	series = Series.objects.all()
+	if not request.user.is_superuser:
+		series = series.exclude( name__startswith='_' )
+	
 	paginator = None
 	if series.count() > ItemsPerPage:
 		series, paginator = getPaginator( request, page_key, series )
