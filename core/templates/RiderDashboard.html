@@ -463,7 +463,8 @@ function updateInfoTable() {
 		dataTable.addRow( row );
 	}
 
-	container.table.draw( dataTable );
+	var options = {'page': 'enable' };
+	container.table.draw( dataTable, options );
 }
 
 function updateGanttChart() {
@@ -699,11 +700,11 @@ function updateCompareDisplays() {
 </div>
 {% endif %}
 <h4 id="idCategoryResults">Category Results</h4>
-<div id="idLapTable" style="height: 190px;"></div>
+<div id="idLapTable"></div>
 <br/>
 Compare&nbsp;to:&nbsp;<select id="idCompareSelect" onchange="compareSelectChange(this)"></select>&nbsp;&nbsp;&nbsp;&nbsp;Category:&nbsp;<select id="idCategorySelect" onchange="categorySelectChange(this)"></select>
 <br/><br/>
-<div id="idInfoTable" style="height: 80px;"></div>
+<div id="idInfoTable"></div>
 <br/>
 <div id="idGanttChart" style="width: 720px; height: 136px;"></div>
 <div id="idLapTimesChart" style="width: 900px; height: 180px;"></div>
