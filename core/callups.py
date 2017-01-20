@@ -2,7 +2,7 @@ import operator
 from collections import defaultdict
 
 from views_common import *
-from series_results import get_callups_for_wave
+from series_results import extract_event_results, get_callups_for_wave
 from django.utils.translation import ugettext_lazy as _
 
 @access_validation()
@@ -11,11 +11,26 @@ def Callups( request, eventId, eventType, seriesId ):
 	series = get_object_or_404( Series, pk=seriesId )
 	competition = event.competition
 	
+	# Get all related categories for this Event.
+	categories = set()
+	for c in event.get_categories():
+		if c not in categories:
+			categories |= series.get_related_categories( c )
+	
+	# Get all license holders for this Event.
+	license_holders = set( p.license_holder for p in event.get_participants() )
+	
+	# Get event results for all the categories.  This only hits the database once.
+	eventResultsAll = []
+	for sce in series.seriescompetitionevent_set.all():
+		if sce.event.date_time < event.date_time:
+			eventResultsAll.extend( extract_event_results(sce, categories, license_holders) )
+	
 	wave_callups = []
 	for w in event.get_wave_set().all():
-		callups = get_callups_for_wave( series, w )
+		callups = get_callups_for_wave( series, w, eventResultsAll )
 		
-		# Format the points colun nicely.
+		# Format the points colunms nicely.
 		for cg, p_points in callups:
 			p_points[:] = [(lh, fp if not fp.startswith('0') else u'')
 				for lh, fp in zip(

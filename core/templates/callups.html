@@ -32,7 +32,7 @@ table.participant_table tr th {
 	<div class="accordion-group panel panel-default">
 		<div class="accordion-heading panel-heading" onclick="$('#wave{{forloop.counter}}').collapse('toggle');">
 			<a class="accordion-toggle" data-toggle="collapse" data-parent="#wave-accordion" href="#wave{{forloop.counter}}">
-				{% trans 'Wave' %} {{forloop.counter}}: {{wave.name}}
+				<span style="font-size: 125%;">{% trans 'Wave' %} {{forloop.counter}}: {{wave.name}}</span>
 			</a>
 		</div>
 		<div id="wave{{forloop.counter}}" class="accordion-body collapse">

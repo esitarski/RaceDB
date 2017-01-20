@@ -171,8 +171,8 @@ class EventSelectForm( Form ):
 		
 		super(EventSelectForm, self).__init__(*args, **kwargs)
 		
-		category_pk = set( series.get_category_pk() )
-		events = [e for e in competition.get_events() if not set(c.pk for c in e.get_categories()).isdisjoint(category_pk)]
+		categories = set( series.get_categories() )
+		events = [e for e in competition.get_events() if not set(e.get_categories()).isdisjoint(categories)]
 		events.sort( key=operator.attrgetter('date_time') )
 		self.fields['events'].choices = [('{}-{}'.format(e.event_type,e.id), string_concat(e.date_time.strftime('%Y-%m-%d %H:%M'), u': ', e.name)) for e in events]
 		
@@ -197,9 +197,9 @@ def SeriesCompetitionAdd( request, seriesId, competitionId=None ):
 		
 		series.remove_competition( competition )
 		default_points_structure = series.get_default_points_structure()
-		category_pk = set( series.get_category_pk() )
+		categories = set( series.get_categories() )
 		for e in competition.get_events():
-			if not set(c.pk for c in e.get_categories()).isdisjoint(category_pk):
+			if not set(e.get_categories()).isdisjoint(categories):
 				sce = SeriesCompetitionEvent( series=series, points_structure=default_points_structure )
 				sce.event = e
 				sce.save()
@@ -263,14 +263,12 @@ def SeriesCompetitionEdit( request, seriesId, competitionId ):
 	EventFormSet = formset_factory(GetEventForm(series), extra=0)
 	
 	def get_form_set():
-		category_pk = set( series.get_category_pk() )
-		events = [e for e in competition.get_events() if not set(c.pk for c in e.get_categories()).isdisjoint(category_pk)] 
+		categories = set( series.get_categories() )
+		events = [e for e in competition.get_events() if not set(e.get_categories()).isdisjoint(categories)]
 		events.sort( key=operator.attrgetter('date_time') )
 
 		events_included = set( series.get_events_for_competition(competition) )
 		points_structure = {ce.event:ce.points_structure.pk for ce in series.seriescompetitionevent_set.all() if ce.event.competition == competition}
-		
-		print [e.pk for e in events]
 		
 		initial = [{
 			'select': e in events_included,
@@ -279,7 +277,7 @@ def SeriesCompetitionEdit( request, seriesId, competitionId ):
 			'et': e.event_type,
 			'pk': e.pk,
 		} for e in events]
-		print initial
+		
 		return EventFormSet( initial=initial )
 
 	if request.method == 'POST':

@@ -2194,6 +2194,7 @@ class Result(models.Model):
 		else:
 			rank = self.get_status_display()
 			gap = ''
+		
 		return mark_safe(u'{}/{}{}'.format(rank, starters, gap).replace(' ', '&nbsp;'))
 	
 	@property
@@ -3622,25 +3623,20 @@ class Series( Sequence ):
 	def get_container( self ):
 		return Series.objects.all()
 		
-	def get_category_pk( self ):
-		return self.seriesincludecategory_set.all().values_list('category',flat=True)
-		
 	def get_categories( self ):
-		return categories_from_pks( self.get_category_pk() )
+		return [ic.category for ic in self.seriesincludecategory_set.all().select_related('category').only('category').order_by('category__sequence')]
 		
 	def get_categories_in_groups( self ):
-		pks = []
+		cats = set()
 		for g in self.categorygroup_set.all():
-			pks.extend( g.get_category_pk() )
-		return categories_from_pks( list(set(pks)) )
+			cats.update( g.get_categories() )
+		return cats
 		
 	def get_categories_not_in_groups( self ):
-		pks = []
-		for g in self.categorygroup_set.all():
-			pks.extend( g.get_category_pk() )
-		return categories_from_pks( list(set(self.get_category_pk()) - set(pks)) )
+		return set(self.get_categories()) - self.get_categories_in_groups()
 		
 	def normalize( self ):
+		categories = self.get_categories()
 		for collection in (
 				self.seriespointsstructure_set.all(),
 				self.seriesupgradeprogression_set.all(),
@@ -3649,20 +3645,20 @@ class Series( Sequence ):
 			normalize_sequence( collection )
 			for i, element in enumerate(collection):
 				try:
-					element.harmonize_categories()
+					element.harmonize_categories( categories )
 				except AttributeError:
 					break
 		
 		ce_to_delete = []
-		category_pk = set( self.get_category_pk() )
+		categories = set( categories )
 		for ce in self.seriescompetitionevent_set.all():
-			if set( c.pk for c in ce.event.get_categories() ).isdisjoint( category_pk ):
+			if set( ce.event.get_categories() ).isdisjoint( categories ):
 				ce_to_delete.append( ce )
 		for ce in ce_to_delete:
 			ce.delete()
 	
 	def get_events_for_competition( self, competition ):
-		events = [ce.event for ce in self.seriescompetitionevent_set.all() if ce.competition == competition]
+		events = [ce.event for ce in self.seriescompetitionevent_set.all().select_related('event_mass_start', 'event_tt') if ce.competition == competition]
 		events.sort( key=operator.attrgetter('date_time') )
 		return events
 		
@@ -3854,14 +3850,11 @@ class CategoryGroup( Sequence ):
 	def get_container( self ):
 		return self.series.categorygroup_set.all()
 	
-	def harmonize_categories( self ):
-		self.categorygroupelement_set.exclude( category__in=self.series.get_category_pk() ).delete()
-	
-	def get_category_pk( self ):
-		return self.categorygroupelement_set.all().values_list('category',flat=True)
+	def harmonize_categories( self, allowed_categories ):
+		self.categorygroupelement_set.exclude( category__in=allowed_categories ).delete()
 	
 	def get_categories( self ):
-		return sorted( (c for c in Category.objects.in_bulk( self.get_category_pk() ).itervalues()), key=operator.attrgetter('sequence') )
+		return [cge.category for cge in self.categorygroupelement_set.all().select_related('category').only('category').order_by('category__sequence')]
 	
 	def get_text( self ):
 		text = []
@@ -3908,7 +3901,7 @@ class SeriesUpgradeProgression( Sequence ):
 	
 	def get_text( self ):
 		s = []
-		for uc in self.seriesupgradecategory_set.all():
+		for uc in self.seriesupgradecategory_set.all().select_related('category'):
 			c = uc.category
 			s.extend( [c.get_gender_display(), '-', c.code, ',  '] )
 		
@@ -3917,11 +3910,11 @@ class SeriesUpgradeProgression( Sequence ):
 		s = s[:-1]
 		return string_concat( *s )
 		
-	def harmonize_categories( self ):
-		self.seriesupgradecategory_set.exclude( category__in=self.series.get_category_pk() ).delete()
+	def harmonize_categories( self, allowed_categories ):
+		self.seriesupgradecategory_set.exclude( category__in=allowed_categories ).delete()
 		
 	def get_categories( self ):
-		return sorted( (ce.category for ce in self.seriesupgradecategory_set.all()), key=operator.attrgetter('sequence') )
+		return [ce.category for ce in self.seriesupgradecategory_set.all().select_related('category').only('category')]
 	
 	def save( self, *args, **kwargs ):
 		if self.factor > 1.0 or self.factor < 0.0:

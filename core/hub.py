@@ -240,6 +240,12 @@ def SearchLicenseHolders( request ):
 			license_holders = LicenseHolder.objects.filter( license_code=search_text.upper() )
 		elif search_type == 2:
 			license_holders = LicenseHolder.objects.filter( uci_code=search_text.replace(' ', '') )
+		
+		# Only return license holders with results.
+		license_holders = license_holders.filter(
+			Q(pk__in=ResultMassStart.objects.all().values_list('participant__license_holder',flat=True).distinct()) |
+			Q(pk__in=ResultTT.objects.all().values_list('participant__license_holder',flat=True).distinct())
+		)
 	else:
 		license_holders = LicenseHolder.objects.none()
 	

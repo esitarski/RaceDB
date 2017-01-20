@@ -6,6 +6,7 @@ import operator
 import datetime
 import itertools
 import random
+from copy import deepcopy
 
 import utils
 from collections import defaultdict
@@ -15,61 +16,52 @@ ordinal = lambda n: "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
 
 class EventResult( object ):
 
-	__slots__ = ('result', 'rank', 'starters', 'value_for_rank', 'category', 'ignored')
+	__slots__ = ('status', 'participant', 'license_holder', 'event', 'rank', 'starters', 'value_for_rank', 'category', 'original_category', 'ignored')
 	
 	def __init__( self, result, rank, starters, value_for_rank ):
-		self.result = result
+		self.status = result.status
+		self.participant = result.participant
+		self.license_holder = result.participant.license_holder
+		self.event = result.event
+		
 		self.rank = rank
 		self.starters = starters
 		
 		self.value_for_rank = value_for_rank
-		self.category = result.participant.category
+		self.original_category = self.category = result.participant.category
 		
 		self.ignored = False
 		
 	@property
-	def status( self ):
-		return self.result.status
-		
-	@property
 	def upgraded( self ):
-		return self.category != self.result.participant.category
-		
-	@property
-	def event( self ):
-		return self.result.event
-		
-	@property
-	def participant( self ):
-		return self.result.participant
+		return self.category != self.original_category
 		
 	@property
 	def team_name( self ):
-		team = self.result.participant.team
+		team = self.participant.team
 		return team.name if team else u''
 		
 	@property
-	def license_holder( self ):
-		return self.result.participant.license_holder
-		
-	@property
 	def status_rank( self ):
-		if self.result.status == 0:
-			return self.rank
-		return 999999
+		return self.rank if self.status == 0 else 999999
 	
 	@property
 	def rank_text( self ):
-		if self.result.status != Result.cFinisher:
-			return self.result.get_status_display()
+		if self.status != Result.cFinisher:
+			return next(v for v in Result.STATUS_CODE_NAMES if v[0] == self.status)[1]
 		return ordinal( self.rank )
 
-def extract_event_results( sce, filter_categories=None ):
+def extract_event_results( sce, filter_categories=None, filter_license_holders=None ):
 	series = sce.series
+	
 	if not filter_categories:
 		filter_categories = series.get_categories()
 		
-	filter_categories = set( filter_categories )
+	if filter_license_holders and not isinstance(filter_license_holders, set):
+		filter_license_holders = set( filter_license_holders )
+	
+	if not isinstance(filter_categories, set):
+		filter_categories = set( filter_categories )
 	
 	points_structure = sce.points_structure if series.ranking_criteria == 0 else None
 	status_keep = [Result.cFinisher, Result.cPUL]
@@ -113,10 +105,8 @@ def extract_event_results( sce, filter_categories=None ):
 			get_starters = lambda rr: rr.category_starters
 	
 		rr_winner = None
-		wave_results = w.get_results().filter(
-				participant__category__in=filter_categories, status__in=status_keep ).select_related(
-				'participant',
-			).order_by('wave_rank')
+		wave_results = w.get_results().filter( status__in=status_keep, participant__category__in=filter_categories )
+		wave_results = wave_results.prefetch_related('participant', 'participant__license_holder', 'participant__category', 'participant__team').order_by('wave_rank')
 		for rr in wave_results:
 			if w.rank_categories_together:
 				if not rr_winner:
@@ -125,6 +115,9 @@ def extract_event_results( sce, filter_categories=None ):
 				if not rr_winner or rr_winner.participant.category != rr.participant.category:
 					rr_winner = rr
 
+			if filter_license_holders and rr.participant.license_holder not in filter_license_holders:
+				continue
+				
 			rank = get_rank( rr )
 			value_for_rank = get_value_for_rank(rr, rank, rr_winner)
 			if value_for_rank:
@@ -203,7 +196,7 @@ def series_results( series, categories, eventResults ):
 	eventResults.sort( key=operator.attrgetter('event.date_time', 'event.name', 'rank') )
 	
 	# Assign a sequence number to the events.
-	events = sorted( set(rr.result.event for rr in eventResults), key=operator.attrgetter('date_time') )
+	events = sorted( set(rr.event for rr in eventResults), key=operator.attrgetter('date_time') )
 	eventSequence = {e:i for i, e in enumerate(events)}
 	
 	lhEventsCompleted = defaultdict( int )
@@ -217,9 +210,6 @@ def series_results( series, categories, eventResults ):
 	
 	percentFormat = u'{:.2f}'
 	floatFormat = u'{:0.2f}'
-	
-	# Pull all the license holders into the cache in one call.
-	LicenseHolder.objects.in_bulk( list(set(rr.result.participant.license_holder_id for rr in eventResults)) )
 	
 	# Get the individual results for each lh, and the total value.
 	for rr in eventResults:
@@ -247,10 +237,9 @@ def series_results( series, categories, eventResults ):
 					rrs[i].ignored = True
 				lhEventsCompleted[lh] = bestResultsToConsider
 
-	# Sort by decreasing events completed, then increasing lh time.
 	lhGap = {}
 	if scoreByTime:
-		# Sort by increasing time..
+		# Sort by decreasing events completed, then increasing time.
 		lhOrder.sort( key = lambda r: tuple(itertools.chain(
 				[-lhEventsCompleted[r], lhValue[r]],
 				[-lhPlaceCount[r][k] for k in xrange(1, numPlacesTieBreaker+1)],
@@ -301,7 +290,7 @@ def get_results_for_category( series, category ):
 	
 	return series_results( series, series.get_group_related_categories(category), eventResults )
 
-def get_callups_for_wave( series, wave ):
+def get_callups_for_wave( series, wave, eventResultsAll=None ):
 	event = wave.event
 	competition = event.competition
 	RC = event.get_result_class()
@@ -326,20 +315,20 @@ def get_callups_for_wave( series, wave ):
 		
 		related_categories = series.get_related_categories( c )
 	
-		eventResults = []
-		for sce in series.seriescompetitionevent_set.all():
-			if sce.event.date_time >= event.date_time:
-				continue
-			eventResults.extend( extract_event_results(sce, related_categories) )
-		
-		# Filter the event results to the participants in this wave.
-		eventResults = [er for er in eventResults if er.result.participant.license_holder in license_holders]
+		if eventResultsAll:
+			eventResults = [deepcopy(er) for er in eventResultsAll if er.license_holder in license_holders]
+		else:
+			eventResults = []
+			for sce in series.seriescompetitionevent_set.all():
+				if sce.event.date_time < event.date_time:
+					eventResults.extend( extract_event_results(sce, related_categories, license_holders) )					
 		
 		# Add "fake" Results for all participants in the current event with 1.0 as value_for_rank.
+		fakeResult = RC( event=event, status=0 )
 		for p in participants:
 			if p.category in series_categories and p.category in group_categories:
-				result = RC( event=event, participant=p, status=0 )
-				eventResults.append( EventResult(result, 1, 1, FakeFinishValue) )
+				fakeResult.participant = p
+				eventResults.append( EventResult(fakeResult, 1, 1, FakeFinishValue) )
 
 		# The fake results ensure any upgraded athletes's points will be considered properly if this is their first upgraded race.
 		adjust_for_upgrades( series, eventResults )
@@ -350,10 +339,9 @@ def get_callups_for_wave( series, wave ):
 		# Remove entries beyond the callup max.
 		del categoryResult[series.callup_max:]
 		
-		# Get the values we need and correct for the FakeFinishValue.
+		# Get the values we need and subtract for the FakeFinishValue.
 		p_values = [[p_from_lh[lh], value-FakeFinishValue] for lh, team, value, gap, results in categoryResult]
 			
-		# Subtract the fake value_for_rank from the callup order points.
 		# Return the participant and the points value.
 		if randomize:
 			# Randomize athletes with no results.
