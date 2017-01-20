@@ -92,12 +92,26 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	else:
 		assert False, 'Unknown ranking criteria'
 	
-	eventResults = []
-	
+	# Create a map between categories and waves.
+	category_pk = [c.pk for c in filter_categories]
+	category_wave = {}
 	for w in sce.event.get_wave_set().all():
-		if filter_categories.isdisjoint( w.categories.all() ):
-			continue
+		for c in w.categories.all().filter( pk__in=category_pk ):
+			category_wave[c] = w
+
+	if not category_wave:
+		return []
 			
+	# Organize the results by wave based on the event results.
+	wave_results = defaultdict( list )
+	for rr in sce.event.get_results().filter(
+			participant__category__in=filter_categories ).prefetch_related(
+			'participant', 'participant__license_holder', 'participant__category', 'participant__team').order_by('wave_rank'):
+		wave_results[category_wave[rr.participant.category]].append( rr )
+	
+	# Report the results by wave.
+	eventResults = []
+	for w, results in wave_results.iteritems():
 		if w.rank_categories_together:
 			get_rank     = lambda rr: rr.wave_rank
 			get_starters = lambda rr: rr.wave_starters
@@ -106,9 +120,8 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 			get_starters = lambda rr: rr.category_starters
 	
 		rr_winner = None
-		wave_results = w.get_results().filter( status__in=status_keep, participant__category__in=filter_categories )
-		wave_results = wave_results.prefetch_related('participant', 'participant__license_holder', 'participant__category', 'participant__team').order_by('wave_rank')
-		for rr in wave_results:
+		
+		for rr in results:
 			if w.rank_categories_together:
 				if not rr_winner:
 					rr_winner = rr
