@@ -93,6 +93,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 		assert False, 'Unknown ranking criteria'
 	
 	eventResults = []
+	
 	for w in sce.event.get_wave_set().all():
 		if filter_categories.isdisjoint( w.categories.all() ):
 			continue
