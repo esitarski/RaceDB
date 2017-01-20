@@ -356,7 +356,10 @@ function updateLapTable() {
 			row.push( { v:d.lapSpeeds[r-1], f:d.lapSpeeds[r-1].toFixed(2) + spacer } );
 		dataTable.addRow( row );
 	}
-	container.table.draw( dataTable, {allowHtml: true} );
+	var options = {allowHtml: true};
+	if( dataTable.getNumberOfRows() > 10 )
+		options['page'] = 'enable';
+	container.table.draw( dataTable, options );
 }
 
 function GetGap( bib, bibRef ) {
@@ -463,8 +466,7 @@ function updateInfoTable() {
 		dataTable.addRow( row );
 	}
 
-	var options = {'page': 'enable' };
-	container.table.draw( dataTable, options );
+	container.table.draw( dataTable );
 }
 
 function updateGanttChart() {
