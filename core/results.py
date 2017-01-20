@@ -23,9 +23,11 @@ def get_payload_for_result( result ):
 	payload['raceScheduledStart'] = event.date_time.strftime( '%Y-%m-%d %H:%M' )
 	payload['winAndOut'] = event.win_and_out
 	payload['isTimeTrial'] = (event.event_type == 1)
+	payload['primes'] = None
 	payload['raceIsRunning'] = False
 	payload["raceIsUnstarted"] = False
-	payload['InfoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCIID', 'NatCode', 'City', 'StateProv']
+	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCIID', 'NatCode', 'City', 'StateProv']
+	
 	data = {}
 	race_times_all = []
 	pos = []

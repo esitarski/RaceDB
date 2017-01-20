@@ -15,12 +15,11 @@ ItemsPerPage = 25
 
 def competitions_with_results( competitions=None ):
 	if competitions is None:
-		competitions = Competition.objects.all()
-	non_empty  = (
-		set( ResultMassStart.objects.values_list('event__competition__pk',flat=True).distinct() ) |
-		set( ResultTT.objects.values_list('event__competition__pk',flat=True).distinct() )
-	)
-	return competitions.filter(pk__in=non_empty)
+		competitions = Competition.objects.all()		
+	return competitions.filter(
+		Q(pk__in=ResultMassStart.objects.values_list('event__competition__pk',flat=True).distinct()) |
+		Q(pk__in=ResultTT.objects.values_list('event__competition__pk',flat=True).distinct())
+	).distinct()
 
 @autostrip
 class CompetitionSearchForm( Form ):
@@ -177,6 +176,7 @@ def LicenseHolderResults( request, licenseHolderId ):
 
 def ResultAnalysis( request, eventId, eventType, resultId ):
 	event = get_object_or_404( (EventMassStart,EventTT)[int(eventType)], pk=eventId )
+	is_timetrial = (event.event_type == 1)
 	result = get_object_or_404( event.get_result_class(), pk=resultId )
 	license_holder = result.participant.license_holder
 	payload = get_payload_for_result( result )

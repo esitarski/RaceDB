@@ -51,6 +51,29 @@ Array.prototype.binSearch = function( v ) {
 	return L;
 }
 
+Array.prototype.swap = function( x, y ) {
+	var tmp = this[x];
+	this[x] = this[y];
+	this[y] = tmp;
+}
+
+function isCanvasSupported() {
+	var elem = document.createElement('canvas');
+	return !!(elem.getContext && elem.getContext('2d'));
+}
+
+function createChild( parent, tag ) {
+	var child = document.createElement(tag);
+	parent.appendChild( child );
+	return child;
+}
+
+function createTextChild( parent, s ) {
+	var child = document.createTextNode(s);
+	parent.appendChild( child );
+	return child;
+}
+
 function getOrdinal( n ) {
 	var s = ['th', 'st', 'nd', 'rd'], v = n%100;
 	return n + (s[(v-20)%10]||s[v]||s[0]);
@@ -111,15 +134,23 @@ function dataProlog() {
 	}
 	catList.sort( function(x, y) { return x.pos.length - y.pos.length || x.iCat - y.iCat; } );
 	
-	document.getElementById( 'idRaceName' ).innerHTML = raceName;
+	document.getElementById( 'idRaceName' ).innerHTML = raceScheduledStart + ' - ' + raceName;
 }
 
 function GetName( bib ) {
 	var d = data[bib];
 	if( !d )	return '';
-	if( d.LastName && d.FirstName )	return d.FirstName + ' ' + d.LastName;
+	if( d.FirstName && d.LastName )	return d.FirstName + ' ' + d.LastName;
 	if( d.LastName ) return d.LastName;
 	return d.FirstName;
+}
+
+function GetInitials( bib ) {
+	var d = data[bib];
+	if( !d )	return '';
+	if( d.LastName && d.FirstName )	return d.FirstName.charAt(0) + '.' + d.LastName.charAt(0) + '.';
+	if( d.LastName ) return d.LastName.charAt(0) + '.';
+	return d.FirstName.charAt(0) + '.';
 }
 
 function GetBibName( bib ) {
@@ -211,6 +242,21 @@ function FormatDistanceGap( d, distanceUnit ) {
 			return (d*5280.0).toFixed(0) + ' ft ' + suffix;
 		return d.toFixed(1) + ' ' + distanceUnit + ' ' + suffix;
 	}
+}
+
+function DrawCircle( ctx, x, y, radius ) {
+	ctx.beginPath();
+	ctx.arc(x, y, radius, 0.0, Math.PI*2, true);
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+}
+
+function DrawLine( ctx, x1, y1, x2, y2 ) {
+	ctx.beginPath();
+	ctx.moveTo( x1, y1 );
+	ctx.lineTo( x2, y2 );
+	ctx.stroke();
 }
 
 function getPositionByLap( bibIn ) {
@@ -502,6 +548,7 @@ function updateGanttChart() {
 	
 	var options = {
 		colors: colors.slice( maxLaps+1 ),
+		chartArea: {width: 64}
 	};
 	container.chart.draw( dataTable, options );
 }
@@ -672,16 +719,1334 @@ function updateCompareDisplays() {
 	updateGapChart();
 	updateLapPositionChart();
 }
+
+// ---------------------------------------------------------------------
+
+function Rect( x, y, width, height ) {
+	this.x = x;
+	this.y = y;
+	this.width = width;
+	this.height = height;
+}
+Rect.prototype.GetLeft = function() { return this.x; }
+Rect.prototype.GetRight = function() { return this.x + this.width; }
+Rect.prototype.GetTop = function() { return this.y; }
+Rect.prototype.GetBottom = function() { return this.y + this.height; }
+Rect.prototype.GetWidth = function() { return this.width; }
+Rect.prototype.GetHeight = function() { return this.height; }
+Rect.prototype.SetTop = function( y ) { this.y = y; }
+Rect.prototype.SetBottom = function( y ) { this.y = y - this.height; }
+Rect.prototype.SetLeft = function( x ) { this.x = x; }
+Rect.prototype.SetRight = function( x ) { this.x = x - this.width; }
+Rect.prototype.ContainsXY = function(x, y) {
+	return this.x <= x && x <= this.x + this.width && this.y <= y && y <= this.y + this.height;
+}
+Rect.prototype.print = function( label ) {
+	console.log( label + ': Rect(' + this.x + ',' + this.y + ',' + this.width + ',' + this.height + ')' );
+}
+Rect.prototype.Intersects = function( r ) {
+	return !(
+		r.x + r.width < this.x ||
+		this.x + this.width < r.x ||
+		r.y + r.height < this.y ||
+		this.y + this.height < r.y
+	);
+}
+
+// ---------------------------------------------------------------------
+
+var _resultsNums = [];
+var _raceTMax = null;
+var _lastCategory = '';
+function GetValidResultsNums() {
+	if( _lastCategory == categoryCur )
+		return _resultsNums;
+	
+	_resultsNums = [];
+	_raceTMax = null;
+	for( var c = 0; c < catDetails.length; ++c )
+	{
+		var catDetail = catDetails[c];
+		for( var p = 0; p < catDetail.pos.length; ++p ) {
+			var num = catDetail.pos[p];
+			var d = data[num];
+			var raceTimes = d['raceTimes'];
+			if( raceTimes && raceTimes.length >= 2 )
+				_resultsNums.push( num );
+		}
+		break;
+	}
+	
+	_lastCategory = categoryCur;
+	return _resultsNums;
+}
+function GetRaceTMax() {
+	if( _lastCategory == categoryCur && _raceTMax != null )
+		return _raceTMax;
+	
+	var resultsNums = GetValidResultsNums();
+	_raceTMax = 0.0;
+	for( var i = 0; i < resultsNums.length; ++i ) {
+		var d = data[resultsNums[i]];
+		var raceTimes = d['raceTimes'];
+		if( raceTimes.back() > _raceTMax )
+			_raceTMax = raceTimes.back();
+	}
+	return _raceTMax;
+}
+
+function ShortFormatTimeGap( t ) {
+	var tStr = FormatTimeGap( t );
+	if( tStr.substring(0, 3) == "0'0" )
+		tStr = tStr.substring(3);
+	else if( tStr.substring(0,2) == "0'" )
+		tStr = tStr.substring(2);
+	return tStr;
+}
+
+function GetLapLE( raceTimes, t ) {
+	var lap = raceTimes.binSearch( t );
+	if( lap >= raceTimes.length )
+		lap = raceTimes.length - 1;
+	return raceTimes[lap] > t ? lap-1 : lap;
+}
+
+function GetPositionSpeed( raceTimes, t ) {
+	var lap = GetLapLE( raceTimes, t );
+	var lapStartTime = raceTimes[lap];
+	var lapTime = 0.0;
+	if( lap+1 < raceTimes.length )
+		lapTime = raceTimes[lap+1] - raceTimes[lap];
+	else
+		lapTime = raceTimes[lap] - raceTimes[lap-1];
+	var speed = 1.0 / lapTime;
+	return {'position': lap + (t - lapStartTime) * speed, 'speed': speed};
+}
+
+function GetLeaderGap( leaderPosition, leaderSpeed, leaderRaceTimes, raceTimes, t ) {
+	if( !raceTimes || raceTimes.length == 0 )
+		return null;
+	if( t >= raceTimes[raceTimes.length-1] ) {
+		if( t >= leaderRaceTimes[leaderRaceTimes.length-1] )
+			return {
+				'gap':leaderRaceTimes.length == raceTimes.length ? raceTimes[raceTimes.length-1] - leaderRaceTimes[leaderRaceTimes.length-1] : null,
+				'lapsDown': raceTimes.length - leaderRaceTimes.length
+			};
+		return {'gap':null, 'lapsDown':raceTimes.length - leaderRaceTimes.length};
+	}
+	
+	var ps = GetPositionSpeed( raceTimes, t );
+	var riderPosition = ps.position, riderSpeed = ps.speed;
+	var deltaPostion = leaderPosition - riderPosition;
+	var positionFraction = deltaPostion - Math.floor(deltaPostion);
+	if( positionFraction < 0.0 )
+		positionFraction += 1.0;
+	return {'gap':positionFraction / leaderSpeed, 'lapsDown': -Math.floor(deltaPostion)};
+}
+
+function PathFromPoints( dc, points, xTranslate, yTranslate ) {
+	xTranslate = xTranslate ? xTranslate : 0;
+	yTranslate = yTranslate ? yTranslate : 0;
+	dc.beginPath();
+	dc.moveTo( points[0][0] + xTranslate, points[0][1] + yTranslate );
+	for( var p = 1; p < points.length; ++p )
+		dc.lineTo( points[p][0] + xTranslate, points[p][1] + yTranslate );
+}
+
+function GetSituationGaps( t ) {
+	var BigTime = 1000.0*24.0*60.0*60.0;
+	
+	var resultsNums = GetValidResultsNums();
+	if( resultsNums.length == 0 )
+		return [];
+		
+	var maxLaps = 0;
+	for( var i = 0; i < resultsNums.length; ++i ) {
+		var d = data[resultsNums[i]];
+		if( d.raceTimes && d.raceTimes.length - 1 > maxLaps )
+			maxLaps = d.raceTimes.length - 1;
+	}
+	
+	if( t == undefined )
+		t = BigTime;
+	var raceTMax = GetRaceTMax();
+	t = Math.min( t, raceTMax );
+	
+	var leaderRaceTimes = [];
+	for( var lap = 0; lap <= maxLaps; ++lap ) {
+		var tMinLap = BigTime;
+		for( var i = 0; i < resultsNums.length; ++i ) {
+			var d = data[resultsNums[i]];
+			if( d.raceTimes.length > lap && d.raceTimes[lap] < tMinLap )
+				tMinLap = d.raceTimes[lap];
+		}
+		leaderRaceTimes.push( tMinLap );
+	}
+	
+	function getInfo( num, lapsDown ) {
+		var d = data[num];
+		var names = [];
+		if( d.LastName ) names.push( d.LastName );
+		if( d.FirstName ) names.push( d.FirstName.slice(0, 1) );
+		if( lapsDown != 0 )
+			num = '\u2198' + num;
+		return num + ' ' + names.join(',') + (lapsDown != 0 ? ' (' + lapsDown + ')': '');
+	}
+	
+	var ps = GetPositionSpeed( leaderRaceTimes, t );
+	var leaderPosition = ps.position, leaderSpeed = ps.speed;
+	var gaps = [];
+	for( var i = 0; i < resultsNums.length; ++i ) {
+		var num = resultsNums[i];
+		var d = data[num];
+		gapLapsDown = GetLeaderGap( leaderPosition, leaderSpeed, leaderRaceTimes, d.raceTimes, t );
+		if( gapLapsDown != null && gapLapsDown.gap != null )
+			gaps.push( [gapLapsDown.gap, getInfo(num, gapLapsDown.lapsDown), num] );
+	}
+	
+	gaps.sort( function(a, b) { return a[0] - b[0]; } );
+	
+	if( gaps.length > 0 ) {
+		var gapMin = gaps[0][0];
+		if( gapMin > 0 ) {
+			for( var g = 0; g < gaps.length; ++g )
+				gaps[g][0] -= gapMin;
+		}
+	}
+	
+	var thisLap = GetLapLE(leaderRaceTimes, t);
+	
+	var tCur = t;
+	var tAfterLeader = t - leaderRaceTimes[thisLap];
+	var laps = leaderRaceTimes.length - 1;
+	var lap = Math.min( thisLap + 1, laps );
+	var lapsToGo = Math.max(laps - lap, 0);
+	
+	var title = 
+			'   ' + '{% trans "Lap" %}' + ': ' + lap + '/' + laps + '   ' + '{% trans "Laps to go" %}' + ': ' + lapsToGo +
+			'    ' + '{% trans "Race Time" %}' + ': ' + FormatTime(tCur);
+	
+	return {"gaps":gaps, "tAfterLeader":tAfterLeader, "title":title, "tCur":tCur};
+}
+
+function Situation( situationCanvas, timeRange, detailDiv) {
+	this.situationCanvas = situationCanvas;
+	this.timeRange = timeRange;
+	this.detailDiv = detailDiv;
+
+	var groupIndexColour = '#FFCC99';
+	var groupGapColour = 'rgb(255,255,102)';
+	var groupSizeColour = '#99CCFF';
+	var groupColour = 'rgb(128,128,255)';
+	var packColour = 'rgb(200,255,200)';
+	var greyPenColour = 'rgb(100,100,100, 0.64)';
+	var greyBrushColour = 'rgb(232,232,232)';
+	var blackColour = '#000000';
+	var whiteColour = '#FFFFFF';
+	
+	this.gaps = [];
+	this.groupRectList = [];
+	this.groupFullData = [];
+
+	this.tAfterLeader = null;
+	this.title = null;
+	this.tCur = null;
+	this.zoom = 1.0;
+	this.animate = false;
+		
+	this.groupClickHandler = null;
+	//	self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp )
+		
+	this.SetData = function( gaps, tAfterLeader, title, tCur ) {
+		// each gap is of the form: [gapSeconds, text]
+		// Expected to be sorted by increasing gapSeconds.
+		this.gaps = (gaps && gaps.length > 0) ? gaps : [];
+		
+		this.tAfterLeader = tAfterLeader;
+		this.title = title;
+		this.tCur = tCur;
+		
+		this.DrawDetails( null, null, null, null );
+		this.Refresh();
+	}
+	
+	this.SetZoom = function( zoom ) {
+		this.zoom = zoom;
+		this.Refresh();
+	}
+
+	this.Refresh = function() { this.Draw(); }
+
+	this.Draw = function() {
+		var dc = situationCanvas.getContext('2d');
+		var width = situationCanvas.width;
+		var height = situationCanvas.height;
+		
+		dc.fillStyle = whiteColour;
+		dc.fillRect( 0, 0, width, height );
+		
+		this.groupRectList = [];
+		this.groupFullData = [];
+		
+		function SetGreyPen() { dc.strokeStyle = greyPenColour; dc.lineWidth = 1; }
+			
+		// Partition the gaps into groups separated by at least one second.
+		var maxGapSec = 20.0*60.0*60.0;	// Ignore gaps that are too great.
+		var groups = [];
+		var group = [];
+		var gapPrev = null;
+		for( var g = 0; g < this.gaps.length; ++g ) {
+			var gap = this.gaps[g];
+			if( gap[0] > maxGapSec )
+				break;
+			if( gapPrev == null || gap[0] - gapPrev[0] <= 1.0 )
+				group.push( gap );
+			else {
+				groups.push( group );
+				group = [gap];
+			}
+			gapPrev = gap;
+		}
+		if( group.length > 0 )
+			groups.push( group );
+
+		// Make a copy of all the group info.  Also get the largest group.
+		this.groupFullData = [];
+		var groupMax = 0;
+		var groupTimeMaxSize = null;
+		for( var g = 0; g < groups.length; ++g ) {
+			var group = groups[g];
+			this.groupFullData.push( group.slice() );
+			if( group.length > groupMax ) {
+				groupMax = group.length;
+				groupTimeMaxSize = group[0][0];
+			}
+		}
+		
+		// Add the group header (index, gap and size).
+		for( var i = 0; i < groups.length; ++i ) {
+			var group = groups[i];
+			if( group.length == 0 )
+				continue;
+			var groupSize = group.length;
+			if( group.length > 10 ) {
+				group = [].concat( group.slice(0,5), [[group[5][0], '...']], group.slice(group.length-5, group.length) );
+			}
+			if( i == 0 )
+				group.splice( 0, 0, [group[0][0], 'Lead  \u200B  ' + groupSize] );
+			else
+				group.splice( 0, 0, [group[0][0], 'Chase\u00A0' + i + '  ' + ShortFormatTimeGap(group[0][0]) + 'gap  ' + groupSize] );
+			groups[i] = group;
+		}
+		
+		var fontHeight = height / 40;
+		if( fontHeight == 0 )
+			return;
+
+		var font = fontHeight + 'px Arial';
+		dc.font = font;
+		var spaceWidth = fontHeight / 2;
+		var boldFont = 'bold ' + fontHeight + 'px Arial';
+		
+		var smallFontHeight = fontHeight * 0.75;
+		var smallFont = smallFontHeight + 'px Arial';
+
+		// -------------------------------------------------------------
+		dc.font = font;
+		dc.fillStyle = blackColour;
+		dc.textBaseline = "top";
+
+		var border = Math.min( width, height ) / 25;
+		var xLeft = border*2;
+		var yTop = border*2.25 + fontHeight;
+		if( this.title != null )
+			dc.fillText( this.title, xLeft, border );
+		
+		if( groups.length == 0 )
+			return;
+		
+		function GetGroupTextExtent( group ) {
+			var widthMax = 0;
+			var widthCur;
+			for( var g = 0; g < group.length; ++g ) {
+				widthMax = Math.max( widthMax, dc.measureText(group[g][1]).width );
+			}
+			return {"width":widthMax, "height":group.length*fontHeight*1.1};
+		}
+		
+		var lastWidth = GetGroupTextExtent( groups[groups.length-1] ).width;
+		
+		var xRight = width - border - lastWidth;
+		var yBottom = height - border;
+		
+		var gapMax = 0.0;
+		if( groups.length > 0 && groups[0].length > 0 ) {
+			var groupFirst = groups[0], groupLast = groups[groups.length-1];
+			var tFirst = groupFirst[0][0];
+			var tLast = groupLast[groupLast.length-1][0];
+			gapMax = tLast - tFirst;
+		}
+		var xScale = (xRight - xLeft) / (gapMax != 0.0 ? gapMax : 1.0) * this.zoom;
+		
+		function drawFinishLine() {
+			if( this.tAfterLeader == null )
+				return;
+			var x = xLeft + this.tAfterLeader * xScale;
+			var flWidth = width / 32;
+			if( x - flWidth > width )
+				return;
+			var flTop = yTop - border / 2;
+			var flBottom = flTop + border;
+			dc.strokeStyle = 'rgb(220,220,220)';
+			dc.lineWidth = Math.max(width / 800, 1);
+			dc.fillStyle = whiteColour;
+			dc.fillRect( x - flWidth / 2, flTop, flWidth, flBottom - flTop );
+			dc.strokeRect( x - flWidth / 2, flTop, flWidth, flBottom - flTop );
+			dc.lineWidth = flWidth / 4;
+			dc.lineCap = 'butt';
+			DrawLine( dc, x, flTop, x, flBottom );
+			dc.fillStyle = whiteColour;
+			dc.fillRect( width-border, 0, width, height );
+		}
+		
+		drawFinishLine();
+		
+		// Draw a direction line.
+		dc.strokeStyle = blackColour;
+		dc.lineWidth = 1;
+		dc.fillStyle = blackColour;
+		DrawLine( dc, xLeft - border, yTop, width-border, yTop );
+		var arrowLength = border * 0.8;
+		var points = [[0,0], [arrowLength, arrowLength/4], [arrowLength, -arrowLength/4]];
+		PathFromPoints( dc, points, border/2, yTop ); dc.closePath();
+		dc.fill();
+		dc.stroke();
+		
+		SetGreyPen();
+		
+		var groupTitleBrushes = [
+			groupIndexColour,
+			groupGapColour,
+			groupSizeColour,
+		];
+		
+		var existingRects = [];	// Sequenced by decreasing GetRight().
+		var groupHeight = height / 40;
+		var groupRectList = [];
+		for( var g = 0; g < groups.length; ++g ) {
+			var group = groups[g];
+			
+			// Draw the group.
+			var xBegin = xLeft + group[0][0] * xScale;
+			var xEnd = xLeft + group[group.length-1][0] * xScale;
+			
+			dc.fillStyle = groupColour;
+			dc.fillRect( xBegin - groupHeight/2, yTop - groupHeight/2, xEnd - xBegin + groupHeight, groupHeight );
+			dc.strokeStyle = blackColour;
+			dc.lineCap = 'butt';
+			dc.lineWidth = height / 100;
+			DrawLine( dc, xBegin, yTop, xEnd, yTop );
+			
+			// Find a non-overlapping area to draw the group text.
+			var xText = xBegin;
+			var yText = yTop + groupHeight/2 + fontHeight;
+			var gte = GetGroupTextExtent( group );
+			var gWidth = gte.width;
+			var gHeight = gte.height;
+			var gRect = new Rect( xText, yText, gWidth + spaceWidth*2, gHeight + fontHeight*0.6 );
+			
+			var conflict = true;
+			while( conflict ) {
+				conflict = false;
+				for( var ir = 0; ir < existingRects.length; ++ir ) {
+					var r = existingRects[ir];
+					if( r.GetRight() < gRect.GetLeft() )
+						break;
+					if( r.Intersects(gRect) ) {
+						gRect.SetTop( r.GetBottom()+1 );
+						conflict = true;
+					}
+				}
+			}
+			
+			// Insert the new rectangle into the list.  Keep sequenced by decreasing GetRight().
+			existingRects.push( gRect );
+			for( var i = existingRects.length-2; i >= 0;  --i ) {
+				if( existingRects[i].GetRight() < existingRects[i+1].GetRight() )
+					existingRects.swap(i, i+1);
+				else
+					break;
+			}
+			
+			groupRectList.push( [group, gRect] );
+		}
+		
+		// Connect the text to the group with a line.
+		SetGreyPen();
+		for( var g = 0; g < groupRectList.length; ++g ) {
+			var gRect = groupRectList[g][1];
+			DrawLine( dc, gRect.GetLeft(), yTop, gRect.GetLeft(), gRect.GetTop() );
+		}
+		
+		dc.textBaseline = "top";
+		for( var ig = 0; ig < groupRectList.length; ++ig ) {
+			var group = groupRectList[ig][0], gRect = groupRectList[ig][1];
+			
+			// Draw the group outline.
+			SetGreyPen();
+			dc.fillStyle = group[0][0] != groupTimeMaxSize ? greyBrushColour : packColour;
+			dc.fillRect( gRect.GetLeft(), gRect.GetTop(), gRect.GetWidth()-1, gRect.GetHeight()-fontHeight/2, fontHeight/3 );
+			dc.strokeRect( gRect.GetLeft(), gRect.GetTop(), gRect.GetWidth()-1, gRect.GetHeight()-fontHeight/2, fontHeight/3 );
+			
+			var xText = gRect.GetLeft();
+			
+			// Draw the group text.
+			SetGreyPen();
+			dc.fillStyle = blackColour;
+			var yText = gRect.GetTop()
+			for( var i = 0; i < group.length; ++i ) {
+				var gap = group[i];
+				
+				if( i == 0 ) {
+					// Draw the coloured rectangles to highlight the title fields.
+					var title = gap[1];
+					var fieldWidths = [-spaceWidth+2];
+					var iSpace = 0;
+					while( true ) {
+						var iSpace = title.indexOf( '  ', iSpace );
+						if( iSpace < 0 ) {
+							fieldWidths.push( dc.measureText(title).width + spaceWidth );
+							break;
+						}
+						fieldWidths.push( dc.measureText(title.slice(0,iSpace)).width + spaceWidth );
+						iSpace += 1;
+					}
+					
+					fieldWidths[fieldWidths.length-1] += spaceWidth/2;
+					var iBrush = (fieldWidths.length > 2 ? 0 : 2);
+					var xLast = xText;
+					for( var iField = 1; iField < fieldWidths.length; ++iField ) {
+						var tWidth = fieldWidths[iField] - fieldWidths[iField-1]
+						dc.fillStyle = groupTitleBrushes[iBrush];
+						dc.fillRect( xLast, yText, tWidth, fontHeight*1.08 );
+						dc.strokeRect( xLast, yText, tWidth, fontHeight*1.08 );
+						iBrush += 1;
+						xLast += tWidth;
+					}
+				}
+					
+				dc.fillStyle = blackColour;
+				dc.fillText( gap[1], xText + spaceWidth, yText+fontHeight*0.07 );
+				yText += fontHeight*1.1;
+			}
+		}
+				
+		this.groupRectList = groupRectList;
+				
+		// Draw the gaps between the groups with dimension lines.
+		SetGreyPen();
+		dc.fillStule = greyBrushColour;
+		dc.font = smallFont;
+		var yUp = yTop - groupHeight - smallFontHeight
+		var yText = yUp + smallFontHeight/2;
+		var yTextCenter = yText + smallFontHeight * 0.5;
+		yUp += smallFontHeight/4;
+		
+		var arrowLength = smallFontHeight * 0.75;
+		var leftArrow = [[0,0], [arrowLength, arrowLength/4], [arrowLength, -arrowLength/4]];
+		var rightArrow = [[0,0], [-arrowLength, arrowLength/4], [-arrowLength, -arrowLength/4]];
+
+		dc.textBaseline = "middle";
+		for( var iGroup = 1; iGroup < groups.length; ++iGroup ) {
+			var groupPrev = groups[iGroup-1], groupNext = groups[iGroup];
+			var tPrev = groupPrev[groupPrev.length-1][0], tNext = groupNext[0][0];
+			var xPrev = xLeft + tPrev * xScale, xNext = xLeft + tNext * xScale;
+			var sepStr = ShortFormatTimeGap(tNext - tPrev);
+			var tWidth = dc.measureText( sepStr ).width;
+			if( xNext - xPrev < tWidth * 1.25 )
+				continue;
+			
+			DrawLine( dc, xPrev, yTop, xPrev, yUp );
+			DrawLine( dc, xNext, yTop, xNext, yUp );
+			
+			if( xNext - xPrev > tWidth + arrowLength * 4 ) {
+				DrawLine( dc, xPrev, yTextCenter, xPrev + (xNext - xPrev - tWidth) / 2 - 2, yTextCenter );
+				DrawLine( dc, xNext - (xNext - xPrev - tWidth) / 2 + 2, yTextCenter, xNext, yTextCenter );
+				PathFromPoints( dc, leftArrow, xPrev, yTextCenter ); dc.closePath(); dc.stroke(); dc.fill();
+				PathFromPoints( dc, rightArrow, xNext, yTextCenter ); dc.closePath(); dc.stroke(); dc.fill();
+			}
+			
+			dc.fillStyle = blackColour;
+			dc.fillText( sepStr, xPrev + (xNext - xPrev - tWidth) / 2, yTextCenter );
+		}
+	}
+	
+	this.processClick = function( event ) {
+		var rect = this.situationCanvas.getBoundingClientRect();
+		var xEvent = event.clientX - rect.left;
+		var yEvent = event.clientY - rect.top;
+
+		for( var i = 0; i < this.groupRectList.length; ++i ) {
+			var gRect = this.groupRectList[i][1];
+			if( gRect.ContainsXY( xEvent, yEvent ) ) {
+				this.DrawDetails( gRect, i, this.groupFullData[i], this.tCur, null );
+				return;
+			}
+		}
+		this.DrawDetails( null, null, null, null );
+	}
+	
+	this.DrawDetails = function( gRect, groupIndex, groupInfo, raceTime, clockTime ) {
+		this.detailDiv.innerHTML = '';
+		if( groupIndex == undefined || groupIndex == null ) {
+			var text = '\u25C0&nbsp;&nbsp;' + '{% trans "Slide to Change Time" %}' + '<br/><br/><br/><br/><br/>\u25C0&nbsp;&nbsp;' + '{% trans "Click Group for Details" %}';
+			var para = createChild( this.detailDiv, 'p' );
+			para.innerHTML = text;
+			para.id = 'detailTitle';
+			return;
+		}
+		
+		var bigSpace = '&nbsp;&nbsp;&nbsp;&nbsp;';
+		var title = 
+			(groupIndex != 0 ? '{% trans "Chase Group" %}' + ': ' + groupIndex : '{% trans "Leaders" %}' + ': \u2714') + 
+			(groupIndex != 0 ? bigSpace + '{% trans "Gap" %}' + ': ' + ShortFormatTimeGap(groupInfo[0][0]) : '') +
+			bigSpace +'{% trans "Size" %}' + ': ' + groupInfo.length + 
+			(raceTime != null ? bigSpace + '{% trans "Race Time" %}' + ': ' + FormatTime(raceTime) : '' ) + 
+			(clockTime != null ? bigSpace + '{% trans "Clock" %}' + ': ' + FormatTime(clockTime) : '' );
+		
+		var para = createChild( this.detailDiv, 'p' );
+		para.innerHTML = title;
+		para.id = 'detailTitle';
+		
+		// Get the bibs and laps down.
+		var nums = [];
+		var lapsDown = {};
+		var sequence = {};
+		var numGap = {};
+		for( var i = 0; i < groupInfo.length; ++i ) {
+			var gap = groupInfo[i][0];
+			var info = groupInfo[i][1];
+			var fields = info.split(' ');
+			var num = parseInt( fields[0].replace(/\D/g,'') );
+			var lastField = fields[fields.length-1];
+			if( lastField.slice(0, 1) == '(' && lastField.slice(-1) == ')')
+				lapsDown[num] = lastField.slice(1).slice(0, -1);
+			nums.push( num );
+			numGap[num] = gap;
+			sequence[num] = i+1;
+		}
+		
+		// Adjust to get a combined name field.
+		var detailFields = ['Seq', 'Bib', 'Name'];
+		var numericFields = {'Seq':true, 'Bib':true, 'LapsDown':true};
+		for( var n in lapsDown ) {
+			var iInsert = 2;
+			for( var i = 0; i < detailFields.length; ++i ) {
+				if( detailFields[i] == 'Name' ) {
+					iInsert = i + 1;
+					break;
+				}
+			}
+			detailFields.splice( iInsert, 0, 'LapsDown' );
+			break;
+		}
+
+		var table = createChild( this.detailDiv, 'TABLE');
+		table.className = 'results table table-striped table-hover table-condensed';
+		var thead = createChild( table, 'THEAD' );
+		
+		var tr = createChild( thead, 'TR' );
+		for( var f = 0; f < detailFields.length; ++f ) {
+			var field = detailFields[f];
+			createTextChild( td = createChild(tr, 'TH'), field == 'Seq' ? '' : detailFields[f] );
+			td.id = 'idNonNumeric';
+		}
+		
+		var tbody = createChild( table, 'TBODY' );
+		for( var i = 0; i < nums.length; ++i ) {
+			var num = nums[i];
+			var d = data[num];			
+			
+			function createTD( tr ) {
+				var td = createChild(tr, 'TD');
+				return td;
+			}
+			
+			var tr = createChild(tbody, 'TR');
+			tr.onclick = function(n) { return function() {ToggleNumberHighlight(n);}; }(num);
+
+			// Add the info fields.
+			for( var f = 0; f < detailFields.length; ++f ) {
+				var field = detailFields[f];
+				var v;
+				if( field == 'Seq' )
+					v = i+1 + '.';
+				else if( field == 'Bib' )
+					v = num;
+				else if( field == 'LapsDown' )
+					v = lapsDown[num] != undefined ? lapsDown[num] : '';
+				else if( field == 'Name' ) {
+					if( d['LastName'] && d['FirstName'] )
+						v = d['LastName'] + ',&nbsp;' + d['FirstName'];
+					else
+						v = d['LastName'] || d['FirstName'];
+				}
+				else
+					v = d[field];
+				td = createTD(tr);
+				td.innerHTML = v;
+				if( !numericFields[field] )
+					td.id = 'idNonNumeric'; 
+			}
+		}
+	}
+}
+// ---------------------------------------------------------------------
+var lapChartObj = null;
+function pDistanceSquared(x, y, x1, y1, x2, y2) {
+	var A = x - x1, B = y - y1, C = x2 - x1, D = y2 - y1;
+
+	var dot = A * C + B * D;
+	var len_sq = C * C + D * D;
+	var param = -1;
+	if (len_sq != 0) // 0 length line
+	  param = dot / len_sq;
+
+	var xx, yy;
+
+	if (param < 0) {
+		xx = x1;
+		yy = y1;
+	}
+	else if (param > 1) {
+		xx = x2;
+		yy = y2;
+	}
+	else {
+		xx = x1 + param * C;
+		yy = y1 + param * D;
+	}
+
+	var dx = x - xx;
+	var dy = y - yy;
+	return dx * dx + dy * dy;
+}
+
+var dnfBackgroundColour = "#E0E0E0";
+function LapChart( ) {
+	// From http://tools.medialab.sciences-po.fr/iwanthue/
+	this.lineColours = [
+		"#3A3312",
+		"#9756EF",
+		"#00D222",
+		"#69D2FD",
+		"#F04403",
+		"#FE3D94",
+		"#0EAB6E",
+		"#301F5B",
+		"#CDA303",
+		"#2C6900",
+		"#45DD97",
+		"#E8B8A4",
+		"#D629BD",
+		"#0AA2A1",
+		"#C30043",
+		"#53131A",
+		"#784B07",
+		"#395B8F",
+		"#284299",
+		"#F4B478",
+		"#993AAE",
+		"#13A3E7",
+		"#340631",
+		"#F25DEE"
+	];
+	
+	this.lapLineColour = '#B0B0B0';
+	this.positionBackgroundColour = '#B7B7B7';
+	this.positionHorizontalLineColor = '#B9B9B9';
+	
+	this.topCornerBackgroundColour = '#8E8C8D';
+	this.legendBackgroundColour = '#C8C8C8';
+	this.lappedBackgroundColour = '#D8E6F4';
+	
+	this.lapLabelBorderColour = '#707070';
+	this.primeColour = '#FFFFAA';
+	
+	this.regularLineWidth = 3;
+	this.selectedLineWidth = 7;
+	this.rowHeight = 22;
+	
+	this.canvas = null;
+	this.data = [];
+	this.lapsMax = 0;
+	this.numSelect = null;
+	this.moveTimer = null;
+	
+	this.doMouseMove = function( evt ) {
+		var numSelectOld = this.numSelect;
+		this.numSelect = null;
+		
+		var rect = this.canvas.getBoundingClientRect();
+		var x = evt.clientX - rect.left, y = evt.clientY - rect.top;
+		
+		// Find the category of the mouse.
+		for( var c = 0; c < this.data.length; ++c ) {
+			if( !(this.data[c].yTop <= y && y < this.data[c].yTop + this.data[c].height) )
+				continue;
+				
+			// Check that the mouse is on the name or number.
+			if( this.data[c].xRight <= x ) {
+				var i = parseInt(((y - this.data[c].yTop) / this.rowHeight) - 1);
+				if( 0 <= i && i < this.data[c].nums.length )
+					this.numSelect = this.data[c].nums[i];
+				break;
+			}
+			if( this.data[c].xLeft <= x ) {
+				var numPos = this.data[c].numPos;
+				var lapsData = this.data[c].lapsData;
+				var xLeft = this.data[c].xLeft, xRight = this.data[c].xRight, lapWidth = this.data[c].lapWidth;
+				var yTop = this.data[c].yTop;
+				var rowHeight = this.rowHeight;
+				var lap = parseInt((x - xLeft) / lapWidth);
+				
+				function getX(lap) { return xLeft + lap * lapWidth; }
+				function getY(pos) { return yTop + rowHeight * (pos + 1); }
+				
+				function getSegment( lapCur, j ) {
+					if( !lapsData[lapCur] || !lapsData[lapCur][j] )
+						return null;
+					var num = lapsData[lapCur][j].num;
+					var x1, y1;
+					if( lapCur == 0 ) {
+						x1 = getX(0);
+						y1 = getY(numPos[num][0]) + rowHeight/2;
+					}
+					else {
+						x1 = getX(lapCur-1) + lapWidth/2;
+						y1 = getY(numPos[num][lapCur-1]) + rowHeight/2;
+					}
+					var x2 = getX(lapCur) + lapWidth/2;
+					var y2 = getY(numPos[num][lapCur]) + rowHeight/2;
+					return {'x1':x1, 'y1':y1, 'x2':x2, 'y2':y2, 'num':num};
+				}
+				
+				var dBest = Number.MAX_VALUE;
+				for( var j = 0; j < lapsData[lap].length; ++j ) {
+					for( var lapCur = lap; lapCur < lap + 2; ++lapCur ) {
+						var segment = getSegment( lapCur, j );
+						if( segment !== null ) {
+							var dCur = pDistanceSquared( x, y, segment.x1, segment.y1, segment.x2, segment.y2 );
+							if( dCur < dBest ) {
+								dBest = dCur;
+								this.numSelect = segment.num;
+							}
+						}
+					}
+				}
+				break;
+			}
+		}
+		if( numSelectOld != this.numSelect )
+			this.draw();
+	}
+	
+	this.onMouseMove = function( evt ) {
+		// Only process the move event if the mouse stops moving.
+		if( this.moveTimer ) {
+			if( this.numSelect ) {
+				this.numSelect = null;
+				this.draw();
+			}
+			clearTimeout( this.moveTimer );
+		}
+		var that = this;
+		this.moveTimer = setTimeout( function() { that.doMouseMove(evt); that.moveTimer=null; }, 25 );
+	}
+	
+	this.init = function( canvas ) {
+		this.canvas = canvas;
+		var that = this;
+		this.canvas.addEventListener( 'mousemove', function(evt) {that.onMouseMove(evt);} );
+	}
+	
+	this.getData = function() {
+		this.data = [];
+		
+		this.lapsMax = 0;
+		for( var c = 0; c < catDetails.length; ++c )
+		{
+			var catDetail = catDetails[c];
+			var catName = catDetail.name;
+				
+			var lapsData = [];
+			var numIndex = {};
+			var nums = [];
+			for( var p = 0; p < catDetail.pos.length; ++p )
+			{
+				var num = catDetail.pos[p];
+				if( num in numIndex )
+					continue;
+				var d = data[num];
+				
+				var raceTimes = d['raceTimes'].slice(0);	// Make a copy so we don't disturb the original.
+				if( raceTimes.length === 0 )
+					continue
+				numIndex[num] = nums.length;
+				nums.push( num )
+				
+				// Remove the race start time if this is not a Wave category.
+				if( catDetail.catType != 'Start Wave' && raceTimes.length > 0 ) {
+					for( var j = 1; j < raceTimes.length; ++j )
+						raceTimes[j] -= raceTimes[0];
+					raceTimes[0] = 0;
+				}
+				// Add all the lap information to the overall structure.
+				for( var j = 1; j < raceTimes.length; ++j ) {
+					if( raceIsRunning && raceTimes[j] > t )
+						break;
+					while( lapsData.length < j )
+						lapsData.push( [] );
+					lapsData[j-1].push( {'raceTime':raceTimes[j], 'num':num, 'lapsDown':0} );
+				}
+				this.lapsMax = Math.max( this.lapsMax, raceTimes.length-1 );
+			}
+		
+			// Sort the race times by lap to get the current rank.
+			for( var lap = 0; lap < lapsData.length; ++lap )
+				lapsData[lap].sort( function(x, y) { return x.raceTime - y.raceTime; } );
+			
+			// Set the laps down.
+			for( var lap = 0; lap < lapsData.length-1; ++lap ) {
+				for( var j = lapsData[lap].length-1; j > 0; --j ) {
+					for( var lapNext = lap+1; lapNext < lapsData.length && lapsData[lap][j].raceTime > lapsData[lapNext][0].raceTime; ++lapNext )
+						--lapsData[lap][j].lapsDown;
+					if( lapsData[lap][j] === 0 )
+						break;
+				}
+			}
+			
+			// Compute the position by lap for each rider.
+			var numPos = {};
+			for( var lap = 0; lap < lapsData.length; ++lap ) {
+				for( var pos = 0; pos < lapsData[lap].length; ++pos ) {
+					var num = lapsData[lap][pos].num;
+					if( num in numPos )
+						numPos[num].push( pos );
+					else
+						numPos[num] = [pos];
+				}
+			}
+			
+			if( lapsData.length > 1 && nums.length > 1 )
+				this.data.push( {'lapsData': lapsData, 'numPos': numPos, 'nums': nums, 'catName':catName} );
+		}
+	}
+	
+	this.draw = function() {
+		if( !this.canvas )
+			return;
+		
+		var that = this;
+		this.getData();
+		
+		if( this.data.length == 0 || this.lapsMax <= 1 ) {
+			this.canvas.height = 0;
+			return;
+		}
+		
+		var primeLaps = {};
+		if( primes && primes.length > 0 ) {
+			var lapsMax = 0;
+			for( var c = 0; c < this.data.length; ++c ) {
+				lapsMax = Math.max( lapsMax, this.data[c].lapsData.length );
+			}
+			for( var i = 0; i < primes.length; ++i )
+				primeLaps[lapsMax-primes[i].lapsToGo-1] = true;
+		}
+		
+		var rowsTotal = 0;
+		for( var c = 0; c < this.data.length; ++c ) {
+			rowsTotal += this.data[c].nums.length + 1.5 + 2;
+		}
+		
+		var rowHeight = this.rowHeight;
+		this.canvas.height = rowHeight * rowsTotal;
+		var width = this.canvas.width;
+		
+		var dc = this.canvas.getContext('2d');
+		dc.setTransform( 1, 0, 0, 1, 0, 0 );
+		
+		for( var c = 0; c < this.data.length; ++c ) {
+			var lapsData = this.data[c].lapsData;
+			var numPos = this.data[c].numPos;
+			var nums = this.data[c].nums;
+			
+			var rowTextFraction = 0.7;
+			var fontHeight = rowHeight * rowTextFraction;
+			dc.font = fontHeight + 'px Arial';
+			
+			dc.translate( 0, rowHeight / 2 );
+			var yTop = rowHeight / 2;
+			
+			dc.fillStyle = '#000000';
+			dc.textBaseline = 'middle';
+			dc.textAlign = 'left';
+			dc.fillText( this.data[c].catName, 0, rowHeight / 2 );
+			
+			dc.translate( 0, rowHeight );
+			yTop += rowHeight;
+			var height = rowHeight * (nums.length + 2);
+			
+			this.data[c].yTop = (c == 0 ? yTop : this.data[c-1].yTop + this.data[c-1].height + yTop);
+			this.data[c].height = height;
+			
+			function getName( num ) {
+				var d = data[num];
+				var name = '';
+				if( d.LastName && d.FirstName ) name = d.LastName + ', ' + d.FirstName;
+				else if( d.LastName ) name = d.LastName;
+				else if( d.FirstName ) name = d.FirstName;
+				return name;
+			}
+			
+			var numWidth = 0;
+			var nameWidth = 0;
+			for( var j = 0; j < nums.length; ++j ) {
+				var num = nums[j];
+				numWidth = Math.max( dc.measureText(''+num).width, numWidth );
+				nameWidth = Math.max( dc.measureText(getName(num)).width, nameWidth );
+			}
+			var paddingWidth = dc.measureText('  ').width;
+			nameWidth += paddingWidth;
+			
+			var posWidth = dc.measureText(''+(nums.length+1) ).width + paddingWidth;
+			var swatchColWidth = rowHeight;
+			var xLeft = posWidth;
+			var xRight = width - (swatchColWidth + numWidth + nameWidth + posWidth);
+			this.data[c].xLeft = xLeft;
+			this.data[c].xRight = xRight;
+			
+			var lapsWidth = xRight - xLeft;
+			var lapWidth = lapsWidth / lapsData.length;
+			this.data[c].lapWidth = lapWidth;
+			
+			// Draw the grid.
+			dc.clearRect(0, 0, width, height);
+			if( nums.length === 0 )
+				return;
+			height = rowHeight * (nums.length + 1);
+			
+			dc.lineCap = 'butt';
+			dc.lineJoin = 'round';
+			dc.setLineDash( [] );
+			
+			function getY(row) { return rowHeight * (row+1); }
+			function getX(lap) { return xLeft + lapWidth * lap; }
+			
+			// Draw the primes.
+			var hasPrimes = false;
+			dc.lineWidth = 1;
+			dc.fillStyle = this.primeColour;
+			for( var lap = 0; lap < lapsData.length; ++lap ) {
+				if( lap in primeLaps ) {
+					dc.fillRect( getX(lap), getY(0), lapWidth, getY(nums.length) - getY(0) );
+					hasPrimes = true;
+				}
+			}
+			
+			// Set the background for lapped riders.
+			var hasLapped = false;
+			dc.fillStyle = this.lappedBackgroundColour;
+			for( var lap = 0; lap < lapsData.length; ++lap ) {
+				for( var row = 0; row < lapsData[lap].length; ++row ) {
+					if( lapsData[lap][row].lapsDown !== 0 ) {
+						hasLapped = true;
+						for( ; row < nums.length; ++row )
+							dc.fillRect( getX(lap), getY(row), lapWidth, rowHeight );
+					}
+				}
+			}
+			
+			// Draw the legend.
+			dc.fillStyle = this.legendBackgroundColour;
+			dc.fillRect( 0, 0, width, rowHeight );
+			dc.fillRect( 0, getY(nums.length), width, rowHeight );
+			dc.fillRect( 0, 0, xLeft, height );
+			dc.fillRect( width - posWidth, 0, xLeft, height );
+			
+			dc.fillStyle = '#FFFFFF';
+			dc.textBaseline = 'middle';
+			dc.textAlign = 'center';
+			for( var j = 0; j < nums.length; ++j ) {
+				dc.fillText( ''+(j+1), posWidth/2, getY(j) + rowHeight/2 );
+				if( data[nums[j]].status == 'Finisher' )
+					dc.fillText( ''+(j+1), width - posWidth/2, getY(j) + rowHeight/2 );
+			}
+			
+			// Draw the lap lines.
+			dc.lineWidth = 1;
+			dc.strokeStyle = this.lapLineColour;
+			for( var lap = 0; lap <= lapsData.length; ++lap ) {
+				dc.beginPath();
+				dc.moveTo( getX(lap), 0 );
+				dc.lineTo( getX(lap), height );
+				dc.stroke();
+			}
+			
+			// Set the background of the rider bib and name.
+			dc.fillStyle = dnfBackgroundColour;
+			for( var j = 0; j < nums.length; ++j ) {
+				var d = data[nums[j]];
+				if( nums[j] == this.numSelect ) {
+					dc.save();
+					dc.fillStyle = '#FFFF66';
+					dc.fillRect( xRight, getY(j), width-xRight-posWidth, rowHeight );
+					dc.restore();
+				}
+				else if( d.status !== 'Finisher' )
+					dc.fillRect( xRight, getY(j), width-xRight-posWidth, rowHeight );
+			}
+			
+			// Draw the numbers.
+			dc.fillStyle = '#000000';
+			dc.textAlign = 'right';
+			var xText = width - nameWidth - posWidth;
+			for( var j = 0; j < nums.length; ++j )
+				dc.fillText( nums[j], xText, getY(j) + rowHeight/2 );
+			
+			// Draw the names.
+			dc.textAlign = 'left';
+			var xText =  width - nameWidth - posWidth + paddingWidth/2;
+			for( var j = 0; j < nums.length; ++j )
+				dc.fillText( getName(nums[j]), xText, getY(j) + rowHeight/2 );
+			
+			function drawPath( j, colour ) {
+				var num = nums[j];
+				var path = numPos[num];
+				
+				dc.strokeStyle = colour ? colour : that.lineColours[j % that.lineColours.length];
+				dc.setLineDash( [] );
+				
+				dc.beginPath();
+				dc.moveTo( getX(0), getY(path[0])+rowHeight/2 );
+				dc.lineTo( getX(0) + lapWidth/2, getY(path[0])+rowHeight/2 );
+				var lap;
+				for( lap = 1; lap < path.length; ++lap )
+					dc.lineTo( getX(lap) + lapWidth/2, getY(path[lap])+rowHeight/2 );
+				var lap = path.length-1;
+				dc.stroke();
+				
+				// Draw a curved line to the final position.
+				if( lap != lapsData.length-1 )
+					dc.setLineDash( [10, 5] );
+				dc.beginPath();
+				dc.moveTo( getX(lap) + lapWidth/2, getY(path[lap])+rowHeight/2 );
+				dc.quadraticCurveTo( getX(lap) + lapWidth/2, getY(j) + rowHeight/2, xRight+ + rowHeight/2, getY(j) + rowHeight/2 );
+				dc.stroke();
+			}
+			
+			// Draw the position lines in reverse order so the winner ends on top.
+			dc.lineWidth = this.regularLineWidth;
+			dc.lineCap = 'round';
+			var jSelect = null;
+			for( var j = nums.length - 1; j >= 0; --j ) {
+				if( nums[j] === this.numSelect )
+					jSelect = j;
+				drawPath( j );
+			}
+			if( jSelect !== null ) {
+				dc.lineWidth = this.selectedLineWidth + 4;
+				drawPath( jSelect, '#FFFF00' );
+				dc.lineWidth = this.selectedLineWidth;
+				drawPath( jSelect );
+			}
+			
+			// Draw the colour swatches.
+			var swatchSize = rowHeight * rowTextFraction;
+			var swatchBorder = (rowHeight - swatchSize) / 2.0;
+			var swatchX = xRight + swatchBorder;
+			for( var j = 0; j < nums.length; ++j ) {
+				dc.fillStyle = this.lineColours[j % this.lineColours.length];
+				dc.fillRect( swatchX, getY(j) + swatchBorder, swatchSize, swatchSize );
+			}
+			
+			// Draw the lap numbers.
+			var lapNumHeight = fontHeight;
+			dc.font = lapNumHeight*0.8 + 'px Arial';
+			dc.textAlign = 'center';
+			dc.textBaseline = 'bottom';
+			dc.lineWidth = 1;
+			dc.setLineDash( [] );
+			var xLast = width;
+			for( var lap = lapsData.length - 1; lap >= 0; --lap ) {
+				var sLap = ' ' + (lap+1) + ' ';
+				var tWidth = dc.measureText(sLap).width;
+				var xMiddle = getX(lap) + lapWidth/2;
+				if( xMiddle + tWidth / 2 > xLast )
+					continue;
+				
+				var x = getX(lap) + lapWidth/2;
+				var y = getY(0) - lapNumHeight;
+				dc.beginPath()
+				dc.moveTo( x - tWidth/2, y );
+				dc.lineTo( x + tWidth/2, y );
+				dc.lineTo( x + tWidth/2, y + lapNumHeight );
+				dc.lineTo( x, y + lapNumHeight * 1.25 );
+				dc.lineTo( x - tWidth/2, y + lapNumHeight );
+				dc.closePath();
+				
+				dc.fillStyle = '#FFFFFF';
+				dc.fill();
+				dc.strokeStyle = this.lapLabelBorderColour;
+				dc.stroke();
+				
+				dc.fillStyle = '#000000';
+				dc.fillText( sLap, getX(lap) + lapWidth/2, getY(0) );
+				xLast = xMiddle - tWidth/2 - 2;
+			}
+			
+			// Draw the legend.
+			dc.font = fontHeight + 'px Arial';
+			dc.textAlign = 'left';
+			dc.textBaseline = 'middle';
+			var x = xRight;
+			if( hasLapped ) {
+				var s = '{% trans "Lapped" %}';
+				x -= dc.measureText(s).width;
+				dc.fillStyle = '#000000';
+				dc.fillText( s, x, getY(nums.length) + rowHeight/2 );
+				x -= rowHeight * 1.2;
+				
+				dc.fillStyle = this.lappedBackgroundColour;
+				dc.fillRect( x + swatchBorder, getY(nums.length) + swatchBorder, swatchSize, swatchSize );
+				x -= rowHeight;
+			}
+			if( hasPrimes ) {
+				var s = '{% trans "Prime" %}';
+				x -= dc.measureText(s).width;
+				dc.fillStyle = '#000000';
+				dc.fillText( s, x, getY(nums.length) + rowHeight/2 );
+				x -= rowHeight * 1.2;
+				
+				dc.fillStyle = this.primeColour;
+				dc.fillRect( x + swatchBorder, getY(nums.length) + swatchBorder, swatchSize, swatchSize );
+				x -= rowHeight;
+			}
+			
+			// Update the y position for the next category.
+			dc.translate( 0, height+rowHeight );
+		}
+	}
+}
+
+var situationObj = null;
+function SetSituationZoom( rbutton ) {
+	situationObj.zoom = parseFloat(rbutton.value);
+	SituationRefresh();
+}
+
+function SetSituationTime( value ) {
+	if( situationObj == null )
+		return;
+		
+	if( value == undefined )
+		value = 10000;
+	value = parseInt( value );
+		
+	var tMax = GetRaceTMax();
+	
+	var tRace = tMax * (value / 10000.0);
+	var gs = GetSituationGaps( tRace );
+	situationObj.SetData( gs.gaps, gs.tAfterLeader, gs.title, gs.tCur );
+}
+function SituationRefresh() {
+	var timeRange = document.getElementById('idTimeRange');
+	SetSituationTime( timeRange.value );
+}
+
+var framesPerSec = 10;
+var waitMS = 1000/framesPerSec;
+var totalFrames = 2*60*framesPerSec;
+function SituationAnimate() {
+	console.log( 'SituationAnimate: ' + situationObj.animate );
+	
+	if( situationObj.animate ) {
+		var tMax = GetRaceTMax();
+		var tUpdate = tMax / totalFrames;
+	
+		situationObj.tCur += tUpdate;
+		if( situationObj.tCur >= tMax )
+			situationObj.tCur = 0.0;
+		situationObj.Draw();
+		
+		var timeRange = document.getElementById('idTimeRange');
+		timeRange.value = parseInt(1000.0 * situationObj.tCur / tMax);
+		console.log( situationObj.tCur );
+	}
+
+	setTimeout( SituationAnimate, waitMS );
+}
+
 {% endblock javascript %}
 
 {% block onload %}
 	dataProlog();
 	var d = data[bib];
-	document.getElementById('idHeader').innerHTML = GetBibName(bib) + (d.Team ? ' (' + d.Team + ')' : '');
+	
+	document.getElementById('idHeader').innerHTML = GetBibName(bib) + (d.Team ? ' <span style="font-size: 75%">(' + d.Team + ')</span>' : '');
 	updateCategoryResults();
 	updateCategories();
 	updateLapTable();
 	updateCompareDisplays();
+	
+	if( !isTimeTrial && isCanvasSupported() ) {
+		lapChartCanvas = document.getElementById('idLapChart');
+		lapChartObj = new LapChart();
+		lapChartObj.init( lapChartCanvas );
+		lapChartObj.draw();
+
+		var situationCanvas = document.getElementById('idSituation');
+		var timeRange = document.getElementById( 'idTimeRange' );
+		var situationDetail = document.getElementById( 'idSituationDetailDiv' );
+		situationObj = new Situation( situationCanvas, timeRange, situationDetail );
+		situationCanvas.addEventListener('click', function(event) { situationObj.processClick(event); }, false);
+		//situationObj.animate = true;
+		
+		SituationRefresh();
+		
+		function resizeCanvas() {
+			lapChartCanvas.width = window.innerWidth * 0.95;
+			lapChartCanvas.height = window.innerHeight * 0.6;
+			lapChartObj.draw();
+			
+			situationCanvas.width = window.innerWidth * 0.7;
+			situationCanvas.height = window.innerHeight * 0.75;
+			SituationRefresh();
+			
+			var ids = ['idGanttChart', 'idLapTimesChart', 'idGapChart', 'idLapPositionChart'];
+			for( var i = 0; i < ids.length; ++i ) {
+				var obj = document.getElementById(ids[i]);
+				obj.width = (window.innerWidth * 0.95) + 'px';
+				obj.chart.width = window.innerWidth * 0.95;
+			}
+			updateCompareDisplays();
+		}
+		resizeCanvas();
+		window.addEventListener('resize', resizeCanvas, false);
+			
+		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+			var activatedTab = e.target;
+			//situationObj.animate = (activatedTab == document.getElementById('sectionSituation'));
+			resizeCanvas();
+		});
+		
+		//SituationAnimate();
+	}
+	else {
+		document.getElementById('idLapChartDiv').className = 'hidden';
+	}
+
 {% endblock onload %}
 
 {% block content %}
@@ -702,15 +2067,76 @@ function updateCompareDisplays() {
 </div>
 {% endif %}
 <h4 id="idCategoryResults">Category Results</h4>
-<div id="idLapTable"></div>
-<br/>
-Compare&nbsp;to:&nbsp;<select id="idCompareSelect" onchange="compareSelectChange(this)"></select>&nbsp;&nbsp;&nbsp;&nbsp;Category:&nbsp;<select id="idCategorySelect" onchange="categorySelectChange(this)"></select>
-<br/><br/>
-<div id="idInfoTable"></div>
-<br/>
-<div id="idGanttChart" style="width: 720px; height: 136px;"></div>
-<div id="idLapTimesChart" style="width: 900px; height: 180px;"></div>
-<div id="idGapChart" style="width: 900px; height: 180px;"></div>
-<div id="idLapPositionChart" style="width: 900px; height: 180px;"></div>
+
+<ul class="nav nav-tabs">
+	<li class="active"><a data-toggle="tab" href="#sectionRiderComparison">{% trans "Comparison" %}</a></li>
+	<li><a data-toggle="tab" href="#sectionLapTimes">{% trans "Lap Times" %}</a></li>
+{% if not is_timetrial %}
+	<li><a data-toggle="tab" href="#sectionLapChart">{% trans "Lap Chart" %}</a></li>
+	<li><a data-toggle="tab" href="#sectionSituation">{% trans "Situation" %}</a></li>
+{% endif %}
+</ul>
+
+<div class="tab-content">
+	<div id="sectionRiderComparison" class="tab-pane fade in active">
+		<br/>
+		Compare&nbsp;to:&nbsp;<select id="idCompareSelect" onchange="compareSelectChange(this)"></select>&nbsp;&nbsp;&nbsp;&nbsp;Category:&nbsp;<select id="idCategorySelect" onchange="categorySelectChange(this)"></select>
+		<br/><br/>
+		<div id="idInfoTable"></div>
+		<br/>
+		<div id="idGanttChart" style="width: 720px; height: 136px;"></div>
+		<div id="idLapTimesChart" style="width: 900px; height: 180px;"></div>
+		<div id="idGapChart" style="width: 900px; height: 180px;"></div>
+		<div id="idLapPositionChart" style="width: 900px; height: 180px;"></div>
+	</div>
+	<div id="sectionLapTimes" class="tab-pane fade">
+		<div id="idLapTable"></div>
+	</div>
+{% if not is_timetrial %}
+	<div id="sectionLapChart" class="tab-pane fade">
+		<div id="idLapChartDiv">
+			<canvas id="idLapChart">
+			<a href="http://www.sites.google.com/site/crossmgrsoftware">CrossMgr</a> Requires support for the HTML5 Canvas.<br/>
+			Please upgrade to a more recent browser version.<br/>
+			For Internet Explorer (IE), you need version 9.0 or higher.<br/><br/>
+			Current versions of Chrome, FireFox and Opera work fine.
+			</canvas>
+		</div><!-- idLapChartDiv -->
+	</div>
+	<div id="sectionSituation" class="tab-pane fade">
+		<div id="idSituationDiv" class="noprint">
+			<table><tr>
+				<td style="vertical-align:top; text-align:center;">
+					<br/><br/><br/><br/>
+					{% trans "Zoom" %}<br/>
+					+<br/>
+					<input type="radio" name="zoom" value="5.0" onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="4.5" onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="4.0" onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="3.5" checked onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="3.0" onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="2.5" onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="2.0" onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="1.5" onclick="SetSituationZoom(this)"></input><br/>
+					<input type="radio" name="zoom" value="1.0" checked onclick="SetSituationZoom(this)"></input><br/>
+					-<br/>
+				</td>
+				<td style="vertical-align: top;">
+					{% trans "Time Slider" %}&nbsp;&nbsp;&nbsp;<input id="idTimeRange" type="range" min="0" max="10000" value="10000" style="width:70%;" oninput="SetSituationTime(this.value)" onchange="SetSituationTime(this.value)"></input><br/>
+					<canvas id="idSituation" width="800" height="600">
+					<a href="http://www.sites.google.com/site/crossmgrsoftware">CrossMgr</a> Requires support for the HTML5 Canvas.<br/>
+					Please upgrade to a more recent browser version.<br/>
+					For Internet Explorer (IE), you need version 9.0 or higher.<br/><br/>
+					Current versions of Chrome, FireFox and Opera work fine.
+					</canvas>
+				</td>
+				<td style="vertical-align: top;">
+					<div id="idSituationDetailDiv"></div>
+				</td>
+			</tr></table>
+		</div><!-- idSituationDiv -->
+	</div>
+{% endif %}
+</div>
 {% endblock content %}
 
