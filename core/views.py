@@ -2241,10 +2241,7 @@ def Participants( request, competitionId ):
 		object_checks.append( lambda p: p.has_any_events() )
 	
 	if object_checks:
-		failed = []
-		for p in participants:
-			if not all(oc(p) for oc in object_checks):
-				failed.append( p )
+		failed = [p for p in participants if not all(oc(p) for oc in object_checks)]
 		if failed:
 			participants = participants.exclude( pk__in=[p.pk for p in failed] )
 
