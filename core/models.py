@@ -1322,17 +1322,6 @@ class Event( models.Model ):
 			w.category_count_html
 		) for w in self.get_wave_set().all() ) + u'</li></ol>'
 	
-	'''
-	def get_participants( self ):
-		participants = set()
-		for w in self.get_wave_set().all():
-			participants |= set( w.get_participants_unsorted().select_related('license_holder','team') )
-		return participants
-		
-	def has_participants( self ):
-		return any( w.get_participants_unsorted().exists() for w in self.get_wave_set().all() )
-	'''
-	
 	def get_participants( self ):
 		categories = []
 		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
