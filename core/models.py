@@ -1162,10 +1162,7 @@ class Event( models.Model ):
 		return self.wave_set if self.event_type == 0 else self.wavett_set
 	
 	def get_categories( self ):
-		categories = set()
-		for w in self.get_wave_set().all(): 
-			categories |= set( w.categories.all() )
-		return sorted( categories, key = lambda c: c.sequence )
+		return list(self.get_categories_query())
 	
 	def get_wave_for_category( self, category ):
 		return self.get_wave_set().filter(categories=category).first()
@@ -1247,12 +1244,8 @@ class Event( models.Model ):
 	#----------------------------------------------------------------------------------------------------
 	
 	def get_potential_duplicate_bibs( self ):
-		categories = set()
-		for w in self.get_wave_set().all():
-			categories |= set( w.categories.all() )
-				
 		category_numbers = set()
-		for c in categories:
+		for c in self.get_categories_query():
 			for cn in CategoryNumbers.objects.filter( competition=self.competition, categories__in=[c] ):
 				category_numbers.add( cn )
 		
@@ -1322,14 +1315,21 @@ class Event( models.Model ):
 			w.category_count_html
 		) for w in self.get_wave_set().all() ) + u'</li></ol>'
 	
+	def get_categories_query( self ):
+		q = None
+		for w in self.get_wave_set().all():
+			if q is None:
+				q = w.categories.all()
+			else:
+				q |= w.categories.all()
+		return q or Categories.objects.none()
+	
 	def get_participants( self ):
-		categories = []
-		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
 		if not self.option_id:
 			return Participant.objects.filter(
 				competition=self.competition,
 				role=Participant.Competitor,
-				category__in=categories,
+				category__in=self.get_categories_query(),
 			).select_related('license_holder','team')
 		else:
 			return Participant.objects.filter(
@@ -1338,7 +1338,7 @@ class Event( models.Model ):
 					option_id=self.option_id,
 					participant__role=Participant.Competitor,
 					participant__competition=self.competition,
-					participant__category__in=categories,
+					participant__category__in=self.get_categories_query(),
 				).values_list('participant__pk', flat=True)
 			).select_related('license_holder','team')
 
@@ -1346,13 +1346,11 @@ class Event( models.Model ):
 		return get_num_nationalities( self.get_participants() )
 			
 	def has_participants( self ):
-		categories = []
-		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
 		if not self.option_id:
 			return Participant.objects.filter(
 				competition=self.competition,
 				role=Participant.Competitor,
-				category__in=categories,
+				category__in=self.get_categories_query(),
 			).exists()
 		else:
 			return ParticipantOption.objects.filter(
@@ -1360,17 +1358,15 @@ class Event( models.Model ):
 				option_id=self.option_id,
 				participant__role=Participant.Competitor,
 				participant__competition=self.competition,
-				participant__category__in=categories,
+				participant__category__in=self.get_categories_query(),
 			).exists()
 		
 	def get_participant_count( self ):
-		categories = []
-		map( categories.extend, (w.categories.all().values_list('pk', flat=True) for w in self.get_wave_set().all()) )
 		if not self.option_id:
 			return Participant.objects.filter(
 				competition=self.competition,
 				role=Participant.Competitor,
-				category__in=categories,
+				category__in=self.get_categories_query(),
 			).count()
 		else:
 			return ParticipantOption.objects.filter(
@@ -1378,7 +1374,7 @@ class Event( models.Model ):
 				option_id=self.option_id,
 				participant__role=Participant.Competitor,
 				participant__competition=self.competition,
-				participant__category__in=categories,
+				participant__category__in=self.get_categories_query(),
 			).count()
 
 	def get_ineligible( self ):
@@ -1401,7 +1397,7 @@ class Event( models.Model ):
 			options = list(
 				ParticipantOption( competition=self.competition, participant=participant, option_id=self.option_id )
 					for participant in Participant.objects.filter(
-						competition=self.competition, role=Participant.Competitor, category__in=self.get_categories()
+						competition=self.competition, role=Participant.Competitor, category__in=self.get_categories_query()
 					)
 			)
 			ParticipantOption.objects.bulk_create( options )

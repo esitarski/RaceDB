@@ -2241,15 +2241,16 @@ def Participants( request, competitionId ):
 		object_checks.append( lambda p: p.has_any_events() )
 	
 	if object_checks:
-		passed = []
+		failed = []
 		for p in participants:
-			if all(oc(p) for oc in object_checks):
-				passed.append( p )
-		participants = passed
+			if not all(oc(p) for oc in object_checks):
+				failed.append( p )
+		if failed:
+			participants = participants.exclude( pk__in=[p.pk for p in failed] )
 
 	if request.method == 'POST':
 		if 'export-excel-submit' in request.POST:
-			xl = get_participant_excel( Q(pk__in=[p.pk for p in participants]) )
+			xl = get_participant_excel( Q(pk__in=participants.values_list('pk',flat=True)) )
 			response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 			response['Content-Disposition'] = 'attachment; filename=RaceDB-Participants-{}.xlsx'.format(
 				datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
