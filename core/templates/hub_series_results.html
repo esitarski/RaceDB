@@ -1,5 +1,38 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load to_js %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+{% endblock srcjavascript %}
+
+{% block javascript %}
+google.charts.load('current', {'packages':['sankey']});
+google.charts.setOnLoadCallback(drawSankey);
+
+function drawSankey() {
+	var data = new google.visualization.DataTable();
+	data.addColumn('string', '{% trans "From" %}');
+	data.addColumn('string', '{% trans "To" %}');
+	data.addColumn('number', '{% if series.ranking_criteria == 1 %}{% trans "Time" %}{% else %}{% trans "Points" %}{% endif %}');
+	data.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+	data.addRows({{json_data|to_js}});
+
+	var options = {
+		width: 600,
+		sankey: {
+			iterations: 0,
+		},
+	  tooltip: {
+			textStyle: {fontSize: 11}
+		}
+	};
+
+	var chart = new google.visualization.Sankey(document.getElementById('idSankeyChart'));
+	chart.draw(data, options);
+}
+{% endblock javascript %}
+
 {% block content %}
 
 <style>
@@ -161,5 +194,8 @@ table.results-table tr th {
 {% endif %}
 	<li>{% trans "Most recent result." %}</li>
 </ol>
+
+<hr/>
+<div class='hidden-print' id="idSankeyChart" style="width: 900px; height: 900px;"></div>
 
 {% endblock content %}

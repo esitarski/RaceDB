@@ -1,3 +1,4 @@
+import re
 import datetime
 import operator
 from collections import defaultdict
@@ -293,6 +294,34 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 	
 	results, events = series_results.get_results_for_category( series, category )
 	group_categories = series.get_group_related_categories( category )
+	
+	# Create data for a Sankey diagram.
+	sankeyMax = 1000
+	total_values = [totalValue for lh, team, totalValue, gap, event_results in results][:sankeyMax]
+	if series.ranking_criteria == 1:
+		total_values = format_column_time( total_values )
+	else:
+		total_values = format_column_float( total_values )
+	
+	json_data = []
+	json_format = formatTime if series.ranking_criteria == 1 else lambda v: '{:.2f}'.format(v)
+	for rank, (lh, team, totalValue, gap, event_results) in enumerate(results[:sankeyMax], 1):
+		rider_name = lh.full_name()
+		node_name = u'{:2d}. {}: {}'.format( rank, total_values[rank-1], rider_name )
+		for er in event_results:
+			if not er or er.ignored:
+				continue
+			event_name = u'{}-{}: {}'.format( er.event.competition.name, er.event.name, er.event.date_time.strftime('%Y-%m-%d') )
+			json_data.append( [
+				node_name,
+				event_name,
+				{'v':er.value_for_rank, 'f':json_format(er.value_for_rank)},
+				u'{} \u2190 {}, {}{} \u2190 {}'.format(
+					rider_name,
+					re.sub(r'.00$|0$', '', json_format(er.value_for_rank)), er.rank_text, u'\u00A0\u2191' if er.upgraded else u'',
+					event_name
+				),
+			] )
 	
 	# Format the results based on the ranking criteria.
 	total_values = []

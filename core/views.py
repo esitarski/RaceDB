@@ -2243,7 +2243,7 @@ def Participants( request, competitionId ):
 	if object_checks:
 		failed = [p for p in participants if not all(oc(p) for oc in object_checks)]
 		if failed:
-			participants = participants.exclude( pk__in=[p.pk for p in failed] )
+			participants = participants.exclude( pk__in=[p.pk for p in failed][:800] )
 
 	if request.method == 'POST':
 		if 'export-excel-submit' in request.POST:
