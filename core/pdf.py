@@ -4,6 +4,57 @@ class PDF( fpdf.FPDF ):
 	def __init__( self, orientation='L', format='Letter' ):
 		super( PDF, self ).__init__( orientation=orientation, unit='pt', format=format )
 	
+	def scale_text_in_rectangle( self, x, y, width, height, text ):
+		text = unicode(text).encode('windows-1252', 'ignore')
+		asc_correct = 1.5 if self.font_family.endswith('-e') else 1.45
+		
+		t_height = 72.0*5.0
+		font_height = t_height * asc_correct
+		self.set_font_size( font_height )
+		t_width = self.get_string_width( text )
+		
+		sy = float(height) / t_height
+		sx = sy
+		t_width_new = t_width * sx
+		if t_width_new > width:
+			sx = float(width) / t_width
+			t_width_new = t_width * sx
+		x_left = (width-t_width_new)/2.0
+		
+		o = self._out
+		o( 'q' )
+		o( '1 0 0 1 {tx} {ty} cm'.format(tx=x+x_left, ty=self.h-(y+height)) )
+		o( '{sx} 0 0 {sy} 0 0 cm'.format(sx=sx, sy=sy) )
+		p_save = (self.h, self.k)
+		self.h = 0
+		self.k = 1.0
+		self.text( 0, 0, text )
+		self.h, self.k = p_save
+		o( 'Q' )
+	
+	def fit_text_in_rectangle( self, x, y, width, height, text, align = 'M' ):
+		text = unicode(text).encode('windows-1252', 'ignore')
+		
+		lineFactor = 1.15
+		fs = height
+		self.set_font_size( fs )
+		t_height = fs
+		t_width = self.get_string_width( text )
+		if t_width > width:
+			fs *= width / float(t_width)
+			self.set_font_size( fs )
+			t_width = self.get_string_width( text )
+		
+		if align == 'M':
+			x += (width - t_width) / 2.0
+		elif align == 'L':
+			pass
+		else:
+			x += width - t_width
+			
+		y += height - (height - fs) / 2.0 - fs*0.13
+		self.text( x, y, text )
+	
 	def table_in_rectangle( self,
 			x, y, width, height, table,
 			leftJustifyCols=None, hasHeader=True, horizontalLines=True, verticalLines=False ):
