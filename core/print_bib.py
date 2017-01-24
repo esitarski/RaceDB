@@ -18,6 +18,9 @@ def has_descenders( text ):
 def get_font_file( fname ):
 	parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 	return os.path.join(parent, 'fonts', fname)
+	
+def get_image_file( fname ):
+	return os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static', 'images', fname)
 
 def reset_font_cache():
 	font_cache = os.path.dirname( get_font_file('base.ttf') )
@@ -275,14 +278,14 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	return pdf_str
 	
 def print_body_bib( participant, copies=2, onePage=False ):
-	license_holder = participant.license_holder
 	copies = int(copies)
 	onePage = int(onePage)
 	
 	if onePage:
-		widthInches, heightInches = 8.5, 11.0/copies
-	else:
-		widthInches, heightInches = 5.9, 3.9
+		return print_aso_bib_two_per_page( participant )
+		
+	license_holder = participant.license_holder
+	widthInches, heightInches = 5.9, 3.9
 	
 	return print_bib_on_rect(
 		participant.bib,
@@ -301,6 +304,175 @@ def print_shoulder_bib( participant ):
 		'CrossMgr',
 		3.9, 2.4, 2
 	)
+
+#---------------------------------------------------------------------------------------------------------
+inch = 72.0
+cm = inch / 2.54 * 1.04
+
+def uci_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+	pdf.set_font( 'din1451alt', '', 16 )
+
+	w_page = 8.5*inch
+	h_page = 11*inch
+
+	# From UCI regs.
+	w_bib = 16*cm
+	h_bib = 18*cm
+
+	x = (w_page - w_bib)/2.0
+	y = (h_page - h_bib)/2.0
+
+	x_text_margin = 0.5*cm
+	
+	x_text = x + x_text_margin
+	y_text = y + 1.0*cm
+	
+	w_text = w_bib - 2*x_text_margin
+	h_text = 10*cm
+
+	y_advertising_top = y+h_bib-6*cm
+
+	pdf.add_page()
+	pdf.rect( x, y, w_bib, h_bib )
+	pdf.line( x, y_advertising_top, x+w_bib, y_advertising_top )
+	pdf.scale_text_in_rectangle( x_text, y_text, w_text, h_text, bib )
+
+def print_uci_bib( participant, copies=2 ):
+	license_holder = participant.license_holder
+	copies = int(copies)
+
+	pdf = PDF(orientation='P')
+	pdf.set_subject( 'Bib number and rider info in uci format.' )
+	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
+
+	for c in xrange(copies):
+		uci_bib( pdf, participant,bib, license_holder.first_name, license_holder.last_name, particpant.competition.name )
+		
+	return pdf.output( dest='s' )
+	
+#---------------------------------------------------------------------------------------------------------
+def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
+	name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+
+	w_page = 8.5*inch
+	h_page = 11*inch
+
+	# From UCI regs.
+	w_bib = 16*cm
+	h_bib = 18*cm
+
+	x = (w_page - w_bib)/2.0
+	y = (h_page - h_bib)/2.0
+
+	h_name_header = 1.5*cm
+
+	x_text_margin = 0.5*cm
+	y_text_margin = 0.5*cm
+
+	x_text = x + x_text_margin
+	y_text = y + h_name_header + y_text_margin
+
+	w_text = w_bib - 2*x_text_margin
+	h_text = 10*cm
+
+	y_advertising_top = y+h_name_header+h_text+y_text_margin*2
+
+	pdf.add_page()
+
+	x_header_margin = 0.5*cm
+	pdf.rect( x, y, w_bib, h_name_header )
+	pdf.set_font( 'Helvetica', 'B', 16 )
+	pdf.fit_text_in_rectangle( x+x_header_margin, y, w_bib-2*x_header_margin, h_name_header, name )
+
+	pdf.rect( x, y, w_bib, h_bib )
+	pdf.line( x, y_advertising_top, x+w_bib, y_advertising_top )
+	
+	if bib > 9999:
+		# Regular
+		pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'), uni=True)
+		pdf.set_font('din1451alt', '', 16 )
+	else:
+		# Bold
+		pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+		pdf.set_font('din1451alt-g', '', 16 )
+
+	#pdf.rect( x_text, y_text, w_text, h_text )
+	pdf.scale_text_in_rectangle( x_text, y_text, w_text, h_text, bib )
+
+def print_aso_bib( participant, copies=2 ):
+	license_holder = participant.license_holder
+	copies = int(copies)
+
+	pdf = PDF(orientation='P')
+	pdf.set_subject( 'Bib number and rider info in aso format.' )
+	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
+
+	for c in xrange(copies):
+		aso_bib( pdf, participant,bib, license_holder.first_name, license_holder.last_name, particpant.competition.name )
+		
+	return pdf.output( dest='s' )
+
+def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_name='' ):
+	name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+
+	w_page = 8.5*inch
+	h_page = 11*inch
+
+	h_name_header = 1.5*cm
+
+	x_text_margin = 0.5*cm
+	y_text_margin = 0.5*cm
+	x_header_margin = 0.5*cm
+
+	w_bib = 16*cm
+	h_bib = h_name_header + 10*cm + y_text_margin*2
+
+	w_text = w_bib - 2*x_text_margin
+	h_text = 10*cm
+
+	x = (w_page - w_bib)/2.0
+	y = (h_page - h_bib*2)/2.0
+	x_text = x + x_text_margin
+	
+	pdf.add_page()
+
+	for p in xrange(0, 2):
+		y_text = y + h_name_header + y_text_margin
+
+		pdf.rect( x, y, w_bib, h_name_header )
+		
+		pdf.set_font( 'Helvetica', 'B', 16 )
+		pdf.fit_text_in_rectangle( x+x_header_margin, y, w_bib-2*x_header_margin, h_name_header, name )
+
+		pdf.rect( x, y, w_bib, h_bib )
+		
+		if bib > 9999:
+			# Regular
+			pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'), uni=True)
+			pdf.set_font('din1451alt', '', 16 )
+		else:
+			# Bold
+			pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+			pdf.set_font('din1451alt-g', '', 16 )
+
+		#pdf.rect( x_text, y_text, w_text, h_text )
+		pdf.scale_text_in_rectangle( x_text, y_text, w_text, h_text, bib )
+		
+		y += h_bib
+		if p == 0:
+			pdf.line( 0, y, w_page, y )
+
+def print_aso_bib_two_per_page( participant ):
+
+	pdf = PDF(orientation='P')
+	pdf.set_subject( 'Bib number and rider info in modified aso format, two per page.' )
+	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
+
+	license_holder = participant.license_holder
+	aso_bib_two_per_page( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
+		
+	return pdf.output( dest='s' )
 
 #---------------------------------------------------------------------------------------------------------
 

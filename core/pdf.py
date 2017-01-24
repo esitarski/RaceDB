@@ -5,6 +5,9 @@ class PDF( fpdf.FPDF ):
 		super( PDF, self ).__init__( orientation=orientation, unit='pt', format=format )
 	
 	def scale_text_in_rectangle( self, x, y, width, height, text ):
+		'''
+			Make the text fit by stretching the font vertically or horizontally as necessary.
+		'''
 		text = unicode(text).encode('windows-1252', 'ignore')
 		asc_correct = 1.5 if self.font_family.endswith('-e') else 1.45
 		
@@ -26,13 +29,15 @@ class PDF( fpdf.FPDF ):
 		o( '1 0 0 1 {tx} {ty} cm'.format(tx=x+x_left, ty=self.h-(y+height)) )
 		o( '{sx} 0 0 {sy} 0 0 cm'.format(sx=sx, sy=sy) )
 		p_save = (self.h, self.k)
-		self.h = 0
-		self.k = 1.0
+		self.h, self.k = 0, 1.0
 		self.text( 0, 0, text )
 		self.h, self.k = p_save
 		o( 'Q' )
 	
 	def fit_text_in_rectangle( self, x, y, width, height, text, align = 'M' ):
+		'''
+			Make the font bigger/smaller to make it fit but to not stretch it.
+		'''
 		text = unicode(text).encode('windows-1252', 'ignore')
 		
 		lineFactor = 1.15
