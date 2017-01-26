@@ -2146,6 +2146,9 @@ class Result(models.Model):
 	
 	ave_kmh = models.FloatField( default=0.0, null=True, blank=True, verbose_name=_('Ave km/h') )
 	
+	points = models.SmallIntegerField( default=0, verbose_name=_('Points') )
+	time_bonus = DurationField.DurationField( null=True, blank=True, verbose_name=_('Time Bonus') )
+	
 	@property
 	def time_html( self ):
 		return mark_safe()
@@ -3567,6 +3570,8 @@ class Series( Sequence ):
 		verbose_name=_('Tie-breaking Rule')
 	)
 	consider_most_events_completed = models.BooleanField( default=False, verbose_name=_('Consider Most Events Completed') )
+	
+	consider_primes = models.BooleanField( default=True, verbose_name=_('Consider Points or Time Primes') )
 	
 	BEST_RESULTS_CHOICES = [(0, _('All Results')), (1, _('Best Result Only'))] + [
 		(i, string_concat('{} '.format(i), _('Best Results Only'))) for i in xrange(2,31)

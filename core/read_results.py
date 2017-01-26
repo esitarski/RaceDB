@@ -115,6 +115,9 @@ def read_results_crossmgr( payload ):
 			cls.objects.bulk_create( objs )
 			del objs[:]
 	
+	prime_points = {p['winnerBib']:p['points'] for p in payload.get('primes',[]) if p.get('points',None) }
+	prime_time_bonus = {p['winnerBib']:DurationField.formatted_timedelta(seconds=p['timeBonus']) for p in payload.get('primes',[]) if p.get('timeBonus',None) }
+	
 	for cd in payload['catDetails']:
 		if cd['catType'] != 'Start Wave' or cd['name'] == 'All':
 			continue
@@ -177,10 +180,14 @@ def read_results_crossmgr( payload ):
 				
 				wave_rank=wave_rank,
 				wave_starters=wave_starters,
-				wave_gap = format_gap( cd, wave_rank ),
+				wave_gap = format_gap( cd, wave_rank ),				
 			)
 			add_if_exists( fields, 'adjustment_time', d, 'ttPenalty' )
 			add_if_exists( fields, 'adjustment_note', d, 'ttNote' )
+			if bib in prime_points:
+				fields['points'] = prime_points[bib]
+			if bib in prime_time_bonus:
+				fields['time_bonus'] = prime_time_bonus[bib]
 			if ave_kmh:
 				fields['ave_kmh'] = ave_kmh
 

@@ -75,14 +75,33 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 		get_points = None
 	
 	if get_points:
-		def get_value_for_rank( rr, rank, rrWinner ):
-			return get_points( rank, rr.status )
+		if series.consider_primes:
+			def get_value_for_rank( rr, rank, rrWinner ):
+				return get_points( rank, rr.status ) + rr.points
+		else:
+			def get_value_for_rank( rr, rank, rrWinner ):
+				return get_points( rank, rr.status )
 	elif series.ranking_criteria == 1:	# Time
-		def get_value_for_rank( rr, rank, rrWinner ):
-			try:
-				return rr.finish_time.total_seconds()
-			except:
-				return 24.0*60.0*60.0
+		if series.consider_primes:
+			def get_value_for_rank( rr, rank, rrWinner ):
+				try:
+					t = rr.finish_time.total_seconds()
+				except:
+					return 24.0*60.0*60.0
+				if rr.adjustment_time:
+					t += rr.adjustment_time.total_seconds()
+				if rr.time_bonus:
+					t -= time_bonus.total_seconds()
+				return t
+		else:
+			def get_value_for_rank( rr, rank, rrWinner ):
+				try:
+					t = rr.finish_time.total_seconds()
+				except:
+					return 24.0*60.0*60.0
+				if rr.adjustment_time:
+					t += rr.adjustment_time.total_seconds()
+				return t
 	elif series.ranking_criteria == 2:	# % Winner / Time
 		def get_value_for_rank( rr, rank, rrWinner ):
 			try:
@@ -194,6 +213,7 @@ def adjust_for_upgrades( series, eventResults ):
 		eventResults[:] = [rr for rr in eventResults if rr.value_for_rank > 0.0]
 		
 def series_results( series, categories, eventResults ):
+	scoreByPoints = (series.ranking_criteria == 0)
 	scoreByTime = (series.ranking_criteria == 1)
 	scoreByPercent = (series.ranking_criteria == 2)
 	bestResultsToConsider = series.best_results_to_consider

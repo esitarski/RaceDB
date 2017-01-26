@@ -84,6 +84,8 @@ class SeriesForm( ModelForm ):
 				Field('ranking_criteria'),
 				Field('best_results_to_consider'),
 				Field('must_have_completed'),
+				HTML('&nbsp;'*4),
+				Field('consider_primes'),
 			),
 			Row( HTML('<hr/>') ),
 			Row(

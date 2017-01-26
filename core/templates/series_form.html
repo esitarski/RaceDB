@@ -32,6 +32,13 @@
 <ol>
 	<li>{{series.get_best_results_to_consider_display}} {% trans "Count" %}</li>
 	<li>{% trans "Must have completed" %} {{series.get_must_have_completed_display}}</li>
+	{% if series.consider_primes %}
+		{% if series.ranking_criteria == 0 %}
+			<li>{% trans "Include Prime Points" %}</li>
+		{% elif series.ranking_criteria == 1 %}
+			<li>{% trans "Include Prime Time Bonuses" %}</li>
+		{% endif %}
+	{% endif %}
 </ol>
 <h5>{% trans "Tie-Breaking Rules" %}:</h5>
 <ol>
