@@ -3938,7 +3938,7 @@ class ExportCompetitionForm( Form ):
 		self.helper.layout = Layout(
 			Row(Field('export_as_template')),
 			Row(Field('remove_ftp_info')),
-			Row(HTML('Cloud Server URL: <strong>' + url + '</strong>') if url else HTML(_('To Export to Cloud Race, configure Cloud Server URL in SystemInfo')) )
+			Row(HTML('Cloud Server URL: <strong>' + url + '</strong>') if url else HTML(_('To Export to Cloud RaceDB, configure Cloud Server URL in SystemInfo')) )
 		)
 		
 		self.additional_buttons = []
