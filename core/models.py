@@ -1,6 +1,6 @@
 from django.db import models, connection
 from django.db import transaction, IntegrityError
-from django.db.models import Q, Max, Count
+from django.db.models import Q, F, Max, Count
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -201,9 +201,14 @@ class CategoryFormat(models.Model):
 		verbose_name = _('CategoryFormat')
 		verbose_name_plural = _('CategoryFormats')
 
-def init_sequence( Class, obj ):
+def init_sequence_last( Class, obj ):
 	if not obj.sequence:
-		obj.sequence = Class.objects.count() + 1
+		obj.sequence = Class.objects.all().count() + 1
+		
+def init_sequence_first( Class, obj ):
+	if not obj.sequence:
+		Class.objects.all().update(sequence = F('sequence')+1)
+		obj.sequence = 1
 		
 class Category(models.Model):
 	format = models.ForeignKey( CategoryFormat, db_index = True )
@@ -218,7 +223,7 @@ class Category(models.Model):
 	sequence = models.PositiveSmallIntegerField( default = 0, verbose_name = _('Sequence') )
 	
 	def save( self, *args, **kwargs ):
-		init_sequence( Category, self )
+		init_sequence_last( Category, self )
 		return super( Category, self ).save( *args, **kwargs )
 	
 	def make_copy( self, category_format ):
@@ -254,7 +259,7 @@ class Discipline(models.Model):
 	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = 0 )
 	
 	def save( self, *args, **kwargs ):
-		init_sequence( Discipline, self )
+		init_sequence_first( Discipline, self )
 		return super( Discipline, self ).save( *args, **kwargs )
 	
 	def __unicode__( self ):
@@ -270,7 +275,7 @@ class RaceClass(models.Model):
 	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = 0 )
 	
 	def save( self, *args, **kwargs ):
-		init_sequence( RaceClass, self )
+		init_sequence_first( RaceClass, self )
 		return super( RaceClass, self ).save( *args, **kwargs )
 	
 	def __unicode__( self ):
@@ -363,7 +368,7 @@ class NumberSet(models.Model):
 		return bib_available_all
 	
 	def save( self, *args, **kwargs ):
-		init_sequence( NumberSet, self )
+		init_sequence_first( NumberSet, self )
 		self.range_str = self.reRangeExcept.sub( u'', self.range_str )
 		return super( NumberSet, self ).save( *args, **kwargs )
 		
@@ -457,7 +462,7 @@ class SeasonsPass(models.Model):
 	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = 0 )
 
 	def save( self, *args, **kwargs ):
-		init_sequence( SeasonsPass, self )
+		init_sequence_first( SeasonsPass, self )
 		return super( SeasonsPass, self ).save( *args, **kwargs )
 	
 	def __unicode__( self ):
@@ -3258,7 +3263,7 @@ class WaveTT( WaveBase ):
 		default=0 )
 	
 	def save( self, *args, **kwargs ):
-		init_sequence( WaveTT, self )
+		init_sequence_last( WaveTT, self )
 		return super( WaveTT, self ).save( *args, **kwargs )
 	
 	def get_results( self ):
