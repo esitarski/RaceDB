@@ -609,7 +609,7 @@ class Competition(models.Model):
 	)
 	recurring = models.PositiveSmallIntegerField(choices=RECURRING_CHOICES, default=0, verbose_name=_('Recurring') )
 	
-	bib_label_print = models.BooleanField( default=False, verbose_name=_("1 Bib Label Print"), help_text=_('2 bibs on 2 labels') )
+	bib_label_print = models.BooleanField( default=False, verbose_name=_("1 Bib Label Print"), help_text=_('1 bib on 1 label') )
 	bibs_label_print = models.BooleanField( default=False, verbose_name=_("2 Bibs Label Print"), help_text=_('2 bibs on 2 labels') )
 	bibs_laser_print = models.BooleanField( default=False, verbose_name=_("2 Bibs Laser Print"), help_text=_('2 bibs on one page') )
 	shoulders_label_print = models.BooleanField( default=False, verbose_name=_("2 Shoulders Label Print"), help_text=_('2 numbers on 2 labels') )
