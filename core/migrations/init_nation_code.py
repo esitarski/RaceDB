@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import migrations, models, transaction
 
 def init_nation_code(apps, schema_editor):
+	'''
 	LicenseHolder = apps.get_model("core", "LicenseHolder")
 	
 	success = True
@@ -14,6 +15,8 @@ def init_nation_code(apps, schema_editor):
 				lh.nation_code = lh.uci_code[:3]
 				lh.save()
 				success = True
+	'''
+	pass
 
 class Migration(migrations.Migration):
 

@@ -413,6 +413,7 @@ def LicenseHoldersDisplay( request ):
 		('correct-errors-submit', _('Correct Errors'), 'btn btn-primary'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
 		('auto-create-tags-submit', _('Auto Create All Tags'), 'btn btn-primary'),
+		('reset-existing-bibs-submit', _('Reset Existing Bib Numbers'), 'btn btn-primary'),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
 	]
@@ -442,6 +443,9 @@ def LicenseHoldersDisplay( request ):
 			
 		if 'auto-create-tags-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersAutoCreateTags') )
+			
+		if 'reset-existing-bibs-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersResetExistingBibs') )
 			
 		if 'import-excel-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersImportExcel') )
@@ -716,6 +720,19 @@ def LicenseHoldersMergeDuplicatesOK( request, mergeId, duplicateIds ):
 	license_holder_merge_duplicates( license_holder_merge, duplicates )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
+#-----------------------------------------------------------------------
+@access_validation()
+def LicenseHoldersResetExistingBibs( request, confirmed=False ):
+	if confirmed:
+		LicenseHolder.objects.exclude(existing_bib__isnull=True).update( existing_bib=None )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Reset Exsting Bibs')
+	message = _('This will reset all existing bibs to null (no value).')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'LicenseHoldersResetExistingBibs/1/'
+	return render( request, 'are_you_sure.html', locals() )
+
 #-----------------------------------------------------------------------
 @access_validation()
 def LicenseHolderNew( request ):
@@ -3938,7 +3955,7 @@ class ExportCompetitionForm( Form ):
 		self.helper.layout = Layout(
 			Row(Field('export_as_template')),
 			Row(Field('remove_ftp_info')),
-			Row(HTML('Cloud Server URL: <strong>' + url + '</strong>') if url else HTML(_('To Export to Cloud RaceDB, configure Cloud Server URL in SystemInfo')) )
+			Row(HTML('Cloud Server URL: <strong>' + url + '</strong>') if url else HTML(_('To Export to Cloud Race, configure Cloud Server URL in SystemInfo')) )
 		)
 		
 		self.additional_buttons = []

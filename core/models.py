@@ -1794,6 +1794,10 @@ class LicenseHolder(models.Model):
 		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
 		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'').upper() )
 		
+		print '*****', self.last_name, self.exsting_bib
+		if not( self.existing_bib is None or isinstance(self.existing_bib, (int,long)) ):
+			self.existing_bib = None
+		
 		for f in ('last_name', 'first_name', 'city', 'state_prov', 'nationality', 'nation_code'):
 			setattr( self, f, (getattr(self, f) or '').strip() )
 		for f in ['license_code', 'existing_tag', 'existing_tag2']:
@@ -4062,10 +4066,20 @@ def fix_non_unique_number_set_entries():
 	for ns in NumberSet.objects.all():
 		ns.normalize()
 
+def fix_nation_code():
+	success = True
+	while success:
+		with transaction.atomic():
+			success = False
+			for lh in LicenseHolder.objects.filter(nation_code__exact='').exclude(uci_code__exact='')[:999]:
+				lh.save()
+				success = True
+
 def models_fix_data():
 	print 'Removing leading zeroes in license codes and chip tags...'
 	fix_bad_license_codes()
 	fix_non_unique_number_set_entries()
+	fix_nation_code()
 
 
 

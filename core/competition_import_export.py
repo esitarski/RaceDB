@@ -198,10 +198,6 @@ def competition_deserializer( object_list, **options ):
 		Model = _get_model(d["model"])
 		ts.flush( Model )
 		
-		#print "**", Model._meta.db_table
-		#if 'core_legal' in Model._meta.db_table or 'core_competition' in Model._meta.db_table:
-		#	import pdb; pdb.set_trace()
-			
 		data = {}
 		if 'pk' in d:
 			try:

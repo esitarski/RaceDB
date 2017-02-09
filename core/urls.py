@@ -176,6 +176,8 @@ urlpatterns = [
 	url(r'^(?i).*LicenseHoldersSelectMergeDuplicate/(?P<duplicateIds>[0123456789,]+)/$', views.LicenseHoldersSelectMergeDuplicate),
 	url(r'^(?i).*LicenseHoldersMergeDuplicates/(?P<mergeId>\d+)/(?P<duplicateIds>[0123456789,]+)/$', views.LicenseHoldersMergeDuplicates),
 	url(r'^(?i).*LicenseHoldersMergeDuplicatesOK/(?P<mergeId>\d+)/(?P<duplicateIds>[0123456789,]+)/$', views.LicenseHoldersMergeDuplicatesOK),
+	url(r'^(?i).*LicenseHoldersResetExistingBibs/$', views.LicenseHoldersResetExistingBibs),
+	url(r'^(?i).*LicenseHoldersResetExistingBibs/(?P<confirmed>\d+)/$', views.LicenseHoldersResetExistingBibs),
 	
 	url(r'^(?i).*Teams/$', team.TeamsDisplay),
 	url(r'^(?i).*TeamNew/$', team.TeamNew),
