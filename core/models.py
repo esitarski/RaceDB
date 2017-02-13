@@ -130,6 +130,14 @@ class SystemInfo(models.Model):
 	
 	cloud_server_url = models.CharField( max_length = 160, blank = True, default = '', verbose_name = _('Cloud Server Url')  )
 	
+	def get_cloud_server_url( url_ref ):
+		url = self.cloud_server_url
+		i = url.find( 'RaceDB' )
+		if i > 0:
+			url = url[:i+len('RaceDB')] + '/'			
+		url += url_ref + '/'
+		return url
+	
 	@classmethod
 	def get_tag_template_default( cls ):
 		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in xrange(4))
@@ -1794,7 +1802,6 @@ class LicenseHolder(models.Model):
 		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
 		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'').upper() )
 		
-		print '*****', self.last_name, self.exsting_bib
 		if not( self.existing_bib is None or isinstance(self.existing_bib, (int,long)) ):
 			self.existing_bib = None
 		

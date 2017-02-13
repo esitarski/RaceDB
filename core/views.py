@@ -417,40 +417,34 @@ def LicenseHoldersDisplay( request ):
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
 	]
+
+	if SystemInfo.get_singleton().cloud_server_url:
+		btns.append(
+		('cloud-import-submit', _('Cloud Import'), 'btn btn-primary'),
+		)
+	
 	if request.method == 'POST':
 	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
-		if 'search-by-barcode-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHolderBarcodeScan') )
-			
-		if 'search-by-tag-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHolderRfidScan') )
-			
 		if 'clear-search-submit' in request.POST:
 			request.session['license_holder_filter'] = ''
 			return HttpResponseRedirect( '.' )
-			
-		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
-			
-		if 'correct-errors-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersCorrectErrors') )
-			
-		if 'manage-duplicates-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )
-			
-		if 'auto-create-tags-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersAutoCreateTags') )
-			
-		if 'reset-existing-bibs-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersResetExistingBibs') )
-			
-		if 'import-excel-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHoldersImportExcel') )
-			
-		form = SearchForm( btns, request.POST )
+
+		for submit_btn, action in (
+				('cancel-submit',				lambda: HttpResponseRedirect( getContext(request,'cancelUrl')) ),
+				('search-by-barcode-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHolderBarcodeScan') )),
+				('search-by-tag-submit', 		lambda: HttpResponseRedirect( pushUrl(request,'LicenseHolderRfidScan') )),
+				('new-submit',					lambda: HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )),
+				('correct-errors-submit',		lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersCorrectErrors') )),
+				('manage-duplicates-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )),
+				('auto-create-tags-submit',		lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersAutoCreateTags') )),
+				('reset-existing-bibs-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersResetExistingBibs') )),
+				('import-excel-submit',			lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersImportExcel') )),
+				('cloud-import-submit',			lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersCloudImport') )),
+			):
+			if submit_btn in request.POST:
+				return action()
+		
+		form = SearchForm( btns, request.POST, additional_buttons_on_new_row=True )
 		if form.is_valid():
 			search_text = form.cleaned_data['search_text']
 			request.session['license_holder_filter'] = search_text
@@ -466,7 +460,7 @@ def LicenseHoldersDisplay( request ):
 				)
 				return response
 	else:
-		form = SearchForm( btns, initial = {'search_text': search_text} )
+		form = SearchForm( btns, initial = {'search_text': search_text}, additional_buttons_on_new_row=True )
 	
 	license_holders = license_holders_from_search_text( search_text )
 	isEdit = True
@@ -1386,6 +1380,62 @@ def LicenseHoldersImportExcel( request ):
 	
 	return render( request, 'license_holder_import_excel.html', locals() )
 
+#-----------------------------------------------------------------------
+def get_compressed_license_holder_json():
+	# Create a temp file.
+	gzip_stream = tempfile.TemporaryFile()
+	# Create a gzip and connect it to the temp file.
+	gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode="wb", filename='{}.json'.format(license_holder) )
+	# Write the json to the gzip obj, which compresses it and writes it to the temp file.
+	license_holder_export( gzip_handler )
+	# Make sure gzip flushes all its buffers.
+	gzip_handler.flush()
+	gzip_handler.close()	# Does not close underlying fileobj.
+	return gzip_stream
+
+def handle_export_license_holders():
+	gzip_stream = get_compressed_license_holder_json()
+		
+	# Generate the response using the file wrapper, content type: x-gzip
+	# Since this file can be big, best to use the StreamingHTTPResponse
+	# that way we can guarantee that the file will be sent entirely.
+	response = StreamingHttpResponse( gzip_stream, content_type='application/x-gzip' )
+
+	# Content size
+	gzip_stream.seek(0, 2)
+	response['Content-Length'] = gzip_stream.tell()
+	gzip_stream.seek( 0 )
+
+	# Add content disposition so the browser will download the file.
+	response['Content-Disposition'] = 'attachment; filename={}.gz'.format(competition.get_filename_base())
+
+	# Send back the response to the request.
+	return response	
+
+@csrf_exempt
+def LicenseHolderCloudDownload( request ):
+	print 'LicenseHolderCloudDownload: processing...'
+	return handle_export_license_holders()
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def LicenseHoldersCloudImport( request, confirmed=False ):
+	if confirmed:
+		url = SystemInfo.get_singleton().get_cloud_server_url( 'LicenseHolderCloudDownload' )
+		response = requests.get( url, stream=True )
+		if response.status_code == requests.codes.ok:
+			gzip_handler = gzip.GzipFile( fileobj=response.raw, mode='rb' )
+			license_holder_import( gzip_handler )
+		else:
+			pass
+		return render( request, 'license_holder_cloud_import.html', locals() )
+		
+	page_title = _('Import all License Holders from Cloud Server')
+	message = _("This will add/update all License Holders in this database to match the Cloud Server..")
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'LicenseHoldersCloudImport/'
+	return render( request, 'are_you_sure.html', locals() )
+	
 #-----------------------------------------------------------------------
 @autostrip
 class AdjustmentForm( Form ):
@@ -3932,6 +3982,7 @@ def QRCode( request ):
 	
 #-----------------------------------------------------------------------
 from competition_import_export import competition_import, competition_export, get_competition_name_start_date
+from competition_import_export import license_holder_import, license_holder_export
 import tempfile
 from wsgiref.util import FileWrapper
 import json
@@ -3990,7 +4041,7 @@ def handle_export_competition( competition, export_as_template=False, remove_ftp
 	gzip_stream.seek( 0 )
 
 	# Add content disposition so the browser will download the file.
-	response['Content-Disposition'] = 'attachment; filename={}.gzip'.format(competition.get_filename_base())
+	response['Content-Disposition'] = 'attachment; filename={}.gz'.format(competition.get_filename_base())
 
 	# Send back the response to the request.
 	return response	
@@ -4009,17 +4060,6 @@ def CompetitionExport( request, competitionId ):
 	
 		form = ExportCompetitionForm(request.POST)
 		if form.is_valid():
-			url = SystemInfo.get_singleton().cloud_server_url
-			
-			i = url.find( 'RaceDB' )
-			if i > 0:
-				url = url[:i+len('RaceDB')]
-				
-			if not url.endswith('/'):
-				url += '/'
-			if 'CompetitionCloudUpload' not in url:
-				url += 'CompetitionCloudUpload/'
-
 			if 'ok-cloud-submit' in request.POST:
 				gzip_stream = get_compressed_competition_json(
 					competition,
@@ -4032,6 +4072,7 @@ def CompetitionExport( request, competitionId ):
 					'Content-Type': 'application/octet-stream',
 				}
 				gzip_stream.seek(0, 0)
+				url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudUpload' )			
 				response = requests.post(url, data=gzip_stream, headers=headers)
 			else:
 				return handle_export_competition(
@@ -4059,7 +4100,7 @@ class ImportCompetitionForm( Form ):
 		self.helper.form_class = 'form-inline'
 		
 		self.helper.layout = Layout(
-			Row(Field('json_file', accept=".gzip,.gz,.json")),
+			Row(Field('json_file', accept=".gz,.gzip,.json")),
 			Row(HTML('&nbsp;')),
 			Row(Col(Field('name'), 6), Col(Field('start_date'), 3)),
 			Row(Field('import_as_template')),

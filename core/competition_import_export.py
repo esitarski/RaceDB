@@ -82,7 +82,7 @@ def _build_instance(Model, data, db, field_names, existing_license_codes):
 	"""
 	Build a model instance.
 	Attempt to find an existing database record based on existing related fields as well as important data fields.
-	Returns new instance and a flag, True an update to an existing record, False if this is a new record.
+	Returns new instance and a flag, True if an update to an existing record, False if this is a new record.
 	"""
 	
 	processing.inc(Model.__name__)
@@ -167,7 +167,7 @@ def instance_changed( instance, existing_instance ):
 	if not existing_instance:
 		return True
 	return instance.__dict__ != existing_instance.__dict__
-	
+
 def competition_deserializer( object_list, **options ):
 	"""
 	Deserialize complex Python objects back into Django ORM instances.
@@ -189,6 +189,8 @@ def competition_deserializer( object_list, **options ):
 	old_new = {}
 	
 	existing_license_codes = set( LicenseHolder.objects.all().values_list('license_code',flat=True) )
+	more_recently_updated_license_holders = None
+	more_recently_updated_waivers = None
 	
 	ts = transaction_save( old_new )
 	while object_list:
@@ -296,31 +298,31 @@ def competition_deserializer( object_list, **options ):
 			if existing_instance:	# This is an update as there is an existing instance.
 				# Check whether the existing record is more recent and should not be preserved.
 				if Model == LicenseHolder:
-					if instance.id not in more_recently_updated_license_holders:
+					if not more_recently_updated_license_holders or instance.id not in more_recently_updated_license_holders:
 						ts.save( Model, db_object, instance, pk_old )
 				elif Model == Waiver:
-					if instance.license_holder.id not in more_recently_updated_waivers:
+					if not more_recently_updated_waivers or instance.license_holder.id not in more_recently_updated_waivers:
 						ts.save( Model, db_object, instance, pk_old )
 				elif Model == LegalEntity:
 					existing_legal_entity = LegalEntity.objects.get(id=instance.id)
 					if instance.waiver_expiry_date > existing_legal_entity.waiver_expiry_date:
 						ts.save( Model, db_object, instance, pk_old )
 				elif Model == NumberSetEntry:
-					if instance.id not in more_recently_updated_license_holders:
+					if not more_recently_updated_license_holders or instance.id not in more_recently_updated_license_holders:
 						if instance.date_lost:
 							if instance.date_lost != existing_instance.date_lost:
-								competition.number_set.set_lost(instance.license_holder, instance.bib, instance.date_lost)
+								existing_instance.number_set.set_lost(instance.license_holder, instance.bib, instance.date_lost)
 						else:
 							if existing_instance.bib != instance.bib:
-								competition.number_set.assign_bib(instance.license_holder, instance.bib)
+								existing_instance.number_set.assign_bib(instance.license_holder, instance.bib)
 				else:
 					ts.save( Model, db_object, instance, pk_old )
 			else:
 				if Model == NumberSetEntry:
 					if instance.date_lost:
-						competition.number_set.set_lost(instance.bib, instance.license_holder, instance.date_lost)
+						NumberSet.objects.get(pk=instance.number_set_pk).set_lost(instance.bib, instance.license_holder, instance.date_lost)
 					else:
-						competition.number_set.assign_bib(instance.license_holder, instance.bib)
+						NumberSet.objects.get(pk=instance.number_set_pk).assign_bib(instance.license_holder, instance.bib)
 				else:
 					ts.save( Model, db_object, instance, pk_old )
 			
@@ -382,18 +384,12 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
   
 	license_holder_ids = set()
 	def get_license_holders():
-		assert not license_holder_ids
-		for p in competition.get_participants():
-			if p.license_holder_id not in license_holder_ids:
-				license_holder_ids.add( p.license_holder_id )
-				yield p.license_holder
+		license_holders = LicenseHolder.objects.filter( pk__in=competition.get_participants().values_list('license_holder',flat=True).distinct() )
+		license_holder_ids.update( license_holders )
+		return license_holders
 
 	def get_teams():
-		teams_seen = set()
-		for p in competition.get_participants():
-			if p.team and p.team_id not in teams_seen:
-				teams_seen.add( p.team_id )
-				yield p.team
+		return Team.objects.filter( pk__in=competition.get_participants().exclude(team__isnull=True).values_list('team',flat=True).distinct() )
 	
 	arr = []
 	arr.extend( competition.report_labels.all() )
@@ -454,12 +450,40 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 			isinstance(o, Team))
 		]
 	
-	# Serialize all the object to json.
+	# Serialize all the objects to json.
 	json_serializer = serializers.get_serializer("json")()
-	json_serializer.serialize(arr, indent=1, stream=stream)
+	json_serializer.serialize(arr, indent=0, stream=stream)
 
 	if remove_ftp_info:
 		for k, v in ftp_info_save.iteritems():
 			setattr( competition, k, v )
 
 	return arr
+
+#-----------------------------------------------------------------------
+
+def license_holder_export( stream, q=None ):
+	if q is None:
+		q = LicenseHolder.objects.all()
+		
+	arr = []
+	
+	arr.extend( Team.objects.filter( pk__in=Participant.objects.exclude(team__isnull=True).values_list('team',flat=True).distinct() ) )
+	arr.extend( q )
+	for ns in NumberSet.objects.all():
+		arr.append( ns )
+		arr.extend( ns.numbersetentry_set.all() )
+	for sp in SeasonsPass.objects.all():
+		arr.append( sp )
+		arr.extend( sp.seasonspassholder_set.all() )
+	for le in LegalEntity.objects.all():
+		arr.append( le )
+		arr.extend( le.waiver_set.all() )
+		
+	# Serialize all the objects to json.
+	json_serializer = serializers.get_serializer("json")()
+	json_serializer.serialize(arr, indent=0, stream=stream)
+
+	return arr
+
+license_holder_import = competition_import

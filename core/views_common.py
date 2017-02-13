@@ -115,6 +115,7 @@ class SearchForm( Form ):
 	
 	def __init__(self, additional_buttons, *args, **kwargs):
 		self.additional_buttons = additional_buttons
+		additional_buttons_on_new_row = kwargs.pop('additional_buttons_on_new_row', False)
 		hide_cancel_button = kwargs.pop( 'hide_cancel_button', False )
 		
 		super(SearchForm, self).__init__(*args, **kwargs)
@@ -125,6 +126,8 @@ class SearchForm( Form ):
 		button_args = [
 			Submit( 'search-submit', 'Search', css_class = 'btn btn-primary hidden-print' ),
 		]
+		
+		Layout( Row( Col( Field('search_text', size=80), 6 ),) )
 		
 		# Add additional search buttons.
 		for ab in additional_buttons:
@@ -138,23 +141,18 @@ class SearchForm( Form ):
 			
 		# Add non-search buttons.
 		if additional_buttons:
-			button_args.append( HTML('&nbsp;' * 8) )
+			if additional_buttons_on_new_row:
+				self.helper.layout.append( Row( *button_args ) )
+				button_args = []
+			else:
+				button_args.append( HTML('&nbsp;' * 8) )
 			for ab in additional_buttons:
 				name, value, cls = ab[:3]
 				if len(ab) == 3:
 					button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
 		
-		Layout(
-			Row(
-				Col( Field('search_text', size=80), 6 ),
-			)
-		)
 		self.helper.layout.append(  HTML( '{{ form.errors }} {{ form.non_field_errors }}' ) )
-		
-		self.helper.layout.extend( [
-				Row( *button_args ),
-			]
-		)
+		self.helper.layout.append( Row( *button_args ) )
 
 #--------------------------------------------------------------------------------------------
 
@@ -165,7 +163,7 @@ NEW_BUTTONS		= OK_BUTTON | SAVE_BUTTON | CANCEL_BUTTON
 DELETE_BUTTONS	= OK_BUTTON | CANCEL_BUTTON
 EDIT_BUTTONS	= 0xFFFF
 
-def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, print_button=None, cancel_alias=None ):
+def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, print_button=None, cancel_alias=None, additional_buttons_on_new_row=False ):
 	btns = []
 	if button_mask & SAVE_BUTTON:
 		btns.append( Submit('save-submit', _('Save'), css_class='btn btn-primary hidden-print') )
@@ -174,14 +172,8 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 	if button_mask & CANCEL_BUTTON:
 		btns.append( Submit('cancel-submit', (cancel_alias or _('Cancel')), css_class='btn btn-warning hidden-print') )
 	
-	if additional_buttons:
-		btns.append( HTML(u'&nbsp;' * 8) )
-		for ab in additional_buttons:
-			name, value, cls = ab[:3]
-			btns.append( Submit(name, value, css_class = cls + ' hidden-print') )
-		
 	if print_button:
-		btns.append( HTML(u'&nbsp;' * 8) )
+		btns.append( HTML(u'&nbsp;' * 4) )
 		btns.append( HTML(string_concat(
 					u'<button class="btn btn-primary hidden-print" onClick="window.print()">',
 					print_button,
@@ -190,7 +182,19 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 			)
 		)
 	
-	form.helper.layout.append( Div(*btns, css_class = 'row') )
+	if additional_buttons:
+		if additional_buttons_on_new_row:
+			form.helper.layout.append( Div(*btns, css_class='row') )
+			btns = []
+		else:
+			btns.append( HTML(u'&nbsp;' * 4) )
+		
+		for i, ab in enumerate(additional_buttons):
+			name, value, cls = ab[:3]
+			btns.append( Submit(name, value, css_class = cls + ' hidden-print') )
+			
+		form.helper.layout.append( Div(*btns, css_class='row') )
+		
 	#form.helper.layout.append( Div( HTML( '{{ form.errors }} {{ form.non_field_errors }}' ), css_class = 'row') )
 
 	
