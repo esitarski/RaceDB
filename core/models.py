@@ -4079,7 +4079,7 @@ def fix_nation_code():
 		with transaction.atomic():
 			success = False
 			for lh in LicenseHolder.objects.filter(nation_code__exact='').exclude(uci_code__exact='')[:999]:
-				lh.save()
+				lh.save()		# performs field validation.
 				success = True
 
 def models_fix_data():

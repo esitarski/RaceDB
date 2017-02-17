@@ -193,7 +193,7 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 			name, value, cls = ab[:3]
 			btns.append( Submit(name, value, css_class = cls + ' hidden-print') )
 			
-		form.helper.layout.append( Div(*btns, css_class='row') )
+	form.helper.layout.append( Div(*btns, css_class='row') )
 		
 	#form.helper.layout.append( Div( HTML( '{{ form.errors }} {{ form.non_field_errors }}' ), css_class = 'row') )
 

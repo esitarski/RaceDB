@@ -305,23 +305,54 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 	
 	json_data = []
 	json_format = formatTime if series.ranking_criteria == 1 else lambda v: '{:.2f}'.format(v)
+	team_map = {}
+	team_count = 0
+	team_total = defaultdict( int )
+	team_arc = defaultdict( int )
+	max_team_len = 15
 	for rank, (lh, team, totalValue, gap, event_results) in enumerate(results[:sankeyMax], 1):
 		rider_name = lh.full_name()
-		node_name = u'{:2d}. {}: {}'.format( rank, total_values[rank-1], rider_name )
+		node_name = u'{:2d}. {} ({})'.format( rank, rider_name, total_values[rank-1] )
 		for er in event_results:
 			if not er or er.ignored:
 				continue
 			event_name = u'{}-{}: {}'.format( er.event.competition.name, er.event.name, er.event.date_time.strftime('%Y-%m-%d') )
 			json_data.append( [
-				node_name,
 				event_name,
+				node_name,
 				{'v':er.value_for_rank, 'f':json_format(er.value_for_rank)},
-				u'{} \u2190 {}, {}{} \u2190 {}'.format(
-					rider_name,
+				None if True else u'{} \u2192 {}, {}{} \u2192 {}'.format(
+					event_name,
 					re.sub(r'.00$|0$', '', json_format(er.value_for_rank)), er.rank_text, u'\u00A0\u2191' if er.upgraded else u'',
-					event_name
+					rider_name,
 				),
 			] )
+			if series.ranking_criteria != 1:
+				try:
+					team_name = team_map[node_name]
+				except KeyError:
+					if not team or 'independent' in team:
+						team_count += 1
+						team_name = u'Ind {}'.format(team_count)
+					else:
+						team_name = team
+					if len(team_name) > max_team_len:
+						team_name = team_name[:max_team_len].strip() + u'...'
+					team_map[node_name] = team_name
+				
+				team_arc[(node_name, team_name)] += er.value_for_rank
+				team_total[team_name] += er.value_for_rank
+
+	tt = [(n,v) for n,v in team_total.iteritems()]
+	team_total = { n:f for (n,v), f in zip(tt, format_column_float( [t[1] for t in tt] )) }
+		
+	for node_name, team_name, value in sorted( ((n, t, v) for (n,t), v in team_arc.iteritems()), key=operator.itemgetter(2), reverse=True ):
+		json_data.append( [
+			node_name,
+			u'{} ({})'.format(team_name, team_total[team_name]),
+			{'v':value, 'f':json_format(value)},
+			None,
+		] )
 	
 	# Format the results based on the ranking criteria.
 	total_values = []
