@@ -1,13 +1,25 @@
 {% extends "base.html" %}
-{% block content %}
-
 {% load i18n %}
 {% load staticfiles %}
+
+{% block onload %}
+	$('.btn').click(function( event ) {
+		var button = $(this);
+		var backgroundColorCur = button.css( "background-color" );
+		button.css( {"background-color": '#666666'} );
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
+
+{% block content %}
 
 <h2>{{page_title}}</h2>
 <h1>{% trans "Are you sure?" %}</h1>
 
-<p>
+<p class="text-center">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+
 <br/>&nbsp;
 <br/>&nbsp;
 </p>

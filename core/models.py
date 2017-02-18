@@ -130,7 +130,7 @@ class SystemInfo(models.Model):
 	
 	cloud_server_url = models.CharField( max_length = 160, blank = True, default = '', verbose_name = _('Cloud Server Url')  )
 	
-	def get_cloud_server_url( url_ref ):
+	def get_cloud_server_url( self, url_ref ):
 		url = self.cloud_server_url
 		i = url.find( 'RaceDB' )
 		if i > 0:

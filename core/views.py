@@ -1385,7 +1385,7 @@ def get_compressed_license_holder_json():
 	# Create a temp file.
 	gzip_stream = tempfile.TemporaryFile()
 	# Create a gzip and connect it to the temp file.
-	gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode="wb", filename='{}.json'.format(license_holder) )
+	gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode="wb", filename='{}.json'.format('license_holders') )
 	# Write the json to the gzip obj, which compresses it and writes it to the temp file.
 	license_holder_export( gzip_handler )
 	# Make sure gzip flushes all its buffers.
@@ -1407,7 +1407,7 @@ def handle_export_license_holders():
 	gzip_stream.seek( 0 )
 
 	# Add content disposition so the browser will download the file.
-	response['Content-Disposition'] = 'attachment; filename={}.gz'.format(competition.get_filename_base())
+	response['Content-Disposition'] = 'attachment; filename={}.gz'.format('license_holder')
 
 	# Send back the response to the request.
 	return response	
@@ -1415,25 +1415,46 @@ def handle_export_license_holders():
 @csrf_exempt
 def LicenseHolderCloudDownload( request ):
 	print 'LicenseHolderCloudDownload: processing...'
-	return handle_export_license_holders()
+	response = handle_export_license_holders()
+	print 'LicenseHolderCloudDownload: response returned.'
+	return response
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def LicenseHoldersCloudImport( request, confirmed=False ):
 	if confirmed:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'LicenseHolderCloudDownload' )
+		print 'LicenseHoldersCloudImport: sending request to:', url
+		
 		response = requests.get( url, stream=True )
-		if response.status_code == requests.codes.ok:
-			gzip_handler = gzip.GzipFile( fileobj=response.raw, mode='rb' )
-			license_holder_import( gzip_handler )
-		else:
-			pass
+		errors = []
+		try:
+			response.raise_for_status()
+		except Exception as e:
+			print 'LicenseHoldersCloudImport: ', e
+			errors.append( e )
+		
+		if not errors:
+			print 'LicenseHoldersCloudImport: received response from:', url
+			try:
+				# Download the content and save it into a temporary file.
+				gzip_stream = tempfile.TemporaryFile()
+				for c in response.iter_content(None):
+					gzip_stream.write( c )
+				gzip_stream.seek( 0 )
+				# Unzip the content and do the import.
+				gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode='rb' )
+				license_holder_import( gzip_handler )
+			except Exception as e:
+				print 'LicenseHoldersCloudImport: ', e
+				errors.append( e )
+		
 		return render( request, 'license_holder_cloud_import.html', locals() )
 		
 	page_title = _('Import all License Holders from Cloud Server')
 	message = _("This will add/update all License Holders in this database to match the Cloud Server..")
 	cancel_target = getContext(request,'popUrl')
-	target = getContext(request,'popUrl') + 'LicenseHoldersCloudImport/'
+	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
 	
 #-----------------------------------------------------------------------

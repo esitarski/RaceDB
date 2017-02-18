@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2>{{title}}</h2>
+<br/>
+<br/>
+{% if errors %}
+	<h3>{% trans "License Holder Download Failed" %}</h3>
+	<div class="alert alert-danger" role="alert">
+	<ul>
+	{% for err in errors %}
+		<li>{{err}}</li>
+	{% endfor %}
+	</ul>
+	</div>
+{% else %}
+	<h3>{% trans "License Holder Download Successful" %}
+{% endif %}
+<hr/>
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+{% endblock content %}

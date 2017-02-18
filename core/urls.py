@@ -181,6 +181,8 @@ urlpatterns = [
 	url(r'^(?i).*LicenseHoldersCloudImport/$', views.LicenseHoldersCloudImport),
 	url(r'^(?i).*LicenseHoldersCloudImport/(?P<confirmed>\d+)/$', views.LicenseHoldersCloudImport),
 	
+	url(r'^(?i).*LicenseHolderCloudDownload/$', views.LicenseHolderCloudDownload),
+	
 	url(r'^(?i).*Teams/$', team.TeamsDisplay),
 	url(r'^(?i).*TeamNew/$', team.TeamNew),
 	url(r'^(?i).*TeamEdit/(?P<teamId>\d+)/$', team.TeamEdit),
