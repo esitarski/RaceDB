@@ -1535,6 +1535,7 @@ def CompetitionCloudImportList( request ):
 				success = True
 			if success:
 				return HttpResponseRedirect(getContext(request,'cancelUrl') + 'LicenseHoldersCloudImport/1/' )
+			return return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	else:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudQuery' )
 		print 'CompetitionCloudImportList: sending request to:', url
