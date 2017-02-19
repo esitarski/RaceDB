@@ -1468,7 +1468,7 @@ competition_fields = ('id', 'date_range_year_str', 'name', 'city', 'stateProv', 
 competition_name_fields = ('category_format', 'discipline', 'race_class')
 def CompetitionCloudQuery( request ):
 	# Gets all Competitions from up to a year ago.
-	d_ref = (timezone.now() - datetime.timedelta(days=366)).date()
+	d_ref = (timezone.now() - datetime.timedelta(days=366*2)).date()
 	competitions = Competition.objects.filter( start_date__gte=d_ref
 		).select_related('category_format','discipline','race_class').order_by('-start_date')
 	
