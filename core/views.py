@@ -2,9 +2,11 @@ from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
+from django.utils.http import escape
 from django.contrib.auth.views import logout
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 
 from subprocess import Popen, PIPE
 import uuid
@@ -807,7 +809,8 @@ class CompetitionSearchForm( Form ):
 		if is_superuser:
 			button_args.extend(	[
 				Submit('new-submit', _('New Competition'), css_class = 'btn btn-success'),
-				Submit('import-submit', _('Import Competition'), css_class = 'btn btn-primary'),
+				Submit('import-cloud-submit', _('Import Competition from Cloud'), css_class = 'btn btn-primary'),
+				Submit('import-submit', _('Import Competition from File'), css_class = 'btn btn-primary'),
 			] )
 		
 			self.helper.layout = Layout(
@@ -971,6 +974,9 @@ def CompetitionsDisplay( request ):
 			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionNew') )
+		
+		if 'import-cloud-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'CompetitionImportCloud') )
 		
 		if 'import-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionImport') )
@@ -1458,6 +1464,87 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 	return render( request, 'are_you_sure.html', locals() )
 	
 #-----------------------------------------------------------------------
+
+@csrf_exempt
+competition_fields = ('id', 'date_range_str', 'event_types_text', 'name', 'city', 'stateProv', 'number_of_days', 'organizer', 'has_results')
+competition_name_fields = ('category_format', 'discipline', 'race_class')
+def CompetitionCloudQuery( request ):
+	# Gets all Competitions from up to a year ago.
+	d_ref = (timezone.now() - datetime.timedelta(days=366)).date()
+	competitions = Competition.objects.filter( start_date__gte=d_ref
+		).select_related('category_format','discipline','race_class').order_by('-start_date')
+	
+	data = []
+	for c in competitions:
+		r = {a:getattr(a) for a in competition_fields}
+		r.update( {a:getattr(a).name for a in competition_name_fields} )
+		r['start_date'] = c.start_date.strftime('%Y-%m-%d')
+		data.append( r )
+	
+	return JsonResponse(data)
+
+@csrf_exempt
+def CompetitionCloudExport( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	return handle_export_competition( competition )
+
+class CompetitionCloudForm( Form ):
+	selected		= forms.BooleanField( required=False, label='' )
+	id				= forms.IntegerField( widget=forms.HiddenInput() )
+	
+	def __init__( self, *args, **kwargs ):
+		initial = kwargs.get('initial', {})
+		self.competition_fields = {}
+		for k in list(initial.iterkeys()):
+			if k not in ('id', 'selected'):
+				self.competition_fields[k] = initial.pop(k)
+		super(CompetitionCloudForm, self).__init__( *args, **kwargs )
+
+	output_fields = ('date_range_str', 'discipline',    'name', 'race_class',  'organizer', 'event_types_text', 'city',  'has_results')
+	output_hdrs   = (_('Date'),      _('Discipline'), _('Name'), _('Class'), _('Organizer'), _('Events'),     _('City'), _('Results') )
+	def as_table( self ):
+		s = StringIO.StringIO()
+		for f in self.output_fields:
+			s.write( u'<td>{}</td>'.format(escape(unicode(self.competition_fields.get(f,u'')))) )
+		p = super((CompetitionCloudForm, self).as_table()
+		return p[:-4] + mark_safe(s.getvalue()) + p[-4:]
+		
+CompetitionCloudFormSet = formset_factory(CompetitionCloudForm, extra=0, max_num=100000)
+	
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CompetitionCloudImportList( request ):
+	headers = CompetitionCloudForm.output_hdrs
+	if request.method == 'POST':
+		form_set = CompetitionCloudFormSet( request.POST )
+		if form_set.is_valid():
+			success = False
+			for d in form_set.cleaned_data:
+				if not d['selected']:
+					continue
+				id = d['id']
+				url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudExport/{}/'.format(id) )
+				response = requests.get( url, stream=True )
+				gzip_stream = tempfile.TemporaryFile()
+				for c in response.iter_content(None):
+					gzip_stream.write( c )
+				gzip_stream.seek( 0 )
+				# Unzip the content and do the import.
+				gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode='rb' )
+				competition_import( gzip_handler )
+				success = True
+			if success:
+				return HttpResponseRedirect(getContext(request,'cancelUrl') + 'LicenseHoldersCloudImport/1/' )
+	else:
+		url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudQuery' )
+		print 'CompetitionCloudImportList: sending request to:', url
+		response = requests.get( url )
+		cloud_competitions = response.json()
+		form_set = CompetitionCloudFormSet( initial=cloud_competitions )
+	return render( request, 'competition_import_cloud_list.html', locals() )
+
+#-----------------------------------------------------------------------
+
 @autostrip
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )

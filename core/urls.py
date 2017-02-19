@@ -183,6 +183,11 @@ urlpatterns = [
 	
 	url(r'^(?i).*LicenseHolderCloudDownload/$', views.LicenseHolderCloudDownload),
 	
+	url(r'^(?i).*CompetitionCloudQuery/$', views.CompetitionCloudQuery),
+	url(r'^(?i).*CompetitionCloudExport/(?P<competitionId>\d+)/$', views.CompetitionCloudExport),
+	
+	url(r'^(?i).*CompetitionCloudImportList/$', views.CompetitionImportCloud),
+	
 	url(r'^(?i).*Teams/$', team.TeamsDisplay),
 	url(r'^(?i).*TeamNew/$', team.TeamNew),
 	url(r'^(?i).*TeamEdit/(?P<teamId>\d+)/$', team.TeamEdit),
