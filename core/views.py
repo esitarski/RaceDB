@@ -1500,9 +1500,9 @@ class CompetitionCloudForm( Form ):
 				self.competition_fields[k] = initial.pop(k)
 		super(CompetitionCloudForm, self).__init__( *args, **kwargs )
 
-	output_hdrs   = (_('Loaded'), _('Dates'),      _('Discipline'), _('Name'), _('Class'), _('Organizer'), _('City'), _('Results') )
-	output_fields = (  'loaded', 'date_range_year_str', 'discipline',    'name', 'race_class',   'organizer',    'city',  'has_results')
-	output_bool_fields = set(['loaded', 'has_results'])
+	output_hdrs   = (_('Local'), _('Dates'),      _('Discipline'), _('Name'), _('Class'), _('Organizer'), _('City'), _('Results') )
+	output_fields = (  'local', 'date_range_year_str', 'discipline',    'name', 'race_class',   'organizer',    'city',  'has_results')
+	output_bool_fields = set(['local', 'has_results'])
 	
 	def as_table( self ):
 		s = StringIO.StringIO()
@@ -1521,10 +1521,9 @@ CompetitionCloudFormSet = formset_factory(CompetitionCloudForm, extra=0, max_num
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionCloudImportList( request ):
-	headers = [_('Select')] + list(CompetitionCloudForm.output_hdrs)
+	headers = [_('Import')] + list(CompetitionCloudForm.output_hdrs)
 	if request.method == 'POST':
 		form_set = CompetitionCloudFormSet( request.POST )
-		import pdb; pdb.set_trace()
 		if form_set.is_valid():
 			success = False
 			for d in form_set.cleaned_data:
@@ -1556,7 +1555,7 @@ def CompetitionCloudImportList( request ):
 		cloud_competitions = response.json()
 		for c in cloud_competitions:
 			d = datetime.date(*[int(v) for v in c['start_date'].split('-')])
-			c['loaded'] = Competition.objects.filter( name=c['name'], start_date=d ).exists()
+			c['local'] = Competition.objects.filter( name=c['name'], start_date=d ).exists()
 		form_set = CompetitionCloudFormSet( initial=cloud_competitions )
 	return render( request, 'competition_import_cloud_list.html', locals() )
 
