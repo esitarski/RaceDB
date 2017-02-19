@@ -135,7 +135,9 @@ class SystemInfo(models.Model):
 		i = url.find( 'RaceDB' )
 		if i > 0:
 			url = url[:i+len('RaceDB')] + '/'			
-		url += url_ref + '/'
+		url += url_ref
+		if not url.endswith('/'):
+			url += '/'
 		return url
 	
 	@classmethod
@@ -654,7 +656,7 @@ class Competition(models.Model):
 		if types:
 			types = ['('] + types + [')']
 			return string_concat( *types )
-		return ''
+		return u''
 	
 	def to_local_speed( self, kmh ):
 		return kmh if self.distance_unit == 0 else kmh * 0.621371
