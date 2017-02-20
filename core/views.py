@@ -807,11 +807,12 @@ class CompetitionSearchForm( Form ):
 		]
 		
 		if is_superuser:
-			button_args.extend(	[
-				Submit('new-submit', _('New Competition'), css_class = 'btn btn-success'),
-				Submit('import-cloud-submit', _('Import Competitions from Cloud'), css_class = 'btn btn-primary'),
-				Submit('import-submit', _('Import Competition from File'), css_class = 'btn btn-primary'),
-			] )
+			superuser_btns = []
+			superuser_btns.append( Submit('new-submit', _('New Competition'), css_class = 'btn btn-success') )
+			if SystemInfo.get_singleton().cloud_server_url:
+				superuser_btns.append( Submit('import-cloud-submit', _('Import Competitions from Cloud'), css_class = 'btn btn-primary') )
+			superuser_btns.append( Submit('import-submit', _('Import Competition from File'), css_class = 'btn btn-primary') )
+			button_args.extend( superuser_btns )
 		
 			self.helper.layout = Layout(
 				Row(
