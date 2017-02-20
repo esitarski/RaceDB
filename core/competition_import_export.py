@@ -186,6 +186,8 @@ def competition_deserializer( object_list, **options ):
 	
 	object_list = deque( object_list )
 	
+	existing_number_sets = set()
+	
 	dependencies = defaultdict( list )	# Place to hold objects when waiting for referenced objects to load.
 	old_new = {}
 	
@@ -308,6 +310,11 @@ def competition_deserializer( object_list, **options ):
 					existing_legal_entity = LegalEntity.objects.get(id=instance.id)
 					if instance.waiver_expiry_date > existing_legal_entity.waiver_expiry_date:
 						ts.save( Model, db_object, instance, pk_old )
+				elif Model == NumberSet:
+					# Keep track of this number set if it is new.  A new number set means that we do not have to compute
+					# any incremental update, which is much faster.
+					existing_number_sets.add( existing_instance.id )
+					ts.save( Model, db_object, instance, pk_old )
 				elif Model == NumberSetEntry:
 					if not more_recently_updated_license_holders or instance.id not in more_recently_updated_license_holders:
 						if instance.date_lost:
@@ -319,7 +326,7 @@ def competition_deserializer( object_list, **options ):
 				else:
 					ts.save( Model, db_object, instance, pk_old )
 			else:
-				if Model == NumberSetEntry:
+				if Model == NumberSetEntry and instance.number_set_id in existing_number_sets:
 					if instance.date_lost:
 						NumberSet.objects.get(id=instance.number_set_id).set_lost(instance.bib, instance.license_holder, instance.date_lost)
 					else:
