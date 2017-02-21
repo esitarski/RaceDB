@@ -20,6 +20,8 @@ import patch_sqlite_text_factory
 import DurationField
 from get_abbrev import get_abbrev
 
+from get_id import get_id
+
 import re
 import os
 import math
@@ -38,6 +40,27 @@ from large_delete_all import large_delete_all
 from WriteLog import writeLog
 
 invalid_date_of_birth = datetime.date(1900,1,1)
+
+class BulkSave( object ):
+	def __init__( self ):
+		self.objects = []
+		
+	def bulk_save( self ):
+		with transaction.atomic():
+			for o in self.objects:
+				o.save()		# Also performs field validation.
+		del self.objects[:]
+				
+	def append( self, obj ):
+		self.objects.append( obj )
+		if len(self.objects) >= 998:
+			self.bulk_save()
+
+	def __enter__( self ):
+		return self
+
+	def __exit__( self, type, value, traceback ):
+		self.bulk_save()
 
 def ordinal( n ):
 	return "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
@@ -95,13 +118,29 @@ def getCopyName( ModelClass, cur_name ):
 
 #----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
-	tag_template = models.CharField( max_length = 24, verbose_name = _('Tag Template'), help_text=_("Template for generating EPC RFID tags from Database ID.") )
+	TAG_CREATION_CHOICES = (
+		(0, _('Universally Unique')),
+		(1, _('From Database ID')),
+		(2, _('From License Code')),
+	)
+	tag_creation = models.PositiveSmallIntegerField( default=0, choices=TAG_CREATION_CHOICES,
+		verbose_name=_('Tag Creation'),
+		help_text=_("Specify how to create RFID tags.")
+	)
+	
+	tag_bits = models.PositiveSmallIntegerField( default=96, choices=[(i,'{}'.format(i)) for i in (64,96)],
+		verbose_name=_('EPC Bits per Tag'),
+		help_text=_("EPC Bits available if generating Universally Unique tags.") )
+
+	tag_template = models.CharField( max_length = 24, verbose_name = _('Tag Template'),
+		help_text=_("Template if generating tags from Database ID.") )
 	
 	tag_from_license = models.BooleanField( default = False, verbose_name = _("RFID Tag from License"),
 			 help_text=_('Generate RFID tag from license (not database id)'))
+	
 	ID_CHOICES = [(i, u'{}'.format(i)) for i in xrange(32)]
 	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'),
-		help_text=_('Identifier incorporated into the tag for additional recognition.') )
+		help_text=_('Identifier for generating tags from License Code.') )
 
 	RFID_SERVER_HOST_DEFAULT = 'localhost'
 	RFID_SERVER_PORT_DEFAULT = 50111
@@ -2013,16 +2052,21 @@ class LicenseHolder(models.Model):
 		LicenseHolder.objects.exclude( existing_tag2__isnull=True ).update( existing_tag2=None )
 
 		system_info = SystemInfo.get_singleton()
-		while LicenseHolder.objects.filter( existing_tag=None ).exists():
-			with transaction.atomic():
-				for lh in LicenseHolder.objects.filter( existing_tag=None )[:999]:
-					lh.existing_tag = lh.get_unique_tag( system_info )
-					lh.save()
+		with BulkSave() as bs:
+			for lh in LicenseHolder.objects.filter( existing_tag__isnull=True ):
+				lh.existing_tag = lh.get_unique_tag( system_info )
+				bs.append( lh )
 	
 	def get_unique_tag( self, system_info=None ):
-		system_info = system_info or SystemInfo.get_singleton()
-		if system_info.tag_from_license and self.license_code:
-			return getTagFromLicense( self.license_code, system_info.tag_from_license_id )
+		if not system_info:
+			system_info = SystemInfo.get_singleton()
+		if system_info.tag_creation == 0:
+			return get_id( system_info.tag_bits )
+		elif system_info.tag_creation == 1:
+			if self.license_code:
+				return getTagFromLicense( self.license_code, system_info.tag_from_license_id )
+			else:
+				return get_id(system_info.tag_bits)
 		else:
 			return getTagFormatStr( system_info.tag_template ).format( n=self.id )
 	
@@ -4053,42 +4097,32 @@ def bad_data_test():
 '''
 
 def fix_bad_license_codes():
+	print 'fix_bad_license_codes...'
 	q = Q(license_code__startswith='0') or Q(existing_tag__startswith='0') or Q(existing_tag2__startswith='0')
-	success = True
-	while success:
-		success = False
-		with transaction.atomic():
-			for lh in LicenseHolder.objects.filter(q)[:999]:
-				lh.save()		# performs field validation.
-				success = True
+	with BulkSave() as bs:
+		for lh in LicenseHolder.objects.filter(q):
+			bs.append( lh )
 	
 	q = Q(tag__startswith='0') or Q(tag2__startswith='0')
-	success = True
-	while success:
-		success = False
-		with transaction.atomic():
-			for p in Participant.objects.filter(q)[:999]:
-				p.save()		# performs field validation.
-				success = True
+	with BulkSave() as bs:
+		for p in Participant.objects.filter(q):
+			bs.append( p )
 
 def fix_non_unique_number_set_entries():
+	print 'fix_non_unique_number_set_entries...'
 	for ns in NumberSet.objects.all():
 		ns.normalize()
 
 def fix_nation_code():
-	success = True
-	while success:
-		with transaction.atomic():
-			success = False
-			for lh in LicenseHolder.objects.filter(nation_code__exact='').exclude(uci_code__exact='')[:999]:
-				lh.save()		# performs field validation.
-				success = True
+	print 'fix_nation_codes...'
+	with BulkSave() as bs:
+		for lh in LicenseHolder.objects.filter(nation_code__exact='').exclude(uci_code__exact=''):
+			bs.append( lh )
 
 def models_fix_data():
-	print 'Removing leading zeroes in license codes and chip tags...'
 	fix_bad_license_codes()
-	fix_non_unique_number_set_entries()
 	fix_nation_code()
+	fix_non_unique_number_set_entries()
 
 
 

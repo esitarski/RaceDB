@@ -59,7 +59,7 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	# Check for a license encoded in an rfid tag.
 	tag_original = None
 	if competition.using_tags and competition.use_existing_tags:
-		if system_info.tag_from_license:
+		if system_info.tag_creation == 2:
 			license_from_tag = getLicenseFromTag( key, system_info.tag_from_license_id )
 			if license_from_tag is not None:
 				tag_original = key

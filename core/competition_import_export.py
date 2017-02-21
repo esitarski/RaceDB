@@ -79,7 +79,7 @@ class transaction_save( object ):
 			del self.pending[:]
 			
 processing = processing_status( 1 )
-def _build_instance(Model, data, db, field_names, existing_license_codes):
+def _build_instance(Model, data, db, field_names, existing_license_codes, system_info):
 	"""
 	Build a model instance.
 	Attempt to find an existing database record based on existing related fields as well as important data fields.
@@ -126,15 +126,22 @@ def _build_instance(Model, data, db, field_names, existing_license_codes):
 				
 				# Update the known license codes.
 				existing_license_codes.add( instance.license_code )
-				
-		if existing_instance:
-			# Re-use the internal tags as they are guaranteed unique.
-			instance.existing_tag = existing_instance.existing_tag
-			instance.existing_tag2 = existing_instance.existing_tag2
+			
+		if system_info.tag_creation == 0:	# Universally Unique.
+			if existing_instance and not instance.existing_tag:
+				# Re-use the existing tag if one is not provided.
+				instance.existing_tag = existing_instance.existing_tag
+				instance.existing_tag2 = existing_instance.existing_tag2
 		else:
-			# Do not import tags from external systems as they could be duplicates of internal tags.
-			instance.existing_tag = None
-			instance.existing_tag2 = None
+			# Else, we could have a duplicate.
+			if existing_instance:
+				# Re-use the internal tags as they are guaranteed unique.
+				instance.existing_tag = existing_instance.existing_tag
+				instance.existing_tag2 = existing_instance.existing_tag2
+			else:
+				# Do not import tags from external systems as they could be duplicates of internal tags.
+				instance.existing_tag = None
+				instance.existing_tag2 = None
 		
 	elif Model == Category:
 		existing_instance = search( code=instance.code, gender=instance.gender, )
@@ -185,6 +192,8 @@ def competition_deserializer( object_list, **options ):
 	field_names_cache = {}  # Model: <list of field_names>
 	
 	object_list = deque( object_list )
+	
+	system_info = SystemInfo.get_singleton()
 	
 	existing_number_sets = set()
 	
@@ -284,7 +293,9 @@ def competition_deserializer( object_list, **options ):
 					raise base.DeserializationError.WithData(e, d['model'], d.get('pk'), field_value)
 
 		if not has_dependency:
-			instance, existing_instance = _build_instance(Model, data, db, field_names, existing_license_codes)
+			instance, existing_instance = _build_instance(
+				Model, data, db, field_names, existing_license_codes, system_info
+			)
 			if Model == Competition:
 				competition = instance
 				more_recently_updated_license_holders = set(

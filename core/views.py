@@ -619,7 +619,16 @@ def LicenseHoldersAutoCreateTags( request, confirmed=False ):
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
 	page_title = _('Auto Create Tag Values for All License Holders')
-	message = _("Create tag values for all License Holders.  If SystemInfo 'RFID Tag from License' is set, the tag will be created from the License Code.  Otherwise it will be created from the Database ID.")
+	message = [_("Create tag values for all License Holders.")]
+	message.append( '    ' )
+	system_info = SystemInfo.get_singleton()
+	if system_info.tag_creation == 0:
+		message.append(_('Existing tags will not work anymore.'))
+	elif system_info.tag_creation == 1:
+		message.append(_('Existing tags *may* not work anymore.'))
+	else:
+		message.append(_('Existing tags will work if the License Codes have not changed.'))
+	message = string_concat( *message )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'LicenseHoldersAutoCreateTags/1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -3740,17 +3749,17 @@ class SystemInfoForm( ModelForm ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Col(Field('tag_template', size=24), 6),
+				Col(Field('tag_creation'), 6),
+			),
+			Row(
+				Col(Field('tag_bits'), 4),
+				Col(Field('tag_template', size=28), 4),
+				Col(Field('tag_from_license_id'), 4),
 			),
 			HTML( '<hr/>' ),
 			Row(
 				Col(Field('print_tag_option'), 4),
 				Col(Field('server_print_tag_cmd', size=80), 8),				
-			),
-			HTML( '<hr/>' ),
-			Row(
-				Col(Field('tag_from_license'), 4),
-				Col(Field('tag_from_license_id'), 4),
 			),
 			HTML( '<hr/>' ),
 			Row(
@@ -3771,6 +3780,7 @@ class SystemInfoForm( ModelForm ):
 			HTML( '<hr/>' ),
 			Field( 'rfid_server_host', type='hidden' ),
 			Field( 'rfid_server_port', type='hidden' ),
+			Field( 'tag_from_license', type='hidden' ),
 		)
 		addFormButtons( self, button_mask )
 		
