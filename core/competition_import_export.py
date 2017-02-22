@@ -14,6 +14,7 @@ from django.utils.encoding import force_text
 from django.db import transaction
 
 from utils import get_search_text
+from get_id import get_id
 
 from models import *
 
@@ -79,7 +80,7 @@ class transaction_save( object ):
 			del self.pending[:]
 			
 processing = processing_status( 1 )
-def _build_instance(Model, data, db, field_names, existing_license_codes, system_info):
+def _build_instance(Model, data, db, field_names, existing_license_codes, existing_tags, system_info):
 	"""
 	Build a model instance.
 	Attempt to find an existing database record based on existing related fields as well as important data fields.
@@ -115,33 +116,47 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, system
 				date_of_birth=instance.date_of_birth,
 			)
 			
-			if existing_instance:
-				# Use this database's version of the license code.
+		#---------------------------------------------------------------
+		# License logic.
+		#
+		if existing_instance:
+			# Use this database's version of the license code if none given.
+			if not instance.license_code:
 				instance.license_code = existing_instance.license_code
-			else:
-				# No existing instance - going to create one.
-				if instance.license_code in existing_license_codes:
-					# Prevent creating a new LicenseHolder with a duplicate license code.
-					instance.license_code = random_temp_license()
-				
-				# Update the known license codes.
-				existing_license_codes.add( instance.license_code )
 			
-		if system_info.tag_creation == 0:	# Universally Unique.
-			if existing_instance and not instance.existing_tag:
+			elif instance.license_code != existing_instance.license_code:
+				existing_license_codes.remove( existing_instance.license_code )
+				
+				# If the license causes a conflict, create a unique one.
+				while instance.license_code in existing_license_codes:
+					instance.license_code = random_temp_license()
+				existing_license_codes.add( instance.license_code )
+		else:
+			# No existing instance - going to create one.
+			while not instance.license_code or instance.license_code in existing_license_codes:
+				instance.license_code = random_temp_license()			
+			existing_license_codes.add( instance.license_code )
+			
+		#---------------------------------------------------------------
+		# Tag logic.
+		#
+		if existing_instance:
+			if not instance.existing_tag:
 				# Re-use the existing tag if one is not provided.
 				instance.existing_tag = existing_instance.existing_tag
-				instance.existing_tag2 = existing_instance.existing_tag2
+			
+			elif instance.existing_tag != existing_instance.existing_tag:
+				existing_tags.remove( existing_instance.existing_tag )
+				
+				# If the new tag causes a conflict, create a unique one.
+				while instance.existing_tag in existing_tags:
+					instance.existing_tag = get_id( system_info.tag_bits )				
+				existing_tags.add( instance.existing_tag )
 		else:
-			# Else, we could have a duplicate.
-			if existing_instance:
-				# Re-use the internal tags as they are guaranteed unique.
-				instance.existing_tag = existing_instance.existing_tag
-				instance.existing_tag2 = existing_instance.existing_tag2
-			else:
-				# Do not import tags from external systems as they could be duplicates of internal tags.
-				instance.existing_tag = None
-				instance.existing_tag2 = None
+			if instance.existing_tag:
+				while instance.existing_tag in existing_tags:
+					instance.existing_tag = get_id( system_info.tag_bits )
+				existing_tags.add( instance.existing_tag )
 		
 	elif Model == Category:
 		existing_instance = search( code=instance.code, gender=instance.gender, )
@@ -201,6 +216,7 @@ def competition_deserializer( object_list, **options ):
 	old_new = {}
 	
 	existing_license_codes = set( LicenseHolder.objects.all().values_list('license_code',flat=True) )
+	existing_tags = set( LicenseHolder.objects.all().values_list('existing_tag',flat=True) )
 	more_recently_updated_license_holders = None
 	more_recently_updated_waivers = None
 	
@@ -294,7 +310,7 @@ def competition_deserializer( object_list, **options ):
 
 		if not has_dependency:
 			instance, existing_instance = _build_instance(
-				Model, data, db, field_names, existing_license_codes, system_info
+				Model, data, db, field_names, existing_license_codes, existing_tags, system_info
 			)
 			if Model == Competition:
 				competition = instance

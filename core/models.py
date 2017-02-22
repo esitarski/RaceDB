@@ -45,7 +45,7 @@ class BulkSave( object ):
 	def __init__( self ):
 		self.objects = []
 		
-	def bulk_save( self ):
+	def flush( self ):
 		with transaction.atomic():
 			for o in self.objects:
 				o.save()		# Also performs field validation.
@@ -54,13 +54,13 @@ class BulkSave( object ):
 	def append( self, obj ):
 		self.objects.append( obj )
 		if len(self.objects) >= 998:
-			self.bulk_save()
+			self.flush()
 
 	def __enter__( self ):
 		return self
 
 	def __exit__( self, type, value, traceback ):
-		self.bulk_save()
+		self.flush()
 
 def ordinal( n ):
 	return "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
@@ -2048,27 +2048,39 @@ class LicenseHolder(models.Model):
 		
 	@staticmethod
 	def auto_create_tags():
-		LicenseHolder.objects.exclude( existing_tag__isnull=True ).update( existing_tag=None )
-		LicenseHolder.objects.exclude( existing_tag2__isnull=True ).update( existing_tag2=None )
-
 		system_info = SystemInfo.get_singleton()
+		tags = set()
 		with BulkSave() as bs:
-			for lh in LicenseHolder.objects.filter( existing_tag__isnull=True ):
-				lh.existing_tag = lh.get_unique_tag( system_info )
+			for lh in LicenseHolder.objects.all():
+				tag = lh.get_unique_tag( system_info, False )
+				while tag in tags:
+					tag = get_id( system_info.tag_bits )
+				tags.add( tag )
+				lh.existing_tag = tag
+				lh.existing_tag2 = None
 				bs.append( lh )
 	
-	def get_unique_tag( self, system_info=None ):
+	def get_unique_tag( self, system_info=None, validate=True ):
 		if not system_info:
 			system_info = SystemInfo.get_singleton()
+			
 		if system_info.tag_creation == 0:
-			return get_id( system_info.tag_bits )
+			tag = get_id( system_info.tag_bits )
+		
 		elif system_info.tag_creation == 1:
 			if self.license_code:
-				return getTagFromLicense( self.license_code, system_info.tag_from_license_id )
+				tag = getTagFromLicense( self.license_code, system_info.tag_from_license_id )
 			else:
-				return get_id(system_info.tag_bits)
+				tag = get_id(system_info.tag_bits)
+		
 		else:
-			return getTagFormatStr( system_info.tag_template ).format( n=self.id )
+			tag = getTagFormatStr( system_info.tag_template ).format( n=self.id )
+		
+		if validate:
+			while LicenseHolder.objects.filter(tag=tag).exists():
+				tag = get_id( system_info.tag_bits )
+		
+		return tag
 	
 	def get_existing_tag_str( self ):
 		return u', '.join( [t for t in [self.existing_tag, self.existing_tag2] if t] )
