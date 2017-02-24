@@ -3775,6 +3775,9 @@ class SystemInfoForm( ModelForm ):
 				Col(Field('license_code_regex', size=80), 6),
 			),
 			Row(
+				Col(Field('license_holder_unique_by_license_code'), 6),
+			),
+			Row(
 				Col(Field('cloud_server_url', size=80), 6),
 			),
 			HTML( '<hr/>' ),

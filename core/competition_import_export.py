@@ -105,16 +105,21 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, existi
 		return all( field_name in field_names and not Model._meta.get_field(field_name).remote_field for field_name in args )
 	
 	if Model == LicenseHolder:
-		# First search by license code.
-		existing_instance = search( license_code=instance.license_code )
+		# Search by UCIID (guaranteed unique).
+		if instance.uci_id:
+			existing_instance = search( license_code=instance.uci_id )
 		
+		# If no match, search by license_code, or (last, first, gender, DOB) depending on configuration.
 		if not existing_instance:
-			# Otherwise search by name, dob and gender.
-			existing_instance = search(
-				search_text__startswith=get_search_text([instance.last_name, instance.first_name]),
-				gender=instance.gender,
-				date_of_birth=instance.date_of_birth,
-			)
+			if system_info.license_holder_unique_by_license_code:
+				if instance.license_code:
+					existing_instance = search( license_code=instance.license_code )
+			else:			
+				existing_instance = search(
+					search_text__startswith=get_search_text([instance.last_name, instance.first_name]),
+					gender=instance.gender,
+					date_of_birth=instance.date_of_birth,
+				)
 			
 		#---------------------------------------------------------------
 		# License logic.
@@ -132,7 +137,7 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, existi
 					instance.license_code = random_temp_license()
 				existing_license_codes.add( instance.license_code )
 		else:
-			# No existing instance - going to create one.
+			# No existing instance - create a random one.
 			while not instance.license_code or instance.license_code in existing_license_codes:
 				instance.license_code = random_temp_license()			
 			existing_license_codes.add( instance.license_code )

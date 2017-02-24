@@ -84,8 +84,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 		for i, ur in ur_records:
 			v = ifm.finder( ur )
 			
-			uci_code = v('uci_code', None)
-			uci_id = v('uci_id', None)
+			uci_code		= to_str(v('uci_code', None))
 			date_of_birth	= v('date_of_birth', None)
 			
 			try:
@@ -122,6 +121,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			state_prov		= to_str(v('state_prov', None))
 			zip_postal		= to_str(v('zip_postal', None))
 			nationality		= to_str(v('nationality', None))
+			
+			uci_id			= to_uci_id(v('uci_id', None))
 			nation_code		= to_str(v('nation_code', None))
 			
 			bib				= (to_int(v('bib', None)) or None)
@@ -130,6 +131,12 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			
 			emergency_contact_name = to_str(v('emergency_contact_name', None))
 			emergency_contact_phone = to_str(v('emergency_contact_phone', None))
+
+			team_name		= to_str(v('team', None))
+			club_name		= to_str(v('club', None))
+			if not team_name:
+				team_name = club_name
+			team_code		= to_str(v('team_code', None))
 
 			#---------------------------------------------
 			
@@ -148,11 +155,35 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				'nationality':nationality,
 				'zip_postal':zip_postal,
 				
+				'nation_code':nation_code,
+				'uci_id':uci_id,
+				
 				'existing_tag':tag,
 				'existing_bib':bib,
 				'note':note,
 			}
 			license_holder_attr_value = { a:v for a, v in license_holder_attr_value.iteritems() if v }
+			
+			#------------------------------------------------------------------------------
+			# Update Team
+			#
+			if team_name:
+				do_save = False
+				team = Team.objects.filter( search_text__startswith=utils.get_search_text([team_name])).first()
+				if not team:
+					team = Team( name=team_name )
+					do_save = True
+				if team_code and team.team_code != team_code:
+					team.team_code = team_code
+					do_save = True
+				if do_save:
+					msg = u'Row {:>6}: Updated team: {}\n'.format(
+						i,
+						u', '.join( unicode(v) if v else u'None' for v in [team_name, team_code,] ),
+					)
+					message_stream_write( msg )
+					print removeDiacritic(msg)[:-1]
+					team.save()
 			
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
@@ -169,8 +200,10 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 					license_holder = license_holder.filter( gender=gender )
 				license_holder = license_holder.first()
 			else:
+				if uci_id:
+					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
 				
-				if license_code and not license_code.upper() == u'TEMP':
+				if not license_holder and license_code and not license_code.upper() == u'TEMP':
 					# Try to find the license holder by license code.
 					try:
 						license_holder = LicenseHolder.objects.get( license_code=license_code )
@@ -250,7 +283,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 						status,
 						temp_to_existing[license_holder.license_code] if license_holder.license_code in temp_to_existing else license_holder.license_code,
 						u', '.join( unicode(v) if v else u'None' for v in [
-								license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.uci_code,
+								license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.nation_code, license_holder.uci_id,
 								u'{} {}'.format(license_holder.first_name, license_holder.last_name),
 								license_holder.city, license_holder.state_prov,
 								license_holder.emergency_contact_name, license_holder.emergency_contact_phone,
@@ -300,6 +333,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 					message_stream_write( u'        {}. {} --> {}\n'.format(col, f, name) )
 				else:
 					message_stream_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
+			message_stream_write( u'\n' )
 			continue
 			
 		ur_records.append( (r+1, [v.value for v in row]) )

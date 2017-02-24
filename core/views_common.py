@@ -289,7 +289,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
 	
-	title = string_concat( _('Edit'), ' ', ModelClass._meta.verbose_name )
+	title = string_concat( _('Delete'), ' ', ModelClass._meta.verbose_name, u' ', _('(are you sure? - there is no undo.)') )
 	if request.method == 'POST':
 		if 'cancel-submit' not in request.POST:
 			instance.delete()

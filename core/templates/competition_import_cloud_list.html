@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load good_err_icon %}
+{% load staticfiles %}
+
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
+
+{% block content %}
+<h2>{{title}}</h2>
+<hr/>
+<form method="post" action=".">
+{% csrf_token %}
+{{ form_set.management_form }}
+<button type="submit" name="import-submit" class="btn btn-success">{% trans "Import Selected Competitions" %}</button>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+&nbsp;&nbsp;&nbsp;&nbsp;{% trans "All License Holders will be updated from the Cloud after a Competition Import" %}
+<p class="text-center">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+<table class="table table-striped table-hover table-condensed">
+	<thead>
+		<tr>{% for h in headers %}<th>{{h}}</th>{% endfor %}</tr>
+	</thead>
+	<tbody>
+		{% for form in form_set %}
+			{{form.as_table}}
+		{% endfor %}
+	</tbody>
+</table>
+</form>
+{% endblock content %}

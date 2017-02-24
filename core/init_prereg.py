@@ -89,7 +89,7 @@ def init_prereg(
 				date_of_birth = None
 			date_of_birth 	= date_of_birth if date_of_birth != invalid_date_of_birth else None
 			
-			uci_code = v('uci_code', None)
+			uci_code = to_str(v('uci_code', None))
 			# If no date of birth, get it from the UCI code.
 			if not date_of_birth and uci_code and not uci_code.isdigit():
 				try:
@@ -139,6 +139,9 @@ def init_prereg(
 				else:
 					seed_option = 1
 			
+			uci_id			= to_uci_id(v('uci_id', None))
+			nation_code		= to_str(v('nation_code', None))
+			
 			emergency_contact_name = to_str(v('emergency_contact_name', None))
 			emergency_contact_phone = to_str(v('emergency_contact_phone', None))
 			
@@ -157,7 +160,10 @@ def init_prereg(
 			license_holder = None
 			#with transaction.atomic():
 			if True:
-				if license_code and license_code.upper() != u'TEMP':
+				if uci_id:
+					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
+					
+				if not license_holder and license_code and license_code.upper() != u'TEMP':
 					try:
 						license_holder = LicenseHolder.objects.get( license_code=license_code )
 					except LicenseHolder.DoesNotExist:
@@ -187,6 +193,8 @@ def init_prereg(
 										'gender':gender,
 										'date_of_birth':date_of_birth,
 										'uci_code':uci_code,
+										'nation_code':nation_code,
+										'uci_id':uci_id,
 										'email':email,
 										'phone':phone,
 										'city':city,
@@ -221,6 +229,8 @@ def init_prereg(
 						'city':city,
 						'state_prov':state_prov,
 						'zip_postal':zip_postal,
+						'nation_code':nation_code,
+						'uci_id':uci_id,
 						'emergency_contact_name':emergency_contact_name,
 						'emergency_contact_phone':emergency_contact_phone,
 						'existing_tag':tag if competition.use_existing_tags else None,
@@ -401,6 +411,8 @@ def init_prereg(
 			if 'license_code' not in ifm:
 				message_stream_write( u'License column not found in Header Row.  Aborting.\n' )
 				return
+			
+			message_stream_write( u'\n' )
 			continue
 			
 		ur_records.append( (r+1, [v.value for v in row]) )

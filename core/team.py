@@ -27,7 +27,7 @@ def GetTeamForm( request ):
 					Col(Field('name', size=100), 12),
 				),
 				Row(
-					Col(Field('team_code', size=4), 2),
+					Col(Field('team_code', size=12), 2),
 					Col('team_type', 2),
 					Col('nation_code', 3),
 					Col('active', 2),

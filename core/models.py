@@ -46,10 +46,11 @@ class BulkSave( object ):
 		self.objects = []
 		
 	def flush( self ):
-		with transaction.atomic():
-			for o in self.objects:
-				o.save()		# Also performs field validation.
-		del self.objects[:]
+		if self.objects:
+			with transaction.atomic():
+				for o in self.objects:
+					o.save()		# Also performs field validation.
+			del self.objects[:]
 				
 	def append( self, obj ):
 		self.objects.append( obj )
@@ -168,6 +169,9 @@ class SystemInfo(models.Model):
 	server_print_tag_cmd = models.CharField( max_length = 160, default = 'lpr "$1"', verbose_name = _('Cmd used to print Bib Tag (parameter is the PDF file)')  )
 	
 	cloud_server_url = models.CharField( max_length = 160, blank = True, default = '', verbose_name = _('Cloud Server Url')  )
+	
+	license_holder_unique_by_license_code = models.BooleanField( default = True, verbose_name = _("License Codes Permanent and Unique"),
+		help_text=_('If True, License Holders will be Merged assuming that License Codes are permanent and unique.  Otherwise, ignore and attempt to match by Last, First, Gender and DOB'))
 	
 	def get_cloud_server_url( self, url_ref ):
 		url = self.cloud_server_url
@@ -1730,7 +1734,7 @@ class WaveCallup( models.Model ):
 #-------------------------------------------------------------------------------------
 class Team(models.Model):
 	name = models.CharField( max_length = 64, db_index = True, verbose_name = _('Name') )
-	team_code = models.CharField( max_length = 3, blank = True, db_index = True, verbose_name = _('Team Code') )
+	team_code = models.CharField( max_length = 16, blank = True, db_index = True, verbose_name = _('Team Code') )
 	TYPE_CHOICES = (
 		(0, _('Club')),
 		(1, _('Regional')),
@@ -1841,7 +1845,7 @@ class LicenseHolder(models.Model):
 	reUCIID = re.compile( r'[^\d]' )
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
-		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'').upper() )
+		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'') )
 		
 		if not( self.existing_bib is None or isinstance(self.existing_bib, (int,long)) ):
 			self.existing_bib = None
@@ -1944,7 +1948,7 @@ class LicenseHolder(models.Model):
 		if not self.uci_id.isdigit():
 			return _(u'uci id must be all digits')
 		
-		if not self.uci_id.startswith('0'):
+		if self.uci_id.startswith('0'):
 			return _(u'uci id must not start with zero')
 		
 		if len(self.uci_id) != 11:
@@ -1956,10 +1960,8 @@ class LicenseHolder(models.Model):
 	
 	@property
 	def uci_code_error( self ):
-		if not self:
+		if not self or not self.uci_code:
 			return None
-		if not self.uci_code:
-			return _(u'missing')
 			
 		self.uci_code = unicode(self.uci_code).upper().replace(u' ', u'')
 		
@@ -4129,7 +4131,8 @@ def fix_nation_code():
 	print 'fix_nation_codes...'
 	with BulkSave() as bs:
 		for lh in LicenseHolder.objects.filter(nation_code__exact='').exclude(uci_code__exact=''):
-			bs.append( lh )
+			if lh.uci_code[:3].upper() in uci_country_codes_set:
+				bs.append( lh )
 
 def models_fix_data():
 	fix_bad_license_codes()

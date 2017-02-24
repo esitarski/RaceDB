@@ -1,5 +1,6 @@
-import datetime
+import re
 import time
+import datetime
 from xlrd import xldate_as_tuple
 from utils import toUnicode, removeDiacritic, gender_from_str
 
@@ -67,7 +68,17 @@ def to_int_str( v ):
 		return unicode(long(v))
 	except:
 		pass
-	return unicode(v)
+	return toUnicode(v)
+
+reUCIID = re.compile( r'[^\d]' )
+def to_uci_id( v ):
+	if v is None:
+		return None
+	try:
+		v = unicode(long(v))
+	except:
+		v = toUnicode(v)
+	return reUCIID.sub( u'', v )
 		
 def to_str( v ):
 	if v is None:
