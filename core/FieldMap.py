@@ -97,7 +97,7 @@ standard_field_aliases = (
 		"Gender",
 	),
 	('team',
-		('Team','Team Name','TeamName','Rider Team'),
+		('Team','Team Name','TeamName','Rider Team','RiderTeam'),
 		"Team",
 	),
 	('team_code',

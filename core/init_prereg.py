@@ -408,8 +408,8 @@ def init_prereg(
 				message_stream_write( u'Clearing existing Participants...\n' )
 				large_delete_all( Participant, Q(competition=competition) )
 			
-			if 'license_code' not in ifm:
-				message_stream_write( u'License column not found in Header Row.  Aborting.\n' )
+			if 'license_code' not in ifm and 'uci_id' not in ifm:
+				message_stream_write( u'Header Row must contain one of (or both) License or UCI ID.  Aborting.\n' )
 				return
 			
 			message_stream_write( u'\n' )

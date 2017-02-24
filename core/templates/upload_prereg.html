@@ -33,11 +33,11 @@ Supports USAC pre-reg format.
 <p>
 The Excel spreadsheet can be as simple as one column of the License numbers you want added to the Competition.
 <br/>
-In this simplest case, License Holders will be matched by the License code and added to the Competition.  License Holders would be expected to be present in the database already, having been imported with init_usac, init,_ccn, init_oca, etc.
+In this simplest case, License Holders will be matched by the UCI ID or License code and added to the Competition.  License Holders would be expected to be present in the database already, having been imported with License Holder Import from Excel, init_usac, init,_ccn, init_oca, etc.
 </p>
 <p>
-Additional fields are used if the License code <strong>does not match</strong> an existing License Holder.
-Additional information is used to create a License Holder record.  Any missing information about the License Holder record can be updated on site at race check-in.
+The additional fields are used if the UCI ID or License code <strong>does not match</strong> an existing License Holder.
+Additional information is used to create a License Holder record.  Of course, any missing information about the License Holder record can be updated on site at race check-in.
 </p>
 <p>
 You can also include or exclude License Holders from optional events.
@@ -57,11 +57,11 @@ The spreadsheet must have a specific format:
 <p>
 Prereg data is intended to match pre-existing <strong>License Holders</strong> in the database.
 <ul>
-<li>If the <strong>License</strong> matches an existing License Holder, the data fields (LastName, FirstName, etc.) are updated.</li>
-<li>If the <strong>License</strong> does not match an existing License Holder, a License Holder record is created using the <strong>License</strong> and any data fields available (eg. LastName, FirstName, etc.).</li>
-<li>If the <strong>License</strong> field is missing, blank, or "TEMP":
+<li>If the <strong>UCI ID</strong> or <strong>License</strong> matches an existing License Holder, the data fields (LastName, FirstName, etc.) are updated.</li>
+<li>If neither the <strong>UCI ID</strong> or <strong>License</strong> match an existing License Holder, a License Holder record is created using the all data fields available (eg. LastName, FirstName, etc.).</li>
+<li>If the <strong>UCI ID</strong> field is missing or the <strong>License</strong> field is missing, blank, or "TEMP":
 	<ul>
-	<li>RaceDB attempts to find the License Holder based on an exact match of the <strong>First Name</strong>, <strong>Last Name</strong>, <strong>Date of Birth</strong> (if present) and <strong>Gender</strong> (if present).</li>
+	<li>RaceDB attempts to find the License Holder based on an exact match of the <strong>Last Name</strong>, <strong>First Name</strong>, <strong>Date of Birth</strong> (if present) and <strong>Gender</strong> (if present).</li>
 	<li>If that fails, RaceDB creates a unique, temporary License code, and then creates a License Holder using the data fields (LastName, FirstName, Gender, Date of Birth, etc.)</li>
 	</ul>
 </ul>
@@ -82,7 +82,7 @@ The same prereg data sheet can be imported into the same Competition any number 
 <tbody>
 <tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong> or <strong>Lic</strong> or <strong>Lic #</strong></td><td>Recommended.  Regional License code (<strong>not UCI code</strong>).<br/>
 Used to find the LicenseHolder in the database.<br/>
-If the License Code is missing or blank, RaceDB will attempt to find the LicenseHolder using the <strong>LastName</strong>, <strong>FirstName</strong>, <strong>Date of Birth</strong> (if present) and <strong>Gender</strong> (if present).<br/>
+If the UCI ID and License Code is missing or blank, RaceDB will attempt to find the LicenseHolder using the <strong>LastName</strong>, <strong>FirstName</strong>, <strong>Date of Birth</strong> (if present) and <strong>Gender</strong> (if present).<br/>
 If the record can be found, it is updated with all provided data fields.<br/>
 If a match cannot be found, a new LicenseHolder will be created with a temporary license code using all provided data fields.<br/>
 If multiple matches are found, an error will be reported.</td></tr>
