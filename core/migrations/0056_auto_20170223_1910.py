@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='systeminfo',
             name='license_holder_unique_by_license_code',
-            field=models.BooleanField(default=True, help_text='If True, License Holders will be Merged assuming that License Codes are permanent and unique.  Otherwise, ignore and attempt to match by Last, First, Gender and DOB', verbose_name='License Codes Permanent and Unique'),
+            field=models.BooleanField(default=False, help_text='If True, License Holders will be Merged assuming that License Codes are permanent and unique.  Otherwise, ignore and attempt to match by Last, First, Gender and DOB', verbose_name='License Codes Permanent and Unique'),
         ),
         migrations.AlterField(
             model_name='systeminfo',
