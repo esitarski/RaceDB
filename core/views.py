@@ -648,8 +648,8 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 		state_prov=lh.state_prov,
 		city=lh.city,
 		nation_code=lh.nation_code,
-		uci_id_code=lh.get_uci_id_text,
-		license=lh.license_code,
+		uci_id=lh.uci_id,
+		license=lh.license_code_trunc,
 	)) for lh in duplicates]
 	
 	@autostrip
