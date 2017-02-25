@@ -91,7 +91,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				if rr.adjustment_time:
 					t += rr.adjustment_time.total_seconds()
 				if rr.time_bonus:
-					t -= time_bonus.total_seconds()
+					t -= rr.time_bonus.total_seconds()
 				return t
 		else:
 			def get_value_for_rank( rr, rank, rrWinner ):
@@ -263,9 +263,9 @@ def series_results( series, categories, eventResults ):
 			iResults = [(i, rr) for i, rr in enumerate(rrs) if rr is not None]
 			if len(iResults) > bestResultsToConsider:
 				if scoreByTime:
-					iResults.sort( key=(lambda x: x[1].value_for_rank, x[0]) )
+					iResults.sort( key=(lambda x: (x[1].value_for_rank, x[0])) )
 				else:
-					iResults.sort( key=(lambda x: -x[1].value_for_rank, x[0]) )
+					iResults.sort( key=(lambda x: (-x[1].value_for_rank, x[0])) )
 				for i, t in iResults[bestResultsToConsider:]:
 					lhValue[lh] -= t
 					rrs[i].ignored = True

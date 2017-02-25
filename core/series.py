@@ -372,7 +372,7 @@ def SeriesPointsStructureDelete( request, seriesPointsStructureId, confirmed=0 )
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesPointsStructureMove( request, moveDirection, seriesPointsStuctureId ):
-	series_points_structure = get_object_or_404( SeriesPointsStucture, pk=seriesPointsStuctureId )
+	series_points_structure = get_object_or_404( SeriesPointsStructure, pk=seriesPointsStuctureId )
 	series_points_structure.move( moveDirection )
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 

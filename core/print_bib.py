@@ -347,7 +347,7 @@ def print_uci_bib( participant, copies=2 ):
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 
 	for c in xrange(copies):
-		uci_bib( pdf, participant,bib, license_holder.first_name, license_holder.last_name, particpant.competition.name )
+		uci_bib( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
 		
 	return pdf.output( dest='s' )
 	
@@ -409,7 +409,7 @@ def print_aso_bib( participant, copies=2 ):
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 
 	for c in xrange(copies):
-		aso_bib( pdf, participant,bib, license_holder.first_name, license_holder.last_name, particpant.competition.name )
+		aso_bib( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
 		
 	return pdf.output( dest='s' )
 

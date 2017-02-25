@@ -102,7 +102,7 @@ def participant_bib_filter( competition, bib ):
 		license_holders = list(
 			competition.number_set.numbersetentry_set.filter(
 				bib=bib, date_lost__isnull=True ).exclude(
-				pk__in=[lh.pk for lk in license_holders])
+				pk__in=[lh.pk for lh in license_holders])
 		)
 	
 	return license_holders, participants

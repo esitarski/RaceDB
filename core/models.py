@@ -481,7 +481,7 @@ class NumberSet(models.Model):
 			return True
 			
 		# If there is only one possibility for the bib, return it.
-		if self.get_bib_max_count() == 1 or get_bib_in_use(bib) == 1:
+		if self.get_bib_max_count() == 1 or self.get_bib_in_use(bib) == 1:
 			self.numbersetentry_set.filter( bib=bib ).delete()
 			return True
 		
@@ -1133,7 +1133,7 @@ class CategoryNumbers( models.Model ):
 		qry = Q()
 		numbers = sorted( self.get_numbers() )
 		if not numbers:
-			return q
+			return qry
 		a = numbers[0]
 		for p, q in zip(numbers, numbers[1:]):
 			if p+1 != q:
@@ -1597,7 +1597,7 @@ class WaveBase( models.Model ):
 	
 	@property
 	def spots_remaining( self ):
-		return None if self.max_participants is None else max(0, self.max_participants - get_participant_count())
+		return None if self.max_participants is None else max(0, self.max_participants - self.get_participant_count())
 	
 	@property
 	def is_full( self ):
@@ -1857,12 +1857,18 @@ class LicenseHolder(models.Model):
 				
 		# Fix nation code.
 		if not self.nation_code:
+			self.nation_code = u''
 			if self.uci_code and country_from_ioc(self.uci_code[:3]):
-				self.nation_code = self.uci_code[:3]
+				self.nation_code = self.uci_code[:3].upper()
 			elif ioc_from_country(self.nationality):
 				self.nation_code = ioc_from_country(self.nationality)
 		else:
 			self.nation_code = self.nation_code.upper()
+			
+			# Check for ISO country code and convert to IOC country code.
+			if self.nation_code != iso_uci_country_codes.get(self.nation_code, self.nation_code):
+				self.nation_code = iso_uci_country_codes.get(self.nation_code, self.nation_code)
+		
 			if self.nation_code not in uci_country_codes_set:
 				self.nation_code = u''
 		
@@ -1871,14 +1877,10 @@ class LicenseHolder(models.Model):
 		else:
 			self.nation_code = u''
 			
-		if self.emergency_contact_name == '0.0':
+		if not self.emergency_contact_name or self.emergency_contact_name.startswith('0'):
 			self.emergency_contact_name = u''
-		if self.emergency_contact_phone == '0':
+		if not self.emergency_contact_phone or self.emergency_contact_phone == '0':
 			self.emergency_contact_phone = u''
-		
-		# Check for ISO country code and convert to IOC country code.
-		if self.nation_code and self.nation_code != iso_uci_country_codes.get(self.nation_code, self.nation_code):
-			self.nation_code = iso_uci_country_codes.get(self.nation_code, self.nation_code)
 		
 		# Fix up date of birth.
 		if self.date_of_birth != invalid_date_of_birth:
@@ -2235,10 +2237,6 @@ class Result(models.Model):
 	time_bonus = DurationField.DurationField( null=True, blank=True, verbose_name=_('Time Bonus') )
 	
 	@property
-	def time_html( self ):
-		return mark_safe()
-	
-	@property
 	def adjusted_finish_time( self ):
 		return DurationField.formatted_timedelta(seconds=self.finish_time.total_seconds() + self.adjustment_time.total_seconds()) if self.finish_time is not None else None
 	
@@ -2323,7 +2321,7 @@ class Result(models.Model):
 	def add_lap_time( self, lt, lk=0.0 ):
 		rt = self.get_race_query().order_by('-race_time').first()
 		rt_last = rt.race_time if rt else 0.0
-		self.add_race_time( rt_last + lt, lap_kmh=lk )
+		self.add_race_time( rt_last + lt, lk )
 	
 	def delete_race_times( self ):
 		self.get_race_time_query().delete()
@@ -3747,7 +3745,7 @@ class Series( Sequence ):
 	def get_default_points_structure( self ):
 		ps = self.seriespointsstructure_set.all().first()
 		if not ps:
-			ps = SeriesPointsStructure( series=series, name='SeriesPointsDefault' )
+			ps = SeriesPointsStructure( series=self, name='SeriesPointsDefault' )
 			ps.save()
 		return ps
 	
