@@ -1861,11 +1861,20 @@ class LicenseHolder(models.Model):
 				self.nation_code = self.uci_code[:3]
 			elif ioc_from_country(self.nationality):
 				self.nation_code = ioc_from_country(self.nationality)
+		else:
+			self.nation_code = self.nation_code.upper()
+			if self.nation_code not in uci_country_codes_set:
+				self.nation_code = u''
 		
 		if self.nation_code and country_from_ioc(self.nation_code):
 			self.nationality = country_from_ioc(self.nation_code)
 		else:
 			self.nation_code = u''
+			
+		if self.emergency_contact_name == '0.0':
+			self.emergency_contact_name = u''
+		if self.emergency_contact_phone == '0':
+			self.emergency_contact_phone = u''
 		
 		# Check for ISO country code and convert to IOC country code.
 		if self.nation_code and self.nation_code != iso_uci_country_codes.get(self.nation_code, self.nation_code):
@@ -4111,13 +4120,16 @@ def bad_data_test():
 '''
 
 def fix_bad_license_codes():
-	print 'fix_bad_license_codes...'
-	q = Q(license_code__startswith='0') or Q(existing_tag__startswith='0') or Q(existing_tag2__startswith='0')
+	print 'fix_bad_license_codes and emergency contacts...'
+	q = (
+		Q(license_code__startswith='0') | Q(existing_tag__startswith='0') | Q(existing_tag2__startswith='0') |
+		Q(emergency_contact_name='0.0') | Q(emergency_contact_phone='0')
+	)
 	with BulkSave() as bs:
 		for lh in LicenseHolder.objects.filter(q):
 			bs.append( lh )
 	
-	q = Q(tag__startswith='0') or Q(tag2__startswith='0')
+	q = Q(tag__startswith='0') | Q(tag2__startswith='0')
 	with BulkSave() as bs:
 		for p in Participant.objects.filter(q):
 			bs.append( p )

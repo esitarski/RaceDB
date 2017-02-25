@@ -18,6 +18,7 @@ data_headers = (
 	'City', 'StateProv', 'Nationality',
 	'Email',
 	'License', 'UCICode',
+	'NatCode', 'UCIID',
 	'Emergency Contact', 'Emergency Phone',
 	'ZipPostal',
 )
@@ -65,6 +66,8 @@ def get_license_holder_excel( q = None ):
 			lh.email,
 			lh.license_code,
 			lh.uci_code,
+			lh.nation_code,
+			lh.uci_id,
 			lh.emergency_contact_name,
 			lh.emergency_contact_phone,
 			lh.zip_postal,
