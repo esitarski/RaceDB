@@ -1380,7 +1380,7 @@ class Event( models.Model ):
 				q = w.categories.all()
 			else:
 				q |= w.categories.all()
-		return q or Categories.objects.none()
+		return q or Category.objects.none()
 	
 	def get_participants( self ):
 		if not self.option_id:
