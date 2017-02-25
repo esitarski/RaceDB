@@ -14,8 +14,10 @@
 		<th>{% trans "Date of Birth" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
+		<th>{% trans "UCI Code" %}</th>
 		<th>{% trans "Nat." %}</th>
 		<th>{% trans "UCI ID" %}</th>
+		<th>{% trans "Emergency Contact" %}</th>
 		{% if isEdit %}
 		<th class="hidden-print"></th>
 		{% endif %}
@@ -33,21 +35,26 @@
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{% if h.date_of_birth_error %}<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>&nbsp;{% endif %}{{h.date_of_birth}}</td>
+			<td>{% if h.date_of_birth_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.date_of_birth}}</td>
 			<td>{{h.get_location}}</td>
 			<td class="text-nowrap">
-				{% if h.license_code_error %}
-					<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>
-				{% endif %}
+				{% if h.license_code_error %}<span class="is-warn"/>&nbsp;{% endif %}
 				{{h.license_code_trunc}}
+			</td>
+			<td class="text-nowrap">
+				{% if h.uci_code_error %}<span class="is-warn"/>&nbsp;{% endif %}
+				{{h.uci_code}}
 			</td>
 			<td>{{h.get_nation_code_html}}</td>
 			<td class="text-nowrap">
-				{% if h.uci_id_error %}
-					<img src="{% static "images/warning.png" %}" style="width:20px;height:20px;"\>
-				{% endif %}
+				{% if h.uci_id_error %}<span class="is-warn"/>&nbsp;{% endif %}
 				{{h.get_uci_id_html}}
 			</td>
+			<td class="text-nowrap">
+				{% if h.emergency_contact_incomplete %}<span class="is-warn"/>&nbsp;{% endif %}
+				{{h.emergency_contact_name}}<br/>{{h.emergency_contact_phone}}
+			</td>
+
 			{% if isEdit %}
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="{{path}}LicenseHolderDelete/{{h.id}}/">{% trans "Delete" %}</a>
