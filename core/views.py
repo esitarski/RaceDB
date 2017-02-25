@@ -367,7 +367,7 @@ def license_holders_from_search_text( search_text ):
 			
 		if search_text.startswith( 'scan=' ):
 			try:
-				arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
+				arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
 				license_holders = [LicenseHolder.objects.get(Q(license_code=arg) | Q(uci_id=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))]
 				break
 			except (IndexError, LicenseHolder.DoesNotExist):
@@ -408,7 +408,7 @@ def LicenseHoldersDisplay( request ):
 
 	search_text = request.session.get('license_holder_filter', '')
 	btns = [
-		('search-by-barcode-submit', _('Barcode Search'), 'btn btn-primary', True),
+		('search-by-barcode-submit', _('Barcode/License/UCIID/Tag Search'), 'btn btn-primary', True),
 		('search-by-tag-submit', _('RFID Search'), 'btn btn-primary', True),
 		('clear-search-submit', _('Clear Search'), 'btn btn-primary', True),
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
@@ -471,7 +471,7 @@ def LicenseHoldersDisplay( request ):
 #--------------------------------------------------------------------------
 @autostrip
 class BarcodeScanForm( Form ):
-	scan = forms.CharField( required = False, label = _('Barcode (License Code or RFID Tag)') )
+	scan = forms.CharField( required = False, label = _('Barcode (License Code, RFID Tag or UCIID)') )
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
@@ -640,15 +640,17 @@ def LicenseHoldersManageDuplicates( request ):
 	return render( request, 'license_holder_duplicate_list.html', locals() )
 
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
-	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city} - {state_prov} - {nationality} - {license}'.format(
+	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city}, {state_prov} - {nation_code} - {license} - {uci_id}'.format(
 		last_name=lh.last_name,
 		first_name=lh.first_name,
 		gender=lh.get_gender_display(),
 		date_of_birth=lh.date_of_birth,
 		state_prov=lh.state_prov,
 		city=lh.city,
-		nationality=lh.nationality,
-		license=lh.license_code, )) for lh in duplicates]
+		nation_code=lh.nation_code,
+		uci_id_code=lh.get_uci_id_text,
+		license=lh.license_code,
+	)) for lh in duplicates]
 	
 	@autostrip
 	class LicenseHolderSelectDuplicatesForm( Form ):

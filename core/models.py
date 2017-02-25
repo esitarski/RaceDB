@@ -2145,8 +2145,8 @@ class LicenseHolder(models.Model):
 	@classmethod
 	def get_errors( cls ):
 		license_holders = LicenseHolder.objects.filter(
-			pk__in=Participant.objects.all().values_list('license_holder',flat=True).distinct()).sorted('search_text')
-		)
+				pk__in=Participant.objects.all().values_list('license_holder',flat=True).distinct()
+			).sorted('search_text')
 		return (lh for lh in license_holders if lh.has_error)
 	
 	@property
