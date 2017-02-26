@@ -135,7 +135,7 @@ standard_field_aliases = (
 		"UCI code of the form NNNYYYYMMDD",
 	),
 	('uci_id',
-		('UCI ID','UCI ID'),
+		('UCIID','UCI ID'),
 		"UCI ID of the form XXX XXX XXX XX",
 	),
 	('bib',
