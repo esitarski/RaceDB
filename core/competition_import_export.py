@@ -90,6 +90,7 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, existi
 	processing.inc(Model.__name__)
 	
 	instance = Model( **data )
+	existing_instance = None
 	
 	# Add the references to the search.
 	included_search_fields = {}
