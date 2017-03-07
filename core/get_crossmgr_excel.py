@@ -18,7 +18,7 @@ import xlsxwriter
 data_headers = (
 	'Bib#',
 	'LastName', 'FirstName',
-	'Team',
+	'Team', 'TeamCode',
 	'City', 'StateProv',
 	'Category', 'Age', 'Gender',
 	'License',
@@ -245,11 +245,10 @@ def get_crossmgr_excel( event_mass_start ):
 	table = [list(data_headers)] if competition.using_tags else [list(data_headers[:-2])]
 	for p in event_mass_start.get_participants():
 		h = p.license_holder
-		print competition.competition_age(h)
 		row_data = [
 			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			p.team.name if p.team else '',
+			p.team.name if p.team else '', p.team.team_code if p.team else '',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code_export,
@@ -318,7 +317,7 @@ def get_crossmgr_excel_tt( event_tt ):
 			start_time.total_seconds() / (24.0*60.0*60.0) if start_time is not None else u'',
 			p.bib if p.bib else u'',
 			h.last_name, h.first_name,
-			p.team.name if p.team else u'',
+			p.team.name if p.team else u'', p.team.team_code if p.team else u'',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code,

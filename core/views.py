@@ -24,6 +24,7 @@ from participation_excel import participation_excel
 from participation_data import participation_data, get_competitions
 from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
+from uci_excel_datariver import uci_excel
 
 from participant_key_filter import participant_key_filter, participant_bib_filter
 from init_prereg import init_prereg
@@ -1267,6 +1268,42 @@ def StartListExcelDownload( request, eventId, eventType ):
 		event.date_time.strftime('%Y-%m-%d-%H%M%S'),
 		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 	)
+	return response
+
+def UCIExcelDownload( request, eventId, eventType, startList=1 ):
+	eventType = int(eventType)
+	event = get_object_or_404( [EventMassStart, EventTT][eventType], pk=eventId )
+	startList = 1 if int(startList) else 0
+	
+	zip_fname = 'RaceDB-UCI-{}-{}-{}_{}.zip'.format(
+		['Results','StartList'][startList],
+		utils.cleanFileName(event.competition.name),
+		utils.cleanFileName(event.name),
+		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+	)
+	
+	# Create a temp file.
+	zip_stream = tempfile.TemporaryFile()
+	
+	zip_handler = zipfile.ZipFile( zip_stream, 'w' )
+	for category in event.get_categories():
+		fname = 'RaceDB-UCI-{}-{}-{}-{}.xlsx'.format(
+			['Results','StartList'][startList],
+			utils.cleanFileName(event.competition.name),
+			utils.cleanFileName(event.name),
+			utils.cleanFileName(category.code_gender),
+		)
+		print 'adding', fname, '...'
+		zip_handler.writestr( fname, uci_excel(event, category, startList) )
+
+	zip_handler.close()
+
+	zip_stream.seek( 0 )	
+	response = HttpResponse(zip_stream, content_type=" application/zip")
+	zip_stream.seek( 0, 2 )
+	response['Content-Length'] = '{}'.format(zip_stream.tell())
+	zip_stream.seek( 0 )	
+	response['Content-Disposition'] = 'attachment; filename={}'.format(zip_fname)
 	return response
 
 @access_validation()

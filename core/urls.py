@@ -71,6 +71,9 @@ urlpatterns = [
 	url(r'^(?i).*StartListEmails/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.StartListEmails),
 	url(r'^(?i).*StartListExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.StartListExcelDownload),
 	
+	url(r'^(?i).*UCIExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.UCIExcelDownload),
+	url(r'^(?i).*UCIExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<startList>\d+)/$', views.UCIExcelDownload),
+	
 	url(r'^(?i).*ParticipantBarcodeAdd/(?P<competitionId>\d+)/$', views.ParticipantBarcodeAdd),
 	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/$', views.ParticipantRfidAdd),
 	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidAdd),
