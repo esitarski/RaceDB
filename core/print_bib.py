@@ -139,9 +139,9 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	license_holder = participant.license_holder
 	
 	bib = participant.bib
-	name = u'{} {}'.format( license_holder.first_name, license_holder.last_name )
+	name = license_holder.first_last
 	if len(name) > 32:
-		name = u'{}. {}'.format( license_holder.first_name[:1], license_holder.last_name )
+		name = license_holder.first_last_short
 	
 	if sponsor_name is None:
 		if competition.number_set and competition.number_set.sponsor:
@@ -221,7 +221,8 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 				barcode_rect = Rect( footer.x + logo_width, footer.y, remaining_width, footer.height )
 			else:
 				barcode_rect = Rect( footer.right - logo_width - remaining_width, footer.y, remaining_width, footer.height )
-			draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
+			if license_code:
+				draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
 		
 	pdf_str = pdf.output( dest='s' )
 	return pdf_str
@@ -290,7 +291,7 @@ def print_body_bib( participant, copies=2, onePage=False ):
 	return print_bib_on_rect(
 		participant.bib,
 		license_holder.license_code,
-		u'{} {}'.format(license_holder.first_name, license_holder.last_name),
+		license_holder.first_last,
 		'CrossMgr',
 		widthInches, heightInches, copies, onePage
 	)
@@ -300,7 +301,7 @@ def print_shoulder_bib( participant ):
 	return print_bib_on_rect(
 		participant.bib,
 		None,
-		u'{} {}'.format(license_holder.first_name, license_holder.last_name),
+		license_holder.first_last,
 		'CrossMgr',
 		3.9, 2.4, 2
 	)
@@ -353,7 +354,10 @@ def print_uci_bib( participant, copies=2 ):
 	
 #---------------------------------------------------------------------------------------------------------
 def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
-	name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+	if first_name:
+		name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+	else:
+		name = last_name.upper()
 
 	w_page = 8.5*inch
 	h_page = 11*inch
@@ -414,8 +418,11 @@ def print_aso_bib( participant, copies=2 ):
 	return pdf.output( dest='s' )
 
 def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_name='' ):
-	name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
-
+	if first_name:
+		name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+	else:
+		name = last_name.upper()
+	
 	w_page = 8.5*inch
 	h_page = 11*inch
 
@@ -503,9 +510,9 @@ def print_id_label( participant ):
 	license_holder = participant.license_holder
 	
 	bib = participant.bib
-	name = u'{} {}'.format( license_holder.first_name, license_holder.last_name )
+	name = license_holder.first_last
 	if len(name) > 32:
-		name = u'{}. {}'.format( license_holder.first_name[:1], license_holder.last_name )
+		name = license_holder.first_last_short
 	
 	system_name = 'CrossMgr'
 	

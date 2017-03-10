@@ -17,6 +17,7 @@ from core import results
 from core import hub
 from core import series
 from core import callups
+from core import custom_label
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -91,6 +92,8 @@ urlpatterns = [
 	url(r'^(?i).*EventMassStartDelete/(?P<eventId>\d+)/$', views.EventMassStartDelete),
 	
 	url(r'^(?i).*UploadCrossMgr/$', views.UploadCrossMgr),
+	
+	url(r'^(?i).*CustomLabel/(?P<competitionId>\d+)/$', custom_label.CustomLabel),
 	
 	url(r'^(?i).*WaveNew/(?P<eventMassStartId>\d+)/$', views.WaveNew),
 	url(r'^(?i).*WaveEdit/(?P<waveId>\d+)/$', views.WaveEdit),

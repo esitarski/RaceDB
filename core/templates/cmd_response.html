@@ -7,7 +7,7 @@
 <h1>{{title}}</h1>
 
 {% if participant %}
-	<h2>{{participant.bib}}: {{participant.license_holder.full_name}}</h2>
+	<h2>{{participant.bib}}{% if participant.license_holder.full_name %}: {{participant.license_holder.full_name}}{% endif %}</h2>
 {% endif %}
 
 {% if stderr_info %}

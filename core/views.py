@@ -1103,6 +1103,7 @@ def CompetitionDashboard( request, competitionId ):
 	events_mass_start = competition.get_events_mass_start()
 	events_tt = competition.get_events_tt()
 	category_numbers=competition.categorynumbers_set.all()
+	system_info = SystemInfo.get_singleton()
 	
 	comp_inuse = set()
 	comp_lost = set()
@@ -2674,14 +2675,11 @@ def get_cmd( cmd ):
 		return cmd.replace('$gswin', gs_cmd() or 'gs_not_found', 1)
 	return cmd
 	
-@access_validation()
-def ParticipantPrintBibLabels( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+def print_pdf( request, participant, pdf_str, print_type ):
 	system_info = SystemInfo.get_singleton()
-	pdf_str = print_bib_tag_label( participant )
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
-			tmp_file = get_temp_print_filename( request, participant.bib, 'Frame' )
+			tmp_file = get_temp_print_filename( request, participant.bib, print_type )
 			with open(tmp_file, 'wb') as f:
 				f.write( pdf_str )
 			p = Popen(
@@ -2709,98 +2707,22 @@ def ParticipantPrintBibLabels( request, participantId ):
 @access_validation()
 def ParticipantPrintBodyBib( request, participantId, copies=2, onePage=False ):
 	participant = get_object_or_404( Participant, pk=participantId )
-	system_info = SystemInfo.get_singleton()
-	pdf_str = print_body_bib( participant, copies, onePage )
-	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
-		try:
-			tmp_file = get_temp_print_filename( request, participant.bib, 'Body' )
-			with open(tmp_file, 'wb') as f:
-				f.write( pdf_str )
-			p = Popen(
-				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
-				stdin=PIPE, stdout=PIPE, stderr=PIPE,
-			)
-			stdout_info, stderr_info = p.communicate( pdf_str )
-		except Exception as e:
-			stdout_info, stderr_info = '', e
-		
-		try:
-			os.remove( tmp_file )
-		except:
-			pass
-		
-		title = _("Print Status")
-		return render( request, 'cmd_response.html', locals() )
-	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
-		response = HttpResponse(pdf_str, content_type="application/pdf")
-		response['Content-Disposition'] = 'inline'
-		return response
-	else:
-		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	return print_pdf( request, participant, print_body_bib(participant, copies, onePage), 'Body' )
+	
+@access_validation()
+def ParticipantPrintBibLabels( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	return print_pdf( request, participant, print_bib_tag_label(participant), 'Frame' )
 	
 @access_validation()
 def ParticipantPrintShoulderBib( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
-	system_info = SystemInfo.get_singleton()
-	pdf_str = print_shoulder_bib( participant )
-	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
-		try:
-			tmp_file = get_temp_print_filename( request, participant.bib, 'Shoulder' )
-			with open(tmp_file, 'wb') as f:
-				f.write( pdf_str )
-			p = Popen(
-				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
-				stdin=PIPE, stdout=PIPE, stderr=PIPE,
-			)
-			stdout_info, stderr_info = p.communicate( pdf_str )
-		except Exception as e:
-			stdout_info, stderr_info = '', e
-		
-		try:
-			os.remove( tmp_file )
-		except:
-			pass
-		
-		title = _("Print Status")
-		return render( request, 'cmd_response.html', locals() )
-	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
-		response = HttpResponse(pdf_str, content_type="application/pdf")
-		response['Content-Disposition'] = 'inline'
-		return response
-	else:
-		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	return print_pdf( request, participant, print_shoulder_bib(participant), 'Shoulder' )
 	
 @access_validation()
 def ParticipantPrintEmergencyContactInfo( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
-	system_info = SystemInfo.get_singleton()
-	pdf_str = print_id_label( participant )
-	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
-		try:
-			tmp_file = get_temp_print_filename( request, participant.bib, 'Emergency' )
-			with open(tmp_file, 'wb') as f:
-				f.write( pdf_str )
-			p = Popen(
-				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
-				stdin=PIPE, stdout=PIPE, stderr=PIPE,
-			)
-			stdout_info, stderr_info = p.communicate( pdf_str )
-		except Exception as e:
-			stdout_info, stderr_info = '', e
-		
-		try:
-			os.remove( tmp_file )
-		except:
-			pass
-		
-		title = _("Print Status")
-		return render( request, 'cmd_response.html', locals() )
-	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
-		response = HttpResponse(pdf_str, content_type="application/pdf")
-		response['Content-Disposition'] = 'inline'
-		return response
-	else:
-		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	return print_pdf( request, participant, print_id_label(participant), 'Emergency' )
 	
 @autostrip
 class ParticipantCategorySelectForm( Form ):
