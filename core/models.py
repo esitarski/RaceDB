@@ -2098,7 +2098,7 @@ class LicenseHolder(models.Model):
 			tag = getTagFormatStr( system_info.tag_template ).format( n=self.id )
 		
 		if validate:
-			while LicenseHolder.objects.filter(tag=tag).exists():
+			while LicenseHolder.objects.filter(existing_tag=tag).exists():
 				tag = get_id( system_info.tag_bits )
 		
 		return tag
