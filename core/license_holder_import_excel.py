@@ -246,7 +246,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				except LicenseHolder.DoesNotExist:
 					pass
 				except LicenseHolder.MultipleObjectsReturned:
-					message_stream_write( u'**** Row {}: Warning Yikes! Name="{}" found duplicate UCIID="{}"\n'.format(
+					message_stream_write( u'**** Row {}: Warning!  Name="{}" found duplicate UCIID="{}"\n'.format(
 							i, name, uci_id,
 						)
 					)
