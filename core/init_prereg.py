@@ -112,6 +112,8 @@ def init_prereg(
 			city			= to_str(v('city', None))
 			state_prov		= to_str(v('state_prov', None))
 			zip_postal		= to_str(v('zip_postal', None))
+			if zip_postal:
+				zip_postal = validate_postal_code( zip_postal )
 			
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))

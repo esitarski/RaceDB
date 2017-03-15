@@ -61,6 +61,14 @@ def set_attributes( obj, attributes, accept_empty_values=False ):
 			changed = True
 	return changed
 	
+def set_attributes_changed( obj, attributes, accept_empty_values=False ):
+	changed = []
+	for key, value in attributes.iteritems():
+		if (accept_empty_values or value) and getattr(obj, key) != value:
+			setattr(obj, key, value)
+			changed.append( (key, value) )
+	return changed
+	
 def to_int_str( v ):
 	if v is None:
 		return None

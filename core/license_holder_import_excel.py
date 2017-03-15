@@ -62,6 +62,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				success = True
 					
 	temp_to_existing = {}
+	existing_to_temp = {}
 	if update_license_codes:
 		print 'Replace all the current license codes with unique temp codes...'
 		success = True
@@ -84,6 +85,9 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 		for i, ur in ur_records:
 			v = ifm.finder( ur )
 			
+			#-----------------------------------------------------------------------------------------
+			# Process all the fields from the Excel sheet.
+			#
 			uci_code		= to_str(v('uci_code', None))
 			date_of_birth	= v('date_of_birth', None)
 			
@@ -106,6 +110,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			date_of_birth 	= date_of_birth or invalid_date_of_birth
 			
 			license_code	= to_int_str(v('license_code', u'')).upper().strip()
+			if license_code == u'TEMP':
+				license_code = None
 			last_name		= to_str(v('last_name',u''))
 			first_name		= to_str(v('first_name',u''))
 			name			= to_str(v('name',u''))
@@ -120,6 +126,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			city			= to_str(v('city', None))
 			state_prov		= to_str(v('state_prov', None))
 			zip_postal		= to_str(v('zip_postal', None))
+			if zip_postal:
+				zip_postal = validate_postal_code( zip_postal )
 			nationality		= to_str(v('nationality', None))
 			
 			uci_id			= to_uci_id(v('uci_id', None))
@@ -191,107 +199,150 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			license_holder = None
 			status = 'Unchanged'
 			
-			#with transaction.atomic():
+			# Get a query by Last, First, DOB and Gender.
+			qNameDOBGender = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
+			if date_of_birth and date_of_birth != invalid_date_of_birth:
+				qNameDOBGender &= Q( date_of_birth=date_of_birth )
+			if gender is not None:
+				qNameDOBGender &= Q( gender=gender )
+			
+			#------------------------------------------------------------------------------
 			if update_license_codes:
-				license_holder = LicenseHolder.objects.filter( search_text__startswith=utils.get_search_text([last_name, first_name]) )
-				if date_of_birth and date_of_birth != invalid_date_of_birth:
-					license_holder = license_holder.filter( date_of_birth=date_of_birth )
-				if gender is not None:
-					license_holder = license_holder.filter( gender=gender )
-				license_holder = license_holder.first()
-			else:
-				if uci_id:
-					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
+				# Try to find the license holder by name, DOB, gender
+				try:
+					license_holder = LicenseHolder.objects.get( qNameDOBGender )
 				
-				if not license_holder and license_code and not license_code.upper() == u'TEMP':
-					# Try to find the license holder by license code.
+				except LicenseHolder.DoesNotExist:
+					# Create a new license holder from the information given.
 					try:
-						license_holder = LicenseHolder.objects.get( license_code=license_code )
-					except LicenseHolder.DoesNotExist:
-						# No match.  Create a new license holder using the given license code.
-						try:
-							license_holder = LicenseHolder( **license_holder_attr_value )
-							license_holder.save()
-							status = 'Added'
-						except Exception as e:
-							message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
-									i, e, name,
-								)
-							)
-							continue
-				else:
-					# No license code.  Try to find the participant by last/first name, [date_of_birth] and [gender].
-					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
-					if date_of_birth and date_of_birth != invalid_date_of_birth:
-						q &= Q( date_of_birth=date_of_birth )
-					if gender is not None:
-						q &= Q( gender=gender )
-					
-					try:
-						license_holder = LicenseHolder.objects.get( q )
-					except LicenseHolder.DoesNotExist:
-						# No name match.
-						# Create a temporary license holder.
-						try:
-							license_holder_attr_value['license_code'] = u'TEMP'
-							license_holder = LicenseHolder( **license_holder_attr_value )
-							del license_holder_attr_value['license_code']
-							license_holder.save()
-							status = 'Added'
-						
-						except Exception as e:
-							message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
-									i, e, name,
-								)
-							)
-							continue
-					
-					except LicenseHolder.MultipleObjectsReturned:
-						message_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
-								i, name,
-							)
-						)
-						continue
-				
-				if not license_holder:
-					continue
-					
-				# Update with any new information.
-				if update_license_codes and license_holder_attr_value.get('license_code', None) is not None:
-					if temp_to_existing.get(license_holder.license_code,None) != license_holder_attr_value['license_code']:
-						temp_to_existing[license_holder.license_code] = license_holder_attr_value['license_code']
-						status = "LicenseCode Changed"
-					del license_holder_attr_value['license_code']
-				
-				if set_attributes( license_holder, license_holder_attr_value, False ):
-					try:
+						if not license_code:
+							license_holder_attr_value['license_code'] = license_code = random_temp_license()
+						license_holder = LicenseHolder( **license_holder_attr_value )
+						temp = random_temp_license(cpy_prefix)
+						temp_to_existing[temp] = license_code
+						license_holder.license_code = temp
 						license_holder.save()
-						if status != 'Added':
-							status = 'Changed'
+						del license_holder_attr_value['license_code']	# Delete this after creating a record to prevent the field update.
+						status = 'Added'
+					
 					except Exception as e:
-						message_stream_write( u'**** Row {}: License Holder Exception: {}, Name="{}"\n'.format(
+						message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
 								i, e, name,
 							)
 						)
-						message_stream.write( u'^^^^ {}\n'.format( u', '.join( u'{}={}'.format(k, v) for k, v in license_holder_attr_value.iteritems()) ) )
 						continue
 				
-				status_count[status] += 1
-				if status != 'Unchanged':
-					msg = u'Row {:>6}: {}: {:>8} {}\n'.format(
-						i,
-						status,
-						temp_to_existing[license_holder.license_code] if license_holder.license_code in temp_to_existing else license_holder.license_code,
-						u', '.join( unicode(v) if v else u'None' for v in [
-								license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.nation_code, license_holder.uci_id,
-								u'{} {}'.format(license_holder.first_name, license_holder.last_name),
-								license_holder.city, license_holder.state_prov,
-								license_holder.emergency_contact_name, license_holder.emergency_contact_phone,
-							]
-						),
+				except LicenseHolder.MultipleObjectsReturned:
+					message_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+							i, name,
+						)
 					)
-					message_stream_write( msg )
-					print removeDiacritic(msg)[:-1]
+					continue
+				
+			#------------------------------------------------------------------------------
+			if not license_holder and uci_id:
+				try:
+					license_holder = LicenseHolder.objects.get( uci_id=uci_id )
+				except LicenseHolder.DoesNotExist:
+					pass
+				except LicenseHolder.MultipleObjectsReturned:
+					message_stream_write( u'**** Row {}: Warning Yikes! Name="{}" found duplicate UCIID="{}"\n'.format(
+							i, name, uci_id,
+						)
+					)
+					pass
+				
+			if not license_holder and license_code:
+				# Try to find the license holder by license code.
+				try:
+					license_holder = LicenseHolder.objects.get( license_code=license_code )
+				except LicenseHolder.DoesNotExist:
+					# No match.  Create a new license holder using the given license code.
+					try:
+						license_holder = LicenseHolder( **license_holder_attr_value )
+						license_holder.save()
+						del license_holder_attr_value['license_code']	# Delete this after creating a record to prevent the field update.
+						status = 'Added'
+					except Exception as e:
+						message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+								i, e, name,
+							)
+						)
+						continue
+						
+			if not license_holder:
+				# Try to find the license holder by name, DOB, gender
+				try:
+					license_holder = LicenseHolder.objects.get( qNameDOBGender )
+				except LicenseHolder.DoesNotExist:
+					# No name match.
+					# Create a temporary license holder.
+					try:
+						license_holder_attr_value['license_code'] = random_temp_license()
+						license_holder = LicenseHolder( **license_holder_attr_value )
+						license_holder.save()
+						del license_holder_attr_value['license_code']	# Delete this after creating a record to prevent a field update.
+						status = 'Added'
+					
+					except Exception as e:
+						message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+								i, e, name,
+							)
+						)
+						continue
+				
+				except LicenseHolder.MultipleObjectsReturned:
+					message_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+							i, name,
+						)
+					)
+					continue
+				
+			if not license_holder:
+				message_stream_write( u'**** Row {}: Cannot find License Holder: {}, Name="{}"\n'.format(
+						i, e, name,
+					)
+				)
+				continue
+				
+			# Update with any new information.
+			if update_license_codes and license_holder_attr_value.get('license_code', None) is not None:
+				if temp_to_existing.get(license_holder.license_code,None) != license_holder_attr_value['license_code']:
+					temp_to_existing[license_holder.license_code] = license_holder_attr_value['license_code']
+					status = "LicenseCode Changed"
+				del license_holder_attr_value['license_code']
+			
+			fields_changed = set_attributes_changed( license_holder, license_holder_attr_value, False )
+			if fields_changed:
+				try:
+					license_holder.save()
+					if status != 'Added':
+						status = 'Changed'
+				except Exception as e:
+					message_stream_write( u'**** Row {}: License Holder Exception: {}, Name="{}"\n'.format(
+							i, e, name,
+						)
+					)
+					message_stream.write( u'^^^^ {}\n'.format( u', '.join( u'{}={}'.format(k, v) for k, v in license_holder_attr_value.iteritems()) ) )
+					continue
+			
+			status_count[status] += 1
+			if status != 'Unchanged':
+				msg = u'Row {:>6}: {}: {:>8} {}\n'.format(
+					i,
+					status,
+					temp_to_existing[license_holder.license_code] if license_holder.license_code in temp_to_existing else license_holder.license_code,
+					u', '.join( unicode(v) if v else u'None' for v in [
+							license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.nation_code, license_holder.uci_id,
+							u'{} {}'.format(license_holder.first_name, license_holder.last_name),
+							license_holder.city, license_holder.state_prov,
+							license_holder.emergency_contact_name, license_holder.emergency_contact_phone,
+						]
+					),
+				)
+				msg += u'            {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
+				message_stream_write( msg )
+				print removeDiacritic(msg)[:-1]
 
 	sheet_name = None
 	if worksheet_contents is not None:
@@ -344,50 +395,28 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 	process_ur_records( ur_records )
 	
 	if update_license_codes:
-		print 'Fix all the license codes...'
-	
-		# Check if the license code changes would cause a conflict.
-		# Ignore changes if they do.
-		existing = set()
-		repairs = set()
-		for k, v in temp_to_existing.iteritems():
-			if v not in existing:
-				existing.add( v )
-				continue
-			message_stream_write( u'License code "{}" is non-unique.  Changed to "{}"\n'.format(v,k.replace(cpy_prefix, dup_prefix)) )
-			repairs.add( k )
-		
-		for k in repairs:
-			temp_to_existing[k] = k.replace(cpy_prefix, dup_prefix)
-		
 		print "Repairing temporary license codes..."
-		bad_licenses = []
+		
+		# Check if the license code changes would cause a conflict.
+		# Set to a DUP code if they do.
+		unique_codes = set()
+		for k, v in list(temp_to_existing.iteritems()):
+			if v not in unique_codes:
+				unique_codes.add( v )
+			else:
+				temp_to_existing[k] = k.replace(cpy_prefix, dup_prefix)
+	
 		success = True
 		while success:
 			success = False
 			lh, license_code_original, license_code_new = None, None, None
-			try:
-				with transaction.atomic():
-					for lh in LicenseHolder.objects.filter( license_code__startswith=cpy_prefix ).exclude( license_code__in=bad_licenses )[:999]:
-						success = True
-						license_code_original, license_code_new = lh.license_code, temp_to_existing.get(lh.license_code, lh.license_code)
-						license_code_new = re.sub( '_XXX_|_CPY_|_DUP_', 'TEMP_', license_code_new )
-						lh.license_code = license_code_new
-						lh.license_code = lh.license_code.replace( '_XXX_', 'TEMP_' )
-						lh.save()
-						
-			except Exception as e:
-				if license_code_original:
-					bad_licenses.append( license_code_original )
-				message_stream_write( u'License fix failure: tmp="{}"  new="{}" {} {} {}, {} {}, {} - {} \n'.format(
-						license_code_original,
-						license_code_new,
-						lh.date_of_birth.strftime('%Y-%m-%d'), lh.uci_code,
-						lh.last_name, lh.first_name,
-						lh.city, lh.state_prov,
-						e,
-					)
-				)
+			with transaction.atomic():
+				for lh in LicenseHolder.objects.filter( license_code__startswith=cpy_prefix )[:999]:
+					success = True
+					license_code_original, license_code_new = lh.license_code, temp_to_existing.get(lh.license_code, lh.license_code)
+					license_code_new = re.sub( '_XXX_|_CPY_|_DUP_', 'TEMP_', license_code_new )
+					lh.license_code = license_code_new
+					lh.save()
 	
 	message_stream_write( u'\n' )
 	message_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )
