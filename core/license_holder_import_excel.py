@@ -222,7 +222,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 						temp_to_existing[temp] = license_code
 						license_holder.license_code = temp
 						license_holder.save()
-						del license_holder_attr_value['license_code']	# Delete this after creating a record to prevent the field update.
+						del license_holder_attr_value['license_code'] # Delete license_code after creating a record to prevent the update.
 						status = 'Added'
 					
 					except Exception as e:
@@ -261,7 +261,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 					try:
 						license_holder = LicenseHolder( **license_holder_attr_value )
 						license_holder.save()
-						del license_holder_attr_value['license_code']	# Delete this after creating a record to prevent the field update.
+						del license_holder_attr_value['license_code'] # Delete license_code after creating a record to prevent the update.
 						status = 'Added'
 					except Exception as e:
 						message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
@@ -281,7 +281,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 						license_holder_attr_value['license_code'] = random_temp_license()
 						license_holder = LicenseHolder( **license_holder_attr_value )
 						license_holder.save()
-						del license_holder_attr_value['license_code']	# Delete this after creating a record to prevent a field update.
+						del license_holder_attr_value['license_code'] # Delete license_code after creating a record to prevent the update.
 						status = 'Added'
 					
 					except Exception as e:
