@@ -413,8 +413,9 @@ class NumberSet(models.Model):
 					counts[bib] = c
 		return counts
 	
-	def get_bib_available_all( self ):
-		bib_used = self.numbersetentry_set.values_list('bib').annotate(Count('bib'))
+	def get_bib_available_all( self, bib_query=None ):
+		bib_used = self.numbersetentry_set.filter( bib_query ) if bib_query else self.numbersetentry_set.all()
+		bib_used = bib_used.values_list('bib').annotate(Count('bib'))
 		bib_available_all = self.get_bib_max_count_all()
 		for bib, used in bib_used:
 			bib_available_all[bib] -= used
@@ -481,7 +482,7 @@ class NumberSet(models.Model):
 			return True
 			
 		# If there is only one possibility for the bib, return it.
-		if self.get_bib_max_count() == 1 or self.get_bib_in_use(bib) == 1:
+		if self.get_bib_max_count(bib) == 1 or self.get_bib_in_use(bib) == 1:
 			self.numbersetentry_set.filter( bib=bib ).delete()
 			return True
 		
@@ -1130,17 +1131,28 @@ class CategoryNumbers( models.Model ):
 		return self.numCache
 		
 	def get_bib_query( self ):
-		qry = Q()
+		qryFail = Q( bib=999999 )
 		numbers = sorted( self.get_numbers() )
 		if not numbers:
-			return qry
+			return qryFail
+		
+		qry = None
 		a = numbers[0]
 		for p, q in zip(numbers, numbers[1:]):
 			if p+1 != q:
-				qry |= Q(bib__range=(a, p))
+				qryRange = Q(bib__range=(a, p))
+				if qry:
+					qry |= qryRange
+				else:
+					qry = qryRange
 				a = q
-		qry |= Q(bib__range=(a, q))
-		return qry
+		
+		qryRange = Q(bib__range=(a, q))
+		if qry:
+			qry |= qryRange
+		else:
+			qry = qryRange
+		return qry or qryFail
 	
 	def __contains__( self, n ):
 		return n in self.get_numbers()

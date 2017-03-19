@@ -713,66 +713,84 @@ def ParticipantBibChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	if not participant.category:
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	competition = participant.competition
-	category = participant.category
-	
-	# Find the available category numbers.
-	participants = Participant.objects.filter( competition=competition )
-	
+		
+	competition      = participant.competition
+	category         = participant.category
+	number_set       = competition.number_set
 	category_numbers = competition.get_category_numbers( category )
-	if category_numbers:
-		participants.filter( category__in=category_numbers.categories.all() )
-	participants = participants.select_related('license_holder')
-	allocated_numbers = { p.bib: p.license_holder for p in participants }
 	
-	# Exclude existing bib numbers of all license holders if using existing bibs.
-	# For duplicate license holders, check whether the duplicate has ever raced this category before.
-	# We don't know whether the existing license holders will show up.
-	if competition.number_set:
-		current_bibs = defaultdict( set )
-		nses = competition.number_set.numbersetentry_set.filter(date_lost__isnull=True)
+	if category_numbers:
+		available_numbers = sorted( category_numbers.get_numbers() )
+		bib_query = category_numbers.get_bib_query()
+		category_numbers_defined = True
+	else:
+		available_numbers = []
+		bib_query = None
+		category_numbers_defined = False
+	
+	allocated_numbers = {}
+	lost_bibs = {}
+	
+	# Find available category numbers.
+	
+	# First, add all numbers allocated to this event (includes pre-reg).
+	if available_numbers:
+		participants = Participant.objects.filter( competition=competition )
 		if category_numbers:
-			nses = nses.filter( category_numbers.get_bib_query() )
-		for nse in nses.select_related('license_holder'):
+			participants = participants.filter( category__in=category_numbers.categories.all() ).filter( bib_query )
+		participants = participants.select_related('license_holder')
+		allocated_numbers = { p.bib: p.license_holder for p in participants }
+	
+	# If there is a NumberSet, add allocated numbers from there.
+	if number_set and available_numbers:
+		# Exclude existing bib numbers of all license holders if using existing bibs.
+		# For duplicate license holders, check whether the duplicate has ever raced this category before.
+		# We don't know if the existing license holders will show up.
+		
+		bib_max = number_set.get_bib_max_count_all()
+		bib_available_all = number_set.get_bib_available_all( bib_query )
+		
+		# Get all the bibs of license holders that match the category_numbers of this category.
+		current_bibs = defaultdict( set )
+		nses = number_set.numbersetentry_set.filter( date_lost__isnull=True ).filter( bib_query )
+		nses = nses.select_related('license_holder')
+		for nse in nses:
 			current_bibs[nse.license_holder].add( nse.bib )
 		
-		pprevious = Participant.objects.filter( competition__number_set=competition.number_set, category=participant.category )
-		if category_numbers:
-			pprevious = pprevious.filter( category_numbers.get_bib_query() )
-		for p in pprevious.exclude(license_holder=participant.license_holder).select_related('license_holder'):
-			try:
-				if p.bib in current_bibs[p.license_holder]:
-					allocated_numbers.update[p.bib] = p.license_holder
-			except:
-				pass
+		# Handle the case of only one bib in the number set.
+		for lh, bibs in current_bibs.iteritems():
+			if len(bibs) == 1:
+				bib = next(iter(bibs))
+				if bib_max.get(bib, 0) == 1:
+					allocated_numbers[bib] = lh
+
+		# Otherwise, get past participants to find which license holder owns the bib.
+		pprevious = Participant.objects.filter( competition__number_set=number_set, category__in=category_numbers.categories.all() )
+		pprevious = pprevious.filter( bib_query )
+		if allocated_numbers and len(allocated_numbers) <= 200:
+			pprevious = pprevious.exclude( bib__in=list(allocated_numbers.iterkeys()) )
+		pprevious = pprevious.order_by('-competition__start_date')
 		
-		bib_available_all = competition.number_set.get_bib_available_all()
-		nses = competition.number_set.numbersetentry_set.exclude(date_lost__isnull=True)
-		if category_numbers:
-			nses = nses.filter( category_numbers.get_bib_query() )
+		for p in pprevious.exclude(license_holder=participant.license_holder).select_related('license_holder'):
+			if p.bib not in allocated_numbers and p.bib in current_bibs[p.license_holder]:
+				allocated_numbers[p.bib] = p.license_holder
+		
+		nses = number_set.numbersetentry_set.exclude( date_lost__isnull=True ).filter( bib_query )
 		lost_bibs = { bib:date_lost
 			for bib, date_lost in nses.order_by('date_lost').values_list('bib','date_lost')
-				if bib_available_all[bib] == 0
+				if bib_available_all.get(bib,-1) == 0
 		}
 	else:
 		lost_bibs = {}
 		
-	if category_numbers:
-		available_numbers = sorted( category_numbers.get_numbers() )
-		category_numbers_defined = True
-	else:
-		available_numbers = []
-		category_numbers_defined = False
-	
 	bibs = [Bib(n, allocated_numbers.get(n, None), lost_bibs.get(n,None)) for n in available_numbers]
 	del available_numbers
 	del allocated_numbers
 	del lost_bibs
 	
-	if participant.category:
-		bib_participants = { p.bib:p
-			for p in Participant.objects.filter(competition=competition, category=participant.category).exclude(bib__isnull=True)
-		}
+	if bibs and participant.category:
+		participants = Participant.objects.filter(competition=competition, category=participant.category).exclude(bib__isnull=True)
+		bib_participants = { p.bib:p for p in participants }
 		for b in bibs:
 			try:
 				b.full_name = bib_participants[b.bib].full_name_team
@@ -780,8 +798,8 @@ def ParticipantBibChange( request, participantId ):
 				pass
 	
 	has_existing_number_set_bib = (
-		competition.number_set and
-		participant.bib == competition.number_set.get_bib( competition, participant.license_holder, participant.category )
+		number_set and
+		participant.bib == number_set.get_bib( competition, participant.license_holder, participant.category )
 	)
 	return render( request, 'participant_bib_select.html', locals() )
 	

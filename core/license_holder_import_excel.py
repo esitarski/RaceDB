@@ -62,23 +62,14 @@ class LicenseHolderUpdate( object ):
 		has_license_code = 'license_code' in lh_attributes
 		
 		if self.match_by_license_code:
-			if not lh:
-				try:
-					lh = self.query_license_code( lh_attributes )
-				except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
-					pass
-			
-			if not lh:
-				try:
-					lh = self.query_uci_id( lh_attributes )
-				except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
-					pass
-					
-			if not has_license_code:
-				try:
-					lh = self.query_name_dob_gender( lh_attributes )
-				except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
-					pass
+			if has_license_code:
+				if not lh:
+					try:
+						lh = self.query_license_code( lh_attributes )
+					except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
+						return None, 'NotFound', None, None
+			else:
+				pass # No license code - add with a temporary license code.
 		else:
 			try:
 				lh = self.query_name_dob_gender( lh_attributes )
