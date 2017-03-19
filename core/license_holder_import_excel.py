@@ -13,6 +13,109 @@ from import_utils import *
 from models import *
 from FieldMap import standard_field_map, normalize 
 
+class LicenseHolderUpdate( object ):
+	def __init__( self, match_by_license_code = True ):
+		self.match_by_license_code = match_by_license_code
+				
+	def __enter__(self):
+		if not match_by_license_code:
+			self.lc_existing = set( LicenseHolder.objects.all().values_list('license_code',flat=True) )
+			self.lc_new = {}
+		return self
+		
+	def __exit__(self, type, value, traceback):
+		if self.match_by_license_code:
+			# Fix existing licenses that are in conflict with new licenses.
+			with BulkSave() as b:
+				for k in self.lc_existing.intersection(self.lc_new.iterkeys()):
+					lh = LicenseHolder.objects.get( license_code = k )
+					lh.license_code = random_temp_license()
+					b.append( lh )
+			
+			# Update the new license codes to the given codes as they are safely unique.
+			with BulkSave() as b:
+				for k, v in self.lc_new.iteritems():
+					lh = LicenseHolder.objects.get( license_holder = v )
+					lh.license_code = k
+					b.append( lh )
+					
+	def query_license_code( self, lh_attributes ):
+		return LicenseHolder.objects.get( license_code = lh_attributes['license_code'] ) if 'license_code' in lh_attributes else None
+	
+	def query_uci_id( self, lh_attributes ):
+		return LicenseHolder.objects.get( uci_id = lh_attributes['uci_id'] ) if 'uci_id' in lh_attributes else None
+	
+	def query_name_dob_gender( self, lh_attibutes ):
+		if not ('last_name' in lh_attributes and 'first_name' in lh_attributes):
+			return None
+		qNameDOBGender = Q( search_text__startswith=utils.get_search_text([lh_attributes['last_name'], lh_attributes['first_name']]) )
+		if 'date_of_birth' in lh_attributes and lh_attributes['date_of_birth'] != invalid_date_of_birth:
+			qNameDOBGender &= Q( date_of_birth=lh_attributes['date_of_birth'] )
+		if lh_attibutes.get('gender', None):
+			qNameDOBGender &= Q( gender=lh_attibutes['gender'] )
+		return LicenseHolder.objects.get( qNameDOBGender )
+		
+	def update( self, lh_attributes ):
+		lh = None
+		sub_value = {}
+		
+		has_license_code = 'license_code' in lh_attributes
+		
+		if self.match_by_license_code:
+			if not lh:
+				try:
+					lh = self.query_license_code( lh_attributes )
+				except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
+					pass
+			
+			if not lh:
+				try:
+					lh = self.query_uci_id( lh_attributes )
+				except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
+					pass
+					
+			if not has_license_code:
+				try:
+					lh = self.query_name_dob_gender( lh_attributes )
+				except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
+					pass
+		else:
+			try:
+				lh = self.query_name_dob_gender( lh_attributes )
+			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned):
+				pass
+		
+		if not has_license_code:
+			lh_attributes['license_code'] = random_temp_license() if not lh else lh.license_code
+		
+		if self.match_by_license_code:
+			if lh:
+				if lh.license_code != lh_attributes['license_code']:
+					self.lc_existing.remove( lh.license_code )
+					temp_lc = random_temp_license()
+					self.lc_new[lh_attributes['license_code']] = temp_lc
+					lh_attributes['license_code'] = sub_value[lh.license_code] = temp_lc
+			else:
+				temp_lc = random_temp_license()
+				self.lc_new[lh_attributes['license_code']] = temp_lc
+				lh_attributes['license_code'] = sub_value[lh.license_code] = temp_lc
+				
+		if lh:
+			action = 'Changed'
+			changed = set_attributes_changed( lh, lh_attributes, False )
+		else:
+			action = 'Added'
+			lh = LicenseHolder( **lh_attributes )
+			changed = tuple((k,v) for k,v in lh_attributes.iteritems())
+		
+		e = None
+		try:
+			lh.save()
+		except Exception as e:
+			action = 'Error'
+			
+		return lh, action, e, tuple( (k, sub_value(v)) for k, v in changed )
+		
 def license_holder_import_excel( worksheet_name='', worksheet_contents=None, message_stream=sys.stdout, update_license_codes=False ):
 	tstart = datetime.datetime.now()
 

@@ -2996,8 +2996,7 @@ class Participant(models.Model):
 		category_numbers = self.competition.get_category_numbers( self.category ) if self.category else None
 		if category_numbers:
 			conflicts = conflicts.filter( category__in=category_numbers.categories.all() )
-		conflicts.exclude( pk=self.pk )
-		return list(conflicts)
+		return list( conflicts.exclude(pk=self.pk) )
 	
 	def get_start_waves( self ):
 		if not self.category:

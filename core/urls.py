@@ -3,6 +3,7 @@ from django.contrib.auth.views import login
 from django.views.generic import RedirectView
 
 from core import views
+from core import participant
 from core import self_serve
 from core import number_set
 from core import seasons_pass
@@ -75,10 +76,10 @@ urlpatterns = [
 	url(r'^(?i).*UCIExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/$', views.UCIExcelDownload),
 	url(r'^(?i).*UCIExcelDownload/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<startList>\d+)/$', views.UCIExcelDownload),
 	
-	url(r'^(?i).*ParticipantBarcodeAdd/(?P<competitionId>\d+)/$', views.ParticipantBarcodeAdd),
-	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/$', views.ParticipantRfidAdd),
-	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', views.ParticipantRfidAdd),
-	url(r'^(?i).*ParticipantBibAdd/(?P<competitionId>\d+)/$', views.ParticipantBibAdd),
+	url(r'^(?i).*ParticipantBarcodeAdd/(?P<competitionId>\d+)/$', participant.ParticipantBarcodeAdd),
+	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/$', participant.ParticipantRfidAdd),
+	url(r'^(?i).*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', participant.ParticipantRfidAdd),
+	url(r'^(?i).*ParticipantBibAdd/(?P<competitionId>\d+)/$', participant.ParticipantBibAdd),
 	
 	url(r'^(?i).*CategoryNumbers/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersDisplay),
 	url(r'^(?i).*CategoryNumbersNew/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersNew),
@@ -119,52 +120,52 @@ urlpatterns = [
 	
 	url(r'^(?i).*Callups/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<seriesId>\d+)/$', callups.Callups),
 	
-	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', views.Participants),
-	url(r'^(?i).*ParticipantsInEvents/(?P<competitionId>\d+)/$', views.ParticipantsInEvents),
-	url(r'^(?i).*ParticipantManualAdd/(?P<competitionId>\d+)/$', views.ParticipantManualAdd),
-	url(r'^(?i).*ParticipantAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.ParticipantAddToCompetition),
+	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', participant.Participants),
+	url(r'^(?i).*ParticipantsInEvents/(?P<competitionId>\d+)/$', participant.ParticipantsInEvents),
+	url(r'^(?i).*ParticipantManualAdd/(?P<competitionId>\d+)/$', participant.ParticipantManualAdd),
+	url(r'^(?i).*ParticipantAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', participant.ParticipantAddToCompetition),
 	url(r'^(?i).*ParticipantAddToCompetitionDifferentCategory/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$',
-				views.ParticipantAddToCompetitionDifferentCategory),
+				participant.ParticipantAddToCompetitionDifferentCategory),
 	url(r'^(?i).*ParticipantAddToCompetitionDifferentCategoryConfirm/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$',
-				views.ParticipantAddToCompetitionDifferentCategoryConfirm),
-	url(r'^(?i).*ParticipantEdit/(?P<participantId>\d+)/$', views.ParticipantEdit),
-	url(r'^(?i).*ParticipantEditFromLicenseHolder/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.ParticipantEditFromLicenseHolder),
-	url(r'^(?i).*ParticipantRemove/(?P<participantId>\d+)/$', views.ParticipantRemove),
-	url(r'^(?i).*ParticipantDoDelete/(?P<participantId>\d+)/$', views.ParticipantDoDelete),
+				participant.ParticipantAddToCompetitionDifferentCategoryConfirm),
+	url(r'^(?i).*ParticipantEdit/(?P<participantId>\d+)/$', participant.ParticipantEdit),
+	url(r'^(?i).*ParticipantEditFromLicenseHolder/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', participant.ParticipantEditFromLicenseHolder),
+	url(r'^(?i).*ParticipantRemove/(?P<participantId>\d+)/$', participant.ParticipantRemove),
+	url(r'^(?i).*ParticipantDoDelete/(?P<participantId>\d+)/$', participant.ParticipantDoDelete),
 	url(r'^(?i).*LicenseHolderAddConfirm/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.LicenseHolderAddConfirm),
 	url(r'^(?i).*LicenseHolderConfirmAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.LicenseHolderConfirmAddToCompetition),
 	
-	url(r'^(?i).*ParticipantCategoryChange/(?P<participantId>\d+)/$', views.ParticipantCategoryChange ),
-	url(r'^(?i).*ParticipantCategorySelect/(?P<participantId>\d+)/(?P<categoryId>\d+)/$', views.ParticipantCategorySelect ),
+	url(r'^(?i).*ParticipantCategoryChange/(?P<participantId>\d+)/$', participant.ParticipantCategoryChange ),
+	url(r'^(?i).*ParticipantCategorySelect/(?P<participantId>\d+)/(?P<categoryId>\d+)/$', participant.ParticipantCategorySelect ),
 	
-	url(r'^(?i).*ParticipantRoleChange/(?P<participantId>\d+)/$', views.ParticipantRoleChange ),
-	url(r'^(?i).*ParticipantRoleSelect/(?P<participantId>\d+)/(?P<role>\d+)/$', views.ParticipantRoleSelect ),
+	url(r'^(?i).*ParticipantRoleChange/(?P<participantId>\d+)/$', participant.ParticipantRoleChange ),
+	url(r'^(?i).*ParticipantRoleSelect/(?P<participantId>\d+)/(?P<role>\d+)/$', participant.ParticipantRoleSelect ),
 	
-	url(r'^(?i).*ParticipantConfirmedChange/(?P<participantId>\d+)/$', views.ParticipantBooleanChange, {'field':'confirmed'}),
-	url(r'^(?i).*ParticipantPreregisteredChange/(?P<participantId>\d+)/$', views.ParticipantBooleanChange, {'field':'preregistered'}),
-	url(r'^(?i).*ParticipantPaidChange/(?P<participantId>\d+)/$', views.ParticipantBooleanChange, {'field':'paid'}),
+	url(r'^(?i).*ParticipantConfirmedChange/(?P<participantId>\d+)/$', participant.ParticipantBooleanChange, {'field':'confirmed'}),
+	url(r'^(?i).*ParticipantPreregisteredChange/(?P<participantId>\d+)/$', participant.ParticipantBooleanChange, {'field':'preregistered'}),
+	url(r'^(?i).*ParticipantPaidChange/(?P<participantId>\d+)/$', participant.ParticipantBooleanChange, {'field':'paid'}),
 	
-	url(r'^(?i).*ParticipantSignatureChange/(?P<participantId>\d+)/$', views.ParticipantSignatureChange ),
-	url(r'^(?i).*SetSignatureWithTouchScreen/(?P<use_touch_screen>\d+)/$', views.SetSignatureWithTouchScreen ),
+	url(r'^(?i).*ParticipantSignatureChange/(?P<participantId>\d+)/$', participant.ParticipantSignatureChange ),
+	url(r'^(?i).*SetSignatureWithTouchScreen/(?P<use_touch_screen>\d+)/$', participant.SetSignatureWithTouchScreen ),
 	
-	url(r'^(?i).*ParticipantTeamChange/(?P<participantId>\d+)/$', views.ParticipantTeamChange ),
-	url(r'^(?i).*ParticipantTeamSelect/(?P<participantId>\d+)/(?P<teamId>\d+)/$', views.ParticipantTeamSelect ),
+	url(r'^(?i).*ParticipantTeamChange/(?P<participantId>\d+)/$', participant.ParticipantTeamChange ),
+	url(r'^(?i).*ParticipantTeamSelect/(?P<participantId>\d+)/(?P<teamId>\d+)/$', participant.ParticipantTeamSelect ),
 	
-	url(r'^(?i).*ParticipantBibChange/(?P<participantId>\d+)/$', views.ParticipantBibChange ),
-	url(r'^(?i).*ParticipantBibSelect/(?P<participantId>\d+)/(?P<bib>\d+)/$', views.ParticipantBibSelect ),
+	url(r'^(?i).*ParticipantBibChange/(?P<participantId>\d+)/$', participant.ParticipantBibChange ),
+	url(r'^(?i).*ParticipantBibSelect/(?P<participantId>\d+)/(?P<bib>\d+)/$', participant.ParticipantBibSelect ),
 	
-	url(r'^(?i).*ParticipantTagChange/(?P<participantId>\d+)/$', views.ParticipantTagChange ),
-	url(r'^(?i).*ParticipantNoteChange/(?P<participantId>\d+)/$', views.ParticipantNoteChange ),
-	url(r'^(?i).*ParticipantGeneralNoteChange/(?P<participantId>\d+)/$', views.ParticipantGeneralNoteChange ),
-	url(r'^(?i).*ParticipantOptionChange/(?P<participantId>\d+)/$', views.ParticipantOptionChange ),
-	url(r'^(?i).*ParticipantEstSpeedChange/(?P<participantId>\d+)/$', views.ParticipantEstSpeedChange ),
-	url(r'^(?i).*ParticipantWaiverChange/(?P<participantId>\d+)/$', views.ParticipantWaiverChange ),
-	url(r'^(?i).*ParticipantPrintBibLabels/(?P<participantId>\d+)/$', views.ParticipantPrintBibLabels ),
-	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/$', views.ParticipantPrintBodyBib ),
-	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/$', views.ParticipantPrintBodyBib ),
-	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/(?P<onePage>\d+)/$', views.ParticipantPrintBodyBib ),
-	url(r'^(?i).*ParticipantPrintShoulderBib/(?P<participantId>\d+)/$', views.ParticipantPrintShoulderBib ),
-	url(r'^(?i).*ParticipantPrintEmergencyContactInfo/(?P<participantId>\d+)/$', views.ParticipantPrintEmergencyContactInfo ),
+	url(r'^(?i).*ParticipantTagChange/(?P<participantId>\d+)/$', participant.ParticipantTagChange ),
+	url(r'^(?i).*ParticipantNoteChange/(?P<participantId>\d+)/$', participant.ParticipantNoteChange ),
+	url(r'^(?i).*ParticipantGeneralNoteChange/(?P<participantId>\d+)/$', participant.ParticipantGeneralNoteChange ),
+	url(r'^(?i).*ParticipantOptionChange/(?P<participantId>\d+)/$', participant.ParticipantOptionChange ),
+	url(r'^(?i).*ParticipantEstSpeedChange/(?P<participantId>\d+)/$', participant.ParticipantEstSpeedChange ),
+	url(r'^(?i).*ParticipantWaiverChange/(?P<participantId>\d+)/$', participant.ParticipantWaiverChange ),
+	url(r'^(?i).*ParticipantPrintBibLabels/(?P<participantId>\d+)/$', participant.ParticipantPrintBibLabels ),
+	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/$', participant.ParticipantPrintBodyBib ),
+	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/$', participant.ParticipantPrintBodyBib ),
+	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/(?P<onePage>\d+)/$', participant.ParticipantPrintBodyBib ),
+	url(r'^(?i).*ParticipantPrintShoulderBib/(?P<participantId>\d+)/$', participant.ParticipantPrintShoulderBib ),
+	url(r'^(?i).*ParticipantPrintEmergencyContactInfo/(?P<participantId>\d+)/$', participant.ParticipantPrintEmergencyContactInfo ),
 	
 	url(r'^(?i).*LicenseHolders/$', views.LicenseHoldersDisplay),
 	url(r'^(?i).*LicenseHolderNew/$', views.LicenseHolderNew),

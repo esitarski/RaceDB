@@ -2,7 +2,7 @@ from views_common import *
 from django.utils.translation import ugettext_lazy as _
 import utils
 
-from views import print_pdf
+from participant import print_pdf
 from print_bib import print_bib_tag_label, print_body_bib, print_shoulder_bib
 
 @autostrip
