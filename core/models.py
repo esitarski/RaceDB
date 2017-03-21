@@ -3930,7 +3930,7 @@ class SeriesCompetitionEvent( models.Model ):
 
 	@property
 	def competition( self ):
-		return self.event.competition
+		return (self.event_mass_start or self.event_tt).competition
 
 	class Meta:
 		verbose_name = _("SeriesCompetitionEvent")
