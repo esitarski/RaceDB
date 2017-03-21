@@ -13,7 +13,7 @@ from django.utils import six
 from django.utils.encoding import force_text
 from django.db import transaction
 
-from utils import get_search_text
+from utils import get_search_text, removeDiacritic
 from get_id import get_id
 
 from models import *
@@ -75,7 +75,6 @@ class transaction_save( object ):
 			for i in xrange(0, len(self.pending), self.MaxTransactionRecords):
 				with transaction.atomic():
 					for dbo, inst, pko in self.pending[i:i+self.MaxTransactionRecords]:
-						print dbo, inst, pko
 						dbo.save()
 						self.old_new[get_key(self.model, pko)] = inst.pk
 			del self.pending[:]
@@ -231,6 +230,7 @@ def competition_deserializer( object_list, **options ):
 	
 	existing_license_codes = set( LicenseHolder.objects.all().values_list('license_code',flat=True) )
 	existing_tags = set( LicenseHolder.objects.all().values_list('existing_tag',flat=True) )
+	existing_license_holder_category = set()
 	more_recently_updated_license_holders = None
 	more_recently_updated_waivers = None
 	
@@ -337,6 +337,8 @@ def competition_deserializer( object_list, **options ):
 						Waiver.objects.filter(date_signed__gt=competition.start_date, legal_entity=competition.legal_entity)
 						.values_list('license_holder__id',flat=True)
 					)
+				existing_license_holder_category = set( tuple(lh_cat)
+					for lh_cat in Participant.objects.filter(competition=competition).values_list('license_holder', 'category') )
 			
 			db_object = base.DeserializedObject(instance, m2m_data)
 			if existing_instance:	# This is an update as there is an existing instance.
@@ -372,6 +374,24 @@ def competition_deserializer( object_list, **options ):
 						NumberSet.objects.get(id=instance.number_set_id).set_lost(instance.bib, instance.license_holder, instance.date_lost)
 					else:
 						NumberSet.objects.get(id=instance.number_set_id).assign_bib(instance.license_holder, instance.bib)
+				if Model == Participant:
+					if not instance.bib:
+						print '****Participant has no Bib.  Skipped.'
+						lh = instance.license_holder
+						print removeDiacritic(u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
+					elif not instance.category:
+						print '****Participant has no Category.  Skipped.'
+						lh = instance.license_holder
+						print removeDiacritic(u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
+					else:
+						lh_cat = (instance.license_holder_id, instance.category_id)
+						if lh_cat in existing_license_holder_category:
+							print '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.'
+							lh = instance.license_holder
+							print removeDiacritic(u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
+						else:
+							existing_license_holder_category.add( lh_cat )
+							ts.save( Model, db_object, instance, pk_old )
 				else:
 					ts.save( Model, db_object, instance, pk_old )
 			
@@ -431,14 +451,17 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 		for a in attrs:
 			setattr( competition, a, Competition._meta.get_field(a).default )
   
+	def get_participants():
+		return competition.get_participants().exclude( category__isnull=True )
+	
 	license_holder_ids = set()
 	def get_license_holders():
-		license_holders = LicenseHolder.objects.filter( pk__in=competition.get_participants().values_list('license_holder',flat=True).distinct() )
+		license_holders = LicenseHolder.objects.filter( pk__in=get_participants().values_list('license_holder',flat=True).distinct() )
 		license_holder_ids.update( license_holders )
 		return license_holders
 
 	def get_teams():
-		return Team.objects.filter( pk__in=competition.get_participants().exclude(team__isnull=True).values_list('team',flat=True).distinct() )
+		return Team.objects.filter( pk__in=get_participants().exclude(team__isnull=True).values_list('team',flat=True).distinct() )
 	
 	arr = []
 	arr.extend( competition.report_labels.all() )
@@ -456,7 +479,8 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	if not export_as_template:
 		arr.extend( get_teams() )
 		arr.extend( get_license_holders() )
-		arr.extend( competition.get_participants() )
+		arr.extend( get_participants().exclude( bib__isnull=True ) )
+		arr.extend( get_participants().filter( bib__isnull=True ) )
 	
 		if competition.number_set:
 			arr.extend( nse for nse in competition.number_set.numbersetentry_set.all()
