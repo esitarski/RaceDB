@@ -735,9 +735,8 @@ def ParticipantBibChange( request, participantId ):
 	
 	# First, add all numbers allocated to this event (includes pre-reg).
 	if available_numbers:
-		participants = Participant.objects.filter( competition=competition )
-		if category_numbers:
-			participants = participants.filter( category__in=category_numbers.categories.all() ).filter( bib_query )
+		participants = Participant.objects.filter( competition=competition ).defer( 'signature' )
+		participants = participants.filter( category__in=category_numbers.categories.all() ).filter( bib_query ).order_by()
 		participants = participants.select_related('license_holder')
 		allocated_numbers = { p.bib: p.license_holder for p in participants }
 	
@@ -766,7 +765,7 @@ def ParticipantBibChange( request, participantId ):
 
 		# Otherwise, get past participants to find which license holder owns the bib.
 		pprevious = Participant.objects.filter( competition__number_set=number_set, category__in=category_numbers.categories.all() )
-		pprevious = pprevious.filter( bib_query )
+		pprevious = pprevious.filter( bib_query ).defer( 'signature' )
 		if allocated_numbers and len(allocated_numbers) <= 200:
 			pprevious = pprevious.exclude( bib__in=list(allocated_numbers.iterkeys()) )
 		pprevious = pprevious.order_by('-competition__start_date')

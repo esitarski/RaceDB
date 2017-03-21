@@ -75,6 +75,7 @@ class transaction_save( object ):
 			for i in xrange(0, len(self.pending), self.MaxTransactionRecords):
 				with transaction.atomic():
 					for dbo, inst, pko in self.pending[i:i+self.MaxTransactionRecords]:
+						print dbo, inst, pko
 						dbo.save()
 						self.old_new[get_key(self.model, pko)] = inst.pk
 			del self.pending[:]
@@ -106,9 +107,15 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, existi
 		return all( field_name in field_names and not Model._meta.get_field(field_name).remote_field for field_name in args )
 	
 	if Model == LicenseHolder:
+		'''
+		if instance.last_name.upper() == 'KOHNEN' and instance.first_name == 'Courtney':
+			import pdb; pdb.set_trace()
+			pass
+		'''
+			
 		# Search by UCIID (guaranteed unique).
 		if instance.uci_id:
-			existing_instance = search( license_code=instance.uci_id )
+			existing_instance = search( uci_id=instance.uci_id )
 		
 		# If no match, search by license_code, or (last, first, gender, DOB) depending on configuration.
 		if not existing_instance:
@@ -131,11 +138,12 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, existi
 				instance.license_code = existing_instance.license_code
 			
 			elif instance.license_code != existing_instance.license_code:
-				existing_license_codes.remove( existing_instance.license_code )
+				existing_license_codes.discard( existing_instance.license_code )
 				
 				# If the license causes a conflict, create a unique one.
 				while instance.license_code in existing_license_codes:
 					instance.license_code = random_temp_license()
+				existing_instance.license_code = instance.license_code
 				existing_license_codes.add( instance.license_code )
 		else:
 			# No existing instance - create a random one.
@@ -152,7 +160,7 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, existi
 				instance.existing_tag = existing_instance.existing_tag
 			
 			elif instance.existing_tag != existing_instance.existing_tag:
-				existing_tags.remove( existing_instance.existing_tag )
+				existing_tags.discard( existing_instance.existing_tag )
 				
 				# If the new tag causes a conflict, create a unique one.
 				while instance.existing_tag in existing_tags:

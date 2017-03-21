@@ -1014,6 +1014,41 @@ class Competition(models.Model):
 		verbose_name_plural = _('Competitions')
 		ordering = ['-start_date', 'name']
 
+def get_bib_query( bibs ):
+	if not bibs:
+		return Q( bib=999999 )
+		
+	bibs = sorted( set(bibs) )
+	standalone_bibs = []	# List of individual bibs not in a range.
+
+	def add_range( query, a, b ):
+		if a == b:
+			standalone_bibs.append( a )
+			return query
+		try:
+			return query | Q(bib__range=(a,b))
+		except TypeError:
+			return Q(bib__range=(a,b))
+
+	query = None
+	a = b = bibs[0]
+	for n in bibs[1:]:
+		if n - 1 == b: # Part of the group, bump the end
+			b = n
+		else: # Not part of the group, process current group and start a new
+			query = add_range( query, a, b )
+			a = b = n
+	query = add_range( query, a, b )
+	
+	if standalone_bibs:
+		q = Q( bib=standalone_bibs[0] ) if len(standalone_bibs) == 1 else Q( bib__in=standalone_bibs )
+		try:
+			query |= q
+		except TypeError:
+			query = q
+	
+	return query
+	
 class CategoryNumbers( models.Model ):
 	competition = models.ForeignKey( Competition, db_index = True )
 	categories = models.ManyToManyField( Category )
@@ -1131,28 +1166,7 @@ class CategoryNumbers( models.Model ):
 		return self.numCache
 		
 	def get_bib_query( self ):
-		qryFail = Q( bib=999999 )
-		numbers = sorted( self.get_numbers() )
-		if not numbers:
-			return qryFail
-		
-		qry = None
-		a = numbers[0]
-		for p, q in zip(numbers, numbers[1:]):
-			if p+1 != q:
-				qryRange = Q(bib__range=(a, p))
-				if qry:
-					qry |= qryRange
-				else:
-					qry = qryRange
-				a = q
-		
-		qryRange = Q(bib__range=(a, q))
-		if qry:
-			qry |= qryRange
-		else:
-			qry = qryRange
-		return qry or qryFail
+		return get_bib_query( self.get_numbers() )
 	
 	def __contains__( self, n ):
 		return n in self.get_numbers()
@@ -2145,12 +2159,32 @@ class LicenseHolder(models.Model):
 	def get_duplicates( cls ):
 		duplicates = defaultdict( list )
 		for last_name, first_name, gender, date_of_birth, pk in LicenseHolder.objects.values_list('last_name','first_name','gender','date_of_birth','pk'):
+			name_initial = u'{}, {}'.format(utils.removeDiacritic(last_name).upper(), utils.removeDiacritic(first_name[:1]).upper()),
 			key = (
-				u'{}, {}'.format(utils.removeDiacritic(last_name).upper(), utils.removeDiacritic(first_name[:1]).upper()),
+				name_initial,
 				gender,
 				date_of_birth
 			)
 			duplicates[key].append( pk )
+			
+			# Check for reversed day/month
+			if date_of_birth.day <= 12:
+				key = (
+					name_initial,
+					gender,
+					datetime.date(year=date_of_birth.year, month=date_of_birth.day, day=date_of_birth.month)
+				)
+				if key in duplicates:
+					duplicates[key].append( pk )
+			
+			# Check for improper gender
+			key = (
+				name_initial,
+				1 - gender,
+				date_of_birth
+			)
+			if key in duplicates:
+				duplicates[key].append( pk )
 		
 		duplicates = [{
 				'key': key,

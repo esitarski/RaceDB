@@ -2774,7 +2774,7 @@ def CompetitionExport( request, competitionId ):
 	
 @autostrip
 class ImportCompetitionForm( Form ):
-	json_file = forms.FileField( required=True, label=_('Competition File (*.gzip|*.json)') )
+	json_file = forms.FileField( required=True, label=_('Competition File (*.gz|*.gzip|*.json)') )
 	
 	name = forms.CharField( required=False, label=_('Change Name to'), help_text=_('Leave blank to use Competition name in import file') )
 	start_date = forms.DateField( required=False, label=_('Change Start Date to'), help_text=_('Leave blank to use Competition date in import file') )
@@ -2789,7 +2789,7 @@ class ImportCompetitionForm( Form ):
 		self.helper.layout = Layout(
 			Row(Field('json_file', accept=".gz,.gzip,.json")),
 			Row(HTML('&nbsp;')),
-			Row(Col(Field('name'), 6), Col(Field('start_date'), 3)),
+			Row(Col(Field('name', size=50), 6), Col(Field('start_date'), 3)),
 			Row(Field('import_as_template')),
 		)
 		
