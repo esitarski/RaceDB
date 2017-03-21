@@ -2425,7 +2425,7 @@ class Result(models.Model):
 	
 	def get_lap_times( self ):
 		race_times = self.get_race_times()
-		return tuple( b - a for b, a in zip(race_times[1:], raceTimes) )
+		return tuple( b - a for b, a in zip(race_times[1:], race_times) )
 	
 	def get_lap_time( self, lap ):
 		race_times = list( self.get_race_time_query()[lap-1:lap] )
