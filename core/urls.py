@@ -199,6 +199,8 @@ urlpatterns = [
 	url(r'^(?i).*TeamNew/$', team.TeamNew),
 	url(r'^(?i).*TeamEdit/(?P<teamId>\d+)/$', team.TeamEdit),
 	url(r'^(?i).*TeamDelete/(?P<teamId>\d+)/$', team.TeamDelete),
+	url(r'^(?i).*TeamManageDuplicates/$', team.TeamManageDuplicates),
+	url(r'^(?i).*TeamManageDuplicatesSelect/$', team.TeamManageDuplicatesSelect),
 	
 	url(r'^(?i).*LegalEntities/$', legal_entity.LegalEntitiesDisplay),
 	url(r'^(?i).*LegalEntityNew/$', legal_entity.LegalEntityNew),

@@ -762,12 +762,11 @@ def ParticipantBibChange( request, participantId ):
 				bib = next(iter(bibs))
 				if bib_max.get(bib, 0) == 1:
 					allocated_numbers[bib] = lh
-
-		# Otherwise, get past participants to find which license holder owns the bib.
+					
+		# Otherwise, scan past participants to check if a license holder in this category owns the bib.
 		pprevious = Participant.objects.filter( competition__number_set=number_set, category__in=category_numbers.categories.all() )
 		pprevious = pprevious.filter( bib_query ).defer( 'signature' )
-		if allocated_numbers and len(allocated_numbers) <= 200:
-			pprevious = pprevious.exclude( bib__in=list(allocated_numbers.iterkeys()) )
+		pprevious = pprevious.exclude( bib__in=list(allocated_numbers.iterkeys())[:200] )
 		pprevious = pprevious.order_by('-competition__start_date')
 		
 		for p in pprevious.exclude(license_holder=participant.license_holder).select_related('license_holder'):

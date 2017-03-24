@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block onload %}
-
-{% endblock onload %}
-{% block content %}
 {% load static %}
 {% load i18n %}
+{% load good_bad_icon %}
+{% load good_err_icon %}
 {% load crispy_forms_tags %}
+
+{% block content %}
 <h2>{{title}}</h2>
 <hr class="hidden-print"/>
 {% crispy form %}
@@ -32,12 +32,7 @@
 			<td>{{t.team_code}}</td>
 			<td>{{t.get_team_type_display}}</td>
 			<td>{{t.nation_code}}</td>
-			<td>{% if t.active %}
-					<img src="{% static "images/glyphicons_206_ok_2_blue.png" %}"/>
-				{% else %}
-					<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}"/></span>
-				{% endif %}
-			</td>
+			<td>{{t.active|good_err_icon}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>
 				&nbsp;
