@@ -180,7 +180,7 @@ def get_team_cannonical_select_form( ids ):
 			self.helper.form_class = 'navbar-form navbar-left'
 			
 			button_args = [
-				Submit( 'select-cannonical-submit', _('Merge Other Teams with Representative Team'), css_class = 'btn btn-primary' ),
+				Submit( 'select-cannonical-submit', _('Merge Teams with Representative Team'), css_class = 'btn btn-primary' ),
 				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 			]
 			self.helper.layout = Layout(
@@ -193,14 +193,15 @@ def get_team_cannonical_select_form( ids ):
 	return TeamCannonicalSelectForm		
 
 def team_merge_duplicates( ids, cannonical ):
-	duplicate_ids = [i for i in ids if i != cannonical]
 	team_cannonical = Team.objects.filter( id=cannonical ).first()
 	if not team_cannonical:
 		return
-	for i in duplicate_ids:
-		team = Team.objects.filter( id=i ).first()
-		if team:
-			Participant.objects.filter(team=team).update(team=team_cannonical)
+	duplicate_ids = [i for i in ids if i != cannonical]
+	if not duplicate_ids:
+		return
+	teams = Team.objects.filter(id__in=duplicate_ids)
+	for cls in [Participant, TeamHint]:
+		cls.objects.filter(team__in=teams).update(team=team_cannonical)
 	Team.objects.filter( id__in=duplicate_ids ).delete()
 
 @access_validation()
@@ -216,7 +217,7 @@ def TeamManageDuplicatesSelect( request ):
 
 		form = get_team_cannonical_select_form(ids)( request.POST )
 		if form.is_valid():
-			cannonical = form.cleaned_data['cannonical']
+			cannonical = int( form.cleaned_data['cannonical'] )
 			request.session['team_manage_duplicate_cannonical'] = cannonical
 			team_merge_duplicates( ids, cannonical )
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))

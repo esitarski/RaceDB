@@ -375,23 +375,14 @@ def competition_deserializer( object_list, **options ):
 					else:
 						NumberSet.objects.get(id=instance.number_set_id).assign_bib(instance.license_holder, instance.bib)
 				if Model == Participant:
-					if not instance.bib:
-						print '****Participant has no Bib.  Skipped.'
-						lh = instance.license_holder
-						print removeDiacritic(u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
-					elif not instance.category:
-						print '****Participant has no Category.  Skipped.'
+					lh_cat = (instance.license_holder_id, instance.category_id if instance.category else None)
+					if lh_cat in existing_license_holder_category:
+						print '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.'
 						lh = instance.license_holder
 						print removeDiacritic(u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
 					else:
-						lh_cat = (instance.license_holder_id, instance.category_id)
-						if lh_cat in existing_license_holder_category:
-							print '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.'
-							lh = instance.license_holder
-							print removeDiacritic(u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
-						else:
-							existing_license_holder_category.add( lh_cat )
-							ts.save( Model, db_object, instance, pk_old )
+						existing_license_holder_category.add( lh_cat )
+						ts.save( Model, db_object, instance, pk_old )
 				else:
 					ts.save( Model, db_object, instance, pk_old )
 			
