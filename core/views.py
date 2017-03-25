@@ -928,7 +928,7 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col('ftp_upload_during_race', 4),
 				),
-				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-warning" role="alert"><strong>Warning:</strong> Set <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(u''), ),
+				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-warning" role="alert"><strong>Warning:</strong> You must set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(u''), ),
 				Row(
 					Col(Field('bib_label_print'),2),
 					Col(Field('bibs_label_print'),2),
