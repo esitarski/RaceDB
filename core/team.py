@@ -165,13 +165,12 @@ def get_team_cannonical_select_form( ids ):
 					team.team_code, u', ',
 					team.get_team_type_display(), ', ',
 					[_('Inactive'), _('Active')][int(team.active)],
-					u' | ',
 				)
 			)
 		)
 	
 	class TeamCannonicalSelectForm( Form ):
-		cannonical = forms.ChoiceField( choices=choices, required=True, widget=forms.RadioSelect(), label=_('Representative Team') )
+		cannonical = forms.ChoiceField( choices=choices, required=True, label=_('Select Representative Team') )
 		
 		def __init__( self, *args, **kwargs ):
 			super( TeamCannonicalSelectForm, self ).__init__( *args, **kwargs )
@@ -185,7 +184,7 @@ def get_team_cannonical_select_form( ids ):
 			]
 			self.helper.layout = Layout(
 				Row(
-					Field('cannonical'),
+					Field('cannonical', size=len(choices)),
 				),
 				Row( *button_args ),
 			)
