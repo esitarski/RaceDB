@@ -160,14 +160,12 @@ def get_team_cannonical_select_form( ids ):
 		team = Team.objects.filter( id=i ).first()
 		if not team:
 			continue
-		choices.append( (i, string_concat(
-					team.name, u', ',
-					team.team_code, u', ',
-					team.get_team_type_display(), ', ',
-					[_('Inactive'), _('Active')][int(team.active)],
-				)
-			)
-		)
+		fields = [team.name]
+		if team.team_code:
+			fields.extend( [u', (', team.team_code, u')'] )
+		fields.extend( [u', ', team.get_team_type_display()] )
+		fields.extend( [u', ', [_('Inactive'), _('Active')][int(team.active)]] )
+		choices.append( (i, string_concat(*fields) ) )
 	
 	class TeamCannonicalSelectForm( Form ):
 		cannonical = forms.ChoiceField( choices=choices, required=True, label=_('Select Representative Team') )
