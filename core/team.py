@@ -164,6 +164,8 @@ def get_team_cannonical_select_form( ids ):
 		if team.team_code:
 			fields.extend( [u', (', team.team_code, u')'] )
 		fields.extend( [u', ', team.get_team_type_display()] )
+		if team.nation_code:
+			fields.extend( [u', ', team.nation_code] )
 		fields.extend( [u', ', [_('Inactive'), _('Active')][int(team.active)]] )
 		choices.append( (i, string_concat(*fields) ) )
 	
