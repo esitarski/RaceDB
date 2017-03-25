@@ -470,8 +470,12 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	if not export_as_template:
 		arr.extend( get_teams() )
 		arr.extend( get_license_holders() )
-		arr.extend( get_participants().filter(  Q(bib__isnull=False) & Q(category__isnull=False) ) )
-		arr.extend( get_participants().exclude( Q(bib__isnull=False) & Q(category__isnull=False) ) )
+		# List the participants in most complete sequence.
+		# This helps do the right thing in import if there are license holder duplicates.
+		arr.extend( get_participants().filter( Q(bib__isnull=False) & Q(category__isnull=False) ) )
+		arr.extend( get_participants().filter( Q(bib__isnull=True)  & Q(category__isnull=False) ) )
+		arr.extend( get_participants().filter( Q(bib__isnull=False) & Q(category__isnull=True)  ) )
+		arr.extend( get_participants().filter( Q(bib__isnull=True)  & Q(category__isnull=True)  ) )
 	
 		if competition.number_set:
 			arr.extend( nse for nse in competition.number_set.numbersetentry_set.all()
