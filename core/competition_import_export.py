@@ -443,7 +443,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 			setattr( competition, a, Competition._meta.get_field(a).default )
   
 	def get_participants():
-		return competition.get_participants().exclude( category__isnull=True )
+		return competition.get_participants()
 	
 	license_holder_ids = set()
 	def get_license_holders():
@@ -470,8 +470,8 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	if not export_as_template:
 		arr.extend( get_teams() )
 		arr.extend( get_license_holders() )
-		arr.extend( get_participants().exclude( bib__isnull=True ) )
-		arr.extend( get_participants().filter( bib__isnull=True ) )
+		arr.extend( get_participants().filter(  Q(bib__isnull=False) & Q(category__isnull=False) ) )
+		arr.extend( get_participants().exclude( Q(bib__isnull=False) & Q(category__isnull=False) ) )
 	
 		if competition.number_set:
 			arr.extend( nse for nse in competition.number_set.numbersetentry_set.all()
