@@ -671,7 +671,7 @@ class Competition(models.Model):
 	
 	@property
 	def any_print( self ):
-		return self.bibs_label_print or self.bibs_laser_print or self.shoulders_label_print or self.frame_label_print
+		return self.bib_label_print or self.bibs_label_print or self.bibs_laser_print or self.shoulders_label_print or self.frame_label_print
 	
 	def get_filename_base( self ):
 		return utils.cleanFileName(u'{}-{}'.format( self.name, self.start_date.strftime('%Y-%m-%d'))).replace(' ', '-')
