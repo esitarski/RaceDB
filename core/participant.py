@@ -1142,11 +1142,15 @@ class ParticipantTagForm( Form ):
 			),
 		)
 
+def get_bits_from_hex( s ):
+	return len(s or '') * 4
+		
 @access_validation()
 def ParticipantTagChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
+	system_info = SystemInfo.get_singleton()
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	
 	if request.method == 'POST':
@@ -1163,14 +1167,18 @@ def ParticipantTagChange( request, participantId ):
 			rfid_antenna = request.session['rfid_antenna'] = int(form.cleaned_data['rfid_antenna'])
 			
 			if 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
-				tag = license_holder.get_unique_tag()
+				if (	competition.use_existing_tags and
+						system_info.tag_creation == 0 and get_bits_from_hex(license_holder.existing_tag) == system_info.tag_bits):
+					tag = license_holder.existing_tag
+				else:
+					tag = license_holder.get_unique_tag()
 				
 			if not tag:
 				status = False
 				status_entries.append(
 					(_('Empty Tag'), (
 						_('Cannot write an empty Tag to the Database.'),
-						_('Please specify a Tag or press Cancel.'),
+						_('Please specify a Tag, generate a Tag, or press Cancel.'),
 					)),
 				)
 			elif not utils.allHex(tag):

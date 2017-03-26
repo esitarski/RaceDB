@@ -404,7 +404,7 @@
 			{% trans "None" %}
 		{% endif %}
 		{% if isEdit and add_multiple_categories %}
-			<a class="btn btn-warning hidden-print" id="focus" href="./ParticipantAddToCompetitionDifferentCategoryConfirm/{{p.competition.id}}/{{p.license_holder.id}}">
+			<a class="btn btn-warning hidden-print" href="./ParticipantAddToCompetitionDifferentCategoryConfirm/{{p.competition.id}}/{{p.license_holder.id}}">
 				{% trans "Add Category" %}
 			</a>
 		{% endif %}
@@ -416,26 +416,26 @@
 		{% with ewbac=participant.get_errors_warnings_bool_all_categories %}
 			{% if not ewbac.0 and not ewbac.1 %}
 				{% if participant.has_any_events or not participant.is_competitor %}
-					<a class="btn btn-success hidden-print" id="focus" href="{{cancelUrl}}">
+					<a class="btn btn-success hidden-print" href="{{cancelUrl}}">
 						{% trans "Complete and Accurate.  Proceed." %}
 					</a>
 				{% else %}
-					<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">
+					<a class="btn btn-danger hidden-print" href="{{cancelUrl}}">
 						{% trans "No Events Selected.  Proceed anyway?" %}
 					</a>
 				{% endif %}
 			{% elif not ewbac.0 %}
 				{% if participant.has_any_events %}
-					<a class="btn btn-warning hidden-print" id="focus" href="{{cancelUrl}}">
+					<a class="btn btn-warning hidden-print" href="{{cancelUrl}}">
 						{% trans "Warnings.  Proceed anyway?" %}
 					</a>
 				{% else %}
-					<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">
+					<a class="btn btn-danger hidden-print" href="{{cancelUrl}}">
 						{% trans "No Events Selected.  Proceed anyway?" %}
 					</a>
 				{% endif %}
 			{% else %}
-				<a class="btn btn-danger hidden-print" id="focus" href="{{cancelUrl}}">
+				<a class="btn btn-danger hidden-print" href="{{cancelUrl}}">
 					{% trans "Errors.  Cannot Start.  Proceed anyway?" %}
 				</a>
 			{% endif %}
@@ -469,7 +469,7 @@
 		&nbsp;&nbsp;&nbsp;
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Voucher" %}</button>
 	{% else %}
-		<a class="btn btn-primary hidden-print" id="focus" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+		<a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 		<a class="btn btn-warning hidden-print" href="{{cancelUrl}}ParticipantDoDelete/{{p.id}}/">{% trans "OK" %}</a>
 	{% endif %}
 

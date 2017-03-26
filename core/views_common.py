@@ -41,7 +41,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.staticfiles.templatetags.staticfiles import static
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row
+from crispy_forms.layout import Layout, Div, Submit, HTML, Button
 from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
