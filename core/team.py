@@ -1,6 +1,7 @@
 from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
+from WriteLog import writeLog
 
 def GetTeamForm( request ):
 	is_superuser = request.user.is_superuser
@@ -199,6 +200,15 @@ def team_merge_duplicates( ids, cannonical ):
 	if not duplicate_ids:
 		return
 	teams = Team.objects.filter(id__in=duplicate_ids)
+	
+	'''
+	message = 'DoMergeDuplicateTeams: {} --> ({})'.format(
+		'|'.join('({})'.format(t.search_text) for t in teams),
+		team_cannonical.search_text
+	)
+	writeLog( message )
+	'''
+	
 	for cls in [Participant, TeamHint]:
 		cls.objects.filter(team__in=teams).update(team=team_cannonical)
 	Team.objects.filter( id__in=duplicate_ids ).delete()
