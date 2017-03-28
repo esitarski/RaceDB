@@ -3953,7 +3953,7 @@ class UpdateLog( models.Model ):
 		html = []
 		for i, d in enumerate(description.split(u'\n')):
 			if i != 0:
-				html.append( safestring('<br/>') )
+				html.append( mark_safe('<br/>') )
 			html.append( escape(d) )
 		return string_concat( *html )
 	
