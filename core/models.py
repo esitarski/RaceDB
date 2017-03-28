@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.utils.translation import string_concat
 from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.utils.html import escape
 
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
@@ -3937,6 +3938,30 @@ class SeriesCompetitionEvent( models.Model ):
 		verbose_name = _("SeriesCompetitionEvent")
 		verbose_name_plural = _("SeriesCompetitionEvents")
 	
+#-----------------------------------------------------------------------
+class UpdateLog( models.Model ):
+	created = models.DateTimeField( auto_now_add=True, db_index=True, verbose_name=_('Created') )
+	UPDATE_TYPE_CHOICES = (
+		(0,_('MergeLicenseHolders')),
+		(1,_('MergeTeams')),
+	)
+	update_type = models.PositiveSmallIntegerField( choices=UPDATE_TYPE_CHOICES, verbose_name=_('Update Type') )
+	description = models.TextField( verbose_name=_('Description') )
+	
+	@property
+	def description_html( self ):
+		html = []
+		for i, d in enumerate(description.split(u'\n')):
+			if i != 0:
+				html.append( safestring('<br/>') )
+			html.append( escape(d) )
+		return string_concat( *html )
+	
+	class Meta:
+		verbose_name = _("UpdateLog")
+		verbose_name_plural = _("UpdateLogs")
+		ordering = ['-created']
+
 #-----------------------------------------------------------------------
 class SeriesIncludeCategory( models.Model ):
 	# Selects which Categories are to be part of the Series.
