@@ -19,6 +19,7 @@
 		<th>{% trans "Nat." %}</th>
 		<th>{% trans "License" %}</th>
 		<th>{% trans "UCIID" %}</th>
+		<th>{% trans "Comps" %}</th>
 		<th></th>
 	</tr>
 </thead>
@@ -34,6 +35,7 @@
 			<td>{{h.nation_code}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
+			<td class='text-center'>{{h.competition_count}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-success" href="{{cancelUrl}}LicenseHoldersMergeDuplicates/{{h.id}}/{{duplicateIds}}/">{% trans "Select" %}</a>
 				&nbsp;

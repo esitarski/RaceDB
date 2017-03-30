@@ -2157,6 +2157,10 @@ class LicenseHolder(models.Model):
 			dy *= 4
 		return -(dy ** 2)
 	
+	@property
+	def competition_count( self ):
+		return Participant.objects.filter(license_holder=self).values_list('competition',flat=True).distinct().count()
+	
 	@classmethod
 	def get_duplicates( cls ):
 		duplicates = defaultdict( list )
@@ -2192,7 +2196,7 @@ class LicenseHolder(models.Model):
 		duplicates = [{
 				'key': key,
 				'duplicateIds': u','.join(unicode(pk) for pk in pks),
-				'license_holders': LicenseHolder.objects.filter(pk__in=pks).order_by( 'search_text' ),
+				'license_holders': LicenseHolder.objects.filter(pk__in=pks).order_by('search_text'),
 				'license_holders_len': len(pks),
 			} for key, pks in duplicates.iteritems() if len(pks) > 1]
 			

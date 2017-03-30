@@ -23,6 +23,7 @@
 		<th>{% trans "Nat." %}</th>
 		<th>{% trans "License" %}</th>
 		<th>{% trans "UCIID" %}</th>
+		<th>{% trans "Comps" %}</th>
 		<th></th>
 	</tr>
 </thead>
@@ -36,6 +37,7 @@
 			<td>{{h.nation_code}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
+			<td class='text-center'>{{h.competition_count}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-primary" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a>
 			</td>
@@ -46,7 +48,7 @@
 {% endspaceless %}
 
 <br/>
-<h4>{% trans "Participants, NumberSets, Seasons Passes and Waivers will be updated to point to this record." %}</h4>
+<h4>{% trans "Participants, Results, NumberSets, Seasons Passes and Waivers will be updated to this record." %}</h4>
 <hr/>
 <a class="btn btn-success" href="{{cancelUrl}}LicenseHoldersMergeDuplicatesOK/{{license_holder_merge.pk}}/{{duplicateIds}}/">{% trans "Merge Duplicates" %}</a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
