@@ -91,8 +91,11 @@ def TeamEdit( request, teamId ):
 	
 @access_validation()
 def TeamDelete( request, teamId ):
-	return GenericDelete( Team, request, teamId, GetTeamForm(request) )
-	
+	team = get_object_or_404( Team, pk=teamId )
+	return GenericDelete( Team, request, teamId, GetTeamForm(request),
+		template = 'team_form.html',
+		additional_context = dict(license_holders=team.license_holders),
+	)
 #-----------------------------------------------------------------------
 class TeamManageDuplicatesSelectForm( Form ):
 	selected		= forms.BooleanField( required=False, label='' )
@@ -106,7 +109,7 @@ class TeamManageDuplicatesSelectForm( Form ):
 				self.team_fields[k] = initial.pop(k)
 		super(TeamManageDuplicatesSelectForm, self).__init__( *args, **kwargs )
 
-	output_hdrs   = (_('Name'), _('Code'),      _('Type'),  _('Active'), _('# Lic. Holders'))
+	output_hdrs   = (_('Name'), _('Code'),      _('Type'),  _('Active'), _('# Members'))
 	output_fields = (  'name', 'team_code',    'team_type',  'active', 'license_holder_count')
 	output_bool_fields = set(['active',])
 	output_center_fields = set(['license_holder_count'])
