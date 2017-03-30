@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+{% if instance.license_holder_count > 0 %}
+<h3>{% trans "Members" %}</h3><br/>
+<table class="table table-striped table-hover table-condensed">
+{% spaceless %}
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Date of Birth" %}</th>
+		<th>{% trans "Location" %}</th>
+		<th>{% trans "License" %}</th>
+		<th>{% trans "UCIID" %}</th>
+	</tr>
+</thead>
+{% endspaceless %}
+{% spaceless %}
+<tbody>
+	{% for h in instance.license_holders %}
+		<tr>
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{h.full_name}}</td>
+			<td>{{h.get_gender_display}}</td>
+			<td class="text-nowrap">{{h.date_of_birth}}</td>
+			<td>{{h.get_location}}</td>
+			<td class="text-nowrap">{{h.license_code_trunc}}</td>
+			<td>{{h.get_flag_uci_id_html}}</td>
+		</tr>
+	{% endfor %}
+</tbody>
+{% endspaceless %}
+</table>
+{% endif %}
+{% endblock content %}
