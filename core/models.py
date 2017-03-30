@@ -4252,9 +4252,11 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 		po.delete()
 	
 	# Cache the participants and results.
-	participants = list(Participant.objects.filter(license_holder__pk__in=[lh.pk for lh in duplicates]))
-	results_mass_start = list(ResultMassStart.objects.filter(participant__in=participants))
-	results_tt = list(ResultTT.objects.filter(participant__in=participants))
+	participant_pks = Participant.objects.filter(license_holder__pk__in=[lh.pk for lh in duplicates]).values_list('pk', flat=True)
+	participants = list(Participant.objects.filter(pk__in=participant_pks))
+	entry_tt = list(EntryTT.objects.filter(participant__pk__in=participant_pks))
+	results_mass_start = list(ResultMassStart.objects.filter(participant__pk__in=participant_pks))
+	results_tt = list(ResultTT.objects.filter(participant__pk__in=participant_pks))
 	
 	# Delete the participants.
 	participants.sort( key = lambda p: 0 if p.license_holder == license_holder_merge else 1 )
@@ -4274,17 +4276,6 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 		competition_participant[p.competition] = p
 		participant_map[pk_old] = p
 	
-	# Add back the results.  Ensure that there is only one result per event.
-	events_seen = set()
-	for results in [results_mass_start, results_tt]:
-		for r in results:
-			if r.event_id in events_seen:
-				continue
-			events_seen.add( r.event_id )
-			r.pk = None
-			r.participant = participant_map[r.participant_id]
-			r.save()
-	
 	# Add back ParticipantOptions that point to the corresponding new Participant.
 	for participant_pk, po in participant_options:
 		po.pk = None
@@ -4298,6 +4289,31 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 		if ParticipantOption.objects.filter(competition=po.competition, participant=po.participant, option_id=po.option_id).exists():
 			continue
 		po.save()
+	
+	# Add back the tt entries.
+	events_seen = set()
+	for ett in entry_tt:
+		if ett.event_id not in events_seen:
+			ett.pk = None
+			try:
+				ett.participant = participant_map[ett.participant_id]
+			except KeyError:
+				continue
+			ett.save()
+			events_seen.add( ett.event_id )
+
+	# Add back the results.  Ensure that there is only one result per event for each license holder.
+	events_seen = set()
+	for results in [results_mass_start, results_tt]:
+		for r in results:
+			if r.event_id not in events_seen:
+				r.pk = None
+				try:
+					r.participant = participant_map[r.participant_id]
+				except KeyError:
+					continue
+				r.save()
+				events_seen.add( r.event_id )
 	
 	# Ensure the merged entry is added to every Season's Passes.
 	sph_duplicates = set( SeasonsPassHolder.objects.filter(license_holder__pk__in=pks) )

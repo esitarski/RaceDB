@@ -6,12 +6,10 @@ import StringIO
 cmd = 'pylint'
 
 with open( 'pylint_output.txt', 'w' ) as output:
+	files = set( sys.argv[1:] )
 	for f in sorted(glob.glob('*.py')):
-		try:
-			if sys.argv[1] != f:
-				continue
-		except IndexError:
-			pass
+		if files and f not in files:
+			continue
 		print f
 		out, err = subprocess.Popen(
 			[cmd, '--load-plugins', 'pylint_django', '--errors-only', f],
