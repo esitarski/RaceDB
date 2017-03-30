@@ -283,6 +283,7 @@ urlpatterns = [
 	url(r'^(?i).*GetEvents/(?P<date>\d\d\d\d-\d\d-\d\d)/$', views.GetEvents),
 	
 	url(r'^(?i).*SystemInfoEdit/$', views.SystemInfoEdit),
+	url(r'^(?i).*UpdateLogShow/$', views.UpdateLogShow),
 	url(r'^(?i).*AttendanceAnalytics/$', views.AttendanceAnalytics),
 	url(r'^(?i).*ParticipantReport/$', views.ParticipantReport),
 	url(r'^(?i).*YearOnYearAnalytics/$', views.YearOnYearAnalytics),

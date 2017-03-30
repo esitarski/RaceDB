@@ -107,7 +107,7 @@ class TeamManageDuplicatesSelectForm( Form ):
 	output_bool_fields = set(['active',])
 	
 	def as_table( self ):
-		s = StringIO.StringIO()
+		s = StringIO()
 		for f in self.output_fields:
 			if f in self.output_bool_fields:
 				v = int(self.team_fields.get(f,False))
@@ -201,13 +201,24 @@ def team_merge_duplicates( ids, cannonical ):
 		return
 	teams = Team.objects.filter(id__in=duplicate_ids)
 	
-	'''
-	message = 'DoMergeDuplicateTeams: {} --> ({})'.format(
-		'|'.join('({})'.format(t.search_text) for t in teams),
-		team_cannonical.search_text
-	)
-	writeLog( message )
-	'''
+	# Record the merge in the log.
+	def get_team_info( t ):
+		return u'"{}" code="{}" type="{}" nation="{}" active={}\n'.format(
+			t.name,
+			t.team_code,
+			t.get_team_type_display(),
+			t.nation_code,
+			t.active,
+		)
+	
+	description = StringIO()
+	for t in teams:
+		description.write( get_team_info(t) )
+	description.write( u'--->\n' )
+	t = team_cannonical
+	description.write( get_team_info(t) )
+	UpdateLog( update_type=1, description=description.getvalue() ).save()
+	description.close()
 	
 	for cls in [Participant, TeamHint]:
 		cls.objects.filter(team__in=teams).update(team=team_cannonical)

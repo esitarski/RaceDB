@@ -2343,6 +2343,11 @@ class SystemInfoForm( ModelForm ):
 def SystemInfoEdit( request ):
 	return GenericEdit( SystemInfo, request, SystemInfo.get_singleton().id, SystemInfoForm )
 	
+@access_validation()
+def UpdateLogShow( request ):
+	update_log = UpdateLog.objects.all()
+	return render( request, 'update_log_show.html', locals() )
+	
 #-----------------------------------------------------------------------
 
 def get_year_choices():

@@ -181,6 +181,9 @@ def _build_instance(Model, data, db, field_names, existing_license_codes, existi
 		# This works because the CategoryNumbers categories list is exclusive between CategoryNumbers records.
 		existing_instance = search( range_str=instance.range_str, categories__in=data.get('categories',[]) )
 	
+	elif Model == UpdateLog:
+		existing_instance = search( created=instance.created )
+	
 	elif has_data_fields('name'):
 		
 		included_search_fields['name'] = instance.name
@@ -486,6 +489,12 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 		if competition.legal_entity:
 			arr.extend( w for w in competition.legal_entity.waiver_set.all()
 				if w.license_holder_id in license_holder_ids )
+				
+		arr.extend( UpdateLog.objects.filter(
+				created__gte=competition.start_date - datetime.timedelta(days=14),
+				created__lte=competition.start_date + datetime.timedelta(days=14)
+			)
+		)
 	
 	arr.extend( competition.categorynumbers_set.all() )
 	
@@ -530,14 +539,21 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 
 #-----------------------------------------------------------------------
 
-def license_holder_export( stream, q=None ):
-	if q is None:
-		q = LicenseHolder.objects.all()
-		
+def license_holder_export( stream ):
 	arr = []
 	
-	arr.extend( Team.objects.filter( pk__in=Participant.objects.exclude(team__isnull=True).values_list('team',flat=True).distinct() ) )
-	arr.extend( q )
+	update_category_hints()
+	arr.extend( Discipline.objects.filter( pk__in=CategoryHint.objects.all().values_list('discipline',flat=True).distinct() ) )
+	for category_format in CategoryFormat.objects.filter( pk__in=CategoryHint.objects.all().values_list('category__format',flat=True).distinct() ):
+		arr.append( category_format )
+		arr.extend( category_format.category_set.all() )
+	
+	update_team_hints()
+	arr.extend( Team.objects.filter( pk__in=TeamHint.objects.all().values_list('team',flat=True).distinct() ) )
+	arr.extend( LicenseHolder.objects.all() )
+	arr.extend( TeamHint.objects.all() )
+	arr.extend( CategoryHint.objects.all() )
+	
 	for ns in NumberSet.objects.all():
 		arr.append( ns )
 		arr.extend( ns.numbersetentry_set.all() )

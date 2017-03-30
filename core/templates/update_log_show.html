@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block content %}
+<h2>{{title}}</h2>
+<br>
+<a href="{{cancelUrl}}" class="btn btn-success">{% trans "OK" %}</a>
+<hr/>
+{% spaceless %}
+<table class="table table-striped table-hover table-compressed">
+	<thead>
+		<tr>
+			<th></th>
+			<th>{% trans "Created" %}</th>
+			<th>{% trans "Type" %}</th>
+			<th>{% trans "Description" %}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for u in update_log %}
+		<tr>
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{u.created|date:"Y-m-d H:i:s e"}}</td>
+			<td>{{u.get_update_type_display}}</td>
+			<td>{{u.description_html}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% endspaceless %}
+{% endblock content %}

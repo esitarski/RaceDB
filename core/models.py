@@ -35,6 +35,7 @@ import utils
 import random
 import itertools
 from collections import defaultdict
+from StringIO import StringIO
 from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
 from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes, ioc_from_code
 from large_delete_all import large_delete_all
@@ -2500,12 +2501,53 @@ class TeamHint(models.Model):
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def unicode( self ):
-		return unicode(self.license_holder) + ' ' + unicode(self.discipline) + ' ' + unicode(self.team) + ' ' + unicode(self.effective_date)
+		return u', '.join((unicode(self.license_holder), unicode(self.discipline), unicode(self.team), unicode(self.effective_date)))
 	
+	def __repr__( self ):
+		return u'TeamHint({})'.format(self.unicode())
+
 	class Meta:
 		verbose_name = _('TeamHint')
 		verbose_name_plural = _('TeamHints')
-		
+
+def update_team_hints():
+	latest_competition_date = datetime.date.today() - datetime.timedelta( days=365*2 )
+	most_recent = {}
+	
+	# Add all the known TeamHints.
+	for license_holder, discipline, team, effective_date in TeamHint.objects.all().values_list(
+			'license_holder','discipline','team','effective_date').order_by( '-effective_date' ):
+		key = (license_holder, discipline)
+		if key not in most_recent:
+			most_recent[key] = (effective_date, team)
+			
+	# Then update with all known teams.
+	for license_holder, discipline, team, effective_date in Participant.objects.filter(
+				team__isnull=False, competition__start_date__gte=latest_competition_date).values_list(
+				'license_holder', 'competition__discipline', 'team', 'competition__start_date').order_by('-competition__start_date'):
+		key = (license_holder, discipline)
+		if key not in most_recent or effective_date > most_recent[key][0]:
+			most_recent[key] = (effective_date, team)
+	
+	# Remove riders who are no longer on a team.
+	for license_holder, discipline, team, effective_date in Participant.objects.filter(
+				team__isnull=True, competition__start_date__gte=latest_competition_date).values_list(
+				'license_holder', 'competition__discipline', 'team', 'competition__start_date').order_by('-competition__start_date'):
+		key = (license_holder, discipline)
+		if key in most_recent and effective_date > most_recent[key][0]:
+			del most_recent[key]
+	
+	# Update the TeamHints with the latest team information by discipline.
+	TeamHint.objects.all().delete()
+	with BulkSave() as b:
+		for (license_holder, discipline), (effective_date, team) in most_recent.iteritems():
+			th = TeamHint()
+			th.license_holder_id = license_holder
+			th.discipline_id = discipline
+			th.team_id = team
+			th.effective_date = effective_date
+			b.append( th )
+
 class CategoryHint(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
 	discipline = models.ForeignKey( 'Discipline', db_index = True )
@@ -2518,6 +2560,36 @@ class CategoryHint(models.Model):
 	class Meta:
 		verbose_name = _('CategoryHint')
 		verbose_name_plural = _('CategoryHints')
+
+def update_category_hints():
+	latest_competition_date = datetime.date.today() - datetime.timedelta( days=365*2 )
+	most_recent = {}
+	
+	# Add all the known CategoryHints.
+	for license_holder, discipline, category_format, category, effective_date in CategoryHint.objects.all().values_list(
+			'license_holder','discipline','category__format','category','effective_date').order_by( '-effective_date' ):
+		key = (license_holder, discipline, category_format)
+		if key not in most_recent:
+			most_recent[key] = (effective_date, category)
+			
+	# Then update with all known categorys.
+	for license_holder, discipline, category_format, category, effective_date in Participant.objects.filter(
+				category__isnull=False, competition__start_date__gte=latest_competition_date).values_list(
+				'license_holder', 'competition__discipline','category__format', 'category', 'competition__start_date').order_by('-competition__start_date'):
+		key = (license_holder, discipline, category_format)
+		if key not in most_recent or effective_date > most_recent[key][0]:
+			most_recent[key] = (effective_date, category)
+	
+	# Update the CategoryHints with the latest category information by discipline.
+	CategoryHint.objects.all().delete()
+	with BulkSave() as b:
+		for (license_holder, category_format, discipline), (effective_date, category) in most_recent.iteritems():
+			ch = CategoryHint()
+			ch.license_holder_id = license_holder
+			ch.discipline_id = discipline
+			ch.category_id = category
+			ch.effective_date = effective_date
+			b.append( ch )
 
 class NumberSetEntry(models.Model):
 	number_set = models.ForeignKey( 'NumberSet', db_index = True )
@@ -2776,43 +2848,59 @@ class Participant(models.Model):
 		)
 	
 	def init_default_values( self ):
-		if self.competition.use_existing_tags:
-			self.tag  = self.license_holder.existing_tag
-			self.tag2 = self.license_holder.existing_tag2
-	
-		def init_values( pp ):
-			if not self.est_kmh and pp.competition.discipline==self.competition.discipline and pp.est_kmh:
-				self.est_kmh = pp.est_kmh
-			
-			if not self.team and pp.team:
-				team = pp.team
-				while 1:
-					try:
-						team = team.is_now_team
-					except ObjectDoesNotExist:
-						break
-				self.team = team
-			if not self.role:
-				self.role = pp.role
-			if not self.category and pp.competition.category_format == self.competition.category_format:
-				self.category = pp.category
-			return self.team and self.role and self.category
+		category_init_date = datetime.date(1920,1,1)
+		team_init_date = datetime.date(1920,1,1)
+		role_init_date = datetime.date(1920,1,1)
 	
 		self.role = 0
-		init_date = None
 		
+		# Try to initialize from past races.
 		for pp in Participant.objects.filter(
-				role=Participant.Competitor,
-				license_holder=self.license_holder).exclude(category__isnull=True).order_by('-competition__start_date', 'category__sequence')[:8]:
-			if init_values(pp):
-				init_date = pp.competition.start_date
+					license_holder=self.license_holder,
+					competition__discipline=self.competition.discipline,
+					role=Participant.Competitor,
+				).exclude(category__isnull=True).defer('signature').select_related('competition').order_by('-competition__start_date','category__sequence')[:8]:
+			
+			if not self.est_kmh and pp.est_kmh:
+				self.est_kmh = pp.est_kmh
+			
+			if pp.competition.start_date > category_init_date and pp.competition.category_format == self.competition.category_format:
+				self.category = pp.category
+				category_init_date = pp.competition.start_date
+			if pp.competition.start_date > team_init_date and pp.team:
+				self.team = pp.team
+				team_init_date = pp.competition.start_date
+			if pp.competition.start_date > role_init_date:
+				self.role = pp.role
+				role_init_date = pp.competition.start_date
+				
+			if self.team and self.role and self.category:
 				break
 
+		# Check for a category hint more recent than the latest participant.
+		ch = CategoryHint.objects.filter(
+			license_holder=self.license_holder, discipline=self.competition.discipline, competition__format=self.competition.competition_format
+			).order_by('-effective_date').first()
+		if ch and ch.effective_date > category_init_date:
+			self.category = ch.category
+			category_init_date = ch.effective_date
+		
+		# Check for a team hint more recent than the latest participant.
+		th = TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by('-effective_date').first()
+		if th and th.effective_date > team_init_date:
+			self.team = th.team
+			team_init_date = th.effective_date
+		
 		# After we found a default category, try to get the bib number.
 		if not self.bib and self.competition.number_set:
 			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
 		
-		# If we still don't have an est_kmh, try to get one from a previous competition of the same discipline.
+		# Use the default tags, if required.
+		if self.competition.use_existing_tags:
+			self.tag  = self.license_holder.existing_tag
+			self.tag2 = self.license_holder.existing_tag2
+				
+		# If we still don't have an est_kmh, try to get one from a previous competition of the same discipline (but not same category format).
 		if not self.est_kmh:
 			for est_kmh in Participant.objects.filter(
 						license_holder=self.license_holder,
@@ -2820,20 +2908,12 @@ class Participant(models.Model):
 						competition__discipline=self.competition.discipline,
 					).exclude(
 						est_kmh=0.0
-					).order_by(
+					).defer('signature').order_by(
 						'-competition__start_date'
 					).values_list('est_kmh', flat=True):
 				self.est_kmh = est_kmh
 				break
-		
-		try:
-			th = TeamHint.objects.get( license_holder=self.license_holder, discipline=self.competition.discipline )
-			if init_date is None or th.effective_date > init_date:
-				init_date = th.effective_date
-				self.team = th.team
-		except TeamHint.DoesNotExist:
-			pass
-		
+
 		if self.is_seasons_pass_holder:
 			self.paid = True
 		
@@ -3951,15 +4031,15 @@ class UpdateLog( models.Model ):
 	@property
 	def description_html( self ):
 		html = []
-		for i, d in enumerate(description.split(u'\n')):
+		for i, d in enumerate(self.description.split(u'\n')):
 			if i != 0:
-				html.append( mark_safe('<br/>') )
+				html.append( u'<br/>' )
 			html.append( escape(d) )
-		return string_concat( *html )
+		return mark_safe( string_concat(*html) )
 	
 	class Meta:
 		verbose_name = _("UpdateLog")
-		verbose_name_plural = _("UpdateLogs")
+		verbose_name_plural = _("UpdateLog")
 		ordering = ['-created']
 
 #-----------------------------------------------------------------------
@@ -4104,7 +4184,26 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	pks = [lh.pk for lh in duplicates if lh != license_holder_merge]
 	if not pks:
 		return
-		
+
+	# Record the merge in the log.
+	def get_lh_info( lh ):
+		return u'"{}" license="{}" uciid="{}" dob={} gender={}\n'.format(
+			lh.full_name(),
+			lh.license_code_trunc,
+			lh.get_uci_id_text(),
+			lh.date_of_birth.strftime('%Y-%m-%d'),
+			lh.get_gender_display()
+		)
+	
+	description = StringIO()
+	for lh in LicenseHolder.objects.filter( pk__in=pks ):
+		description.write( get_lh_info(lh) )
+	description.write( u'--->\n' )
+	lh = license_holder_merge
+	description.write( get_lh_info(lh) )
+	UpdateLog( update_type=0, description=description.getvalue() ).save()
+	description.close()
+	
 	# Cache and delete the Participant Options.
 	participant_options = [(po.participant.pk, po) for po in ParticipantOption.objects.filter( participant__license_holder__pk__in=[lh.pk for lh in duplicates] ) ]
 	for participant_pk, po in participant_options:
