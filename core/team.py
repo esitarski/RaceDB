@@ -83,19 +83,11 @@ def TeamNew( request ):
 	
 @access_validation()
 def TeamEdit( request, teamId ):
-	team = get_object_or_404( Team, pk=teamId )
-	return GenericEdit( Team, request, teamId, GetTeamForm(request),
-		template = 'team_form.html',
-		additional_context = dict(license_holders=team.license_holders),
-	)
+	return GenericEdit( Team, request, teamId, GetTeamForm(request), template = 'team_form.html' )
 	
 @access_validation()
 def TeamDelete( request, teamId ):
-	team = get_object_or_404( Team, pk=teamId )
-	return GenericDelete( Team, request, teamId, GetTeamForm(request),
-		template = 'team_form.html',
-		additional_context = dict(license_holders=team.license_holders),
-	)
+	return GenericDelete( Team, request, teamId, GetTeamForm(request), template = 'team_form.html' )
 #-----------------------------------------------------------------------
 class TeamManageDuplicatesSelectForm( Form ):
 	selected		= forms.BooleanField( required=False, label='' )
