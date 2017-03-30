@@ -2616,6 +2616,55 @@ class FormatTimeDelta( datetime.timedelta ):
 	
 	def __unicode( self ):
 		return unicode( self.__repr__() )
+
+class ParticipantDefaultValues( object ):
+	def __init__( self, competition ):
+		self.competition = competition
+		self.category_format = self.competition.category_format
+		self.category_init_date = datetime.date(1920,1,1)
+		self.category = None
+		self.team_init_date = datetime.date(1920,1,1)
+		self.team = None
+		self.role_init_date = datetime.date(1920,1,1)
+		self.role = None
+		self.est_kmh_init_date = datetime.date(1920,1,1)
+		self.est_kmh = None
+		
+	def done( self ):
+		return self.team and self.role and self.category
+		
+	def update_participant( self, pp ):
+		if not pp:
+			return
+			
+		if not self.est_kmh and pp.est_kmh:
+			self.est_kmh = pp.est_kmh
+		
+		if pp.competition.start_date > self.category_init_date and pp.category and pp.competition.category_format == self.competition.category_format:
+			self.category = pp.category
+			self.category_init_date = pp.competition.start_date
+		
+		if pp.competition.start_date > self.team_init_date and pp.team:
+			self.team = pp.team
+			self.team_init_date = pp.competition.start_date
+		
+		if pp.competition.start_date > self.role_init_date:
+			self.role = pp.role
+			self.role_init_date = pp.competition.start_date
+		
+		return self.done()
+
+	def update_team_hint( self, th ):
+		if th and th.effective_date > self.team_init_date:
+			self.team = th.team
+			self.team_init_date = th.effective_date
+		return self.done()
+			
+	def update_category_hint( self, ch ):
+		if ch and ch.category.format == self.category_format and ch.effective_date > self.category_init_date:
+			self.category = ch.category
+			self.category_init_date = ch.effective_date
+		return self.done()
 		
 class Participant(models.Model):
 	competition = models.ForeignKey( 'Competition', db_index=True )
@@ -2848,78 +2897,71 @@ class Participant(models.Model):
 		)
 	
 	def init_default_values( self ):
-		category_init_date = datetime.date(1920,1,1)
-		team_init_date = datetime.date(1920,1,1)
-		role_init_date = datetime.date(1920,1,1)
+		pdv = ParticipantDefaultValues( self.competition )
 	
 		self.role = 0
 		
-		# Try to initialize from past races.
+		# Initialize from past participants of the same discipline and category_format.
 		for pp in Participant.objects.filter(
 					license_holder=self.license_holder,
 					competition__discipline=self.competition.discipline,
+					competition__category_format=self.competition.category_format,
 					role=Participant.Competitor,
-				).exclude(category__isnull=True).defer('signature').select_related('competition').order_by('-competition__start_date','category__sequence')[:8]:
-			
-			if not self.est_kmh and pp.est_kmh:
-				self.est_kmh = pp.est_kmh
-			
-			if pp.competition.start_date > category_init_date and pp.competition.category_format == self.competition.category_format:
-				self.category = pp.category
-				category_init_date = pp.competition.start_date
-			if pp.competition.start_date > team_init_date and pp.team:
-				self.team = pp.team
-				team_init_date = pp.competition.start_date
-			if pp.competition.start_date > role_init_date:
-				self.role = pp.role
-				role_init_date = pp.competition.start_date
-				
-			if self.team and self.role and self.category:
+				).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+					'-competition__start_date','category__sequence')[:8]:
+			if pdv.update_participant( pp ):
 				break
 
-		# Check for a category hint more recent than the latest participant.
-		ch = CategoryHint.objects.filter(
-			license_holder=self.license_holder, discipline=self.competition.discipline, competition__format=self.competition.competition_format
-			).order_by('-effective_date').first()
-		if ch and ch.effective_date > category_init_date:
-			self.category = ch.category
-			category_init_date = ch.effective_date
+		# Initialize from past participants of the same discipline (relax category format).
+		if not pdv.done():
+			for pp in Participant.objects.filter(
+						license_holder=self.license_holder,
+						competition__discipline=self.competition.discipline,
+						role=Participant.Competitor,
+					).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+						'-competition__start_date','category__sequence')[:8]:
+				if pdv.update_participant( pp ):
+					break			
+				
+		# Initialize from past participants of any discipline, category format or role.
+		if not pdv.done():
+			for pp in Participant.objects.filter(
+						license_holder=self.license_holder,
+						competition__discipline=self.competition.discipline,
+					).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+						'-competition__start_date','category__sequence')[:8]:
+				if pdv.update_participant( pp ):
+					break			
 		
-		# Check for a team hint more recent than the latest participant.
-		th = TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by('-effective_date').first()
-		if th and th.effective_date > team_init_date:
-			self.team = th.team
-			team_init_date = th.effective_date
+		if not pdv.category and pdv.role == self.Competitor:
+			pdv.update_category_hint( CategoryHint.objects.filter(
+				license_holder=self.license_holder, discipline=self.competition.discipline, competition__format=self.competition.competition_format
+				).order_by('-effective_date').first()
+			)
 		
-		# After we found a default category, try to get the bib number.
-		if not self.bib and self.competition.number_set:
+		if not pdv.team and pdv.role < 200:
+			pdv.update_team_hint( TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by(
+				'-effective_date').first()
+			)
+		
+		self.category	= pdv.category
+		self.team		= pdv.team
+		self.role		= pdv.role or self.Competitor
+		self.est_kmh	= pdv.est_kmh or 0.0
+		
+		# After we found a default category, try to get a bib number from the number set.
+		if not self.bib and self.category and self.competition.number_set:
 			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
 		
-		# Use the default tags, if required.
+		# Use default tags.
 		if self.competition.use_existing_tags:
 			self.tag  = self.license_holder.existing_tag
 			self.tag2 = self.license_holder.existing_tag2
 				
-		# If we still don't have an est_kmh, try to get one from a previous competition of the same discipline (but not same category format).
-		if not self.est_kmh:
-			for est_kmh in Participant.objects.filter(
-						license_holder=self.license_holder,
-						role=Participant.Competitor,
-						competition__discipline=self.competition.discipline,
-					).exclude(
-						est_kmh=0.0
-					).defer('signature').order_by(
-						'-competition__start_date'
-					).values_list('est_kmh', flat=True):
-				self.est_kmh = est_kmh
-				break
-
 		if self.is_seasons_pass_holder:
 			self.paid = True
 		
-		if not self.role:
-			self.role = Participant._meta.get_field('role').default
-		
+		# Remove anomylous fields if not competitor.
 		if self.role != self.Competitor:
 			self.bib = None
 			self.category = None
@@ -4209,13 +4251,17 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	for participant_pk, po in participant_options:
 		po.delete()
 	
-	# Cache and delete the Participants.
+	# Cache the participants and results.
 	participants = list(Participant.objects.filter(license_holder__pk__in=[lh.pk for lh in duplicates]))
+	results_mass_start = list(ResultMassStart.objects.filter(participant__in=participants))
+	results_tt = list(ResultTT.objects.filter(participant__in=participants))
+	
+	# Delete the participants.
 	participants.sort( key = lambda p: 0 if p.license_holder == license_holder_merge else 1 )
 	for p in participants:
 		p.delete()
 		
-	# Add back Participants that point to the merged license_holder.
+	# Add back Participants to point to the merged license_holder.
 	competition_participant = {}
 	participant_map = {}
 	for p in participants:
@@ -4227,6 +4273,17 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 		p.save( license_holder_update=False, number_set_update=False )
 		competition_participant[p.competition] = p
 		participant_map[pk_old] = p
+	
+	# Add back the results.  Ensure that there is only one result per event.
+	events_seen = set()
+	for results in [results_mass_start, results_tt]:
+		for r in results:
+			if r.event_id in events_seen:
+				continue
+			events_seen.add( r.event_id )
+			r.pk = None
+			r.participant = participant_map[r.participant_id]
+			r.save()
 	
 	# Add back ParticipantOptions that point to the corresponding new Participant.
 	for participant_pk, po in participant_options:
