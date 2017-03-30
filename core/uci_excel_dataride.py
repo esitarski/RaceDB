@@ -1,11 +1,9 @@
-from models import *
-
-import utils
-
 import copy
 import xlsxwriter
 import operator
-import StringIO
+
+import utils
+from models import *
 
 def uci_excel( event, category, fname, startList=True ):
 	Finisher = Result.cFinisher
@@ -89,7 +87,7 @@ def uci_excel( event, category, fname, startList=True ):
 				rr.finish_time = None
 			results.append( rr )
 	
-	output = StringIO.StringIO()
+	output = StringIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(font_size=24, valign='vcenter') )
