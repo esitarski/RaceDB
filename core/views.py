@@ -20,7 +20,7 @@ from participation_excel import participation_excel
 from participation_data import participation_data, get_competitions
 from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
-from uci_excel_datariver import uci_excel
+from uci_excel_dataride import uci_excel
 
 from participant_key_filter import participant_key_filter, participant_bib_filter
 from init_prereg import init_prereg

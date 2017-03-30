@@ -3,7 +3,6 @@ import getpass
 import zipfile
 import datetime
 import socket
-import StringIO
 
 from models import *
 
@@ -11,7 +10,7 @@ def toUtf8( row ):
 	return [unicode(v).encode('utf-8') for v in row]
 
 def getWriterIO():
-	io = StringIO.StringIO()
+	io = StringIO()
 	writer = csv.writer( io )
 	return writer, io
 	
@@ -59,7 +58,7 @@ def FinishLynxExport( competition ):
 				) )
 			evtWriter.writerow( toUtf8([u'', p.bib]) )
 	
-	zipIO = StringIO.StringIO()
+	zipIO = StringIO()
 	with zipfile.ZipFile(zipIO, 'w') as zip:
 		for fname, io in fnameIOs:
 			zip.writestr( fname, io.getvalue() )
