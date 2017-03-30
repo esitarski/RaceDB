@@ -1783,6 +1783,21 @@ class Team(models.Model):
 					
 	SearchTextLength = 80
 	search_text = models.CharField( max_length=SearchTextLength, blank=True, default='', db_index=True )
+	
+	@property
+	def license_holder_pks( self ):
+		return (
+			set(TeamHint.objects.filter(team=self).values_list('license_holder',flat=True).distinct()) |
+			set(Participant.objects.filter(team=self, category__isnull=False).values_list('license_holder',flat=True).distinct())
+		)
+	
+	@property
+	def license_holder_count( self ):
+		return len(self.license_holder_pks)
+		
+	@property
+	def license_holders( self ):
+		return LicenseHolder.objects.filter( pk__in=self.license_holder_pks )
 
 	def save( self, *args, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]

@@ -83,7 +83,11 @@ def TeamNew( request ):
 	
 @access_validation()
 def TeamEdit( request, teamId ):
-	return GenericEdit( Team, request, teamId, GetTeamForm(request) )
+	team = get_object_or_404( Team, pk=teamId )
+	return GenericEdit( Team, request, teamId, GetTeamForm(request),
+		template = 'team_form.html',
+		additional_context = dict(license_holders=team.license_holders),
+	)
 	
 @access_validation()
 def TeamDelete( request, teamId ):
@@ -102,9 +106,10 @@ class TeamManageDuplicatesSelectForm( Form ):
 				self.team_fields[k] = initial.pop(k)
 		super(TeamManageDuplicatesSelectForm, self).__init__( *args, **kwargs )
 
-	output_hdrs   = (_('Name'), _('Code'),      _('Type'),  _('Active'))
-	output_fields = (  'name', 'team_code',    'team_type',  'active')
+	output_hdrs   = (_('Name'), _('Code'),      _('Type'),  _('Active'), _('# Lic. Holders'))
+	output_fields = (  'name', 'team_code',    'team_type',  'active', 'license_holder_count')
 	output_bool_fields = set(['active',])
+	output_center_fields = set(['license_holder_count'])
 	
 	def as_table( self ):
 		s = StringIO()
@@ -112,6 +117,8 @@ class TeamManageDuplicatesSelectForm( Form ):
 			if f in self.output_bool_fields:
 				v = int(self.team_fields.get(f,False))
 				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['is-err', 'is-good'][v]) )
+			elif f in self.output_center_fields:
+				s.write( u'<td class="text-center">{}</td>'.format(escape(unicode(self.team_fields.get(f,u'')))) )
 			else:
 				s.write( u'<td>{}</td>'.format(escape(unicode(self.team_fields.get(f,u'')))) )
 		p = super(TeamManageDuplicatesSelectForm, self).as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
@@ -144,6 +151,7 @@ def TeamManageDuplicates( request ):
 				'name'  	: t.name,
 				'team_code'	: t.team_code,
 				'team_type'	: t.get_team_type_display(),
+				'license_holder_count': t.license_holder_count,
 				'active'	: t.active,
 			} for t in teams
 		]
