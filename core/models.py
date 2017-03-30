@@ -1788,7 +1788,7 @@ class Team(models.Model):
 	def license_holder_pks( self ):
 		return (
 			set(TeamHint.objects.filter(team=self).values_list('license_holder',flat=True).distinct()) |
-			set(Participant.objects.filter(team=self, category__isnull=False).values_list('license_holder',flat=True).distinct())
+			set(Participant.objects.filter(team=self).values_list('license_holder',flat=True).distinct())
 		)
 	
 	@property
