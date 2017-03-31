@@ -11,8 +11,6 @@ import json
 import datetime
 import string
 
-import StringIO
-
 import utils
 from WriteLog import logCall
 

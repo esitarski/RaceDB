@@ -214,7 +214,7 @@ class UploadSeasonsPassForm( Form ):
 
 def handle_upload_seasons_pass( seasonsPassId, excel_contents, clear_existing ):
 	worksheet_contents = excel_contents.read()
-	message_stream = StringIO.StringIO()
+	message_stream = StringIO()
 	init_seasons_pass(
 		seasonsPassId=seasonsPassId,
 		worksheet_contents=worksheet_contents,
