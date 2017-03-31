@@ -1352,7 +1352,7 @@ class UploadPreregForm( Form ):
 
 def handle_upload_prereg( competitionId, excel_contents, clear_existing ):
 	worksheet_contents = excel_contents.read()
-	message_stream = StringIO.StringIO()
+	message_stream = StringIO()
 	init_prereg(
 		competitionId=competitionId,
 		worksheet_contents=worksheet_contents,
@@ -1406,7 +1406,7 @@ class ImportExcelForm( Form ):
 
 def handle_license_holder_import_excel( excel_contents, update_license_codes ):
 	worksheet_contents = excel_contents.read()
-	message_stream = StringIO.StringIO()
+	message_stream = StringIO()
 	license_holder_import_excel(
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
@@ -1550,7 +1550,7 @@ class CompetitionCloudForm( Form ):
 	output_bool_fields = set(['local', 'has_results'])
 	
 	def as_table( self ):
-		s = StringIO.StringIO()
+		s = StringIO()
 		for f in self.output_fields:
 			if f in self.output_bool_fields:
 				v = int(self.competition_fields.get(f,False))
@@ -2809,7 +2809,7 @@ def handle_import_competition( json_file_request, import_as_template=False, name
 	except Exception as e:
 		pass
 		
-	message_stream = StringIO.StringIO()
+	message_stream = StringIO()
 		
 	try:
 		name, start_date, pydata = get_competition_name_start_date(
@@ -2867,7 +2867,7 @@ def CompetitionCloudUpload( request ):
 	response = {'errors':[], 'warnings':[], 'message':''}
 	if request.method == "POST":
 		try:
-			gzip_handler = gzip.GzipFile(fileobj=StringIO.StringIO(request.body), mode='rb')
+			gzip_handler = gzip.GzipFile(fileobj=StringIO(request.body), mode='rb')
 			response['message'] = handle_import_competition( gzip_handler, import_as_template=False, replace=True )
 		except Exception as e:
 			response['errors'].append( 'Competition Upload Error: {}'.format(e) )

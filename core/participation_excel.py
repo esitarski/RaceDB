@@ -1,10 +1,8 @@
-
 import re
 import os
 import sys
 import locale
 import datetime
-import StringIO
 import utils
 
 from django.utils.translation import ugettext_lazy as _
@@ -47,7 +45,7 @@ def participation_excel( start_date=None, end_date=None, disciplines=None, race_
 	license_holders = sorted( license_holders, key=lambda x: x.get_search_text() )
 	events.sort( key=lambda x: x.date_time )
 	
-	output = StringIO.StringIO()
+	output = StringIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	title_format = wb.add_format( dict(bold=True, text_wrap= True) )
 	

@@ -164,7 +164,7 @@ class UploadNumberSetForm( Form ):
 
 def handle_upload_number_set( numberSetId, excel_contents ):
 	worksheet_contents = excel_contents.read()
-	message_stream = StringIO.StringIO()
+	message_stream = StringIO()
 	init_number_set(
 		numberSetId=numberSetId,
 		worksheet_contents=worksheet_contents,

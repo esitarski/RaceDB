@@ -1,7 +1,6 @@
 
 import os
 import datetime
-import StringIO
 import utils
 
 from django.utils.translation import ugettext_lazy as _
@@ -40,7 +39,7 @@ def write_row_data( ws, row, row_data, format = None ):
 	return row + 1
 
 def get_seasons_pass_excel( seasons_pass ):
-	output = StringIO.StringIO()
+	output = StringIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
