@@ -45,14 +45,14 @@ class LicenseHolderUpdate( object ):
 	def query_uci_id( self, lh_attributes ):
 		return LicenseHolder.objects.get( uci_id = lh_attributes['uci_id'] ) if 'uci_id' in lh_attributes else None
 	
-	def query_name_dob_gender( self, lh_attibutes ):
+	def query_name_dob_gender( self, lh_attributes ):
 		if not ('last_name' in lh_attributes and 'first_name' in lh_attributes):
 			return None
 		qNameDOBGender = Q( search_text__startswith=utils.get_search_text([lh_attributes['last_name'], lh_attributes['first_name']]) )
 		if 'date_of_birth' in lh_attributes and lh_attributes['date_of_birth'] != invalid_date_of_birth:
 			qNameDOBGender &= Q( date_of_birth=lh_attributes['date_of_birth'] )
-		if lh_attibutes.get('gender', None):
-			qNameDOBGender &= Q( gender=lh_attibutes['gender'] )
+		if lh_attributes.get('gender', None):
+			qNameDOBGender &= Q( gender=lh_attributes['gender'] )
 		return LicenseHolder.objects.get( qNameDOBGender )
 		
 	def update( self, lh_attributes ):
