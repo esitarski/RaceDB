@@ -2954,7 +2954,7 @@ class Participant(models.Model):
 		
 		if not pdv.category and pdv.role == self.Competitor:
 			pdv.update_category_hint( CategoryHint.objects.filter(
-				license_holder=self.license_holder, discipline=self.competition.discipline, competition__format=self.competition.competition_format
+				license_holder=self.license_holder, discipline=self.competition.discipline, category__format=self.competition.category_format
 				).order_by('-effective_date').first()
 			)
 		
