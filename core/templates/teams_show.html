@@ -47,7 +47,7 @@ function hideShowTeam( i ) {
 {% for ti in team_info %}
 	<div class="panel panel-info" id="idTeam{{forloop.counter}}">
 		<div class="panel-heading">
-			<h3>{{ti.team_name}}, <span style="font-size:75%">{{ti.team.get_team_type_display}}, {{ti.team.team_code}}, , {{ti.team.nation_code}}<strong> {% trans "Strs" %}:&nbsp;{{ti.competitor_count}}</strong></span></h3>
+			<h3><a class="btn btn-primary btn-md" href="{{path}}TeamEdit/{{ti.team.id}}">{{ti.team_name}}</a>&nbsp;<span style="font-size:75%">{{ti.team.get_team_type_display}}, {{ti.team.team_code}}, {{ti.team.nation_code}}, {{ti.team.contact}}, <strong> {% trans "Strs" %}:&nbsp;{{ti.competitor_count}}</strong></span></h3>
 		</div>
 		<div class="panel-body">
 			<ul>
