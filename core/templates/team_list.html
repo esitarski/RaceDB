@@ -22,6 +22,7 @@
 		<th>{% trans "Nation Code" %}</th>
 		<th>{% trans "Active" %}</th>
 		<th>{% trans "# Members" %}</th>
+		<th>{% trans "Contact" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -35,6 +36,7 @@
 			<td>{{t.nation_code}}</td>
 			<td>{{t.active|good_err_icon}}</td>
 			<td class="text-center">{{t.license_holder_count}}</td>
+			<td>{{t.contact}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>
 				&nbsp;

@@ -235,7 +235,6 @@ def competition_deserializer( object_list, **options ):
 	existing_tags = set( LicenseHolder.objects.all().values_list('existing_tag',flat=True) )
 	existing_license_holder_category = set()
 	more_recently_updated_license_holders = None
-	more_recently_updated_waivers = None
 	
 	ts = transaction_save( old_new )
 	while object_list:
@@ -335,11 +334,6 @@ def competition_deserializer( object_list, **options ):
 					Participant.objects.filter(competition__start_date__gt=competition.start_date)
 					.values_list('license_holder__id',flat=True)
 				)
-				if competition.legal_entity:
-					more_recently_updated_waivers = set(
-						Waiver.objects.filter(date_signed__gt=competition.start_date, legal_entity=competition.legal_entity)
-						.values_list('license_holder__id',flat=True)
-					)
 				existing_license_holder_category = set( tuple(lh_cat)
 					for lh_cat in Participant.objects.filter(competition=competition).values_list('license_holder', 'category') )
 			
@@ -350,7 +344,7 @@ def competition_deserializer( object_list, **options ):
 					if not more_recently_updated_license_holders or instance.id not in more_recently_updated_license_holders:
 						ts.save( Model, db_object, instance, pk_old )
 				elif Model == Waiver:
-					if not more_recently_updated_waivers or instance.license_holder.id not in more_recently_updated_waivers:
+					if instance.date_signed > existing_instance.date_signed:
 						ts.save( Model, db_object, instance, pk_old )
 				elif Model == LegalEntity:
 					existing_legal_entity = LegalEntity.objects.get(id=instance.id)
@@ -448,12 +442,8 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	def get_participants():
 		return competition.get_participants()
 	
-	license_holder_ids = set()
-	def get_license_holders():
-		license_holders = LicenseHolder.objects.filter( pk__in=get_participants().values_list('license_holder',flat=True).distinct() )
-		license_holder_ids.update( license_holders )
-		return license_holders
-
+	license_holder_query = LicenseHolder.objects.filter( pk__in=get_participants().values_list('license_holder',flat=True).distinct() )
+	
 	def get_teams():
 		return Team.objects.filter( pk__in=get_participants().exclude(team__isnull=True).values_list('team',flat=True).distinct() )
 	
@@ -472,7 +462,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	arr.extend( competition.category_format.category_set.all() )
 	if not export_as_template:
 		arr.extend( get_teams() )
-		arr.extend( get_license_holders() )
+		arr.extend( license_holder_query )
 		# List the participants in most complete sequence.
 		# This helps do the right thing in import if there are license holder duplicates.
 		arr.extend( get_participants().filter( Q(bib__isnull=False) & Q(category__isnull=False) ) )
@@ -481,14 +471,11 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 		arr.extend( get_participants().filter( Q(bib__isnull=True)  & Q(category__isnull=True)  ) )
 	
 		if competition.number_set:
-			arr.extend( nse for nse in competition.number_set.numbersetentry_set.all()
-				if nse.license_holder_id in license_holder_ids )
+			arr.extend( competition.number_set.numbersetentry_set.filter(license_holder__in=license_holder_query) )
 		if competition.seasons_pass:
-			arr.extend( sph for sph in competition.seasons_pass.seasonspassholder_set.all()
-				if sph.license_holder_id in license_holder_ids )
+			arr.extend( competition.seasons_pass.seasonspassholder_set.filter(license_holder__in=license_holder_query) )
 		if competition.legal_entity:
-			arr.extend( w for w in competition.legal_entity.waiver_set.all()
-				if w.license_holder_id in license_holder_ids )
+			arr.extend( competition.legal_entity.waiver_set.filter(license_holder__in=license_holder_query) )
 				
 		arr.extend( UpdateLog.objects.filter(
 				created__gte=competition.start_date - datetime.timedelta(days=14),

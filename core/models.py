@@ -456,7 +456,7 @@ class NumberSet(models.Model):
 			
 		# The bib is unavailable.  Take one that was lost (presumably found), or take it from someone else.
 		with transaction.atomic():
-			nse = self.numbersetentry_set.filter( bib=bib, date_lost__isnull = True ).first() or self.numbersetentry_set.filter( bib=bib ).first()
+			nse = self.numbersetentry_set.filter( bib=bib, date_lost__isnull=True ).first() or self.numbersetentry_set.filter( bib=bib ).first()
 			nse.license_holder = license_holder
 			nse.date_lost = None
 			nse.save()
@@ -1783,6 +1783,10 @@ class Team(models.Model):
 					
 	SearchTextLength = 80
 	search_text = models.CharField( max_length=SearchTextLength, blank=True, default='', db_index=True )
+
+	contact = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('Contact') )
+	contact_email = models.EmailField( blank = True, verbose_name=_('Contact Email') )
+	contact_phone = models.CharField( max_length = 22, blank = True, default = '', verbose_name=_('Contact Phone') )
 	
 	@property
 	def license_holder_pks( self ):

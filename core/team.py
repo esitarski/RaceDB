@@ -35,6 +35,11 @@ def GetTeamForm( request ):
 					Col('active', 2),
 				),
 				Row(
+					Col(Field('contact', size=40), 4),
+					Col(Field('contact_email', size=30), 4),
+					Col(Field('contact_phone', size=22), 4),
+				),
+				Row(
 					HTML('&nbsp'*8),
 				)
 			)
