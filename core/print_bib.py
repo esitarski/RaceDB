@@ -483,28 +483,6 @@ def print_aso_bib_two_per_page( participant ):
 
 #---------------------------------------------------------------------------------------------------------
 
-def calculate_age( born ):
-    today = datetime.date.today()
-    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
-
-def get_nationality( participant ):
-	license_holder = participant.license_holder
-	nationality = license_holder.nationality
-	if len(nationality) > 24:
-		if license_holder.uci_country:
-			nationality = license_holder.uci_country
-		else:
-			nationality = nationality[:24]
-	if nationality == 'CANADA':
-		nationality = 'Canada'
-	return nationality
-
-def format_phone( phone ):
-	phone = unicode( phone )
-	if len(phone) == len('AAA333NNNN') and phone.isdigit():
-		return u'({}) {}-{}'.format(phone[:3], phone[3:6], phone[6:])
-	return phone
-	
 def print_id_label( participant ):
 	competition = participant.competition
 	license_holder = participant.license_holder
@@ -552,7 +530,7 @@ def print_id_label( participant ):
 	info = []
 	info.append(
 		['', u',  '.join([
-			u'Age: {}'.format(calculate_age(license_holder.date_of_birth)),
+			u'Age: {}'.format(license_holder.get_age()),
 			u'Date of Birth: {}'.format(license_holder.date_of_birth.strftime('%Y-%m-%d')),
 			]),
 		]
@@ -560,7 +538,7 @@ def print_id_label( participant ):
 	info.append(
 		['', u',  '.join([
 			u'Gender: {}'.format(license_holder.get_gender_display()),
-			u'Nat: {}'.format(get_nationality(participant)),
+			u'Nat: {}'.format(license_holder.get_nationality()),
 			]),
 		]
 	)
@@ -584,7 +562,8 @@ def print_id_label( participant ):
 	
 	info.append( ['',''] )
 	info.append( ['', u'Emergency Contact:'] )
-	info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
+	if license_holder.emergency_contact_name:
+		info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
 	info.append( ['', u'  {}'.format(format_phone(license_holder.emergency_contact_phone or 'No phone number provided'))] )
 	
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,

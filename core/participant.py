@@ -533,6 +533,35 @@ def ParticipantPrintEmergencyContactInfo( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	return print_pdf( request, participant, print_id_label(participant), 'Emergency' )
 	
+def ParticipantEmergencyContactInfo( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	license_holder = participant.license_holder
+	competition = participant.competition
+	team_members = None
+	if participant.team:
+		team_members_non_competitors_at_competition = LicenseHolder.objects.filter(
+			pk__in=Participant.objects.filter(competition=competition,team=participant.team).exclude(
+			license_holder=license_holder).exclude(
+			role=Participant.Competitor).values_list('license_holder',flat=True).distinct()
+		)
+		team_members_at_competition = LicenseHolder.objects.filter(
+			pk__in=Participant.objects.filter(competition=competition,team=participant.team,role=Participant.Competitor).exclude(
+			license_holder=license_holder).values_list('license_holder',flat=True).distinct()
+		)
+		team_members_other = LicenseHolder.objects.filter(
+			pk__in=Participant.objects.filter(
+				team=participant.team).exclude(
+				competition=competition).exclude(
+				license_holder=license_holder).exclude(
+				license_holder__in=team_members_at_competition).exclude(
+				license_holder__in=team_members_non_competitors_at_competition).values_list('license_holder',flat=True).distinct()
+		)
+	else:
+		team_members_non_competitors_at_competition = LicenseHolder.objects.none()
+		team_members_at_competition = LicenseHolder.objects.none()
+		team_members_other = LicenseHolder.objects.none()
+	return render( request, 'participant_emergency_info.html', locals() )
+	
 @autostrip
 class ParticipantCategorySelectForm( Form ):
 	gender = forms.ChoiceField( choices = (

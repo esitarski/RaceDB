@@ -441,6 +441,8 @@
 			{% endif %}
 		{% endwith %}
 		
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<a class="btn btn-primary" href="./ParticipantEmergencyContactInfo/{{p.id}}/">{% trans 'Emergency Info' %}</a>
 		{% if system_info.print_tag_option != 0 %}
 			&nbsp;&nbsp;&nbsp;
 			<span style="font-size: 150%">{% trans "Print" %}:</span>
@@ -464,9 +466,7 @@
 				</span>
 				&nbsp;&nbsp;&nbsp;
 			{% endif %}
-			<a class="btn btn-primary" href="./ParticipantPrintEmergencyContactInfo/{{p.id}}/">{% trans 'Emergency Info' %}</a>
 		{% endif %}
-		&nbsp;&nbsp;&nbsp;
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Voucher" %}</button>
 	{% else %}
 		<a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "Cancel" %}</a>

@@ -1833,6 +1833,11 @@ def validate_postal_code( postal ):
 def random_temp_license( prefix = u'TEMP_'):
 	return u'{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in xrange(15)) )
 
+def format_phone( phone ):
+	if len(phone) == len('AAA333NNNN') and phone.isdigit():
+		return u'({}) {}-{}'.format(phone[:3], phone[3:6], phone[6:])
+	return phone
+	
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
 	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), db_index=True )
@@ -1877,6 +1882,21 @@ class LicenseHolder(models.Model):
 	
 	emergency_contact_name = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact') )
 	emergency_contact_phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
+
+	def get_age( self ):
+		today = datetime.date.today()
+		return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
+
+	def get_nationality( self ):
+		nationality = self.nationality
+		if len(nationality) > 24:
+			if self.nation_code:
+				nationality = self.nation_code
+			else:
+				nationality = nationality[:24]
+		if nationality == 'CANADA':
+			nationality = 'Canada'
+		return nationality
 
 	def correct_uci_county_code( self ):
 		uci_code_save = self.uci_code
