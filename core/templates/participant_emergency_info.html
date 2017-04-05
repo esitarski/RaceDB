@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% load staticfiles %}
+{% load format_phone %}
+
+{% block content %}
+
+<h2>{% trans "Emergency Contact Info" %}</h2>
+<hr/>
+{% with p=participant lh=participant.license_holder c=participant.competition t=participant.team %}
+<div class="hidden-print">
+	<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a class="btn btn-primary" href="{{path}}ParticipantPrintEmergencyContactInfo/{{participant.id}}/">{% trans "Print Emergency Contact Label" %}</a>
+<hr/>
+</div>
+<h1><strong style="font-size: 120%">{{lh.first_last}}</strong></h1>
+<h4>{% trans "Emergency Contact" %}:
+	<strong>
+		{% if lh.emergency_contact_name %}{{lh.emergency_contact_name}},{% endif %}
+		{% if lh.emergency_contact_phone %}<a href="tel:{{lh.emergency_contact_phone|urlencode}}">{{lh.emergency_contact_phone|format_phone}}</a>{% else %}{% trans "No contact phone on file." %}{% endif %}
+	</strong>
+</h4>
+<br/>
+<h4>
+	{% trans "Age" %} <strong>{{lh.get_age}}, {{lh.get_gender_display}},</strong>
+	{% trans "Date of Birth" %} <strong>{{lh.date_of_birth|date:"Y-m-d"}},</strong>
+	{{lh.city}}, {{lh.state_prov}}, {{lh.get_nation_code_html}}
+</h4>
+<br/>
+<h4>
+	{% if p.bib %}{% trans "Bib" %} <strong>{{p.bib}}</strong>{% endif %}{% if p.category %}, {% trans "Category" %} <strong>{{p.category.code}},</strong>{% endif %}
+	{% if lh.uci_id %}UCIID <strong>{{lh.get_flag_uci_id_html}}</strong>{% endif %}
+</h4>
+{% if t %}
+	<br/>
+	<h3>{% trans "Team" %}: <strong>{{t.name}}</strong></h3>
+	{% if t.contact or t.contact_phone or t.contact_email %}
+		<h4>
+			{% trans "Contact" %}:
+			{% if t.contact %}<strong>{{t.contact}}</strong>{% endif %}
+			{% if t.contact_phone %}&nbsp;&nbsp;{% trans "Tel" %} <a href="tel:{{t.contact_phone|urlencode}}"><strong>{{t.contact_phone|format_phone}}</strong></a>{% endif %}
+			{% if t.contact_email %}&nbsp;&nbsp;{% trans "Email" %} <a href="mailto:{{t.contact_email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{t.contact_email}}</strong></a>{% endif %}
+		</h4>
+	{% endif %}
+	{% if team_members_non_competitors.exists %}
+		<br/>
+		<h4>{% trans "Team Staff at this Competition" %}:</h4>
+		<table class="table table-striped table-condensed table-hover" style="width: auto">
+			{% for tm in team_members_non_competitors_at_competition %}
+			<tr>
+				<td class="text-right">{{forloop.counter}}.</td>
+				<td>{{tm.full_name}}</td>
+				<td>{% trans "Age" %} {{tm.get_age}}</td>
+				<td>{% if tm.phone %}<a href="tel:{{tm.phone|urlencode}}"><strong>{{tm.phone|format_phone}}</strong></a>{% endif %}</td>
+				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
+				<td>{{tm.get_nation_code_html}}</td>
+			</tr>
+			{% endfor %}
+		</table>
+	{% endif %}
+	{% if team_members_at_competition.exists %}
+		<br/>
+		<h4>{% trans "Team Members at this Competition" %}:</h4>
+		<table class="table table-striped table-condensed table-hover" style="width: auto">
+			{% for tm in team_members_at_competition %}
+			<tr>
+				<td class="text-right">{{forloop.counter}}.</td>
+				<td>{{tm.full_name}}</td>
+				<td>{% trans "Age" %} {{tm.get_age}}</td>
+				<td>{% if tm.phone %}<a href="tel:{{tm.phone|urlencode}}"><strong>{{tm.phone|format_phone}}</strong></a>{% endif %}</td>
+				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
+				<td>{{tm.get_nation_code_html}}</td>
+			</tr>
+			{% endfor %}
+		</table>
+	{% endif %}
+	{% if team_members_other.exists %}
+		<br/>
+		<h4>{% trans "Team Members Not Registered at this Competition" %}:</h4>
+		<table class="table table-striped table-condensed table-hover" style="width: auto">
+			{% for tm in team_members_other %}
+			<tr>
+				<td class="text-right">{{forloop.counter}}.</td>
+				<td>{{tm.full_name}}</td>
+				<td>{% trans "Age" %} {{tm.get_age}}</td>
+				<td>{% if tm.phone %}<a href="tel:{{tm.phone|urlencode}}"><strong>{{tm.phone|format_phone}}</strong></a>{% endif %}</td>
+				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
+				<td>{{tm.get_nation_code_html}}</td>
+			</tr>
+			{% endfor %}
+		</table>
+	{% endif %}
+{% endif %}
+{% endwith %}
+{% endblock content %}
