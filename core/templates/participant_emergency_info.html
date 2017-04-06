@@ -41,7 +41,7 @@
 			{% trans "Contact" %}:
 			{% if t.contact %}<strong>{{t.contact}}</strong>{% endif %}
 			{% if t.contact_phone %}&nbsp;&nbsp;{% trans "Tel" %} <a href="tel:{{t.contact_phone|urlencode}}"><strong>{{t.contact_phone|format_phone}}</strong></a>{% endif %}
-			{% if t.contact_email %}&nbsp;&nbsp;{% trans "Email" %} <a href="mailto:{{t.contact_email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{t.contact_email}}</strong></a>{% endif %}
+			{% if t.contact_email %}&nbsp;&nbsp;{% trans "Email" %} <a href="mailto:{{t.contact_email}}?Subject={{lh.first_last|urlencode}}%20{% trans "Emergency"%}"><strong>{{t.contact_email}}</strong></a>{% endif %}
 		</h4>
 	{% endif %}
 	{% if team_members_non_competitors.exists %}
@@ -54,7 +54,7 @@
 				<td>{{tm.full_name}}</td>
 				<td>{% trans "Age" %} {{tm.get_age}}</td>
 				<td>{% if tm.phone %}<a href="tel:{{tm.phone|urlencode}}"><strong>{{tm.phone|format_phone}}</strong></a>{% endif %}</td>
-				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
+				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}}%20{% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
 				<td>{{tm.get_nation_code_html}}</td>
 			</tr>
 			{% endfor %}
@@ -70,7 +70,7 @@
 				<td>{{tm.full_name}}</td>
 				<td>{% trans "Age" %} {{tm.get_age}}</td>
 				<td>{% if tm.phone %}<a href="tel:{{tm.phone|urlencode}}"><strong>{{tm.phone|format_phone}}</strong></a>{% endif %}</td>
-				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
+				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}}%20{% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
 				<td>{{tm.get_nation_code_html}}</td>
 			</tr>
 			{% endfor %}
@@ -86,7 +86,7 @@
 				<td>{{tm.full_name}}</td>
 				<td>{% trans "Age" %} {{tm.get_age}}</td>
 				<td>{% if tm.phone %}<a href="tel:{{tm.phone|urlencode}}"><strong>{{tm.phone|format_phone}}</strong></a>{% endif %}</td>
-				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}} {% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
+				<td>{% if tm.email %}<a href="mailto:{{tm.email}}?Subject={{lh.first_last|urlencode}}%20{% trans "Emergency"%}"><strong>{{tm.email}}</strong></a>{% endif %}</td>
 				<td>{{tm.get_nation_code_html}}</td>
 			</tr>
 			{% endfor %}
