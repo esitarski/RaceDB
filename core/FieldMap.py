@@ -163,7 +163,7 @@ standard_field_aliases = (
 		"State or Province",
 	),
 	('nation_code',
-		('Nation Code','NationCode','NatCode'),
+		('Nation Code','NationCode','NatCode','Racing Nationality'),
 		"Nation Code (3 letters)",
 	),
 	('nationality',
@@ -228,6 +228,15 @@ def standard_field_map( exclude = [] ):
 	fm = FieldMap()
 	for a in standard_field_aliases:
 		fm.set_aliases( *a )
+		if a[0] == 'license_code':
+			for i in xrange(1,9):
+				i_str = '{}'.format(i)
+				lci = (
+					a[0] + i_str,
+					tuple( v + i_str for v in a[1] ),
+					a[2] + i_str,
+				)
+				fm.set_aliases( *lci )
 	for e in exclude:
 		del fm[e]
 	return fm

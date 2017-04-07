@@ -174,6 +174,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 	
 	status_count = defaultdict( int )
 	
+	license_code_aliases = []
+	
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
@@ -203,9 +205,16 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			# As a last resort, pick the default DOB
 			date_of_birth 	= date_of_birth or invalid_date_of_birth
 			
-			license_code	= to_int_str(v('license_code', u'')).upper().strip()
-			if license_code == u'TEMP':
+			license_code = None
+			for lc in license_code_aliases:
+				license_code = to_int_str(v(lc, None))
+				if license_code is not None:
+					license_code = license_code.upper().strip()
+					if license_code:
+						break
+			if not license_code or license_code == u'TEMP':
 				license_code = None
+			
 			last_name		= to_str(v('last_name',u''))
 			first_name		= to_str(v('first_name',u''))
 			name			= to_str(v('name',u''))
@@ -471,6 +480,8 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			# Get the header fields from the first row.
 			fields = [unicode(f.value).strip() for f in row]
 			ifm.set_headers( fields )
+			license_code_aliases = [lh for lh in ifm.name_to_col.iterkeys() if lh.startswith('license_code')]
+			
 			message_stream_write( u'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
 				name = ifm.get_name_from_alias( f )
