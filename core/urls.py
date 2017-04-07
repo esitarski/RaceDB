@@ -44,6 +44,7 @@ urlpatterns = [
 	
 	url(r'^(?i).*SelfServe/$', self_serve.SelfServe),
 	url(r'^(?i).*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
+	url(r'^(?i).*SelfServe/4/SelfServeSignature/$', self_serve.SelfServeSignature),
 	url(r'^(?i).*SelfServe/SelfServeQR/$', self_serve.SelfServeQRCode),
 	
 	url(r'^(?i).*Competitions/$', views.CompetitionsDisplay),

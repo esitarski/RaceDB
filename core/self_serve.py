@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from participant_key_filter import participant_key_filter, add_participant_from_license_holder
 from ReadWriteTag import ReadTag, WriteTag
+from participant import ParticipantSignatureForm
 
 def get_valid_competitions():
 	dNow = timezone.now().date()
@@ -75,6 +76,58 @@ def SelfServeQRCode( request ):
 
 	qrcode_note = _('Login with Username: serve')
 	return render( request, 'qrcode.html', locals() )
+
+@access_validation( selfserve_ok=True )
+def SelfServeSignature( request ):
+	url_error = getContext(request, 'popUrl') + '/SelfServe/'
+	competition_id = request.session.get('competition_id', None)
+	if not competition_id:
+		return HttpResponseRedirect( url_error )
+	competition = get_object_or_404( Competition, pk=competition_id )
+	
+	tag = request.session.get('tag', None)
+	if not tag:
+		return HttpResponseRedirect( url_error )
+	
+	license_holder, participants = participant_key_filter( competition, tag, False )
+	if not license_holder or not participants:
+		return HttpResponseRedirect( url_error )
+	
+	participant = participants[0]
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		form = ParticipantSignatureForm( request.POST )
+		if form.is_valid():
+			signature = form.cleaned_data['signature']
+			if not signature:
+				return HttpResponseRedirect( url_error )
+			
+			for p in participants:
+				p.signature = signature
+				p.save()
+			
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = ParticipantSignatureForm()
+		
+	return render( request, 'self_serve_signature.html', dict(
+			request=request,
+			url_error=url_error,
+			form=form,
+			participant=participant,
+			competition=competition
+		)
+	)
+
+#----------------------------------------------------------------------------
+# do_scan states:
+# 0: show self serve screen
+# 1: read rfid
+# 2: confirm logout
+# 3: do logout
+# 4: get signature
 	
 @access_validation( selfserve_ok=True )
 def SelfServe( request, do_scan=0 ):
@@ -96,6 +149,10 @@ def SelfServe( request, do_scan=0 ):
 	confirm_logout = False
 	
 	path_noargs = getContext(request, 'cancelUrl') + 'SelfServe/'
+	
+	if do_scan != 4:
+		# Forget tag if not retrieve signature.
+		request.session['tag'] = None
 	
 	if do_scan == 2:
 		confirm_logout = True
@@ -155,31 +212,36 @@ def SelfServe( request, do_scan=0 ):
 		return render( request, 'self_serve.html', locals() )
 
 	debugRFID = False
-	if not debugRFID:
-		tag = None
-		status, response = ReadTag(rfid_antenna)
-		if not status:
-			status_entries.append(
-				(_('Tag Read Failure'), response.get('errors',[]) ),
-			)
-		else:
-			tags = response.get('tags', [])
-			try:
-				tag = tags[0]
-			except (AttributeError, IndexError) as e:
-				status = False
-				status_entries.append(
-					(_('Tag Read Failure'), [e] ),
-				)
-	else:
-		tag = '8F7200647614'
+	tag = request.session.get('tag', None)
+	if tag:
 		tags = [tag]
 		status = True
+	else:
+		if not debugRFID:
+			tag = None
+			status, response = ReadTag(rfid_antenna)
+			if not status:
+				status_entries.append(
+					(_('Tag Read Failure'), response.get('errors',[]) ),
+				)
+			else:
+				tags = response.get('tag', [])
+				try:
+					tag = tags[0]
+				except (AttributeError, IndexError) as e:
+					status = False
+					status_entries.append(
+						(_('Tag Read Failure'), [e] ),
+					)
+		else:
+			tag = '8F7200647614'
+			tags = [tag]
+			status = True
 	
 	if tag and len(tags) > 1:
 		status = False
 		if len(tags) > 4:
-			tags = tags[:4] + ['...']
+			tags = tags[:4] + [u'...']
 		status_entries.append(
 			(_('Multiple Tags Read (check that only one tag is near the antenna).'), [u', '.join(tags)] )
 		)
@@ -187,9 +249,11 @@ def SelfServe( request, do_scan=0 ):
 	if not status:
 		return render( request, 'self_serve.html', locals() )
 	
+	request.session['tag'] = tag
 	license_holder, participants = participant_key_filter( competition, tag, False )
 	
 	if not license_holder:
+		request.session['tag'] = None
 		errors.append( string_concat(_('Tag not found '), u' (', tag, u').') )
 		return render( request, 'self_serve.html', locals() )
 	
@@ -200,11 +264,16 @@ def SelfServe( request, do_scan=0 ):
 	if not participants:
 		errors.append( _('Not Registered') )
 		
-	errors, warnings = participants[0].get_lh_errors_warnings()
-	for p in participants:
-		e, w = p.get_errors_warnings()
-		errors.extend( e )
-		warnings.extend( w )
+	if not errors and competition.show_signature:
+		if not all( p.good_signature() for p in participants ):
+			return HttpResponseRedirect( getContext(request, 'cancelUrl') + 'SelfServe/4/SelfServeSignature/' )
+		
+	if not errors:
+		errors, warnings = participants[0].get_lh_errors_warnings()
+		for p in participants:
+			e, w = p.get_errors_warnings()
+			errors.extend( e )
+			warnings.extend( w )
 				
 	if not errors:
 		for p in participants:

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 def create_users():
 	if not User.objects.filter(username__exact='serve').exists():
 		serve = User.objects.create_user('serve', password='serve')
+		serve.save()
 
 	if not User.objects.filter(username__exact='reg').exists():
 		reg = User.objects.create_user('reg', password='reg')
