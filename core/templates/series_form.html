@@ -220,7 +220,7 @@
 </thead>
 <tbody>
 	{% for s in series.seriesupgradeprogression_set.all %}
-		<tr onclick="jump('{{path}}SeriesUpgradeProgressionEdit/{{p.id}}/')">
+		<tr onclick="jump('{{path}}SeriesUpgradeProgressionEdit/{{s.id}}/')">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{s.get_text}}</td>
 			<td class='text-right'>{{s.factor}}</td>
