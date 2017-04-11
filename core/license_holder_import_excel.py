@@ -154,22 +154,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				lh.license_code = lh.license_code.replace( dup_prefix, err_prefix )
 				lh.save()
 				success = True
-					
-	temp_to_existing = {}
-	existing_to_temp = {}
-	if update_license_codes:
-		print 'Replace all the current license codes with unique temp codes...'
-		success = True
-		while success:
-			success = False
-			with transaction.atomic():
-				for lh in LicenseHolder.objects.all().exclude( license_code__startswith=cpy_prefix )[:999]:
-					temp = random_temp_license(cpy_prefix)
-					temp_to_existing[temp] = lh.license_code
-					lh.license_code = temp
-					lh.save()
-					success = True
-	
+
 	ifm = standard_field_map()
 	
 	status_count = defaultdict( int )
@@ -314,18 +299,28 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				# Try to find the license holder by name, DOB, gender
 				try:
 					license_holder = LicenseHolder.objects.get( qNameDOBGender )
+					
+					# Check if there is another license holder with this license code.  If so, make it unique.
+					if 'license_code' in license_holder_attr_value:
+						lc_license_holder = LicenseHolder.objects.filter( license_code=license_holder_attr_value['license_code'] ).first( )
+						if lc_license_holder and lc_license_holder.id != license_holder.id:
+							lc_license_holder.license_code = random_temp_license()
+							lc_license_holder.save()
 				
 				except LicenseHolder.DoesNotExist:
 					# Create a new license holder from the information given.
 					try:
-						if not license_code:
+						if 'license_code' not in license_holder_attr_value:
 							license_holder_attr_value['license_code'] = license_code = random_temp_license()
+						else:
+							# Check if there is an existing license holder with this license code.  If so, make it unique.
+							lc_license_holder = LicenseHolder.objects.first( license_holder_attr_value['license_code'] )
+							if lc_license_holder:
+								lc_license_holder.license_code = random_temp_license()
+								lc_license_holder.save()
+						
 						license_holder = LicenseHolder( **license_holder_attr_value )
-						temp = random_temp_license(cpy_prefix)
-						temp_to_existing[temp] = license_code
-						license_holder.license_code = temp
 						license_holder.save()
-						del license_holder_attr_value['license_code'] # Delete license_code after creating a record to prevent the update.
 						status = 'Added'
 					
 					except Exception as e:
@@ -341,7 +336,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 						)
 					)
 					continue
-				
+					
 			#------------------------------------------------------------------------------
 			if not license_holder and uci_id:
 				try:
@@ -408,13 +403,6 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				)
 				continue
 				
-			# Update with any new information.
-			if update_license_codes and license_holder_attr_value.get('license_code', None) is not None:
-				if temp_to_existing.get(license_holder.license_code,None) != license_holder_attr_value['license_code']:
-					temp_to_existing[license_holder.license_code] = license_holder_attr_value['license_code']
-					status = "LicenseCode Changed"
-				del license_holder_attr_value['license_code']
-			
 			fields_changed = set_attributes_changed( license_holder, license_holder_attr_value, False )
 			if fields_changed:
 				try:
@@ -434,7 +422,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				msg = u'Row {:>6}: {}: {:>8} {}\n'.format(
 					i,
 					status,
-					temp_to_existing[license_holder.license_code] if license_holder.license_code in temp_to_existing else license_holder.license_code,
+					license_holder.license_code,
 					u', '.join( unicode(v) if v else u'None' for v in [
 							license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.nation_code, license_holder.uci_id,
 							u'{} {}'.format(license_holder.first_name, license_holder.last_name),
@@ -498,30 +486,6 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			ur_records = []
 			
 	process_ur_records( ur_records )
-	
-	if update_license_codes:
-		print "Repairing temporary license codes..."
-		
-		# Check if the license code changes would cause a conflict.
-		# Set to a DUP code if they do.
-		unique_codes = set()
-		for k, v in list(temp_to_existing.iteritems()):
-			if v not in unique_codes:
-				unique_codes.add( v )
-			else:
-				temp_to_existing[k] = k.replace(cpy_prefix, dup_prefix)
-	
-		success = True
-		while success:
-			success = False
-			lh, license_code_original, license_code_new = None, None, None
-			with transaction.atomic():
-				for lh in LicenseHolder.objects.filter( license_code__startswith=cpy_prefix )[:999]:
-					success = True
-					license_code_original, license_code_new = lh.license_code, temp_to_existing.get(lh.license_code, lh.license_code)
-					license_code_new = re.sub( '_XXX_|_CPY_|_DUP_', 'TEMP_', license_code_new )
-					lh.license_code = license_code_new
-					lh.save()
 	
 	message_stream_write( u'\n' )
 	message_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )
