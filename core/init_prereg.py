@@ -78,6 +78,7 @@ def init_prereg(
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
+		
 			v = ifm.finder( ur )
 			date_of_birth	= v('date_of_birth', None)
 			try:
@@ -288,6 +289,8 @@ def init_prereg(
 					) )
 					continue
 				
+				participant.init_default_values()
+				
 				for attr, value in (
 						('category',category), ('team',team),
 						('bib',bib), ('tag',tag), ('note',note),
@@ -299,8 +302,6 @@ def init_prereg(
 						setattr( participant, attr, value )
 				
 				participant.preregistered = True
-				
-				participant.init_default_values()
 				
 				try:
 					participant.save()
