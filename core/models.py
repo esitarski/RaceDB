@@ -1914,6 +1914,8 @@ class LicenseHolder(models.Model):
 		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
 		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'') )
 		
+		self.gender = self.gender or 0
+		
 		if not( self.existing_bib is None or isinstance(self.existing_bib, (int,long)) ):
 			self.existing_bib = None
 		
