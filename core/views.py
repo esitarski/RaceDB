@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.contrib.auth.views import logout
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 
 import zipfile
 import operator
@@ -21,6 +21,7 @@ from participation_data import participation_data, get_competitions
 from year_on_year_data import year_on_year_data
 from license_holder_import_excel import license_holder_import_excel
 from uci_excel_dataride import uci_excel
+import authorization
 
 from participant_key_filter import participant_key_filter, participant_bib_filter
 from init_prereg import init_prereg
@@ -1454,7 +1455,8 @@ def handle_export_license_holders():
 
 	# Content size
 	gzip_stream.seek(0, 2)
-	response['Content-Length'] = gzip_stream.tell()
+	response['Content-Length'] = '{}'.format(gzip_stream.tell())
+	response['Authorization'] = authorization.get_secret_authorization()
 	gzip_stream.seek( 0 )
 
 	# Add content disposition so the browser will download the file.
@@ -1464,9 +1466,13 @@ def handle_export_license_holders():
 	return response	
 
 def LicenseHolderCloudDownload( request ):
+	if not authorization.validate_secret_request(request):
+		return HttpResponseForbidden()
+	
 	print 'LicenseHolderCloudDownload: processing...'
 	response = handle_export_license_holders()
 	print 'LicenseHolderCloudDownload: response returned.'
+	response['Authorization'] = authorization.get_secret_authorization()
 	return response
 
 @access_validation()
@@ -1476,7 +1482,8 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'LicenseHolderCloudDownload' )
 		print 'LicenseHoldersCloudImport: sending request to:', url
 		
-		response = requests.get( url, stream=True )
+		response = requests.get( url, stream=True, headers={'Authorization':authorization.get_secret_authorization()} )
+		
 		errors = []
 		try:
 			response.raise_for_status()
@@ -1512,6 +1519,9 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 competition_fields = ('id', 'date_range_year_str', 'name', 'city', 'stateProv', 'number_of_days', 'organizer', 'has_results')
 competition_name_fields = ('category_format', 'discipline', 'race_class')
 def CompetitionCloudQuery( request ):
+	if not authorization.validate_secret_request(request):
+		return HttpResponseForbidden()
+	
 	# Gets all Competitions from up to a year ago.
 	d_ref = (timezone.now() - datetime.timedelta(days=366*2)).date()
 	competitions = Competition.objects.filter( start_date__gte=d_ref
@@ -1527,6 +1537,9 @@ def CompetitionCloudQuery( request ):
 	return JsonResponse(response, safe=False)
 
 def CompetitionCloudExport( request, competitionId ):
+	if not authorization.validate_secret_request(request):
+		return HttpResponseForbidden()
+	
 	competition = get_object_or_404( Competition, pk=competitionId )
 	print 'CompetitionCloudExport: processing Competition id:', competitionId
 	response = handle_export_competition( competition )
@@ -1577,7 +1590,7 @@ def CompetitionCloudImportList( request ):
 				
 				url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudExport/{}'.format(d['id']) )
 				print 'CompetitionCloudImportList: sending request:', url
-				response = requests.get( url, stream=True )
+				response = requests.get( url, stream=True, headers={'Authorization':authorization.get_secret_authorization()} )
 				gzip_stream = tempfile.TemporaryFile()
 				for c in response.iter_content(None):
 					gzip_stream.write( c )
@@ -1595,7 +1608,7 @@ def CompetitionCloudImportList( request ):
 	else:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudQuery' )
 		print 'CompetitionCloudImportList: sending request:', url
-		response = requests.get( url )
+		response = requests.get( url, headers={'Authorization':authorization.get_secret_authorization()} )
 		
 		cloud_competitions = response.json()
 		for c in cloud_competitions:
@@ -2731,7 +2744,8 @@ def handle_export_competition( competition, export_as_template=False, remove_ftp
 
 	# Content size
 	gzip_stream.seek(0, 2)
-	response['Content-Length'] = gzip_stream.tell()
+	response['Content-Length'] = '{}'.format(gzip_stream.tell())
+	response['Authorization'] = authorization.get_secret_authorization()
 	gzip_stream.seek( 0 )
 
 	# Add content disposition so the browser will download the file.
@@ -2762,8 +2776,9 @@ def CompetitionExport( request, competitionId ):
 				)
 				gzip_stream.seek(0, 2)
 				headers = {
-					'Content-Length': gzip_stream.tell(),
+					'Content-Length': '{}'.format(gzip_stream.tell()),
 					'Content-Type': 'application/octet-stream',
+					'Authorization': authorization.get_secret_authorization(),
 				}
 				gzip_stream.seek(0, 0)
 				url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudUpload' )			
@@ -2866,11 +2881,14 @@ def CompetitionCloudUpload( request ):
 	print 'CompetitionCloudUpload: processing...'
 	response = {'errors':[], 'warnings':[], 'message':''}
 	if request.method == "POST":
-		try:
-			gzip_handler = gzip.GzipFile(fileobj=StringIO(request.body), mode='rb')
-			response['message'] = handle_import_competition( gzip_handler, import_as_template=False, replace=True )
-		except Exception as e:
-			response['errors'].append( 'Competition Upload Error: {}'.format(e) )
+		if not authorization.validate_secret_request( request ):
+			response['errors'].append( 'Authorization Error' )
+		else:
+			try:
+				gzip_handler = gzip.GzipFile(fileobj=StringIO(request.body), mode='rb')
+				response['message'] = handle_import_competition( gzip_handler, import_as_template=False, replace=True )
+			except Exception as e:
+				response['errors'].append( 'Competition Upload Error: {}'.format(e) )
 	else:
 		response['errors'].append( u'Request must be of type POST with gzip json payload.' )
 	print 'CompetitionCloudUpload: done.'

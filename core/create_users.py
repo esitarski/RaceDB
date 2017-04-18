@@ -11,11 +11,17 @@ def create_users():
 		reg.save()
 	
 	if not User.objects.filter(username__exact='hub').exists():
-		reg = User.objects.create_user('hub', password='hub')
-		reg.save()
+		hub = User.objects.create_user('hub', password='hub')
+		hub.save()
 	
 	if not User.objects.filter(username__exact='super').exists():
 		root = User.objects.create_user('super', password='super')
 		root.is_staff = True
 		root.is_superuser = True
 		root.save()
+	
+	if not User.objects.filter(username__exact='support').exists():
+		support = User.objects.create_user('support', password=None)
+		support.is_staff = True
+		support.is_superuser = True
+		support.save()
