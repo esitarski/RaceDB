@@ -14,7 +14,6 @@
 		<th>{% trans "Date of Birth" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCI Code" %}</th>
 		<th>{% trans "Nat." %}</th>
 		<th>{% trans "UCI ID" %}</th>
 		<th>{% trans "Emergency Contact" %}</th>
@@ -40,10 +39,6 @@
 			<td class="text-nowrap">
 				{% if h.license_code_error %}<span class="is-warn"/>&nbsp;{% endif %}
 				{{h.license_code_trunc}}
-			</td>
-			<td class="text-nowrap">
-				{% if h.uci_code_error %}<span class="is-warn"/>&nbsp;{% endif %}
-				{{h.uci_code}}
 			</td>
 			<td>{{h.get_nation_code_html}}</td>
 			<td class="text-nowrap">

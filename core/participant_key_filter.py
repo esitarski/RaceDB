@@ -95,14 +95,18 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 def participant_bib_filter( competition, bib ):
 	# Check for an existing participant.
 	participants = list( competition.participant_set.filter(bib=bib, role=Participant.Competitor) )
-	license_holders = []
+	existing_license_holders = set( p.license_holder_pk for p in participants )
 
-	# Check if we can find this bib in the number set.
+	# Check if we can find this bib in the number set excluding existing participants.
 	if competition.number_set:
-		license_holders = list(
-			competition.number_set.numbersetentry_set.filter(
-				bib=bib, date_lost__isnull=True ).exclude(
-				pk__in=[lh.pk for lh in license_holders])
+		license_holders = list( LicenseHolder.objects.filter( pk__in=
+				competition.number_set.numbersetentry_set.filter(
+					bib=bib, date_lost__isnull=True ).exclude(
+					license_holder__pk__in=existing_license_holders).values_list('license_holder__pk', flat=True
+				)
+			)
 		)
+	else:
+		license_holders = []
 	
 	return license_holders, participants

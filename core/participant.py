@@ -329,13 +329,11 @@ def ParticipantBibAdd( request, competitionId ):
 				return HttpResponseRedirect(getContext(request,'path'))
 				
 			license_holders, participants = participant_bib_filter( competition, bib )
-			if len(participants) == 1:
-				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
-			elif len(participants) > 1:
-				return render( request, 'participant_scan_error.html', locals() )
-			
-			if len(license_holders) == 1:
+			if len(participants) == 1 and len(license_holders) == 0:
+				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit', participants[0].id))
+			if len(participants) == 0 and len(license_holders) == 1:
 				return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holders[0].id))
+				
 			return render( request, 'participant_scan_error.html', locals() )			
 	else:
 		form = BibScanForm( hide_cancel_button=True )
