@@ -2302,7 +2302,6 @@ class Waiver(models.Model):
 		verbose_name_plural = _('Waivers')
 
 #---------------------------------------------------------------
-#---------------------------------------------------------------
 
 class Result(models.Model):
 	participant = models.ForeignKey( 'Participant', db_index=True )

@@ -332,6 +332,8 @@ function updateCategoryResults() {
 		var s = 'Finished in ' + FormatTimeHMS(d.raceTimes.back() - d.raceTimes[0], true);
 		if( d.speed )
 			s += ' at ' + d.speed;
+		if( d.raceTimes.length > 2 )
+			s += ', laps: ' + (d.raceTimes.length-1);
 		cr.push( s );
 	}
 	else if( d.status != 'Finisher' )
@@ -712,12 +714,81 @@ function updateLapPositionChart() {
 	container.chart.draw( dataTable, options );
 }
 
+function updateHistogramChart() {
+	var container = document.getElementById( 'idHistogramChart' );
+	if( !container.chart )
+		container.chart = new google.visualization.Histogram( container );
+	
+	var dataTable = new google.visualization.DataTable();
+	dataTable.addColumn( 'string', 'Bib Name' );
+	dataTable.addColumn( 'number', 'Finish Time (min)' );
+	
+	var finishTimes = [];
+	var winnerRaceTimesLength = -1;
+	for( var i = 0; i < categoryCur.pos.length; ++i ) {
+		var bibCur = categoryCur.pos[i];
+		var d = data[bibCur];
+		if( !d.raceTimes || d.raceTimes.length < 2 || d.status != 'Finisher' )
+			continue;
+		if( winnerRaceTimesLength < 0 )
+			winnerRaceTimesLength = d.raceTimes.length;
+		if( d.raceTimes.length != winnerRaceTimesLength )
+			continue;
+		var name = '' + (bibCur);
+		if( d.LastName )
+			name += ': ' + d.LastName;
+		if( d.FirstName )
+			name += ', ' + d.FirstName;
+		var finishTime = (d.raceTimes.back() - d.raceTimes[0]) / 60.0;
+		finishTimes.push( finishTime );
+		var row = [ name, finishTime];
+		dataTable.addRow( row );
+	}
+
+	var mean = 0, median = 0, variance = 0, std = 0;
+	if( finishTimes.length > 0 ) {
+		if( (finishTimes.length & 1) == 1 )
+			median = finishTimes[Math.floor(finishTimes.length/2)];
+		else {
+			var i = Math.floor(finishTimes.length / 2);
+			median = (finishTimes[i] + finishTime[i+1]) / 2.0;
+		}
+		for( var i = 0; i < finishTimes.length; ++i )
+			mean += finishTimes[i];
+		mean /= finishTimes.length;
+		for( var i = 0; i < finishTimes.length; ++i )
+			variance += (finishTimes[i] - mean) * (finishTimes[i] - mean);
+		variance /= finishTimes.length;
+		std = Math.sqrt( variance );
+	}
+	var statsDiv = document.getElementById( 'idStatistics' );
+	if( mean != 0 ) {
+		function strong( v ) { return '<strong>' + v + '</strong>'; }
+		statsDiv.innerHTML = '<p>' + 
+			'Total: ' + strong(finishTimes.length) + '&nbsp;&nbsp;' +
+			'Median: ' + strong(median.toFixed(3)) + '&nbsp;&nbsp;' +
+			'Mean: ' + strong(mean.toFixed(3)) + '&nbsp;&nbsp;' +
+			'Std: ' + strong(std.toFixed(3)) + '&nbsp;&nbsp;' +
+			'Var: ' + strong(variance.toFixed(3)) + '' +
+		'</p>';
+	} else
+		statsDiv.innerHTML = '';
+	
+	var options = {
+		title: 'Finish Time Histogram (minutes), Laps: ' + (winnerRaceTimesLength-1),
+		vAxis: { title: "count" },
+		legend: { position: 'none' },
+	};
+	container.chart.draw( dataTable, options );
+}
+
 function updateCompareDisplays() {
 	updateInfoTable();
 	updateGanttChart();
 	updateLapTimesChart();
 	updateGapChart();
 	updateLapPositionChart();
+	updateHistogramChart();
 }
 
 // ---------------------------------------------------------------------
@@ -2071,6 +2142,7 @@ function SituationAnimate() {
 <ul class="nav nav-tabs">
 	<li class="active"><a data-toggle="tab" href="#sectionRiderComparison">{% trans "Comparison" %}</a></li>
 	<li><a data-toggle="tab" href="#sectionLapTimes">{% trans "Lap Times" %}</a></li>
+	<li><a data-toggle="tab" href="#histogram">{% trans "Histogram" %}</a></li>
 {% if not is_timetrial %}
 	<li><a data-toggle="tab" href="#sectionLapChart">{% trans "Lap Chart" %}</a></li>
 	<li><a data-toggle="tab" href="#sectionSituation">{% trans "Situation" %}</a></li>
@@ -2092,6 +2164,11 @@ function SituationAnimate() {
 	<div id="sectionLapTimes" class="tab-pane fade">
 		<br/>
 		<div id="idLapTable"></div>
+	</div>
+	<div id="histogram" class="tab-pane fade">
+		<br/>
+		<div id="idHistogramChart" style="width: 900px; height: 400px;"></div>
+		<div id="idStatistics"></div>
 	</div>
 {% if not is_timetrial %}
 	<div id="sectionLapChart" class="tab-pane fade">
