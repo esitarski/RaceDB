@@ -18,7 +18,7 @@ class LicenseHolderUpdate( object ):
 		self.match_by_license_code = match_by_license_code
 				
 	def __enter__(self):
-		if not match_by_license_code:
+		if not self.match_by_license_code:
 			self.lc_existing = set( LicenseHolder.objects.all().values_list('license_code',flat=True) )
 			self.lc_new = {}
 		return self
@@ -105,7 +105,7 @@ class LicenseHolderUpdate( object ):
 		except Exception as e:
 			action = 'Error'
 			
-		return lh, action, e, tuple( (k, sub_value(v)) for k, v in changed )
+		return lh, action, e, tuple( (k, sub_value[v]) for k, v in changed )
 		
 def license_holder_import_excel( worksheet_name='', worksheet_contents=None, message_stream=sys.stdout, update_license_codes=False ):
 	tstart = datetime.datetime.now()
