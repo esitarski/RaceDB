@@ -314,7 +314,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 							license_holder_attr_value['license_code'] = license_code = random_temp_license()
 						else:
 							# Check if there is an existing license holder with this license code.  If so, make it unique.
-							lc_license_holder = LicenseHolder.objects.first( license_holder_attr_value['license_code'] )
+							lc_license_holder = LicenseHolder.objects.filter( license_holder_attr_value['license_code'] ).first()
 							if lc_license_holder:
 								lc_license_holder.license_code = random_temp_license()
 								lc_license_holder.save()
