@@ -151,12 +151,15 @@ This data includes:
 ***********************************************************************
 Step 9:  Start the RaceDB Server (run RaceDB)
 
-Ensure you are cd'd to the RaceDB directory (see above).
+If you are running on Windows, the install will create a desktop shortcut called "RaceDB Launch".
+This does the same as "python manage.py launch" shown below.
+
+If you are on Linux or wish to run from the command line, ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal enter:
 
   python manage.py launch
   
-After a few seconds, you will see a browser open connected to the RaceDB server.
+After a few seconds, you will see a browser connected to the RaceDB server.
 
 For more details about RaceDB, scroll to the bottom of the browser screen
 and press "Help".
@@ -186,7 +189,22 @@ After logging in to RaceDB, click on the "Tutorial" and "Help" link at the botto
 The system also comes with another login username="reg" password="reg".
 This is what the registration staff should use.  It disables access to configuration data and makes the system easier to use.
 It is OK if multiple people log in with the same username.
- 
+
+***********************************************************************
+Step 10:  Windows Only:  Create Launch Icons with different options
+
+On Windows, you can customize the desktop icon to include additional parameters.
+For example, say you want to launch RaceDB with the "--rfid_read" option from a desktop icon.
+To do so:
+
+1. On the existing "RaceDB Launch" desktop icon, right-click and select "Copy".
+2. On the background of your desktop, right-click and select "Paste shortcut".  This will create "RaceDB Launch (2)"
+3. Right-click on "RaceDB Launch (2)" and select "Properties"
+4. In the "Target" field, add the additional command options.  In this case, you can set "launch --rfid__reader".
+   The options exactly the same as described above.  Press OK when you are done.
+5. Right-click on "RaceDB Launch (2)" and select "Rename".  Change the name to "RFID RaceDB".
+6. It important to give your new launch icon a different name, otherwise it will be overwritten when you upgrade RaceDB.
+
 ***********************************************************************
 RaceDB Config File:
 It is possible to configure launch options in a RaceDB.cfg config file.

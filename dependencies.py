@@ -5,6 +5,9 @@ import shutil
 import argparse
 import subprocess
 import compileall
+import platform
+
+is_windows = (platform.system() == 'Windows')
 
 pyllrp = 'pip-install-pyllrp-0.1.4.zip'
 
@@ -24,6 +27,9 @@ dependencies = [
 	pyllrp,
 ]
 
+if is_windows:
+	dependencies.append('winshell')
+	
 uninstall_dependencies = [
 	'south',
 ]
@@ -80,3 +86,7 @@ if __name__ == '__main__':
 	
 	args = parser.parse_args()
 	update_dependencies( args.upgrade )
+	
+	if is_windows:
+		import CreateShortcut
+		CreateShortcut.CreateShortcut()

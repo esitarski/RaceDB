@@ -21,6 +21,25 @@ from core.create_users import create_users
 from core.print_bib import reset_font_cache
 from core.views_common import set_hub_mode
 
+def check_connection( host, port ):
+	print 'Checking connection {}:{}'.format(host,port)
+	
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+	try:
+		s.bind((host, port))
+		success = True
+	except socket.error as e:
+		print e
+		success = False
+
+	s.close()
+	
+	if success:
+		print 'Connection check succeeded.'
+	
+	return success
+
 class KWArgs( object ):
 	def __init__( self ):
 		self.kwargs = {}
@@ -118,10 +137,15 @@ def launch_server( command, **options ):
 		thread.start()
 		time.sleep( 0.5 )
 	
+	connection_good = check_connection( options['host'], options['port'] )
+
 	if not options['no_browser']:
+		if not connection_good:
+			print 'Attempting to launch broswer connecting to an existing RaceDB server...'
+		
 		# Schedule a web browser to launch a few seconds after starting the server.
 		url = 'http://{}:{}/RaceDB/'.format(socket.gethostbyname(socket.gethostname()), options['port'])
-		threading.Timer( 3.0,
+		threading.Timer( 3.0 if connection_good else 0.01,
 			webbrowser.open,
 			kwargs = dict(
 				url = url,
@@ -129,11 +153,15 @@ def launch_server( command, **options ):
 			)
 		).start()
 		print 'A browser will be launched in a few moments at: {}'.format(url)
+	
+	if connection_good:
+		print 'To stop the server, click in this window and press Ctrl-c.'
 		
-	print 'To stop the server, click in this window and press Ctrl-c.'
-
-	# Add Cling to serve up static files efficiently.
-	serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
+		# Add Cling to serve up static files efficiently.
+		serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
+	else:
+		time.sleep( 0.5 )
+		
 
 class Command(BaseCommand):
 	
