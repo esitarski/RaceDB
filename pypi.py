@@ -24,7 +24,7 @@ def pypi():
 		'py',
 		'txt', 'md',
 		'html', 'css', 'js',
-		'png', 'gif', 'jpg',
+		'png', 'gif', 'jpg', 'ico',
 		'json',
 		'xls', 'xlsx',
 		'gz',
