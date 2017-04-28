@@ -769,6 +769,10 @@ def ParticipantBibChange( request, participantId ):
 	
 	# If there is a NumberSet, add allocated numbers from there.
 	if number_set and available_numbers:
+		# Exclude available numbers not allowed in the number set.
+		range_events = number_set.get_range_events()
+		available_numbers = [bib for bib in available_numbers if number_set.is_bib_valid(bib, range_events)]
+		
 		# Exclude existing bib numbers of all license holders if using existing bibs.
 		# For duplicate license holders, check whether the duplicate has ever raced this category before.
 		# We don't know if the existing license holders will show up.

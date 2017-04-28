@@ -288,6 +288,7 @@
 		{% if competition.number_set %}<th class="text-right">{% trans "Lost" %}</th>{% endif %}
 		<th class="text-right">{% trans "On-Hand" %}</th>
 		<th></th>
+		<th></th>
 	</tr>
 </thead>
 <tbody>
@@ -299,6 +300,9 @@
 			<td class="text-right">{{c.inuse_count}}</td>
 			{% if competition.number_set %}<td class="text-right">{{c.lost_count}}</td>{% endif %}
 			<td class="text-right">{{c.onhand_count}}</td>
+			<td>
+			{% if c.total_count == 0 %}<span class="is-err">&nbsp;{% trans "No Bibs (check Numbers, NumberSet)" %}</span>{% endif %}
+			</td>
 			<td>
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning hidden-print" href="{{path}}CategoryNumbersDelete/{{c.id}}/">{% trans "Delete" %}</a>&nbsp;

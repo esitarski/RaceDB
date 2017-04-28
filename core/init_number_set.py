@@ -50,7 +50,10 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 						i, license_code) )
 					continue
 				
-				number_set.assign_bib( license_holder, bib )
+				if not number_set.assign_bib( license_holder, bib ):
+					messsage_stream_write( u'**** Row {}: bib={} cannot be assigned.  The bib must be valid and allowed by the NumberSet ranges?\n'.format(
+						i, bib) )
+					
 				messsage_stream_write(
 					u'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
 						i=i,

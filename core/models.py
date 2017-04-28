@@ -389,7 +389,10 @@ class NumberSet(models.Model):
 			if a > bib:
 				break
 			count += v
-		return count
+		return max(0, count)
+		
+	def is_bib_valid( self, bib, range_events = None ):
+		return self.get_bib_max_count(bib, range_events)  > 0
 		
 	def get_bib_in_use( self, bib ):
 		return self.numbersetentry_set.filter(bib=bib).count()
@@ -446,20 +449,26 @@ class NumberSet(models.Model):
 				if nse.date_lost is not None:
 					nse.date_lost = None
 					nse.save()
-				return
+				return True
 
 		# Check if this bib is available.  If so, take it.
 		with transaction.atomic():
 			if self.get_bib_available(bib) > 0:
 				NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
-				return
+				return True
 			
-		# The bib is unavailable.  Take one that was lost (presumably found), or take it from someone else.
+		# The bib is unavailable (if invalid).
+		# Try to take one that was lost (presumably found), or take it from someone else.
+		# If the bib is invalid, do not assign it, and return False.
 		with transaction.atomic():
 			nse = self.numbersetentry_set.filter( bib=bib, date_lost__isnull=True ).first() or self.numbersetentry_set.filter( bib=bib ).first()
+			if not nse:
+				return False
 			nse.license_holder = license_holder
 			nse.date_lost = None
 			nse.save()
+		
+		return True
 	
 	def set_lost( self, bib, license_holder=None, date_lost=None ):
 		if bib is None:
@@ -1158,7 +1167,14 @@ class CategoryNumbers( models.Model ):
 					include.difference_update( xrange(nBegin, nEnd+1) )
 				else:
 					include.update( xrange(nBegin, nEnd+1) )
-		self.numbers = include
+		
+		if self.competition.number_set:
+			number_set = self.competition.number_set
+			range_events = number_set.get_range_events()
+			is_bib_valid = number_set.is_bib_valid
+			include = set( bib for bib in include if is_bib_valid(bib, range_events) )
+			
+		self.numbers = include		
 		return include
 	
 	def get_numbers( self ):
@@ -2820,7 +2836,8 @@ class Participant(models.Model):
 			
 			if number_set_update and competition.number_set:
 				if self.bib and self.category:
-					competition.number_set.assign_bib( license_holder, self.bib )
+					if not competition.number_set.assign_bib( license_holder, self.bib ):
+						self.bib = None
 				
 			if license_holder_update:
 				if competition.use_existing_tags:
