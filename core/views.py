@@ -2800,6 +2800,7 @@ class ImportCompetitionForm( Form ):
 	
 	name = forms.CharField( required=False, label=_('Change Name to'), help_text=_('Leave blank to use Competition name in import file') )
 	start_date = forms.DateField( required=False, label=_('Change Start Date to'), help_text=_('Leave blank to use Competition date in import file') )
+	replace = forms.BooleanField( required=False, label=_('Replace existing Competition with same Name and Start Date') )
 	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore Participants and Teams)') )
 	
 	def __init__( self, *args, **kwargs ):
@@ -2812,7 +2813,7 @@ class ImportCompetitionForm( Form ):
 			Row(Field('json_file', accept=".gz,.gzip,.json")),
 			Row(HTML('&nbsp;')),
 			Row(Col(Field('name', size=50), 6), Col(Field('start_date'), 3)),
-			Row(Field('import_as_template')),
+			Row(Col(Field('replace'), 4), Col(Field('import_as_template'), 4)),
 		)
 		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
@@ -2869,6 +2870,7 @@ def CompetitionImport( request ):
 				form.cleaned_data['import_as_template'],
 				form.cleaned_data['name'] or None,
 				form.cleaned_data['start_date'] or None,
+				form.cleaned_data['replace'],
 			)
 			return render( request, 'import_competition.html', locals() )
 	else:
