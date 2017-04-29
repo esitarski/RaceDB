@@ -367,7 +367,7 @@ def competition_deserializer( object_list, **options ):
 					ts.save( Model, db_object, instance, pk_old )
 			else:
 				if Model == NumberSetEntry and instance.number_set_id in existing_number_sets:
-					ns = NumberSet.objects.get( id=instance.number_set_id )
+					ns = instance.number_set
 					if instance.date_lost:
 						ns.set_lost(instance.bib, instance.license_holder, instance.date_lost)
 					else:
