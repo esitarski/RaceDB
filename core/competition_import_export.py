@@ -367,11 +367,12 @@ def competition_deserializer( object_list, **options ):
 					ts.save( Model, db_object, instance, pk_old )
 			else:
 				if Model == NumberSetEntry and instance.number_set_id in existing_number_sets:
+					ns = NumberSet.objects.get( id=instance.number_set_id )
 					if instance.date_lost:
-						NumberSet.objects.get(id=instance.number_set_id).set_lost(instance.bib, instance.license_holder, instance.date_lost)
+						ns.set_lost(instance.bib, instance.license_holder, instance.date_lost)
 					else:
-						NumberSet.objects.get(id=instance.number_set_id).assign_bib(instance.license_holder, instance.bib)
-				if Model == Participant:
+						ns.assign_bib(instance.license_holder, instance.bib)
+				elif Model == Participant:
 					lh_cat = (instance.license_holder_id, instance.category_id if instance.category else None)
 					if lh_cat in existing_license_holder_category:
 						print '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.'
