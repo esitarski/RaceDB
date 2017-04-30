@@ -166,7 +166,9 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	num_starters = results.exclude( status=Result.cDNS ).count()
 	time_stamp = timezone.datetime.now()
 
+	payload = get_payload_for_result( results.first() )
 	exclude_breadcrumbs = True
+	hub_mode = True
 	return render( request, 'hub_results_list.html', locals() )
 
 def LicenseHolderResults( request, licenseHolderId ):

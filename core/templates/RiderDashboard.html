@@ -33,6 +33,7 @@ var bib = null;
 var data = null;
 var catDetails = null;
 var raceName = null;
+var hub_mode = null;
 
 var bibRef = null;
 var categoryCur = null;
@@ -154,11 +155,10 @@ function GetInitials( bib ) {
 }
 
 function GetBibName( bib ) {
-{% if hub_mode %}
-	return bib + ': ' + '<a href="/RaceDB/Hub/LicenseHolderResults/{{license_holder.id}}/">' + GetName(bib) + '</a>';
-{% else %}
-	return bib + ': ' + GetName(bib);
-{% endif %}
+	if( hub_mode )
+		return bib + ': ' + '<a href="/RaceDB/Hub/LicenseHolderResults/{{license_holder.id}}/">' + GetName(bib) + '</a>';
+	else
+		return bib + ': ' + GetName(bib);
 }
 
 function GetDateFromSecs( t ) {
@@ -2062,6 +2062,7 @@ function SituationAnimate() {
 {% endblock javascript %}
 
 {% block onload %}
+	hub_mode = {% if hub_mode %}true{% else %}false{% endif %};
 	dataProlog();
 	var d = data[bib];
 	
@@ -2165,11 +2166,6 @@ function SituationAnimate() {
 		<br/>
 		<div id="idLapTable"></div>
 	</div>
-	<div id="histogram" class="tab-pane fade">
-		<br/>
-		<div id="idHistogramChart" style="width: 900px; height: 400px;"></div>
-		<div id="idStatistics"></div>
-	</div>
 {% if not is_timetrial %}
 	<div id="sectionLapChart" class="tab-pane fade">
 		<div id="idLapChartDiv">
@@ -2215,6 +2211,11 @@ function SituationAnimate() {
 		</div><!-- idSituationDiv -->
 	</div>
 {% endif %}
+	<div id="histogram" class="tab-pane fade">
+		<br/>
+		<div id="idHistogramChart" style="width: 900px; height: 400px;"></div>
+		<div id="idStatistics"></div>
+	</div>
 </div>
 {% endblock content %}
 
