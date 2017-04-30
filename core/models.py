@@ -2660,7 +2660,7 @@ class NumberSetEntry(models.Model):
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
 
 	def save( self ):
-		if self.date_lost is None and self.number_set.get_bib_available(self.bib) <= 0:
+		if self.date_lost is None and self.id is None and self.number_set.get_bib_available(self.bib) <= 0:
 			raise IntegrityError()
 		return super( NumberSetEntry, self ).save()
 	
