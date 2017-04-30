@@ -750,7 +750,7 @@ function updateHistogramChart() {
 		if( (finishTimes.length & 1) == 1 )
 			median = finishTimes[Math.floor(finishTimes.length/2)];
 		else {
-			var i = Math.floor(finishTimes.length / 2);
+			var i = Math.floor(finishTimes.length/2);
 			median = (finishTimes[i] + finishTime[i+1]) / 2.0;
 		}
 		for( var i = 0; i < finishTimes.length; ++i )
@@ -2142,11 +2142,11 @@ function SituationAnimate() {
 <ul class="nav nav-tabs">
 	<li class="active"><a data-toggle="tab" href="#sectionRiderComparison">{% trans "Comparison" %}</a></li>
 	<li><a data-toggle="tab" href="#sectionLapTimes">{% trans "Lap Times" %}</a></li>
-	<li><a data-toggle="tab" href="#histogram">{% trans "Histogram" %}</a></li>
 {% if not is_timetrial %}
 	<li><a data-toggle="tab" href="#sectionLapChart">{% trans "Lap Chart" %}</a></li>
 	<li><a data-toggle="tab" href="#sectionSituation">{% trans "Situation" %}</a></li>
 {% endif %}
+	<li><a data-toggle="tab" href="#histogram">{% trans "Histogram" %}</a></li>
 </ul>
 
 <div class="tab-content">
