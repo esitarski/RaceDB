@@ -1016,9 +1016,9 @@ def CompetitionsDisplay( request ):
 	else:	
 		# If not super user, only show the competitions for today and after.
 		dNow = timezone.now().date()
-		competitions = competitions.filter(start_date__gte = dNow - datetime.timedelta(days=365) )
+		competitions = competitions.filter( start_date__gte = dNow - datetime.timedelta(days=365) )
 		competitions = [c for c in competitions
-			if c.start_date + datetime.timedelta(days=(c.number_of_days or 1)) > dNow
+			if c.start_date + datetime.timedelta(days=(c.number_of_days or 1)) >= dNow
 		]
 	
 	competitions = sorted( competitions, key = operator.attrgetter('start_date'), reverse=True )
