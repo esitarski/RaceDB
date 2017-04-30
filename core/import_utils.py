@@ -3,12 +3,13 @@ import time
 import datetime
 from xlrd import xldate_as_tuple
 from utils import toUnicode, removeDiacritic, gender_from_str
+from django.utils import timezone
 
 datemode = None
 
-today = datetime.date.today()
-earliest_year = (today - datetime.timedelta( days=106*365 )).year
-latest_year = (today - datetime.timedelta( days=7*365 )).year
+dNow = timezone.now().date()
+earliest_year = (dNow - datetime.timedelta( days=106*365 )).year
+latest_year = (dNow - datetime.timedelta( days=7*365 )).year
 
 invalid_date_of_birth = datetime.date(1900, 1, 1)
 def date_from_value( s ):

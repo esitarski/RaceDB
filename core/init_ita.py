@@ -9,6 +9,7 @@ from django.db.models import Q
 from utils import toUnicode, removeDiacritic, gender_from_str
 import import_utils
 from import_utils import *
+from django.utils import timezone
 
 def set_attributes( obj, attributes ):
 	changed = False
@@ -43,7 +44,7 @@ def init_ccn( fname ):
 	
 	discipline_id = dict( (discipline, Discipline.objects.get(name=discipline)) for discipline in ['Road', 'Track', 'Cyclocross', 'MTB'] )
 
-	effective_date = datetime.date.today()
+	effective_date = timezone.now().date()
 	
 	# Process the records in large transactions for efficiency.
 	invalid_date_of_birth = datetime.date(1900, 1, 1)

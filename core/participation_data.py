@@ -238,7 +238,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		license_holder_men_profile = sorted(fix_age(profile_year - lh.date_of_birth.year) for lh in license_holders_set if lh.gender == 0)
 		license_holder_women_profile = sorted(fix_age(profile_year - lh.date_of_birth.year) for lh in license_holders_set if lh.gender == 1)
 	else:
-		profile_year = datetime.date.today().year
+		profile_year = timezone.now().date().year
 		
 	attendees_total = sum(c['attendees_total'] for c in data)
 	

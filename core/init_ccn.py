@@ -11,7 +11,7 @@ from fix_utf8 import fix_utf8
 import import_utils
 from import_utils import get_key
 
-today = datetime.date.today()
+today = timezone.now().date()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
 

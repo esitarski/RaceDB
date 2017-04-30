@@ -3,7 +3,6 @@ import datetime
 import operator
 from collections import defaultdict
 from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from views_common import *

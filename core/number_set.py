@@ -129,7 +129,7 @@ def BibReturn( request, numberSetEntryId, confirmed=False ):
 def BibLost( request, numberSetEntryId, confirmed=False ):
 	nse = get_object_or_404( NumberSetEntry, pk=numberSetEntryId )
 	if confirmed:
-		nse.date_lost = datetime.date.today()
+		nse.date_lost = timezone.now().date()
 		nse.save()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	page_title = _('Record Bib as Lost (and unavailable)')

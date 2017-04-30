@@ -8,7 +8,6 @@ import scramble
 import minimal_intervals
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
 
 from models import *
 

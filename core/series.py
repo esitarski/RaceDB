@@ -3,7 +3,6 @@ from collections import defaultdict
 
 from views_common import *
 from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
 from django.forms import formset_factory
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 

@@ -1,7 +1,6 @@
 from views_common import *
 import operator
 
-from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from participant_key_filter import participant_key_filter, add_participant_from_license_holder

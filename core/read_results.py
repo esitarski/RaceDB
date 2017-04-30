@@ -6,8 +6,6 @@ from collections import defaultdict
 from models import *
 import DurationField
 
-from django.utils import timezone
-
 reNonDigit = re.compile( r'[^\d]' )
 def get_event_from_payload( payload ):
 	raceScheduledLocalList = [int(f) for f in reNonDigit.sub( ' ', payload['raceScheduledStart'] ).split()]

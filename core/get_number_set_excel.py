@@ -3,7 +3,6 @@ import datetime
 import utils
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
 
 from models import *
 

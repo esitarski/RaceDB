@@ -2661,7 +2661,7 @@ def YearOnYearAnalytics( request ):
 
 def GetEvents( request, date=None ):
 	if date is None:
-		date = datetime.date.today()
+		date = timezone.now().date()
 	else:
 		date = datetime.date( *[int(d) for d in date.split('-')] )
 	

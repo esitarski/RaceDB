@@ -483,7 +483,7 @@ class NumberSet(models.Model):
 		
 		nse = self.numbersetentry_set.filter(q1).filter(q2).first()
 		if nse:
-			nse.date_lost = date_lost or datetime.date.today()
+			nse.date_lost = date_lost or timezone.now().date()
 			nse.save()
 	
 	def return_to_pool( self, bib, license_holder=None ):
@@ -742,7 +742,7 @@ class Competition(models.Model):
 		event_tts = self.eventtt_set.all()
 		report_labels = list( self.report_labels.all() )
 	
-		start_date_old, start_date_new = self.start_date, datetime.date.today()
+		start_date_old, start_date_new = self.start_date, timezone.now().date()
 		competition_new = self
 		competition_new.pk = None
 		competition_new.start_date = start_date_new
@@ -1900,7 +1900,7 @@ class LicenseHolder(models.Model):
 	emergency_contact_phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
 
 	def get_age( self ):
-		today = datetime.date.today()
+		today = timezone.now().date()
 		return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
 
 	def get_nationality( self ):
@@ -2088,7 +2088,7 @@ class LicenseHolder(models.Model):
 		if d != self.date_of_birth:
 			return _(u'inconsistent with date of birth')
 		
-		age = datetime.date.today().year - d.year
+		age = timezone.now().date().year - d.year
 		if age < self.MinAge:
 			return _(u'date too recent')
 		if age > self.MaxAge:
@@ -2099,7 +2099,7 @@ class LicenseHolder(models.Model):
 	def date_of_birth_error( self ):
 		if not self or not self.date_of_birth:
 			return None
-		age = datetime.date.today().year - self.date_of_birth.year
+		age = timezone.now().date().year - self.date_of_birth.year
 		if age < self.MinAge:
 			return _(u'age too young')
 		if age > self.MaxAge:
@@ -2571,7 +2571,7 @@ class TeamHint(models.Model):
 		verbose_name_plural = _('TeamHints')
 
 def update_team_hints():
-	latest_competition_date = datetime.date.today() - datetime.timedelta( days=365*2 )
+	latest_competition_date = timezone.now().date() - datetime.timedelta( days=365*2 )
 	most_recent = {}
 	
 	# Add all the known TeamHints.
@@ -2622,7 +2622,7 @@ class CategoryHint(models.Model):
 		verbose_name_plural = _('CategoryHints')
 
 def update_category_hints():
-	latest_competition_date = datetime.date.today() - datetime.timedelta( days=365*2 )
+	latest_competition_date = timezone.now().date() - datetime.timedelta( days=365*2 )
 	most_recent = {}
 	
 	# Add all the known CategoryHints.
@@ -2933,13 +2933,13 @@ class Participant(models.Model):
 		if legal_entity:
 			waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
 			if waiver:
-				waiver.date_signed = (backdate or datetime.date.today())
+				waiver.date_signed = (backdate or timezone.now().date())
 				waiver.save()
 			else:
 				Waiver(
 					license_holder=self.license_holder,
 					legal_entity=legal_entity,
-					date_signed=(backdate or datetime.date.today())
+					date_signed=(backdate or timezone.now().date())
 				).save()
 	
 	def unsign_waiver_now( self ):
@@ -3160,7 +3160,7 @@ class Participant(models.Model):
 		return all( p.is_done for p in self.get_category_participants() )
 		
 	def auto_confirm( self ):
-		if self.competition.start_date <= datetime.date.today() <= self.competition.finish_date and self.show_confirm:
+		if self.competition.start_date <= timezone.now().date() <= self.competition.finish_date and self.show_confirm:
 			self.confirmed = True
 		return self
 	
@@ -3601,7 +3601,7 @@ class WaveTT( WaveBase ):
 				p.seed_option,
 				p.est_kmh,
 				-(p.bib or 0),
-				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.license_holder.get_tt_metric(timezone.now().date()),
 				p.id,
 			)
 		elif self.sequence_option == self.age_increasing:
@@ -3615,7 +3615,7 @@ class WaveTT( WaveBase ):
 			return lambda p: (
 				p.seed_option,
 				p.bib or 0,
-				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.license_holder.get_tt_metric(timezone.now().date()),
 				p.id,
 			)
 		elif self.sequence_option == self.age_decreasing:
@@ -3623,14 +3623,14 @@ class WaveTT( WaveBase ):
 				p.seed_option,
 				datetime.date(3000,1,1) - p.license_holder.date_of_birth,
 				-(p.bib or 0),
-				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.license_holder.get_tt_metric(timezone.now().date()),
 				p.id,
 			)
 		elif self.sequence_option == self.bib_decreasing:
 			return lambda p: (
 				p.seed_option,
 				-(p.bib or 0),
-				p.license_holder.get_tt_metric(datetime.date.today()),
+				p.license_holder.get_tt_metric(timezone.now().date()),
 				p.id,
 			)
 	
@@ -4413,7 +4413,7 @@ def bad_data_test():
 	fields = dict(
 		last_name = '00-TEST-LAST-NAME',
 		first_name = '00-TEST-FIRST-NAME',
-		date_of_birth = datetime.datetime.today(),
+		date_of_birth = timezone.now().date(),
 	
 		license_code = '0000{}'.format( random.randint(0,10000) ),
 	
