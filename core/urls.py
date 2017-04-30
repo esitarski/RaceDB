@@ -151,6 +151,7 @@ urlpatterns = [
 	
 	url(r'^(?i).*ParticipantTeamChange/(?P<participantId>\d+)/$', participant.ParticipantTeamChange ),
 	url(r'^(?i).*ParticipantTeamSelect/(?P<participantId>\d+)/(?P<teamId>\d+)/$', participant.ParticipantTeamSelect ),
+	url(r'^(?i).*ParticipantTeamSelectDiscipline/(?P<participantId>\d+)/(?P<teamId>\d+)/$', participant.ParticipantTeamSelectDiscipline ),
 	
 	url(r'^(?i).*ParticipantBibChange/(?P<participantId>\d+)/$', participant.ParticipantBibChange ),
 	url(r'^(?i).*ParticipantBibSelect/(?P<participantId>\d+)/(?P<bib>\d+)/$', participant.ParticipantBibSelect ),

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<h3><strong>{{participant.license_holder.full_name}}</strong>: {{participant.team.full_name}}</h3>
+<hr/>
+{% crispy form %}
+{% endblock content %}

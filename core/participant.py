@@ -688,7 +688,6 @@ def ParticipantBooleanChange( request, participantId, field ):
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	
 #-----------------------------------------------------------------------
-
 @access_validation()
 def ParticipantTeamChange( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
@@ -723,9 +722,84 @@ def ParticipantTeamSelect( request, participantId, teamId ):
 		team = get_object_or_404( Team, pk=teamId )
 	else:
 		team = None
-	participant.team = team
-	participant.auto_confirm().save()
-	return HttpResponseRedirect(getContext(request,'pop2Url'))
+	
+	if False:
+		participant.team = team
+		participant.auto_confirm().save()
+		return HttpResponseRedirect(getContext(request,'pop2Url'))
+	
+	return HttpResponseRedirect(getContext(request,'popUrl') + 'ParticipantTeamSelectDiscipline/{}/{}/'.format(participantId,teamId))
+
+@autostrip
+class TeamDisciplineForm( Form ):
+	disciplines = forms.MultipleChoiceField(required=False, widget=forms.CheckboxSelectMultiple,)
+	
+	def __init__(self, *args, **kwargs):
+		super(TeamDisciplineForm, self).__init__(*args, **kwargs)
+		
+		self.fields['disciplines'].choices = [(d.id, d.name) for d in Discipline.objects.all()]
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = ''
+		
+		buttons = [
+			Submit( 'set-all-submit', _('Same Team for All Disciplines'), css_class = 'btn btn-primary' ),
+			Submit( 'set-selected-submit', _('Team for Selected Disciplines Only'), css_class = 'btn btn-primary' ),
+			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+		]
+		
+		self.helper.layout = Layout(
+			Row( buttons[0], HTML('&nbsp;'*8), buttons[2] ),
+			Field('disciplines'),
+			Row( buttons[1] ),
+		)
+
+@access_validation()
+def ParticipantTeamSelectDiscipline( request, participantId, teamId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	competition = participant.competition
+	if int(teamId):
+		team = get_object_or_404( Team, pk=teamId )
+	else:
+		team = None
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'pop2Url'))
+		
+		disciplines = []
+		if 'set-all-submit' in request.POST:
+			disciplines = list( Discipline.objects.all().values_list('id', flat=True) )
+		elif 'set-selected-submit' in request.POST:
+			form = TeamDisciplineForm( request.POST )
+			if form.is_valid():
+				disciplines = form.cleaned_data['disciplines']
+
+		participant.team = team
+		participant.auto_confirm().save()
+		
+		today = timezone.now().date()
+		for id in disciplines:
+			if team:
+				try:
+					th = TeamHint.objects.get( discipline__id=id, license_holder=participant.license_holder )
+					if th.team_id == team.id:
+						continue
+					th.team = team
+				except TeamHint.DoesNotExist:
+					th = TeamHint( license_holder=participant.license_holder, team=team )
+					th.discipline_id = id
+				th.effective_date = today
+				th.save()
+			else:
+				TeamHint.objects.filter( discipline__id=id, license_holder=participant.license_holder ).delete()
+		return HttpResponseRedirect(getContext(request,'pop2Url'))
+	else:
+		form = TeamDisciplineForm( initial = {'disciplines': [competition.discipline_id]} )
+		
+	return render( request, 'participant_team_select_discipline.html', locals() )
+
 
 #-----------------------------------------------------------------------
 class Bib( object ):
