@@ -6,6 +6,8 @@ register = template.Library()
 
 @register.filter
 def format_time_no_decimals( value ):
+	if not value:
+		return mark_safe(u'')
 	try:
 		return mark_safe(value.format_no_decimals())
 	except AttributeError:

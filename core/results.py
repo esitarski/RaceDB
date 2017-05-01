@@ -21,7 +21,7 @@ def get_payload_for_result( result ):
 	payload['bib'] = result.participant.bib
 	payload['raceName'] = u'{} - {} ({})'.format( competition.name, event.name, competition.discipline.name )
 	payload['raceScheduledStart'] = event.date_time.strftime( '%Y-%m-%d %H:%M' )
-	payload['winAndOut'] = event.win_and_out
+	payload['winAndOut'] = getattr(event, 'win_and_out', False)
 	payload['isTimeTrial'] = (event.event_type == 1)
 	payload['primes'] = None
 	payload['raceIsRunning'] = False
