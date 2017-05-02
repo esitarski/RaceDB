@@ -2354,7 +2354,9 @@ class Result(models.Model):
 	
 	@property
 	def adjusted_finish_time( self ):
-		return DurationField.formatted_timedelta(seconds=self.finish_time.total_seconds() + self.adjustment_time.total_seconds()) if self.finish_time is not None else None
+		if self.finish_time and self.adjustment_time:
+			return DurationField.formatted_timedelta(seconds=self.finish_time.total_seconds() + self.adjustment_time.total_seconds())
+		return self.finish_time
 	
 	@property
 	def status_text( self ):

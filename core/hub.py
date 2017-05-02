@@ -151,7 +151,8 @@ def CompetitionResults( request, competitionId ):
 	return render( request, 'hub_events_list.html', locals() )
 
 def CategoryResults( request, eventId, eventType, categoryId ):
-	event = get_object_or_404( (EventMassStart,EventTT)[int(eventType)], pk=eventId )
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
 	category = get_object_or_404( Category, pk=categoryId )
 	wave = event.get_wave_for_category( category )
 	
@@ -169,6 +170,7 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	payload = get_payload_for_result( results.first() )
 	exclude_breadcrumbs = True
 	hub_mode = True
+	is_timetrial = (eventType == 1)
 	return render( request, 'hub_results_list.html', locals() )
 
 def LicenseHolderResults( request, licenseHolderId ):
@@ -177,13 +179,15 @@ def LicenseHolderResults( request, licenseHolderId ):
 	return render( request, 'hub_license_holder_results.html', locals() )
 
 def ResultAnalysis( request, eventId, eventType, resultId ):
-	event = get_object_or_404( (EventMassStart,EventTT)[int(eventType)], pk=eventId )
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
 	is_timetrial = (event.event_type == 1)
 	result = get_object_or_404( event.get_result_class(), pk=resultId )
 	license_holder = result.participant.license_holder
 	payload = get_payload_for_result( result )
 	exclude_breadcrumbs = True
 	hub_mode = True
+	is_timetrial = (eventType == 1)
 	return render( request, 'RiderDashboard.html', locals() )
 	
 #---------------------------------------------------------------------------------------------------

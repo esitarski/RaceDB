@@ -247,17 +247,13 @@ function updateHistogramChart() {
 	var mean = 0, median = 0, variance = 0, std = 0;
 	if( finishTimes.length > 0 ) {
 		if( (finishTimes.length & 1) == 1 )
-			median = finishTimes[Math.floor(finishTimes.length/2)];
+			median = finishTimes[~~(finishTimes.length/2)];
 		else {
-			var i = Math.floor(finishTimes.length/2);
-			median = (finishTimes[i] + finishTime[i+1]) / 2.0;
+			var i = ~~(finishTimes.length/2);
+			median = (finishTimes[i] + finishTimes[i+1]) / 2.0;
 		}
-		for( var i = 0; i < finishTimes.length; ++i )
-			mean += finishTimes[i];
-		mean /= finishTimes.length;
-		for( var i = 0; i < finishTimes.length; ++i )
-			variance += (finishTimes[i] - mean) * (finishTimes[i] - mean);
-		variance /= finishTimes.length;
+		mean = finishTimes.reduce( function(meanTotal, value) { return meanTotal + value; }, 0.0 ) / finishTimes.length;
+		variance = finishTimes.reduce( function(varTotal, value) { return varTotal + value*value; }, 0.0 ) / finishTimes.length;
 		std = Math.sqrt( variance );
 	}
 	var statsDiv = document.getElementById( 'idStatistics' );
@@ -1655,7 +1651,7 @@ table.participant_table tr th {
 			{% if wave.rank_categories_together %}<td>{{p.category.code_gender}}</td>{% endif %}
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
-			<td class="text-right">{{rr.adjusted_finish_time|format_time_no_decimals}}</td>
+			<td class="text-right">{% if rr.adjusted_finish_time %}{{rr.adjusted_finish_time|format_time_no_decimals}}{% endif %}</td>
 			<td class="text-right">{% if wave.rank_categories_together %}{{rr.wave_gap}}{% else %}{{rr.category_gap}}{% endif %}</td>
 		</tr>
 		{% endwith %}
