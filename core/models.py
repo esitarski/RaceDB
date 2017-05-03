@@ -2368,12 +2368,6 @@ class Result(models.Model):
 	def get_race_time_query( self ):
 		return self.get_race_time_class().objects.filter(result=self)
 	
-	@property
-	def wave_rank_html( self ):
-		if self.status != 0:
-			return self.get_status_display()
-		return mark_safe(u'{}.'.format(self.wave_rank))
-	
 	def format_result_html( self, rank, gap, starters ):
 		if self.status == 0:
 			if rank == 1:
@@ -2393,6 +2387,12 @@ class Result(models.Model):
 	@property
 	def wave_result_html( self ):
 		return self.format_result_html( self.wave_rank, self.wave_gap, self.wave_starters )
+	
+	@property
+	def wave_rank_html( self ):
+		if self.status != 0:
+			return self.get_status_display()
+		return mark_safe(u'{}.'.format(self.wave_rank))
 	
 	@property
 	def category_rank_html( self ):
