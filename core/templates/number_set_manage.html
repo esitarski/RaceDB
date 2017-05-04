@@ -54,11 +54,13 @@
 			<td class="text-nowrap">{{lh.get_flag_uci_id_html}}</td>
 			<td class="hidden-print">
 				{% if nse.date_lost %}
-					<a class="btn btn-success" href="./BibReturn/{{nse.id}}/">{% trans "Bib Found" %}</a>
+					<a class="btn btn-sm btn-success" href="./BibReturn/{{nse.id}}/">{% trans "Bib Found" %}</a>
 				{% else %}
-					<a class="btn btn-success" href="./BibLost/{{nse.id}}/">{% trans "Bib Lost" %}</a>
+					<a class="btn btn-sm btn-success" href="./BibLost/{{nse.id}}/">{% trans "Bib Lost" %}</a>
+					&nbsp;
+					<a class="btn btn-sm btn-primary" href="./BibReturn/{{nse.id}}/">{% trans "Return" %}</a>
 				{% endif %}
-				&nbsp;<a class="btn btn-warning" href="./LicenseHolderEdit/{{lh.id}}/">{% trans "License Holder" %}</a>
+				&nbsp;<a class="btn btn-sm btn-warning" href="./LicenseHolderEdit/{{lh.id}}/">{% trans "License Holder" %}</a>
 			</td>
 		</tr>
 		{% endwith %}
