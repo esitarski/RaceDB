@@ -179,13 +179,17 @@ def get_team_cannonical_select_form( ids ):
 		choices.append( (i, string_concat(*fields) ) )
 	
 	class TeamCannonicalSelectForm( Form ):
-		cannonical = forms.ChoiceField( choices=choices, required=True, label=_('Select Representative Team') )
+		cannonical = forms.ChoiceField(
+			choices=choices, required=True,
+			label=_('Select Representative Team'),
+			widget=forms.RadioSelect,
+		)
 		
 		def __init__( self, *args, **kwargs ):
 			super( TeamCannonicalSelectForm, self ).__init__( *args, **kwargs )
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
-			self.helper.form_class = 'navbar-form navbar-left'
+			self.helper.form_class = ''
 			
 			button_args = [
 				Submit( 'select-cannonical-submit', _('Merge Teams with Representative Team'), css_class = 'btn btn-primary' ),
@@ -193,7 +197,7 @@ def get_team_cannonical_select_form( ids ):
 			]
 			self.helper.layout = Layout(
 				Row(
-					Field('cannonical', size=len(choices)),
+					HTML('<div class="well">'), Field('cannonical'), HTML('</div>'),
 				),
 				Row( *button_args ),
 			)

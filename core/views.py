@@ -649,14 +649,17 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 	
 	@autostrip
 	class LicenseHolderSelectDuplicatesForm( Form ):
-		pks = forms.MultipleChoiceField( required = False, label = _('Potential Duplicates'), choices=choices )
+		pks = forms.MultipleChoiceField(
+			required = False, label = _('Confirm Potential Duplicates'),
+			choices=choices, widget=forms.CheckboxSelectMultiple
+		)
 		
 		def __init__(self, *args, **kwargs):
 			super(LicenseHolderSelectDuplicatesForm, self).__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
-			self.helper.form_class = 'navbar-form navbar-left'
+			self.helper.form_class = ''
 			
 			button_args = [
 				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
@@ -665,7 +668,7 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 			
 			self.helper.layout = Layout(
 				Row(
-					Field('pks', css_class = 'form-control', size = '10'),
+					HTML('<div class="well">'), Field('pks'), HTML('</div>'),
 				),
 				Row(
 					button_args[0],
