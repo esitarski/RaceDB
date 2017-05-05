@@ -120,6 +120,71 @@ def getCopyName( ModelClass, cur_name ):
 	return cur_name
 
 #----------------------------------------------------------------------------------------
+def normalize_sequence( elements ):
+	with transaction.atomic():
+		for seq, e in enumerate(elements):
+			if e.sequence != seq:
+				e.sequence = seq
+				e.save()
+	
+class Sequence( models.Model ):
+	sequence = models.PositiveSmallIntegerField( default=32767, blank=True, verbose_name=_('Sequence') )
+
+	def get_container( self ):
+		assert False, 'Please implement function get_container().'
+
+	def normalize( self ):
+		normalize_sequence( self.get_container().order_by('sequence') )
+				
+	def prev( self ):
+		return self.get_container().filter( sequence=self.sequence-1 ).first()
+	
+	def next( self ):
+		return self.get_container().filter( sequence=self.sequence+1 ).first()
+	
+	def first( self ):
+		return self.get_container().order_by('sequence').first()
+		
+	def last( self ):
+		return self.get_container().order_by('sequence').last()
+
+	def move_to( self, i ):
+		elements = list( self.get_container() )
+		i = max( 0, min( i, len(elements) ) )
+		elements.remove( self )
+		elements.insert( i, self )
+		normalize_sequence( elements )
+		
+	def move_lower( self ):
+		self.move_to( self.sequence-1 )
+
+	def move_higher( self ):
+		self.move_to( self.sequence+1 )
+
+	def move_to_head( self ):
+		self.move_to( 0 )
+
+	def move_to_tail( self ):
+		self.move_to( 32767 )
+		
+	def move( self, move_direction ):
+		if move_direction == 0:
+			self.move_to( 0 )
+		elif move_direction == 1:
+			self.move_higher()
+		elif move_direction == -1:
+			self.move_lower()
+		else:
+			self.move_to_tail()
+
+	def get_sequence_max( self ):
+		return self.get_container().count()
+	
+	class Meta:
+		ordering = ['sequence']
+		abstract = True
+
+#----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
 	TAG_CREATION_CHOICES = (
 		(0, _('Universally Unique')),
@@ -1059,6 +1124,79 @@ def get_bib_query( bibs ):
 			query = q
 	
 	return query
+
+def normalize_range_str( range_str ):
+	r = range_str.upper()
+	r = re.sub( r'\s', ',', r, flags=re.UNICODE )	# Replace spaces with commas.
+	r = re.sub( r'[^0123456789,-]', '', r )			# Remove invalid characters.
+	r = re.sub( r',,+', ',', r )						# Remove repeated commas.
+
+	if r.startswith( ',' ):
+		r = r[1:]
+	while r.endswith( ',' ) or r.endswith( '-' ):
+		r = r[:-1]
+	
+	num_max = 99999
+	pairs = []
+	for p in r.split( u',' ):
+		p = p.strip()
+		if p.startswith( '-' ):
+			exclude = u'-'
+			p = p[1:]
+		else:
+			exclude = u''
+			
+		pair = p.split( u'-' )
+		if len(pair) == 1:
+			try:
+				n = int(pair[0])
+			except:
+				continue
+			pairs.append( exclude + unicode(n) )
+		elif len(pair) >= 2:
+			try:
+				nBegin = int(pair[0])
+			except:
+				continue
+			try:
+				nEnd = int(pair[1])
+			except:
+				continue
+			nBegin = min( nBegin, num_max )
+			nEnd = min( max(nBegin,nEnd), num_max )
+			pairs.append( exclude + unicode(nBegin) + u'-' + unicode(nEnd) )
+	
+	return u', '.join( pairs )
+
+def get_numbers( range_str ):
+	include = set()
+	for p in range_str.split(','):
+		p = p.strip()
+		if not p:
+			continue
+		
+		if p.startswith( '-' ):
+			exclude = True
+			p = p[1:]
+		else:
+			exclude = False
+			
+		pair = p.split( '-' )
+		if len(pair) == 1:
+			n = max(1, int(pair[0]))
+			if exclude:
+				include.discard( n )
+			else:
+				include.add( n )
+		elif len(pair) >= 2:
+			nBegin, nEnd = [int(v) for v in pair[:2]]
+			nBegin, nEnd = max(nBegin, 1), min(nEnd, 99999)
+			if exclude:
+				include.difference_update( xrange(nBegin, nEnd+1) )
+			else:
+				include.update( xrange(nBegin, nEnd+1) )
+	
+	return include
 	
 class CategoryNumbers( models.Model ):
 	competition = models.ForeignKey( Competition, db_index = True )
@@ -1066,8 +1204,6 @@ class CategoryNumbers( models.Model ):
 	range_str = models.TextField( default = '1-99,120-129,-50-60,181,-87', verbose_name=_('Range') )
 	
 	numCache = None
-	valid_chars = set( u'0123456789,-' )
-	numMax = 99999
 	
 	@property
 	def category_list( self ):
@@ -1094,87 +1230,16 @@ class CategoryNumbers( models.Model ):
 		return category_numbers_new
 	
 	def normalize( self ):
-		# Normalize the input.
-		r = self.range_str.replace( u' ', u',' ).replace( u'\n', u',' )
-		r = u''.join( v for v in r if v in self.valid_chars )
-		while 1:
-			rNew = r.replace( ',,', ',' ).replace( '--', '-' ).replace( '-,', ',' )
-			if rNew == r:
-				break
-			r = rNew
-		if r.startswith( ',' ):
-			r = r[1:]
-		while r.endswith( ',' ) or r.endswith( '-' ):
-			r = r[:-1]
-		
-		pairs = []
-		for p in r.split( u',' ):
-			p = p.strip()
-			if p.startswith( '-' ):
-				exclude = u'-'
-				p = p[1:]
-			else:
-				exclude = u''
-				
-			pair = p.split( u'-' )
-			if len(pair) == 1:
-				try:
-					n = int(pair[0])
-				except:
-					continue
-				pairs.append( exclude + unicode(n) )
-			elif len(pair) >= 2:
-				try:
-					nBegin = int(pair[0])
-				except:
-					continue
-				try:
-					nEnd = int(pair[1])
-				except:
-					continue
-				nBegin = min( nBegin, self.numMax )
-				nEnd = min( max(nBegin,nEnd), self.numMax )
-				pairs.append( exclude + unicode(nBegin) + u'-' + unicode(nEnd) )
-		
-		self.range_str = u', '.join( pairs )
+		self.range_str = normalize_range_str( self.range_str )
+		return self.range_str
 	
 	def getNumbersWorker( self ):
-		self.normalize()
-		
-		include = set()
-		for p in self.range_str.split( ',' ):
-			p = p.strip()
-			if not p:
-				continue
-			
-			if p.startswith( '-' ):
-				exclude = True
-				p = p[1:]
-			else:
-				exclude = False
-				
-			pair = p.split( '-' )
-			if len(pair) == 1:
-				n = max(1, int(pair[0]))
-				if exclude:
-					include.discard( n )
-				else:
-					include.add( n )
-			elif len(pair) >= 2:
-				nBegin, nEnd = [int(v) for v in pair[:2]]
-				nBegin, nEnd = max(nBegin, 1), min(nEnd, 99999)
-				if exclude:
-					include.difference_update( xrange(nBegin, nEnd+1) )
-				else:
-					include.update( xrange(nBegin, nEnd+1) )
-		
+		include = get_numbers( self.normalize() )
 		if self.competition.number_set:
 			number_set = self.competition.number_set
 			range_events = number_set.get_range_events()
 			is_bib_valid = number_set.is_bib_valid
 			include = set( bib for bib in include if is_bib_valid(bib, range_events) )
-			
-		self.numbers = include		
 		return include
 	
 	def get_numbers( self ):
@@ -1262,6 +1327,9 @@ class Event( models.Model ):
 	
 	def get_wave_set( self ):
 		return self.wave_set if self.event_type == 0 else self.wavett_set
+		
+	def get_custom_category_set( self ):
+		return self.customcategorymassstart_set if self.event_type == 0 else self.customcategorytt_set
 	
 	def get_categories( self ):
 		return list(self.get_categories_query())
@@ -1270,6 +1338,9 @@ class Event( models.Model ):
 		return self.get_wave_set().filter(categories=category).first()
 	
 	def get_result_class( self ):
+		raise NotImplementedError("Please Implement this method")
+		
+	def get_custom_category_class( self ):
 		raise NotImplementedError("Please Implement this method")
 			
 	def get_results( self ):
@@ -1304,7 +1375,6 @@ class Event( models.Model ):
 		time_diff = self.date_time - datetime.datetime.combine(
 			start_date_old, datetime.time(0,0,0)
 		).replace(tzinfo = get_default_timezone())
-		waves = self.get_wave_set().all()
 		
 		self_pk = self.pk
 		
@@ -1316,8 +1386,11 @@ class Event( models.Model ):
 		event_new.option_id = 0		# Ensure the option_id gets reset if necessary.
 		event_new.save()
 		
-		for w in waves:
+		for w in self.get_wave_set().all():
 			w.make_copy( event_new )
+			
+		for cc in self.get_custom_category_set().all():
+			cc.make_copy( event_new )
 			
 		# If this event is in a series, add the new event to the series also.
 		q = Q(event_mass_start__pk=self_pk) if self.event_type == 0 else Q(event_tt__pk=self_pk)
@@ -1519,6 +1592,9 @@ class EventMassStart( Event ):
 	
 	def get_result_class( self ):
 		return ResultMassStart
+		
+	def get_custom_category_class( self ):
+		return CustomCategoryMassStart
 		
 	def get_series( self ):
 		for ce in SeriesCompetitionEvent.objects.filter( event_mass_start=self ).exclude( series__callup_max=0 ).order_by('series__sequence'):
@@ -2446,6 +2522,9 @@ class Result(models.Model):
 		
 	def get_race_times( self ):
 		return [ rt.total_seconds() for rt in self.get_race_time_query().values_list('race_time',flat=True) ]
+		
+	def get_num_laps( self ):
+		return self.get_race_time_query().count() - 1
 	
 	def get_lap_kmh( self ):
 		lap_kmh = []
@@ -2553,6 +2632,134 @@ class RaceTimeTT(RaceTime):
 		verbose_name = _('RaceTimeTT')
 		verbose_name_plural = _('RaceTimesTT')
 
+#---------------------------------------------------------------
+#---------------------------------------------------------------
+
+class CustomCategory(Sequence):
+	range_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_('Bib Ranges') )
+	nation_code_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_("Nation Codes") )
+	GENDER_CHOICES = tuple( list(Category.GENDER_CHOICES[:-1]) + [(2,_('All'))] )
+	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
+	
+	def normalize( self ):
+		self.range_str = normalize_range_str( self.range_str )
+		r = self.nation_code_str.upper()
+		r = re.sub( r'[^A-Z]', ',', r )					# Replace invalid characters with commas.
+		r = re.sub( r',,+', ',', r )					# Remove repeated commas.
+		if r.startswith(','):
+			r = r[1:]
+		if r.endswith(','):
+			r = r[:-1]
+		self.nation_code_str = r
+		
+		return self.range_str
+	
+	def get_participant_query( self ):
+		q = Q()
+		self.normalize()
+		if self.range_str:
+			q &= get_bib_query( get_numbers(self.range_str) )
+		if self.nation_code_str:
+			nation_codes = [n.strip() for n in self.nation_code_str.split(',')]
+			if len(nation_codes) == 1:
+				q &= Q(license_holder__nation_code=nation_codes[0])
+			else:
+				q &= Q(license_holder__nation_code__in=nation_codes)
+		if self.gender != 2:
+			q &= Q(license_holder__gender=self.gender)
+		return q
+	
+	def make_copy( self, event_new ):
+		custom_category = self
+		custom_category.pk = None
+		custom_category.event = event_new
+		custom_category.save()
+		return custom_category
+	
+	def save(self, *args, **kwargs):
+		self.normalize()
+		return super(CustomCategory, self).save( *args, **kwargs )
+	
+	def get_results( self ):
+		custom_participants = self.event.get_participants().filter(self.get_participant_query())
+		wave_with_participants = set()
+		results = []
+		for w in self.event.get_wave_set():
+			rr = list( w.get_results().filter( participant__id__in=custom_participants.values_list('id',flat=True) ) )
+			if rr:
+				results.extend( rr )
+				wave_with_participants.add( w )
+				
+		# If all results are from one wave, use the scoring from that wave.
+		if len(wave_with_participants) <= 1:
+			for rr in results:
+				rr.category_gap = rr.wave_gap
+			return results
+		
+		if getattr(self.event, 'win_and_out', False):
+			results.sort( key=lambda rr: (rr.status, rr.get_num_laps(), rr.participant.bib) )
+			for rr in results:
+				rr.wave_gap = rr.category_gap = u''
+			return results
+		
+		# Rank the combined results together.
+		results.sort( key=lambda rr: (rr.status, -rr.get_num_laps(), rr.adjusted_finish_time, rr.wave_rank, rr.participant.bib) )
+			
+		winner = results[0]
+		winner_time = winner.adjusted_finish_time
+		if winner.status != 0 or not winner_time:
+			for rr in results:
+				rr.wave_gap = rr.category_gap = u''
+			return results
+
+		winner_laps = winner.get_num_laps()
+		for rr in results:
+			if rr is winner or rr.status != 0:
+				rr.wave_gap = rr.category_gap = u''
+				continue
+			
+			if winner_laps:
+				laps_down = winner_laps - rr.get_num_laps()
+				if laps_down > 0:
+					rr.wave_gap = rr.category_gap = u'-{} {}'.format(laps_down, ('lap','laps')[int(laps_down>1)])
+					continue
+				
+			rr_time = rr.adjusted_finish_time
+			if not rr_time:
+				rr.wave_gap = rr.category_gap = u''
+				continue
+				
+			t = DurationField.formatted_timedelta(seconds=rr_time.total_seconds() - winner_time.total_seconds())
+			rr.wave_gap = rr.category_gap = t.format_no_decimals()
+
+		return results
+	
+	class Meta:
+		verbose_name = _('CustomCstegory')
+		verbose_name_plural = _('CustomCategories')
+		abstract = True
+		ordering = ['sequence']	
+
+class CustomCategoryMassStart(CustomCategory):
+	event = models.ForeignKey( 'EventMassStart', verbose_name=_('EventMassSart') )
+	
+	def get_container( self ):
+		return self.event.customcategorymassstart_set.all()
+	
+	class Meta:
+		verbose_name = _('CustomCategoryMassStart')
+		verbose_name_plural = _('CustomCategoriesMassStart')
+
+class CustomCategoryTT(CustomCategory):
+	event = models.ForeignKey( 'EventTT', verbose_name=_('EventTT') )
+	
+	def get_container( self ):
+		return self.event.customcategorytt_set.all()
+	
+	class Meta:
+		verbose_name = _('CustomCategoryTT')
+		verbose_name_plural = _('CustomCategoriesTT')
+		
 #---------------------------------------------------------------
 #---------------------------------------------------------------
 
@@ -3382,6 +3589,9 @@ class EventTT( Event ):
 	def get_result_class( self ):
 		return ResultTT
 		
+	def get_custom_category_class( self ):
+		return CustomCategoryTT	
+	
 	create_seeded_startlist = models.BooleanField( default=True, verbose_name=_('Create Seeded Startlist'),
 		help_text=_('If True, seeded start times will be generated in the startlist for CrossMgr.  If False, no seeded times will be generated, and the TT time will start on the first recorded time in CrossMgr.') )
 
@@ -3798,70 +4008,6 @@ class ParticipantOption( models.Model ):
 #-------------------------------------------------------------------------------------
 # Series
 #
-def normalize_sequence( elements ):
-	with transaction.atomic():
-		for seq, e in enumerate(elements):
-			if e.sequence != seq:
-				e.sequence = seq
-				e.save()
-	
-class Sequence( models.Model ):
-	sequence = models.PositiveSmallIntegerField( default=32767, blank=True, verbose_name=_('Sequence') )
-
-	def get_container( self ):
-		assert False, 'Please implement function get_container().'
-
-	def normalize( self ):
-		normalize_sequence( self.get_container().order_by('sequence') )
-				
-	def prev( self ):
-		return self.get_container().filter( sequence=self.sequence-1 ).first()
-	
-	def next( self ):
-		return self.get_container().filter( sequence=self.sequence+1 ).first()
-	
-	def first( self ):
-		return self.get_container().order_by('sequence').first()
-		
-	def last( self ):
-		return self.get_container().order_by('sequence').last()
-
-	def move_to( self, i ):
-		elements = list( self.get_container() )
-		i = max( 0, min( i, len(elements) ) )
-		elements.remove( self )
-		elements.insert( i, self )
-		normalize_sequence( elements )
-		
-	def move_lower( self ):
-		self.move_to( self.sequence-1 )
-
-	def move_higher( self ):
-		self.move_to( self.sequence+1 )
-
-	def move_to_head( self ):
-		self.move_to( 0 )
-
-	def move_to_tail( self ):
-		self.move_to( 32767 )
-		
-	def move( self, move_direction ):
-		if move_direction == 0:
-			self.move_to( 0 )
-		elif move_direction == 1:
-			self.move_higher()
-		elif move_direction == -1:
-			self.move_lower()
-		else:
-			self.move_to_tail()
-
-	def get_sequence_max( self ):
-		return self.get_container().count()
-	
-	class Meta:
-		ordering = ['sequence']
-		abstract = True
-
 def categories_from_pks( pks ):
 	return sorted( (c for c in Category.objects.in_bulk(pks).itervalues()), key=operator.attrgetter('sequence') )
 
