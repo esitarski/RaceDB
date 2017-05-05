@@ -32,9 +32,13 @@
 					<td>{{category.code}}</td>
 					{% for event_waves in day_event_waves %}
 					<td>
+						<ul>
 						{% for e, w in event_waves %}
-							<a href="/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/"><strong>{{e.name}} {{e.get_type_abbrev}}</strong></a><br/>
+							<li>
+							<a href="/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/"><strong>{{e.name}} {{e.get_type_abbrev}}</strong></a>
+							</li>
 						{% endfor %}
+						</ul>
 					</td>
 					{% endfor %}
 				</tr>
