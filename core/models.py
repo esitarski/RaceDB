@@ -2639,7 +2639,9 @@ class CustomCategory(Sequence):
 	range_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_('Bib Ranges') )
 	nation_code_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_("Nation Codes") )
 	GENDER_CHOICES = tuple( list(Category.GENDER_CHOICES[:-1]) + [(2,_('All'))] )
-	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
+	gender = models.PositiveSmallIntegerField( choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
+	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth Minimum') )
+	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth Maximum') )
 	
 	def normalize( self ):
 		self.range_str = normalize_range_str( self.range_str )
@@ -2667,6 +2669,10 @@ class CustomCategory(Sequence):
 				q &= Q(license_holder__nation_code__in=nation_codes)
 		if self.gender != 2:
 			q &= Q(license_holder__gender=self.gender)
+		if self.date_of_birth_minimum:
+			q &= Q(license_holder__date_of_birth__gte=self.date_of_birth_minimum)
+		if self.date_of_birth_maximum:
+			q &= Q(license_holder__date_of_birth__lte=self.date_of_birth_maximum)
 		return q
 	
 	def make_copy( self, event_new ):
@@ -2738,7 +2744,6 @@ class CustomCategory(Sequence):
 		verbose_name = _('CustomCstegory')
 		verbose_name_plural = _('CustomCategories')
 		abstract = True
-		ordering = ['sequence']	
 
 class CustomCategoryMassStart(CustomCategory):
 	event = models.ForeignKey( 'EventMassStart', verbose_name=_('EventMassSart') )
