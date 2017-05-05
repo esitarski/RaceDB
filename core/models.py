@@ -2636,8 +2636,11 @@ class RaceTimeTT(RaceTime):
 #---------------------------------------------------------------
 
 class CustomCategory(Sequence):
-	range_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_('Bib Ranges') )
-	nation_code_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_("Nation Codes") )
+	name = models.CharField( max_length=80, verbose_name=_('Name') )
+	range_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_('Bib Ranges'),
+		help_text = _('e.g. 1-199, -35-45') )
+	nation_code_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_("Nation Codes"),
+		help_text = _('3-letter ISO Country Codes, comma separated') )
 	GENDER_CHOICES = tuple( list(Category.GENDER_CHOICES[:-1]) + [(2,_('All'))] )
 	gender = models.PositiveSmallIntegerField( choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
 	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth Minimum') )
