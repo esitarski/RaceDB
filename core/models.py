@@ -2674,7 +2674,7 @@ class CustomCategory(Sequence):
 		 # Replace invalid characters with commas.
 		self.nation_code_str = validate_str_list( re.sub(r'[^A-Z]', ',', self.nation_code_str, flags=re.IGNORECASE) )
 		self.license_code_prefixes = validate_str_list(re.sub( r'[^A-Z0-9]', ',', self.license_code_prefixes, flags=re.IGNORECASE) )
-		self.state_prov_str = validate_str_list( re.sub(r'[^A-Z0-9]', ',', self.state_prov_str, flags=re.IGNORECASE) )
+		self.state_prov_str = validate_str_list( re.sub(r'[^A-Z0-9 ]', ',', self.state_prov_str, flags=re.IGNORECASE) )
 		return self.range_str
 	
 	def get_participant_query( self ):
