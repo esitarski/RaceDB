@@ -2659,12 +2659,16 @@ class CustomCategory(Sequence):
 		help_text = _('e.g. "ON,BC" comma separated') )
 	state_prov_str =  models.CharField( default='', blank=True, max_length=128, verbose_name=_("State/Provs"),
 		help_text = _('States or Provinces, comma separated') )
-	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth >=') )
-	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth <=') )
+	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Born After') )
+	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Born Before') )
 	
 	def full_name( self ):
 		return string_concat(self.name, u', ', Category.GENDER_CHOICES[self.gender][1])
-		
+	
+	@property
+	def code( self ):
+		return self.name
+	
 	@property
 	def code_gender( self ):
 		return string_concat(self.name, u' (', Category.GENDER_CHOICES[self.gender][1], u')')
@@ -2695,6 +2699,9 @@ class CustomCategory(Sequence):
 		if self.state_prov_str:
 			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace('.',r'\.').replace(',','|')))
 		return q
+	
+	def get_bibs( self ):
+		return self.event.get_participants().filter(self.get_participant_query()).filter(bib__isnull=False).values_list('bib',flat=True)
 	
 	def make_copy( self, event_new ):
 		custom_category = self

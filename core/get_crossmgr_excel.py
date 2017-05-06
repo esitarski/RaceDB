@@ -80,7 +80,7 @@ def get_number_range_str( numbers ):
 	return u','.join( unicode(p[0]) if p[0] == p[1] else u'{}-{}'.format(*p) for p in pairs )
 
 def get_gender_str( g ):
-	return [u'Men', u'Women', u'Open'][g]
+	return (u'Men', u'Women', u'Open')[g]
 
 def write_row_data( ws, row, row_data, format = None ):
 	if format is None:
@@ -181,7 +181,6 @@ def add_categories_page( wb, title_format, event ):
 					u'Component',
 					category.code,
 					get_gender_str(category.gender),
-					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
 					category_intervals.get(category,''),
 					unicode(getattr(wave,'start_offset',u'')),
 					u'',
@@ -190,6 +189,20 @@ def add_categories_page( wb, title_format, event ):
 					component_flag, component_flag, component_flag,
 				]
 				row = write_row_data( ws, row, row_data )
+	
+	for category in event.get_custom_categories():
+		row_data = [
+			u'Custom',
+			category.code,
+			get_gender_str(category.gender),
+			get_number_range_str( category.get_bibs() ),
+			u'',
+			u'',
+			u'',
+			u'',
+			True, True, True,
+		]
+		row = write_row_data( ws, row, row_data )
 
 def add_properties_page( wb, title_format, event, raceNumber ):
 	competition = event.competition
