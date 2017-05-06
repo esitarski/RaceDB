@@ -2639,6 +2639,14 @@ class RaceTimeTT(RaceTime):
 #---------------------------------------------------------------
 #---------------------------------------------------------------
 
+def validate_str_list( r ):
+	r = re.sub( r',,+', ',', r )					# Remove repeated commas.
+	if r.startswith(','):
+		r = r[1:]
+	if r.endswith(','):
+		r = r[:-1]
+	return r
+
 class CustomCategory(Sequence):
 	name = models.CharField( max_length=80, verbose_name=_('Name') )
 	range_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_('Bib Ranges'),
@@ -2647,8 +2655,10 @@ class CustomCategory(Sequence):
 		help_text = _('3-letter ISO Country Codes, comma separated') )
 	GENDER_CHOICES = tuple( list(Category.GENDER_CHOICES[:-1]) + [(2,_('All'))] )
 	gender = models.PositiveSmallIntegerField( choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
-	#license_code_wildcard = models.CharField( default='', blank=True, max_length=128, verbose_name=_("License Code Wildcard"),
-	#	help_text = _('use * for any character, for example ON* matches license codes starting with ON') )
+	license_code_prefixes = models.CharField( default='', blank=True, max_length=32, verbose_name=_("License Code Prefixes"),
+		help_text = _('e.g. "ON,BC" comma separated') )
+	state_prov_str =  models.CharField( default='', blank=True, max_length=128, verbose_name=_("State/Provs"),
+		help_text = _('States or Provinces, comma separated') )
 	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth >=') )
 	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth <=') )
 	
@@ -2661,15 +2671,10 @@ class CustomCategory(Sequence):
 	
 	def validate( self ):
 		self.range_str = validate_range_str( self.range_str )
-		r = self.nation_code_str.upper()
-		r = re.sub( r'[^A-Z]', ',', r )					# Replace invalid characters with commas.
-		r = re.sub( r',,+', ',', r )					# Remove repeated commas.
-		if r.startswith(','):
-			r = r[1:]
-		if r.endswith(','):
-			r = r[:-1]
-		self.nation_code_str = r
-		
+		 # Replace invalid characters with commas.
+		self.nation_code_str = validate_str_list( re.sub(r'[^A-Z]', ',', self.nation_code_str, flags=re.IGNORECASE) )
+		self.license_code_prefixes = validate_str_list(re.sub( r'[^A-Z0-9]', ',', self.license_code_prefixes, flags=re.IGNORECASE) )
+		self.state_prov_str = validate_str_list( re.sub(r'[^A-Z0-9]', ',', self.state_prov_str, flags=re.IGNORECASE) )
 		return self.range_str
 	
 	def get_participant_query( self ):
@@ -2677,18 +2682,18 @@ class CustomCategory(Sequence):
 		self.validate()
 		if self.range_str:
 			q &= get_bib_query( get_numbers(self.range_str) )
-		if self.nation_code_str:
-			nation_codes = [n.strip() for n in self.nation_code_str.split(',')]
-			if len(nation_codes) == 1:
-				q &= Q(license_holder__nation_code=nation_codes[0])
-			else:
-				q &= Q(license_holder__nation_code__in=nation_codes)
 		if self.gender != 2:
 			q &= Q(license_holder__gender=self.gender)
 		if self.date_of_birth_minimum:
 			q &= Q(license_holder__date_of_birth__gte=self.date_of_birth_minimum)
 		if self.date_of_birth_maximum:
 			q &= Q(license_holder__date_of_birth__lte=self.date_of_birth_maximum)
+		if self.license_code_prefixes:
+			q &= Q(license_holder__license_code__iregex=u'^({}).*$'.format(self.license_code_prefixes.replace(',','|')))
+		if self.nation_code_str:
+			q &= Q(license_holder__nation_code__iregex=u'^({})$'.format(self.nation_code_str.replace(',','|')))
+		if self.state_prov_str:
+			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace(',','|')))
 		return q
 	
 	def make_copy( self, event_new ):
@@ -2718,9 +2723,12 @@ class CustomCategory(Sequence):
 				rr.wave_gap = rr.category_gap = u''
 			return results
 		
+		if not results:
+			return results
+		
 		# Rank the combined results together.
 		results.sort( key=lambda rr: (rr.status, -rr.get_num_laps(), rr.adjusted_finish_time, rr.wave_rank, rr.participant.bib) )
-			
+		
 		winner = results[0]
 		winner_time = winner.adjusted_finish_time
 		if winner.status != 0 or not winner_time:

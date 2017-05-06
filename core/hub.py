@@ -205,7 +205,7 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
 	time_stamp = timezone.datetime.now()
 
-	payload = get_payload_for_result( results[0] )
+	payload = get_payload_for_result( results[0] ) if results else {}
 	exclude_breadcrumbs = True
 	hub_mode = True
 	is_timetrial = (eventType == 1)
