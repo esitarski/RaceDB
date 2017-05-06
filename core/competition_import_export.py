@@ -489,6 +489,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	#-------------------------------------------------------------------
 	arr.extend( competition.eventmassstart_set.all() )
 	arr.extend( Wave.objects.filter(event__competition=competition) )
+	arr.extend( CustomCategoryMassStart.objects.filter(event__competition=competition) )
 	if not export_as_template:
 		arr.extend( ResultMassStart.objects.filter(event__competition=competition) )
 		arr.extend( RaceTimeMassStart.objects.filter(result__event__competition=competition) )
@@ -496,6 +497,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	#-------------------------------------------------------------------
 	arr.extend( competition.eventtt_set.all() )
 	arr.extend( WaveTT.objects.filter(event__competition=competition) )	
+	arr.extend( CustomCategoryTT.objects.filter(event__competition=competition) )
 	if not export_as_template:
 		arr.extend( EntryTT.objects.filter(event__competition=competition) )
 		arr.extend( ResultTT.objects.filter(event__competition=competition) )

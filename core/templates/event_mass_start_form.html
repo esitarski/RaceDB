@@ -71,6 +71,8 @@
 					<td>
 						{% if cc.range_str %}{% trans "Bibs"%}="{{cc.range_str}}"&nbsp;&nbsp;{% endif %}
 						{% if cc.nation_code_str %}{% trans "NationCodes"%}="{{cc.nation_code_str}}"&nbsp;&nbsp;{% endif %}
+						{% if cc.state_prov_str %}{% trans "StateProv"%}="{{cc.state_prov_str}}"&nbsp;&nbsp;{% endif %}
+						{% if cc.license_code_prefixes %}{% trans "LicenseCodePrefixes"%}="{{cc.license_code_prefixes}}"&nbsp;&nbsp;{% endif %}
 						{% trans "Gender"%}="{{cc.get_gender_display}}"&nbsp;&nbsp;
 						{% if cc.date_of_birth_minimum %}{% trans "MinDOB"%}="{{cc.date_of_birth_minimum}}"{% endif %}
 						{% if cc.date_of_birth_maximum %}{% trans "MaxDOB"%}="{{cc.date_of_birth_maximum}}"{% endif %}

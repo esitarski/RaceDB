@@ -2018,6 +2018,9 @@ class EventTTForm( ModelForm ):
 	def newWaveTTCB( self, request, eventTT ):
 		return HttpResponseRedirect( pushUrl(request,'WaveTTNew',eventTT.id) )
 	
+	def newCustomCategoryCB( self, request, eventTT ):
+		return HttpResponseRedirect( pushUrl(request,'CustomCategoryNew',eventTT.id, eventTT.event_type) )
+	
 	def applyToParticipantsCB( self, request, eventMassStart ):
 		return HttpResponseRedirect( pushUrl(request,'EventApplyToExistingParticipants',eventMassStart.id) )
 	
@@ -2065,6 +2068,9 @@ class EventTTForm( ModelForm ):
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
 				('new-wave-submit', _('New TT Wave'), 'btn btn-success', self.newWaveTTCB),
+			] )
+			self.additional_buttons.extend( [
+				('custom-category-submit', _('New Custom Category'), 'btn btn-success', self.newCustomCategoryCB),
 			] )
 			instance = getattr(self, 'instance', None)
 			if instance and instance.optional and instance.competition.has_participants():

@@ -2706,16 +2706,18 @@ class CustomCategory(Sequence):
 	def save(self, *args, **kwargs):
 		self.validate()
 		return super(CustomCategory, self).save( *args, **kwargs )
+		
+	def has_results( self ):
+		custom_participants = self.event.get_participants().filter(self.get_participant_query())
+		return self.event.get_results().filter( participant__in=custom_participants ).exists()
+	
+	def get_results_count( self ):
+		custom_participants = self.event.get_participants().filter(self.get_participant_query())
+		return self.event.get_results().filter( participant__in=custom_participants ).count()
 	
 	def get_results( self ):
 		custom_participants = self.event.get_participants().filter(self.get_participant_query())
-		wave_with_participants = set()
-		results = []
-		for w in self.event.get_wave_set().all():
-			rr = list( w.get_results().filter( participant__id__in=custom_participants.values_list('id',flat=True) ) )
-			if rr:
-				results.extend( rr )
-				wave_with_participants.add( w )
+		results = list( self.event.get_results().filter(participant__in=custom_participants) )
 			
 		if getattr(self.event, 'win_and_out', False):
 			results.sort( key=lambda rr: (rr.status, rr.get_num_laps(), rr.participant.bib) )

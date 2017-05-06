@@ -147,7 +147,7 @@ def CompetitionResults( request, competitionId ):
 	custom_category_results = [[] for d in event_days]
 	for e in events:
 		day = get_day[timezone.localtime(e.date_time).strftime('%Y-%m-%d')]
-		custom_categories = list(e.get_custom_categories())
+		custom_categories = list(cc for cc in e.get_custom_categories())
 		if not custom_categories:
 			continue
 		if not custom_category_results[day] or custom_category_results[day][-1] != e:
@@ -158,7 +158,7 @@ def CompetitionResults( request, competitionId ):
 	custom_category_results = [ccr for ccr in custom_category_results if ccr]
 	if custom_category_results:
 		row_max = max( len(ccr) for ccr in custom_category_results )
-		col_max = len( ccr )
+		col_max = len( custom_category_results )
 		ccr_table = [ [(None,[]) for r in xrange(col_max)] for c in xrange(row_max) ]
 		for i, ccr in enumerate(custom_category_results):
 			for j, ecc in enumerate(ccr):
