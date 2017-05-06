@@ -2652,7 +2652,7 @@ class CustomCategory(Sequence):
 	range_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_('Bib Ranges'),
 		help_text = _('e.g. 1-199, -35-45') )
 	nation_code_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_("Nation Codes"),
-		help_text = _('3-letter ISO Country Codes, comma separated') )
+		help_text = _('3-letter IOC Country Codes, comma separated') )
 	GENDER_CHOICES = tuple( list(Category.GENDER_CHOICES[:-1]) + [(2,_('All'))] )
 	gender = models.PositiveSmallIntegerField( choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
 	license_code_prefixes = models.CharField( default='', blank=True, max_length=32, verbose_name=_("License Code Prefixes"),
@@ -2674,7 +2674,7 @@ class CustomCategory(Sequence):
 		 # Replace invalid characters with commas.
 		self.nation_code_str = validate_str_list( re.sub(r'[^A-Z]', ',', self.nation_code_str, flags=re.IGNORECASE) )
 		self.license_code_prefixes = validate_str_list(re.sub( r'[^A-Z0-9]', ',', self.license_code_prefixes, flags=re.IGNORECASE) )
-		self.state_prov_str = validate_str_list( re.sub(r'[^A-Z0-9 ]', ',', self.state_prov_str, flags=re.IGNORECASE) )
+		self.state_prov_str = validate_str_list( re.sub(r'[^A-Z0-9 -.]', ',', self.state_prov_str, flags=re.IGNORECASE) )
 		return self.range_str
 	
 	def get_participant_query( self ):
@@ -2693,7 +2693,7 @@ class CustomCategory(Sequence):
 		if self.nation_code_str:
 			q &= Q(license_holder__nation_code__iregex=u'^({})$'.format(self.nation_code_str.replace(',','|')))
 		if self.state_prov_str:
-			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace(',','|')))
+			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace('.',r'\.').replace(',','|')))
 		return q
 	
 	def make_copy( self, event_new ):
