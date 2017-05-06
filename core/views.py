@@ -1768,6 +1768,9 @@ class EventMassStartForm( ModelForm ):
 	def newWaveCB( self, request, eventMassStart ):
 		return HttpResponseRedirect( pushUrl(request,'WaveNew',eventMassStart.id) )
 	
+	def newCustomCategoryCB( self, request, eventMassStart ):
+		return HttpResponseRedirect( pushUrl(request,'CustomCategoryNew',eventMassStart.id, eventMassStart.event_type) )
+	
 	def applyToParticipantsCB( self, request, eventMassStart ):
 		return HttpResponseRedirect( pushUrl(request,'EventApplyToExistingParticipants',eventMassStart.id) )
 	
@@ -1815,6 +1818,9 @@ class EventMassStartForm( ModelForm ):
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
 				('new-wave-submit', _('New Start Wave'), 'btn btn-success', self.newWaveCB),
+			] )
+			self.additional_buttons.extend( [
+				('custom-category-submit', _('New Custom Category'), 'btn btn-success', self.newCustomCategoryCB),
 			] )
 			instance = getattr(self, 'instance', None)
 			if instance and instance.optional and instance.competition.has_participants():

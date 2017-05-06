@@ -225,7 +225,7 @@ def NumberSetManage( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	search_fields = request.session.get('number_set_manage_filter', {})
 	
-	number_set.normalize()
+	number_set.validate()
 	
 	def getData( search_fields ):
 		q = Q( number_set=number_set )

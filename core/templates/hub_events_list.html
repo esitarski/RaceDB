@@ -49,4 +49,42 @@
 	</div>
 {% endfor %}
 </div>
+{% if custom_category_results %}
+	<div class="row">
+		<div class="col-md-12">
+			<h3>{% trans "Custom" %}</h3>
+			<table class="table table-condensed table-striped table-bordered table-hover" style="width: auto;">
+				<thead>
+					<tr>
+						{% for h in ccr_header %}
+							<th class="text-center">{{h}}</th>
+						{% endfor %}
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in ccr_table %}
+						<tr>
+							{% for e, ccrs in row %}
+								<td>
+								{% if e %}
+									{{e.name}}
+									<ul>
+									{% for ccr in ccrs %}
+										<li>
+											<a href="/RaceDB/Hub/CustomCategoryResults/{{e.id}}/{{e.event_type}}/{{ccr.id}}/">
+												<strong>{{ccr.code_gender}}</strong>
+											</a>
+										</li>
+									{% endfor %}
+									</ul>
+								{% endif %}
+								</td>
+							{% endfor %}
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+{% endif %}
 {% endblock content %}

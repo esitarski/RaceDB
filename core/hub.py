@@ -124,20 +124,16 @@ def CompetitionResults( request, competitionId ):
 	events = competition.get_events()
 	events.sort( key=operator.attrgetter('date_time') )
 	
-	event_day = set()
-	for e in events:
-		event_day.add( timezone.localtime(e.date_time).strftime('%Y-%m-%d') )
-		
-	event_days = sorted( event_day )
+	event_days = sorted( set( timezone.localtime(e.date_time).strftime('%Y-%m-%d') for e in events ) )
 	get_day = {d:i for i, d in enumerate(event_days)}
 	
 	category_results = defaultdict(lambda: [[] for i in xrange(len(event_days))])
 	for e in events:
 		day = get_day[timezone.localtime(e.date_time).strftime('%Y-%m-%d')]
 		for w in e.get_wave_set().all():
-			for c in set( rr.participant.category for rr in w.get_results().select_related('participant','participant__category') ):
+			for c in Category.objects.filter( pk__in=w.get_results().values_list('participant__category__pk',flat=True).distinct() ):
 				category_results[c][day].append( (e, w) )
-				
+
 	category_results = [(k,v) for k,v in category_results.iteritems()]
 	category_results.sort( key=lambda p:(p[0].gender, p[0].sequence) )
 	
@@ -147,6 +143,30 @@ def CompetitionResults( request, competitionId ):
 	gender_category_results = [(gr[0][0], gr) for gr in gender_category_results if gr]
 	col_gender = 12 // (len(gender_category_results) if gender_category_results else 1)
 	
+	#--------------------------------------------------------------------
+	custom_category_results = [[] for d in event_days]
+	for e in events:
+		day = get_day[timezone.localtime(e.date_time).strftime('%Y-%m-%d')]
+		custom_categories = list(e.get_custom_categories())
+		if not custom_categories:
+			continue
+		if not custom_category_results[day] or custom_category_results[day][-1] != e:
+			custom_category_results[day].append( (e, []) )
+		for cc in custom_categories:
+			custom_category_results[day][-1][1].append( cc )
+	
+	custom_category_results = [ccr for ccr in custom_category_results if ccr]
+	if custom_category_results:
+		row_max = max( len(ccr) for ccr in custom_category_results )
+		col_max = len( ccr )
+		ccr_table = [ [(None,[]) for r in xrange(col_max)] for c in xrange(row_max) ]
+		for i, ccr in enumerate(custom_category_results):
+			for j, ecc in enumerate(ccr):
+				ccr_table[j][i] = ecc
+		ccr_header = [timezone.localtime(ccr[0][0].date_time).strftime('%Y-%m-%d') for ccr in custom_category_results]
+	else:
+		ccr_table = ccr_header = []
+		
 	exclude_breadcrumbs = True
 	return render( request, 'hub_events_list.html', locals() )
 
@@ -171,6 +191,25 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	exclude_breadcrumbs = True
 	hub_mode = True
 	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	return render( request, 'hub_results_list.html', locals() )
+
+def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart, EventTT)[eventType], pk=eventId )
+	CCC = event.get_custom_category_class()
+	custom_category = category = get_object_or_404( CCC, pk=customCategoryId )
+	
+	results = custom_category.get_results()
+	num_nationalities = len(set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code))
+	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
+	time_stamp = timezone.datetime.now()
+
+	payload = get_payload_for_result( results[0] )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = True
 	return render( request, 'hub_results_list.html', locals() )
 
 def LicenseHolderResults( request, licenseHolderId ):

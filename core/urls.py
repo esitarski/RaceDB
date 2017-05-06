@@ -17,6 +17,7 @@ from core import team
 from core import results
 from core import hub
 from core import series
+from core import custom_category
 from core import callups
 from core import custom_label
 
@@ -32,6 +33,7 @@ urlpatterns = [
 	url(r'^(?i).*Hub/SearchCompetitions/$', hub.SearchCompetitions),
 	url(r'^(?i).*Hub/CompetitionResults/(?P<competitionId>\d+)/$', hub.CompetitionResults),
 	url(r'^(?i).*Hub/CategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.CategoryResults),
+	url(r'^(?i).*Hub/CustomCategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$', hub.CustomCategoryResults),
 	
 	url(r'^(?i).*Hub/LicenseHolderResults/(?P<licenseHolderId>\d+)/$', hub.LicenseHolderResults),
 	url(r'^(?i).*Hub/ResultAnalysis/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<resultId>\d+)/$', hub.ResultAnalysis),
@@ -335,6 +337,16 @@ urlpatterns = [
 	url(r'^(?i).*SeriesCategoryGroupMove/(?P<moveDirection>\d+)/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupMove),
 	url(r'^(?i).*SeriesCategoryGroupEdit/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupEdit),
 	
+	url(r'^(?i).*CustomCategoryNew/(?P<eventId>\d+)/(?P<eventType>\d+)/$', custom_category.CustomCategoryNew),
+	url(r'^(?i).*CustomCategoryEdit/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$',
+		custom_category.CustomCategoryEdit),
+	url(r'^(?i).*CustomCategoryDelete/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$',
+		custom_category.CustomCategoryDelete),
+	url(r'^(?i).*CustomCategoryDelete/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/(?P<confirmed>\d+)/$',
+		custom_category.CustomCategoryDelete),
+	url(r'^(?i).*CustomCategoryMove/(?P<moveDirection>\d+)/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$', 
+		custom_category.CustomCategoryMove),
+		
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}, name='login'),
 	url(r'^(?i).*logout/$', views.Logout),
 ]

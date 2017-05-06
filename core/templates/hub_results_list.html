@@ -1633,7 +1633,7 @@ table.participant_table tr th {
 		<th class="text-right">{% trans "Bib" %}</th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
-		{% if wave.rank_categories_together %}<th>{% trans "Category" %}</th>{% endif %}
+		{% if show_category %}<th>{% trans "Category" %}</th>{% endif %}
 		<th>{% trans "License" %}</th>
 		<th>{% trans "UCIID" %}</th>
 		<th class="text-right">{% trans "Time" %}</th>
@@ -1648,7 +1648,7 @@ table.participant_table tr th {
 			<td class="text-right">{{p.bib}}</td>
 			<td><a href="/RaceDB/Hub/LicenseHolderResults/{{h.id}}">{{h.full_name}}</a></td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-			{% if wave.rank_categories_together %}<td>{{p.category.code_gender}}</td>{% endif %}
+			{% if show_category %}<td>{{p.category.code_gender}}</td>{% endif %}
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
 			<td class="text-right">{{rr.adjusted_finish_time|format_time_no_decimals}}</td>

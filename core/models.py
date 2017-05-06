@@ -120,9 +120,9 @@ def getCopyName( ModelClass, cur_name ):
 	return cur_name
 
 #----------------------------------------------------------------------------------------
-def normalize_sequence( elements ):
+def validate_sequence( elements ):
 	with transaction.atomic():
-		for seq, e in enumerate(elements):
+		for seq, e in enumerate(list(elements)):
 			if e.sequence != seq:
 				e.sequence = seq
 				e.save()
@@ -133,8 +133,8 @@ class Sequence( models.Model ):
 	def get_container( self ):
 		assert False, 'Please implement function get_container().'
 
-	def normalize( self ):
-		normalize_sequence( self.get_container().order_by('sequence') )
+	def validate_sequence( self ):
+		validate_sequence( self.get_container().order_by('sequence') )
 				
 	def prev( self ):
 		return self.get_container().filter( sequence=self.sequence-1 ).first()
@@ -153,7 +153,7 @@ class Sequence( models.Model ):
 		i = max( 0, min( i, len(elements) ) )
 		elements.remove( self )
 		elements.insert( i, self )
-		normalize_sequence( elements )
+		validate_sequence( elements )
 		
 	def move_lower( self ):
 		self.move_to( self.sequence-1 )
@@ -357,16 +357,16 @@ class Category(models.Model):
 	def full_name( self ):
 		return u', '.join( [self.code, self.get_gender_display(), self.description] )
 		
+	@property
+	def code_gender( self ):
+		return u'{} ({})'.format(self.code, self.get_gender_display())
+	
 	def get_search_text( self ):
 		return utils.normalizeSearch(u' '.join( u'"{}"'.format(f) for f in [self.code, self.get_gender_display(), self.description] ) )
 		
 	def __unicode__( self ):
 		return u'{} ({}) [{}]'.format(self.code, self.description, self.format.name)
 		
-	@property
-	def code_gender( self ):
-		return u'{} ({})'.format(self.code, self.get_gender_display())
-	
 	class Meta:
 		verbose_name = _('Category')
 		verbose_name_plural = _("Categories")
@@ -569,7 +569,7 @@ class NumberSet(models.Model):
 	def __unicode__( self ):
 		return self.name
 	
-	def normalize( self ):
+	def validate( self ):
 		# Nulls sort to the beginning.  If we have a lost bib it will have a date_lost.
 		# We want to keep as many lost entries as we can, so we delete everything but the last values.
 		range_events = self.get_range_events()
@@ -1036,7 +1036,7 @@ class Competition(models.Model):
 	def apply_number_set( self ):
 		participants_changed = []
 		if self.number_set:
-			self.number_set.normalize()
+			self.number_set.validate()
 			
 			participants = self.get_participants().filter( role=Participant.Competitor )
 			
@@ -1083,7 +1083,7 @@ class Competition(models.Model):
 						for participant in self.get_participants().filter(role=Participant.Competitor) if participant.bib
 				]
 			)
-			self.number_set.normalize()
+			self.number_set.validate()
 	
 	class Meta:
 		verbose_name = _('Competition')
@@ -1125,7 +1125,7 @@ def get_bib_query( bibs ):
 	
 	return query
 
-def normalize_range_str( range_str ):
+def validate_range_str( range_str ):
 	r = range_str.upper()
 	r = re.sub( r'\s', ',', r, flags=re.UNICODE )	# Replace spaces with commas.
 	r = re.sub( r'[^0123456789,-]', '', r )			# Remove invalid characters.
@@ -1229,12 +1229,13 @@ class CategoryNumbers( models.Model ):
 		category_numbers_new.categories = categories
 		return category_numbers_new
 	
-	def normalize( self ):
-		self.range_str = normalize_range_str( self.range_str )
+	def validate( self ):
+		self.range_str = validate_range_str( self.range_str )
 		return self.range_str
 	
 	def getNumbersWorker( self ):
-		include = get_numbers( self.normalize() )
+		self.validate()
+		include = get_numbers( self.range_str )
 		if self.competition.number_set:
 			number_set = self.competition.number_set
 			range_events = number_set.get_range_events()
@@ -1263,7 +1264,7 @@ class CategoryNumbers( models.Model ):
 			self.range_str += u', -{}'.format( n )
 		
 	def save(self, *args, **kwargs):
-		self.normalize()
+		self.validate()
 		return super(CategoryNumbers, self).save( *args, **kwargs )
 	
 	class Meta:
@@ -1330,9 +1331,12 @@ class Event( models.Model ):
 		
 	def get_custom_category_set( self ):
 		return self.customcategorymassstart_set if self.event_type == 0 else self.customcategorytt_set
-	
+		
 	def get_categories( self ):
 		return list(self.get_categories_query())
+	
+	def get_custom_categories( self ):
+		return list(self.get_custom_category_set().all().order_by('sequence'))
 	
 	def get_wave_for_category( self, category ):
 		return self.get_wave_set().filter(categories=category).first()
@@ -2643,11 +2647,18 @@ class CustomCategory(Sequence):
 		help_text = _('3-letter ISO Country Codes, comma separated') )
 	GENDER_CHOICES = tuple( list(Category.GENDER_CHOICES[:-1]) + [(2,_('All'))] )
 	gender = models.PositiveSmallIntegerField( choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
-	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth Minimum') )
-	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth Maximum') )
+	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth >=') )
+	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth <=') )
 	
-	def normalize( self ):
-		self.range_str = normalize_range_str( self.range_str )
+	def full_name( self ):
+		return string_concat(self.name, u', ', Category.GENDER_CHOICES[self.gender][1])
+		
+	@property
+	def code_gender( self ):
+		return string_concat(self.name, u' (', Category.GENDER_CHOICES[self.gender][1], u')')
+	
+	def validate( self ):
+		self.range_str = validate_range_str( self.range_str )
 		r = self.nation_code_str.upper()
 		r = re.sub( r'[^A-Z]', ',', r )					# Replace invalid characters with commas.
 		r = re.sub( r',,+', ',', r )					# Remove repeated commas.
@@ -2661,7 +2672,7 @@ class CustomCategory(Sequence):
 	
 	def get_participant_query( self ):
 		q = Q()
-		self.normalize()
+		self.validate()
 		if self.range_str:
 			q &= get_bib_query( get_numbers(self.range_str) )
 		if self.nation_code_str:
@@ -2686,25 +2697,19 @@ class CustomCategory(Sequence):
 		return custom_category
 	
 	def save(self, *args, **kwargs):
-		self.normalize()
+		self.validate()
 		return super(CustomCategory, self).save( *args, **kwargs )
 	
 	def get_results( self ):
 		custom_participants = self.event.get_participants().filter(self.get_participant_query())
 		wave_with_participants = set()
 		results = []
-		for w in self.event.get_wave_set():
+		for w in self.event.get_wave_set().all():
 			rr = list( w.get_results().filter( participant__id__in=custom_participants.values_list('id',flat=True) ) )
 			if rr:
 				results.extend( rr )
 				wave_with_participants.add( w )
-				
-		# If all results are from one wave, use the scoring from that wave.
-		if len(wave_with_participants) <= 1:
-			for rr in results:
-				rr.category_gap = rr.wave_gap
-			return results
-		
+			
 		if getattr(self.event, 'win_and_out', False):
 			results.sort( key=lambda rr: (rr.status, rr.get_num_laps(), rr.participant.bib) )
 			for rr in results:
@@ -4101,14 +4106,14 @@ class Series( Sequence ):
 	def get_categories_not_in_groups( self ):
 		return set(self.get_categories()) - self.get_categories_in_groups()
 		
-	def normalize( self ):
+	def validate( self ):
 		categories = self.get_categories()
 		for collection in (
 				self.seriespointsstructure_set.all(),
 				self.seriesupgradeprogression_set.all(),
 				self.categorygroup_set.all(),
 				):
-			normalize_sequence( collection )
+			validate_sequence( collection )
 			for i, element in enumerate(collection):
 				try:
 					element.harmonize_categories( categories )
@@ -4602,7 +4607,7 @@ def fix_bad_license_codes():
 def fix_non_unique_number_set_entries():
 	print 'fix_non_unique_number_set_entries...'
 	for ns in NumberSet.objects.all():
-		ns.normalize()
+		ns.validate()
 
 def fix_nation_code():
 	print 'fix_nation_codes...'
