@@ -2647,6 +2647,8 @@ class CustomCategory(Sequence):
 		help_text = _('3-letter ISO Country Codes, comma separated') )
 	GENDER_CHOICES = tuple( list(Category.GENDER_CHOICES[:-1]) + [(2,_('All'))] )
 	gender = models.PositiveSmallIntegerField( choices=GENDER_CHOICES, default=2, verbose_name=_('Gender') )
+	#license_code_wildcard = models.CharField( default='', blank=True, max_length=128, verbose_name=_("License Code Wildcard"),
+	#	help_text = _('use * for any character, for example ON* matches license codes starting with ON') )
 	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth >=') )
 	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Date of Birth <=') )
 	
