@@ -71,14 +71,32 @@ def get_number_range_str( numbers ):
 	numbers = sorted( set(numbers) )
 	if len(numbers) <= 1:
 		return u','.join( unicode(n) for n in numbers )
-	pairs = [(numbers[0], numbers[0])]
+	pairs = [[numbers[0], numbers[0]]]
 	for n in numbers[1:]:
 		if n == pairs[-1][1] + 1:
-			pairs[-1] = (pairs[-1][0], n)
+			pairs[-1][1] += 1
 		else:
-			pairs.append( (n, n) )
+			pairs.append( [n, n] )
 	return u','.join( unicode(p[0]) if p[0] == p[1] else u'{}-{}'.format(*p) for p in pairs )
 
+def get_subset_number_range_str( bib_all, bib_subset ):
+	bib_subset = sorted( bib_subset )
+	if len(bib_subset) <= 1:
+		return u','.join( unicode(n) for n in bib_subset )
+	bib_all = sorted( bib_all )
+	
+	bib_i = {bib:i for i, bib in enumerate(bib_all)}
+	numbers = [bib_i[bib] for bib in bib_subset]
+	pairs = [[numbers[0], numbers[0]]]
+	for n in numbers[1:]:
+		if n == pairs[-1][1] + 1:
+			pairs[-1][1] += 1
+		else:
+			pairs.append( [n, n] )
+	
+	i_bib = {i:bib for i, bib in enumerate(bib_all)}
+	return u','.join( unicode(i_bib[p[0]]) if p[0] == p[1] else u'{}-{}'.format(i_bib[p[0]],i_bib[p[1]]) for p in pairs )	
+	
 def get_gender_str( g ):
 	return (u'Men', u'Women', u'Open')[g]
 
@@ -190,12 +208,15 @@ def add_categories_page( wb, title_format, event ):
 				]
 				row = write_row_data( ws, row, row_data )
 	
+	bibs_all = None
 	for category in event.get_custom_categories():
+		if bibs_all is None:
+			bibs_all = event.get_participants().exclude(bib__isnull=True).values_list('bib',flat=True)
 		row_data = [
 			u'Custom',
 			category.code,
 			get_gender_str(category.gender),
-			get_number_range_str( category.get_bibs() ),
+			get_subset_number_range_str( bibs_all, category.get_bibs() ),
 			u'',
 			u'',
 			u'',

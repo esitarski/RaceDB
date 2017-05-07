@@ -2701,7 +2701,7 @@ class CustomCategory(Sequence):
 		return q
 	
 	def get_bibs( self ):
-		return self.event.get_participants().filter(self.get_participant_query()).filter(bib__isnull=False).values_list('bib',flat=True)
+		return self.event.get_participants().filter(self.get_participant_query()).exclude(bib__isnull=True).values_list('bib',flat=True)
 	
 	def make_copy( self, event_new ):
 		custom_category = self
