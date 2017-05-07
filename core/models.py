@@ -802,9 +802,9 @@ class Competition(models.Model):
 	
 	@transaction.atomic
 	def make_copy( self ):
-		category_numbers = self.categorynumbers_set.all()
-		event_mass_starts = self.eventmassstart_set.all()
-		event_tts = self.eventtt_set.all()
+		category_numbers = list(self.categorynumbers_set.all())
+		event_mass_starts = list(self.eventmassstart_set.all())
+		event_tts = list(self.eventtt_set.all())
 		report_labels = list( self.report_labels.all() )
 	
 		start_date_old, start_date_new = self.start_date, timezone.now().date()
@@ -1376,12 +1376,14 @@ class Event( models.Model ):
 		return delta.total_seconds()/60.0 < reg_closure_minutes
 	
 	def make_copy( self, competition_new, start_date_old, start_date_new ):
+		pk_old = self.pk
+		waves = list(self.get_wave_set().all())
+		custom_categories = list(self.get_custom_categories())
+		
 		time_diff = self.date_time - datetime.datetime.combine(
 			start_date_old, datetime.time(0,0,0)
 		).replace(tzinfo = get_default_timezone())
-		
-		self_pk = self.pk
-		
+				
 		event_new = self
 		event_new.pk = None
 		event_new.competition = competition_new
@@ -1390,14 +1392,14 @@ class Event( models.Model ):
 		event_new.option_id = 0		# Ensure the option_id gets reset if necessary.
 		event_new.save()
 		
-		for w in self.get_wave_set().all():
+		for w in waves:
 			w.make_copy( event_new )
 			
-		for cc in self.get_custom_category_set().all():
+		for cc in custom_categories:
 			cc.make_copy( event_new )
 			
 		# If this event is in a series, add the new event to the series also.
-		q = Q(event_mass_start__pk=self_pk) if self.event_type == 0 else Q(event_tt__pk=self_pk)
+		q = Q(event_mass_start__pk=pk_old) if self.event_type == 0 else Q(event_tt__pk=pk_old)
 		for ce in SeriesCompetitionEvent.objects.filter( q ):
 			ce.pk = None
 			ce.event = event_new
