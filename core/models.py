@@ -1494,6 +1494,13 @@ class Event( models.Model ):
 			w.category_count_html
 		) for w in self.get_wave_set().all() ) + u'</li></ol>'
 	
+	@property
+	def custom_category_text_html( self ):
+		ccs = self.get_custom_categories()
+		if not ccs:
+			return u''
+		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}</strong>'.format(cc.name) for cc in ccs ) + u'</li></ol>'
+	
 	def get_categories_query( self ):
 		q = None
 		for w in self.get_wave_set().all():
