@@ -19,12 +19,12 @@
 </thead>
 <tbody>
 	{% for e in events %}
-		<tr onclick="jump('{{path}}StartList/{{e.id}}/');">
+		<tr onclick="jump('./StartList/{{e.id}}/');">
 			<td>{{e.name}}</td>
 			<td>{{e.get_event_type_display}}</td>
 			<td>{{e.wave_text}}</td>
 			<td>{{e.date_time}}</td>
-			<td><a class="btn btn-primary" href="{{path}}StartList/{{e.id}}/">{% trans "Start List" %}</a></td>
+			<td><a class="btn btn-primary" href="./StartList/{{e.id}}/">{% trans "Start List" %}</a></td>
 		</tr>
 	{% endfor %}
 </tbody>

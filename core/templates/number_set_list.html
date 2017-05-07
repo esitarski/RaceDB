@@ -22,28 +22,28 @@
 </thead>
 <tbody>
 	{% for r in number_sets %}
-		<tr onclick="jump('{{path}}NumberSetManage/{{r.id}}/');">
+		<tr onclick="jump('./NumberSetManage/{{r.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{r.name}}</td>
 			<td>{{r.range_str}}</td>
 			<td>{{r.sponsor}}</td>
 			<td>{{r.description}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}NumberSetDelete/{{r.id}}/">{% trans "Delete" %}</a>
-				<a class="btn btn-primary" href="{{path}}NumberSetEdit/{{r.id}}/">{% trans "Edit" %}</a>
-				<a class="btn btn-success" href="{{path}}NumberSetManage/{{r.id}}/">{% trans "Manage" %}</a>
+				<a class="btn btn-warning" href="./NumberSetDelete/{{r.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-primary" href="./NumberSetEdit/{{r.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-success" href="./NumberSetManage/{{r.id}}/">{% trans "Manage" %}</a>
 			</td>
 			<td class="hidden-print">
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}NumberSetUp/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./NumberSetUp/{{r.id}}/">
 						<img src="{% static "images/glyphicons_213_up_arrow.png" %}" ></a> {% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}NumberSetDown/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./NumberSetDown/{{r.id}}/">
 						<img src="{% static "images/glyphicons_212_down_arrow.png" %}" ></a> {% endif %}
 				</div>
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}NumberSetTop/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./NumberSetTop/{{r.id}}/">
 						<img src="{% static "images/glyphicons_347_hand_up.png" %}" ></a>{% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}NumberSetBottom/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./NumberSetBottom/{{r.id}}/">
 						<img src="{% static "images/glyphicons_348_hand_down.png" %}" ></a> {% endif %}
 				</div>
 			</td>

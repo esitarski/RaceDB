@@ -45,7 +45,7 @@
 					<a class="btn btn-success btn-sm" href="./LicenseHolderAddConfirm/{{competitionId}}/{{h.id}}/">{% trans "Add" %}</a>
 				{% endif %}
 			</td>
-			<td class="hidden-print"><a class="btn btn-primary btn-sm" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "License Holder" %}</a></td>
+			<td class="hidden-print"><a class="btn btn-primary btn-sm" href="./LicenseHolderEdit/{{h.id}}/">{% trans "License Holder" %}</a></td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
 	{% endfor %}

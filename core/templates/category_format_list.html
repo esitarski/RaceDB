@@ -18,14 +18,14 @@
 </thead>
 <tbody>
 	{% for c in category_formats %}
-		<tr onclick="jump('{{path}}CategoryFormatEdit/{{c.id}}/')">
+		<tr onclick="jump('./CategoryFormatEdit/{{c.id}}/')">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{c.name}}</td>
 			<td>{{c.description}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}CategoryFormatDelete/{{c.id}}/">Delete</a>
-				<a class="btn btn-primary" href="{{path}}CategoryFormatCopy/{{c.id}}/">Copy</a>
-				<a class="btn btn-success" href="{{path}}CategoryFormatEdit/{{c.id}}/">Edit</a>
+				<a class="btn btn-warning" href="./CategoryFormatDelete/{{c.id}}/">Delete</a>
+				<a class="btn btn-primary" href="./CategoryFormatCopy/{{c.id}}/">Copy</a>
+				<a class="btn btn-success" href="./CategoryFormatEdit/{{c.id}}/">Edit</a>
 			</td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}

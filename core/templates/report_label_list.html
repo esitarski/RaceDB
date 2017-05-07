@@ -19,24 +19,24 @@
 </thead>
 <tbody>
 	{% for r in report_labels %}
-		<tr onclick="jump('{{path}}ReportLabelEdit/{{r.id}}/');">
+		<tr onclick="jump('./ReportLabelEdit/{{r.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{r.name}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}ReportLabelDelete/{{r.id}}/">Delete</a>
-				<a class="btn btn-success" href="{{path}}ReportLabelEdit/{{r.id}}/">Edit</a>
+				<a class="btn btn-warning" href="./ReportLabelDelete/{{r.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-success" href="./ReportLabelEdit/{{r.id}}/">{% trans "Edit" %}</a>
 			</td>
 			<td class="hidden-print">
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}ReportLabelUp/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./ReportLabelUp/{{r.id}}/">
 						<img src="{% static "images/glyphicons_213_up_arrow.png" %}" ></a> {% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}ReportLabelDown/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./ReportLabelDown/{{r.id}}/">
 						<img src="{% static "images/glyphicons_212_down_arrow.png" %}" ></a> {% endif %}
 				</div>
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}ReportLabelTop/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./ReportLabelTop/{{r.id}}/">
 						<img src="{% static "images/glyphicons_347_hand_up.png" %}" ></a>{% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}ReportLabelBottom/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./ReportLabelBottom/{{r.id}}/">
 						<img src="{% static "images/glyphicons_348_hand_down.png" %}" ></a> {% endif %}
 				</div>
 			</td>

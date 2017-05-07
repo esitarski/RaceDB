@@ -19,24 +19,24 @@
 </thead>
 <tbody>
 	{% for r in race_classes %}
-		<tr onclick="jump('{{path}}RaceClassEdit/{{r.id}}/');">
+		<tr onclick="jump('./RaceClassEdit/{{r.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{r.name}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}RaceClassDelete/{{r.id}}/">Delete</a>
-				<a class="btn btn-success" href="{{path}}RaceClassEdit/{{r.id}}/">Edit</a>
+				<a class="btn btn-warning" href="./RaceClassDelete/{{r.id}}/">Delete</a>
+				<a class="btn btn-success" href="./RaceClassEdit/{{r.id}}/">Edit</a>
 			</td>
 			<td class="hidden-print">
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}RaceClassUp/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./RaceClassUp/{{r.id}}/">
 						<img src="{% static "images/glyphicons_213_up_arrow.png" %}" ></a> {% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}RaceClassDown/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./RaceClassDown/{{r.id}}/">
 						<img src="{% static "images/glyphicons_212_down_arrow.png" %}" ></a> {% endif %}
 				</div>
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}RaceClassTop/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./RaceClassTop/{{r.id}}/">
 						<img src="{% static "images/glyphicons_347_hand_up.png" %}" ></a>{% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}RaceClassBottom/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./RaceClassBottom/{{r.id}}/">
 						<img src="{% static "images/glyphicons_348_hand_down.png" %}" ></a> {% endif %}
 				</div>
 			</td>

@@ -6,7 +6,7 @@
 
 <h2>{{title}}</h2>
 <a class="btn btn-success" href="{{cancelUrl}}">{% trans "OK" %}</a>
-<a class="btn btn-primary" href="{{path}}SeriesNew/">{% trans "New Series" %}</a>
+<a class="btn btn-primary" href="./SeriesNew/">{% trans "New Series" %}</a>
 	<button class='btn btn-primary' type="button" data-toggle="collapse" data-target="#newSeriesHelp" aria-expanded="false" aria-controls="newSeriesHelp">
 		Help
 	</button>
@@ -38,7 +38,7 @@
 </thead>
 <tbody>
 	{% for s in series %}
-		<tr onclick="jump('{{path}}SeriesEdit/{{s.id}}/')">
+		<tr onclick="jump('./SeriesEdit/{{s.id}}/')">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{s.name}}</td>
 			<td>{{s.description}}</td>
@@ -46,7 +46,7 @@
 			<td class="text-right">{{s.get_competitions|length}}</td>
 			<td class="text-right">{{s.seriescompetitionevent_set.all.count}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-success" href="{{path}}SeriesEdit/{{s.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-success" href="./SeriesEdit/{{s.id}}/">{% trans "Edit" %}</a>
 				<div class="btn-group">
 					{% if not forloop.first %}
 						<a class="btn btn-primary" href="{{cancelUrl}}Series/99/{{s.id}}/"><img src='{% static "images/glyphicons_213_up_arrow.png" %}'></a>
@@ -55,9 +55,9 @@
 						<a class="btn btn-primary" href="{{cancelUrl}}Series/101/{{s.id}}/"><img src="{% static "images/glyphicons_212_down_arrow.png" %}"></a>
 					{% endif %}
 				</div>
-				<a class="btn btn-warning" href="{{path}}SeriesDelete/{{s.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-warning" href="./SeriesDelete/{{s.id}}/">{% trans "Delete" %}</a>
 				&nbsp;
-				<a class="btn btn-primary" href="{{path}}SeriesCopy/{{s.id}}/">{% trans "Copy" %}</a>
+				<a class="btn btn-primary" href="./SeriesCopy/{{s.id}}/">{% trans "Copy" %}</a>
 			</td>
 		</tr>
 	{% endfor %}

@@ -21,18 +21,18 @@
 	</tr>
 </thead>
 <tbody>
-	<tr onclick="jump('{{path}}ParticipantTeamSelect/{{participant.id}}/0/');">
+	<tr onclick="jump('./ParticipantTeamSelect/{{participant.id}}/0/');">
 		<td></td>
 		<td>-- {% trans "no team" %} --</td>
 		<td>----</td>
 		<td>----</td>
 		<td>----</td>
 		<td class="hidden-print">
-			<a class="btn btn-success" href="{{path}}ParticipantTeamSelect/{{participant.id}}/0/">{% trans "Select" %}</a>
+			<a class="btn btn-success" href="./ParticipantTeamSelect/{{participant.id}}/0/">{% trans "Select" %}</a>
 		</td>
 	</tr>
 	{% for t in teams %}
-		<tr onclick="jump('{{path}}ParticipantTeamSelect/{{participant.id}}/{{t.id}}/');">
+		<tr onclick="jump('./ParticipantTeamSelect/{{participant.id}}/{{t.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{t.name}}</td>
 			<td>{{t.code}}</td>

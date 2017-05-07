@@ -28,9 +28,9 @@
 	{% for h in license_holders %}
 		<tr
 			{% if h.id not in existing_seasons_pass_holders %}
-				onclick="jump('{{path}}SeasonsPassLicenseHolderAdd/{{seasons_pass.id}}/{{h.id}}/');"
+				onclick="jump('./SeasonsPassLicenseHolderAdd/{{seasons_pass.id}}/{{h.id}}/');"
 			{% else %}
-				onclick="jump('{{path}}SeasonsPassLicenseHolderRemove/{{seasons_pass.id}}/{{h.id}}/');"
+				onclick="jump('./SeasonsPassLicenseHolderRemove/{{seasons_pass.id}}/{{h.id}}/');"
 			{% endif %}
 		>
 			<td class="text-right">{{forloop.counter}}.</td>
@@ -44,9 +44,9 @@
 			<td>{{h.get_flag_uci_id_html}}</td>
 			<td class="hidden-print">
 				{% if h.id not in existing_seasons_pass_holders %}
-					<a class="btn btn-success" href="{{path}}SeasonsPassLicenseHolderAdd/{{seasons_pass.id}}/{{h.id}}/">{% trans "Add" %}</a>
+					<a class="btn btn-success" href="./SeasonsPassLicenseHolderAdd/{{seasons_pass.id}}/{{h.id}}/">{% trans "Add" %}</a>
 				{% else %}
-					<a class="btn btn-warning" href="{{path}}SeasonsPassLicenseHolderRemove/{{seasons_pass.id}}/{{h.id}}/">{% trans "Remove" %}</a>
+					<a class="btn btn-warning" href="./SeasonsPassLicenseHolderRemove/{{seasons_pass.id}}/{{h.id}}/">{% trans "Remove" %}</a>
 				{% endif %}
 			</td>
 		</tr>

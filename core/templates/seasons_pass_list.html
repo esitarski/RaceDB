@@ -21,28 +21,28 @@
 </thead>
 <tbody>
 	{% for r in seasons_passes %}
-		<tr onclick="jump('{{path}}SeasonsPassEdit/{{r.id}}/');">
+		<tr onclick="jump('./SeasonsPassEdit/{{r.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{r.name}}</td>
 			<td>{{r.holders_count}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}SeasonsPassDelete/{{r.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-warning" href="./SeasonsPassDelete/{{r.id}}/">{% trans "Delete" %}</a>
 				&nbsp;&nbsp;
-				<a class="btn btn-warning" href="{{path}}SeasonsPassCopy/{{r.id}}/">{% trans "Copy" %}</a>
+				<a class="btn btn-warning" href="./SeasonsPassCopy/{{r.id}}/">{% trans "Copy" %}</a>
 				&nbsp;&nbsp;
-				<a class="btn btn-success" href="{{path}}SeasonsPassEdit/{{r.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-success" href="./SeasonsPassEdit/{{r.id}}/">{% trans "Edit" %}</a>
 			</td>
 			<td class="hidden-print">
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}SeasonsPassUp/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./SeasonsPassUp/{{r.id}}/">
 						<img src="{% static "images/glyphicons_213_up_arrow.png" %}" ></a> {% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}SeasonsPassDown/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./SeasonsPassDown/{{r.id}}/">
 						<img src="{% static "images/glyphicons_212_down_arrow.png" %}" ></a> {% endif %}
 				</div>
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}SeasonsPassTop/{{r.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./SeasonsPassTop/{{r.id}}/">
 						<img src="{% static "images/glyphicons_347_hand_up.png" %}" ></a>{% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}SeasonsPassBottom/{{r.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./SeasonsPassBottom/{{r.id}}/">
 						<img src="{% static "images/glyphicons_348_hand_down.png" %}" ></a> {% endif %}
 				</div>
 			</td>

@@ -24,19 +24,19 @@
 </thead>
 <tbody>
 	{% for c in instance.category_set.all %}
-		<tr onclick="jump('{{path}}CategoryEdit/{{c.id}}/')">
+		<tr onclick="jump('./CategoryEdit/{{c.id}}/')">
 			<td>{{c.code_gender}}</td>
 			<td>{{c.description}}</td>
 			{% if isEdit %}
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}CategoryDelete/{{c.id}}/">Delete</a>
-				<a class="btn btn-success" href="{{path}}CategoryEdit/{{c.id}}/">Edit</a>
+				<a class="btn btn-warning" href="./CategoryDelete/{{c.id}}/">Delete</a>
+				<a class="btn btn-success" href="./CategoryEdit/{{c.id}}/">Edit</a>
 			</td>
 			<td class="hidden-print">
 				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="{{path}}CategoryUp/{{c.id}}/">
+					{% if not forloop.first %}<a class="btn btn-primary" href="./CategoryUp/{{c.id}}/">
 						<img src='{% static "images/glyphicons_213_up_arrow.png" %}' ></a> {% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="{{path}}CategoryDown/{{c.id}}/">
+					{% if not forloop.last %}<a class="btn btn-primary" href="./CategoryDown/{{c.id}}/">
 						<img src='{% static "images/glyphicons_212_down_arrow.png" %}' ></a> {% endif %}
 				</div>
 			</td>

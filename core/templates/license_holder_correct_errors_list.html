@@ -27,7 +27,7 @@
 <tbody>
 	{% for h in license_holders %}
 		{% if isEdit %}
-		<tr onclick="jump('{{path}}LicenseHolderEdit/{{h.id}}/');">
+		<tr onclick="jump('./LicenseHolderEdit/{{h.id}}/');">
 		{% else %}
 		<tr>
 		{% endif %}
@@ -52,8 +52,8 @@
 
 			{% if isEdit %}
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="{{path}}LicenseHolderDelete/{{h.id}}/">{% trans "Delete" %}</a>
-				<a class="btn btn-success" href="{{path}}LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-warning" href="./LicenseHolderDelete/{{h.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-success" href="./LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a>
 			</td>
 			{% endif %}
 		</tr>

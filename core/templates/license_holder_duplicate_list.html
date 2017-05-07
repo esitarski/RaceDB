@@ -16,7 +16,7 @@
 </thead>
 <tbody>
 	{% for d in duplicates %}
-		<tr onclick="jump('{{path}}LicenseHoldersSelectDuplicates/{{d.duplicateIds}}/');">
+		<tr onclick="jump('./LicenseHoldersSelectDuplicates/{{d.duplicateIds}}/');">
 			<td class="text-right" style="vertical-align:middle">{{forloop.counter}}.</td>
 			<td style="vertical-align:middle">{{d.key.0}}</td>
 			<td>
@@ -48,7 +48,7 @@
 				</table>
 			</td>
 			<td class="hidden-print" style="vertical-align:middle">
-				<a class="btn btn-success" href="{{path}}LicenseHoldersSelectDuplicates/{{d.duplicateIds}}/">{% trans "Select" %}</a>
+				<a class="btn btn-success" href="./LicenseHoldersSelectDuplicates/{{d.duplicateIds}}/">{% trans "Select" %}</a>
 			</td>
 		</tr>
 	{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}

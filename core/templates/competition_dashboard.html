@@ -25,7 +25,7 @@
 			<div class="col-md-12">
 				<strong>{{competition.name}}</strong>{% if competition.description %}, {{competition.description}}{% endif %}, {% trans "Category Format" %}
 				{% if request.user.is_superuser %}
-					<a class="btn btn-primary btn-xs" href="{{path}}CategoryFormatEdit/{{competition.category_format.id}}">{{competition.category_format.name}}</a>
+					<a class="btn btn-primary btn-xs" href="./CategoryFormatEdit/{{competition.category_format.id}}">{{competition.category_format.name}}</a>
 				{% else %}
 					{{competition.category_format.name}}
 				{% endif %}{% if competition.report_labels_text %}, {{competition.report_labels_text}}{% endif %}
@@ -61,7 +61,7 @@
 				{% if competition.number_set %}
 					<span>&nbsp;&nbsp;</span>
 					{% if request.user.is_superuser %}
-						{{competition|get_field_name:"number_set"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}NumberSetEdit/{{competition.number_set.id}}">{{competition.number_set.name}}</a>
+						{{competition|get_field_name:"number_set"}}:&nbsp;<a class="btn btn-primary btn-xs" href="./NumberSetEdit/{{competition.number_set.id}}">{{competition.number_set.name}}</a>
 					{% else %}
 						{{competition|get_field_name:"number_set"}}:&nbsp;<strong>{{competition.number_set.name}}</strong>
 					{% endif %}
@@ -69,7 +69,7 @@
 				{% if competition.seasons_pass %}
 					<span>&nbsp;&nbsp;</span>
 					{% if request.user.is_superuser %}
-						{{competition|get_field_name:"seasons_pass"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}SeasonsPassEdit/{{competition.seasons_pass.id}}">{{competition.seasons_pass.name}}</a>
+						{{competition|get_field_name:"seasons_pass"}}:&nbsp;<a class="btn btn-primary btn-xs" href="./SeasonsPassEdit/{{competition.seasons_pass.id}}">{{competition.seasons_pass.name}}</a>
 					{% else %}
 						{{competition|get_field_name:"seasons_pass"}}:&nbsp;<strong>{{competition.seasons_pass.name}}</strong>
 					{% endif %}
@@ -77,7 +77,7 @@
 				{% if competition.legal_entity %}
 					<span>&nbsp;&nbsp;</span>
 					{% if request.user.is_superuser %}
-						{{competition|get_field_name:"legal_entity"}}:&nbsp;<a class="btn btn-primary btn-xs" href="{{path}}LegalEntityEdit/{{competition.legal_entity.id}}">{{competition.legal_entity.name}}</a>
+						{{competition|get_field_name:"legal_entity"}}:&nbsp;<a class="btn btn-primary btn-xs" href="./LegalEntityEdit/{{competition.legal_entity.id}}">{{competition.legal_entity.name}}</a>
 					{% else %}
 						{{competition|get_field_name:"legal_entity"}}:&nbsp;<strong>{{competition.legal_entity.name}}</strong>
 					{% endif %}
@@ -89,11 +89,11 @@
 				<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 				{% if request.user.is_superuser %}
 					&nbsp;
-					<a class="btn btn-primary" href="{{path}}CompetitionEdit/{{competition.id}}/">{% trans "Edit" %}</a>
+					<a class="btn btn-primary" href="./CompetitionEdit/{{competition.id}}/">{% trans "Edit" %}</a>
 					&nbsp;
-					<a class="btn btn-success" href="{{path}}UploadPrereg/{{competition.id}}/">{% trans "Upload Pre-reg" %}</a>
+					<a class="btn btn-success" href="./UploadPrereg/{{competition.id}}/">{% trans "Upload Pre-reg" %}</a>
 					&nbsp;
-					<a class="btn btn-primary" href="{{path}}CompetitionRegAnalytics/{{competition.id}}/">{% trans "Reg Analytics" %}</a>
+					<a class="btn btn-primary" href="./CompetitionRegAnalytics/{{competition.id}}/">{% trans "Reg Analytics" %}</a>
 				{% endif %}
 				&nbsp;
 				<button class="btn btn-primary hidden-print" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print" %}</button>
@@ -102,22 +102,22 @@
 				<a class="btn btn-primary hidden-print" target="_blank" href="/RaceDB/Hub/CompetitionResults/{{competition.id}}/">{% trans "Results Hub" %}</a>
 				{% endif %}
 				&nbsp;
-				<a class="btn btn-primary hidden-print" href="{{path}}FinishLynx/{{competition.id}}/"><img src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
+				<a class="btn btn-primary hidden-print" href="./FinishLynx/{{competition.id}}/"><img src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<a class="btn btn-success" href="{{path}}TeamsShow/{{competition.id}}/"><img src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
+				<a class="btn btn-success" href="./TeamsShow/{{competition.id}}/"><img src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
 				&nbsp;&nbsp;
 				
-				<a class="btn btn-success" href="{{path}}Participants/{{competition.id}}/"><img src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
+				<a class="btn btn-success" href="./Participants/{{competition.id}}/"><img src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
 				&nbsp;&nbsp;
 				{% if competition.using_tags %}
-					<a class="btn btn-success" href="{{path}}ParticipantRfidAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
+					<a class="btn btn-success" href="./ParticipantRfidAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
 				{% else %}
-					<a class="btn btn-success" href="{{path}}ParticipantManualAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
+					<a class="btn btn-success" href="./ParticipantManualAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
 				{% endif %}
 				
 				{% if system_info.print_tag_option != 0 and competition.any_print %}
 					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-					<a class="btn btn-success" href="{{path}}CustomLabel/{{competition.id}}/"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Custom Label" %}</a>
+					<a class="btn btn-success" href="./CustomLabel/{{competition.id}}/"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Custom Label" %}</a>
 				{% endif %}
 			</div>
 		</div>
@@ -129,14 +129,14 @@
 <h3>
 	{% trans "Mass Start Events" %}:
 	{% if request.user.is_superuser %}
-		<a class="btn btn-primary hidden-print" href="{{path}}EventMassStartNew/{{competition.id}}/">{% trans "New" %}</a>
+		<a class="btn btn-primary hidden-print" href="./EventMassStartNew/{{competition.id}}/">{% trans "New" %}</a>
 	{% endif %}
 </h3>
 {% spaceless %}
 <table class="table table-condensed table-no-border table-hover">
 <tbody>
 	{% for e in events_mass_start %}
-		<tr onclick="jump('{{path}}StartList/{{e.id}}/');">
+		<tr onclick="jump('./StartList/{{e.id}}/');">
 			<td>
 				<div class="panel panel-info">
 					<div class="panel-heading">
@@ -176,18 +176,18 @@
 			</td>
 			<td>
 				{% if request.user.is_superuser %}
-					<a class="btn btn-warning btn-sm hidden-print" href="{{path}}EventMassStartDelete/{{e.id}}/">{% trans "Delete" %}</a>&nbsp;
-					<a class="btn btn-primary btn-sm hidden-print" href="{{path}}EventMassStartEdit/{{e.id}}/">{% trans "Edit" %}</a>
+					<a class="btn btn-warning btn-sm hidden-print" href="./EventMassStartDelete/{{e.id}}/">{% trans "Delete" %}</a>&nbsp;
+					<a class="btn btn-primary btn-sm hidden-print" href="./EventMassStartEdit/{{e.id}}/">{% trans "Edit" %}</a>
 					<br/>&nbsp;<br/>
 				{% endif %}
-				<a class="btn btn-primary btn-sm hidden-print" href="{{path}}EventMassStartCrossMgr/{{e.id}}/">
+				<a class="btn btn-primary btn-sm hidden-print" href="./EventMassStartCrossMgr/{{e.id}}/">
 					<img src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
 				</a>
 				<br/>&nbsp;<br/>
-				<a class="btn btn-success btn-sm hidden-print" href="{{path}}StartList/{{e.id}}/">{% trans "Start List" %}</a>
+				<a class="btn btn-success btn-sm hidden-print" href="./StartList/{{e.id}}/">{% trans "Start List" %}</a>
 				{% with series=e.get_series %}{% if series %}
 				<br/>&nbsp;<br/>
-				<a class="btn btn-primary btn-sm hidden-print" href="{{path}}Callups/{{e.id}}/{{e.event_type}}/{{series.id}}/">{% trans "Callups" %}</a>
+				<a class="btn btn-primary btn-sm hidden-print" href="./Callups/{{e.id}}/{{e.event_type}}/{{series.id}}/">{% trans "Callups" %}</a>
 				{% endif %}{% endwith %}
 			</td>
 		</tr>
@@ -200,14 +200,14 @@
 <h3 class="page-break-before">
 	{% trans "Time Trial Events" %}:
 	{% if request.user.is_superuser %}
-		<a class="btn btn-primary hidden-print" href="{{path}}EventTTNew/{{competition.id}}/">{% trans "New" %}</a>
+		<a class="btn btn-primary hidden-print" href="./EventTTNew/{{competition.id}}/">{% trans "New" %}</a>
 	{% endif %}
 </h3>
 {% spaceless %}
 <table class="table table-condensed table-no-border table-hover">
 <tbody>
 	{% for e in events_tt %}
-		<tr onclick="jump('{{path}}StartListTT/{{e.id}}/');">
+		<tr onclick="jump('./StartListTT/{{e.id}}/');">
 			<td>
 				<div class="panel panel-info">
 					<div class="panel-heading">
@@ -247,15 +247,15 @@
 			</td>
 			<td>
 				{% if request.user.is_superuser %}
-					<a class="btn btn-warning btn-sm hidden-print" href="{{path}}EventTTDelete/{{e.id}}/">{% trans "Delete" %}</a>
-					<a class="btn btn-primary btn-sm hidden-print" href="{{path}}EventTTEdit/{{e.id}}/">{% trans "Edit" %}</a>
+					<a class="btn btn-warning btn-sm hidden-print" href="./EventTTDelete/{{e.id}}/">{% trans "Delete" %}</a>
+					<a class="btn btn-primary btn-sm hidden-print" href="./EventTTEdit/{{e.id}}/">{% trans "Edit" %}</a>
 					<br/>&nbsp;<br/>
 				{% endif %}
-				<a class="btn btn-primary btn-sm hidden-print" href="{{path}}EventTTCrossMgr/{{e.id}}/">
+				<a class="btn btn-primary btn-sm hidden-print" href="./EventTTCrossMgr/{{e.id}}/">
 					<img src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
 				</a>
 				<br/>&nbsp;<br/>
-				<a class="btn btn-success btn-sm hidden-print" href="{{path}}StartListTT/{{e.id}}/">{% trans "Start List" %}</a>
+				<a class="btn btn-success btn-sm hidden-print" href="./StartListTT/{{e.id}}/">{% trans "Start List" %}</a>
 			</td>
 		</tr>
 	{% endfor %}
@@ -275,7 +275,7 @@
 <h3>
 	{% trans "Category Numbers" %}:
 	{% if request.user.is_superuser %}
-		<a class="btn btn-primary hidden-print" href="{{path}}CategoryNumbersNew/{{competition.id}}/">{% trans "New" %}</a>
+		<a class="btn btn-primary hidden-print" href="./CategoryNumbersNew/{{competition.id}}/">{% trans "New" %}</a>
 	{% endif %}
 </h3>
 {% if not category_numbers.exists %}
@@ -305,7 +305,7 @@
 </thead>
 <tbody>
 	{% for c in category_numbers %}
-		<tr onclick="jump('{{path}}CategoryNumbersEdit/{{c.id}}/');">
+		<tr onclick="jump('./CategoryNumbersEdit/{{c.id}}/');">
 			<td>{{c.category_list}}</td>
 			<td>{{c.range_str}}</td>
 			<td class="text-right">{{c.total_count}}</td>
@@ -317,8 +317,8 @@
 			</td>
 			<td>
 				{% if request.user.is_superuser %}
-					<a class="btn btn-warning hidden-print" href="{{path}}CategoryNumbersDelete/{{c.id}}/">{% trans "Delete" %}</a>&nbsp;
-					<a class="btn btn-success hidden-print" href="{{path}}CategoryNumbersEdit/{{c.id}}/">{% trans "Edit" %}</a>
+					<a class="btn btn-warning hidden-print" href="./CategoryNumbersDelete/{{c.id}}/">{% trans "Delete" %}</a>&nbsp;
+					<a class="btn btn-success hidden-print" href="./CategoryNumbersEdit/{{c.id}}/">{% trans "Edit" %}</a>
 				{% endif %}
 			</td>
 		</tr>
