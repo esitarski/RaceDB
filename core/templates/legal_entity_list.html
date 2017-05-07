@@ -37,9 +37,9 @@
 				{% endif %}
 			</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="./LegalEntityDelete/{{le.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-warning btn-sm" href="./LegalEntityDelete/{{le.id}}/">{% trans "Delete" %}</a>
 				&nbsp;
-				<a class="btn btn-success" href="./LegalEntityEdit/{{le.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-success btn-sm" href="./LegalEntityEdit/{{le.id}}/">{% trans "Edit" %}</a>
 			</td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}

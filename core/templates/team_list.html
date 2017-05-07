@@ -38,9 +38,9 @@
 			<td class="text-center">{{t.license_holder_count}}</td>
 			<td>{{t.contact}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-warning" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>
+				<a class="btn btn-warning btn-sm" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>
 				&nbsp;
-				<a class="btn btn-success" href="./TeamEdit/{{t.id}}/">{% trans "Edit" %}</a>
+				<a class="btn btn-success btn-sm" href="./TeamEdit/{{t.id}}/">{% trans "Edit" %}</a>
 			</td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}

@@ -3131,7 +3131,7 @@ class Participant(models.Model):
 
 	@property
 	def role_full_name( self ):
-		return u'{} {}'.format( self.ROLE_NAMES[self.roleCode], get_role_display() )
+		return u'{} {}'.format( self.ROLE_NAMES[self.roleCode], self.get_role_display() )
 	
 	@property
 	def needs_bib( self ):
