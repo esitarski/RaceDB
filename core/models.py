@@ -2733,7 +2733,8 @@ class CustomCategory(Sequence):
 	
 	def get_results( self ):
 		custom_participants = self.event.get_participants().filter(self.get_participant_query())
-		results = list( self.event.get_results().filter(participant__in=custom_participants) )
+		results_query = self.event.get_results().filter(participant__in=custom_participants)
+		results = list( results_query )
 			
 		if getattr(self.event, 'win_and_out', False):
 			results.sort( key=lambda rr: (rr.status, rr.get_num_laps(), rr.participant.bib) )
@@ -2745,7 +2746,10 @@ class CustomCategory(Sequence):
 			return results
 		
 		# Rank the combined results together.
-		results.sort( key=lambda rr: (rr.status, -rr.get_num_laps(), rr.adjusted_finish_time, rr.wave_rank, rr.participant.bib) )
+		if custom_participants.values('category__id').distinct().count() == 1:
+			results.sort( key=lambda rr: rr.category_rank )
+		else:
+			results.sort( key=lambda rr: (rr.status, -rr.get_num_laps(), rr.adjusted_finish_time, rr.wave_rank, rr.participant.bib) )
 		
 		winner = results[0]
 		winner_time = winner.adjusted_finish_time
