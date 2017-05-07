@@ -1084,7 +1084,7 @@ def CompetitionCopy( request, competitionId ):
 		competition_new.start_date = recurring_start_date
 		competition_new.save()
 	
-	return HttpResponseRedirect(getContext(request, 'cancelUrl'))
+	return HttpResponseRedirect(getContext(request, 'cancelUrl') + 'CompetitionEdit/{}/'.format(competition_new.id))
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
