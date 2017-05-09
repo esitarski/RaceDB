@@ -24,7 +24,8 @@ class ParticipantSearchForm( Form ):
 	event = forms.ChoiceField( required=False, label = _('Event'), help_text=_('For faster response, review one Event at a time') )
 	name_text = forms.CharField( required=False, label = _('Name Text') )
 	team_text = forms.CharField( required=False, label = _('Team Text') )
-	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib: (-1 to find NoBib)') )
+	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib: (-1 for Missing)') )
+	rfid_text = forms.CharField( required=False, label = _('RFIDTag: (-1 for Missing)') )
 	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
 	role_type = forms.ChoiceField( required=False, label = _('Role Type')  )
 	category = forms.ChoiceField( required=False, label = _('Category') )
@@ -71,9 +72,14 @@ class ParticipantSearchForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row( Field('scan', size=20, autofocus=True ), HTML('&nbsp;'*8), Field('event'),),
-			Row( Field('name_text'), Field('team_text'), Field('bib'), Field('gender'), Field('role_type'), Field('category'), ),
-			Row( Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'),
-				Field('paid'), Field('complete'), Field('has_events'), Field('eligible'), ),
+			Row( *(
+					[Field('name_text'), Field('team_text'), Field('category'), Field('bib'),] +
+					([Field('rfid_text'),] if competition and competition.using_tags else []) +
+					[Field('gender'), Field('role_type'),] +
+					[Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'),] + 
+					[Field('paid'), Field('complete'), Field('has_events'), Field('eligible'),]
+				)
+			),
 			Row( *(button_args[:-2] + [HTML('&nbsp;'*8)] + button_args[-2:]) ),
 		)
 
@@ -142,6 +148,7 @@ def Participants( request, competitionId ):
 	competitors = participants.filter( role=Participant.Competitor )
 	missing_category_count = competitors.filter( category__isnull=True ).count()
 	missing_bib_count = competitors.filter( bib__isnull=True ).count()
+	missing_tag_count = 0 if not competition.using_tags else competitors.filter( Q(tag__isnull=True) | Q(tag=u'') ).count()
 	
 	if participant_filter.get('scan',0):
 		name_text = utils.normalizeSearch( participant_filter['scan'] )
@@ -227,6 +234,13 @@ def Participants( request, competitionId ):
 		else:
 			participants = participants.exclude( Participant.get_can_start_query(competition) )
 		object_checks.append( lambda p: bool(p.is_done) == complete )
+		
+	if competition.using_tags and participant_filter.get('rfid_text',''):
+		rfid = participant_filter.get('rfid_text','').upper()
+		if rfid == u'-1':
+			participants = participants.filter( Q(tag__isnull=True) | Q(tag=''))
+		else:
+			participants = participants.filter( tag=rfid )
 	
 	has_events = int(participant_filter.get('has_events',-1))
 	if has_events == 0:
