@@ -2259,13 +2259,13 @@ class LicenseHolder(models.Model):
 		if not system_info:
 			system_info = SystemInfo.get_singleton()
 			
-		if system_info.tag_creation == 0:			# Universal Unique.
+		if system_info.tag_creation == 0:			# 0: Universal Unique.
 			tag = get_id( system_info.tag_bits )
 		
-		elif system_info.tag_creation == 1:			# From database id.
+		elif system_info.tag_creation == 1:			# 1: From database id.
 			tag = getTagFormatStr( system_info.tag_template ).format( n=self.id )
 			
-		else:										# From license.
+		else:										# 2: From license.
 			if self.license_code:
 				tag = getTagFromLicense( self.license_code, system_info.tag_from_license_id )
 			else:

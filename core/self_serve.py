@@ -224,7 +224,7 @@ def SelfServe( request, do_scan=0 ):
 					(_('Tag Read Failure'), response.get('errors',[]) ),
 				)
 			else:
-				tags = response.get('tag', [])
+				tags = response.get('tags', [])
 				try:
 					tag = tags[0]
 				except (AttributeError, IndexError) as e:
