@@ -4,7 +4,6 @@ from ConfigParser import SafeConfigParser, NoOptionError
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.core import management
-#from whitenoise.django import DjangoWhiteNoise
 
 from dj_static import Cling
 
@@ -76,9 +75,11 @@ class KWArgs( object ):
 		
 def launch_server( command, **options ):
 
-	# Migrate the database automatically.
-	# print 'Performing database migration (if necessary)...'
-	#management.call_command('migrate', '--noinput', verbosity=0)
+	# Migrate the database.
+	cmd_args = {'noinput':True}
+	if options['database']:
+		cmd_args['database'] = options['database']
+	management.call_command( 'migrate', **cmd_args )
 	
 	create_users()
 	models_fix_data()

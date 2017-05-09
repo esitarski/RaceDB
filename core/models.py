@@ -186,10 +186,11 @@ class Sequence( models.Model ):
 
 #----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
+	tcUniversallyUnique, tcDatabaseID, tcLicenseCode = tuple(range(3))
 	TAG_CREATION_CHOICES = (
-		(0, _('Universally Unique')),
-		(1, _('From Database ID')),
-		(2, _('From License Code')),
+		(tcUniversallyUnique,	_('Universally Unique')),
+		(tcDatabaseID,			_('From Database ID')),
+		(tcLicenseCode,			_('From License Code')),
 	)
 	tag_creation = models.PositiveSmallIntegerField( default=0, choices=TAG_CREATION_CHOICES,
 		verbose_name=_('Tag Creation'),
@@ -2258,18 +2259,20 @@ class LicenseHolder(models.Model):
 	def get_unique_tag( self, system_info=None, validate=True ):
 		if not system_info:
 			system_info = SystemInfo.get_singleton()
-			
-		if system_info.tag_creation == 0:			# 0: Universal Unique.
+		
+		if system_info.tag_creation ==		SystemInfo.tcUniversallyUnique:
 			tag = get_id( system_info.tag_bits )
 		
-		elif system_info.tag_creation == 1:			# 1: From database id.
+		elif system_info.tag_creation ==	SystemInfo.tcDatabaseID:
 			tag = getTagFormatStr( system_info.tag_template ).format( n=self.id )
 			
-		else:										# 2: From license.
+		elif system_info.tag_creation ==	SystemInfo.tcLicenseCode:
 			if self.license_code:
 				tag = getTagFromLicense( self.license_code, system_info.tag_from_license_id )
 			else:
 				tag = get_id(system_info.tag_bits)
+		else:
+			assert False, 'Unknown tag creation option'
 		
 		if validate:
 			while LicenseHolder.objects.filter(existing_tag=tag).exists():
