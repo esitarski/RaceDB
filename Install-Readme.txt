@@ -257,11 +257,11 @@ You will see a text scrolling as necessary as the modules are installed.
 By patient!
 This may take a few minutes.
 
-Now, perform any database migrations:
-
-  python manage.py migrate
-
 That's it!
 Now, follow Step 9 to launch RaceDB as usual with:
 
   python manage.py launch <your_usual_launch_options_if_you_have_any>
+
+If there are a lot of database conversions, this might take a few minutes.
+Be patient!
+After the database has been updated, subsequent launches will be fast.
