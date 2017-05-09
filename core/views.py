@@ -277,9 +277,9 @@ class LicenseHolderForm( ModelForm ):
 					cols=2),
 			),
 			Row(
-				Col(Field('city', size=40), 3),
+				Col(Field('city', size=32), 3),
 				Col(Field('state_prov', size=20), 3),
-				Col(Field('nationality', size=20), 2),
+				Col(Field('nationality', size=18), 2),
 				Col(Field('nation_code', size=3), 2),
 				Col(Field('zip_postal', size=10), 2),
 			),
@@ -310,9 +310,9 @@ class LicenseHolderForm( ModelForm ):
 				Col(HTML(nation_code_html()), 2),
 			),
 			Row(
-				Col('existing_tag', 3),
-				Col('existing_tag2', 3),
-				Col('active', 3),
+				Col(Field('existing_tag', size=30), 4),
+				Col(Field('existing_tag2', size=30), 4),
+				Col(Field('active'), 4),
 			),
 			Row(
 				ColKey(
