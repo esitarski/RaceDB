@@ -1388,7 +1388,7 @@ def UploadPrereg( request, competitionId ):
 @autostrip
 class ImportExcelForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
-	set_team_all_disciplines = forms.BooleanField( required=False, label=_('Update Team for all disciplines'), )
+	set_team_all_disciplines = forms.BooleanField( required=False, label=_('Update Default Team for all Disciplines'), )
 	update_license_codes = forms.BooleanField( required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
 			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	

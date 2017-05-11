@@ -1,6 +1,8 @@
 from views_common import *
 import uuid
 from subprocess import Popen, PIPE
+from get_id import get_id
+import traceback
 
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -17,6 +19,19 @@ from emails import show_emails
 from gs_cmd import gs_cmd
 
 from ReadWriteTag import ReadTag, WriteTag
+
+def get_participant( participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	competition = participant.competition
+	
+	# Check for a permanent tag conflict.
+	if competition.using_tags and competition.use_existing_tags and participant.tag:
+		for lh in LicenseHolder.objects.filter( existing_tag=participant.tag ):
+			if lh != participant.license_holder:
+				participant.tag = get_id( SystemInfo.get_singleton().tag_bits )
+				participant.save()
+				break
+	return participant
 
 @autostrip
 class ParticipantSearchForm( Form ):
@@ -442,7 +457,7 @@ def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId,
 
 @access_validation()
 def ParticipantEdit( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	system_info = SystemInfo.get_singleton()
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
@@ -462,7 +477,7 @@ def ParticipantEditFromLicenseHolder( request, competitionId, licenseHolderId ):
 	
 @access_validation()
 def ParticipantRemove( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	is_suspicious_age = not (8 <= competition_age <= 90)
@@ -471,7 +486,7 @@ def ParticipantRemove( request, participantId ):
 	
 @access_validation()
 def ParticipantDoDelete( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	participant.delete()
 	return HttpResponseRedirect( getContext(request,'cancelUrl') )
 
@@ -527,26 +542,26 @@ def print_pdf( request, participant, pdf_str, print_type ):
 	
 @access_validation()
 def ParticipantPrintBodyBib( request, participantId, copies=2, onePage=False ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	return print_pdf( request, participant, print_body_bib(participant, copies, onePage), 'Body' )
 	
 @access_validation()
 def ParticipantPrintBibLabels( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	return print_pdf( request, participant, print_bib_tag_label(participant), 'Frame' )
 	
 @access_validation()
 def ParticipantPrintShoulderBib( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	return print_pdf( request, participant, print_shoulder_bib(participant), 'Shoulder' )
 	
 @access_validation()
 def ParticipantPrintEmergencyContactInfo( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	return print_pdf( request, participant, print_id_label(participant), 'Emergency' )
 	
 def ParticipantEmergencyContactInfo( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	license_holder = participant.license_holder
 	competition = participant.competition
 	team_members = None
@@ -606,7 +621,7 @@ class ParticipantCategorySelectForm( Form ):
 
 @access_validation()
 def ParticipantCategoryChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
 	competition_age = competition.competition_age( license_holder )
@@ -639,7 +654,7 @@ def ParticipantCategoryChange( request, participantId ):
 
 @access_validation()
 def ParticipantCategorySelect( request, participantId, categoryId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	if int(categoryId):
 		category = get_object_or_404( Category, pk=categoryId )
@@ -674,12 +689,12 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 #-----------------------------------------------------------------------
 @access_validation()
 def ParticipantRoleChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	return render( request, 'participant_role_select.html', locals() )
 
 @access_validation()
 def ParticipantRoleSelect( request, participantId, role ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	participant.role = int(role)
 	if participant.role != Participant.Competitor:
 		participant.bib = None
@@ -694,7 +709,7 @@ def ParticipantRoleSelect( request, participantId, role ):
 #-----------------------------------------------------------------------
 @access_validation()
 def ParticipantBooleanChange( request, participantId, field ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	setattr( participant, field, not getattr(participant, field) )
 	if field != 'confirmed':
 		participant.auto_confirm()
@@ -704,7 +719,7 @@ def ParticipantBooleanChange( request, participantId, field ):
 #-----------------------------------------------------------------------
 @access_validation()
 def ParticipantTeamChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	search_text = request.session.get('teams_filter', '')
 	btns = [('new-submit', _('New Team'), 'btn btn-success')]
 	if request.method == 'POST':
@@ -731,7 +746,7 @@ def ParticipantTeamChange( request, participantId ):
 	
 @access_validation()
 def ParticipantTeamSelect( request, participantId, teamId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	if int(teamId):
 		team = get_object_or_404( Team, pk=teamId )
 	else:
@@ -771,7 +786,7 @@ class TeamDisciplineForm( Form ):
 
 @access_validation()
 def ParticipantTeamSelectDiscipline( request, participantId, teamId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	if int(teamId):
 		team = get_object_or_404( Team, pk=teamId )
@@ -825,7 +840,7 @@ class Bib( object ):
 
 @access_validation()
 def ParticipantBibChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	if not participant.category:
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
@@ -922,7 +937,7 @@ def ParticipantBibChange( request, participantId ):
 	
 @access_validation()
 def ParticipantBibSelect( request, participantId, bib ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	
 	done = HttpResponseRedirect(getContext(request,'pop2Url'))
@@ -964,6 +979,7 @@ def ParticipantBibSelect( request, participantId, bib ):
 	try:
 		participant.auto_confirm().save()
 	except IntegrityError as e:
+		# Assume the Integrity Error is due to a race condition with the bib number.
 		return showSelectAgain
 	
 	return done
@@ -997,7 +1013,7 @@ class ParticipantNoteForm( Form ):
 		
 @access_validation()
 def ParticipantNoteChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
 	
@@ -1018,7 +1034,7 @@ def ParticipantNoteChange( request, participantId ):
 
 @access_validation()
 def ParticipantGeneralNoteChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
 	
@@ -1073,7 +1089,7 @@ def GetParticipantOptionForm( participation_optional_events ):
 		
 @access_validation()
 def ParticipantOptionChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
 	
@@ -1136,7 +1152,7 @@ def GetParticipantEstSpeedForm( competition ):
 		
 @access_validation()
 def ParticipantEstSpeedChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
 	
@@ -1201,7 +1217,7 @@ class ParticipantWaiverForm( Form ):
 		
 @access_validation()
 def ParticipantWaiverChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	
 	if request.method == 'POST':
 		if 'ok-submit' in request.POST:
@@ -1266,7 +1282,7 @@ def get_bits_from_hex( s ):
 		
 @access_validation()
 def ParticipantTagChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	competition = participant.competition
 	license_holder = participant.license_holder
 	system_info = SystemInfo.get_singleton()
@@ -1419,7 +1435,7 @@ class ParticipantSignatureForm( Form ):
 
 @access_validation()
 def ParticipantSignatureChange( request, participantId ):
-	participant = get_object_or_404( Participant, pk=participantId )
+	participant = get_participant( participantId )
 	signature_with_touch_screen = int(request.session.get('signature_with_touch_screen', True))
 	
 	if request.method == 'POST':
