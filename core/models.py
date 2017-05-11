@@ -2139,7 +2139,7 @@ class LicenseHolder(models.Model):
 			return _(u'uci id must not start with zero')
 		
 		if len(self.uci_id) != 11:
-			return _(u'uci id must be 11 digits in length')
+			return _(u'uci id must be 11 digits')
 			
 		if int(self.uci_id[:-2]) % 97 != int(self.uci_id[-2:]):
 			return _(u'uci id check digit error')
@@ -3064,6 +3064,19 @@ class Participant(models.Model):
 	SEED_OPTION_CHOICES = ((1,_('-')),(0,_('Seed Early')),(2,_('Seed Late')),)
 	seed_option=models.SmallIntegerField( choices=SEED_OPTION_CHOICES, default=1, verbose_name=_('Seed Option') )
 	
+	def enforce_tag_constraints( self ):
+		license_holder = self.license_holder
+		competition = self.competition
+		
+		# Enforce tag conistency with license holder.
+		if competition.use_existing_tags and (
+					self.tag  != license_holder.existing_tag or
+					self.tag2 != license_holder.existing_tag2 ):
+			self.tag  = license_holder.existing_tag
+			self.tag2 = license_holder.existing_tag2
+			self.save()
+		return self
+	
 	@property
 	def est_speed_display( self ):
 		return u'{:g} {}{}'.format(
@@ -3109,7 +3122,7 @@ class Participant(models.Model):
 			if license_holder_update:
 				if competition.use_existing_tags:
 					if license_holder.existing_tag != self.tag or license_holder.existing_tag2 != self.tag2:
-						license_holder.existing_tag = self.tag
+						license_holder.existing_tag  = self.tag
 						license_holder.existing_tag2 = self.tag2
 						license_holder.save()
 		else:

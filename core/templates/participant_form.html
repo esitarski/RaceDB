@@ -79,11 +79,17 @@
 				{{h.license_code_trunc}}
 			{% if isEdit and h.is_temp_license %}</a>{% endif %}
 		{% endif %}
-		&nbsp;{{h.get_flag_uci_id_html}},
+		&nbsp;
+			{% if isEdit and h.uci_id_error %}<a class="btn btn-warning" href='./LicenseHolderEdit/{{h.id}}/'>{% endif %}
+				{{h.get_flag_uci_id_html}}
+			{% if isEdit and h.uci_id_error %}</a>{% endif %},
 		{{h.get_location}}
 		{% if isEdit %}
 			{% if h.license_code and h.is_temp_license %}
 				<br/><a class="btn btn-warning" href='./LicenseHolderEdit/{{h.id}}/'>{% trans "Fix License Code" %}</a>
+			{% endif %}
+			{% if h.uci_id and h.uci_id_error %}
+				<br/><a class="btn btn-warning" href='./LicenseHolderEdit/{{h.id}}/'>{% trans "Fix UCI ID" %}</a>
 			{% endif %}
 			{% if h.emergency_contact_incomplete %}
 				<br/><a class="btn btn-warning" href='./LicenseHolderEdit/{{h.id}}/'>{% trans "Fix Emergency Contact" %}</a>

@@ -22,16 +22,7 @@ from ReadWriteTag import ReadTag, WriteTag
 
 def get_participant( participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
-	competition = participant.competition
-	
-	# Check for a permanent tag conflict.
-	if competition.using_tags and competition.use_existing_tags and participant.tag:
-		for lh in LicenseHolder.objects.filter( existing_tag=participant.tag ):
-			if lh != participant.license_holder:
-				participant.tag = get_id( SystemInfo.get_singleton().tag_bits )
-				participant.save()
-				break
-	return participant
+	return participant.enforce_tag_constraints()
 
 @autostrip
 class ParticipantSearchForm( Form ):
