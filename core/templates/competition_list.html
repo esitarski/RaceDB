@@ -18,6 +18,7 @@
 <table class="table table-striped table-hover table-condensed">
 <thead>
 	<tr>
+		<th></th>
 		<th>{% trans "Dates" %}</th>
 		<th>{% trans "Discipline" %}</th>
 		<th>{% trans "Name" %}</th>
@@ -31,7 +32,8 @@
 </thead>
 <tbody>
 	{% for c in competitions %}
-		<tr onclick="jump('{{path}}CompetitionDashboard/{{c.id}}/');">
+		<tr onclick="jump('./CompetitionDashboard/{{c.id}}/');">
+			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{c.date_range_str}}</td>
 			<td>{{c.discipline.name}} {{c.event_types_text}}</td>
 			<td>{{c.name}}</td>
@@ -42,14 +44,14 @@
 			<td>{{c.report_labels_text}}</td>
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
-					<a class="btn btn-warning btn-sm" href="{{path}}CompetitionDelete/{{c.id}}/">{% trans "Delete" %}</a>
+					<a class="btn btn-warning btn-sm" href="./CompetitionDelete/{{c.id}}/">{% trans "Delete" %}</a>
 					&nbsp;
-					<a class="btn btn-primary btn-sm" href="{{path}}CompetitionCopy/{{c.id}}/">{% trans "Copy Format" %}</a>
+					<a class="btn btn-primary btn-sm" href="./CompetitionCopy/{{c.id}}/">{% trans "Copy Format" %}</a>
 					&nbsp;
-					<a class="btn btn-primary btn-sm" href="{{path}}CompetitionExport/{{c.id}}/">{% trans "Export" %}</a>
+					<a class="btn btn-primary btn-sm" href="./CompetitionExport/{{c.id}}/">{% trans "Export" %}</a>
 					&nbsp;&nbsp;
 				{% endif %}
-				<a class="btn btn-success btn-sm" href="{{path}}CompetitionDashboard/{{c.id}}/">{% trans "Dashboard" %}</a>
+				<a class="btn btn-success btn-sm" href="./CompetitionDashboard/{{c.id}}/">{% trans "Dashboard" %}</a>
 			</td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}

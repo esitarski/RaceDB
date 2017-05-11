@@ -13,8 +13,25 @@ from import_utils import *
 from models import *
 from FieldMap import standard_field_map, normalize 
 
-def license_holder_import_excel( worksheet_name='', worksheet_contents=None, message_stream=sys.stdout, update_license_codes=False ):
+def license_holder_import_excel(
+		worksheet_name='', worksheet_contents=None, message_stream=sys.stdout,
+		update_license_codes=False,
+		set_team_all_disciplines=False
+	):
 	tstart = datetime.datetime.now()
+	
+	license_holder_team = {}
+	disciplines = list(Discipline.objects.all())
+	effective_date = timezone.now().date()
+	def process_license_holder_team( license_holder_team ):
+		TeamHint.objects.filter( license_holder__in=list(license_holder_team.iterkeys()) ).delete()
+		team_hints = []
+		for lh, t in license_holder_team.iteritems():
+			for d in disciplines:
+				team_hints.append( TeamHint(license_holder=lh, team=t, discipline=d, effective_date=effective_date) )
+		TeamHint.objects.bulk_create( team_hints )
+		print "Updated {} license holder team's for all disciplines".format(len(license_holder_team))
+		license_holder_team.clear()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def message_stream_write( s ):
@@ -169,6 +186,7 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			#------------------------------------------------------------------------------
 			# Update Team
 			#
+			team = None
 			if team_name:
 				do_save = False
 				team = Team.objects.filter( search_text__startswith=utils.get_search_text([team_name])).first()
@@ -342,6 +360,11 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 				msg += u'            {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
 				message_stream_write( msg )
 				print removeDiacritic(msg)[:-1]
+				
+			if license_holder and team and set_team_all_disciplines:
+				license_holder_team[license_holder] = team
+				if len(license_holder_team) >= 200:
+					process_license_holder_team( license_holder_team )
 
 	sheet_name = None
 	if worksheet_contents is not None:
@@ -394,6 +417,9 @@ def license_holder_import_excel( worksheet_name='', worksheet_contents=None, mes
 			ur_records = []
 			
 	process_ur_records( ur_records )
+	
+	if license_holder_team:
+		process_license_holder_team( license_holder_team )
 	
 	message_stream_write( u'\n' )
 	message_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )

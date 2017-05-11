@@ -6,6 +6,7 @@
 {% include "meta.html" %}
 
 <script type="text/javascript" src="{% static "js/jquery-2.2.4.min.js" %}"></script>
+
 {% block srcjavascript %}
 {% endblock srcjavascript %}
 
@@ -63,6 +64,21 @@ h2, h3, h4, h5 { margin: 1px; }
 {% endblock style %}
 </style>
 <script type="text/javascript">
+function setRowSorter( className, sId ) {
+	$('#'+sId).rowSorter({
+		
+		// if new_index === old_index, this function won't be called.
+		onDrop: function(tbody, row, new_index, old_index) {
+			window.location = "./Resequence_" + className + "_Class/" + row.id + "/" + new_index + "/";
+		},
+		
+		// if new_index === old_index, this function will be called.
+		onDragEnd: function(tbody, row, current_index) {
+			window.location = "./" + className + "Edit/" + row.id + "/";
+		}
+	});
+}
+
 {% block javascript %}
 {% endblock javascript %}
 

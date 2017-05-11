@@ -60,6 +60,7 @@
 <table class="table table-striped table-hover">
 <thead>
 	<tr>
+		<th></th>
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Categories" %}</th>
 		<th>{% trans "Sequence" %}</th>
@@ -72,6 +73,7 @@
 <tbody>
 	{% for w in instance.wavett_set.all %}
 		<tr onclick="jump('./WaveTTEdit/{{w.id}}/');">
+			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{w.name}}</td>
 			<td>{{w.category_count_text}}</td>
 			<td>{{w.get_sequence_option_display}}</td>

@@ -347,6 +347,10 @@ def pushUrl( request, name, *args, **kwargs ):
 		url = u'{}{}/'.format( target, name )
 	return url
 
+def popPushUrl( request, name, *args, **kwargs ):
+	kwargs['cancelUrl'] = True
+	return pushUrl( request, name, *args, **kwargs )
+
 def setFormReadOnly( form ):
 	instance = getattr( form, 'instance', None )
 	if instance:

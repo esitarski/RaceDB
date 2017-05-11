@@ -1388,6 +1388,7 @@ def UploadPrereg( request, competitionId ):
 @autostrip
 class ImportExcelForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	set_team_all_disciplines = forms.BooleanField( required=False, label=_('Update Team for all disciplines'), )
 	update_license_codes = forms.BooleanField( required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
 			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	
@@ -1402,19 +1403,23 @@ class ImportExcelForm( Form ):
 				Field('excel_file', accept=".xls,.xlsx"),
 			),
 			Row(
+				Field('set_team_all_disciplines'),
+			),
+			Row(
 				Field('update_license_codes'),
 			),
 		)
 
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_license_holder_import_excel( excel_contents, update_license_codes ):
+def handle_license_holder_import_excel( excel_contents, update_license_codes, set_team_all_disciplines ):
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO()
 	license_holder_import_excel(
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
 		update_license_codes=update_license_codes,
+		set_team_all_disciplines=set_team_all_disciplines,
 	)
 	results_str = message_stream.getvalue()
 	return results_str
@@ -1428,10 +1433,14 @@ def LicenseHoldersImportExcel( request ):
 	
 		form = ImportExcelForm(request.POST, request.FILES)
 		if form.is_valid():
-			results_str = handle_license_holder_import_excel( request.FILES['excel_file'], form.cleaned_data['update_license_codes'] )
+			results_str = handle_license_holder_import_excel(
+				request.FILES['excel_file'],
+				form.cleaned_data['update_license_codes'],
+				form.cleaned_data['set_team_all_disciplines'],
+			)
 			return render( request, 'license_holder_import_excel.html', locals() )
 	else:
-		form = ImportExcelForm()
+		form = ImportExcelForm( initial={'set_team_all_disciplines': True} )
 	
 	return render( request, 'license_holder_import_excel.html', locals() )
 
@@ -2023,6 +2032,9 @@ class EventTTForm( ModelForm ):
 	
 	def applyToParticipantsCB( self, request, eventMassStart ):
 		return HttpResponseRedirect( pushUrl(request,'EventApplyToExistingParticipants',eventMassStart.id) )
+		
+	def seedingCB( self, request, eventTT ):
+		return HttpResponseRedirect( pushUrl(request,'StartListTT',eventTT.id) )		
 	
 	def clean( self ):
 		cleaned_data = super(EventTTForm, self).clean()
@@ -2072,10 +2084,13 @@ class EventTTForm( ModelForm ):
 			self.additional_buttons.extend( [
 				('custom-category-submit', _('New Custom Category'), 'btn btn-success', self.newCustomCategoryCB),
 			] )
+			self.additional_buttons.extend( [
+				('seeding-submit', _('Edit Seeding'), 'btn btn-success', self.seedingCB),
+			] )
 			instance = getattr(self, 'instance', None)
 			if instance and instance.optional and instance.competition.has_participants():
 				self.additional_buttons.extend( [
-					('apply-to-participants-submit', _('Apply Select by Default to Existing Participants'), 'btn btn-success', self.applyToParticipantsCB),
+					('apply-to-participants-submit', _('Apply "Select by Default" to Existing Participants'), 'btn btn-success', self.applyToParticipantsCB),
 				] )
 		addFormButtons( self, button_mask, self.additional_buttons, print_button = _('Print Waves') if button_mask == EDIT_BUTTONS else None )
 
@@ -2915,6 +2930,26 @@ def CompetitionCloudUpload( request ):
 	for w in response['warnings']:
 		print 'Error:', w
 	return JsonResponse( response )
+
+#-----------------------------------------------------------------------
+def Resequence( request, modelClassName, instanceId, newSequence ):
+	newSequence = int(newSequence)
+	cls = globals()[modelClassName]
+	instance = get_object_or_404( cls, pk=instanceId )
+	
+	try:
+		instance.move_to( newSequence )
+	except AttributeError:
+		objs = list(cls.objects.all().order_by('sequence'))
+		newSequence = max(0, min(newSequence, len(objs)) )
+		objs.remove( instance )
+		objs.insert( newSequence, instance )
+		with transaction.atomic():
+			for i, obj in enumerate(objs, 1):
+				if obj.sequence != i:
+					obj.sequence = i
+					obj.save()
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
 #-----------------------------------------------------------------------
 

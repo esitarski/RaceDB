@@ -4,20 +4,6 @@ from collections import defaultdict
 from views_common import *
 from django.utils.translation import ugettext_lazy as _
 
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CustomCategoryNew( request, eventId, eventType ):
-	eventType = int(eventType)
-	event = get_object_or_404( (EventMassStart, EventTT)[eventType], pk=eventId )
-	CCC = event.get_custom_category_class()
-	
-	custom_category = CCC( event=event, name=datetime.datetime.now().strftime('Custom Category %Y-%m-%d %H:%M:%S') )
-	custom_category.save()
-	custom_category.move_to( 0 )
-	
-	return HttpResponseRedirect(getContext(request,'cancelUrl') + 'CustomCategoryEdit/{}/{}/{}/'.format(
-		eventId, eventType, custom_category.id) )
-
 def GetCustomCategoryForm( cls ):
 	@autostrip
 	class CustomCategoryForm( ModelForm ):
@@ -59,6 +45,17 @@ def GetCustomCategoryForm( cls ):
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
+def CustomCategoryNew( request, eventId, eventType ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart, EventTT)[eventType], pk=eventId )
+	CCC = event.get_custom_category_class()
+	return GenericNew(
+		CCC, request, GetCustomCategoryForm(CCC),
+		instance_fields=dict(event=event, name=datetime.datetime.now().strftime('Custom Category %Y-%m-%d %H:%M:%S'))
+	)
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
 def CustomCategoryEdit( request, eventId, eventType, customCategoryId ):
 	eventType = int(eventType)
 	event = get_object_or_404( (EventMassStart, EventTT)[eventType], pk=eventId )
@@ -68,7 +65,22 @@ def CustomCategoryEdit( request, eventId, eventType, customCategoryId ):
 	return GenericEdit( CCC, request,
 		customCategoryId,
 		GetCustomCategoryForm(CCC),
-		template='generic_form.html',
+	)	
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CustomCategoryMassStartEdit( request, customCategoryId ):
+	return GenericEdit( CustomCategoryMassStart, request,
+		customCategoryId,
+		GetCustomCategoryForm(CustomCategoryMassStart),
+	)	
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CustomCategoryTTEdit( request, customCategoryId ):
+	return GenericEdit( CustomCategoryTT, request,
+		customCategoryId,
+		GetCustomCategoryForm(CustomCategoryTT),
 	)	
 
 @access_validation()
@@ -85,15 +97,3 @@ def CustomCategoryDelete( request, eventId, eventType, customCategoryId, confirm
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
-
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CustomCategoryMove( request, moveDirection, eventId, eventType, customCategoryId ):
-	eventType = int(eventType)
-	event = get_object_or_404( (EventMassStart, EventTT)[eventType], pk=eventId )
-	CCC = event.get_custom_category_class()
-	custom_category = get_object_or_404( CCC, pk=customCategoryId )
-
-	moveDirection = int(moveDirection) - 100
-	custom_category.move( moveDirection )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))

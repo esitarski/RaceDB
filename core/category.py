@@ -87,20 +87,6 @@ def CategorySwapAdjacent( category, swapBefore ):
 	categoryAdjacent.save()
 	category.save()
 	
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryDown( request, categoryId ):
-	category = get_object_or_404( Category, pk=categoryId )
-	CategorySwapAdjacent( category, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def CategoryUp( request, categoryId ):
-	category = get_object_or_404( Category, pk=categoryId )
-	CategorySwapAdjacent( category, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 #--------------------------------------------------------------------------------------------
 
 @autostrip

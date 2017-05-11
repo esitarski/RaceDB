@@ -218,9 +218,6 @@ urlpatterns = [
 	url(r'^(?i).*CategoryFormatCopy/(?P<categoryFormatId>\d+)/$', category.CategoryFormatCopy),
 	url(r'^(?i).*CategoryFormatDelete/(?P<categoryFormatId>\d+)/$', category.CategoryFormatDelete),
 	
-	url(r'^(?i).*CategoryUp/(?P<categoryId>\d+)/$', category.CategoryUp),
-	url(r'^(?i).*CategoryDown/(?P<categoryId>\d+)/$', category.CategoryDown),
-	
 	url(r'^(?i).*CategoryNew/(?P<categoryFormatId>\d+)/$', category.CategoryNew),
 	url(r'^(?i).*CategoryEdit/(?P<categoryId>\d+)/$', category.CategoryEdit),
 	url(r'^(?i).*CategoryDelete/(?P<categoryId>\d+)/$', category.CategoryDelete),
@@ -261,10 +258,6 @@ urlpatterns = [
 	url(r'^(?i).*RaceClassNew/$', race_class.RaceClassNew),
 	url(r'^(?i).*RaceClassEdit/(?P<raceClassId>\d+)/$', race_class.RaceClassEdit),
 	url(r'^(?i).*RaceClassDelete/(?P<raceClassId>\d+)/$', race_class.RaceClassDelete),
-	url(r'^(?i).*RaceClassUp/(?P<raceClassId>\d+)/$', race_class.RaceClassUp),
-	url(r'^(?i).*RaceClassDown/(?P<raceClassId>\d+)/$', race_class.RaceClassDown),
-	url(r'^(?i).*RaceClassTop/(?P<raceClassId>\d+)/$', race_class.RaceClassTop),
-	url(r'^(?i).*RaceClassBottom/(?P<raceClassId>\d+)/$', race_class.RaceClassBottom),
 	
 	url(r'^(?i).*Disciplines/$', discipline.DisciplinesDisplay),
 	url(r'^(?i).*DisciplineNew/$', discipline.DisciplineNew),
@@ -279,10 +272,6 @@ urlpatterns = [
 	url(r'^(?i).*ReportLabelNew/$', report_label.ReportLabelNew),
 	url(r'^(?i).*ReportLabelEdit/(?P<reportLabelId>\d+)/$', report_label.ReportLabelEdit),
 	url(r'^(?i).*ReportLabelDelete/(?P<reportLabelId>\d+)/$', report_label.ReportLabelDelete),
-	url(r'^(?i).*ReportLabelUp/(?P<reportLabelId>\d+)/$', report_label.ReportLabelUp),
-	url(r'^(?i).*ReportLabelDown/(?P<reportLabelId>\d+)/$', report_label.ReportLabelDown),
-	url(r'^(?i).*ReportLabelTop/(?P<reportLabelId>\d+)/$', report_label.ReportLabelTop),
-	url(r'^(?i).*ReportLabelBottom/(?P<reportLabelId>\d+)/$', report_label.ReportLabelBottom),
 	
 	url(r'^(?i).*GetEvents/$', views.GetEvents),
 	url(r'^(?i).*GetEvents/(?P<date>\d\d\d\d-\d\d-\d\d)/$', views.GetEvents),
@@ -295,7 +284,6 @@ urlpatterns = [
 	url(r'^(?i).*QRCode/$', views.QRCode),
 	
 	url(r'^(?i).*Series/$', series.SeriesList),
-	url(r'^(?i).*Series/(?P<moveDirection>\d+)/(?P<seriesId>\d+)/$', series.SeriesList),
 	
 	url(r'^(?i).*SeriesNew/$', series.SeriesNew),
 	url(r'^(?i).*SeriesNew/(?P<categoryFormatId>\d+)/$', series.SeriesNew),
@@ -312,9 +300,6 @@ urlpatterns = [
 	
 	url(r'^(?i).*SeriesPointsStructureDelete/(?P<seriesPointsStructureId>\d+)/$', series.SeriesPointsStructureDelete),
 	url(r'^(?i).*SeriesPointsStructureDelete/(?P<seriesPointsStructureId>\d+)/(?P<confirmed>\d+)/$', series.SeriesPointsStructureDelete),
-	
-	url(r'^(?i).*SeriesPointsStructureMove/(?P<moveDirection>\d+)/(?P<seriesPointsStructureId>\d+)/$', series.SeriesPointsStructureMove),
-	url(r'^(?i).*SeriesUpgradeProgressionMove/(?P<moveDirection>\d+)/(?P<seriesUpgradeProgressionId>\d+)/$', series.SeriesUpgradeProgressionMove),
 	
 	url(r'^(?i).*SeriesUpgradeProgressionNew/(?P<seriesId>\d+)/$', series.SeriesUpgradeProgressionNew),
 	url(r'^(?i).*SeriesUpgradeProgressionDelete/(?P<seriesUpgradeProgressionId>\d+)/$', series.SeriesUpgradeProgressionDelete),
@@ -334,19 +319,22 @@ urlpatterns = [
 	url(r'^(?i).*SeriesCategoryGroupNew/(?P<seriesId>\d+)/$', series.SeriesCategoryGroupNew),	
 	url(r'^(?i).*SeriesCategoryGroupDelete/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupDelete),
 	url(r'^(?i).*SeriesCategoryGroupDelete/(?P<categoryGroupId>\d+)/(?P<confirmed>\d+)/$', series.SeriesCategoryGroupDelete),
-	url(r'^(?i).*SeriesCategoryGroupMove/(?P<moveDirection>\d+)/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupMove),
 	url(r'^(?i).*SeriesCategoryGroupEdit/(?P<categoryGroupId>\d+)/$', series.SeriesCategoryGroupEdit),
 	
 	url(r'^(?i).*CustomCategoryNew/(?P<eventId>\d+)/(?P<eventType>\d+)/$', custom_category.CustomCategoryNew),
 	url(r'^(?i).*CustomCategoryEdit/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$',
 		custom_category.CustomCategoryEdit),
+	url(r'^(?i).*CustomCategoryMassStartEdit/(?P<customCategoryId>\d+)/$',
+		custom_category.CustomCategoryMassStartEdit),
+	url(r'^(?i).*CustomCategoryTTEdit/(?P<customCategoryId>\d+)/$',
+		custom_category.CustomCategoryTTEdit),
 	url(r'^(?i).*CustomCategoryDelete/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$',
 		custom_category.CustomCategoryDelete),
 	url(r'^(?i).*CustomCategoryDelete/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/(?P<confirmed>\d+)/$',
 		custom_category.CustomCategoryDelete),
-	url(r'^(?i).*CustomCategoryMove/(?P<moveDirection>\d+)/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$', 
-		custom_category.CustomCategoryMove),
 		
+	url(r'^(?i).*Resequence_(?P<modelClassName>[^_]+)_Class/(?P<instanceId>\d+)/(?P<newSequence>\d+)/$', views.Resequence),
+	
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}, name='login'),
 	url(r'^(?i).*logout/$', views.Logout),
 ]

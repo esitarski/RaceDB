@@ -25,14 +25,8 @@ def getPaginator( request, page_key, items ):
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
-def SeriesList( request, moveDirection=None, seriesId=None ):
-	validate_sequence( Series.objects.all() )
-		
-	if moveDirection is not None:
-		moveDirection = int(moveDirection) - 100
-		series = get_object_or_404( Series, pk=seriesId )
-		series.move( moveDirection )
-	
+def SeriesList( request ):
+	validate_sequence( Series.objects.all() )		
 	series = Series.objects.all()
 	return render( request, 'series_list.html', locals() )
 
@@ -348,8 +342,7 @@ class SeriesPointsStructureForm( ModelForm ):
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesPointsStructureNew( request, seriesId ):
 	series = get_object_or_404( Series, pk=seriesId )
-	SeriesPointsStructure( series=series, name=timezone.now().strftime('Points Structure %H:%M:%S') ).save()
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	return GenericNew( SeriesPointsStructure, request, SeriesPointsStructureForm, instance_fields={'series':series, 'name':timezone.now().strftime('Series Points %Y-%m-%f %H:%M:S')} )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -368,23 +361,9 @@ def SeriesPointsStructureDelete( request, seriesPointsStructureId, confirmed=0 )
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
 	
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def SeriesPointsStructureMove( request, moveDirection, seriesPointsStuctureId ):
-	series_points_structure = get_object_or_404( SeriesPointsStructure, pk=seriesPointsStuctureId )
-	series_points_structure.move( moveDirection )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def SeriesUpgradeProgressionMove( request, moveDirection, seriesUpgradeProgressionId ):
-	series_upgrade_progression = get_object_or_404( SeriesUpgradeProgression, pk=seriesUpgradeProgressionId )
-	series_upgrade_progression.move( moveDirection )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
 #-----------------------------------------------------------------------
 class CategorySelectForm( Form ):
-	categories = forms.MultipleChoiceField( label=_("Categories in the Series"), help_text=_('Ctrl-Click to Multi-select') )
+	categories = forms.MultipleChoiceField( label=_("Categories in the Series"), widget=forms.CheckboxSelectMultiple )
 	
 	def __init__( self, *args, **kwargs ):
 		series = kwargs.pop( 'series' )
@@ -399,7 +378,7 @@ class CategorySelectForm( Form ):
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
+		self.helper.form_class = ''
 		
 		self.helper.layout = Layout(
 			Row(
@@ -424,7 +403,7 @@ def SeriesCategoriesChange( request, seriesId ):
 			for pk in categories:
 				series.seriesincludecategory_set.create( category=Category.objects.get(pk=pk) )
 			
-			series.normalize()
+			series.validate()
 			
 			if 'ok-submit' in request.POST:
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -442,8 +421,9 @@ def SeriesCategoriesChange( request, seriesId ):
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesUpgradeProgressionNew( request, seriesId ):
 	series = get_object_or_404( Series, pk=seriesId )
-	SeriesUpgradeProgression( series=series ).save()
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	up = SeriesUpgradeProgression( series=series )
+	up.save()
+	return HttpResponseRedirect( popPushUrl(request, 'SeriesUpgradeProgressionEdit', up.id) )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -532,15 +512,9 @@ def SeriesUpgradeProgressionEdit( request, seriesUpgradeProgressionId ):
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesCategoryGroupNew( request, seriesId ):
 	series = get_object_or_404( Series, pk=seriesId )
-	CategoryGroup( series=series, name=datetime.datetime.now().strftime('Category Group %H:%M:%S') ).save()
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-@user_passes_test( lambda u: u.is_superuser )
-def SeriesCategoryGroupMove( request, moveDirection, categoryGroupId ):
-	category_group = get_object_or_404( CategoryGroup, pk=categoryGroupId )
-	category_group.move( moveDirection )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	cg = CategoryGroup( series=series, name=datetime.datetime.now().strftime('Category Group %H:%M:%S') )
+	cg.save()
+	return HttpResponseRedirect( popPushUrl(request, 'SeriesCategoryGroupEdit', cg.id) )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -557,7 +531,7 @@ def SeriesCategoryGroupDelete( request, categoryGroupId, confirmed=0 ):
 #-----------------------------------------------------------------------
 class CategoryGroupForm( Form ):
 	name = forms.CharField( label=_('Name') )
-	categories = forms.MultipleChoiceField( label=_("Categories in the Group"), help_text=_('Ctrl-Click to Multi-select') )
+	categories = forms.MultipleChoiceField( label=_("Categories in the Group"), widget=forms.CheckboxSelectMultiple )
 	
 	def __init__( self, *args, **kwargs ):
 		category_group = kwargs.pop( 'category_group' )
@@ -571,7 +545,7 @@ class CategoryGroupForm( Form ):
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
-		self.helper.form_class = 'form-inline'
+		self.helper.form_class = ''
 		
 		self.helper.layout = Layout(
 			Row(

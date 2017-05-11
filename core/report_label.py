@@ -72,29 +72,3 @@ def ReportLabelEdit( request, reportLabelId ):
 def ReportLabelDelete( request, reportLabelId ):
 	return GenericDelete( ReportLabel, request, reportLabelId, ReportLabelForm )
 
-@access_validation()
-def ReportLabelDown( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	SwapAdjacentSequence( ReportLabel, report_label, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
-@access_validation()
-def ReportLabelUp( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	SwapAdjacentSequence( ReportLabel, report_label, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def ReportLabelBottom( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	NormalizeSequence( ReportLabel.objects.all() )
-	MoveSequence( ReportLabel, report_label, False )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-
-@access_validation()
-def ReportLabelTop( request, reportLabelId ):
-	report_label = get_object_or_404( ReportLabel, pk=reportLabelId )
-	NormalizeSequence( ReportLabel.objects.all() )
-	MoveSequence( ReportLabel, report_label, True )
-	return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	

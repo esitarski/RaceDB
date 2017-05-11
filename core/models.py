@@ -149,10 +149,11 @@ class Sequence( models.Model ):
 		return self.get_container().order_by('sequence').last()
 
 	def move_to( self, i ):
-		elements = list( self.get_container() )
+		elements = list( self.get_container().all() )
 		i = max( 0, min( i, len(elements) ) )
 		elements.remove( self )
 		elements.insert( i, self )
+		self.sequence = -1
 		validate_sequence( elements )
 		
 	def move_lower( self ):
@@ -2823,6 +2824,15 @@ class TeamHint(models.Model):
 	def __repr__( self ):
 		return u'TeamHint({})'.format(self.unicode())
 
+	@staticmethod
+	def set_all_disciplines( license_holder, team ):
+		TeamHint.objects.filter(license_holder=license_holder, team=team).delete()
+		effective_date = timezone.now().date()
+		TeamHint.objects.bulk_create( 
+			[TeamHint(license_holder=license_holder, discipline=discipline, team=team, effective_date=effective_date)
+				for discipline in Discipline.objects.all()]
+		)
+		
 	class Meta:
 		verbose_name = _('TeamHint')
 		verbose_name_plural = _('TeamHints')
@@ -3134,7 +3144,10 @@ class Participant(models.Model):
 		
 	@property
 	def is_seasons_pass_holder( self ):
-		return self.competition.seasons_pass and SeasonsPassHolder.objects.filter(seasons_pass=self.competition.seasons_pass, license_holder=self.license_holder).exists()
+		return (
+			self.competition.seasons_pass and
+			SeasonsPassHolder.objects.filter(seasons_pass=self.competition.seasons_pass, license_holder=self.license_holder).exists()
+		)
 
 	@property
 	def role_full_name( self ):
@@ -4139,7 +4152,16 @@ class Series( Sequence ):
 		return cats
 		
 	def get_categories_not_in_groups( self ):
-		return set(self.get_categories()) - self.get_categories_in_groups()
+		return sorted( set(self.get_categories()) - self.get_categories_in_groups(), key=operator.attrgetter('sequence') )
+		
+	def get_points_structures( self ):
+		return self.seriespointsstructure_set.all().order_by('sequence')
+		
+	def get_upgrade_progressions( self ):
+		return self.seriesupgradeprogression_set.all().order_by('sequence')
+		
+	def get_category_groups( self ):
+		return self.categorygroup_set.all().order_by('sequence')
 		
 	def validate( self ):
 		categories = self.get_categories()

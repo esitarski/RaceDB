@@ -1,14 +1,25 @@
 {% extends "base.html" %}
-{% block content %}
-
 {% load i18n %}
+{% load static %}
 {% load staticfiles %}
 {% load crispy_forms_tags %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="{% static "js/RowSorter.js" %}"></script>
+{% endblock srcjavascript %}
+
+{% block onload %}
+setRowSorter('NumberSet','sort_table_id');
+{% endblock onload %}
+
+{% block content %}
+
 <h2>{{title}}</h2>
 <hr class="hidden-print"/>
 {% crispy form %}
+<p>{% trans "Drag and drop rows to change sequence." %}</p>
 {% include "show_count.html" %}
-<table class="table table-striped table-hover table-condensed">
+<table class="table table-striped table-hover table-condensed" id='sort_table_id'>
 <thead>
 	<tr>
 		<th></th>
@@ -17,12 +28,11 @@
 		<th>{% trans "Sponsor" %}</th>
 		<th>{% trans "Description" %}</th>
 		<th class="hidden-print"></th>
-		<th class="hidden-print"></th>
 	</tr>
 </thead>
 <tbody>
 	{% for r in number_sets %}
-		<tr onclick="jump('./NumberSetManage/{{r.id}}/');">
+		<tr id={{r.id}}>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{r.name}}</td>
 			<td>{{r.range_str}}</td>
@@ -32,20 +42,6 @@
 				<a class="btn btn-warning" href="./NumberSetDelete/{{r.id}}/">{% trans "Delete" %}</a>
 				<a class="btn btn-primary" href="./NumberSetEdit/{{r.id}}/">{% trans "Edit" %}</a>
 				<a class="btn btn-success" href="./NumberSetManage/{{r.id}}/">{% trans "Manage" %}</a>
-			</td>
-			<td class="hidden-print">
-				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="./NumberSetUp/{{r.id}}/">
-						<img src="{% static "images/glyphicons_213_up_arrow.png" %}" ></a> {% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="./NumberSetDown/{{r.id}}/">
-						<img src="{% static "images/glyphicons_212_down_arrow.png" %}" ></a> {% endif %}
-				</div>
-				<div class="btn-group">
-					{% if not forloop.first %}<a class="btn btn-primary" href="./NumberSetTop/{{r.id}}/">
-						<img src="{% static "images/glyphicons_347_hand_up.png" %}" ></a>{% endif %}
-					{% if not forloop.last %}<a class="btn btn-primary" href="./NumberSetBottom/{{r.id}}/">
-						<img src="{% static "images/glyphicons_348_hand_down.png" %}" ></a> {% endif %}
-				</div>
 			</td>
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}

@@ -61,12 +61,15 @@ def get_participant_excel( q = None ):
 	optional_events = None
 	row = None
 	
-	row = write_row_data( ws, 0, data_headers, title_format )
 	for p in Participant.objects.filter(q).defer('signature').select_related('license_holder'):
 		if competition is None:
 			headers = list(data_headers)
 			
 			competition = p.competition
+			seasons_pass = competition.seasons_pass
+			if seasons_pass:
+				headers.append( 'SeasonsPass' )
+			
 			legal_entity = competition.legal_entity
 			if legal_entity:
 				headers.append( 'Waiver' )
@@ -97,6 +100,8 @@ def get_participant_excel( q = None ):
 			p.confirmed,
 			p.paid,
 		]
+		if seasons_pass:
+			data.append( p.is_seasons_pass_holder )
 		if legal_entity:
 			data.append( p.good_waiver() )
 		for e in optional_events:

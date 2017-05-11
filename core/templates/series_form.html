@@ -3,6 +3,22 @@
 {% load crispy_forms_tags %}
 {% load static %}
 {% load staticfiles %}
+{% block srcjavascript %}
+<script type="text/javascript" src="{% static "js/RowSorter.js" %}"></script>
+{% endblock srcjavascript %}
+
+{% block onload %}
+
+var model_ids = [
+	['SeriesPointsStructure', 		'id_series_points_structure'],
+	['SeriesUpgradeProgression',	'id_series_upgrade_progression'],
+	['CategoryGroup',				'id_category_group']
+];
+	
+for (var i = 0; i < model_ids.length; ++i ) {
+	setRowSorter( model_ids[i][0], model_ids[i][1] );
+}
+{% endblock onload %}
 
 {% block content %}
 <h1>
@@ -126,13 +142,14 @@
 		Points are constrained so that: Smallest Points for Place >= Finish Points >= DNF Points >= DNS Points.<br/>
 		Be careful with DNF and DNS points (recommend these be zero) - they can encourage riders not to try.<br/>
 		<br/>
-		Points Structures do not apply if you are rank your Series by Time or % Winner / Finish Time.
+		Points Structures do not apply if you are rank your Series by Time or % Winner / Finish Time.<br/>
+		Drag and drop rows to change the sequence.
 	</p>
   </div>
 </div>
-{% if series.seriespointsstructure_set.exists %}
+{% if series.get_points_structures.exists %}
 {% spaceless %}
-<table class="table table-striped table-hover table-condensed">
+<table class="table table-striped table-hover table-condensed" id="id_series_points_structure">
 <thead>
 	<tr>
 		<th></th>
@@ -145,9 +162,9 @@
 	</tr>
 </thead>
 <tbody>
-{% with p_count=series.seriespointsstructure_set.count %}
-{% for p in series.seriespointsstructure_set.all %}
-	<tr onclick="jump('./SeriesPointsStructureEdit/{{p.id}}/')">
+{% with p_count=series.get_points_structures.count %}
+{% for p in series.get_points_structures %}
+	<tr id={{p.id}}>
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{p.name}}</td>
 		<td>{{p.points_for_place}}&nbsp;&nbsp;&nbsp;({{p.points_deep}} {% trans "deep" %})</td>
@@ -156,14 +173,6 @@
 		<td class="text-right">{{p.dns_points}}</td>
 		<td class="hidden-print">
 			<a class="btn btn-success" href="./SeriesPointsStructureEdit/{{p.id}}/">{% trans "Edit" %}</a>
-			<div class="btn-group">
-				{% if not forloop.first %}
-					<a class="btn btn-primary" href="./SeriesPointsStructureMove/99/{{p.id}}/"><img src='{% static "images/glyphicons_213_up_arrow.png" %}'></a>
-				{% endif %}
-				{% if not forloop.last %}
-					<a class="btn btn-primary" href="./SeriesPointsStructureMove/101/{{p.id}}/"><img src="{% static "images/glyphicons_212_down_arrow.png" %}"></a>
-				{% endif %}
-			</div>
 			{% if p_count != 1 %}
 				<a class="btn btn-warning" href="./SeriesPointsStructureDelete/{{p.id}}/">{% trans "Delete" %}</a>
 			{% endif %}
@@ -203,13 +212,15 @@
 		Multiple upgrades to the same athlete are supported.  The Factor is applied each time a conversion is made.<br/>
 		In the above example, say an athlete earned points as follows:  10 Beginner, 20 Intermediate and 15 Elite.<br/>
 		The total Elite points would be 27.5 = 15 as Elite + 10 (20*0.5=10, Intermediate --> Elite) + 2.5 (10*0.5=5 Beginner --> Intermediate, 5*0.5=2.5 Intermediate --> Elite).
+		<br/>
+		Drag and drop rows to change the sequence.
 	</p>
   </div>
 </div>
 
-{% if series.seriesupgradeprogression_set.exists %}
+{% if series.get_upgrade_progressions.exists %}
 {% spaceless %}
-<table class="table table-striped table-hover table-condensed">
+<table class="table table-striped table-hover table-condensed" id="id_series_upgrade_progression">
 <thead>
 	<tr>
 		<th></th>
@@ -219,25 +230,13 @@
 	</tr>
 </thead>
 <tbody>
-	{% for s in series.seriesupgradeprogression_set.all %}
-		<tr onclick="jump('./SeriesUpgradeProgressionEdit/{{s.id}}/')">
+	{% for s in series.get_upgrade_progressions %}
+		<tr id={{s.id}}>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{s.get_text}}</td>
 			<td class='text-right'>{{s.factor}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-success" href="./SeriesUpgradeProgressionEdit/{{s.id}}/">{% trans "Edit" %}</a>
-				<div class="btn-group">
-					{% if not forloop.first %}
-						<a class="btn btn-primary" href="./SeriesUpgradeProgressionMove/99/{{s.id}}/">
-							<img src='{% static "images/glyphicons_213_up_arrow.png" %}'/>
-						</a>
-					{% endif %}
-					{% if not forloop.last %}
-						<a class="btn btn-primary" href="./SeriesUpgradeProgressionMove/101/{{s.id}}/">
-							<img src='{% static "images/glyphicons_212_down_arrow.png" %}'/>
-						</a>
-					{% endif %}
-				</div>
 				<a class="btn btn-warning" href="./SeriesUpgradeProgressionDelete/{{s.id}}/">{% trans "Delete" %}</a>
 			</td>
 		</tr>
@@ -263,11 +262,13 @@
 		For example, you may wish all categories of Master Women to be ranked together.<br/>
 		Or perhaps, rank all Men 50-59, 60-69 and 70+ to be ranked together.<br/>
 		Specify this here by defining <strong>Category Groups</strong>.<br/>
+		<br/>
+		Drag and drop rows to change the sequence.
 	</p>
   </div>
-</div>{% if series.categorygroup_set.exists %}
+</div>{% if series.get_category_groups.exists %}
 {% spaceless %}
-<table class="table table-striped table-hover table-condensed">
+<table class="table table-striped table-hover table-condensed" id="id_category_group">
 <thead>
 	<tr>
 		<th></th>
@@ -277,25 +278,13 @@
 	</tr>
 </thead>
 <tbody>
-	{% for g in series.categorygroup_set.all %}
-		<tr onclick="jump('./SeriesCategoryGroupEdit/{{g.id}}/')">
+	{% for g in series.get_category_groups %}
+		<tr id={{g.id}}>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{g.name}}</td>
 			<td>{{g.get_text}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-success" href="./SeriesCategoryGroupEdit/{{g.id}}/">{% trans "Edit" %}</a>
-				<div class="btn-group">
-					{% if not forloop.first %}
-						<a class="btn btn-primary" href="./SeriesCategoryGroupMove/99/{{g.id}}/">
-							<img src='{% static "images/glyphicons_213_up_arrow.png" %}'/>
-						</a>
-					{% endif %}
-					{% if not forloop.last %}
-						<a class="btn btn-primary" href="./SeriesCategoryGroupMove/101/{{g.id}}/">
-							<img src='{% static "images/glyphicons_212_down_arrow.png" %}'/>
-						</a>
-					{% endif %}
-				</div>
 				<a class="btn btn-warning" href="./SeriesCategoryGroupDelete/{{g.id}}/">{% trans "Delete" %}</a>
 			</td>
 		</tr>

@@ -20,10 +20,10 @@
 &nbsp;&nbsp;&nbsp;&nbsp;
 <button class="btn btn-primary" id="focus" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
 {% if request.user.is_superuser %}
-	<a class="btn btn-primary" href="{{path}}StartListEmails/{{instance.id}}/{{instance.event_type}}">{% trans "Emails" %}</a>
+	<a class="btn btn-primary" href="./StartListEmails/{{instance.id}}/{{instance.event_type}}">{% trans "Emails" %}</a>
 {% endif %}
-<a class="btn btn-primary" href="{{path}}StartListExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export to Excel" %}</a>
-<a class="btn btn-primary" href="{{path}}UCIExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export as UCI DataRide Excel" %}</a>
+<a class="btn btn-primary" href="./StartListExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export to Excel" %}</a>
+<a class="btn btn-primary" href="./UCIExcelDownload/{{instance.id}}/{{instance.event_type}}">{% trans "Export as UCI DataRide Excel" %}</a>
 <hr/>
 </div>
 <h2 class="visible-print">{% trans "Waves" %}</h2>

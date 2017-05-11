@@ -1,6 +1,27 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load static %}
 {% load staticfiles %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="{% static "js/RowSorter.js" %}"></script>
+{% endblock srcjavascript %}
+
+{% block onload %}
+var className = 'Series';
+$('#sort_table_id').rowSorter({
+	
+	// if new_index === old_index, this function won't be called.
+	onDrop: function(tbody, row, new_index, old_index) {
+		window.location = "./Resequence_" + className + "_Class/" + row.id + "/" + new_index + "/";
+	},
+	
+	// if new_index === old_index, this function will be called.
+	onDragEnd: function(tbody, row, current_index) {
+		window.location = "./" + className + "Edit/" + row.id + "/";
+	}
+});
+{% endblock onload %}
 
 {% block content %}
 
@@ -24,7 +45,8 @@
   </div>
 </div>
 <hr/>
-<table class="table table-striped table-hover table-condensed">
+<p>{% trans "Drag and drop rows to change sequence." %}</p>
+<table class="table table-striped table-hover table-condensed" id='sort_table_id'>
 <thead>
 	<tr>
 		<th></th>
@@ -38,7 +60,7 @@
 </thead>
 <tbody>
 	{% for s in series %}
-		<tr onclick="jump('./SeriesEdit/{{s.id}}/')">
+		<tr id="{{s.id}}">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{s.name}}</td>
 			<td>{{s.description}}</td>
@@ -47,14 +69,6 @@
 			<td class="text-right">{{s.seriescompetitionevent_set.all.count}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-success" href="./SeriesEdit/{{s.id}}/">{% trans "Edit" %}</a>
-				<div class="btn-group">
-					{% if not forloop.first %}
-						<a class="btn btn-primary" href="{{cancelUrl}}Series/99/{{s.id}}/"><img src='{% static "images/glyphicons_213_up_arrow.png" %}'></a>
-					{% endif %}
-					{% if not forloop.last %}
-						<a class="btn btn-primary" href="{{cancelUrl}}Series/101/{{s.id}}/"><img src="{% static "images/glyphicons_212_down_arrow.png" %}"></a>
-					{% endif %}
-				</div>
 				<a class="btn btn-warning" href="./SeriesDelete/{{s.id}}/">{% trans "Delete" %}</a>
 				&nbsp;
 				<a class="btn btn-primary" href="./SeriesCopy/{{s.id}}/">{% trans "Copy" %}</a>
