@@ -32,15 +32,23 @@ def license_holder_import_excel(
 			for d in disciplines:
 				team_hints.append( TeamHint(license_holder=lh, team=t, discipline=d, effective_date=effective_date) )
 		TeamHint.objects.bulk_create( team_hints )
-		print "Updated {} license holder team's for all disciplines".format(len(license_holder_team))
 		license_holder_team.clear()
 
+	out_message = []
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def message_stream_write( s ):
+		def ms_write( s, flush=False ):
 			message_stream.write( removeDiacritic(s) )
+			out_message.append( removeDiacritic(s) )
+			if flush or len(out_message) >= 20:
+				sys.stdout.write( ''.join(out_message) )
+				out_message[:] = []
 	else:
-		def message_stream_write( s ):
+		def ms_write( s, flush=False ):
 			message_stream.write( unicode(s) )
+			out_message.append( removeDiacritic(s) )
+			if flush or len(out_message) >= 20:
+				sys.stdout.write( ''.join(out_message) )
+				out_message[:] = []
 	
 	#-------------------------------------------------------------------------------------------------
 	discipline_cols = {
@@ -117,7 +125,7 @@ def license_holder_import_excel(
 		try:
 			date_of_birth = date_from_value(date_of_birth)
 		except Exception as e:
-			message_stream_write( 'Row {}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
+			ms_write( 'Row {}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
 				i, date_of_birth, ur, e)
 			)
 			date_of_birth = None
@@ -220,8 +228,7 @@ def license_holder_import_excel(
 							i,
 							u', '.join( unicode(v) if v else u'None' for v in [team_name, team_code,] ),
 						)
-						message_stream_write( msg )
-						print removeDiacritic(msg)[:-1]
+						ms_write( msg )
 						team.save()
 				
 				#------------------------------------------------------------------------------
@@ -270,7 +277,7 @@ def license_holder_import_excel(
 						status = 'Added'
 					
 					else:
-						message_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+						ms_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
 								i, name,
 							)
 						)
@@ -282,7 +289,7 @@ def license_holder_import_excel(
 					if len(lhs) == 1:
 						license_holder = lhs[0]
 					elif len(lhs) > 1:
-						message_stream_write( u'**** Row {}: Warning!  Name="{}" found duplicate UCIID="{}"\n'.format(
+						ms_write( u'**** Row {}: Warning!  Name="{}" found duplicate UCIID="{}"\n'.format(
 								i, name, uci_id,
 							)
 						)
@@ -316,14 +323,14 @@ def license_holder_import_excel(
 						status = 'Added'
 					
 					elif len(lhs) > 1:
-						message_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+						ms_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
 								i, name,
 							)
 						)
 						continue
 					
 				if not license_holder:
-					message_stream_write( u'**** Row {}: Cannot find License Holder: Name="{}"\n'.format(
+					ms_write( u'**** Row {}: Cannot find License Holder: Name="{}"\n'.format(
 							i, name,
 						)
 					)
@@ -351,8 +358,7 @@ def license_holder_import_excel(
 						),
 					)
 					msg += u'            {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
-					message_stream_write( msg )
-					print removeDiacritic(msg)[:-1]
+					ms_write( msg )
 					
 				if license_holder and team and set_team_all_disciplines:
 					license_holder_team[license_holder] = team
@@ -375,15 +381,14 @@ def license_holder_import_excel(
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
 		if cur_sheet_name == sheet_name or sheet_name is None:
-			message_stream_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
+			ms_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
 			ws = wb.sheet_by_name(cur_sheet_name)
 			break
 	
 	if not ws:
-		message_stream_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
+		ms_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 	
-	print 'Process all rows in spreadsheet...'
 	num_rows = ws.nrows
 	num_cols = ws.ncols
 	for r in xrange(num_rows):
@@ -394,14 +399,14 @@ def license_holder_import_excel(
 			ifm.set_headers( fields )
 			license_code_aliases = [lh for lh in ifm.name_to_col.iterkeys() if lh.startswith('license_code')]
 			
-			message_stream_write( u'Header Row:\n' )
+			ms_write( u'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
 				name = ifm.get_name_from_alias( f )
 				if name is not None:
-					message_stream_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+					ms_write( u'        {}. {} --> {}\n'.format(col, f, name) )
 				else:
-					message_stream_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
-			message_stream_write( u'\n' )
+					ms_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
+			ms_write( u'\n' )
 			continue
 			
 		license_holder_rows.append( clean_license_header_row(r+1, [v.value for v in row]) )
@@ -413,7 +418,8 @@ def license_holder_import_excel(
 	if license_holder_team:
 		process_license_holder_team( license_holder_team )
 	
-	message_stream_write( u'\n' )
-	message_stream_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )
-	message_stream_write( u'\n' )
-	message_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( u'\n' )
+	ms_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )
+	ms_write( u'\n' )
+	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( u'', True )
