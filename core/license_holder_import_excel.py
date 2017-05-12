@@ -38,10 +38,6 @@ def license_holder_import_excel(
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def ms_write( s, flush=False ):
 			message_stream.write( removeDiacritic(s) )
-			out_message.append( removeDiacritic(s) )
-			if flush or len(out_message) >= 20:
-				sys.stdout.write( ''.join(out_message) )
-				out_message[:] = []
 	else:
 		def ms_write( s, flush=False ):
 			message_stream.write( unicode(s) )
