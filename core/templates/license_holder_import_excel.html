@@ -20,7 +20,7 @@
 &nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
 </p>
 {% if results_str %}
-<pre>{{results_str}}</pre>
+{{results_str|safe}}
 {% endif %}
 <p>
 <h3>Import License Holders into RaceDB from Excel.</h3>

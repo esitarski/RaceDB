@@ -19,7 +19,7 @@ from get_license_holder_excel import get_license_holder_excel
 from participation_excel import participation_excel
 from participation_data import participation_data, get_competitions
 from year_on_year_data import year_on_year_data
-from license_holder_import_excel import license_holder_import_excel
+from license_holder_import_excel import license_holder_import_excel, license_holder_msg_to_html
 from uci_excel_dataride import uci_excel
 import authorization
 
@@ -1422,7 +1422,7 @@ def handle_license_holder_import_excel( excel_contents, update_license_codes, se
 		set_team_all_disciplines=set_team_all_disciplines,
 	)
 	results_str = message_stream.getvalue()
-	return results_str
+	return license_holder_msg_to_html(results_str)
 		
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )

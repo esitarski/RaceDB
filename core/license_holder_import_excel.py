@@ -14,6 +14,91 @@ from models import *
 from FieldMap import standard_field_map, normalize
 from get_id import get_id
 
+import cgi
+
+class tag(object):
+	def __init__( self, stream, name, attr=None ):
+		self.stream = stream
+		self.name = name
+		self.attr = attr
+	def __enter__(self):
+		self.stream.write( u'<{}'.format(self.name) )
+		if self.attr:
+			self.stream.write( u' {}'.format(u' '.join( u'{}="{}"'.format(k,v) for k,v in self.attr.iteritems()) ) )
+		self.stream.write( u'>' )
+		return self
+	def __exit__(self, type, value, traceback):
+		self.stream.write( u'</{}>'.format(self.name) )
+
+def license_holder_msg_to_html( msg ):
+	s = StringIO()
+	icon = {
+		1:	u'<span class="is-warn">',
+		2:	u'<span class="is-err">',
+	}
+	bg_class = {
+		1:	{'class':'bg-warning'},
+		2:	{'class':'bg-danger'},
+	}
+	with tag(s, 'table', {
+			'class':'table table-hover table-sm table-condensed',
+			'style':'border-width: 0;',
+		}):
+		with tag(s, 'thead'):
+			with tag(s, 'tr'):
+				with tag(s, 'th'):
+					s.write( u'' )
+				with tag(s, 'th'):
+					s.write( u'Row' )
+				with tag(s, 'th'):
+					s.write( u'Message' )
+		
+		def write_row( m, bg, icon_str ):
+			with tag(s, 'tr', bg):
+				with tag(s, 'td'):
+					s.write( icon_str )
+				row = u''
+				if m.startswith('Row'):
+					match = re.search(r'^Row\s+(\d+):', m)
+					row = int(match.group(1))
+					m = m[len(match.group(0)):].strip()
+				with tag(s, 'td', {'class':'text-right'}):
+					s.write( u'{}'.format(row) )
+				with tag(s, 'td'):
+					m = cgi.escape( m )
+					m = re.sub(r'Added:|Unchanged:|Changed:|Updated:|Warning:|Error:',
+						lambda match: u'<strong>{}</strong>'.format(match.group(0)), m, flags=re.I)
+					s.write( m )
+		
+		# Write out all errors and warnings first.
+		for m in msg.split('\n'):
+			m = m.strip()
+			icon_str = u''
+			bg = None
+			for type in xrange(2, 0, -1):
+				if m.startswith(u'*'*type):
+					m = m[type:].strip()
+					icon_str = icon.get(type, u'')
+					bg = bg_class.get(type, None)
+					write_row( m, bg, icon_str )
+					break
+		
+		# Then write out all informatoin.
+		for m in msg.split('\n'):
+			m = m.strip()
+			icon_str = u''
+			bg = None
+			for type in xrange(2, 0, -1):
+				if m.startswith(u'*'*type):
+					m = m[type:].strip()
+					icon_str = icon.get(type, u'')
+					bg = bg_class.get(type, None)
+					break
+			if bg is None:
+				write_row( m, bg, icon_str )
+	
+	return s.getvalue()
+
 def license_holder_import_excel(
 		worksheet_name='', worksheet_contents=None, message_stream=sys.stdout,
 		update_license_codes=False,
@@ -34,17 +119,19 @@ def license_holder_import_excel(
 		TeamHint.objects.bulk_create( team_hints )
 		license_holder_team.clear()
 
-	out_message = []
+	Info, Warning, Error = 0, 1, 2
+	prefix = {i:u'*'*i for i in xrange(3)}
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def ms_write( s, flush=False ):
+		def ms_write( s, flush=False, type=Info ):
+			s = prefix[type] + unicode(s)
 			message_stream.write( removeDiacritic(s) )
 	else:
-		def ms_write( s, flush=False ):
-			message_stream.write( unicode(s) )
-			out_message.append( removeDiacritic(s) )
-			if flush or len(out_message) >= 20:
-				sys.stdout.write( ''.join(out_message) )
-				out_message[:] = []
+		def ms_write( s, flush=False, type=Info ):
+			s = prefix[type] + unicode(s)
+			message_stream.write( s )
+			sys.stdout.write( removeDiacritic(s) )
+			if flush:
+				sys.stdout.flush()
 	
 	#-------------------------------------------------------------------------------------------------
 	discipline_cols = {
@@ -121,8 +208,8 @@ def license_holder_import_excel(
 		try:
 			date_of_birth = date_from_value(date_of_birth)
 		except Exception as e:
-			ms_write( 'Row {}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
-				i, date_of_birth, ur, e)
+			ms_write( 'Row {}: Warning: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
+				i, date_of_birth, ur, e), type=Warning,
 			)
 			date_of_birth = None
 		
@@ -273,9 +360,9 @@ def license_holder_import_excel(
 						status = 'Added'
 					
 					else:
-						ms_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+						ms_write( u'Row {}: Warning:  Update not performed.  Found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
 								i, name,
-							)
+							), type=Warning
 						)
 						continue
 						
@@ -285,9 +372,9 @@ def license_holder_import_excel(
 					if len(lhs) == 1:
 						license_holder = lhs[0]
 					elif len(lhs) > 1:
-						ms_write( u'**** Row {}: Warning!  Name="{}" found duplicate UCIID="{}"\n'.format(
+						ms_write( u'Row {}: Warning:  Name="{}" found duplicate UCIID="{}"\n'.format(
 								i, name, uci_id,
-							)
+							), type=Warning
 						)
 					
 				if not license_holder and license_code:
@@ -319,16 +406,16 @@ def license_holder_import_excel(
 						status = 'Added'
 					
 					elif len(lhs) > 1:
-						ms_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+						ms_write( u'Row {}: Error:  found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
 								i, name,
-							)
+							), type=Error,
 						)
 						continue
 					
 				if not license_holder:
-					ms_write( u'**** Row {}: Cannot find License Holder: Name="{}"\n'.format(
+					ms_write( u'Row {}: Error:  Cannot find License Holder: Name="{}"\n'.format(
 							i, name,
-						)
+						), type=Error,
 					)
 					continue
 				
@@ -353,7 +440,8 @@ def license_holder_import_excel(
 							]
 						),
 					)
-					msg += u'            {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
+					if status == 'Changed':
+						msg += u'            Updated: {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
 					ms_write( msg )
 					
 				if license_holder and team and set_team_all_disciplines:
