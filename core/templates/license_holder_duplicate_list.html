@@ -37,7 +37,7 @@
 						<tr>
 							<td>{{h.last_name}},&nbsp;{{h.first_name}}</td>
 							<td>{{h.get_gender_display}}</td>
-							<td>{{h.date_of_birth}}</td>
+							<td>{{h.date_of_birth|date:"Y-m-d"}}</td>
 							<td>{{h.city}}, {{h.state_prov}}</td>
 							<td>{{h.license_code_trunc}}</td>
 							<td>{{h.get_flag_uci_id_html}}</td>

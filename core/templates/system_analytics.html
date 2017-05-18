@@ -1140,7 +1140,7 @@ $(document).ready(function() {
 		<tr>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<th><a class="btn btn-success btn-sm" href="./LicenseHolderEdit/{{lh.id}}/">{{lh.full_name}}</a></td>
-			<td>{{lh.date_of_birth}}</td>
+			<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
 			<td><a class="btn btn-success btn-sm" href="./CompetitionEdit/{{e.competition.id}}/">{{e.competition.name}}</a></td>
 			<td>{{e.competition.start_date}}</td>
 			<td><a class="btn btn-success btn-sm" href="./{{e.edit_link}}/">{{e.name}}</a></td>

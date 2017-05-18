@@ -34,7 +34,7 @@
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{% if h.date_of_birth_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.date_of_birth}}</td>
+			<td>{% if h.date_of_birth_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{h.get_location}}</td>
 			<td class="text-nowrap">
 				{% if h.license_code_error %}<span class="is-warn"/>&nbsp;{% endif %}

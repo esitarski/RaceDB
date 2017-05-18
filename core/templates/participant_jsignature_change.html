@@ -59,10 +59,10 @@ function reset_signature() {
 {% if participant.category %}
 	{% trans "racing category" %} <strong>{{participant.category.code}}:</strong>,
 	{% trans "and my date of birth is " %}
-	<strong>{{participant.license_holder.date_of_birth}}</strong>.
+	<strong>{{participant.license_holder.date_of_birth|date:"Y-m-d"}}</strong>.
 {% else %}
 	{% trans "and my date of birth is " %}
-	<strong>{{participant.license_holder.date_of_birth}}</strong>.
+	<strong>{{participant.license_holder.date_of_birth|date:"Y-m-d"}}</strong>.
 {% endif %}
 </h2>
 {% crispy form %}

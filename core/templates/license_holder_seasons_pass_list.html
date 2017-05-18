@@ -36,7 +36,7 @@
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{{h.date_of_birth}}</td>
+			<td>{{h.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{h.city}}</td>
 			<td>{{h.state_prov}}</td>
 			<td>{{h.nationality}}</td>

@@ -17,7 +17,7 @@
 
 <h2 class="hidden-print">{{title}}</h2>
 <h2><strong>{{instance.competition.name}}</strong></h2>
-<h2><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
+<h2><strong>{{instance.name}}</strong>: {{instance.date_time|date:"Y-m-d H:i"}}</h2>
 <div class="hidden-print">
 <hr/>
 {% trans "Change the seeding by entering values in the <strong>Adjust</strong> field, then pressing the <strong>Apply Adjustments</strong> button  (or press Enter)." %}<br/>

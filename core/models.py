@@ -840,7 +840,7 @@ class Competition(models.Model):
 	def finish_date( self ):
 		return self.start_date + datetime.timedelta( days = self.number_of_days - 1 )
 	
-	reMatchLeadingZeros = re.compile( '^0| 0')
+	reMatchLeadingZeros = re.compile( '^0| 0' )
 	def fix_date_leading_zeros( self, s ):
 		return self.reMatchLeadingZeros.sub(' ', s).strip()
 	
@@ -1740,7 +1740,7 @@ class WaveBase( models.Model ):
 		
 	def get_starters_str( self ):
 		count = self.get_participant_count()
-		if self.max_participants is None:
+		if not self.max_participants:
 			return '{}'.format( count )
 		else:
 			percent = 100.0 * float(count)/float(self.max_participants)

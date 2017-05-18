@@ -55,7 +55,7 @@ $("form").submit(function(event) {
 	{% for p in participation %}
 	<tr>
 		<td class="text-right">{{forloop.counter}}.</td>
-		<td>{{p.competition.date_range_str}}</td>
+		<td>{{p.competition.date_range_year_str}}</td>
 		<td>{% if p.category %}{{p.category.code}} ({{p.category.get_gender_display}}){% endif %}</td>
 		<td>{{p.team.name}}</td>
 		<td>{{p.competition.name}}</td>

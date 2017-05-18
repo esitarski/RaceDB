@@ -1600,7 +1600,7 @@ function SituationAnimate() {
 	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.name}}</a>: {{event.name}}</strong><br/>
 	<span style="font-size: 75%">
 		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}<br/>
-		{{event.date_time}}&nbsp;&nbsp; {% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp; {% trans "Strs" %}: {{num_starters}}
+		{{event.date_time|date:"Y-m-d H:i"}}&nbsp;&nbsp; {% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp; {% trans "Strs" %}: {{num_starters}}
 	</span>
 </h1>
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}

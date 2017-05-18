@@ -35,7 +35,7 @@
 			<td>{{h.get_gender_display}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
-			<td>{{h.date_of_birth}}</td>
+			<td>{{h.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{h.get_location}}</td>
 			{% if competition.using_tags %}<td>{{h.get_existing_tag_str}}</td>{% endif %}
 			<td class="hidden-print">

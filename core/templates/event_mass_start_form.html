@@ -15,8 +15,8 @@
 {% block content %}
 
 <h2 class="hidden-print">{{title}}</h2>
-<h2><strong>{{instance.competition.name}}</strong>: {{instance.competition.date_range_str}}</h2>
-<h2 class="visible-print"><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
+<h2><strong>{{instance.competition.name}}</strong>: {{instance.competition.date_range_year_str}}</h2>
+<h2 class="visible-print"><strong>{{instance.name}}</strong>: {{instance.date_time|date:"Y-m-d H:i"}}</h2>
 <hr class="hidden-print"/>
 {% crispy form %}
 <hr/>
