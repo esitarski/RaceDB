@@ -15,11 +15,16 @@ ItemsPerPage = 25
 
 def competitions_with_results( competitions=None ):
 	if competitions is None:
-		competitions = Competition.objects.all()		
+		competitions = Competition.objects.all()
 	return competitions.filter(
 		Q(pk__in=ResultMassStart.objects.values_list('event__competition__pk',flat=True).distinct()) |
 		Q(pk__in=ResultTT.objects.values_list('event__competition__pk',flat=True).distinct())
 	).distinct()
+
+def competitions_with_results_or_prereg( competitions=None ):
+	if competitions is None:
+		competitions = Competition.objects.all()
+	return competitions.filter( pk__in=Participant.objects.values_list('competition__pk',flat=True).distinct() )
 
 @autostrip
 class CompetitionSearchForm( Form ):
@@ -30,7 +35,7 @@ class CompetitionSearchForm( Form ):
 	def __init__(self, *args, **kwargs):
 		super(CompetitionSearchForm, self).__init__(*args, **kwargs)
 		
-		competitions = competitions_with_results()
+		competitions = competitions_with_results_or_prereg()
 		
 		year_cur = datetime.datetime.now().year
 		
@@ -113,7 +118,7 @@ def SearchCompetitions( request ):
 		for n in name_text.split():
 			competitions = competitions.filter( name__icontains=n )
 	
-	competitions = competitions_with_results( competitions ).order_by('-start_date')
+	competitions = competitions_with_results_or_prereg( competitions ).order_by('-start_date')
 	
 	competitions, paginator = getPaginator( request, page_key, competitions )
 	exclude_breadcrumbs = True
@@ -131,8 +136,12 @@ def CompetitionResults( request, competitionId ):
 	for e in events:
 		day = get_day[timezone.localtime(e.date_time).strftime('%Y-%m-%d')]
 		for w in e.get_wave_set().all():
-			for c in Category.objects.filter( pk__in=w.get_results().values_list('participant__category__pk',flat=True).distinct() ):
-				category_results[c][day].append( (e, w) )
+			if w.has_results():
+				for c in Category.objects.filter( pk__in=w.get_results().values_list('participant__category__pk',flat=True).distinct() ):
+					category_results[c][day].append( (e, w) )
+			else:
+				for c in Category.objects.filter( pk__in=set( p.category.pk for p in w.get_participants() if p.category ) ):
+					category_results[c][day].append( (e, w) )				
 
 	category_results = [(k,v) for k,v in category_results.iteritems()]
 	category_results.sort( key=lambda p:(p[0].gender, p[0].sequence) )
@@ -176,18 +185,27 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	category = get_object_or_404( Category, pk=categoryId )
 	wave = event.get_wave_for_category( category )
 	
+	has_results = wave.has_results()
+	
+	if has_results:
+		def get_results( c = None ):
+			return list( wave.get_results(c) )
+	else:
+		def get_results( c = None ):
+			return list( wave.get_prereg_results(c) )
+	
 	if wave.rank_categories_together:
-		results = wave.get_results()
+		results = get_results()
 		cat_name = wave.name
 	else:
-		results = event.get_results().filter( participant__category=category ).order_by('status','category_rank')
+		results = get_results( category )
 		cat_name = category.code_gender
 	
-	num_nationalities = results.exclude(participant__license_holder__nation_code='').values('participant__license_holder__nation_code').distinct().count()
-	num_starters = results.exclude( status=Result.cDNS ).count()
+	num_nationalities = len( set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code) )
+	num_starters = sum( 1 for rr in results if rr.status!=Result.cDNS )
 	time_stamp = timezone.datetime.now()
 
-	payload = get_payload_for_result( results.first() )
+	payload = get_payload_for_result( results[0] ) if results else {}
 	exclude_breadcrumbs = True
 	hub_mode = True
 	is_timetrial = (eventType == 1)

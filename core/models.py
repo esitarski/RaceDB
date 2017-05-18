@@ -1354,6 +1354,11 @@ class Event( models.Model ):
 
 	def has_results( self ):
 		return self.get_results().exists()
+		
+	def get_prereg_results( self ):
+		for w in self.get_wave_set().all():
+			for r in w.get_prereg_results():
+				yield r
 	
 	def get_results_num_starters( self ):
 		return self.get_results().exclude(status=Result.cDNS).count()
@@ -1710,14 +1715,18 @@ class WaveBase( models.Model ):
 			return self.get_participant_options().count()
 	
 	def get_participants( self ):
-		return self.get_participants_unsorted().order_by('bib')
+		return self.get_participants_unsorted().select_related('category', 'license_holder').order_by('bib')
 		
 	def get_num_nationalities( self ):
 		return self.get_participants_unsorted().exclude(
 			license_holder__nation_code='').values_list('license_holder__nation_code').distinct().count()
 	
-	def get_results( self ):
-		return self.event.get_results().filter(participant__category__in=self.categories.all())
+	def get_results( self, category=None ):
+		if category:
+			assert self.categories.filter(pk=category.pk).exists()
+			return self.event.get_results().filter(participant__category=category).order_by('status','category_rank')
+		else:
+			return self.event.get_results().filter(participant__category__in=self.categories.all()).order_by('status','wave_rank')
 
 	def has_results( self ):
 		return self.get_results().exists()
@@ -1730,6 +1739,35 @@ class WaveBase( models.Model ):
 			status=Result.cDNS).exclude(
 			participant__license_holder__nation_code='').values_list('participant__license_holder__nation_code').distinct().count()
 	
+	def get_prereg_results( self, category=None ):
+		assert not self.has_results()
+		
+		RC = self.event.get_result_class()
+		if category:
+			participants = list( p for p in self.get_participants() if p.category == category )
+		else:
+			participants = list( self.get_participants() )
+		participants.sort( key=operator.attrgetter('license_holder.search_text') )
+		
+		category_starters = defaultdict( int )
+		for p in participants:
+			category_starters[p.category_id] += 1
+		
+		wave_starters = sum( category_starters.itervalues() )
+		category_rank = defaultdict( int )
+		for pos, p in enumerate(participants, 1):
+			category_rank[p.category_id] += 1
+			yield RC(
+				event=self.event,
+				participant=p,
+				status=Result.cNP,
+				category_rank=category_rank[p.category_id], category_starters=category_starters[p.category_id],
+				wave_rank=pos, wave_starters=wave_starters,
+			)
+			
+	def get_num_nationalities( self ):
+		return self.get_participants().exclude(license_holder__nation_code='').values_list('license_holder__nation_code').distinct().count()
+			
 	@property
 	def spots_remaining( self ):
 		return None if self.max_participants is None else max(0, self.max_participants - self.get_participant_count())
@@ -1833,8 +1871,8 @@ class Wave( WaveBase ):
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
 	
-	def get_results( self ):
-		return self.event.get_results().select_related('participant', 'participant__license_holder').filter( participant__category__in=self.categories.all() )
+	def get_results( self, category = None ):
+		return super( Wave, self ).get_results( category ).select_related('participant', 'participant__license_holder')
 	
 	def get_json( self ):
 		js = super(Wave, self).get_json()
@@ -3867,8 +3905,8 @@ class WaveTT( WaveBase ):
 		init_sequence_last( WaveTT, self )
 		return super( WaveTT, self ).save( *args, **kwargs )
 	
-	def get_results( self ):
-		return self.event.get_results().filter( participant__category__in=self.categories.all() )
+	def get_results( self, category = None ):
+		return super( WaveTT, self ).get_results( category ).select_related('participant', 'participant__license_holder')
 	
 	def get_speed( self, participant ):
 		try:
@@ -3954,7 +3992,7 @@ class WaveTT( WaveBase ):
 		return u' '.join( summary )
 	
 	def get_participants( self ):
-		participants = list( self.get_participants_unsorted().select_related('license_holder','team') )
+		participants = list( self.get_participants_unsorted().select_related('category', 'license_holder','team') )
 		
 		if not self.event.create_seeded_startlist:
 			participants.sort( key=lambda p: p.bib or 0 )

@@ -37,7 +37,7 @@
 			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
 			<td>{{c.organizer}}</td>
 			<td>{{c.race_class.name}}</td>
-			<td>{% with has_results=c.has_results %}{% if has_results %}{{has_results|good_bad_icon}}{% endif %}{% endwith %}</td>
+			<td>{% if c.has_results %}<span class="is-finished" />{% endif %}</td>
 			{% if c not in existing_competitions %}
 				<td>
 					<a class="btn btn-success hidden-print" href="{{popUrl}}SeriesCompetitionAdd/{{series.id}}/{{c.id}}/">{% trans "Add" %}</a>

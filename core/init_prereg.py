@@ -20,11 +20,14 @@ def init_prereg(
 	tstart = datetime.datetime.now()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def message_stream_write( s ):
+		def ms_write( s, flush=False ):
 			message_stream.write( removeDiacritic(s) )
 	else:
-		def message_stream_write( s ):
+		def ms_write( s, flush=False ):
 			message_stream.write( unicode(s) )
+			sys.stdout.write( removeDiacritic(s) )
+			if flush:
+				sys.stdout.flush()
 	
 	fix_bad_license_codes()
 	
@@ -34,10 +37,10 @@ def init_prereg(
 		try:
 			competition = Competition.objects.get( name=competition_name )
 		except Competition.DoesNotExist:
-			message_stream_write( u'**** Cannot find Competition: "{}"\n'.format(competition_name) )
+			ms_write( u'**** Cannot find Competition: "{}"\n'.format(competition_name) )
 			return
 		except Competition.MultipleObjectsReturned:
-			message_stream_write( u'**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
+			ms_write( u'**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
 			return
 	
 	optional_events = { normalize(event.name):event for event in competition.get_events() if event.optional }
@@ -50,7 +53,7 @@ def init_prereg(
 			event_name_count[event.name] += 1
 	for event_name, count in event_name_count.iteritems():
 		if count > 1:
-			message_stream_write( u'**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
+			ms_write( u'**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
 	
 	role_code = {}
 	for role_type, roles in Participant.COMPETITION_ROLE_CHOICES:
@@ -84,7 +87,7 @@ def init_prereg(
 			try:
 				date_of_birth = date_from_value(date_of_birth)
 			except Exception as e:
-				message_stream_write( 'Row {}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
+				ms_write( 'Row {}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
 					i, date_of_birth, ur, e)
 				)
 				date_of_birth = None
@@ -97,6 +100,9 @@ def init_prereg(
 					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
 				except:
 					pass
+			
+			# As a last resort, pick the default DOB
+			date_of_birth 	= date_of_birth or invalid_date_of_birth
 			
 			license_code	= to_int_str(v('license_code', u'')).upper().strip()
 			last_name		= to_str(v('last_name',u''))
@@ -170,14 +176,14 @@ def init_prereg(
 					try:
 						license_holder = LicenseHolder.objects.get( license_code=license_code )
 					except LicenseHolder.DoesNotExist:
-						message_stream_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
+						ms_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
 							i, license_code, name) )
 						continue
 				else:
 					# No license code.  Try to find the participant by last/first name, [date_of_birth] and [gender].
 					# Case insensitive comparison, accents ignored for names.
 					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
-					if date_of_birth:
+					if date_of_birth and date_of_birth != invalid_date_of_birth:
 						q &= Q( date_of_birth=date_of_birth )
 					if gender is not None:
 						q &= Q( gender=gender )
@@ -211,13 +217,13 @@ def init_prereg(
 							)
 							license_holder.save()
 						except Exception as e:
-							message_stream_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+							ms_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
 									i, e, name,
 								)
 							)
 							continue
 					except LicenseHolder.MultipleObjectsReturned:
-						message_stream_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
+						ms_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
 								i, name,
 							)
 						)
@@ -241,7 +247,7 @@ def init_prereg(
 					try:
 						license_holder.save()
 					except Exception as e:
-						message_stream_write( u'**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
+						ms_write( u'**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
 								i, e, name,
 							)
 						)
@@ -254,7 +260,7 @@ def init_prereg(
 				if category_code:
 					category = get_category( category_code, license_holder.gender )
 					if category is None:
-						message_stream_write( u'**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
+						ms_write( u'**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
 							i, category_code, name,
 						) )
 				
@@ -266,11 +272,11 @@ def init_prereg(
 					try:
 						team = Team.objects.get(name=team_name)
 					except Team.DoesNotExist:
-						message_stream_write( u'**** Row {}: no Team matches name (ignoring): "{}" Name="{}"\n'.format(
+						ms_write( u'**** Row {}: no Team matches name (ignoring): "{}" Name="{}"\n'.format(
 							i, team_name, name,
 						) )
 					except Team.MultipleObjectsReturned:
-						message_stream_write( u'**** Row {}: multiple Teams match name (ignoring): "{}" Name="{}"\n'.format(
+						ms_write( u'**** Row {}: multiple Teams match name (ignoring): "{}" Name="{}"\n'.format(
 							i, team_name, name,
 						) )
 				
@@ -284,7 +290,7 @@ def init_prereg(
 				except Participant.DoesNotExist:
 					participant = Participant( **participant_keys )
 				except Participant.MultipleObjectsReturned:
-					message_stream_write( u'**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
+					ms_write( u'**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
 						i, name,
 					) )
 					continue
@@ -306,14 +312,14 @@ def init_prereg(
 				try:
 					participant.save()
 				except IntegrityError as e:
-					message_stream_write( u'**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+					ms_write( u'**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
 						i, e,
 						bib, category_code, license_code, name,
 					) )
 					success, integrity_error_message, conflict_participant = participant.explain_integrity_error()
 					if success:
-						message_stream_write( u'{}\n'.format(integrity_error_message) )
-						message_stream_write( u'{}\n'.format(conflict_participant) )
+						ms_write( u'{}\n'.format(integrity_error_message) )
+						ms_write( u'{}\n'.format(conflict_participant) )
 					continue
 				
 				participant.add_to_default_optional_events()
@@ -337,7 +343,7 @@ def init_prereg(
 					else:
 						participant.unsign_waiver_now()
 				
-				message_stream_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
+				ms_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
 							row=i,
 							license=license_holder.license_code,
 							dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
@@ -366,12 +372,12 @@ def init_prereg(
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
 		if cur_sheet_name == sheet_name or sheet_name is None:
-			message_stream_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
+			ms_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
 			ws = wb.sheet_by_name(cur_sheet_name)
 			break
 	
 	if not ws:
-		message_stream_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
+		ms_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 		
 	num_rows = ws.nrows
@@ -395,27 +401,27 @@ def init_prereg(
 				ifm.set_aliases( pattern, (pattern,) )
 			
 			ifm.set_headers( fields )
-			message_stream_write( u'Header Row:\n' )
+			ms_write( u'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
 				if f.lower().strip() in optional_events:
-					message_stream_write( u'        {}. {} (Optional Event)\n'.format(col,f) )
+					ms_write( u'        {}. {} (Optional Event)\n'.format(col,f) )
 				else:
 					name = ifm.get_name_from_alias( f )
 					if name is not None:
-						message_stream_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+						ms_write( u'        {}. {} --> {}\n'.format(col, f, name) )
 					else:
-						message_stream_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
+						ms_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
 			
 			fields_lower = [f.lower() for f in fields]
 			if clear_existing or 'bib' in ifm:
-				message_stream_write( u'Clearing existing Participants...\n' )
+				ms_write( u'Clearing existing Participants...\n' )
 				large_delete_all( Participant, Q(competition=competition) )
 			
 			if 'license_code' not in ifm and 'uci_id' not in ifm:
-				message_stream_write( u'Header Row must contain one of (or both) License or UCI ID.  Aborting.\n' )
+				ms_write( u'Header Row must contain one of (or both) License or UCI ID.  Aborting.\n' )
 				return
 			
-			message_stream_write( u'\n' )
+			ms_write( u'\n' )
 			continue
 			
 		ur_records.append( (r+1, [v.value for v in row]) )
@@ -425,8 +431,8 @@ def init_prereg(
 			
 	process_ur_records( ur_records )
 	
-	message_stream_write( u'\n' )
+	ms_write( u'\n' )
 	for section, total in sorted( times.iteritems(), key = lambda e: e[1], reverse=True ):
-		message_stream_write( u'{}={:.6f}\n'.format(section, total) )
-	message_stream_write( u'\n' )
-	message_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+		ms_write( u'{}={:.6f}\n'.format(section, total) )
+	ms_write( u'\n' )
+	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )

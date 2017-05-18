@@ -8,12 +8,17 @@ def get_payload_for_result( result ):
 	event = result.event
 	competition = event.competition
 	wave = event.get_wave_for_category( category )
+	has_results = wave.has_results()
+	
+	if not has_results:
+		return {}
+	
 	if wave.rank_categories_together:
 		results = wave.get_results()
 		cat_name = wave.name
 		cat_type = 'Start Wave'
 	else:
-		results = event.get_results().filter( participant__category=category ).order_by('status','category_rank')
+		results = wave.get_results( category )
 		cat_name = category.code_gender
 		cat_type = 'Component'
 	
@@ -27,6 +32,7 @@ def get_payload_for_result( result ):
 	payload['raceIsRunning'] = False
 	payload["raceIsUnstarted"] = False
 	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCIID', 'NatCode', 'City', 'StateProv']
+	payload['has_results'] = wave.has_results()
 	
 	data = {}
 	race_times_all = []

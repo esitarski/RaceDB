@@ -20,6 +20,7 @@
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "Organizer" %}</th>
 		<th>{% trans "Class" %}</th>
+		<th>{% trans "Results" %}</th>
 	</tr>
 </thead>
 <tbody>
@@ -32,6 +33,7 @@
 			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
 			<td>{{c.organizer}}</td>
 			<td>{{c.race_class.name}}</td>
+			<td>{% if c.has_results %}<span class="is-finished"/>{% endif %}</td>
 		</tr>
 	{% endfor %}
 </tbody>
