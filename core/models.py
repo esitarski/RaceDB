@@ -3031,6 +3031,24 @@ class ParticipantDefaultValues( object ):
 			self.category_init_date = ch.effective_date
 		return self.done()
 		
+	def update_results_avg_kmh( self, license_holder ):
+		ave_kmh = sorted( ResultTT.objects.filter(
+			status=Result.cFinisher,
+			participant__license_holder=license_holder,
+			event__competition__discipline=self.competition.discipline,
+			ave_kmh__isnull=False,
+			).exclude( ave_kmh__lte=0.0,
+			).order_by('-event__date_time',
+			)[:3].values_list( 'ave_kmh', flat=True )
+		)
+		if ave_kmh:
+			lak = len(ave_kmh)
+			if lak & 1:
+				self.est_kmh = ave_kmh[lak//2]
+			else:
+				m = lak // 2
+				self.est_kmh = (ave_kmh[m-1] + ave_kmh[m]) / 2.0
+		
 class Participant(models.Model):
 	competition = models.ForeignKey( 'Competition', db_index=True )
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True )
@@ -3325,6 +3343,10 @@ class Participant(models.Model):
 			pdv.update_team_hint( TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by(
 				'-effective_date').first()
 			)
+		
+		# If there are time trial events, initialize from past time trials results.
+		if EventTT.objects.filter( competition=self.competition ).exists():
+			pdv.update_results_avg_kmh( self.license_holder )
 		
 		self.category	= pdv.category
 		self.team		= pdv.team
