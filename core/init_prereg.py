@@ -269,14 +269,10 @@ def init_prereg(
 				#
 				team = None
 				if team_name:
-					try:
-						team = Team.objects.get(name=team_name)
-					except Team.DoesNotExist:
-						ms_write( u'**** Row {}: no Team matches name (ignoring): "{}" Name="{}"\n'.format(
-							i, team_name, name,
-						) )
-					except Team.MultipleObjectsReturned:
-						ms_write( u'**** Row {}: multiple Teams match name (ignoring): "{}" Name="{}"\n'.format(
+					team = Team.objects.filter( search_text__startswith=utils.get_search_text([team_name])
+						).order_by('-team_type').first()
+					if not team:
+						ms_write( u'**** Row {}: no Team matches name (ignoring): Team="{}" Name="{}"\n'.format(
 							i, team_name, name,
 						) )
 				
