@@ -1768,9 +1768,6 @@ class WaveBase( models.Model ):
 				wave_rank=pos, wave_starters=wave_starters,
 			)
 			
-	def get_num_nationalities( self ):
-		return self.get_participants().exclude(license_holder__nation_code='').values_list('license_holder__nation_code').distinct().count()
-			
 	@property
 	def spots_remaining( self ):
 		return None if self.max_participants is None else max(0, self.max_participants - self.get_participant_count())
