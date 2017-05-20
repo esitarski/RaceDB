@@ -1721,8 +1721,7 @@ class WaveBase( models.Model ):
 		return self.get_participants_unsorted().select_related('category', 'license_holder').order_by('bib')
 		
 	def get_num_nationalities( self ):
-		return self.get_participants_unsorted().exclude(
-			license_holder__nation_code='').values_list('license_holder__nation_code').distinct().count()
+		return get_num_nationalities( self.get_participants_unsorted() )
 	
 	def get_results( self, category=None ):
 		if category:
