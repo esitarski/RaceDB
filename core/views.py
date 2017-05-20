@@ -102,6 +102,7 @@ class LicenseHolderTagForm( Form ):
 def LicenseHolderTagChange( request, licenseHolderId ):
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
+	system_info = SystemInfo.get_singleton()
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -155,7 +156,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 					)
 				
 				# Check for valid tag.
-				elif not utils.allHex(tag):
+				elif system_info.tag_all_hex and not utils.allHex(tag):
 					status = False
 					status_entries.append(
 						(_('Non-Hex Characters in Tag'), (
@@ -2349,6 +2350,9 @@ class SystemInfoForm( ModelForm ):
 				Col(Field('tag_bits'), 4),
 				Col(Field('tag_template', size=28), 4),
 				Col(Field('tag_from_license_id'), 4),
+			),
+			Row(
+				Col(Field('tag_all_hex'), 6),
 			),
 			HTML( '<hr/>' ),
 			Row(

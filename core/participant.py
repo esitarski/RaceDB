@@ -1307,7 +1307,7 @@ def ParticipantTagChange( request, participantId ):
 						_('Please specify a Tag, generate a Tag, or press Cancel.'),
 					)),
 				)
-			elif not utils.allHex(tag):
+			elif system_info.tag_all_hex and not utils.allHex(tag):
 				status = False
 				status_entries.append(
 					(_('Non-Hex Characters in Tag'), (

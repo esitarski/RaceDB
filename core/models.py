@@ -211,6 +211,9 @@ class SystemInfo(models.Model):
 	ID_CHOICES = [(i, u'{}'.format(i)) for i in xrange(32)]
 	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'),
 		help_text=_('Identifier for generating tags from License Code.') )
+		
+	tag_all_hex = models.BooleanField( default = True, verbose_name = _("RFID Tag all Hex"),
+			 help_text=_('Set to True if all tags characters are in [0-9A-F]'))
 
 	RFID_SERVER_HOST_DEFAULT = 'localhost'
 	RFID_SERVER_PORT_DEFAULT = 50111
