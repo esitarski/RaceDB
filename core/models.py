@@ -2777,13 +2777,13 @@ class CustomCategory(Sequence):
 		results_query = self.event.get_results().filter(participant__in=custom_participants)
 		results = list( results_query )
 			
+		if not results:
+			return results
+		
 		if getattr(self.event, 'win_and_out', False):
 			results.sort( key=lambda rr: (rr.status, rr.get_num_laps(), rr.participant.bib) )
 			for rr in results:
 				rr.wave_gap = rr.category_gap = u''
-			return results
-		
-		if not results:
 			return results
 		
 		# Rank the combined results together.
@@ -2820,6 +2820,22 @@ class CustomCategory(Sequence):
 			rr.wave_gap = rr.category_gap = t.format_no_decimals()
 
 		return results
+	
+	def get_prereg_results( self ):
+		assert not self.has_results()
+		
+		RC = self.event.get_result_class()
+		participants = self.event.get_participants().filter(self.get_participant_query())
+		
+		wave_starters = participants.count()
+		return [
+			RC(
+				event=self.event,
+				participant=p,
+				status=Result.cNP,
+				category_rank=pos, category_starters=wave_starters,
+				wave_rank=pos, wave_starters=wave_starters,
+			) for pos, p in enumerate(participants.order_by('license_holder__search_text'), 1) ]
 	
 	class Meta:
 		verbose_name = _('CustomCstegory')

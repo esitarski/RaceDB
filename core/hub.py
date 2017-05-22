@@ -220,7 +220,7 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	
 	has_results = custom_category.has_results()
 	
-	results = custom_category.get_results()
+	results = custom_category.get_results() if has_results else custom_category.get_prereg_results()
 	num_nationalities = len(set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code))
 	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
 	time_stamp = timezone.datetime.now()
