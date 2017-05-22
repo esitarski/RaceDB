@@ -76,6 +76,7 @@
 										<li>
 											<a href="/RaceDB/Hub/CustomCategoryResults/{{e.id}}/{{e.event_type}}/{{ccr.id}}/">
 												<strong>{{ccr.code_gender}}</strong>
+											{% if ccr.has_results %}&nbsp;<span class="is-finished" />{% endif %}
 											</a>
 										</li>
 									{% endfor %}

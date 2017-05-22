@@ -218,6 +218,8 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	CCC = event.get_custom_category_class()
 	custom_category = category = get_object_or_404( CCC, pk=customCategoryId )
 	
+	has_results = custom_category.has_results()
+	
 	results = custom_category.get_results()
 	num_nationalities = len(set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code))
 	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
