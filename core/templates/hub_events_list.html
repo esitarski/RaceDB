@@ -37,7 +37,7 @@
 							<li>
 							<a href="/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/">
 								<strong>{{e.name}} {{e.get_type_abbrev}}</strong></a>
-								{% if w.has_results %}<span class="is-finished" />{% endif %}
+								{% if w.has_results %}&nbsp;<span class="is-finished" />{% endif %}
 							</li>
 						{% endfor %}
 						</ul>
