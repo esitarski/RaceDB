@@ -3,24 +3,13 @@ import datetime
 from django.utils.translation import ugettext_lazy as _
 from views import license_holders_from_search_text
 
-def get_payload_for_result( result ):
-	category = result.participant.category
+def get_payload_for_result( has_results, result_list, cat_name, cat_type, result=None ):
+	if not result_list or not has_results:
+		return {}
+
+	result = result or result_list[0]
 	event = result.event
 	competition = event.competition
-	wave = event.get_wave_for_category( category )
-	has_results = wave.has_results()
-	
-	if not has_results:
-		return {}
-	
-	if wave.rank_categories_together:
-		results = wave.get_results()
-		cat_name = wave.name
-		cat_type = 'Start Wave'
-	else:
-		results = wave.get_results( category )
-		cat_name = category.code_gender
-		cat_type = 'Component'
 	
 	payload = {}
 	payload['bib'] = result.participant.bib
@@ -32,7 +21,7 @@ def get_payload_for_result( result ):
 	payload['raceIsRunning'] = False
 	payload["raceIsUnstarted"] = False
 	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCIID', 'NatCode', 'City', 'StateProv']
-	payload['has_results'] = wave.has_results()
+	payload['has_results'] = has_results
 	
 	data = {}
 	race_times_all = []
@@ -46,7 +35,7 @@ def get_payload_for_result( result ):
 	speed_unit = 'km/h' if competition.distance_unit == 0 else 'mph'
 	distance_unit = 'km' if competition.distance_unit == 0 else 'miles'
 	
-	for rr in results:
+	for rr in result_list:
 		p = rr.participant
 		h = p.license_holder
 		

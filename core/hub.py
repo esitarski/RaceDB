@@ -197,15 +197,17 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	if wave.rank_categories_together:
 		results = get_results()
 		cat_name = wave.name
+		cat_type = 'Start Wave'
 	else:
 		results = get_results( category )
 		cat_name = category.code_gender
+		cat_type = 'Component'
 	
 	num_nationalities = len( set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code) )
 	num_starters = sum( 1 for rr in results if rr.status!=Result.cDNS )
 	time_stamp = timezone.datetime.now()
 
-	payload = get_payload_for_result( results[0] ) if results else {}
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
 	exclude_breadcrumbs = True
 	hub_mode = True
 	is_timetrial = (eventType == 1)
@@ -225,7 +227,7 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
 	time_stamp = timezone.datetime.now()
 
-	payload = get_payload_for_result( results[0] ) if results else {}
+	payload = get_payload_for_result( has_results, results, custom_category.name, 'Custom' )
 	exclude_breadcrumbs = True
 	hub_mode = True
 	is_timetrial = (eventType == 1)
@@ -240,10 +242,36 @@ def LicenseHolderResults( request, licenseHolderId ):
 def ResultAnalysis( request, eventId, eventType, resultId ):
 	eventType = int(eventType)
 	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	
 	is_timetrial = (event.event_type == 1)
 	result = get_object_or_404( event.get_result_class(), pk=resultId )
+	participant = result.participant
+	category = participant.category	
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	
+	if has_results:
+		def get_results( c = None ):
+			return list( wave.get_results(c) )
+	else:
+		def get_results( c = None ):
+			return list( wave.get_prereg_results(c) )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
 	license_holder = result.participant.license_holder
-	payload = get_payload_for_result( result )
+	
+	event.result.event
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type, result=result )
 	exclude_breadcrumbs = True
 	hub_mode = True
 	is_timetrial = (eventType == 1)
