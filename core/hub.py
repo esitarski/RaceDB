@@ -269,8 +269,6 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 	
 	license_holder = result.participant.license_holder
 	
-	event.result.event
-	
 	payload = get_payload_for_result( has_results, results, cat_name, cat_type, result=result )
 	exclude_breadcrumbs = True
 	hub_mode = True

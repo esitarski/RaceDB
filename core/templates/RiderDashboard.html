@@ -741,7 +741,7 @@ function updateHistogramChart() {
 			name += ', ' + d.FirstName;
 		var finishTime = (d.raceTimes.back() - d.raceTimes[0]) / 60.0;
 		finishTimes.push( finishTime );
-		var row = [ name, finishTime];
+		var row = [name, finishTime];
 		dataTable.addRow( row );
 	}
 
@@ -751,15 +751,13 @@ function updateHistogramChart() {
 			median = finishTimes[Math.floor(finishTimes.length/2)];
 		else {
 			var i = Math.floor(finishTimes.length/2);
-			median = (finishTimes[i] + finishTime[i+1]) / 2.0;
+			median = (finishTimes[i-1] + finishTimes[i]) / 2.0;
 		}
-		for( var i = 0; i < finishTimes.length; ++i )
-			mean += finishTimes[i];
-		mean /= finishTimes.length;
-		for( var i = 0; i < finishTimes.length; ++i )
-			variance += (finishTimes[i] - mean) * (finishTimes[i] - mean);
-		variance /= finishTimes.length;
-		std = Math.sqrt( variance );
+		mean = finishTimes.reduce( function(s, v) { return s + v; }, 0) / finishTimes.length;
+		var sumOfSquares = finishTimes.reduce( function(s, v) { return (v-mean) * (v-mean); }, 0);
+		variance = sumOfSquares / finishTimes.length;
+		if( finishTimes.length > 1 )
+			std = Math.sqrt( sumOfSquares / (finishTimes.length-1) );
 	}
 	var statsDiv = document.getElementById( 'idStatistics' );
 	if( mean != 0 ) {
