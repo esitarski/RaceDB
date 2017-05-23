@@ -747,7 +747,7 @@ function updateHistogramChart() {
 
 	var mean = 0, median = 0, variance = 0, std = 0;
 	if( finishTimes.length > 0 ) {
-		if( (finishTimes.length & 1) == 1 )
+		if( finishTimes.length & 1 )
 			median = finishTimes[Math.floor(finishTimes.length/2)];
 		else {
 			var i = Math.floor(finishTimes.length/2);
