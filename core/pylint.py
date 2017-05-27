@@ -1,5 +1,6 @@
 import sys
 import glob
+import operator
 import subprocess
 import StringIO
 
@@ -7,7 +8,7 @@ cmd = 'pylint'
 
 with open( 'pylint_output.txt', 'w' ) as output:
 	files = set( sys.argv[1:] )
-	for f in sorted(glob.glob('*.py')):
+	for f in sorted(glob.glob('*.py'), key=operator.methodcaller('lower')):
 		if files and f not in files:
 			continue
 		print f

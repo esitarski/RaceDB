@@ -2,12 +2,12 @@ import csv
 import datetime
 import HTMLParser
 from collections import namedtuple
-from models import *
 from utils import toUnicode, removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 from django.db.utils import IntegrityError
 import csv, codecs
+from models import *
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
@@ -69,7 +69,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 	
 	state_set = set( states.split(',') ) if states else None
 
-	discipline_id = dict( (discipline, Discipline.objects.get(name=discipline)) for discipline in ['Road', 'Track', 'Cyclocross', 'MTB'] )
+	discipline_id = { discipline.name.lower():discipline for discipline in Discipline.objects.all() }
 
 	effective_date = datetime.date.today()
 	
@@ -116,7 +116,11 @@ def init_usac( fname = fnameDefault, states = '' ):
 			
 			teams = dict( ((th.discipline, th.team.team_type), th) for th in TeamHint.objects.select_related('team').filter(license_holder=lh) )
 			th_used = set()
-			for code, discipline in [('rd', 'Road'), ('track', 'Track'), ('cx', 'Cyclocross'), ('mtn', 'MTB')]:
+			for code, discipline_name in [('rd', 'Road'), ('track', 'Track'), ('cx', 'Cyclocross'), ('mtn', 'MTB')]:
+				discipline_obj = discipline_id.get( discipline_name.lower(), None )
+				if not discipline_obj:
+					continue
+				
 				if getattr(ur, code + 'team', None):
 					tname = getattr(ur, code + 'team')
 					ttype = 1
@@ -127,13 +131,13 @@ def init_usac( fname = fnameDefault, states = '' ):
 					continue
 					
 				attributes = {
-					'discipline':		discipline_id[discipline],
+					'discipline':		discipline_obj,
 					'license_holder':	lh,
 					'effective_date':	effective_date,
 					'team':				Team.objects.get_or_create(name=tname, team_type=ttype, nation_code='USA')[0],
 				}
 				try:
-					th = teams[(discipline_id[discipline], ttype)]
+					th = teams[(discipline_obj, ttype)]
 					if set_attributes( th, attributes ):
 						th.save()
 				except KeyError:
