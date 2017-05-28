@@ -155,7 +155,7 @@
 	{% with h=p.license_holder %}
 	<tr onclick="jump('./ParticipantEdit/{{p.id}}/');" {% if p.gap_change > 0 %}class="gap-change-inc"{% elif p.gap_change < 0%}class="gap-change-dec"{% endif %}>
 		<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
-		<td class="text-right clock-time">{% if p.clock_time %}{{p.clock_time | time:"h:i:s a"}}{% else %}{% trans "None" %}{% endif %}</td>
+		<td class="text-right clock-time">{% if p.clock_time %}{{p.clock_time | time:"H:i:s"}}{% else %}{% trans "None" %}{% endif %}</td>
 		<td class="text-right start-time">{% if p.start_time %}{{p.start_time}}{% else %}{% trans "None" %}{% endif %}</td>
 		<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
 		<td>{{p.license_holder.full_name}}</td>
