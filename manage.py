@@ -26,5 +26,8 @@ if __name__ == "__main__":
     
     import django
     assert django.VERSION[:3] >= (1,9,9), "Django version must be >= 1.9.9 (currently {}).".format(django.__version__)
+	
+    from django.conf import settings
+    sys.stderr.write( 'ServerTimeZone="{}"\n'.format(settings.TIME_ZONE) )
     
     execute_from_command_line(sys.argv)
