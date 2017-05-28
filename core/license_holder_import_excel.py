@@ -304,12 +304,23 @@ def license_holder_import_excel(
 				team = None
 				team_name = lhr.pop('team_name', None)
 				team_code = lhr.pop('team_code', None)
+				team_args = { 'name':team_name, 'team_code':team_code }
+				team_args = {k:v for k,v in team_args.iteritems() if v}
 				if team_name:
 					team = Team.objects.filter( search_text__startswith=utils.get_search_text([team_name])).first()
-					if set_attributes_changed( team, {'name':team_name, 'team_code':team_code}, False ):
-						msg = u'Row {:>6}: Updated team: {}\n'.format(
+					if team:
+						if set_attributes_changed( team, team_args, False ):
+							msg = u'Row {:>6}: Updated team: {}\n'.format(
+								i,
+								u', '.join( unicode(v) for v in [team_name, team_code,] ),
+							)
+							ms_write( msg )
+							team.save()
+					else:
+						team = Team( **team_args )
+						msg = u'Row {:>6}: Added team: {}\n'.format(
 							i,
-							u', '.join( unicode(v) if v else u'None' for v in [team_name, team_code,] ),
+							u', '.join( unicode(v) for v in [team_name, team_code,] ),
 						)
 						ms_write( msg )
 						team.save()
