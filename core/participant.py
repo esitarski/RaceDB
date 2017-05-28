@@ -1297,7 +1297,7 @@ def ParticipantTagChange( request, participantId ):
 						system_info.tag_creation == 0 and get_bits_from_hex(license_holder.existing_tag) == system_info.tag_bits):
 					tag = license_holder.existing_tag
 				else:
-					tag = license_holder.get_unique_tag()
+					tag = license_holder.get_unique_tag( system_info )
 				
 			if not tag:
 				status = False

@@ -3193,6 +3193,16 @@ class Participant(models.Model):
 			if license_holder_update:
 				if competition.use_existing_tags:
 					if license_holder.existing_tag != self.tag or license_holder.existing_tag2 != self.tag2:
+						if self.tag:
+							for license_holder_dup in list(LicenseHolder.objects.filter(existing_tag=self.tag)):
+								license_holder_dup.existing_tag = license_holder_dup.get_unique_tag()
+								license_holder_dup.save()
+						
+						if self.tag2:
+							for license_holder_dup in list(LicenseHolder.objects.filter(existing_tag=self.tag2)):
+								license_holder_dup.existing_tag2 = license_holder_dup.get_unique_tag()
+								license_holder_dup.save()
+						
 						license_holder.existing_tag  = self.tag
 						license_holder.existing_tag2 = self.tag2
 						license_holder.save()
