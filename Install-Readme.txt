@@ -123,7 +123,6 @@ Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal enter two commands:
 
   python manage.py migrate
-  python manage.py init_data
 
 The first command builds the required database structure for all the RaceDB modules.
 During the process, you may be required to enter an admin login.

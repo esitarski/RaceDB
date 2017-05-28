@@ -19,6 +19,7 @@ from core.models import SystemInfo, models_fix_data
 from core.create_users import create_users
 from core.print_bib import reset_font_cache
 from core.views_common import set_hub_mode
+from core.init_data import init_data_if_necessary
 
 def check_connection( host, port ):
 	print 'Checking connection {}:{}'.format(host,port)
@@ -87,6 +88,9 @@ def launch_server( command, **options ):
 		reset_font_cache()
 	except:
 		pass
+	
+	# Initialize the database with pre-seeded data if it was not done.
+	init_data_if_necessary()
 	
 	# Read the config file and adjust any options.
 	config_parser = SafeConfigParser()
