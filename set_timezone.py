@@ -4,6 +4,7 @@
 import sys
 from pytz import all_timezones
 from Tkinter import *
+import tkMessageBox
 
 def get_list(event):
 	"""
@@ -15,7 +16,7 @@ def get_list(event):
 	# get the line's text
 	seltext = listbox1.get(index)
 	# delete previous text in enter1
-	enter1.delete(0, 50)
+	enter1.delete(0, END)
 	# now display the selected text
 	enter1.insert(0, seltext)
 
@@ -63,12 +64,18 @@ except Exception as e:
 
 # create data entry
 enter1 = Entry(root, width=50, bg='yellow')
-enter1.insert(0, 'Click a time zone then press OK')
+enter1.insert(0, 'Select your Time Zone and press OK')
 enter1.grid(row=rowCur, column=0, sticky=E+W, padx=8, pady=8)
 rowCur += 1
 
 def ok_callback():
 	timezone = enter1.get()
+	if 'Time Zone' in timezone:
+		enter1.delete(0, END)
+		enter1.insert(0, 'Seriously! Select your Time Zone, press OK')
+		tkMessageBox.showerror("Time Zone Select Error", "Select your Time Zone from the list and press OK.")
+		return
+
 	with open('RaceDB/time_zone.py','w') as f:
 		f.write( 'TIME_ZONE="{}"\n'.format(timezone) )
 	sys.exit()

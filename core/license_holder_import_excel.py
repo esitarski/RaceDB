@@ -181,7 +181,7 @@ def license_holder_import_excel(
 		if license_code:
 			q = LicenseHolder.objects.filter(license_code=license_code)
 			if existing_id:
-				q.exclude( id=existing_id )
+				q = q.exclude( id=existing_id )
 			lh = q.first()
 			if lh:
 				lh.license_code = random_temp_license()
@@ -189,7 +189,7 @@ def license_holder_import_excel(
 		if tag:
 			q = LicenseHolder.objects.filter(existing_tag=tag)
 			if existing_id:
-				q.exclude( id=existing_id )
+				q = q.exclude( id=existing_id )
 			lh = q.first()
 			if lh:
 				lh.existing_tag = get_id( system_info.tag_bits )
@@ -296,6 +296,7 @@ def license_holder_import_excel(
 	def process_license_header_rows( license_holder_rows ):
 		# Put all the cleansed data into the database in one transaction.
 		# It is critical not to throw any exceptions here.
+		
 		with transaction.atomic():
 			for i, lhr in license_holder_rows:			
 				#------------------------------------------------------------------------------

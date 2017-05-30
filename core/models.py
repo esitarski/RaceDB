@@ -619,11 +619,10 @@ class SeasonsPass(models.Model):
 		return seasons_pass_new
 	
 	def add( self, license_holder ):
-		try:
+		if not self.has_license_holder( license_holder ):
 			SeasonsPassHolder(seasons_pass=self, license_holder=license_holder).save()
 			return True
-		except IntegrityError as e:
-			return False
+		return False
 			
 	def has_license_holder( self, license_holder ):
 		return SeasonsPassHolder.objects.filter(seasons_pass=self, license_holder=license_holder).exists()

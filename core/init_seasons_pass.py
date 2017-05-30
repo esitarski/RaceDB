@@ -6,6 +6,7 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q
 from large_delete_all import large_delete_all
 import import_utils
+from FieldMap import standard_field_map
 from import_utils import *
 from models import *
 
@@ -14,88 +15,77 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 	tstart = datetime.datetime.now()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def messsage_stream_write( s ):
+		def ms_write( s ):
 			message_stream.write( removeDiacritic(s) )
 	else:
-		def messsage_stream_write( s ):
+		def ms_write( s ):
 			message_stream.write( unicode(s) )
+			sys.stdout.write( removeDiacritic(s) )
 	
 	try:
 		seasons_pass = SeasonsPass.objects.get( pk=seasonsPassId )
 	except SeasonsPass.DoesNotExist:
-		messsage_stream_write( u'**** Cannot find SeasonsPass\n' )
+		ms_write( u'**** Cannot find SeasonsPass\n' )
 		return
 		
 	if clear_existing:
 		large_delete_all( SeasonsPassHolder, Q(seasons_pass=seasons_pass) )
 	
-	license_col_names = ('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode')
+	ifm = standard_field_map()
 	
 	# Process the records in large transactions for efficiency.
+	@transaction.atomic
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-			
-			license_code = to_int_str(get_key(ur, license_col_names, u'')).upper().strip()
-			last_name		= to_str(get_key(ur,('LastName','Last Name'),u''))
-			first_name		= to_str(get_key(ur,('FirstName','First Name'),u''))
-			date_of_birth	= get_key(ur, ('Date of Birth', 'Birthdate', 'DOB'), None)
+		
+			v = ifm.finder( ur )
+			date_of_birth	= v('date_of_birth', None)
 			try:
 				date_of_birth = date_from_value(date_of_birth)
 			except Exception as e:
-				messsage_stream_write( 'Row {:>6}: Invalid birthdate (ignoring) "{}" ({}) {}'.format( i, date_of_birth, ur, e ) )
+				ms_write( 'Row {i:>6}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
+					i, date_of_birth, ur, e)
+				)
 				date_of_birth = None
+			
 			date_of_birth 	= date_of_birth if date_of_birth != invalid_date_of_birth else None
+			license_code	= to_int_str(v('license_code', u'')).upper().strip()
+			last_name		= to_str(v('last_name',u''))
+			first_name		= to_str(v('first_name',u''))
+			uci_id			= to_uci_id(v('uci_id', None))
 
 			license_holder = None
-			if license_code:
-				try:
-					license_holder = LicenseHolder.objects.get( license_code=license_code )
-				except LicenseHolder.DoesNotExist:
-					messsage_stream_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: "{}"\n'.format(
-						i, license_code) )
-					continue
-				
-			elif last_name:
-				q = Q(search_text__startswith=utils.get_search_text([last_name,first_name]))
-				if date_of_birth:
-					q &= Q(date_of_birth=date_of_birth)
-				try:
-					license_holder = LicenseHolder.objects.get( q )
-				except LicenseHolder.DoesNotExist:
-					messsage_stream_write( u'**** Row {}: cannot find LicenceHolder: "{}, {}" {}\n'.format(
-						i, last_name, first_name, date_of_birth if date_of_birth else '')
-					)
-					continue
-				except LicenseHolder.MultipleObjectsReturned:
-					messsage_stream_write( u'**** Row {}: found multiple LicenceHolders matching "{}, {}" {}\n'.format(
-						i, last_name, first_name, date_of_birth if date_of_birth else '')
-					)
-					continue
-
+			if not license_holder and license_code:
+				license_holder = LicenseHolder.objects.filter( license_code=license_code ).first()
 			else:
-				messsage_stream_write(
-					u'Row {i:>6}: Missing License or LastName, FirstName [Date of Birth]\n'.format(
+				if not license_holder and uci_id:
+					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
+					
+				if not license_holder and last_name:
+					q = Q(search_text__startswith=utils.get_search_text([last_name,first_name]))
+					if date_of_birth:
+						q &= Q(date_of_birth=date_of_birth)				
+					license_holder = LicenseHolder.objects.filter( q ).first()
+
+			if not license_holder:
+				ms_write(
+					u'Row {i:>6}: Cannot find License Holder by License Code or LastName, FirstName [Date of Birth]\n'.format(
 						i=i,
 					)
 				)
 				continue
 				
-			if not license_holder:
-				continue
-			
 			seasons_pass.add( license_holder )
-			messsage_stream_write(
-				u'Row {i:>6}: {license_code:>8} {dob:>10} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
+			ms_write(
+				u'Row {i:>6}: {license_code:>8} {dob:>10} {last_name}, {first_name}, {city}, {state_prov}\n'.format(
 					i=i,
 					license_code=license_holder.license_code,
 					dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
-					uci_code=license_holder.uci_code,
 					last_name=license_holder.last_name,
 					first_name=license_holder.first_name,
 					city=license_holder.city, state_prov=license_holder.state_prov,
 				)
 			)
-			
 	
 	sheet_name = None
 	if worksheet_contents is not None:
@@ -112,12 +102,12 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 	
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
-		messsage_stream_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
+		ms_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
 		ws = wb.sheet_by_name(cur_sheet_name)
 		break
 	
 	if not ws:
-		messsage_stream_write( u'Cannot find sheet.\n' )
+		ms_write( u'Cannot find sheet.\n' )
 		return
 		
 	num_rows = ws.nrows
@@ -127,23 +117,22 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unicode(f.value).strip() for f in row]
-			messsage_stream_write( u'Header Row:\n' )
-			for f in fields:
-				messsage_stream_write( u'   {}\n'.format(f) )
-			
-			fields_lower = [f.lower() for f in fields]
-			if not any( r.lower() in fields_lower for r in license_col_names ):
-				messsage_stream_write( u'License column not found in Header Row.  Aborting.\n' )
-				return
+			ifm.set_headers( fields )
+			ms_write( u'Header Row:\n' )
+			for col, f in enumerate(fields, 1):
+				name = ifm.get_name_from_alias( f )
+				if name is not None:
+					ms_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+				else:
+					ms_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
 			continue
 			
-		ur = { f.strip().lower(): row[c].value for c, f in enumerate(fields) }
-		ur_records.append( (r+1, ur) )
-		if len(ur_records) == 1000:
+		ur_records.append( (r+1, [v.value for v in row]) )
+		if len(ur_records) == 300:
 			process_ur_records( ur_records )
 			ur_records = []
 			
 	process_ur_records( ur_records )
 	
-	messsage_stream_write( u'\n' )
-	messsage_stream_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( u'\n' )
+	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
