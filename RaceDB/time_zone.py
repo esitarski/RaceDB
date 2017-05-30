@@ -1,1 +1,1 @@
-TIME_ZONE="America/Los_Angeles"
+TIME_ZONE="America/Toronto"

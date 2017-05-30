@@ -33,8 +33,16 @@ def pypi():
 	}
 	for root, dirs, files in os.walk('.'):
 		for f in files:
+		
+			# Don't include local configuration in the install.
+			if f in ('time_zone.py', 'DatabaseConfig.py'):
+				print( '****************************************' )
+				print( 'skipping: {}'.format(f) )
+				print( '****************************************' )
+				continue
+			
 			fname = os.path.join( root, f )
-			if any( d in fname for d in ['EV', 'GFRR', 'usac_heatmap', 'usac_bug', 'test_data', 'migrations_old', 'time_zone.py', "bugs"] ):
+			if any( d in fname for d in ['EV', 'GFRR', 'usac_heatmap', 'usac_bug', 'test_data', 'migrations_old', "bugs"] ):
 				continue
 			if os.path.splitext(fname)[1][1:] in suffixes:
 				print( 'writing: {}'.format(fname) )

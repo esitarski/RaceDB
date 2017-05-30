@@ -22,7 +22,7 @@ def get_list(event):
 
 root = Tk()
 root.wm_title("RaceDB: Set Time Zone")
-root.geometry( '300x650' )
+root.geometry( '300x500' )
 
 root.columnconfigure( 0, weight=1 )
 root.rowconfigure( 1, weight=1 )
