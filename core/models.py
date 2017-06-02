@@ -2708,6 +2708,12 @@ class CustomCategory(Sequence):
 		help_text = _('e.g. "ON,BC" comma separated') )
 	state_prov_str =  models.CharField( default='', blank=True, max_length=128, verbose_name=_("State/Provs"),
 		help_text = _('States or Provinces, comma separated') )
+	
+	competitive_age_minimum = models.PositiveSmallIntegerField( default=None, null=True, blank=True,
+		verbose_name=_('Competitive Age Min') )
+	competitive_age_maximum = models.PositiveSmallIntegerField( default=None, null=True, blank=True,
+		verbose_name=_('Competitive Age Max') )
+		
 	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Born After') )
 	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Born Before') )
 	
@@ -2737,6 +2743,10 @@ class CustomCategory(Sequence):
 			q &= get_bib_query( get_numbers(self.range_str) )
 		if self.gender != 2:
 			q &= Q(license_holder__gender=self.gender)
+		if self.competitive_age_minimum:
+			q &= Q(license_holder__date_of_birth__gte=datetime.date(self.event.date_time.year-self.competitive_age_minimum, 1, 1))
+		if self.competitive_age_maximum:
+			q &= Q(license_holder__date_of_birth__lte=datetime.date(self.event.date_time.year-self.competitive_age_minimum, 12, 31))
 		if self.date_of_birth_minimum:
 			q &= Q(license_holder__date_of_birth__gte=self.date_of_birth_minimum)
 		if self.date_of_birth_maximum:

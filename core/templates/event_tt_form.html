@@ -99,6 +99,8 @@
 						{% if cc.state_prov_str %}{% trans "StateProv"%}="{{cc.state_prov_str}}"&nbsp;&nbsp;{% endif %}
 						{% if cc.license_code_prefixes %}{% trans "LicenseCodePrefixes"%}="{{cc.license_code_prefixes}}"&nbsp;&nbsp;{% endif %}
 						{% trans "Gender"%}="{{cc.get_gender_display}}"&nbsp;&nbsp;
+						{% if cc.competitive_age_minimum %}{% trans "MinAge"%}="{{cc.competitive_age_minimum}}"{% endif %}
+						{% if cc.competitive_age_maximum %}{% trans "MaxAge"%}="{{cc.competitive_age_maximum}}"{% endif %}
 						{% if cc.date_of_birth_minimum %}{% trans "MinDOB"%}="{{cc.date_of_birth_minimum}}"{% endif %}
 						{% if cc.date_of_birth_maximum %}{% trans "MaxDOB"%}="{{cc.date_of_birth_maximum}}"{% endif %}
 					</td>

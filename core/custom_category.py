@@ -28,13 +28,17 @@ def GetCustomCategoryForm( cls ):
 				),
 				Row(
 					Col( Field('gender'), 3),
-					Col( Field('date_of_birth_minimum'), 3),
-					Col( Field('date_of_birth_maximum'), 3),
+					Col( Field('competitive_age_minimum'), 3),
+					Col( Field('competitive_age_maximum'), 3),
 				),
 				Row(
 					Col( Field('nation_code_str', size=30), 3),
 					Col( Field('state_prov_str', size=30), 3),
 					Col( Field('license_code_prefixes', size=30), 3),
+				),
+				Row(
+					Col( Field('date_of_birth_minimum'), 3),
+					Col( Field('date_of_birth_maximum'), 3),
 				),
 				Field('event', type='hidden'),
 				Field('sequence', type='hidden'),
