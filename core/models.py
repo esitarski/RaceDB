@@ -2744,9 +2744,9 @@ class CustomCategory(Sequence):
 		if self.gender != 2:
 			q &= Q(license_holder__gender=self.gender)
 		if self.competitive_age_minimum:
-			q &= Q(license_holder__date_of_birth__gte=datetime.date(self.event.date_time.year-self.competitive_age_minimum, 1, 1))
-		if self.competitive_age_maximum:
 			q &= Q(license_holder__date_of_birth__lte=datetime.date(self.event.date_time.year-self.competitive_age_minimum, 12, 31))
+		if self.competitive_age_maximum:
+			q &= Q(license_holder__date_of_birth__gte=datetime.date(self.event.date_time.year-self.competitive_age_maximum, 1, 1))
 		if self.date_of_birth_minimum:
 			q &= Q(license_holder__date_of_birth__gte=self.date_of_birth_minimum)
 		if self.date_of_birth_maximum:
@@ -2757,6 +2757,7 @@ class CustomCategory(Sequence):
 			q &= Q(license_holder__nation_code__iregex=u'^({})$'.format(self.nation_code_str.replace(',','|')))
 		if self.state_prov_str:
 			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace('.',r'\.').replace(',','|')))
+		print q
 		return q
 	
 	def get_bibs( self ):
