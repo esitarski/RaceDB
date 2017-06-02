@@ -128,11 +128,6 @@ def Participants( request, competitionId ):
 		if form.is_valid():
 			participant_filter = form.cleaned_data
 			request.session[pfKey] = participant_filter
-			
-			participant_filter_no_scan = participant_filter.copy()
-			participant_filter_no_scan.pop( 'scan' )
-			
-			request.session[pfKey] = participant_filter_no_scan
 			request.session[pageKey] = None
 	else:
 		form = ParticipantSearchForm( competition = competition, initial = participant_filter )

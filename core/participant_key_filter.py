@@ -94,8 +94,8 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 
 def participant_bib_filter( competition, bib ):
 	# Check for an existing participant.
-	participants = list( competition.participant_set.filter(bib=bib, role=Participant.Competitor) )
-	existing_license_holders = set( p.license_holder_pk for p in participants )
+	participants = list( competition.participant_set.filter(bib=bib, role=Participant.Competitor).select_related('license_holder') )
+	existing_license_holders = set( p.license_holder.pk for p in participants )
 
 	# Check if we can find this bib in the number set excluding existing participants.
 	if competition.number_set:
