@@ -2757,7 +2757,6 @@ class CustomCategory(Sequence):
 			q &= Q(license_holder__nation_code__iregex=u'^({})$'.format(self.nation_code_str.replace(',','|')))
 		if self.state_prov_str:
 			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace('.',r'\.').replace(',','|')))
-		print q
 		return q
 	
 	def get_bibs( self ):
