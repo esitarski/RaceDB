@@ -3,34 +3,38 @@
 {% load to_js %}
 
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+{% if series.ranking_criteria != 1 %}
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+{% endif %}
 {% endblock srcjavascript %}
 
 {% block javascript %}
-google.charts.load('current', {'packages':['sankey']});
-google.charts.setOnLoadCallback(drawSankey);
+{% if series.ranking_criteria != 1 %}
+	google.charts.load('current', {'packages':['sankey']});
+	google.charts.setOnLoadCallback(drawSankey);
 
-function drawSankey() {
-	var data = new google.visualization.DataTable();
-	data.addColumn('string', '{% trans "From" %}');
-	data.addColumn('string', '{% trans "To" %}');
-	data.addColumn('number', '{% if series.ranking_criteria == 1 %}{% trans "Time" %}{% else %}{% trans "Points" %}{% endif %}');
-	data.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
-	data.addRows({{json_data|to_js}});
+	function drawSankey() {
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', '{% trans "From" %}');
+		data.addColumn('string', '{% trans "To" %}');
+		data.addColumn('number', '{% if series.ranking_criteria == 1 %}{% trans "Time" %}{% else %}{% trans "Points" %}{% endif %}');
+		data.addColumn({type: 'string', role: 'tooltip', 'p': {'html': true}});
+		data.addRows({{json_data|to_js}});
 
-	var options = {
-		width: 600,
-		sankey: {
-			iterations: 0,
-		},
-	  tooltip: {
-			textStyle: {fontSize: 11}
-		}
-	};
+		var options = {
+			width: 600,
+			sankey: {
+				iterations: 0,
+			},
+		  tooltip: {
+				textStyle: {fontSize: 11}
+			}
+		};
 
-	var chart = new google.visualization.Sankey(document.getElementById('idSankeyChart'));
-	chart.draw(data, options);
-}
+		var chart = new google.visualization.Sankey(document.getElementById('idSankeyChart'));
+		chart.draw(data, options);
+	}
+{% endif %}
 {% endblock javascript %}
 
 {% block content %}
@@ -58,7 +62,7 @@ table.results-table tr th {
 <h1>
 	<strong><a href='/RaceDB/Hub/SeriesCategories/{{series.id}}/'>{{series.name}}</strong></a> <span style="font-size: 75%">{{series.description}}</span><br/>
 	<span style="font-size: 75%">
-		{% for c in group_categories %}{% if not forloop.last %}, {% endif %}{{c.code_gender}}{% endfor %}
+		{% for c in group_categories %}{{c.code_gender}}{% if not forloop.last %}, {% endif %}{% endfor %}
 	</span>
 </h1>
 {% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
@@ -195,7 +199,9 @@ table.results-table tr th {
 	<li>{% trans "Most recent result." %}</li>
 </ol>
 
-<hr/>
-<div class='hidden-print' id="idSankeyChart" style="width: 1200px; height: 900px;"></div>
+{% if series.ranking_criteria != 1 %}
+	<hr/>
+	<div class='hidden-print' id="idSankeyChart" style="width: 1200px; height: 900px;"></div>
+{% endif %}
 
 {% endblock content %}

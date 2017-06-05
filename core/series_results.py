@@ -266,8 +266,8 @@ def series_results( series, categories, eventResults ):
 					iResults.sort( key=(lambda x: (x[1].value_for_rank, x[0])) )
 				else:
 					iResults.sort( key=(lambda x: (-x[1].value_for_rank, x[0])) )
-				for i, t in iResults[bestResultsToConsider:]:
-					lhValue[lh] -= t
+				for i, rr in iResults[bestResultsToConsider:]:
+					lhValue[lh] -= rr.value_for_rank
 					rrs[i].ignored = True
 				lhEventsCompleted[lh] = bestResultsToConsider
 
