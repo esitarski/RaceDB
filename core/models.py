@@ -2510,6 +2510,10 @@ class Result(models.Model):
 		return mark_safe(u'{}/{}{}'.format(rank, starters, gap).replace(' ', '&nbsp;'))
 	
 	@property
+	def is_finisher( self ):
+		return self.status == self.cFinisher
+	
+	@property
 	def category_result_html( self ):
 		return self.format_result_html( self.category_rank, self.category_gap, self.category_starters )
 	

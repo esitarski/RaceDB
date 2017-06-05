@@ -31,7 +31,11 @@ class EventResult( object ):
 		self.original_category = self.category = result.participant.category
 		
 		self.ignored = False
-		
+	
+	@property
+	def is_finisher( self ):
+		return self.status == Result.cFinisher
+	
 	@property
 	def upgraded( self ):
 		return self.category != self.original_category
@@ -225,6 +229,11 @@ def series_results( series, categories, eventResults ):
 	# Get all results for this category.
 	categories = set( list(categories) )
 	eventResults = [rr for rr in eventResults if rr.category in categories]
+	
+	# If scoring by time, trim out all DNF and DNS events as they contribute nothing.
+	if scoreByTime:
+		eventResults = [rr for rr in eventResults if rr.is_finisher]
+	
 	if not eventResults:
 		return [], []
 	eventResults.sort( key=operator.attrgetter('event.date_time', 'event.name', 'rank') )
