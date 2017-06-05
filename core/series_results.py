@@ -55,6 +55,7 @@ class EventResult( object ):
 			return next(v for v in Result.STATUS_CODE_NAMES if v[0] == self.status)[1]
 		return ordinal( self.rank )
 
+InvalidSeconds = 100.0*365.0*24.0*60.0*60.0
 def extract_event_results( sce, filter_categories=None, filter_license_holders=None ):
 	series = sce.series
 	
@@ -91,7 +92,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				try:
 					t = rr.finish_time.total_seconds()
 				except:
-					return 24.0*60.0*60.0
+					return InvalidSeconds
 				if rr.adjustment_time:
 					t += rr.adjustment_time.total_seconds()
 				if rr.time_bonus:
@@ -102,7 +103,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				try:
 					t = rr.finish_time.total_seconds()
 				except:
-					return 24.0*60.0*60.0
+					return InvalidSeconds
 				if rr.adjustment_time:
 					t += rr.adjustment_time.total_seconds()
 				return t
