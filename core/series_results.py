@@ -55,7 +55,6 @@ class EventResult( object ):
 			return next(v for v in Result.STATUS_CODE_NAMES if v[0] == self.status)[1]
 		return ordinal( self.rank )
 
-InvalidSeconds = 100.0*365.0*24.0*60.0*60.0
 def extract_event_results( sce, filter_categories=None, filter_license_holders=None ):
 	series = sce.series
 	
@@ -92,7 +91,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				try:
 					t = rr.finish_time.total_seconds()
 				except:
-					return InvalidSeconds
+					return None
 				if rr.adjustment_time:
 					t += rr.adjustment_time.total_seconds()
 				if rr.time_bonus:
@@ -103,7 +102,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				try:
 					t = rr.finish_time.total_seconds()
 				except:
-					return InvalidSeconds
+					return None
 				if rr.adjustment_time:
 					t += rr.adjustment_time.total_seconds()
 				return t
@@ -231,8 +230,8 @@ def series_results( series, categories, eventResults ):
 	categories = set( list(categories) )
 	eventResults = [rr for rr in eventResults if rr.category in categories]
 	
-	# If scoring by time, trim out all DNF and DNS events as they contribute nothing.
-	if scoreByTime:
+	# If not scoring by points, trim out all non-finisher status (DNF, DNS, etc.) as any finish time does not count.
+	if not scoreByPoints:
 		eventResults = [rr for rr in eventResults if rr.is_finisher]
 	
 	if not eventResults:
