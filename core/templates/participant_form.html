@@ -469,6 +469,9 @@
 					{% if c.frame_label_print %}
 						<a class="btn btn-primary" href="./ParticipantPrintBibLabels/{{p.id}}/">{% trans "2 Frame Nums" %}</a>
 					{% endif %}
+					{% if c.frame_label_print_1 %}
+						<a class="btn btn-primary" href="./ParticipantPrintBibLabel1/{{p.id}}/">{% trans "1 Frame Num" %}</a>
+					{% endif %}
 				</span>
 				&nbsp;&nbsp;&nbsp;
 			{% endif %}

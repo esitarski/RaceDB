@@ -537,6 +537,11 @@ def ParticipantPrintBibLabels( request, participantId ):
 	return print_pdf( request, participant, print_bib_tag_label(participant), 'Frame' )
 	
 @access_validation()
+def ParticipantPrintBibLabel1( request, participantId ):
+	participant = get_participant( participantId )
+	return print_pdf( request, participant, print_bib_tag_label(participant, right_page=False), 'Frame' )
+	
+@access_validation()
 def ParticipantPrintShoulderBib( request, participantId ):
 	participant = get_participant( participantId )
 	return print_pdf( request, participant, print_shoulder_bib(participant), 'Shoulder' )

@@ -938,8 +938,9 @@ def GetCompetitionForm( competition_cur = None ):
 					Col(Field('bib_label_print'),2),
 					Col(Field('bibs_label_print'),2),
 					Col(Field('bibs_laser_print'),2),
-					Col(Field('shoulders_label_print'),3),
-					Col(Field('frame_label_print'),3),
+					Col(Field('shoulders_label_print'),2),
+					Col(Field('frame_label_print'),2),
+					Col(Field('frame_label_print_1'),2),
 				),
 				Row( HTML('<hr/>') ),
 				Row(

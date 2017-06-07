@@ -88,6 +88,8 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	elif series.ranking_criteria == 1:	# Time
 		if series.consider_primes:
 			def get_value_for_rank( rr, rank, rrWinner ):
+				if rr.get_num_laps_fast() != rrWinner.get_num_laps_fast():
+					return None
 				try:
 					t = rr.finish_time.total_seconds()
 				except:
@@ -99,6 +101,8 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				return t
 		else:
 			def get_value_for_rank( rr, rank, rrWinner ):
+				if rr.get_num_laps_fast() != rrWinner.get_num_laps_fast():
+					return None
 				try:
 					t = rr.finish_time.total_seconds()
 				except:
@@ -108,10 +112,13 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				return t
 	elif series.ranking_criteria == 2:	# % Winner / Time
 		def get_value_for_rank( rr, rank, rrWinner ):
+			if rr.get_num_laps_fast() != rrWinner.get_num_laps_fast():
+				return None
 			try:
-				return 100.0 * rrWinner.finish_time.total_seconds() / rr.finish_time.total_seconds()
+				v = 100.0 * rrWinner.finish_time.total_seconds() / rr.finish_time.total_seconds()
 			except:
-				return 0
+				v = 0
+			return v if v <= 100.0 else 0
 	else:
 		assert False, 'Unknown ranking criteria'
 	

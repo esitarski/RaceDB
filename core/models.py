@@ -748,10 +748,11 @@ class Competition(models.Model):
 	bibs_laser_print = models.BooleanField( default=False, verbose_name=_("2 Bibs Laser Print"), help_text=_('2 bibs on one page') )
 	shoulders_label_print = models.BooleanField( default=False, verbose_name=_("2 Shoulders Label Print"), help_text=_('2 numbers on 2 labels') )
 	frame_label_print = models.BooleanField( default=False, verbose_name=_("2 Frame Label Print"), help_text=_('2 frame numbers on 2 labels') )
+	frame_label_print_1 = models.BooleanField( default=False, verbose_name=_("1 Frame Label Print"), help_text=_('1 frame number on 1 label') )
 	
 	@property
 	def any_print( self ):
-		return self.bib_label_print or self.bibs_label_print or self.bibs_laser_print or self.shoulders_label_print or self.frame_label_print
+		return self.bib_label_print or self.bibs_label_print or self.bibs_laser_print or self.shoulders_label_print or self.frame_label_print or frame_label_print_1
 	
 	def get_filename_base( self ):
 		return utils.cleanFileName(u'{}-{}'.format( self.name, self.start_date.strftime('%Y-%m-%d'))).replace(' ', '-')
@@ -2582,6 +2583,13 @@ class Result(models.Model):
 		
 	def get_num_laps( self ):
 		return self.get_race_time_query().count() - 1
+	
+	def get_num_laps_fast( self ):
+		try:
+			return self._num_laps
+		except:
+			self._num_laps = self.get_num_laps()
+			return self._num_laps
 	
 	def get_lap_kmh( self ):
 		lap_kmh = []

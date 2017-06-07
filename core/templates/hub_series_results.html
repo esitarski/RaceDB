@@ -183,6 +183,10 @@ table.results-table tr th {
 			{% trans "Lower Category Points converted to Higher Category Points by multiplying by Factor." %}
 		</p>
 	{% endif %}
+{% else %}
+	<p>
+		{% trans "Competitors must finish the full distance for the timed result to be counted." %}
+	</p>
 {% endif %}
 
 
