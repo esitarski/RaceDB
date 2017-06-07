@@ -1090,6 +1090,32 @@ class Competition(models.Model):
 			)
 			self.number_set.validate()
 	
+	def prereg_detect( self ):
+		run_count = 1
+		prereg_count = 0
+		total_count = 0
+		prev = None
+		for cur in self.get_participants().order_by('registration_timestamp').values_list('registration_timestamp', flat=True):
+			if prev:
+				if (cur-prev).total_seconds() < 0.2:
+					run_count += 1
+				else:
+					if run_count >= 5:
+						prereg_count += run_count
+					run_count = 1
+			prev = cur
+			total_count += 1
+		
+		on_site = total_count - prereg_count
+		
+		return {
+			'prereg':prereg_count,
+			'on_site':on_site,
+			'total':total_count,
+			'prereg_percent':(float(prereg_count)/float(total_count) if total_count else 0.0),
+			'on_site_percent':(float(on_site)/float(total_count) if total_count else 0.0),
+		}
+	
 	class Meta:
 		verbose_name = _('Competition')
 		verbose_name_plural = _('Competitions')
