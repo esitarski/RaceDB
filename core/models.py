@@ -1091,9 +1091,9 @@ class Competition(models.Model):
 			self.number_set.validate()
 	
 	def prereg_detect( self ):
-		run_count = 1
 		prereg_count = 0
 		total_count = 0
+		run_count = 1
 		prev = None
 		for cur in self.get_participants().order_by('registration_timestamp').values_list('registration_timestamp', flat=True):
 			if prev:
@@ -1109,13 +1109,19 @@ class Competition(models.Model):
 		on_site = total_count - prereg_count
 		
 		return {
-			'prereg':prereg_count,
-			'on_site':on_site,
-			'total':total_count,
-			'prereg_percent':(float(prereg_count)/float(total_count) if total_count else 0.0),
-			'on_site_percent':(float(on_site)/float(total_count) if total_count else 0.0),
+			'prereg':			prereg_count,
+			'on_site':			on_site,
+			'total':			total_count,
+			'prereg_percent':	(float(prereg_count)/float(total_count) if total_count else 0.0),
+			'on_site_percent':	(float(on_site)/float(total_count) if total_count else 0.0),
 		}
 	
+	def seasons_pass_holders_count( self ):
+		return SeasonsPassHolder.objects.filter(
+			seasons_pass=self.seasons_pass,
+			license_holder__pk__in=self.get_participants().values('license_holder__pk'),
+		).count() if self.seasons_pass else 0
+		
 	class Meta:
 		verbose_name = _('Competition')
 		verbose_name_plural = _('Competitions')
