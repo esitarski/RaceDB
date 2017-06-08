@@ -1111,7 +1111,7 @@ class Competition(models.Model):
 		seasons_pass_count = SeasonsPassHolder.objects.filter(
 			seasons_pass=self.seasons_pass,
 			license_holder__pk__in=self.get_participants().values('license_holder__pk'),
-		).count() if self.seasons_pass else 0
+		).values('pk').distinct().count() if self.seasons_pass else 0
 		seasons_pass_total = self.get_participants().values('license_holder__pk').distinct().count()
 		
 		return {
