@@ -2457,20 +2457,20 @@ def get_participant_report_form():
 			self.helper.layout = Layout(
 				Row(
 					Div(
-						Row( Field('start_date') ),
-						Row( Field('end_date') ),
-						css_class = 'col-md-3'
+						Row( Field('start_date', size=10) ),
+						Row( Field('end_date', size=10) ),
+						css_class = 'col-md-1'
 					),
 					Div(
 						Row(
-							Field('race_classes', id='focus', size=10),
-							Field('disciplines', size=10),
-							Field('organizers', size=10),
-							Field('include_labels', size=10),
-							Field('exclude_labels', size=10),
+							Field('race_classes', id='focus', size=10, style="width: 13em;"),
+							Field('disciplines', size=10, style="width: 13em;"),
+							Field('organizers', size=10, style="width: 13em;"),
+							Field('include_labels', size=10, style="width: 13em;"),
+							Field('exclude_labels', size=10, style="width: 13em;"),
 						),
 						Row( HTML( _('Use Ctrl-Click to Multi-Select and Ctrl-Click to Deselect') ) ),
-						css_class = 'col-md-9',
+						css_class = 'col-md-11',
 					)
 				),
 				HTML( '<hr/>' ),
