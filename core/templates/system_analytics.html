@@ -1107,9 +1107,9 @@ $(document).ready(function() {
 		<th>{% trans "Class" %}</th>
 		<th>{% trans "Organizer" %}</th>
 		<th class="text-center">{% trans "Total" %}</th>
-		<th></th><th colspan=2>{% trans "OnSite" %}</th>
-		<th></th><th colspan=2>{% trans "PreReg" %}</th>
-		<th></th><th colspan=2>{% trans "SeasPass" %}</th>
+		<th colspan=2>{% trans "OnSite" %}</th>
+		<th colspan=2>{% trans "PreReg" %}</th>
+		<th colspan=2>{% trans "SeasPass" %}</th>
 	</tr>
 </thead>
 <tbody>
@@ -1123,9 +1123,9 @@ $(document).ready(function() {
 			<td>{{c.organizer}}</td>
 			{% with pd=c.prereg_detect %}
 				<td class="text-right">{{pd.total}}</td>
-				<td>&nbsp;&nbsp;</td><td class="text-right">{{pd.on_site}}</td><td class="text-right">{{pd.on_site_percent|percent}}</td>
-				<td>&nbsp;&nbsp;</td><td class="text-right">{{pd.prereg}}</td><td class="text-right">{{pd.prereg_percent|percent}}</td>
-				<td>&nbsp;&nbsp;</td><td class="text-right">{{pd.seasons_pass}}</td><td class="text-right">{{pd.seasons_pass_percent|percent}}</td>
+				<td class="text-right">&nbsp;&nbsp;{{pd.on_site}}</td><td class="text-right">{{pd.on_site_percent|percent}}</td>
+				<td class="text-right">&nbsp;&nbsp;{{pd.prereg}}</td><td class="text-right">{{pd.prereg_percent|percent}}</td>
+				<td class="text-right">&nbsp;&nbsp;{{pd.seasons_pass}}</td><td class="text-right">{{pd.seasons_pass_percent|percent}}</td>
 			{% endwith %}
 		</tr>
 		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
