@@ -1108,12 +1108,21 @@ class Competition(models.Model):
 		
 		on_site = total_count - prereg_count
 		
+		seasons_pass_count = SeasonsPassHolder.objects.filter(
+			seasons_pass=self.seasons_pass,
+			license_holder__pk__in=self.get_participants().values('license_holder__pk'),
+		).count() if self.seasons_pass else 0
+		seasons_pass_total = self.get_participants().values('license_holder__pk').distinct().count()
+		
 		return {
-			'prereg':			prereg_count,
-			'on_site':			on_site,
-			'total':			total_count,
-			'prereg_percent':	(float(prereg_count)/float(total_count) if total_count else 0.0),
-			'on_site_percent':	(float(on_site)/float(total_count) if total_count else 0.0),
+			'prereg':				prereg_count,
+			'on_site':				on_site,
+			'total':				total_count,
+			'prereg_percent':		float(prereg_count)/float(total_count) if total_count else 0.0,
+			'on_site_percent':		float(on_site)/float(total_count) if total_count else 0.0,
+			'seasons_pass':			seasons_pass_count,
+			'seasons_pass_percent':	float(seasons_pass_count)/float(seasons_pass_total) if seasons_pass_total else 0.0,
+			'seasons_pass_total':	seasons_pass_total,
 		}
 	
 	def seasons_pass_holders_count( self ):

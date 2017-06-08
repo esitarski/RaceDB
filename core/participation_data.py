@@ -414,4 +414,4 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		
 		'category_average_max': category_average_max,
 	}
-	return payload, sorted( license_holders_event_errors, key=lambda x: (x[1].date_time, x[0].date_of_birth) )
+	return payload, sorted( license_holders_event_errors, key=lambda x: (x[1].date_time, x[0].date_of_birth) ), competitions.order_by('-start_date')

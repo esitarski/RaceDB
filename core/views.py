@@ -2569,10 +2569,10 @@ def AttendanceAnalytics( request ):
 				)
 				return response
 		
-			payload, license_holders_event_errors = participation_data( **initial )
+			payload, license_holders_event_errors, competitions = participation_data( **initial )
 			payload_json = json.dumps(payload, separators=(',',':'))
 	else:
-		payload, license_holders_event_errors = participation_data( **initial )
+		payload, license_holders_event_errors, competitions = participation_data( **initial )
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()( initial=initial )
 	

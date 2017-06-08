@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load percent %}
 
 {% block style %}
 	chart-big { min-height: 500px; width: 100%; height: 500px; }
@@ -976,6 +977,7 @@ $(document).ready(function() {
 		<li class="nav"><a href="#ByCompAndEvent" data-toggle="tab">Comp &amp; Event</a></li>
 		<li class="nav"><a href="#ByDiscipline" data-toggle="tab">Discipline</a></li>
 		<li class="nav"><a href="#ByPostalChart" data-toggle="tab">Postal</a></li>
+		<li class="nav"><a href="#ByPreregSeasonsPass" data-toggle="tab">Prereg/Seasons Pass</a></li>
 		<li class="nav"><a href="#ByData" data-toggle="tab">Data</a></li>
 	</ul>
 
@@ -1087,6 +1089,52 @@ $(document).ready(function() {
 					</div>
 				</div>
 			{% endif %}
+			</p>
+		</div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade" id="ByPreregSeasonsPass">
+			<p>
+			<h3 class="page-break-before">Prereg and Seasons Pass</h3>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed" style="width: auto;">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Dates" %}</th>
+		<th>{% trans "Discipline" %}</th>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Class" %}</th>
+		<th>{% trans "Organizer" %}</th>
+		<th class="text-center">{% trans "Total" %}</th>
+		<th></th><th colspan=2>{% trans "OnSite" %}</th>
+		<th></th><th colspan=2>{% trans "PreReg" %}</th>
+		<th></th><th colspan=2>{% trans "SeasPass" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for c in competitions %}
+		<tr>
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{c.date_range_str}}</td>
+			<td>{{c.discipline.name}} {{c.event_types_text}}</td>
+			<td>{{c.name}}</td>
+			<td>{{c.race_class.name}}</td>
+			<td>{{c.organizer}}</td>
+			{% with pd=c.prereg_detect %}
+				<td class="text-right">{{pd.total}}</td>
+				<td>&nbsp;</td><td class="text-right">{{pd.on_site}}</td><td class="text-right">{{pd.on_site_percent|percent}}</td>
+				<td>&nbsp;</td><td class="text-right">{{pd.prereg}}</td><td class="text-right">{{pd.prereg_percent|percent}}</td>
+				<td>&nbsp;</td><td class="text-right">{{pd.seasons_pass}}</td><td class="text-right">{{pd.seasons_pass_percent|percent}}</td>
+			{% endwith %}
+		</tr>
+		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+
+			</table>
 			</p>
 		</div>
 		
