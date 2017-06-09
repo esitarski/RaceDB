@@ -145,6 +145,8 @@ def init_prereg(
 					seed_option = 0
 				elif 'late' in seed_option:
 					seed_option = 2
+				elif 'last' in seed_option:
+					seed_option = 3
 				else:
 					seed_option = 1
 			

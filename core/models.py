@@ -3194,7 +3194,7 @@ class Participant(models.Model):
 	
 	est_kmh=models.FloatField( default=0.0, verbose_name=_('Est Kmh') )
 	seed_early=models.BooleanField( default=False, verbose_name=_('Seed Early') )
-	SEED_OPTION_CHOICES = ((1,_('-')),(0,_('Seed Early')),(2,_('Seed Late')),)
+	SEED_OPTION_CHOICES = ((1,_('-')),(0,_('Seed Early')),(2,_('Seed Late')),(3,_('Seed Last')),)
 	seed_option=models.SmallIntegerField( choices=SEED_OPTION_CHOICES, default=1, verbose_name=_('Seed Option') )
 	
 	def enforce_tag_constraints( self ):
@@ -3223,7 +3223,7 @@ class Participant(models.Model):
 	
 	@property
 	def adjusted_est_kmh( self ):
-		return [-1000000.0, 0.0, 1000000][self.seed_option] + self.est_kmh
+		return [-1000000.0, 0.0, 1000000, 10000000][self.seed_option] + self.est_kmh
 	
 	def save( self, *args, **kwargs ):
 		license_holder_update = kwargs.pop('license_holder_update', True)

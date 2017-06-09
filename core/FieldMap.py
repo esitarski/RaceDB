@@ -197,7 +197,7 @@ standard_field_aliases = (
 	),
 	('seed_option',
 		('Seed Option','SeedOption',),
-		"Time Trial Seeding Option (value is 'early','late' or blank)",
+		"Time Trial Seeding Option (value is 'early','late', 'last' or blank)",
 	),
 	('emergency_contact_name',
 		('Emergency Contact','Emergency Contact Name','Emergency Name',),
