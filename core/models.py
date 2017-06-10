@@ -3858,8 +3858,8 @@ class EventTT( Event ):
 				gap = max( max(empty_gap_before_wave, wave_tt.gap_before_wave) if i == 0 else zero_gap, rider_gap )
 				if self.group_size:
 					if gap >= self.group_size_gap:
-						groupCount = 0
-					elif groupCount % self.group_size == 0:
+						groupCount = 0		# If there was already a gap larger than the group size gap, reset the group count.
+					elif groupCount >= self.group_size:	# Else, if we are at a group boundary, insert the group gap.
 						gap = max( gap, self.group_size_gap )
 						groupCount = 0
 					groupCount += 1
