@@ -3816,11 +3816,15 @@ class EventTT( Event ):
 		return ResultTT
 		
 	def get_custom_category_class( self ):
-		return CustomCategoryTT	
-	
+		return CustomCategoryTT
+		
 	create_seeded_startlist = models.BooleanField( default=True, verbose_name=_('Create Seeded Startlist'),
 		help_text=_('If True, seeded start times will be generated in the startlist for CrossMgr.  If False, no seeded times will be generated, and the TT time will start on the first recorded time in CrossMgr.') )
 
+	group_size = models.PositiveSmallIntegerField( default=0, verbose_name = _('Group Size'),
+		help_text=_('Maximum number of starters without a Group Size Gap.  The Group Size Gap will be inserted between riders of Group Size (if non-zero).') )
+	group_size_gap = DurationField.DurationField( verbose_name=_('Group Size Gap'), default = 5*60 )
+	
 	def create_initial_seeding( self ):
 		while EntryTT.objects.filter(event=self).exists():
 			with transaction.atomic():
@@ -3846,6 +3850,7 @@ class EventTT( Event ):
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
 				rider_gap = max(
+					self.group_size_gap if i and self.group_size and i%self.group_size == 0 else zero_gap,
 					wave_tt.fastest_participants_start_gap if i >= last_fastest else zero_gap,
 					wave_tt.regular_start_gap,
 					min_gap,
