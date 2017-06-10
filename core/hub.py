@@ -406,7 +406,7 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 		for er in event_results:
 			if not er or er.ignored:
 				continue
-			event_name = u'{}-{}: {}'.format( er.event.competition.name, er.event.name, er.event.date_time.strftime('%Y-%m-%d') )
+			event_name = u'{}-{}: {}'.format( er.event.competition.title, er.event.name, er.event.date_time.strftime('%Y-%m-%d') )
 			json_data.append( [
 				event_name,
 				node_name,

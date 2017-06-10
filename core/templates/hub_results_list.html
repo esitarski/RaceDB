@@ -1597,7 +1597,7 @@ function SituationAnimate() {
 {% block content %}
 {% include "hub_nav.html" %}
 <h1>
-	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.name}}</a>: {{event.name}}</strong>{% if not has_results %}: {% trans "Registered Only (no results)" %}{% endif %}<br/>
+	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.title}}</a>: {{event.name}}</strong>{% if not has_results %}: {% trans "Registered Only (no results)" %}{% endif %}<br/>
 	<span style="font-size: 75%">
 		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}<br/>
 		{{event.date_time|date:"Y-m-d H:i"}}&nbsp;&nbsp; {% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp; {% trans "Strs" %}: {{num_starters}}

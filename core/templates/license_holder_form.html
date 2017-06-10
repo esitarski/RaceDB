@@ -58,7 +58,7 @@ $("form").submit(function(event) {
 		<td>{{p.competition.date_range_year_str}}</td>
 		<td>{% if p.category %}{{p.category.code}} ({{p.category.get_gender_display}}){% endif %}</td>
 		<td>{{p.team.name}}</td>
-		<td>{{p.competition.name}}</td>
+		<td>{{p.competition.title}}</td>
 		<td>{{p.competition.discipline.name}}</td>
 		<td>{{p.competition.category_format.name}}</td>
 		<td>{{p.competition.race_class.name}}</td>

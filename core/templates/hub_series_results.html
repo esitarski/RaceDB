@@ -83,7 +83,7 @@ table.results-table tr th {
 		<th class='text-right col-border-right-gap'>{% trans "Gap" %}</th>
 		{% for e in events %}
 			<th colspan="2" class="text-center col-border-right hidden-print">
-				{{e.competition.name}}<br/>
+				{{e.competition.title}}<br/>
 				{{e.date_time|date:"Y-m-d H:i"}}<br/>
 				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>
 					<span style="white-space: nowrap;">{{e.name}}</span>

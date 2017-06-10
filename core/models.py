@@ -686,6 +686,7 @@ class LegalEntity(models.Model):
 #-------------------------------------------------------------------
 class Competition(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
+	long_name = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('Long Name (Title)') )
 	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('Description') )
 	
 	number_set = models.ForeignKey( NumberSet, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Number Set') )
@@ -749,6 +750,10 @@ class Competition(models.Model):
 	shoulders_label_print = models.BooleanField( default=False, verbose_name=_("2 Shoulders Label Print"), help_text=_('2 numbers on 2 labels') )
 	frame_label_print = models.BooleanField( default=False, verbose_name=_("2 Frame Label Print"), help_text=_('2 frame numbers on 2 labels') )
 	frame_label_print_1 = models.BooleanField( default=False, verbose_name=_("1 Frame Label Print"), help_text=_('1 frame number on 1 label') )
+	
+	@property
+	def title( self ):
+		return self.long_name or self.name
 	
 	@property
 	def any_print( self ):

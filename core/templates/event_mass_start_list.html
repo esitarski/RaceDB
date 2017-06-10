@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 <h2>{{title}}</h2>
-<h2>{% trans "Competition" %}: <strong>{{competition.name}}</strong></h2>
+<h2>{% trans "Competition" %}: <strong>{{competition.title}}</strong></h2>
 <hr/>
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <a class="btn btn-primary" href="./EventMassStartNew/{{competition.id}}">{% trans "New Mass Start Event" %}</a>

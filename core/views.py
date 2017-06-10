@@ -889,9 +889,9 @@ def GetCompetitionForm( competition_cur = None ):
 			
 			self.helper.layout = Layout(
 				Row(
-					Col(Field('name', size=40), 4),
-					Col(Field('description', size=40), 4),
-					Col('category_format', 4),
+					Col(Field('name', size=30), 3),
+					Col(Field('long_name', size=40), 4),
+					Col(Field('description', size=50), 4),
 				),
 				Row(
 					Col(Field('city', size=40), 4),
@@ -905,15 +905,16 @@ def GetCompetitionForm( competition_cur = None ):
 					Col(Field('organizer_phone', size=20), 3),
 				),
 				Row(
+					Col('category_format', 3),
 					Col('discipline', 2),
 					Col('race_class', 2),
 					Col('legal_entity', 4),
 				),
 				Row(
-					Col('start_date', 2),
-					Col('number_of_days', 2),
-					Col('recurring', 2),
-					Col('distance_unit', 2),
+					Col(Field('start_date', size=11), 2),
+					Col(Field('number_of_days', size=3), 2),
+					Col(Field('recurring'), 2),
+					Col(Field('distance_unit'), 2),
 				),
 				Row(
 					Col('number_set', 4),
@@ -1243,14 +1244,14 @@ def StartLists( request, competitionId ):
 def StartList( request, eventId ):
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
-	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
+	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
 	return render( request, 'mass_start_start_list.html', locals() )
 	
 @access_validation()
 def StartListTT( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	time_stamp = datetime.datetime.now()
-	page_title = u'{} - {}'.format( instance.competition.name, instance.name )
+	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
 	return render( request, 'tt_start_list.html', locals() )
 
 def StartListExcelDownload( request, eventId, eventType ):

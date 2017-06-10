@@ -13,7 +13,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	
 	payload = {}
 	payload['bib'] = result.participant.bib
-	payload['raceName'] = u'{} - {} ({})'.format( competition.name, event.name, competition.discipline.name )
+	payload['raceName'] = u'{} - {} ({})'.format( competition.title, event.name, competition.discipline.name )
 	payload['raceScheduledStart'] = event.date_time.strftime( '%Y-%m-%d %H:%M' )
 	payload['winAndOut'] = getattr(event, 'win_and_out', False)
 	payload['isTimeTrial'] = (event.event_type == 1)
