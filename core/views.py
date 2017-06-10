@@ -2077,8 +2077,8 @@ class EventTTForm( ModelForm ):
 				Col(Field('select_by_default'), 6),
 			),
 			Row(
-				Col(Field('group_size'), 2),
-				Col(Field('group_size_gap'), 2),
+				Col(Field('group_size'), 4),
+				Col(Field('group_size_gap'), 4),
 			),
 			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4) ),
 			Row( Field('note', rows='4', cols='60') ),
