@@ -144,7 +144,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 					th = TeamHint( **attributes )
 					th.save()
 				print u'{} {}: {} ({})'.format( ' '*16,
-					removeDiacritic(discipline),
+					removeDiacritic(discipline_name),
 					removeDiacritic(attributes['team'].name),
 					['Club', 'Team'][ttype]
 				)
