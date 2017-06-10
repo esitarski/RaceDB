@@ -146,7 +146,7 @@
 		{% with e=form.entry_tt w=form.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
 		<tr {% if form.gap_change > 0 %}class="gap-change-inc"{% elif form.gap_change < 0 %}class="gap-change-dec"{% endif %}>
 			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
-			<td class="text-right">{{e.clock_time | time:"g:i:s a"}}</td>
+			<td class="text-right">{{e.clock_time | time:"H:i:s"}}</td>
 			<td class="text-right">{{e.start_time}}</td>
 			<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 			<td>{{p.license_holder.full_name}}</td>
