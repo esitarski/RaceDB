@@ -3837,6 +3837,7 @@ class EventTT( Event ):
 		empty_gap_before_wave = zero_gap
 		
 		sequenceCur = 1
+		groupCount = 0
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
 			participants = sorted( [p for p in wave_tt.get_participants_unsorted() if p.can_tt_start()], key=wave_tt.get_sequence_key() )
@@ -3850,12 +3851,20 @@ class EventTT( Event ):
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
 				rider_gap = max(
-					self.group_size_gap if i and self.group_size and i%self.group_size == 0 else zero_gap,
 					wave_tt.fastest_participants_start_gap if i >= last_fastest else zero_gap,
 					wave_tt.regular_start_gap,
 					min_gap,
 				)
-				tCur += max( max(empty_gap_before_wave, wave_tt.gap_before_wave) if i == 0 else zero_gap, rider_gap )
+				gap = max( max(empty_gap_before_wave, wave_tt.gap_before_wave) if i == 0 else zero_gap, rider_gap )
+				if self.group_size:
+					if gap >= self.group_size_gap:
+						groupCount = 0
+					elif groupCount % self.group_size == 0:
+						gap = max( gap, self.group_size_gap )
+						groupCount = 0
+					groupCount += 1
+				
+				tCur += gap
 				
 				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
 				sequenceCur += 1
