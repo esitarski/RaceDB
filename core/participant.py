@@ -28,10 +28,10 @@ def get_participant( participantId ):
 class ParticipantSearchForm( Form ):
 	scan = forms.CharField( required=False, label = _('Scan Search'), help_text=_('Searches License and RFID Tag only') )
 	event = forms.ChoiceField( required=False, label = _('Event'), help_text=_('For faster response, review one Event at a time') )
-	name_text = forms.CharField( required=False, label = _('Name Text') )
-	team_text = forms.CharField( required=False, label = _('Team Text') )
-	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib: (-1 for Missing)') )
-	rfid_text = forms.CharField( required=False, label = _('RFIDTag: (-1 for Missing)') )
+	name_text = forms.CharField( required=False, label = _('Name') )
+	team_text = forms.CharField( required=False, label = _('Team (-1 for Independent)') )
+	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib (-1 for Missing Bib)') )
+	rfid_text = forms.CharField( required=False, label = _('RFIDTag (-1 for Missing)') )
 	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
 	role_type = forms.ChoiceField( required=False, label = _('Role Type')  )
 	category = forms.ChoiceField( required=False, label = _('Category') )
@@ -222,11 +222,14 @@ def Participants( request, competitionId ):
 	
 	team_search = participant_filter.get('team_text','').strip()
 	if team_search:
-		participants = participants.filter( team__isnull = False )
-		q = Q()
-		for t in team_search.split():
-			q &= Q( team__search_text__contains=t )
-		participants = participants.filter( q )
+		if team_search == '-1':
+			participants = participants.filter( team__isnull = True )
+		else:
+			participants = participants.filter( team__isnull = False )
+			q = Q()
+			for t in team_search.split():
+				q &= Q( team__search_text__contains=t )
+			participants = participants.filter( q )
 		
 	if 0 <= int(participant_filter.get('complete',-1) or 0) <= 1:
 		complete = bool(int(participant_filter['complete']))
