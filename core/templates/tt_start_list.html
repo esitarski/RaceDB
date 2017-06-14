@@ -159,7 +159,7 @@
 		<td class="text-right start-time">{% if p.start_time %}{{p.start_time}}{% else %}{% trans "None" %}{% endif %}</td>
 		<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
 		<td>{{p.license_holder.full_name}}</td>
-		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+		<td>{{p.team_name}}</td>
 		<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 		<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
 		<td class="hidden-print">

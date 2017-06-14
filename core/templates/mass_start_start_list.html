@@ -111,7 +111,7 @@
 			<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
 				<td>{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
 				<td>{{p.license_holder.full_name}}</td>
-				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+				<td>{{p.team_name}}</td>
 				<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 				<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
 				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}

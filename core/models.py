@@ -3230,6 +3230,10 @@ class Participant(models.Model):
 	def adjusted_est_kmh( self ):
 		return [-1000000.0, 0.0, 1000000, 10000000][self.seed_option] + self.est_kmh
 	
+	@property
+	def team_name( self ):
+		return self.team.name if self.team else _('Independent')
+	
 	def save( self, *args, **kwargs ):
 		license_holder_update = kwargs.pop('license_holder_update', True)
 		number_set_update = kwargs.pop('number_set_update', True)
