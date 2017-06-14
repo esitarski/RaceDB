@@ -3483,12 +3483,12 @@ class Participant(models.Model):
 	def can_start( self ):
 		return (
 			self.good_eligible() and
-			self.good_bib() and
-			self.good_category() and
-			self.good_tag() and
+			self.good_waiver() and
 			self.good_paid() and
-			self.good_signature() and
-			self.good_waiver()
+			self.good_category() and
+			self.good_bib() and
+			self.good_tag() and
+			self.good_signature()
 		)
 		
 	@classmethod
