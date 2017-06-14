@@ -240,7 +240,7 @@
 {% endif %}
 {% if p.show_confirm and p.is_competitor %}
 <tr onclick="jump({% if isEdit %}'./ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Confirmed" %}:</td>
+	<td class="text-right">{% trans "License Confirmed" %}:</td>
 	<td>
 		{% if p.confirmed %}
 			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
