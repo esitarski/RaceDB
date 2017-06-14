@@ -3516,7 +3516,11 @@ class Participant(models.Model):
 	def show_confirm( self ):
 		return (
 			self.is_competitor and
-			self.can_start()
+			self.good_eligible() and
+			self.good_bib() and
+			self.good_category() and
+			self.good_paid() and
+			self.good_waiver()
 		)
 	
 	@property

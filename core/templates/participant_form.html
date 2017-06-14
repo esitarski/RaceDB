@@ -122,6 +122,23 @@
 </tr>
 {% endif %}
 
+{% if p.is_competitor %}
+<tr onclick="jump({% if isEdit %}'./ParticipantPaidChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Paid" %}{% if not p.good_paid %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
+	<td>
+		{% if p.paid %}
+			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
+		{% else %}
+			<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+		{% endif %}
+		{% if p.is_seasons_pass_holder %} ({% trans "Season's Pass Holder" %}) {% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="./ParticipantPaidChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
+{% endif %}
+
 <tr onclick="jump({% if request.user.is_superuser and isEdit %}'./ParticipantRoleChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "Role" %}:</td>
 	<td>
@@ -182,20 +199,6 @@
 		{% endif %}
 	</td>
 </tr>
-<tr onclick="jump({% if isEdit %}'./ParticipantPaidChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Paid" %}{% if not p.good_paid %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
-	<td>
-		{% if p.paid %}
-			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
-		{% else %}
-			<span class="label label-danger"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
-		{% endif %}
-		{% if p.is_seasons_pass_holder %} ({% trans "Season's Pass Holder" %}) {% endif %}
-	</td>
-	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="./ParticipantPaidChange/{{p.id}}/">{% trans "Change" %}</a></td>
-	{% endif %}
-</tr>
 {% endif %}
 {% if p.category and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'./ParticipantBibChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
@@ -207,6 +210,21 @@
 			<td><a class="btn btn-success hidden-print" href="./ParticipantBibChange/{{p.id}}/">{% trans "Change" %}</a></td>
 		{% endif %}
 	</tr>
+{% endif %}
+{% if p.show_confirm %}
+<tr onclick="jump({% if isEdit %}'./ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
+	<td class="text-right">{% trans "Lic. Confirmed" %}:</td>
+	<td>
+		{% if p.confirmed %}
+			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
+		{% else %}
+			<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
+		{% endif %}
+	</td>
+	{% if isEdit %}
+		<td><a class="btn btn-success hidden-print" href="./ParticipantConfirmedChange/{{p.id}}/">{% trans "Change" %}</a></td>
+	{% endif %}
+</tr>
 {% endif %}
 {% if c.using_tags and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'./ParticipantTagChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
@@ -237,21 +255,6 @@
 			<td><a class="btn btn-success hidden-print" href="./ParticipantEstSpeedChange/{{p.id}}/">{% trans "Change" %}</a></td>
 		{% endif %}
 	</tr>
-{% endif %}
-{% if p.show_confirm and p.is_competitor %}
-<tr onclick="jump({% if isEdit %}'./ParticipantConfirmedChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-	<td class="text-right">{% trans "Lic. Confirmed" %}:</td>
-	<td>
-		{% if p.confirmed %}
-			<span class="label label-default"><img src="{% static "images/glyphicons_206_ok_2.png" %}" > {% trans "Yes" %}</span>
-		{% else %}
-			<span class="label label-warning"><img src="{% static "images/glyphicons_207_remove_2.png" %}" > {% trans "No" %}</span>
-		{% endif %}
-	</td>
-	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="./ParticipantConfirmedChange/{{p.id}}/">{% trans "Change" %}</a></td>
-	{% endif %}
-</tr>
 {% endif %}
 {% if c.show_signature and p.is_competitor and p.category %}
 <tr onclick="jump({% if isEdit %}'./ParticipantSignatureChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
