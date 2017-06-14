@@ -3599,8 +3599,8 @@ class Participant(models.Model):
 		return all( p.is_done for p in self.get_category_participants() )
 		
 	def auto_confirm( self ):
-		if self.competition.start_date <= timezone.now().date() <= self.competition.finish_date and self.show_confirm:
-			self.confirmed = True
+		#if self.competition.start_date <= timezone.now().date() <= self.competition.finish_date and self.show_confirm:
+		#	self.confirmed = True
 		return self
 	
 	def propagate_bib_tag( self ):
