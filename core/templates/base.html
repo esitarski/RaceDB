@@ -132,15 +132,19 @@ function onLoad()
 	var in_use_color = '#dff0d8';
 	var fs = $("form.search");
 	fs.find(".select.form-control").each(function() {
-		if( $(this).val() != $(this).find('option:first').val() )
+		if( $(this).val() != $(this).find('option:first').val() && !$(this).prop('readonly') && !$(this).hasClass('no-highlight') )
 			$(this).css( 'background-color', in_use_color );
 	} );
 	fs.find(".numberinput.form-control").each(function() {
-		if( $(this).val() )
+		if( $(this).val() && !$(this).prop('readonly') && !$(this).hasClass('no-highlight') )
+			$(this).css( 'background-color', in_use_color );
+	} );
+	fs.find(".dateinput.form-control").each(function() {
+		if( $(this).val() && !$(this).prop('readonly') && !$(this).hasClass('no-highlight') )
 			$(this).css( 'background-color', in_use_color );
 	} );
 	fs.find(".textinput.form-control").each(function() {
-		if( $(this).val() )
+		if( $(this).val() && !$(this).prop('readonly') && !$(this).hasClass('no-highlight') )
 			$(this).css( 'background-color', in_use_color );
 	} );
 

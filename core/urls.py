@@ -155,6 +155,10 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantTeamSelect/(?P<participantId>\d+)/(?P<teamId>\d+)/$', participant.ParticipantTeamSelect ),
 	url(r'^(?i).*ParticipantTeamSelectDiscipline/(?P<participantId>\d+)/(?P<teamId>\d+)/$', participant.ParticipantTeamSelectDiscipline ),
 	
+	url(r'^(?i).*LicenseHolderNationCodeChange/(?P<licenseHolderId>\d+)/$', participant.LicenseHolderNationCodeChange ),
+	url(r'^(?i).*LicenseHolderNationCodeSelect/(?P<licenseHolderId>\d+)/(?P<iocI>\d+)/$', participant.LicenseHolderNationCodeSelect ),
+	url(r'^(?i).*ParticipantConfirm/(?P<participantId>\d+)/$', participant.ParticipantConfirm ),
+	
 	url(r'^(?i).*ParticipantBibChange/(?P<participantId>\d+)/$', participant.ParticipantBibChange ),
 	url(r'^(?i).*ParticipantBibSelect/(?P<participantId>\d+)/(?P<bib>\d+)/$', participant.ParticipantBibSelect ),
 	

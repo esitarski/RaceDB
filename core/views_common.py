@@ -41,7 +41,7 @@ from django.contrib.staticfiles.templatetags.staticfiles import static
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, HTML, Button
 from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
-from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
+from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions, FieldWithButtons
 
 from autostrip import autostrip
 from context_processors import getContext

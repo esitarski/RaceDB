@@ -2027,7 +2027,14 @@ def format_phone( phone ):
 	if len(phone) == len('AAA333NNNN') and phone.isdigit():
 		return u'({}) {}-{}'.format(phone[:3], phone[3:6], phone[6:])
 	return phone
-	
+
+def flag_html( nation_code ):
+	if nation_code and nation_code in uci_country_codes_set:
+		flag = '<img src="{}/{}.png"/>'.format(static('flags'), nation_code)
+	else:
+		flag = nation_code
+	return mark_safe(flag)
+
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
 	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), db_index=True )
@@ -2290,7 +2297,7 @@ class LicenseHolder(models.Model):
 	
 	@property
 	def has_error( self ):
-		return self.uci_code_error or self.license_code_error
+		return self.uci_id_error or self.license_code_error
 		
 	def __unicode__( self ):
 		return '{}, {} ({}, {}, {}, {})'.format(
@@ -3091,7 +3098,7 @@ class ParticipantDefaultValues( object ):
 			self.category = pp.category
 			self.category_init_date = pp.competition.start_date
 		
-		if pp.competition.start_date > self.team_init_date and pp.team:
+		if pp.competition.start_date > self.team_init_date:
 			self.team = pp.team
 			self.team_init_date = pp.competition.start_date
 		
@@ -3233,6 +3240,10 @@ class Participant(models.Model):
 	@property
 	def team_name( self ):
 		return self.team.name if self.team else _('Independent')
+	
+	@property
+	def category_name( self ):
+		return self.category.code_gender if self.category else u''
 	
 	def save( self, *args, **kwargs ):
 		license_holder_update = kwargs.pop('license_holder_update', True)

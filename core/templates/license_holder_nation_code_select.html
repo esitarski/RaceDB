@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load staticfiles %}
+
+{% block content %}
+<h2>{{title}} {% if code_instance %}{{flag_instance}} {{code_instance}} ({{name_instance}}){% endif %}</h2>
+<h3><strong>{{license_holder.full_name}}</strong></h3>
+<hr/>
+<a class='btn btn-primary' href="{{cancelUrl}}" >{% trans "Cancel" %}</a>
+<p></p>
+{% spaceless %}
+<table>
+<tbody>
+	{% for row in rows %}
+		<tr>
+		{% for i, flag_html, name, code in row %}
+			<td><a class='btn' href="{{cancelUrl}}LicenseHolderNationCodeSelect/{{license_holder.id}}/{{i}}">{{flag_html}} {{code}} ({{name}})</a></td>
+		{% endfor %}
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+{% endblock content %}

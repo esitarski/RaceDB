@@ -10,6 +10,8 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from views import BarcodeScanForm, RfidScanForm
 
+from CountryIOC import ioc_country
+
 from print_bib import print_bib_tag_label, print_id_label, print_body_bib, print_shoulder_bib
 
 from participant_key_filter import participant_key_filter, participant_bib_filter
@@ -752,6 +754,41 @@ def ParticipantTeamSelect( request, participantId, teamId ):
 		return HttpResponseRedirect(getContext(request,'pop2Url'))
 	
 	return HttpResponseRedirect(getContext(request,'popUrl') + 'ParticipantTeamSelectDiscipline/{}/{}/'.format(participantId,teamId))
+
+def get_ioc_countries():
+	countries = [(name, code) for code, name in ioc_country.iteritems()]
+	countries.sort( key=operator.itemgetter(1) )
+	return countries
+
+@access_validation()
+def LicenseHolderNationCodeSelect( request, licenseHolderId, iocI ):
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	iocI = int(iocI)
+	if iocI < 0:
+		license_holder.nation_code = u''
+	else:
+		license_holder.nation_code = get_ioc_countries()[iocI][-1]
+	license_holder.save()
+	return HttpResponseRedirect(getContext(request,'popUrl'))
+
+@access_validation()
+def LicenseHolderNationCodeChange( request, licenseHolderId ):
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	countries = [[i, flag_html(c[-1])] + list(c) for i, c in enumerate(get_ioc_countries())]
+	flag_instance = u''
+	code_instance = u''
+	name_instance = u''
+	for c in countries:
+		if c[-1] == license_holder.nation_code:
+			flag_instance = c[1]
+			ioc_instance = c[-1]
+			name_instance = c[-2]
+			break
+	rows = []
+	cols = 4
+	for i in xrange(0, len(countries), cols):
+		rows.append( countries[i:i+cols] )
+	return render( request, 'license_holder_nation_code_select.html', locals() )
 
 @autostrip
 class TeamDisciplineForm( Form ):
@@ -1575,3 +1612,158 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 		
 	return render( request, 'participant_scan_rfid.html', locals() )
 
+#-----------------------------------------------------------------------
+
+@autostrip
+class ParticipantConfirmForm( Form ):
+	participant_id = forms.IntegerField()
+	
+	last_name = forms.CharField( label = _('Last Name') )
+	first_name = forms.CharField( required=False, label = _('First Name') )
+	date_of_birth = forms.DateField( label = _('Date of Birth'))
+	nation_code = forms.CharField( max_length=3, required=False, label=_('Nation Code'), widget=forms.TextInput(attrs={'size': 3}) )
+	gender = forms.ChoiceField( required=False, choices = ((0, _('Men')), (1, _('Women'))), label=_('Gender') )
+	
+	uci_id = forms.CharField( required=False, label=_('UCIID') )
+	license_code = forms.CharField( required=False, label=_('License Code') )
+	
+	category_name = forms.CharField( required=False, label = _('Category') )
+	team_name = forms.CharField( required=False, label = _('Team') )
+	confirmed = forms.BooleanField( required=False, label = _('Confirmed') )
+	
+	license_holder_fields = ('last_name', 'first_name', 'date_of_birth', 'nation_code', 'gender', 'uci_id', 'license_code')
+	participant_fields = ('confirmed','category_name', 'team_name')
+		
+	def save( self, request ):
+		participant = get_object_or_404( Participant, pk=self.cleaned_data['participant_id'] )
+		license_holder = participant.license_holder
+
+		for a in self.license_holder_fields:
+			setattr( license_holder, a, self.cleaned_data[a] )
+		license_holder.save()
+
+		for a in self.participant_fields:
+			if not a.endswith('_name'):
+				setattr( participant, a, self.cleaned_data[a] )
+		participant.save()
+	
+	@classmethod
+	def get_initial( cls, participant ):
+		license_holder = participant.license_holder
+		initial = {}
+		for a in cls.license_holder_fields:
+			initial[a] = getattr( license_holder, a )
+		for a in cls.participant_fields:
+			if not a.endswith('_name'):
+				initial[a] = getattr( participant, a )
+		initial['category_name'] = participant.category_name
+		initial['team_name'] = participant.team_name
+		initial['participant_id'] = participant.id
+		return initial
+	
+	def changeCategoryCB( self, request ):
+		participant = get_object_or_404( Participant, pk=self.cleaned_data['participant_id'] )
+		return HttpResponseRedirect( pushUrl(request, 'ParticipantCategoryChange', participant.id) )
+		
+	def changeTeamCB( self, request ):
+		participant = get_object_or_404( Participant, pk=self.cleaned_data['participant_id'] )
+		return HttpResponseRedirect( pushUrl(request, 'ParticipantTeamChange', participant.id) )
+		
+	def changeNationCodeCB( self, request ):
+		participant = get_object_or_404( Participant, pk=self.cleaned_data['participant_id'] )
+		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderNationCodeChange', participant.license_holder.id) )
+	
+	def dispatch( self, request ):
+		for ab in self.additional_buttons:
+			if ab[3:] and ab[0] in request.POST:
+				self.save( request )
+				return ab[3]( request )
+	
+	def submit_button( self, ab ):
+		name, value, cls = ab[:3]
+		return Submit(name, value, css_class = cls + ' hidden-print')
+	
+	def __init__(self, *args, **kwargs):
+		participant = kwargs.pop( 'participant', None )
+		competition = participant.competition
+		license_holder = participant.license_holder
+		super(ParticipantConfirmForm, self).__init__(*args, **kwargs)
+		
+		self.fields['category_name'].widget.attrs['readonly'] = True
+		self.fields['team_name'].widget.attrs['readonly'] = True
+			
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline search'
+		
+		button_args = [
+			Submit( 'save-submit', _('Save'), css_class = 'btn btn-primary' ),
+			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+		]
+		
+		change_team = ('change-team-submit', _('Change'), 'btn btn-primary', self.changeTeamCB)
+		change_nation_code = ('change-nation-code-submit', _('Lookup'), 'btn btn-primary', self.changeNationCodeCB)
+		change_category = ('change-category-submit', _('Change'), 'btn btn-primary', self.changeCategoryCB)
+		self.additional_buttons = (change_team, change_nation_code, change_category)
+		
+		nation_code_error = license_holder.nation_code_error
+		if not license_holder.uci_id:
+			uci_id_error = u'missing'
+		else:
+			uci_id_error = license_holder.uci_id_error
+		
+		def warning_html( warning ):
+			return u'<img src="{}" style="width:20px;height:20px;"/>{}'.format(static('images/warning.png'), warning) if warning else u''
+
+		self.helper.layout = Layout(
+			Row( button_args[0], HTML('&nbsp;'*8), button_args[1], HTML('&nbsp;'*8), button_args[2] ),
+			Row( HTML('<hr/>') ),
+			Row( HTML('<div style="font-size: 125%;">'), Field('confirmed'), HTML('</div>') ),
+			Row(
+				Field('last_name', size=50, css_class='no-highlight'),
+				Field('first_name', size=20, css_class='no-highlight'),
+				Field('date_of_birth', size=10, css_class='no-highlight'),
+			),
+			Row(
+				HTML(warning_html(nation_code_error)),
+				HTML(flag_html(license_holder.nation_code) + ' ' + ioc_country.get(license_holder.nation_code, u'')),
+				FieldWithButtons(Field('nation_code', css_class='no-highlight'), self.submit_button(change_nation_code) ),
+				HTML('&nbsp;'*2), Field('gender', css_class='no-highlight'),
+				HTML('&nbsp;'*2), FieldWithButtons(Field('team_name', size=40, css_class='no-highlight'), self.submit_button(change_team) ),
+			),
+			Row(
+				HTML(warning_html(uci_id_error)),
+				Field('uci_id', size=15, css_class='no-highlight'), Field('license_code', css_class='no-highlight'),
+				HTML('&nbsp;'*2), FieldWithButtons(Field('category_name', size=30, css_class='no-highlight'), self.submit_button(change_category) ),
+			),
+			Field('participant_id', type='hidden'),
+		)
+
+@access_validation()
+def ParticipantConfirm( request, participantId ):
+	participant = get_object_or_404( Participant, pk=participantId )
+	competition_age = participant.competition.competition_age( participant.license_holder )
+	
+	if request.method == 'POST':
+	
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect( getContext(request,'cancelUrl') )
+		
+		form = ParticipantConfirmForm( request.POST, participant=participant )
+		if form.is_valid():
+			form.save( request )
+			
+			if 'save-submit' in request.POST:
+				return HttpResponseRedirect( '.' )
+		
+			if 'ok-submit' in request.POST:
+				participant.confirmed = True
+				participant.save()
+				return HttpResponseRedirect( getContext(request,'cancelUrl') )
+			return form.dispatch( request )
+	else:
+		form = ParticipantConfirmForm( initial=ParticipantConfirmForm.get_initial(participant), participant=participant )
+
+	return render( request, 'participant_confirm.html', locals() )
+	

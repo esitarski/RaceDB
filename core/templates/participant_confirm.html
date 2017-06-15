@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% block content %}
+{% with p=participant lh=participant.license_holder %}
+<h1><strong>{{lh.last_name}}, {{lh.first_name}}</strong>, {{p.team_name}}, {% trans "Age" %} {{competition_age}}</h1>
+<hr/>
+{% crispy form %}
+{% endwith %}
+{% endblock content %}
