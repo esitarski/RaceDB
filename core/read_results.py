@@ -182,6 +182,7 @@ def read_results_crossmgr( payload ):
 			)
 			add_if_exists( fields, 'adjustment_time', d, 'ttPenalty' )
 			add_if_exists( fields, 'adjustment_note', d, 'ttNote' )
+			add_if_exists( fields, 'relegated', d, 'relegated' )
 			if bib in prime_points:
 				fields['points'] = prime_points[bib]
 			if bib in prime_time_bonus:

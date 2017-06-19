@@ -2535,6 +2535,8 @@ class Result(models.Model):
 	points = models.SmallIntegerField( default=0, verbose_name=_('Points') )
 	time_bonus = DurationField.DurationField( null=True, blank=True, verbose_name=_('Time Bonus') )
 	
+	relegated = models.BooleanField( default=False, verbose_name=_('Relegated') )
+
 	@property
 	def adjusted_finish_time( self ):
 		if self.finish_time and self.adjustment_time:
@@ -2579,13 +2581,13 @@ class Result(models.Model):
 	def wave_rank_html( self ):
 		if self.status != 0:
 			return self.get_status_display()
-		return mark_safe(u'{}.'.format(self.wave_rank))
+		return mark_safe(u'{}{}.'.format(self.wave_rank, u'&nbsp;REL' if self.relegated else u''))
 	
 	@property
 	def category_rank_html( self ):
 		if self.status != 0:
 			return self.get_status_display()
-		return mark_safe(u'{}.'.format(self.category_rank))
+		return mark_safe(u'{}{}.'.format(self.category_rank, u'&nbsp;REL' if self.relegated else u''))
 	
 	@property
 	def result_html( self ):
