@@ -101,6 +101,11 @@ def get_subset_number_range_str( bib_all, bib_subset ):
 def get_gender_str( g ):
 	return (u'Men', u'Women', u'Open')[g]
 
+def safe_xl( v ):
+	if v is None or isinstance(v, (unicode, int, long, float, bool, datetime.datetime, datetime.date) ):
+		return v
+	return unicode(v)
+	
 def write_row_data( ws, row, row_data, format = None ):
 	if format is None:
 		for col, d in enumerate(row_data):
