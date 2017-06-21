@@ -282,7 +282,7 @@ def get_crossmgr_excel( event_mass_start ):
 		row_data = [
 			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			unicode(p.team_name), p.team.team_code if p.team else '',
+			unicode(p.team_name), p.team.team_code if p.team else u'',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code_export,
