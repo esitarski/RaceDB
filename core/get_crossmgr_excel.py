@@ -282,7 +282,7 @@ def get_crossmgr_excel( event_mass_start ):
 		row_data = [
 			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			p.team_name, p.team.team_code if p.team else '',
+			unicode(p.team_name), p.team.team_code if p.team else '',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code_export,
@@ -290,7 +290,7 @@ def get_crossmgr_excel( event_mass_start ):
 		]
 		if competition.using_tags:
 			row_data.extend( [p.tag, p.tag2] )
-			
+		
 		table.append( row_data )
 	
 	# Remove empty columns.  Keep Bib column.
