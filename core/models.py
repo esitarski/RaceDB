@@ -1996,6 +1996,16 @@ class Team(models.Model):
 	def get_team_aliases( self ):
 		return u', '.join(u'"{}"'.format(ta.alias) for ta in self.teamalias_set.all())
 
+	def get_team_aliases_html( self ):
+		team_aliases = list(self.teamalias_set.all())
+		if not team_aliases:
+			return u''
+		strings = [u'<ul>']
+		for ta in team_aliases:
+			strings.extend( [u'<li>', escape(ta.alias), u'</li>'] )
+		strings.append( u'</ul>' )
+		return mark_safe( string_concat(*strings) )
+
 	def save( self, *args, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		return super(Team, self).save( *args, **kwargs )

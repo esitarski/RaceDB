@@ -34,7 +34,7 @@
 	{% for t in teams %}
 		<tr onclick="jump('./TeamEdit/{{t.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
-			<td><strong>{{t.name}}</strong><br/><span class='aliases'>{{t.get_team_aliases}}</span></td>
+			<td><strong>{{t.name}}</strong><br/>{{t.get_team_aliases_html}}</td>
 			<td>{{t.team_code}}</td>
 			<td>{{t.get_team_type_display}}</td>
 			<td>{{t.nation_code}}</td>
