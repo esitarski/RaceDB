@@ -1993,6 +1993,9 @@ class Team(models.Model):
 	def license_holders( self ):
 		return LicenseHolder.objects.filter( pk__in=self.license_holder_pks )
 
+	def get_team_aliases( self ):
+		return u', '.join(u'"{}"'.format(ta.alias) for ta in self.teamalias_set.all())
+
 	def save( self, *args, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		return super(Team, self).save( *args, **kwargs )
@@ -2015,6 +2018,59 @@ class Team(models.Model):
 		verbose_name_plural = _('Teams')
 		ordering = ['search_text']
 
+class TeamAlias(models.Model):
+	team = models.ForeignKey( 'Team', db_index=True )
+	alias = models.CharField( max_length = 64, db_index = True, verbose_name = _('Alias') )
+	
+	@staticmethod
+	def alias_conflicts():
+		map = defaultdict( set )
+		def add_team_name( name, team ):
+			key = utils.get_search_text([name])
+			map[key].add( team )
+		
+		for team in  Team.objects.all():
+			add_team_name( team.name, team )
+		for ta in TeamAlias.objects.all():
+			add_team_name( ta.alias, ta.team )
+		
+		return {k:sorted(v, key = attrgettr('search_text')) for k, v in map if len(v) > 1 }
+	
+	class Meta:
+		verbose_name = _('Team Alias')
+		verbose_name_plural = _('Team Aliases')
+		ordering = ['team__search_text']
+
+class TeamLookup( object ):
+	def __init__( self ):
+		self.refresh()
+		
+	def refresh( self ):
+		self.map = { utils.get_search_text([team.name]):team for team in Team.objects.all() }
+		for ta in TeamAlias.objects.all():
+			self.map[utils.get_search_text([ta.alias])] = ta.team
+	
+	def __contains__( self, name ):
+		if name:
+			name = name.strip()
+		if not name:
+			return True		# Independent
+		key = utils.get_search_text([name,])
+		return key in self.map
+	
+	def __getitem__( self, name ):
+		if name:
+			name = name.strip()
+		if not name:
+			return None		# Independent.
+		key = utils.get_search_text([name,])
+		team = self.map.get(key, None)
+		if not team:
+			team = Team( name = name )
+			team.save()
+			self.map[utils.get_search_text([team.name])] = team
+		return team
+		
 rePostalCode = re.compile('^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$')
 def validate_postal_code( postal ):
 	postal = (postal or '').replace(' ', '').upper()

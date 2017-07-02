@@ -16,8 +16,11 @@ from models import *
 def init_prereg(
 		competition_name='', worksheet_name='', clear_existing=False,
 		competitionId=None, worksheet_contents=None, message_stream=sys.stdout ):
-	
+
+	team_lookup = TeamLookup()
+		
 	tstart = datetime.datetime.now()
+	current_year = datetime.date.today().year
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def ms_write( s, flush=False ):
@@ -100,6 +103,14 @@ def init_prereg(
 					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
 				except:
 					pass
+			
+			# If no date of birth, make one up based on the age.
+			age = to_int(v('age', None))
+			if not date_of_birth and age:
+				date_of_birth = datetime.date( current_year - age, 1, 1 )
+				year_only_dob = True
+			else:
+				year_only_dob = False
 			
 			# As a last resort, pick the default DOB
 			date_of_birth 	= date_of_birth or invalid_date_of_birth
@@ -186,7 +197,10 @@ def init_prereg(
 					# Case insensitive comparison, accents ignored for names.
 					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 					if date_of_birth and date_of_birth != invalid_date_of_birth:
-						q &= Q( date_of_birth=date_of_birth )
+						if year_only_dob:
+							q &= Q( date_of_birth__year=date_of_birth__year )
+						else:
+							q &= Q( date_of_birth=date_of_birth )
 					if gender is not None:
 						q &= Q( gender=gender )
 					
@@ -233,7 +247,7 @@ def init_prereg(
 				
 				# Update the license_holder record with all new information.
 				if set_attributes( license_holder, {
-						'date_of_birth':date_of_birth,
+						'date_of_birth':date_of_birth if not year_only_dob else None,
 						'uci_code':uci_code,
 						'email':email,
 						'phone':phone,
@@ -269,18 +283,12 @@ def init_prereg(
 				#------------------------------------------------------------------------------
 				# Get Team
 				#
-				team = None
-				if team_name:
-					try:
-						team = Team.objects.get(name=team_name)
-					except Team.DoesNotExist:
-						ms_write( u'**** Row {}: no Team matches name (ignoring): "{}" Name="{}"\n'.format(
-							i, team_name, name,
-						) )
-					except Team.MultipleObjectsReturned:
-						ms_write( u'**** Row {}: multiple Teams match name (ignoring): "{}" Name="{}"\n'.format(
-							i, team_name, name,
-						) )
+				if team_name not in team_lookup:
+					msg = u'Row {:>6}: Added team: {}\n'.format(
+						i, team_name,
+					)
+					ms_write( msg )
+				team = team_lookup[team_name]
 				
 				#------------------------------------------------------------------------------
 				participant_keys = { 'competition': competition, 'license_holder': license_holder, }

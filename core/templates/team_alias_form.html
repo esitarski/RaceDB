@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}} - {% trans "for Team" %}: {{instance.team.name}}</h2>
+<hr/>
+{% crispy form %}
+{% endblock content %}

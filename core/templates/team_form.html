@@ -7,8 +7,42 @@
 <hr/>
 {% crispy form %}
 <hr/>
+<h3>{% trans "Aliases" %}
+<a class="btn btn-primary" href="./TeamAliasNew/{{instance.id}}/">{% trans "New Team Alias" %}</a>
+</h3>
+<p>
+{% trans "Team Aliases are used in Excel imports to translate unofficial or mis-spelled team names to the official team name." %}
+</p>
+{% if instance.teamalias_set.exists %}
+<table class="table table-striped table-hover table-condensed" style="width: auto;">
+{% spaceless %}
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Aliases" %}</th>
+		<th class="hidden-print"></th>
+	</tr>
+</thead>
+<tbody>
+	{% for a in instance.teamalias_set.all %}
+		<tr>
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{a.alias}}</td>
+			<td class="hidden-print">
+				<a class="btn btn-warning btn-sm" href="./TeamAliasDelete/{{a.id}}/">{% trans "Delete" %}</a>
+				&nbsp;
+				<a class="btn btn-success btn-sm" href="./TeamAliasEdit/{{a.id}}/">{% trans "Edit" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+{% endspaceless %}
+</table>
+{% endif %}
+
 {% if instance.license_holder_count > 0 %}
-<h3>{% trans "Members" %}</h3><br/>
+<br/>
+<h3>{% trans "Team Members" %}</h3>
 <table class="table table-striped table-hover table-condensed">
 {% spaceless %}
 <thead>
@@ -22,8 +56,6 @@
 		<th>{% trans "UCIID" %}</th>
 	</tr>
 </thead>
-{% endspaceless %}
-{% spaceless %}
 <tbody>
 	{% for h in instance.license_holders %}
 		<tr>

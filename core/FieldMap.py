@@ -223,6 +223,10 @@ standard_field_aliases = (
 		('Waiver',),
 		"Waiver",
 	),
+	('age',
+		('Age','Competition Age'),
+		"age",
+	),
 )
 
 def standard_field_map( exclude = [] ):

@@ -212,6 +212,10 @@ urlpatterns = [
 	url(r'^(?i).*TeamManageDuplicates/$', team.TeamManageDuplicates),
 	url(r'^(?i).*TeamManageDuplicatesSelect/$', team.TeamManageDuplicatesSelect),
 	
+	url(r'^(?i).*TeamAliasNew/(?P<teamId>\d+)/$', team.TeamAliasNew),
+	url(r'^(?i).*TeamAliasEdit/(?P<teamAliasId>\d+)/$', team.TeamAliasEdit),
+	url(r'^(?i).*TeamAliasDelete/(?P<teamAliasId>\d+)/$', team.TeamAliasDelete),
+
 	url(r'^(?i).*LegalEntities/$', legal_entity.LegalEntitiesDisplay),
 	url(r'^(?i).*LegalEntityNew/$', legal_entity.LegalEntityNew),
 	url(r'^(?i).*LegalEntityEdit/(?P<legalEntityId>\d+)/$', legal_entity.LegalEntityEdit),

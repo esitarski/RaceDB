@@ -5,6 +5,10 @@
 {% load good_err_icon %}
 {% load crispy_forms_tags %}
 
+{% block style %}
+.aliases { font-size: 80%; font-style: italic; }
+{% endblock style %}
+
 {% block content %}
 <h2>{{title}}</h2>
 <hr class="hidden-print"/>
@@ -30,7 +34,7 @@
 	{% for t in teams %}
 		<tr onclick="jump('./TeamEdit/{{t.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
-			<td>{{t.name}}</td>
+			<td><strong>{{t.name}}</strong><br/><span class='aliases'>{{t.get_team_aliases}}</span></td>
 			<td>{{t.team_code}}</td>
 			<td>{{t.get_team_type_display}}</td>
 			<td>{{t.nation_code}}</td>

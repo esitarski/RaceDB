@@ -107,6 +107,8 @@ def license_holder_import_excel(
 	system_info = SystemInfo.get_singleton()
 	tstart = datetime.datetime.now()
 	
+	team_lookup = TeamLookup()
+		
 	license_holder_team = {}
 	disciplines = list(Discipline.objects.all())
 	effective_date = timezone.now().date()
@@ -196,6 +198,8 @@ def license_holder_import_excel(
 				lh.save()
 		
 	# Process the records in large transactions for efficiency.
+	current_year = datetime.date.today().year
+	
 	def clean_license_header_row( i, ur ):
 		v = ifm.finder( ur )
 		
@@ -204,6 +208,7 @@ def license_holder_import_excel(
 		#
 		uci_code		= to_str(v('uci_code', None))
 		date_of_birth	= v('date_of_birth', None)
+		age             = to_int(v('age', None))
 		
 		try:
 			date_of_birth = date_from_value(date_of_birth)
@@ -219,6 +224,13 @@ def license_holder_import_excel(
 				date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
 			except:
 				pass
+		
+		# If no date of birth, make one up based on the age.
+		if not date_of_birth and age:
+			date_of_birth = datetime.date( current_year - age, 1, 1 )
+			year_only_dob = True
+		else:
+			year_only_dob = False
 		
 		# As a last resort, pick the default DOB
 		date_of_birth 	= date_of_birth or invalid_date_of_birth
@@ -272,6 +284,7 @@ def license_holder_import_excel(
 			'first_name':first_name,
 			'gender':gender,
 			'date_of_birth':date_of_birth,
+			'year_only_dob':year_only_dob,
 			'uci_code':uci_code,
 			'emergency_contact_name':emergency_contact_name,
 			'emergency_contact_phone':emergency_contact_phone,
@@ -305,26 +318,25 @@ def license_holder_import_excel(
 				team = None
 				team_name = lhr.pop('team_name', None)
 				team_code = lhr.pop('team_code', None)
+				year_only_dob = lhr.pop('year_only_dob', False)
+				
 				team_args = { 'name':team_name, 'team_code':team_code }
 				team_args = {k:v for k,v in team_args.iteritems() if v}
-				if team_name:
-					team = Team.objects.filter( search_text__startswith=utils.get_search_text([team_name])).first()
-					if team:
-						if set_attributes_changed( team, team_args, False ):
-							msg = u'Row {:>6}: Updated team: {}\n'.format(
-								i,
-								u', '.join( unicode(v) for v in [team_name, team_code,] ),
-							)
-							ms_write( msg )
-							team.save()
-					else:
-						team = Team( **team_args )
-						msg = u'Row {:>6}: Added team: {}\n'.format(
-							i,
-							u', '.join( unicode(v) for v in [team_name, team_code,] ),
-						)
-						ms_write( msg )
-						team.save()
+				
+				if team_name not in team_lookup:
+					msg = u'Row {:>6}: Added team: {}\n'.format(
+						i,
+						u', '.join( unicode(v) for v in [team_name, team_code,] ),
+					)
+					ms_write( msg )
+				team = team_lookup[team_name]
+				if team and set_attributes_changed( team, team_args, False ):
+					msg = u'Row {:>6}: Updated team: {}\n'.format(
+						i,
+						u', '.join( unicode(v) for v in [team_name, team_code,] ),
+					)
+					ms_write( msg )
+					team.save()
 				
 				#------------------------------------------------------------------------------
 				# Get LicenseHolder.
@@ -346,15 +358,26 @@ def license_holder_import_excel(
 				# Get a query by Last, First, DOB and Gender.
 				qNameDOBGender = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 				if date_of_birth and date_of_birth != invalid_date_of_birth:
-					qNameDOBGender &= Q( date_of_birth=date_of_birth )
+					if year_only_dob:
+						qNameDOBGender &= Q( date_of_birth__year=date_of_birth__year )
+					else:
+						qNameDOBGender &= Q( date_of_birth=date_of_birth )
 				if gender is not None:
 					qNameDOBGender &= Q( gender=gender )
 				
 				#------------------------------------------------------------------------------
-				# If this existing tag causes a conflict, change it.
+				if not license_holder and uci_id:
+					lhs = list( LicenseHolder.objects.filter(uci_id=uci_id) )
+					if len(lhs) == 1:
+						license_holder = lhs[0]
+					elif len(lhs) > 1:
+						ms_write( u'Row {}: Warning:  Name="{}" found duplicate UCIID="{}"\n'.format(
+								i, name, uci_id,
+							), type=Warning
+						)
 				
 				#------------------------------------------------------------------------------
-				if update_license_codes:
+				if not license_holder and update_license_codes:
 					# Try to find the license holder by name, DOB, gender
 					lhs = list( LicenseHolder.objects.filter(qNameDOBGender) )
 					if len(lhs) == 1:
@@ -378,17 +401,8 @@ def license_holder_import_excel(
 						)
 						continue
 						
-				#------------------------------------------------------------------------------
-				if not license_holder and uci_id:
-					lhs = list( LicenseHolder.objects.filter(uci_id=uci_id) )
-					if len(lhs) == 1:
-						license_holder = lhs[0]
-					elif len(lhs) > 1:
-						ms_write( u'Row {}: Warning:  Name="{}" found duplicate UCIID="{}"\n'.format(
-								i, name, uci_id,
-							), type=Warning
-						)
 					
+				#------------------------------------------------------------------------------
 				if not license_holder and license_code:
 					# Try to find the license holder by license code.
 					lhs = list( LicenseHolder.objects.filter(license_code=license_code) )

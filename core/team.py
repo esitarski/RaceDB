@@ -80,6 +80,7 @@ def TeamsDisplay( request ):
 		form = SearchForm( btns, initial = {'search_text': search_text} )
 		
 	teams = teams_from_search_text( search_text )
+	#alias_conflicts = TeamAlias.alias_conflicts()
 	return render( request, 'team_list.html', locals() )
 
 @access_validation()
@@ -200,6 +201,7 @@ def get_team_cannonical_select_form( ids ):
 					HTML('<div class="well">'), Field('cannonical'), HTML('</div>'),
 				),
 				Row( *button_args ),
+				Row( HTML(_('Note: Merged Team Names will also be added to the Team Alias list.')) ),
 			)
 			
 	return TeamCannonicalSelectForm		
@@ -226,6 +228,11 @@ def team_merge_duplicates( ids, cannonical ):
 	description = StringIO()
 	for t in teams:
 		description.write( get_team_info(t) )
+		
+		# Add the old team names to the cannonical team's aliases.
+		if not TeamAlias.objects.filter( alias=t.name ).exists():
+			TeamAlias( team=team_cannonical, alias=t.name ).save()
+	
 	description.write( u'--->\n' )
 	t = team_cannonical
 	description.write( get_team_info(t) )
@@ -259,4 +266,42 @@ def TeamManageDuplicatesSelect( request ):
 	title = _('Select the Representative Team to merge the Duplicate to')
 	return render( request, 'generic_form.html', locals() )
 
+#--------------------------------------------------------------------------------
+@access_validation()
+def TeamAliasNew( request, teamId ):
+	team = get_object_or_404( Team, pk=teamId )
+	TeamAlias( team=team, alias = u'{} - Alias'.format(team.name) ).save()
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+@autostrip
+class TeamAliasForm( ModelForm ):
+	class Meta:
+		model = TeamAlias
+		fields = '__all__'
+		
+	def __init__( self, *args, **kwargs ):
+		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
+		
+		super(TeamAliasForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col(Field('alias', size=100), 12),
+			),
+			Row(
+				Field( 'team', type='hidden' ),
+			)
+		)
+		addFormButtons( self, button_mask )
+
+@access_validation()
+def TeamAliasEdit( request, teamAliasId ):
+	return GenericEdit( TeamAlias, request, teamAliasId, TeamAliasForm, template = 'team_alias_form.html' )
+	
+@access_validation()
+def TeamAliasDelete( request, teamAliasId ):
+	return GenericDelete( TeamAlias, request, teamAliasId, TeamAliasForm, template = 'team_alias_form.html' )
 
