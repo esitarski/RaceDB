@@ -174,7 +174,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	footer = Rect( margin, page_height - margin - header.height, header.width, header.height )
 	field = Rect( header.x, header.bottom + sep, width, footer.top - header.bottom - sep*2 )
 
-	license_code = license_holder.license_code
+	license_code = license_holder.uci_id or license_holder.license_code
 	
 	leftArrow, rightArrow = 'A', 'a'
 	
@@ -290,7 +290,7 @@ def print_body_bib( participant, copies=2, onePage=False ):
 	
 	return print_bib_on_rect(
 		participant.bib,
-		license_holder.license_code,
+		license_holder.uci_id or license_holder.license_code,
 		license_holder.first_last,
 		'CrossMgr',
 		widthInches, heightInches, copies, onePage
