@@ -8,17 +8,20 @@ var distance_unit = {{participant.competition.distance_unit}};
 
 function pad(a,b) { return(1e15+a+"").slice(-b); }
 
+function format_secs( s ) {
+	var hh = Math.floor(s / (60*60));
+	var mm = Math.floor(s / 60) % 60;
+	var ss = s % 60;
+	return pad(hh, 2) + ':' + pad(mm,2) + ':' + pad(ss,2);
+}
+
 function change_speed() {
 	var est_speed = parseFloat(document.getElementById('id_est_speed').value);
 	if( est_speed <= 0.0 )
 		return;
 	var est_kmh = (distance_unit ? est_speed * 1.60934 : est_speed);
-	var s = parseInt(60*60*tt_km / est_kmh);
-	var hh = Math.floor(s / (60*60));
-	var mm = Math.floor(s / 60) % 60;
-	var ss = s % 60;
-	var	t = pad(hh, 2) + ':' + pad(mm,2) + ':' + pad(ss,2);
-	document.getElementById('id_est_duration').value = t;
+	var secs = parseInt(60*60*tt_km / est_kmh);
+	document.getElementById('id_est_duration').value = format_secs( secs );
 }
 function change_duration() {
 	var est_duration = document.getElementById('id_est_duration').value.replace(/[^\d.:]/g, '');
@@ -32,6 +35,7 @@ function change_duration() {
 	var est_kmh = tt_km / hours;
 	var est_speed = (distance_unit ? est_kmh / 1.60934 : est_kmh);
 	document.getElementById('id_est_speed').value = est_speed.toFixed(2);
+	document.getElementById('id_est_duration').value = format_secs( secs );
 }
 
 {% else %}
