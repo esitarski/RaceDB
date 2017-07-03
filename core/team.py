@@ -105,6 +105,7 @@ class TeamManageDuplicatesSelectForm( Form ):
 		for k in list(initial.iterkeys()):
 			if k not in ('id', 'selected'):
 				self.team_fields[k] = initial.pop(k)
+		self.team_id = initial.get('id', None)
 		super(TeamManageDuplicatesSelectForm, self).__init__( *args, **kwargs )
 
 	output_hdrs   = (_('Name'), _('Code'),      _('Type'),  _('Active'), _('# Members'))
@@ -120,6 +121,9 @@ class TeamManageDuplicatesSelectForm( Form ):
 				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['is-err', 'is-good'][v]) )
 			elif f in self.output_center_fields:
 				s.write( u'<td class="text-center">{}</td>'.format(escape(unicode(self.team_fields.get(f,u'')))) )
+			elif f == 'name':
+				team = Team.objects.get(id=self.team_id)
+				s.write( u'<td>{}<br/>{}</td>'.format(team.name, team.get_team_aliases_html()) )
 			else:
 				s.write( u'<td>{}</td>'.format(escape(unicode(self.team_fields.get(f,u'')))) )
 		p = super(TeamManageDuplicatesSelectForm, self).as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
@@ -229,9 +233,16 @@ def team_merge_duplicates( ids, cannonical ):
 	for t in teams:
 		description.write( get_team_info(t) )
 		
-		# Add the old team names to the cannonical team's aliases.
-		if not TeamAlias.objects.filter( alias=t.name ).exists():
+		# Add the duplicate team name to the cannonical team's aliases.
+		if not TeamAlias.objects.filter( team=team_cannonical, alias=t.name ).exists():
 			TeamAlias( team=team_cannonical, alias=t.name ).save()
+			
+	# Add any duplicate team aliases from the old team to the cannonical team.
+	# Otherwise old aliases will be deleted in the cascade delete.
+	for ta in list(TeamAlias.objects.filter(team__id__in=duplicate_ids)):
+		if not TeamAlias.objects.filter( team=team_cannonical, alias=ta.alias ).exists():
+			ta.team = team_cannonical
+			ta.save()
 	
 	description.write( u'--->\n' )
 	t = team_cannonical
