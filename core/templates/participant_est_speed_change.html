@@ -14,7 +14,6 @@ function format_secs( s ) {
 	var ss = s % 60;
 	return pad(hh, 2) + ':' + pad(mm,2) + ':' + pad(ss,2);
 }
-
 function change_speed() {
 	var est_speed = parseFloat(document.getElementById('id_est_speed').value);
 	if( est_speed <= 0.0 )
@@ -40,6 +39,7 @@ function change_duration() {
 
 {% else %}
 var tt_km = 0;
+function change_speed() {}
 {% endif %}
 {% endwith %}
 
