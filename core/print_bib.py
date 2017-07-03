@@ -531,14 +531,8 @@ def print_id_label( participant ):
 	info.append(
 		['', u',  '.join([
 			u'Age: {}'.format(license_holder.get_age()),
-			u'Date of Birth: {}'.format(license_holder.date_of_birth.strftime('%Y-%m-%d')),
-			]),
-		]
-	)
-	info.append(
-		['', u',  '.join([
 			u'Gender: {}'.format(license_holder.get_gender_display()),
-			u'Nat: {}'.format(license_holder.get_nationality()),
+			u'Nation: {}'.format(license_holder.nation_code),
 			]),
 		]
 	)
@@ -564,7 +558,7 @@ def print_id_label( participant ):
 	info.append( ['', u'Emergency Contact:'] )
 	if license_holder.emergency_contact_name:
 		info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
-	info.append( ['', u'  {}'.format(format_phone(license_holder.emergency_contact_phone or 'No phone number provided'))] )
+	info.append( ['', u'  {}'.format(format_phone(license_holder.emergency_contact_phone) or 'No phone number provided')] )
 	
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,
 		leftJustifyCols = [0,1], hasHeader=False, horizontalLines=False )
