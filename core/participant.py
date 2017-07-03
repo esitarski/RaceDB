@@ -1145,12 +1145,20 @@ def ParticipantOptionChange( request, participantId ):
 	
 #-----------------------------------------------------------------------
 
-def GetParticipantEstSpeedForm( competition ):
+def GetParticipantEstSpeedForm( participant ):
+	competition = participant.competition
+	km = participant.get_tt_km()
+	
 	@autostrip
 	class ParticipantEstSpeedForm( Form ):
 		est_speed = forms.FloatField( required = False,
 			label=string_concat(_('Estimated speed for Time Trial'), ' (', competition.speed_unit_display, ')'),
 			help_text=_('Enter a value or choose from the grid below.')
+		)
+		if km:
+			est_duration = DurationField.DurationFormField( required = False,
+			label=string_concat(_('or Estimated time for Time Trial'), ' (', participant.get_tt_distance_text(), ')' ),
+			help_text=_('In [HH:]MM:SS format.')
 		)
 		seed_option = forms.ChoiceField( required = False, choices=Participant.SEED_OPTION_CHOICES, label=_('Seed Option'),
 			help_text=_('Tells RaceDB to start this rider as Early or as Late as possible in the Start Wave')
@@ -1170,8 +1178,9 @@ def GetParticipantEstSpeedForm( competition ):
 			
 			self.helper.layout = Layout(
 				Row(
-					Col(Field('est_speed', css_class = 'form-control', size = '20'), 5),
-					Col(Field('seed_option'), 6),
+					Col(Field('est_speed', css_class = 'form-control', size = '20'), 4),
+					Col(Field('est_duration'), 4) if km else HTML(''),
+					Col(Field('seed_option'), 4),
 				),
 				Row(
 					button_args[0],
@@ -1191,7 +1200,7 @@ def ParticipantEstSpeedChange( request, participantId ):
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
-		form = GetParticipantEstSpeedForm(competition)( request.POST )
+		form = GetParticipantEstSpeedForm(participant)( request.POST )
 		if form.is_valid():
 			est_speed = form.cleaned_data['est_speed']
 			participant.est_kmh = competition.to_kmh( est_speed or 0.0 )
@@ -1199,7 +1208,7 @@ def ParticipantEstSpeedChange( request, participantId ):
 			participant.save()
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
-		form = GetParticipantEstSpeedForm(competition)(
+		form = GetParticipantEstSpeedForm(participant)(
 			initial = dict( est_speed=competition.to_local_speed(participant.est_kmh), seed_option=participant.seed_option )
 		)
 	

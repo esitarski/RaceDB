@@ -791,6 +791,9 @@ class Competition(models.Model):
 	def to_local_speed( self, kmh ):
 		return kmh if self.distance_unit == 0 else kmh * 0.621371
 		
+	def to_local_distance( self, km ):
+		return km if self.distance_unit == 0 else km * 0.621371
+		
 	def to_kmh( self, speed ):
 		return speed if self.distance_unit == 0 else speed / 0.621371
 	
@@ -3297,13 +3300,52 @@ class Participant(models.Model):
 			self.competition.speed_unit_display,
 			u' ({})'.format( self.get_seed_option_display() ) if self.seed_option != 1 else u'',
 		)
-	
-	def get_short_role_display( self ):
-		role = self.get_role_display()
-	
+		
 	@property
 	def adjusted_est_kmh( self ):
 		return [-1000000.0, 0.0, 1000000, 10000000][self.seed_option] + self.est_kmh
+	
+	def get_tt_km( self ):
+		if not self.category or not self.is_competitor:
+			return None
+		# Get the TT event after the current time, or the last TT event in the Competition.
+		waveTTs = list(WaveTT.objects.filter(event__competition=self.competition, categories=self.category).select_related('event').order_by('event__date_time'))
+		if not waveTTs:
+			waveTT = None
+		elif len(waveTTs) == 1:
+			waveTT = waveTTs[0]
+		else:
+			tNow = timezone.now()
+			waveTT = None
+			for w in waveTTs:
+				if w.event.date_time >= tNow:
+					waveTT = w
+			if not waveTT:
+				waveTT = waveTTs[-1]
+		
+		if not waveTT or not waveTT.distance:
+			return None
+		return waveTT.distance * (waveTT.laps or 1)
+	
+	def get_tt_distance_text( self ):
+		tt_km = self.get_tt_km()
+		if not tt_km:
+			return u''
+		return u'{:.2f}{}'.format( self.competition.to_local_distance(tt_km), self.competition.get_distance_unit_display() )
+	
+	def get_tt_est_duration( self ):
+		if not self.est_kmh:
+			return None
+		tt_km = self.get_tt_km()
+		if not tt_km:
+			return None
+		return DurationField.formatted_timedelta( hours = tt_km / self.est_kmh )
+	
+	def get_tt_est_time_text( self ):
+		tt_est_duration = self.get_tt_est_duration()
+		if not tt_est_duration:
+			return u''
+		return tt_est_duration.format_no_decimals()
 	
 	@property
 	def team_name( self ):

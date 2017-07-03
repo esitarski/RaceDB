@@ -1,9 +1,64 @@
 {% extends "base.html" %}
+
+{% block javascript %}
+{% with tt_km=participant.get_tt_km %}
+{% if tt_km %}
+var tt_km = {{tt_km}};
+var distance_unit = {{participant.competition.distance_unit}};
+
+function pad(a,b) { return(1e15+a+"").slice(-b); }
+
+function change_speed() {
+	var est_speed = parseFloat(document.getElementById('id_est_speed').value);
+	if( est_speed <= 0.0 )
+		return;
+	var est_kmh = (distance_unit ? est_speed * 1.60934 : est_speed);
+	var s = parseInt(60*60*tt_km / est_kmh);
+	var hh = Math.floor(s / (60*60));
+	var mm = Math.floor(s / 60) % 60;
+	var ss = s % 60;
+	var	t = pad(hh, 2) + ':' + pad(mm,2) + ':' + pad(ss,2);
+	document.getElementById('id_est_duration').value = t;
+}
+function change_duration() {
+	var est_duration = document.getElementById('id_est_duration').value.replace(/[^\d.:]/g, '');
+	var secs = 0;
+	var values = est_duration.split(':');
+	for( var i = 0; i < values.length; ++i )
+		secs = secs * 60.0 + parseInt('0' + values[i], 10);
+	var hours = secs / (60.0*60.0);
+	if( hours <= 0 )
+		return
+	var est_kmh = tt_km / hours;
+	var est_speed = (distance_unit ? est_kmh / 1.60934 : est_kmh);
+	document.getElementById('id_est_speed').value = est_speed.toFixed(2);
+}
+
+{% else %}
+var tt_km = 0;
+{% endif %}
+{% endwith %}
+
+function setSpeed( speed ) {
+	var est_speed = document.getElementById('id_est_speed');
+	est_speed.value = speed;
+	change_speed();
+}
+{% endblock javascript %}
+
+{% block onload %}
+	if( tt_km != 0 ) {
+		$('#id_est_speed').change( change_speed );
+		$('#id_est_duration').change( change_duration );
+		change_speed();
+	}
+{% endblock onload %}
+
 {% block content %}
 {% load i18n %}
 {% load crispy_forms_tags %}
-<h2>{{title}}</h2>
-<h2>{% trans "Participant"%}: <strong>{{participant.license_holder.full_name}}</strong></h2>
+<h2>{{title}}</h2><br/>
+<h2><strong>{{participant.license_holder.full_name}}</strong></h2>
 {% if participant.team %}
 	<h2>{% trans "Team"%}: <strong>{{participant.team.name}}</strong>
 	</h2>
@@ -13,13 +68,12 @@
 	{{participant.category.get_gender_display}}, {{participant.category.description}}
 	</h2>
 {% endif %} 
+{% with tt_distance=participant.get_tt_distance_text %}
+	{% if tt_distance %}
+		<h2>{% trans "TT Distance" %}: <strong>{{tt_distance}}</strong></h2>
+	{% endif %}
+{% endwith %}
 <hr/>
-<script>
-function setSpeed( speed ) {
-	var est_speed = document.getElementById('id_est_speed');
-	est_speed.value = speed;
-}
-</script>
 {% crispy form %}
 <div style="clear:both;"></div>
 <div class="span12 row">
