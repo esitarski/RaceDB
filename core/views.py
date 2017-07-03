@@ -298,7 +298,7 @@ class LicenseHolderForm( ModelForm ):
 				),
 				ColKey(
 					HTML(warning_html(lh and lh.uci_id_error)),
-					Field('uci_id'),
+					Field('uci_id', maxlength=16),
 					HTML(error_html(lh and lh.uci_id_error)),
 					cols=4,
 				),

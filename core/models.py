@@ -2175,7 +2175,7 @@ class LicenseHolder(models.Model):
 	reUCIID = re.compile( r'[^\d]' )
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
-		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'') )
+		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'') )[:11]
 		
 		self.gender = self.gender or 0
 		

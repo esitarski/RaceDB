@@ -16,10 +16,15 @@
 {% endblock javascript %}
 
 {% block onload %}
+var uci_code = $('#id_uci_id');
+uci_code.val( uci_code.val().replace(/(\d\d\d)/g, '$1 ') );
+
 $("form").submit(function(event) {
 		$('#id_license_code, #id_existing_tag, #id_existing_tag2, #tag, #tag2').each(
 			function() { $(this).val( $(this).val().trim().replace(/^0+/, '') );
 		});
+		var uci_code = $('#id_uci_id');
+		uci_code.val( uci_code.val().replace(/[^\d]/g, '') );
 	});
 {% endblock onload %}
 
