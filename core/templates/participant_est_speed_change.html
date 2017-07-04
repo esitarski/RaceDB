@@ -6,9 +6,12 @@
 var tt_km = {{tt_km}};
 var distance_unit = {{participant.competition.distance_unit}};
 
-function pad(a,b) { return(1e15+a+"").slice(-b); }
+function pad(a,b) {
+	return("0".repeat(b)+a).slice(-b);
+}
 
 function format_secs( s ) {
+	s = Math.round( s );
 	var hh = Math.floor(s / (60*60));
 	var mm = Math.floor(s / 60) % 60;
 	var ss = s % 60;
@@ -19,7 +22,7 @@ function change_speed() {
 	if( est_speed <= 0.0 )
 		return;
 	var est_kmh = (distance_unit ? est_speed * 1.60934 : est_speed);
-	var secs = parseInt(60*60*tt_km / est_kmh);
+	var secs = 60.0*60.0 * tt_km / est_kmh;
 	document.getElementById('id_est_duration').value = format_secs( secs );
 }
 function change_duration() {
@@ -27,7 +30,7 @@ function change_duration() {
 	var secs = 0;
 	var values = est_duration.split(':');
 	for( var i = 0; i < values.length; ++i )
-		secs = secs * 60.0 + parseInt('0' + values[i], 10);
+		secs = secs * 60.0 + parseFloat('0' + values[i]);
 	var hours = secs / (60.0*60.0);
 	if( hours <= 0 )
 		return

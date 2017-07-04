@@ -3345,7 +3345,7 @@ class Participant(models.Model):
 		tt_est_duration = self.get_tt_est_duration()
 		if not tt_est_duration:
 			return u''
-		return tt_est_duration.format_no_decimals()
+		return DurationField.format_seconds( round(tt_est_duration.total_seconds()), False )
 	
 	@property
 	def team_name( self ):
