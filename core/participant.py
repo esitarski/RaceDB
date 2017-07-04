@@ -1152,12 +1152,12 @@ def GetParticipantEstSpeedForm( participant ):
 	@autostrip
 	class ParticipantEstSpeedForm( Form ):
 		est_speed = forms.FloatField( required = False,
-			label=string_concat(_('Estimated speed for Time Trial'), ' (', competition.speed_unit_display, ')'),
+			label=string_concat(_('Estimated Speed for Time Trial'), ' (', competition.speed_unit_display, ')'),
 			help_text=_('Enter a value or choose from the grid below.')
 		)
 		if km:
 			est_duration = DurationField.DurationFormField( required = False,
-			label=string_concat(_('or Estimated time for Time Trial'), ' (', participant.get_tt_distance_text(), ')' ),
+			label=string_concat(_('or Estimated Time for Time Trial'), ' (', participant.get_tt_distance_text(), ')' ),
 			help_text=_('In [HH:]MM:SS format.')
 		)
 		seed_option = forms.ChoiceField( required = False, choices=Participant.SEED_OPTION_CHOICES, label=_('Seed Option'),
