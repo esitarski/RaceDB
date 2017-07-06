@@ -198,7 +198,7 @@ def license_holder_import_excel(
 				lh.save()
 		
 	# Process the records in large transactions for efficiency.
-	current_year = datetime.date.today().year
+	today = datetime.date.today()
 	
 	def clean_license_header_row( i, ur ):
 		v = ifm.finder( ur )
@@ -227,7 +227,7 @@ def license_holder_import_excel(
 		
 		# If no date of birth, make one up based on the age.
 		if not date_of_birth and age:
-			date_of_birth = datetime.date( current_year - age, 1, 1 )
+			date_of_birth = date_of_birth_from_age( age, today )
 			year_only_dob = True
 		else:
 			year_only_dob = False
@@ -359,7 +359,7 @@ def license_holder_import_excel(
 				qNameDOBGender = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 				if date_of_birth and date_of_birth != invalid_date_of_birth:
 					if year_only_dob:
-						qNameDOBGender &= Q( date_of_birth__year=date_of_birth__year )
+						qNameDOBGender &= Q( date_of_birth__year=date_of_birth.year )
 					else:
 						qNameDOBGender &= Q( date_of_birth=date_of_birth )
 				if gender is not None:

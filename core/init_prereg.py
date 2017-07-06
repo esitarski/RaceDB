@@ -20,7 +20,7 @@ def init_prereg(
 	team_lookup = TeamLookup()
 		
 	tstart = datetime.datetime.now()
-	current_year = datetime.date.today().year
+	today = datetime.date.today()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def ms_write( s, flush=False ):
@@ -107,7 +107,7 @@ def init_prereg(
 			# If no date of birth, make one up based on the age.
 			age = to_int(v('age', None))
 			if not date_of_birth and age:
-				date_of_birth = datetime.date( current_year - age, 1, 1 )
+				date_of_birth = date_of_birth_from_age( age, today )
 				year_only_dob = True
 			else:
 				year_only_dob = False
@@ -198,7 +198,7 @@ def init_prereg(
 					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 					if date_of_birth and date_of_birth != invalid_date_of_birth:
 						if year_only_dob:
-							q &= Q( date_of_birth__year=date_of_birth__year )
+							q &= Q( date_of_birth__year=date_of_birth.year )
 						else:
 							q &= Q( date_of_birth=date_of_birth )
 					if gender is not None:

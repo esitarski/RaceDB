@@ -126,3 +126,19 @@ def get_key( d, keys, default_value ):
 			return d[k]
 	return default_value
 
+def date_of_birth_from_age( age, today=None ):
+	if age is None:
+		return None
+	if isinstance(age, datetime.date):
+		return age
+	if isinstance(age, datetime.datetime):
+		return age.date()
+	try:
+		age = int(age)
+	except:
+		return None
+	if 1900 <= age:
+		return datetime.date( age, 1, 1 )
+	if not today:
+		today = datetime.date.today()
+	return datetime.date( today.year - age, 1, 1 )
