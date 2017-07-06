@@ -65,6 +65,7 @@ property_headers = (
 	'No Data DNS',
 	'Win and Out',
 	'Event Long Name',
+	'Email',
 )
 	
 def get_number_range_str( numbers ):
@@ -265,6 +266,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		event.dnsNoData,
 		getattr(event, 'win_and_out', False),
 		u'-'.join( [competition.long_name, event.name] ) if competition.long_name else u'',
+		competition.organizer_email,
 	]
 	row = write_row_data( ws, row, row_data )
 
