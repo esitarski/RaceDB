@@ -1214,7 +1214,7 @@ def TeamsShow( request, competitionId ):
 	for ti in team_info:
 		ti['competitors'] = competitors = sorted(
 			list(ti['competitors']),
-			key=lambda p: (getCategorySeq(p), p.license_holder.search_text),
+			key=lambda p: (getCategorySeq(p), p.bib if p.bib else 99999, p.license_holder.search_text),
 		)
 		for i in xrange( 1, len(competitors) ):
 			if getCategorySeq(competitors[i-1]) != getCategorySeq(competitors[i]):
