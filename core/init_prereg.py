@@ -192,7 +192,7 @@ def init_prereg(
 						ms_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
 							i, license_code, name) )
 						continue
-				else:
+				elif not license_holder:
 					# No license code.  Try to find the participant by last/first name, [date_of_birth] and [gender].
 					# Case insensitive comparison, accents ignored for names.
 					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
