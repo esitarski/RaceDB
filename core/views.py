@@ -350,53 +350,32 @@ def is_uci_id( uci_id ):
 def license_holders_from_search_text( search_text ):
 	search_text = utils.normalizeSearch(search_text)
 	license_holders = []
-	while True:
-		if search_text.startswith( 'rfid=' ):
-			try:
-				arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
-				license_holders = [LicenseHolder.objects.get(Q(existing_tag=arg) | Q(existing_tag2=arg))]
-				break
-			except (IndexError, LicenseHolder.DoesNotExist):
-				break
-			except LicenseHolder.MultipleObjectsReturned:
-				pass
-			
-		if search_text.startswith( 'scan=' ):
-			try:
-				arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
-				license_holders = [LicenseHolder.objects.get(Q(license_code=arg) | Q(uci_id=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))]
-				break
-			except (IndexError, LicenseHolder.DoesNotExist):
-				break
-			except LicenseHolder.MultipleObjectsReturned:
-				pass
 	
-		if reUCICode.match(search_text):
-			try:
-				license_holders = [LicenseHolder.objects.get(uci_code = search_text.upper())]
-				break
-			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-				pass
-				
-		if is_uci_id( search_text ):
-			try:
-				license_holders = [LicenseHolder.objects.get(uci_id = search_text.replace(' ',''))]
-				break
-			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-				pass
+	if not license_holders and search_text.startswith( 'rfid=' ):
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
+		license_holders = list(LicenseHolder.objects.filter(Q(existing_tag=arg) | Q(existing_tag2=arg)))
 		
-		if search_text[-4:].isdigit():
-			try:
-				license_holders = [LicenseHolder.objects.get(license_code = search_text.upper().lstrip('0'))]
-				break
-			except (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-				pass
-		
+	if not license_holders and search_text.startswith( 'scan=' ):
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
+		license_holders = list(LicenseHolder.objects.filter(
+			Q(license_code=arg) | Q(uci_id=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))
+		)
+
+	if not license_holders and is_uci_id( search_text ):
+		license_holders = list(LicenseHolder.objects.filter(uci_id = search_text.replace(' ','')))
+	
+	if not license_holders and reUCICode.match( search_text ):
+		license_holders = list(LicenseHolder.objects.filter(uci_code = search_text.upper()))
+			
+	if not license_holders and search_text[-4:].isdigit():
+		license_holders = list(LicenseHolder.objects.filter(license_code = search_text.upper().lstrip('0')))
+
+	if not license_holders:
 		q = Q()
 		for n in search_text.split():
 			q &= Q( search_text__contains = n )
 		license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
-		break
+	
 	return license_holders
 	
 @access_validation()
