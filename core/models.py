@@ -2148,6 +2148,8 @@ class LicenseHolder(models.Model):
 	
 	emergency_contact_name = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact') )
 	emergency_contact_phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
+	emergency_medical = models.CharField( max_length=64, blank=True, default='',
+		verbose_name=_('Medical Alert'), help_text = _('eg. diabetic, drug alergy, etc.') )
 
 	def get_age( self ):
 		today = timezone.now().date()

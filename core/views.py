@@ -319,13 +319,14 @@ class LicenseHolderForm( ModelForm ):
 				ColKey(
 					HTML(warning_html(lh and not lh.emergency_contact_name)),
 					Field('emergency_contact_name', size=50),
-					cols=6,
+					cols=5,
 				),
 				ColKey(
 					HTML(warning_html(lh and not lh.emergency_contact_phone)),
 					Field('emergency_contact_phone'),
-					cols=4,
+					cols=3,
 				),
+				Col(Field('emergency_medical', size=30), 3),
 			),
 			Row(
 				Col('eligible', 2),

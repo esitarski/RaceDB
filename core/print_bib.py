@@ -555,6 +555,8 @@ def print_id_label( participant ):
 		)
 	
 	info.append( ['',''] )
+	if license_holder.emergency_medical:
+		info.append( ['', u'Medical Alert: {}'.format(license_holder.emergency_medical)] )
 	info.append( ['', u'Emergency Contact:'] )
 	if license_holder.emergency_contact_name:
 		info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or 'None provided')] )

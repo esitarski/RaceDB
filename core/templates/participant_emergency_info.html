@@ -3,6 +3,7 @@
 {% load static %}
 {% load staticfiles %}
 {% load format_phone %}
+{% load non_empty_list %}
 
 {% block content %}
 
@@ -16,6 +17,9 @@
 <hr/>
 </div>
 <h1><strong style="font-size: 120%">{{lh.first_last}}</strong></h1>
+{% if lh.emergency_medical %}
+<h4>{% trans "Medical Alert" %}: <strong>{{lh.emergency_medical}}</strong></h4>
+{% endif %}
 <h4>{% trans "Emergency Contact" %}:
 	<strong>
 		{% if lh.emergency_contact_name %}{{lh.emergency_contact_name}},{% endif %}
@@ -24,12 +28,12 @@
 </h4>
 <br/>
 <h4>
-	{% trans "Age" %} <strong>{{lh.get_age}}, {{lh.get_gender_display}},</strong>
-	{{lh.city}}, {{lh.state_prov}}, {{lh.get_nation_code_html}}
+	{% trans "Age" %} <strong>{{lh.get_age}}, {{lh.get_gender_display}}</strong>
+	{% non_empty_list lh.city lh.state_prov lh.get_nation_code_html %}
 </h4>
 <br/>
 <h4>
-	{% if p.bib %}{% trans "Bib" %} <strong>{{p.bib}}</strong>{% endif %}{% if p.category %}, {% trans "Category" %} <strong>{{p.category.code}},</strong>{% endif %}
+	{% if p.bib %}{% trans "Bib" %} <strong>{{p.bib}}</strong>{% endif %}{% if p.category %}, {% trans "Category" %} <strong>{{p.category_name}},</strong>{% endif %}
 	{% if lh.uci_id %}UCIID <strong>{{lh.get_flag_uci_id_html}}</strong>{% endif %}
 </h4>
 {% if t %}
