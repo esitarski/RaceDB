@@ -6,6 +6,7 @@
 {% load crispy_forms_tags %}
 {% load get_field_name %}
 {% load yes_no %}
+{% load non_empty_list %}
 
 <style>
 #dashboard {
@@ -37,7 +38,7 @@
 			<div class="col-md-4">{{competition.organizer_phone}}</div>
 		</div>
 		<div class="row">
-			<div class="col-md-12">{{competition.city}}, {{competition.stateProv}}, {{competition.country}}</div>
+			<div class="col-md-12">{% non_empty_list competition.city competition.stateProv competition.country %}</div>
 		</div>
 		<div class="row">
 			<div class="col-md-12">{{competition.discipline}}, {{competition.race_class}}</div>

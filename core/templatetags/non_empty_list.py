@@ -10,5 +10,5 @@ def non_empty( v ):
 
 @register.simple_tag
 def non_empty_list(*args, **kwargs):
-	sep = kwargs.pop('sep', u',')
+	sep = kwargs.pop('sep', u', ')
 	return sep.join( a for a in args if non_empty(a) )

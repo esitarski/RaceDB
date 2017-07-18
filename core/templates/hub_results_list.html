@@ -1651,7 +1651,7 @@ table.participant_table tr th {
 		{% with p=rr.participant h=rr.participant.license_holder %}
 		<tr onclick="jump('/RaceDB/Hub/LicenseHolderResults/{{h.id}}')">
 			{% if has_results %}
-				<td class="text-right">{% if rr.status == 0 %}{{forloop.counter}}.{% else %}{{rr.get_status_display}}{% endif %}</td>
+				<td class="text-right">{% if rr.is_finisher %}{{forloop.counter}}.{% else %}{{rr.get_status_display}}{% endif %}</td>
 			{% endif %}
 			<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 			<td><a href="/RaceDB/Hub/LicenseHolderResults/{{h.id}}">{{h.full_name}}</a></td>
@@ -1660,7 +1660,7 @@ table.participant_table tr th {
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
 			{% if has_results %}
-				<td class="text-right">{{rr.adjusted_finish_time|format_time_no_decimals}}</td>
+				<td class="text-right">{% if rr.is_finisher %}{{rr.adjusted_finish_time|format_time_no_decimals}}{% endif %}</td>
 				<td class="text-right">{% if wave.rank_categories_together %}{{rr.wave_gap}}{% else %}{{rr.category_gap}}{% endif %}</td>
 			{% endif %}
 		</tr>

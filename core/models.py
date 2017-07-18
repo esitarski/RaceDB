@@ -2638,7 +2638,7 @@ class Result(models.Model):
 	
 	@property
 	def is_finisher( self ):
-		return self.status == self.cFinisher
+		return self.status in (self.cFinisher, self.cPUL)
 	
 	@property
 	def category_result_html( self ):

@@ -3,6 +3,7 @@
 {% load crispy_forms_tags %}
 {% load static %}
 {% load staticfiles %}
+{% load non_empty_list %}
 
 {% block content %}
 {% include "hub_nav.html" %}   
@@ -10,7 +11,7 @@
 <h1>
 	<strong>{{h.first_name}} {{h.last_name}}</strong>
 </h1>
-<h2>{{h.city}}, {{h.state_prov}} {{h.}}</h2>
+<h2>{% non_empty_list h.city h.state_prov %}</h2>
 <h2>{{h.get_gender_display}}&nbsp;&nbsp; {{h.license_code_trunc}}&nbsp;&nbsp; {{h.get_flag_uci_id_html}}</h2>
 <h2>&nbsp;</h2>
 <h3>{% trans "Results" %}:</h3>

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load paginate_html %}
+{% load non_empty_list %}
 {% block content %}
 
 {% include "hub_nav.html" %}
@@ -30,7 +31,7 @@
 			<td>{{c.date_range_year_str}}</td>
 			<td>{{c.discipline.name}}</td>
 			<td><a href="/RaceDB/Hub/CompetitionResults/{{c.id}}/"><strong>{{c.name}}</strong></a></td>
-			<td>{{c.city}} {{c.stateProv}}, {{c.country}}</td>
+			<td>{% non_empty_list c.city c.stateProv c.country %}</td>
 			<td>{{c.organizer}}</td>
 			<td>{{c.race_class.name}}</td>
 			<td>{% if c.has_results %}<span class="is-finished"/>{% endif %}</td>

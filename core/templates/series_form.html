@@ -3,6 +3,7 @@
 {% load crispy_forms_tags %}
 {% load static %}
 {% load staticfiles %}
+{% load non_empty_list %}
 {% block srcjavascript %}
 <script type="text/javascript" src="{% static "js/RowSorter.js" %}"></script>
 {% endblock srcjavascript %}
@@ -336,7 +337,7 @@ for (var i = 0; i < model_ids.length; ++i ) {
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{c.date_range_year_str}}</td>
 		<td>{{c.discipline.name}}</td>
-		<td>{{c.name}}<br/>{{c.city}}, {{c.stateProv}}, {{c.country}}</td>
+		<td>{{c.name}}<br/>{% non_empty_list c.city c.stateProv c.country %}</td>
 		<td>{{c.race_class.name}}</td>
 		<td>
 			<table>

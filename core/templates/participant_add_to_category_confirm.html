@@ -2,6 +2,7 @@
 
 {% block content %}
 {% load staticfiles %}
+{% load non_empty_list %}
 {% load i18n %}
 <h2>{{title}}</h2>
 <h2><strong>{{competition.name}}</strong></h2>
@@ -27,7 +28,7 @@
 			<td class="text-right">{% trans "Date of Birth" %}:</td>
 			<td><strong>{{license_holder.date_of_birth|date:"Y-m-d"}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Competition Age" %}: <strong>{{competition_age}}</strong></td>
 		</tr>
-		<tr><td class="text-right">{% trans "From" %}:</td>				<td><strong>{{license_holder.city}}, {{license_holder.state_prov}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "From" %}:</td>				<td><strong>{% non_empty_list license_holder.city license_holder.state_prov %}</strong></td></tr>
 		<tr><td class="text-right">{% trans "Nationality" %}:</td>		<td><strong>{{license_holder.nationality}}</strong></td></tr>
 		<tr><td class="text-right">{% trans "License" %}:</td>			<td><strong>{{license_holder.license_code}}</strong></td></tr>
 		<tr><td class="text-right">{% trans "UCI ID" %}:</td>			<td><strong>{{license_holder.get_flag_uci_id_html}}</strong></td></tr>
