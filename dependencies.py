@@ -88,5 +88,6 @@ if __name__ == '__main__':
 	update_dependencies( args.upgrade )
 	
 	if is_windows:
+		print( 'Creating Windows desktop shortcut...' )
 		import CreateShortcut
 		CreateShortcut.CreateShortcut()
