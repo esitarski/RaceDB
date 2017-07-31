@@ -1,19 +1,49 @@
-import sys, os, winshell
+import sys, os
+import tempfile
+import subprocess
 
-# RaceDB command and arguments to create shortcut.
-cmd = "launch"
+vbTemplate = '''
+Set oWS = WScript.CreateObject("WScript.Shell")
+Set oLink = oWS.CreateShortcut("{link}")
 
-def CreateShortcut():
+oLink.TargetPath = "{targetPath}"
+oLink.Arguments = "{arguments}"
+oLink.Description = "{description}"
+oLink.IconLocation =  "{icon}"
+oLink.WorkingDirectory = "{workingDirectory}"
+oLink.WindowStyle = 1
+oLink.Save
+'''
+
+def CreateShortcut( cmd="launch" ):
+	'''
+		Create a desktop shortcut on Windows without win32shell module.
+		Write a visual basic script, then run it with CScript.
+	'''
 	current_folder = os.path.dirname(os.path.realpath(__file__))
-	desktop = winshell.desktop()
-	shortcut_path = os.path.join(desktop, "RaceDB Launch.lnk")
-
-	with winshell.shortcut(shortcut_path) as link:
-		link.description = "RaceDB Shortcut"
-		link.working_directory = current_folder
-		link.icon_location = (os.path.join(current_folder, 'core', 'static', 'images', 'RaceDB.ico'), 1)
-		link.path = sys.executable
-		link.arguments = "manage.py" + " " + cmd
+	
+	vbStr = vbTemplate.format(
+		link			=os.path.join( current_folder, 'RaceDB Launch.LNK' ),
+		targetPath		=sys.executable,
+		arguments		=' '.join( ("manage.py", cmd) ),
+		description		="RaceDB",
+		icon			='{},{}'.format(os.path.join(current_folder, 'core', 'static', 'images', 'RaceDB.ico'), 0),
+		workingDirectory=current_folder,
+	)
+	
+	print vbStr
+	
+	fd, fname = tempfile.mkstemp( suffix='.vbs' )
+	f = os.fdopen( fd, 'wb' )
+	f.write( vbStr )
+	f.close()
+	
+	try:
+		subprocess.call( ['CScript.exe', fname], shell=True )
+	except Exception as e:
+		print 'Failed: ', e
+	finally:
+		os.remove( fname )
 
 if __name__ == '__main__':
 	CreateShortcut()

@@ -34,7 +34,7 @@
 	{% for c in competitions %}
 		<tr onclick="jump('./CompetitionDashboard/{{c.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
-			<td>{{c.date_range_str}}</td>
+			<td>{{c.date_range_year_str}}</td>
 			<td>{{c.discipline.name}} {{c.event_types_text}}</td>
 			<td>{{c.name}}</td>
 			<td style="text-align:right">{{c.get_participants.count}}</td>

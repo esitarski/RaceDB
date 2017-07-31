@@ -27,9 +27,6 @@ dependencies = [
 	pyllrp,
 ]
 
-if is_windows:
-	dependencies.append('winshell')
-	
 uninstall_dependencies = [
 	'south',
 ]

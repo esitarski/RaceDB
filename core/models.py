@@ -2062,7 +2062,7 @@ class TeamAlias(models.Model):
 		for ta in TeamAlias.objects.all():
 			add_team_name( ta.alias, ta.team )
 		
-		return {k:sorted(v, key = attrgettr('search_text')) for k, v in map if len(v) > 1 }
+		return {k:sorted(v, key = operator.attrgettr('search_text')) for k, v in map if len(v) > 1 }
 	
 	class Meta:
 		verbose_name = _('Team Alias')
@@ -3900,7 +3900,7 @@ class Participant(models.Model):
 	
 	def get_tag_str( self ):
 		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)
-		return u'{}, {}'.format( tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
 	
 	class Meta:
 		unique_together = (

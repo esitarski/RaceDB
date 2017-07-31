@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 from pytz import all_timezones
 from Tkinter import *
@@ -28,7 +29,7 @@ root.columnconfigure( 0, weight=1 )
 root.rowconfigure( 1, weight=1 )
 
 rowCur = 0
-label = Label(root, text="Time Zones:")
+label = Label(root, text="Choose a Time Zone and press OK:")
 label.grid( row=rowCur, column=0, sticky=W, padx=4, pady=4 )
 rowCur += 1
 
@@ -44,27 +45,24 @@ rowCur += 1
 # load the listbox with data
 for item in all_timezones:
 	listbox1.insert(END, item)
+	
+# get the current time zone from the time_zone.py
+try:
+	from RaceDB.time_zone import TIME_ZONE as currentTZ
+except Exception as e:
+	currentTZ = None
 
 # Initialize the list box with the current time zone.
-try:
-	with open('RaceDB/time_zone.py') as f:
-		for line in f:
-			line = line.strip()
-			if line.startswith('TIME_ZONE'):
-				tz = line.split('=')[1]
-				tz = tz.strip().strip('"\'')
-				for row, item in enumerate(all_timezones):
-					if item == tz:
-						listbox1.see( row )
-						listbox1.selection_set( row )
-						break
-				break
-except Exception as e:
-	pass
+if currentTZ:
+	for row, item in enumerate(all_timezones):
+		if item == currentTZ:
+			listbox1.see( row )
+			listbox1.selection_set( row )
+			break
 
 # create data entry
 enter1 = Entry(root, width=50, bg='yellow')
-enter1.insert(0, 'Select your Time Zone and press OK')
+enter1.insert(0, currentTZ if currentTZ else 'Choose a Time Zone and press OK')
 enter1.grid(row=rowCur, column=0, sticky=E+W, padx=8, pady=8)
 rowCur += 1
 
@@ -72,9 +70,14 @@ def ok_callback():
 	timezone = enter1.get()
 	if 'Time Zone' in timezone:
 		enter1.delete(0, END)
-		enter1.insert(0, 'Seriously! Select your Time Zone, press OK')
+		enter1.insert(0, 'Select your Time Zone and press OK')
 		tkMessageBox.showerror("Time Zone Select Error", "Select your Time Zone from the list and press OK.")
 		return
+	
+	try:
+		os.remove('RaceDB/time_zone.pyc')
+	except Exception as e:
+		pass
 
 	with open('RaceDB/time_zone.py','w') as f:
 		f.write( 'TIME_ZONE="{}"\n'.format(timezone) )

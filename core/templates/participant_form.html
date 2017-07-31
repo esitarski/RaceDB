@@ -228,9 +228,9 @@
 {% endif %}
 {% if c.using_tags and p.is_competitor %}
 	<tr onclick="jump({% if isEdit %}'./ParticipantTagChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% if p.tag and p.tag2 %}{% trans "Chip Tags" %}{% else %}{% trans "Chip Tag" %}{% endif %}{% if not p.good_tag %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
+		<td class="text-right">{% trans "Chip Tag" %}{% if not p.good_tag %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 		<td>
-			{% if not p.tag and not p.tag2 %}
+			{% if not p.get_tag_str %}
 				 <span class="label label-danger">{% trans "No tag" %}</span>
 			{% else %}
 				<strong>{{p.get_tag_str}}</strong>
