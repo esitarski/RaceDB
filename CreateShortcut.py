@@ -31,11 +31,11 @@ def CreateShortcut( cmd="launch" ):
 		workingDirectory=current_folder,
 	)
 	
-	#fd, fname = tempfile.mkstemp( suffix='.vbs' )
-	#f = os.fdopen( fd, 'wb' )
+	fd, fname = tempfile.mkstemp( suffix='.vbs' )
+	f = os.fdopen( fd, 'wb' )
 	
-	fname = os.path.join( current_folder, 'create_shortcut.vbs' )
-	f = open( fname, 'w' )
+	#fname = os.path.join( current_folder, 'create_shortcut.vbs' )
+	#f = open( fname, 'w' )
 	
 	f.write( vbStr )
 	f.close()
@@ -45,7 +45,7 @@ def CreateShortcut( cmd="launch" ):
 	except Exception as e:
 		print 'Failed: ', e
 	finally:
-		#os.remove( fname )
+		os.remove( fname )
 		pass
 
 if __name__ == '__main__':
