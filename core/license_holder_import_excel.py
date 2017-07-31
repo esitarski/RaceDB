@@ -529,7 +529,7 @@ def license_holder_import_excel(
 		process_license_holder_team( license_holder_team )
 		
 	# Update the tags for future competitions.
-	for c in Competition.objects.filter( using_tags=True, use_existing_tags=True, start_date__gte=datetime.date.today()-datetime.timedelta(day=24) ):
+	for c in Competition.objects.filter( using_tags=True, use_existing_tags=True, start_date__gte=datetime.date.today()-datetime.timedelta(days=24) ):
 		c.sync_tags()
 	
 	ms_write( u'\n' )
