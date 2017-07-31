@@ -25,7 +25,6 @@
 		<th>{% trans "Paid" %}</th>
 		{% if competition.using_tags %}
 			<th>{% trans "Tag" %}</th>
-			<th>{% trans "Tag2" %}</th>
 		{% endif %}
 		<th>{% trans "From" %}</th>
 		<th class="hidden-print"></th>
@@ -60,8 +59,7 @@
 				{% endif %}
 			</td>
 			{% if competition.using_tags %}
-				<td>{{p.tag}}</td>
-				<td>{{p.tag2}}</td>
+				<td>{{p.get_tag_str}}</td>
 			{% endif %}
 			<td>{{h.location}}</td>
 			<td class="hidden-print">

@@ -428,6 +428,8 @@ def get_competition_name_start_date( stream=None, pydata=[],
 # ----------------------------------------------------------------------------------------------------
 
 def competition_export( competition, stream, export_as_template=False, remove_ftp_info=False ):
+	competition.sync_tags()
+
 	if remove_ftp_info:
 		attrs = ("ftp_host", "ftp_user", "ftp_password", "ftp_path", "ftp_upload_during_race", "ga_tracking_id")
 		ftp_info_save = { a:getattr(competition, a) for a in attrs }

@@ -21,7 +21,7 @@ data_headers = (
 	'Category', 'Age', 'Gender',
 	'License',
 	'NatCode', 'UCIID',
-	'Tag', 'Tag2',
+	'Tag', 'Tag2',				# These must be last.
 )
 
 category_headers = (
@@ -296,7 +296,7 @@ def get_crossmgr_excel( event_mass_start ):
 			h.nation_code, h.get_uci_id_text(),
 		]
 		if competition.using_tags:
-			row_data.extend( [p.tag, p.tag2] )
+			row_data.extend( [h.existing_tag, h.existing_tag2] if competition.use_existing_tags else [p.tag, p.tag2] )
 		
 		table.append( row_data )
 	
@@ -365,7 +365,7 @@ def get_crossmgr_excel_tt( event_tt ):
 			h.nation_code, h.get_uci_id_text(),
 		]
 		if competition.using_tags:
-			row_data.extend( [p.tag, p.tag2] )
+			row_data.extend( [h.existing_tag, h.existing_tag2] if competition.use_existing_tags else [p.tag, p.tag2] )
 			
 		table.append( row_data )
 	

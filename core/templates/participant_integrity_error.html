@@ -15,7 +15,7 @@
 	<tr><td>{% trans "Category" %}</td><td><strong>{{p.category.code}}</strong></td></tr>
 	<tr><td>{% trans "Bib" %}</td><td><strong>{{p.bib}}</strong></td></tr>
 	{% if competition.using_tags %}
-		<tr><td>{% trans "Tag"%}</td><td><strong>{{p.tag}}</strong></td></tr>
+		<tr><td>{% trans "Tag"%}</td><td><strong>{{p.get_tag_str}}</strong></td></tr>
 	{% endif %}
 </table>
 {% endwith %}
@@ -27,7 +27,7 @@
 	<tr><td>{% trans "Category" %}</td><td><strong>{{p.category.code}}</strong></td></tr>
 	<tr><td>{% trans "Bib" %}</td><td><strong>{{p.bib}}</strong></td></tr>
 	{% if competition.using_tags %}
-		<tr><td>{% trans "Tag"%}</td><td><strong>{{p.tag}}</strong></td></tr>
+		<tr><td>{% trans "Tag"%}</td><td><strong>{{p.get_tag_str}}</strong></td></tr>
 	{% endif %}
 </table>
 {% endwith %}

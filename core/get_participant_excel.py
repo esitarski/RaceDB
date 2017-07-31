@@ -94,7 +94,7 @@ def get_participant_excel( q = None ):
 			lh.zip_postal,
 			p.category.code_gender if p.category else u'',
 			p.bib if p.bib else u'',
-			p.tag,
+			p.get_tag_str(),
 			p.team.name if p.team else u'',
 			p.get_role_display(),
 			p.confirmed,

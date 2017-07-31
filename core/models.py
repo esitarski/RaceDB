@@ -994,6 +994,19 @@ class Competition(models.Model):
 	def has_participants( self ):
 		return self.get_participants().exists()
 		
+	def sync_tags( self ):
+		if (self.using_tags and self.use_existing_tags and
+			self.get_participants().exclude( Q(tag=F('license_holder__existing_tag')) & Q(tag2=F('license_holder__existing_tag2')) ).update(tag=None, tag2=None)
+			):
+			with transaction.atomic():
+				for p in self.get_participants().exclude(
+						Q(tag=F('license_holder__existing_tag')) & Q(tag2=F('license_holder__existing_tag2')) ).select_related('license_holder'):
+					p.tag  = p.license_holder.existing_tag
+					p.tag2 = p.license_holder.existing_tag2
+					p.save()
+			return True
+		return False
+			
 	def get_available_categories( self, license_holder, gender=None, participant_exclude=None ):
 		categories_remaining = Category.objects.filter( format=self.category_format )
 		if gender is None:
@@ -3447,7 +3460,11 @@ class Participant(models.Model):
 	
 	@property
 	def needs_tag( self ):
-		return self.is_competitor and self.competition.using_tags and not self.tag and not self.tag2
+		return (
+			self.is_competitor and
+			self.competition.using_tags and
+			not (self.license_holder.existing_tag if self.competition.use_existing_tags else self.tag)
+		)
 	
 	@property
 	def name( self ):
@@ -3879,7 +3896,8 @@ class Participant(models.Model):
 		return False, _('Unknown Integrity Error.'), None
 	
 	def get_tag_str( self ):
-		return u', '.join( [t for t in [self.tag, self.tag2] if t] )
+		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)
+		return u'{}, {}'.format( tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
 	
 	class Meta:
 		unique_together = (

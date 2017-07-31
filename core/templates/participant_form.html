@@ -232,9 +232,9 @@
 		<td>
 			{% if not p.tag and not p.tag2 %}
 				 <span class="label label-danger">{% trans "No tag" %}</span>
+			{% else %}
+				<strong>{{p.get_tag_str}}</strong>
 			{% endif %}
-			{% if p.tag %} <strong>{{p.tag}}{% if p.tag2 %},{% endif %}</strong>{% endif %}
-			{% if p.tag2 %} <strong>{{p.tag2}} </strong>{% endif %}
 		</td>
 		{% if isEdit %}
 			<td><a class="btn btn-success hidden-print" href="./ParticipantTagChange/{{p.id}}/">{% trans "Change" %}</a></td>
