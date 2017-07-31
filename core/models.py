@@ -1457,6 +1457,7 @@ class Event( models.Model ):
 		).replace(tzinfo = get_default_timezone())
 				
 		event_new = self
+		event_new.id = None
 		event_new.pk = None
 		event_new.competition = competition_new
 		event_new.date_time = datetime.datetime.combine(
@@ -1717,6 +1718,7 @@ class WaveBase( models.Model ):
 		categories = self.categories.all()
 		wave_new = self
 		wave_new.pk = None
+		wave_new.id = None
 		wave_new.event = event_new
 		wave_new.save()
 		wave_new.categories = categories
@@ -2916,6 +2918,7 @@ class CustomCategory(Sequence):
 	def make_copy( self, event_new ):
 		custom_category = self
 		custom_category.pk = None
+		custom_category.id = None
 		custom_category.event = event_new
 		custom_category.save()
 		return custom_category
@@ -4457,6 +4460,7 @@ class Series( Sequence ):
 		
 		series_new = self
 		series_new.pk = None
+		series_new.id = None
 		series_new.name += timezone.now().strftime(' %Y-%m-%d %H:%M:%S')
 		series_new.save()
 		
@@ -4577,6 +4581,7 @@ class SeriesPointsStructure( Sequence ):
 		self_pk = self.pk
 		o_new = self
 		o_new.pk = None
+		o_new.id = None
 		o_new.series = series_new
 		o_new.save()
 		return o_new
@@ -4643,6 +4648,7 @@ class SeriesCompetitionEvent( models.Model ):
 		self_pk = self.pk
 		o_new = self
 		o_new.pk = None
+		o_new.id = None
 		o_new.series = series_new
 		o_new.points_structure = points_structure_new
 		o_new.save()
@@ -4701,6 +4707,7 @@ class SeriesIncludeCategory( models.Model ):
 		self_pk = self.pk
 		o_new = self
 		o_new.pk = None
+		o_new.id = None
 		o_new.series = series_new
 		o_new.save()
 		return o_new
@@ -4721,6 +4728,7 @@ class CategoryGroup( Sequence ):
 		self_pk = self.pk
 		o_new = self
 		o_new.pk = None
+		o_new.id = None
 		o_new.series = series_new
 		o_new.save()
 		
@@ -4768,6 +4776,7 @@ class SeriesUpgradeProgression( Sequence ):
 		self_pk = self.pk
 		o_new = self
 		o_new.pk = None
+		o_new.id = None
 		o_new.series = series_new
 		o_new.save()
 		
