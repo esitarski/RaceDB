@@ -1046,7 +1046,6 @@ def CompetitionNew( request ):
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionEdit( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	competition.sync_tags()
 	return GenericEdit(
 		Competition, request, competitionId, GetCompetitionForm(competition),
 		template = 'competition_form.html',

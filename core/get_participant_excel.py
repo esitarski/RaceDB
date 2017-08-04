@@ -66,7 +66,6 @@ def get_participant_excel( q = None ):
 			headers = list(data_headers)
 			
 			competition = p.competition
-			competition.sync_tags()
 			
 			seasons_pass = competition.seasons_pass
 			if seasons_pass:
