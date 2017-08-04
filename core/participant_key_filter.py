@@ -45,12 +45,20 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	if not key:
 		return None, []
 		
+	if competition.using_tags:
+		if competition.use_existing_tags:
+			tag_query = Q(license_holder__existing_tag=key) | Q(license_holder__existing_tag2=key)
+		else:
+			tag_query = Q(tag=key) | Q(tag2=key)
+	else:
+		tag_query = Q(tag='---')   # This is always fail as tags must be letters/numbers.
+	
 	# Check for an existing participant.
 	if license_code:
 		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor, license_holder__license_code=license_code ) )
 	else:
 		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor ).filter(
-			Q(license_holder__license_code=key) | Q(tag=key) | Q(tag2=key)) )
+			Q(license_holder__license_code=key) | tag_query) )
 	
 	if participants:
 		participants.sort( key = lambda p: (p.category.sequence if p.category else 999999, p.bib or 999999) )
@@ -69,7 +77,7 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	if license_code:
 		q = Q(license_code=license_code)
 	elif competition.using_tags and competition.use_existing_tags:
-		q = Q(license_code=key) | Q(existing_tag=key) | Q(existing_tag2=key)
+		q = Q(license_code=key) | tag_query
 	else:
 		q = Q(license_code=key)
 	

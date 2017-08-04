@@ -3303,7 +3303,7 @@ class Participant(models.Model):
 		competition = self.competition
 		
 		# Enforce tag conistency with license holder.
-		if competition.use_existing_tags and (
+		if competition.using_tags and competition.use_existing_tags and (
 					self.tag  != license_holder.existing_tag or
 					self.tag2 != license_holder.existing_tag2 ):
 			self.tag  = license_holder.existing_tag

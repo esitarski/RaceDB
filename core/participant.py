@@ -96,7 +96,6 @@ def Participants( request, competitionId ):
 	ParticipantsPerPage = 25
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
-	#competition.sync_tags()	# Removed for performance reasons.
 	
 	pfKey = 'participant_filter_{}'.format( competitionId )
 	pageKey = 'participant_filter_page_{}'.format( competitionId )
@@ -152,7 +151,16 @@ def Participants( request, competitionId ):
 	competitors = participants.filter( role=Participant.Competitor )
 	missing_category_count = competitors.filter( category__isnull=True ).count()
 	missing_bib_count = competitors.filter( bib__isnull=True ).count()
-	missing_tag_count = 0 if not competition.using_tags else competitors.filter( Q(tag__isnull=True) | Q(tag=u'') ).count()
+	
+	if competition.using_tags:
+		if competition.use_existing_tags:
+			missing_tag_query = Q(license_holder__existing_tag__isnull=True) | Q(license_holder__existing_tag=u'')
+		else:
+			missing_tag_query = Q(tag__isnull=True) | Q(tag=u'')
+	else:
+			missing_tag_query = Q()
+	
+	missing_tag_count = competitors.filter( missing_tag_query ).count() if competition.using_tags else 0
 	
 	if participant_filter.get('scan',0):
 		name_text = utils.normalizeSearch( participant_filter['scan'] )
@@ -245,9 +253,12 @@ def Participants( request, competitionId ):
 	if competition.using_tags and participant_filter.get('rfid_text',''):
 		rfid = participant_filter.get('rfid_text','').upper()
 		if rfid == u'-1':
-			participants = participants.filter( Q(tag__isnull=True) | Q(tag=''))
+			participants = participants.filter( missing_tag_query )
 		else:
-			participants = participants.filter( tag=rfid )
+			if competition.use_existing_tags:
+				participants = participants.filter( license_holder__existing_tag=rfid )
+			else:
+				participants = participants.filter( tag=rfid )
 	
 	has_events = int(participant_filter.get('has_events',-1))
 	if has_events == 0:
@@ -450,6 +461,8 @@ def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId,
 @access_validation()
 def ParticipantEdit( request, participantId ):
 	participant = get_participant( participantId )
+	participant.enforce_tag_constraints()
+	
 	system_info = SystemInfo.get_singleton()
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
@@ -465,11 +478,13 @@ def ParticipantEditFromLicenseHolder( request, competitionId, licenseHolderId ):
 	participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
 	if not participant:
 		return ParticipantAddToCompetition( request, competitionId, licenseHolderId )
+	participant.enforce_tag_constraints()
 	return ParticipantEdit( request, participant.id )
 	
 @access_validation()
 def ParticipantRemove( request, participantId ):
 	participant = get_participant( participantId )
+	participant.enforce_tag_constraints()
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	is_suspicious_age = not (8 <= competition_age <= 90)
