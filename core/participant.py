@@ -158,7 +158,7 @@ def Participants( request, competitionId ):
 		else:
 			missing_tag_query = Q(tag__isnull=True) | Q(tag=u'')
 	else:
-			missing_tag_query = Q()
+		missing_tag_query = Q()
 	
 	missing_tag_count = competitors.filter( missing_tag_query ).count() if competition.using_tags else 0
 	
