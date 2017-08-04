@@ -96,7 +96,7 @@ def Participants( request, competitionId ):
 	ParticipantsPerPage = 25
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
-	competition.sync_tags()
+	#competition.sync_tags()	# Removed for performance reasons.
 	
 	pfKey = 'participant_filter_{}'.format( competitionId )
 	pageKey = 'participant_filter_page_{}'.format( competitionId )
