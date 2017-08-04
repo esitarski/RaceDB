@@ -31,25 +31,24 @@ class ParticipantSearchForm( Form ):
 	scan = forms.CharField( required=False, label = _('Scan Search'), help_text=_('Searches License and RFID Tag only') )
 	event = forms.ChoiceField( required=False, label = _('Event'), help_text=_('For faster response, review one Event at a time') )
 	name_text = forms.CharField( required=False, label = _('Name') )
-	team_text = forms.CharField( required=False, label = _('Team (-1 for Independent)') )
+	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
+	category = forms.ChoiceField( required=False, label = _('Category') )
 	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib (-1 for Missing Bib)') )
 	rfid_text = forms.CharField( required=False, label = _('RFIDTag (-1 for Missing)') )
-	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
+	eligible = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Eligible') )	
+	paid = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Paid') )
+	confirmed = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Confirmed') )
+
+	team_text = forms.CharField( required=False, label = _('Team (-1 for Independent)') )
 	role_type = forms.ChoiceField( required=False, label = _('Role Type')  )
-	category = forms.ChoiceField( required=False, label = _('Category') )
 	
 	city_text = forms.CharField( required=False, label = _('City') )
 	state_prov_text = forms.CharField( required=False, label = _('State/Prov') )
 	nationality_text = forms.CharField( required=False, label = _('Nationality') )
 	
-	confirmed = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Confirmed') )
-	paid = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Paid') )
-	
 	complete = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Complete') )
 	
 	has_events = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('None')), (1, _('Some'))), label = _('Has Events') )
-	
-	eligible = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Eligible') )
 	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
@@ -81,11 +80,11 @@ class ParticipantSearchForm( Form ):
 		self.helper.layout = Layout(
 			Row( Field('scan', size=20, autofocus=True ), HTML('&nbsp;'*8), Field('event'),),
 			Row( *(
-					[Field('name_text'), Field('team_text'), Field('category'), Field('bib'),] +
+					[Field('name_text'), Field('gender'), Field('category'), Field('bib'),] +
 					([Field('rfid_text'),] if competition and competition.using_tags else []) +
-					[Field('gender'), Field('role_type'),] +
-					[Field('city_text'), Field('state_prov_text'), Field('nationality_text'), Field('confirmed'),] + 
-					[Field('paid'), Field('complete'), Field('has_events'), Field('eligible'),]
+					[Field('eligible'), Field('paid'), Field('confirmed'), Field('team_text'), Field('role_type'),] +
+					[Field('city_text'), Field('state_prov_text'), Field('nationality_text'), ] + 
+					[Field('complete'), Field('has_events'), ]
 				)
 			),
 			Row( *(button_args[:-2] + [HTML('&nbsp;'*8)] + button_args[-2:]) ),
