@@ -51,7 +51,7 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 		else:
 			tag_query = Q(tag=key) | Q(tag2=key)
 	else:
-		tag_query = Q(tag='---')   # This is always fail as tags must be letters/numbers.
+		tag_query = Q(tag=u'---')   # This will always fail as tags must be letters/numbers.
 	
 	# Check for an existing participant.
 	if license_code:
