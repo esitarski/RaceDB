@@ -995,16 +995,16 @@ class Competition(models.Model):
 		return self.get_participants().exists()
 		
 	def sync_tags( self ):
-		if (self.using_tags and self.use_existing_tags and
-			self.get_participants().exclude( Q(tag=F('license_holder__existing_tag')) & Q(tag2=F('license_holder__existing_tag2')) ).update(tag=None, tag2=None)
-			):
-			with transaction.atomic():
-				for p in self.get_participants().exclude(
-						Q(tag=F('license_holder__existing_tag')) & Q(tag2=F('license_holder__existing_tag2')) ).select_related('license_holder'):
-					p.tag  = p.license_holder.existing_tag
-					p.tag2 = p.license_holder.existing_tag2
-					p.save()
-			return True
+		if self.using_tags and self.use_existing_tags:
+			qtag = self.get_participants().exclude( Q(tag=F('license_holder__existing_tag')) & Q(tag2=F('license_holder__existing_tag2')) )
+			if qtag.exists():
+				qtag.update( tag=None, tag2=None )
+				with transaction.atomic():
+					for p in qtag.select_related('license_holder'):
+						p.tag  = p.license_holder.existing_tag
+						p.tag2 = p.license_holder.existing_tag2
+						p.save()
+				return True
 		return False
 			
 	def get_available_categories( self, license_holder, gender=None, participant_exclude=None ):
