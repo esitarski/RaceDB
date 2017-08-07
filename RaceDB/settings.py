@@ -100,7 +100,10 @@ except ImportError:
 		'default': {
 			'ENGINE': 'django.db.backends.sqlite3',
 			'NAME': get_database_from_args() or os.path.join(BASE_DIR, 'RaceDB.sqlite3'),
-		}
+			'OPTIONS': {
+				'timeout': 20,	# Increase the timeout to avoid "OperationalError: database is locked" error.
+			}
+		},
 	}
 
 try:
