@@ -77,7 +77,7 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	if license_code:
 		q = Q(license_code=license_code)
 	elif competition.using_tags and competition.use_existing_tags:
-		q = Q(license_code=key) | tag_query
+		q = Q(license_code=key) | Q(existing_tag=key) | Q(existing_tag2=key)
 	else:
 		q = Q(license_code=key)
 	
