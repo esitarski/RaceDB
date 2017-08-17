@@ -1698,6 +1698,7 @@ class WaveBase( models.Model ):
 	name = models.CharField( max_length = 32 )
 	categories = models.ManyToManyField( Category, verbose_name = _('Categories') )
 	
+	# distance is always stored in km.
 	distance = models.FloatField( null = True, blank = True, verbose_name = _('Distance') )
 	laps = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Laps') )
 	

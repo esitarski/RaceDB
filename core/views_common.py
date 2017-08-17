@@ -244,8 +244,11 @@ def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additio
 	form_context.update( additional_context )
 	return render( request, template or 'generic_form.html', form_context )
 	
-def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, template = None, additional_context = {} ):
+def GenericEdit( ModelClass, request, instanceId, ModelFormClass=None, template=None, additional_context={},
+		pre_edit_func=None, pre_save_func=None ):
 	instance = get_object_or_404( ModelClass, pk=instanceId )
+	if pre_edit_func:
+		pre_edit_func( instance )
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = True
@@ -258,6 +261,8 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
 		if form.is_valid():
 			formInstance = form.save( commit = False )
+			if pre_save_func:
+				pre_save_func( formInstance )
 			formInstance.save()
 			try:
 				form.save_m2m()
@@ -281,7 +286,8 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass = None, templat
 	form_context.update( additional_context )
 	return render( request, template or 'generic_form.html', form_context )
 
-def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, template = None, additional_context = {} ):
+def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, template = None, additional_context = {},
+		pre_edit_func=None ):
 	instance = get_object_or_404( ModelClass, pk=instanceId )
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
@@ -293,6 +299,8 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 			instance.delete()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
+		if pre_edit_func:
+			pre_edit_func( instance )
 		form = setFormReadOnly( ModelFormClass(instance = instance, button_mask=DELETE_BUTTONS) )
 		
 	form_context = {}

@@ -1943,6 +1943,14 @@ def GetWaveForm( event_mass_start, wave = None ):
 			
 	return WaveForm
 
+def pre_edit_fix_wave_distance( wave ):
+	if wave.distance and wave.event.competition.distance_unit == 1:
+		wave.distance /= 1.609344
+	
+def pre_save_fix_wave_distance( wave ):
+	if wave.distance and wave.event.competition.distance_unit == 1:
+		wave.distance *= 1.609344
+	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveNew( request, eventMassStartId ):
@@ -1954,7 +1962,9 @@ def WaveNew( request, eventMassStartId ):
 	
 		form = GetWaveForm(event_mass_start)(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
-			instance = form.save()
+			instance = form.save(commit=False)
+			pre_save_fix_wave_distance( instance )
+			instance.save()
 			
 			if 'ok-submit' in request.POST:
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -1988,7 +1998,8 @@ def WaveNew( request, eventMassStartId ):
 def WaveEdit( request, waveId ):
 	wave = get_object_or_404( Wave, pk=waveId )
 	return GenericEdit( Wave, request, waveId, GetWaveForm(wave.event, wave),
-		template = 'wave_form.html'
+		template = 'wave_form.html',
+		pre_edit_func=pre_edit_fix_wave_distance, pre_save_func=pre_save_fix_wave_distance,
 	)
 	
 @access_validation()
@@ -1996,7 +2007,8 @@ def WaveEdit( request, waveId ):
 def WaveDelete( request, waveId ):
 	wave = get_object_or_404( Wave, pk=waveId )
 	return GenericDelete( Wave, request, waveId, GetWaveForm(wave.event, wave),
-		template = 'wave_form.html'
+		template = 'wave_form.html',
+		pre_edit_func=pre_edit_fix_wave_distance,
 	)
 
 #-----------------------------------------------------------------------
@@ -2097,7 +2109,9 @@ def EventTTNew( request, competitionId ):
 	
 		form = EventTTForm(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
-			instance = form.save()
+			instance = form.save( commit=False )
+			pre_save_fix_wave_distance( instance )
+			instance.save()
 			
 			if 'ok-submit' in request.POST or 'save-submit' in request.POST:
 				return HttpResponseRedirect( pushUrl(request, 'EventTTEdit', instance.id, cancelUrl=True) )
@@ -2114,7 +2128,8 @@ def EventTTNew( request, competitionId ):
 @user_passes_test( lambda u: u.is_superuser )
 def EventTTEdit( request, eventTTId ):
 	return GenericEdit( EventTT, request, eventTTId, EventTTForm,
-		template = 'event_tt_form.html'
+		template = 'event_tt_form.html',
+		pre_edit_func=pre_edit_fix_wave_distance, pre_save_func=pre_save_fix_wave_distance,
 	)
 
 @access_validation()
@@ -2122,6 +2137,7 @@ def EventTTEdit( request, eventTTId ):
 def EventTTDelete( request, eventTTId ):
 	return GenericDelete( EventTT, request, eventTTId, EventTTForm,
 		template = 'event_tt_form.html',
+		pre_edit_func=pre_edit_fix_wave_distance,
 	)
 
 def EventTTCrossMgr( request, eventTTId ):
