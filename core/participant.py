@@ -545,7 +545,7 @@ def print_pdf( request, participant, pdf_str, print_type ):
 		return response
 	else:
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	
+
 @access_validation()
 def ParticipantPrintBodyBib( request, participantId, copies=2, onePage=False ):
 	participant = get_participant( participantId )
@@ -565,6 +565,30 @@ def ParticipantPrintBibLabel1( request, participantId ):
 def ParticipantPrintShoulderBib( request, participantId ):
 	participant = get_participant( participantId )
 	return print_pdf( request, participant, print_shoulder_bib(participant), 'Shoulder' )
+	
+@access_validation()
+def ParticipantPrintAllBib( request, participantId ):
+	participant = get_participant( participantId )
+	c = participant.competition
+	
+	ret = None
+	if c.bibs_label_print:
+		ret = ParticipantPrintBodyBib( request, participantId, 2 )
+	elif c.bib_label_print:
+		ret = ParticipantPrintBodyBib( request, participantId, 1 )
+	
+	if c.bibs_laser_print:
+		ret = ParticipantPrintBodyBib( request, participantId, 2, 1 )
+		
+	if c.shoulders_label_print:
+		ret = ParticipantPrintShoulderBib( request, participantId )
+		
+	if c.frame_label_print:
+		ret = ParticipantPrintBibLabels( request, participantId )
+	elif c.frame_label_print_1:
+		ret = ParticipantPrintBibLabel1( request, participantId )
+	
+	return ret
 	
 @access_validation()
 def ParticipantPrintEmergencyContactInfo( request, participantId ):

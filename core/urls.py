@@ -174,6 +174,7 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/$', participant.ParticipantPrintBodyBib ),
 	url(r'^(?i).*ParticipantPrintBodyBib/(?P<participantId>\d+)/(?P<copies>\d+)/(?P<onePage>\d+)/$', participant.ParticipantPrintBodyBib ),
 	url(r'^(?i).*ParticipantPrintShoulderBib/(?P<participantId>\d+)/$', participant.ParticipantPrintShoulderBib ),
+	url(r'^(?i).*ParticipantPrintAllBib/(?P<participantId>\d+)/$', participant.ParticipantPrintAllBib ),
 	url(r'^(?i).*ParticipantEmergencyContactInfo/(?P<participantId>\d+)/$', participant.ParticipantEmergencyContactInfo ),
 	url(r'^(?i).*ParticipantPrintEmergencyContactInfo/(?P<participantId>\d+)/$', participant.ParticipantPrintEmergencyContactInfo ),
 	
