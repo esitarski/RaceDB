@@ -2491,7 +2491,8 @@ class LicenseHolder(models.Model):
 	@classmethod
 	def get_duplicates( cls ):
 		duplicates = defaultdict( list )
-		for last_name, first_name, gender, date_of_birth, pk in LicenseHolder.objects.values_list('last_name','first_name','gender','date_of_birth','pk'):
+		for last_name, first_name, gender, date_of_birth, uci_id, pk in LicenseHolder.objects.values_list(
+				'last_name','first_name','gender','date_of_birth','uci_id','pk'):
 			
 			name_initial = u'{}, {}'.format(utils.removeDiacritic(last_name).upper(), utils.removeDiacritic(first_name[:1]).upper())
 			key = (
@@ -2500,6 +2501,8 @@ class LicenseHolder(models.Model):
 				date_of_birth
 			)
 			duplicates[key].append( pk )
+			if uci_id:
+				duplicates[(u'{} UCIID'.format(u' '.join( uci_id[i:i+3] for i in xrange(0, len(uci_id), 3) )),None,None)].append( pk )
 			
 			# Check for reversed day/month
 			if date_of_birth.day != date_of_birth.month and date_of_birth.day <= 12:

@@ -280,7 +280,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	
 def print_body_bib( participant, copies=2, onePage=False ):
 	copies = int(copies)
-	onePage = int(onePage)
+	onePage = bool(onePage)
 	
 	if onePage:
 		return print_aso_bib_two_per_page( participant )
