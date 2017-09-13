@@ -260,6 +260,7 @@ def init_prereg(
 						'uci_id':uci_id,
 						'emergency_contact_name':emergency_contact_name,
 						'emergency_contact_phone':emergency_contact_phone,
+						'emergency_medical':emergency_medical,
 						'existing_tag':tag if competition.use_existing_tags else None,
 					} ):
 					try:

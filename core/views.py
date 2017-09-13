@@ -615,8 +615,13 @@ def LicenseHoldersManageDuplicates( request ):
 	duplicates = LicenseHolder.get_duplicates()
 	return render( request, 'license_holder_duplicate_list.html', locals() )
 
+def format_uci_id( uci_id ):
+	uci_id = uci_id or u''
+	return u' '.join( uci_id[i:i+3] for i in xrange(0, len(uci_id), 3) )
+
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
-	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city}, {state_prov} - {nation_code} - {license} - {uci_id}'.format(
+	
+	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city}, {state_prov} - {nation_code} - {license} - {uci_id} - ({num_comps})'.format(
 		last_name=lh.last_name,
 		first_name=lh.first_name,
 		gender=lh.get_gender_display(),
@@ -624,8 +629,9 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 		state_prov=lh.state_prov,
 		city=lh.city,
 		nation_code=lh.nation_code,
-		uci_id=lh.uci_id,
+		uci_id=format_uci_id( lh.uci_id ),
 		license=lh.license_code_trunc,
+		num_comps=Participant.objects.filter( license_holder=lh ).count(),
 	)) for lh in duplicates]
 	
 	@autostrip
