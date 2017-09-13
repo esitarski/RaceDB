@@ -166,6 +166,7 @@ def init_prereg(
 			
 			emergency_contact_name = to_str(v('emergency_contact_name', None))
 			emergency_contact_phone = to_str(v('emergency_contact_phone', None))
+			emergency_medical = to_str(v('emergency_medical', None))
 			
 			participant_optional_events = []
 			for pattern, events in pattern_optional_events.iteritems():
@@ -227,6 +228,7 @@ def init_prereg(
 										'zip_postal':zip_postal,
 										'emergency_contact_name':emergency_contact_name,
 										'emergency_contact_phone':emergency_contact_phone,
+										'emergency_medical':emergency_medical,
 										'existing_tag':tag if competition.use_existing_tags else None,
 									}.iteritems() if value is not None
 								}

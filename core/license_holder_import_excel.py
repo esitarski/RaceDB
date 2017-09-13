@@ -269,6 +269,7 @@ def license_holder_import_excel(
 		
 		emergency_contact_name = to_str(v('emergency_contact_name', None))
 		emergency_contact_phone = to_str(v('emergency_contact_phone', None))
+		emergency_medical = to_str(v('emergency_medical', None))
 
 		team_name		= to_str(v('team', None))
 		club_name		= to_str(v('club', None))
@@ -288,6 +289,7 @@ def license_holder_import_excel(
 			'uci_code':uci_code,
 			'emergency_contact_name':emergency_contact_name,
 			'emergency_contact_phone':emergency_contact_phone,
+			'emergency_medical':emergency_medical,
 			'email':email,
 			'city':city,
 			'state_prov':state_prov,
