@@ -979,6 +979,7 @@ $(document).ready(function() {
 		<li class="nav"><a href="#ByPreregSeasonsPass" data-toggle="tab">Prereg/Seasons Pass</a></li>
 		<li class="nav"><a href="#ByPostalChart" data-toggle="tab">Postal</a></li>
 		<li class="nav"><a href="#ByData" data-toggle="tab">Data</a></li>
+		<li class="nav"><a href="#Help" data-toggle="tab">Help</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -1157,6 +1158,35 @@ $(document).ready(function() {
 			<div id='compTableDiv' class="page-break-before"></div>
 			</p>
 		</div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade in active" id="Help">
+			<p>
+			<h3 class="page-break-before">Help</h3>
+			</p>
+			<dl>
+				<dt>Event</dt>
+				<dd>A race event (Mass Start or Time Trial).  An Event could have single or multiple categories.</dd>
+				
+				<dt>Competition</dt>
+				<dd>A single or multi-day collection of Events with the same organizer.</dd>
+				
+				<dt>License Holder</dt>
+				<dd>A License Holder cooresponds to a unique person (holds a license).  A License Holder can attend a Competition as an Attendee, and race in any number of Events at the Competition as a Participant.</dd>
+				
+				<dt>Category</dt>
+				<dd>The Category of the License Holder in the Event.  License Holder may compete in different Events in different Categories at the same Competition.</dd>
+				
+				<dt>Attendee</dt>
+				<dd>A License Holder attending a Competition.  If the License Holder participates in more than one Events, in the same or in different categories, he/she is only counted once at the Competition.  Unless otherwise specified, counts in the Analytics pages are shown by Attendees.</dd>
+				
+				<dt>Participant</dt>
+				<dd>An Attendee who starts in a race with a Bib number.  The same Attendee can be a Participant more then once at the same Competition if he/she races in multiple Events (either in the same category or in different categories).  The number of Participants at a Competition is always greater or equal to the number of Attendees.  This metric helps understand the work on the race administration.</dd>
+				
+			</dl>
+			</p>
+		</div>
+
 	</div>
 </div>
 
