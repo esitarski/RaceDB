@@ -811,6 +811,76 @@ function drawCharts() {
 	);
 	
 	// -----------------------------------------------------------------
+	// DNF
+	//
+	var dnfChartData = new google.visualization.DataTable();
+	dnfChartData.addColumn('string', 'Competition');
+	dnfChartData.addColumn('number', 'Men');
+	dnfChartData.addColumn('number', 'Women');
+	dnfChartData.addColumn('number', 'All');
+	var rows = [];
+	var competitions = payload.competitions;
+	for( var iCompetition = 0; iCompetition < competitions.length; ++iCompetition ) {
+		var competition = competitions[iCompetition];
+		rows.push( [
+			competition.name,
+			formatPercentInt(competition.participants_men_dnf, competition.participants_men),
+			formatPercentInt(competition.participants_women_dnf, competition.participants_women),
+			formatPercentInt(competition.participants_total_dnf, competition.participants_total)
+		] );
+	}
+	dnfChartData.addRows( rows );
+	
+	var divId = "compEventDnfChartDiv";
+	var compEventChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	compEventChart.draw(dnfChartData,
+		fixSize(divId, {
+			title:'DNF' + ' (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			isStacked: false,
+			legend: {position: 'none'},
+			animation: animationOption,
+			hAxis: { textPosition: 'none' },
+			vAxis: {viewWindow: {min: 0, max:100}}
+		})
+	);
+	
+	// -----------------------------------------------------------------
+	// DNS
+	//
+	var dnsChartData = new google.visualization.DataTable();
+	dnsChartData.addColumn('string', 'Competition');
+	dnsChartData.addColumn('number', 'Men');
+	dnsChartData.addColumn('number', 'Women');
+	dnsChartData.addColumn('number', 'All');
+	var rows = [];
+	var competitions = payload.competitions;
+	for( var iCompetition = 0; iCompetition < competitions.length; ++iCompetition ) {
+		var competition = competitions[iCompetition];
+		rows.push( [
+			competition.name,
+			formatPercentInt(competition.participants_men_dns, competition.participants_men),
+			formatPercentInt(competition.participants_women_dns, competition.participants_women),
+			formatPercentInt(competition.participants_total_dns, competition.participants_total)
+		] );
+	}
+	dnsChartData.addRows( rows );
+	
+	var divId = "compEventDnsChartDiv";
+	var compEventChart = new google.visualization.ColumnChart(document.getElementById(divId));
+	compEventChart.draw(dnsChartData,
+		fixSize(divId, {
+			title:'DNS' + ' (includes attendees competing in multiple categories)',
+			bar: { groupWidth: '75%' },
+			isStacked: false,
+			legend: {position: 'none'},
+			animation: animationOption,
+			hAxis: { textPosition: 'none' },
+			vAxis: {viewWindow: {min: 0, max:100}}
+		})
+	);
+	
+	// -----------------------------------------------------------------
 	// Postal Codes
 	//
 {% if payload.postal_codes %}
@@ -942,6 +1012,7 @@ $(document).ready(function() {
 {% load crispy_forms_tags %}
 <div class='hidden-print'>
 {% crispy form %}
+{% include "show_count.html" %}
 <hr/>
 <img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
 <h2>{{page_title}}</h2>
@@ -979,7 +1050,7 @@ $(document).ready(function() {
 		<li class="nav"><a href="#ByPreregSeasonsPass" data-toggle="tab">Prereg/Seasons Pass</a></li>
 		<li class="nav"><a href="#ByPostalChart" data-toggle="tab">Postal</a></li>
 		<li class="nav"><a href="#ByData" data-toggle="tab">Data</a></li>
-		<li class="nav"><a href="#Help" data-toggle="tab">Help</a></li>
+		<li class="nav"><a href="#ByHelp" data-toggle="tab">Help</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -1068,6 +1139,8 @@ $(document).ready(function() {
 			<div id="compEventChartDiv" class="chart-big"></div>
 			<div id="compEventPreRegChartDiv" class="chart-big"></div>
 			<div id="compEventPaymentChartDiv" class="chart-big"></div>
+			<div id="compEventDnfChartDiv" class="chart-big"></div>
+			<div id="compEventDnsChartDiv" class="chart-big"></div>
 			</p>
 		</div>
 		
@@ -1097,7 +1170,6 @@ $(document).ready(function() {
 		<div class="tab-pane fade" id="ByPreregSeasonsPass">
 			<p>
 			<h3 class="page-break-before">Prereg and Seasons Pass <span style="font-size: 75%">(includes attendees competing in multiple categories)</span></h3>
-{% spaceless %}
 <table class="table table-striped table-hover table-condensed" style="width: auto;">
 <thead>
 	<tr>
@@ -1133,7 +1205,6 @@ $(document).ready(function() {
 	{% endfor %}
 </tbody>
 </table>
-{% endspaceless %}
 
 			</table>
 			</p>
@@ -1160,10 +1231,9 @@ $(document).ready(function() {
 		</div>
 		
 		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
-		<div class="tab-pane fade in active" id="Help">
+		<div class="tab-pane fade in" id="ByHelp">
+			<p><h3 class="page-break-before">Help</h3></p>
 			<p>
-			<h3 class="page-break-before">Help</h3>
-			</p>
 			<dl>
 				<dt>Event</dt>
 				<dd>A race event (Mass Start or Time Trial).  An Event could have single or multiple categories.</dd>
@@ -1186,7 +1256,6 @@ $(document).ready(function() {
 			</dl>
 			</p>
 		</div>
-
 	</div>
 </div>
 
@@ -1197,8 +1266,6 @@ $(document).ready(function() {
 {% if False and license_holders_event_errors %}
 <div class="hidden-print">
 <h2>Suspicious Dates</h2>
-{% include "show_count.html" %}
-{% spaceless %}
 <table class="table table-striped table-condensed">
 <thead>
 	<tr>
@@ -1228,7 +1295,6 @@ $(document).ready(function() {
 	{% endfor %}
 </tbody>
 </table>
-{% endspaceless %}
 <hr/>
 </div>
 {% endif %}

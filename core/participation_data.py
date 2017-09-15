@@ -84,6 +84,14 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 			'participants_women': 0,
 			'participants_total': 0,
 			
+			'participants_men_dnf': 0,
+			'participants_women_dnf': 0,
+			'participants_total_dnf': 0,
+			
+			'participants_men_dns': 0,
+			'participants_women_dns': 0,
+			'participants_total_dns': 0,
+			
 			'prereg_participants_men': 0,
 			'prereg_participants_women': 0,
 			
@@ -152,7 +160,19 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 					age_range_women_license_holders[bucket].add( license_holder )
 					age_range_women_attendee_count[bucket] += 1
 					discipline_women[discipline_name].add( license_holder )
-			
+					
+			event_men_dnf = 0
+			event_men_dns = 0
+			event_women_dnf = 0
+			event_women_dns = 0
+			for rr in event.get_results():
+				if rr.participant.gender == 0:
+					event_men_dnf += int(rr.status == Result.cDNF)
+					event_men_dns += int(rr.status == Result.cDNS)
+				else:
+					event_women_dnf += int(rr.status == Result.cDNF)
+					event_women_dns += int(rr.status == Result.cDNS)
+				
 			event_data = {
 				'name':event.name,
 				'attendees':attendee_data,
@@ -162,16 +182,28 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 				'participants_women': sum(1 for p in participant_data if p[0] == 1),
 				'prereg_participants_men': sum(1 for p in prereg_participant_data if p[0] == 0),
 				'prereg_participants_women': sum(1 for p in prereg_participant_data if p[0] == 1),
+				
+				'men_dnf': event_men_dnf,
+				'men_dns': event_men_dns,
+				'women_dnf': event_women_dnf,
+				'women_dns': event_women_dns,
+				'total_dnf': event_men_dnf + event_women_dnf,
+				'total_dns': event_men_dns + event_women_dns,
 			}
 			event_data['attendees_total'] = event_data['attendees_men'] + event_data['attendees_women']
 			event_data['participants_total'] = event_data['participants_men'] + event_data['participants_women']
-			event_data['prereg_participants_total'] = event_data['prereg_participants_men'] + event_data['prereg_participants_women']
+			event_data['prereg_participants_total'] = event_data['prereg_participants_men'] + event_data['prereg_participants_women']			
 			
 			competition_data['attendees_men'] += event_data['attendees_men']
 			competition_data['attendees_women'] += event_data['attendees_women']
 			
 			competition_data['participants_men'] += event_data['participants_men']
 			competition_data['participants_women'] += event_data['participants_women']
+			
+			competition_data['participants_men_dnf'] += event_data['men_dnf']
+			competition_data['participants_men_dns'] += event_data['men_dns']
+			competition_data['participants_women_dnf'] += event_data['women_dnf']
+			competition_data['participants_women_dns'] += event_data['women_dns']
 			
 			competition_data['prereg_participants_men'] += event_data['prereg_participants_men']
 			competition_data['prereg_participants_women'] += event_data['prereg_participants_women']
@@ -181,6 +213,8 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		competition_data['attendees_total'] = competition_data['attendees_men'] + competition_data['attendees_women']
 		competition_data['participants_total'] = competition_data['participants_men'] + competition_data['participants_women']
 		competition_data['prereg_participants_total'] = competition_data['prereg_participants_men'] + competition_data['prereg_participants_women']
+		competition_data['participants_total_dnf'] = competition_data['participants_men_dnf'] + competition_data['participants_women_dnf']
+		competition_data['participants_total_dns'] = competition_data['participants_men_dns'] + competition_data['participants_women_dns']
 
 		#------------------------------------------------
 		if competition.seasons_pass:
