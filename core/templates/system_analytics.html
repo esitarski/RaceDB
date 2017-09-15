@@ -1047,6 +1047,7 @@ $(document).ready(function() {
 		<li class="nav"><a href="#ByAge" data-toggle="tab">Age</a></li>
 		<li class="nav"><a href="#ByCompAndEvent" data-toggle="tab">Comp &amp; Event</a></li>
 		<li class="nav"><a href="#ByDiscipline" data-toggle="tab">Discipline</a></li>
+		<li class="nav"><a href="#ByDnfDns" data-toggle="tab">DNF &amp; DNS</a></li>
 		<li class="nav"><a href="#ByPreregSeasonsPass" data-toggle="tab">Prereg/Seasons Pass</a></li>
 		<li class="nav"><a href="#ByPostalChart" data-toggle="tab">Postal</a></li>
 		<li class="nav"><a href="#ByData" data-toggle="tab">Data</a></li>
@@ -1139,8 +1140,6 @@ $(document).ready(function() {
 			<div id="compEventChartDiv" class="chart-big"></div>
 			<div id="compEventPreRegChartDiv" class="chart-big"></div>
 			<div id="compEventPaymentChartDiv" class="chart-big"></div>
-			<div id="compEventDnfChartDiv" class="chart-big"></div>
-			<div id="compEventDnsChartDiv" class="chart-big"></div>
 			</p>
 		</div>
 		
@@ -1163,6 +1162,15 @@ $(document).ready(function() {
 					</div>
 				</div>
 			{% endif %}
+			</p>
+		</div>
+		
+		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
+		<div class="tab-pane fade" id="ByDnfDns">
+			<p>
+			<h2 class="page-break-before">DNF and DNS</h2>
+			<div id="compEventDnfChartDiv" class="chart-big"></div>
+			<div id="compEventDnsChartDiv" class="chart-big"></div>
 			</p>
 		</div>
 		
