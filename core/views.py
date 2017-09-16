@@ -1928,7 +1928,7 @@ def GetWaveForm( event_mass_start, wave = None ):
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline hidden-print'
 			
-			self.helper.layout = Layout(
+			self.helper.layout = Layout( 
 				Field( 'event', type='hidden' ),
 				Row(
 					Col(Field('name', size=40), 4),
@@ -1962,42 +1962,27 @@ def pre_save_fix_wave_distance( wave ):
 def WaveNew( request, eventMassStartId ):
 	event_mass_start = get_object_or_404( EventMassStart, pk=eventMassStartId )
 	
-	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	waves_existing = list( event_mass_start.wave_set.all() )
+	wave = Wave( event = event_mass_start )
+	c = len( waves_existing )
+	waveLetter = []
+	while 1:
+		waveLetter.append( string.ascii_uppercase[c % 26] )
+		c //= 26
+		if c == 0:
+			break
+	waveLetter.reverse()
+	waveLetter = ''.join( waveLetter )
+	wave.name = u'Wave' + u' ' + waveLetter
+	if waves_existing:
+		wave_last = waves_existing[-1]
+		wave.start_offset = wave_last.start_offset + datetime.timedelta(seconds = 60.0)
+		wave.distance = wave_last.distance
+		wave.laps = wave_last.laps
+		wave.minutes = wave_last.minutes
+	wave.save()
 	
-		form = GetWaveForm(event_mass_start)(request.POST, button_mask = NEW_BUTTONS)
-		if form.is_valid():
-			instance = form.save(commit=False)
-			pre_save_fix_wave_distance( instance )
-			instance.save()
-			
-			if 'ok-submit' in request.POST:
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			if 'save-submit' in request.POST:
-				return HttpResponseRedirect( pushUrl(request, 'WaveEdit', instance.id, cancelUrl = True) )
-	else:
-		wave = Wave( event = event_mass_start )
-		waves_existing = list( event_mass_start.wave_set.all() )
-		c = len( waves_existing )
-		waveLetter = []
-		while 1:
-			waveLetter.append( string.ascii_uppercase[c % 26] )
-			c //= 26
-			if c == 0:
-				break
-		waveLetter.reverse()
-		waveLetter = ''.join( waveLetter )
-		wave.name = u'Wave' + u' ' + waveLetter
-		if waves_existing:
-			wave_last = waves_existing[-1]
-			wave.start_offset = wave_last.start_offset + datetime.timedelta(seconds = 60.0)
-			wave.distance = wave_last.distance
-			wave.laps = wave_last.laps
-			wave.minutes = wave_last.minutes
-		form = GetWaveForm(event_mass_start, wave)(instance = wave, button_mask = NEW_BUTTONS)
-	
-	return render( request, 'wave_form.html', locals() )
+	return HttpResponseRedirect( popPushUrl(request,'WaveEdit',wave.id) )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
@@ -2116,7 +2101,6 @@ def EventTTNew( request, competitionId ):
 		form = EventTTForm(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
 			instance = form.save( commit=False )
-			pre_save_fix_wave_distance( instance )
 			instance.save()
 			
 			if 'ok-submit' in request.POST or 'save-submit' in request.POST:
@@ -2135,7 +2119,6 @@ def EventTTNew( request, competitionId ):
 def EventTTEdit( request, eventTTId ):
 	return GenericEdit( EventTT, request, eventTTId, EventTTForm,
 		template = 'event_tt_form.html',
-		pre_edit_func=pre_edit_fix_wave_distance, pre_save_func=pre_save_fix_wave_distance,
 	)
 
 @access_validation()
@@ -2143,7 +2126,6 @@ def EventTTEdit( request, eventTTId ):
 def EventTTDelete( request, eventTTId ):
 	return GenericDelete( EventTT, request, eventTTId, EventTTForm,
 		template = 'event_tt_form.html',
-		pre_edit_func=pre_edit_fix_wave_distance,
 	)
 
 def EventTTCrossMgr( request, eventTTId ):
@@ -2220,45 +2202,33 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 def WaveTTNew( request, eventTTId ):
 	event_tt = get_object_or_404( EventTT, pk=eventTTId )
 	
-	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	wave_tts_existing = list( event_tt.wavett_set.all() )
+	wave_tt = WaveTT( event = event_tt )
+	c = len( wave_tts_existing )
+	wave_tt_letter = []
+	while 1:
+		wave_tt_letter.append( string.ascii_uppercase[c % 26] )
+		c //= 26
+		if c == 0:
+			break
+	wave_tt_letter.reverse()
+	wave_tt_letter = ''.join( wave_tt_letter )
+	wave_tt.name = u'WaveTT' + u' ' + wave_tt_letter
+	if wave_tts_existing:
+		wave_tt_last = wave_tts_existing[-1]
+		wave_tt.distance = wave_tt_last.distance
+		wave_tt.laps = wave_tt_last.laps
+	wave_tt.save()
 	
-		form = GetWaveTTForm(event_tt)(request.POST, button_mask = NEW_BUTTONS)
-		if form.is_valid():
-			instance = form.save()
-			
-			if 'ok-submit' in request.POST:
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			if 'save-submit' in request.POST:
-				return HttpResponseRedirect( pushUrl(request, 'WaveTTEdit', instance.id, cancelUrl = True) )
-	else:
-		wave_tt = WaveTT( event = event_tt )
-		wave_tts_existing = list( event_tt.wavett_set.all() )
-		c = len( wave_tts_existing )
-		wave_tt_letter = []
-		while 1:
-			wave_tt_letter.append( string.ascii_uppercase[c % 26] )
-			c //= 26
-			if c == 0:
-				break
-		wave_tt_letter.reverse()
-		wave_tt_letter = ''.join( wave_tt_letter )
-		wave_tt.name = u'WaveTT' + u' ' + wave_tt_letter
-		if wave_tts_existing:
-			wave_tt_last = wave_tts_existing[-1]
-			wave_tt.distance = wave_tt_last.distance
-			wave_tt.laps = wave_tt_last.laps
-		form = GetWaveTTForm(event_tt, wave_tt)(instance=wave_tt, button_mask=NEW_BUTTONS)
-	
-	return render( request, 'wave_tt_form.html', locals() )
+	return HttpResponseRedirect( popPushUrl(request,'WaveTTEdit',wave_tt.id) )
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def WaveTTEdit( request, waveTTId ):
 	wave_tt = get_object_or_404( WaveTT, pk=waveTTId )
 	return GenericEdit( WaveTT, request, waveTTId, GetWaveTTForm(wave_tt.event, wave_tt),
-		template = 'wave_tt_form.html'
+		template = 'wave_tt_form.html',
+		pre_edit_func=pre_edit_fix_wave_distance, pre_save_func=pre_save_fix_wave_distance,
 	)
 	
 @access_validation()
@@ -2266,7 +2236,8 @@ def WaveTTEdit( request, waveTTId ):
 def WaveTTDelete( request, waveTTId ):
 	wave_tt = get_object_or_404( WaveTT, pk=waveTTId )
 	return GenericDelete( WaveTT, request, waveTTId, GetWaveTTForm(wave_tt.event, wave_tt),
-		template = 'wave_tt_form.html'
+		template = 'wave_tt_form.html',
+		pre_edit_func=pre_edit_fix_wave_distance,
 	)
 
 @transaction.atomic
