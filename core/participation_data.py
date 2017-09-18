@@ -161,17 +161,10 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 					age_range_women_attendee_count[bucket] += 1
 					discipline_women[discipline_name].add( license_holder )
 					
-			event_men_dnf = 0
-			event_men_dns = 0
-			event_women_dnf = 0
-			event_women_dns = 0
-			for rr in event.get_results():
-				if rr.participant.license_holder.gender == 0:
-					event_men_dnf += int(rr.status == Result.cDNF)
-					event_men_dns += int(rr.status == Result.cDNS)
-				else:
-					event_women_dnf += int(rr.status == Result.cDNF)
-					event_women_dns += int(rr.status == Result.cDNS)
+			event_men_dnf   = event.get_results().filter( status=Result.cDNF, participant__license_holder__gender=0 ).count()
+			event_men_dns   = event.get_results().filter( status=Result.cDNS, participant__license_holder__gender=0 ).count()
+			event_women_dnf = event.get_results().filter( status=Result.cDNF, participant__license_holder__gender=1 ).count()
+			event_women_dns = event.get_results().filter( status=Result.cDNS, participant__license_holder__gender=1 ).count()
 				
 			event_data = {
 				'name':event.name,

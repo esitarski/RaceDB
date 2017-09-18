@@ -411,6 +411,11 @@ function formatPercentInt( num, total ) {
 	return {v:percent, f:percent.toFixed(2) + '% (' + num + ' / ' + total + ')'};
 }
 
+function formatSimplePercent( num, total ) {
+	var percent = (100.0 * num) / (total ? total : 1);
+	return {v:percent, f:percent.toFixed(2)};
+}
+
 function drawCharts() {
 	var animationOption = {};
 
@@ -841,7 +846,6 @@ function drawCharts() {
 			legend: {position: 'none'},
 			animation: animationOption,
 			hAxis: { textPosition: 'none' },
-			vAxis: {viewWindow: {min: 0, max:100}}
 		})
 	);
 	
@@ -876,9 +880,67 @@ function drawCharts() {
 			legend: {position: 'none'},
 			animation: animationOption,
 			hAxis: { textPosition: 'none' },
-			vAxis: {viewWindow: {min: 0, max:100}}
 		})
 	);
+	
+	// -----------------------------------------------------------------
+	// DNF/DNS Raw data table.
+	//
+	var compData = new google.visualization.DataTable();
+	compData.addColumn('string', 'Start Date');
+	compData.addColumn('string', 'Competition');
+	compData.addColumn('number', 'DNF %');
+	compData.addColumn('number', 'Men DNF %');
+	compData.addColumn('number', 'Women DNF %');
+	compData.addColumn('number', 'DNS %');
+	compData.addColumn('number', 'Men DNS %');
+	compData.addColumn('number', 'Women DNS %');
+	var rows = [];
+	var competitions = payload.competitions;
+	var blankNum = {v:0,f:''};
+	var men_dnf_total = 0, women_dnf_total = 0, men_dns_total = 0, women_dns_total = 0;
+	var participants_men = 0, participants_women = 0, participants_total = 0;
+	for( var iCompetition = 0; iCompetition < competitions.length; ++iCompetition ) {
+		var competition = competitions[iCompetition];
+		rows.push( [
+			competition.start_date,
+			competition.name,
+			
+			formatPercentInt(competition.participants_total_dnf, competition.participants_total),
+			formatPercentInt(competition.participants_men_dnf, competition.participants_men),
+			formatPercentInt(competition.participants_women_dnf, competition.participants_women),
+			
+			formatPercentInt(competition.participants_total_dns, competition.participants_total),
+			formatPercentInt(competition.participants_men_dns, competition.participants_men),
+			formatPercentInt(competition.participants_women_dns, competition.participants_women)
+		] );
+		
+		men_dnf_total += competition.participants_men_dnf;
+		men_dns_total += competition.participants_men_dns;
+		participants_men += competition.participants_men;
+		
+		women_dnf_total += competition.participants_women_dnf;
+		women_dns_total += competition.participants_women_dns;
+		participants_women += competition.participants_women;
+		
+		participants_total += competition.participants_total;
+	}
+	rows.unshift( [
+		'',
+		'Average',
+		
+		formatPercentInt( men_dnf_total + women_dnf_total, participants_total ),
+		formatPercentInt( men_dnf_total, participants_men ),
+		formatPercentInt( women_dnf_total, participants_women ),
+		
+		formatPercentInt( men_dns_total + women_dns_total, participants_total ),
+		formatPercentInt( men_dns_total, participants_men ),
+		formatPercentInt( women_dns_total, participants_women )
+	] );
+	compData.addRows( rows );
+	var compTable = new google.visualization.Table(document.getElementById('dnfDnsTableDiv'));
+	compTable.draw(compData, {showRowNumber: true, alternatingRowStyle:false});
+	compTable.setSelection( [{row:0, column:null}] );
 	
 	// -----------------------------------------------------------------
 	// Postal Codes
@@ -1012,7 +1074,6 @@ $(document).ready(function() {
 {% load crispy_forms_tags %}
 <div class='hidden-print'>
 {% crispy form %}
-{% include "show_count.html" %}
 <hr/>
 <img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>
 <h2>{{page_title}}</h2>
@@ -1169,6 +1230,8 @@ $(document).ready(function() {
 		<div class="tab-pane fade" id="ByDnfDns">
 			<p>
 			<h2 class="page-break-before">DNF and DNS</h2>
+			<p>Click on a Column Header to sort.</p>
+			<div id="dnfDnsTableDiv"></div>
 			<div id="compEventDnfChartDiv" class="chart-big"></div>
 			<div id="compEventDnsChartDiv" class="chart-big"></div>
 			</p>
@@ -1209,7 +1272,6 @@ $(document).ready(function() {
 				<td class="text-right" style="padding-left: 28px;">{{pd.seasons_pass}}</td><td class="text-right">{{pd.seasons_pass_percent|percent}}</td>
 			{% endwith %}
 		</tr>
-		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
 	{% endfor %}
 </tbody>
 </table>
@@ -1299,7 +1361,6 @@ $(document).ready(function() {
 			<td><a class="btn btn-success btn-sm" href="./{{e.edit_link}}/">{{e.name}}</a></td>
 			<td>{{e.date_time}}</td>
 		</tr>
-		{% if forloop.last %}<script>set_show_count( {{forloop.counter}} );</script>{% endif %}
 	{% endfor %}
 </tbody>
 </table>
