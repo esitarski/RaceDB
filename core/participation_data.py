@@ -166,7 +166,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 			event_women_dnf = 0
 			event_women_dns = 0
 			for rr in event.get_results():
-				if rr.participant.gender == 0:
+				if rr.participant.license_holder.gender == 0:
 					event_men_dnf += int(rr.status == Result.cDNF)
 					event_men_dns += int(rr.status == Result.cDNS)
 				else:
