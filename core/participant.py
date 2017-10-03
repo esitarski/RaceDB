@@ -1010,11 +1010,17 @@ def ParticipantBibSelect( request, participantId, bib ):
 	participant = get_participant( participantId )
 	competition = participant.competition
 	
-	done = HttpResponseRedirect(getContext(request,'pop2Url'))
-	showSelectAgain = HttpResponseRedirect(getContext(request,'popUrl'))
+	def done():
+		return HttpResponseRedirect(getContext(request,'pop2Url'))
+	def showSelectAgain():
+		return HttpResponseRedirect(getContext(request,'popUrl'))
 	
 	bib_save = participant.bib
 	bib = int(bib)
+	
+	# No change - nothing to do.
+	if bib == bib_save:
+		return done()
 	
 	if competition.number_set and bib_save is not None:
 		def set_lost():
@@ -1023,15 +1029,11 @@ def ParticipantBibSelect( request, participantId, bib ):
 		def set_lost():
 			pass
 	
-	# No change - nothing to do.
-	if bib == bib_save:
-		return done
-	
 	# Bib assigned "No Bib".
 	if bib < 0:
 		participant.bib = None
 		set_lost()
-		return done		
+		return done()
 	
 	# Assign new Bib.
 	participant.bib = bib
@@ -1042,7 +1044,7 @@ def ParticipantBibSelect( request, participantId, bib ):
 		if bib_conflicts:
 			# If conflict, restore the previous bib and repeat.
 			participant.bib = bib_save
-			return showSelectAgain
+			return showSelectAgain()
 
 	set_lost()
 	
@@ -1050,9 +1052,9 @@ def ParticipantBibSelect( request, participantId, bib ):
 		participant.auto_confirm().save()
 	except IntegrityError as e:
 		# Assume the Integrity Error is due to a race condition with the bib number.
-		return showSelectAgain
+		return showSelectAgain()
 	
-	return done
+	return done()
 
 #-----------------------------------------------------------------------
 @autostrip

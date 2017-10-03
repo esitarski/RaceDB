@@ -501,16 +501,25 @@ class NumberSet(models.Model):
 		self.range_str = self.reRangeExcept.sub( u'', self.range_str )
 		return super( NumberSet, self ).save( *args, **kwargs )
 		
-	def get_bib( self, competition, license_holder, category ):
-		category_numbers = competition.get_category_numbers( category )
-		if category_numbers:
-			numbers = category_numbers.get_numbers()
+	def get_bib( self, competition, license_holder, category, category_numbers_set=None ):
+		numbers = None
+		if category_numbers_set:
+			numbers = category_numbers_set
+		else:
+			category_numbers = competition.get_category_numbers( category )
+			if category_numbers:
+				numbers = category_numbers.get_numbers()
+		
+		if numbers:
 			for bib in self.numbersetentry_set.filter(
 					license_holder=license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True):
 				if bib in numbers:
 					return bib
 		return None
-		
+	
+	def bib_owners( self, bib ):
+		return set( self.numbersetentry_set.filter(bib=bib) )
+	
 	def assign_bib( self, license_holder, bib ):
 		# Check if this license_holder already has this bib assigned, or lost it.
 		with transaction.atomic():
@@ -1308,6 +1317,7 @@ class CategoryNumbers( models.Model ):
 			range_events = number_set.get_range_events()
 			is_bib_valid = number_set.is_bib_valid
 			include = set( bib for bib in include if is_bib_valid(bib, range_events) )
+		include.discard( 0 )
 		return include
 	
 	def get_numbers( self ):
@@ -2063,7 +2073,7 @@ class TeamAlias(models.Model):
 		for ta in TeamAlias.objects.all():
 			add_team_name( ta.alias, ta.team )
 		
-		return {k:sorted(v, key = operator.attrgettr('search_text')) for k, v in map if len(v) > 1 }
+		return {k:sorted(v, key = operator.attrgetter('search_text')) for k, v in map if len(v) > 1 }
 	
 	class Meta:
 		verbose_name = _('Team Alias')
@@ -3596,9 +3606,21 @@ class Participant(models.Model):
 		self.role		= pdv.role or self.Competitor
 		self.est_kmh	= pdv.est_kmh or 0.0
 		
-		# After we found a default category, try to get a bib number from the number set.
-		if not self.bib and self.category and self.competition.number_set:
-			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
+		# If we have a category, check the bib number.
+		if self.category:
+			cn = self.competition.get_category_numbers( self.category )
+			category_numbers_set = cn.get_numbers() if cn else set()
+			
+			if self.bib in category_numbers_set:
+				# This is a valid bib.
+				if self.competition.number_set:
+					self.competition.number_set.assign_bib( self.license_holder, self.bib )
+			else:
+				# This is an INVALID bib.
+				if self.competition.number_set:
+					self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category, category_numbers_set )
+				else:
+					self.bib = None
 		
 		# Use default tags.
 		if self.competition.use_existing_tags:
@@ -3776,7 +3798,7 @@ class Participant(models.Model):
 			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
 			return
 		
-		category_numbers = CategoryNumbers.objects.filter( competition=self.competition, categories=self.category ).first()
+		category_numbers = self.competition.get_category_numbers( self.category )
 		if not category_numbers:
 			self.bib = None
 			return

@@ -308,8 +308,6 @@ def init_prereg(
 					) )
 					continue
 				
-				participant.init_default_values()
-				
 				for attr, value in (
 						('category',category), ('team',team),
 						('bib',bib), ('tag',tag), ('note',note),
@@ -319,6 +317,8 @@ def init_prereg(
 					):
 					if value is not None:
 						setattr( participant, attr, value )
+				
+				participant.init_default_values()
 				
 				participant.preregistered = True
 				
