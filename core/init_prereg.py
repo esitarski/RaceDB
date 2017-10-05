@@ -65,8 +65,12 @@ def init_prereg(
 	# Construct a cache to find categories quicker.
 	category_code_gender_suffix = re.compile( r'\(Open\)$|\(Men\)$|\(Women\)$' )
 	cat_gender = defaultdict( list )
+	category_numbers_set = {None: set()}
 	for category in Category.objects.filter( format=competition.category_format ).order_by('gender', 'code'):
 		cat_gender[category.code].append( (category, category.gender) )
+		cn = competition.get_category_numbers( category )
+		category_numbers_set[category] = cn.get_numbers() if cn else set()
+	
 	def get_category( category_code_search, gender_search ):
 		category_code_search = category_code_gender_suffix.sub( '', category_code_search ).strip()
 		for category, gender in cat_gender.get(category_code_search, []):
@@ -177,6 +181,7 @@ def init_prereg(
 			
 			role			= role_code.get( v('role','').lower().replace(' ', '').replace('.', ''), None )
 			waiver			= to_bool(v('waiver',None))
+			
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
 			#
@@ -308,6 +313,10 @@ def init_prereg(
 					) )
 					continue
 				
+				# First get the defaults based on previous hints and categories.
+				participant.init_default_values()
+				
+				# Now, override default values with specified ones.
 				for attr, value in (
 						('category',category), ('team',team),
 						('bib',bib), ('tag',tag), ('note',note),
@@ -317,8 +326,20 @@ def init_prereg(
 					):
 					if value is not None:
 						setattr( participant, attr, value )
+
+				# Ensure the bib number is compatible with the category.
+				participant.update_bib_new_category()
 				
-				participant.init_default_values()
+				# If we have an assigned bib, ensure it is respected.
+				if bib and bib in category_numbers_set[category]:
+					participant.bib = bib
+					# Add the assigned bib to the number set if it exists.
+					if self.competition.number_set:
+						self.competition.number_set.assign_bib( participant.license_holder, participant.bib )
+
+				# Do a final check for bib compatibility.
+				if participant.bib and participant.bib not in category_numbers_set[category]:
+					participant.bib = None
 				
 				participant.preregistered = True
 				

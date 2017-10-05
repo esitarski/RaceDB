@@ -34,7 +34,7 @@
 			<td>{% if p.category %}{{p.category.code}}{% endif %}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.get_flag_uci_id_html}}</td>
-			<td>{{p.get_tag_str}}</td>
+			<td>{{p.get_short_tag_str}}</td>
 		</tr>
 		{% endwith %}
 	{% endfor %}

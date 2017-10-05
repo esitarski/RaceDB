@@ -521,6 +521,9 @@ class NumberSet(models.Model):
 		return set( self.numbersetentry_set.filter(bib=bib) )
 	
 	def assign_bib( self, license_holder, bib ):
+		if not bib:
+			return True
+		
 		# Check if this license_holder already has this bib assigned, or lost it.
 		with transaction.atomic():
 			nse = self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).first()
@@ -2556,7 +2559,7 @@ class LicenseHolder(models.Model):
 		if country:
 			return u'{} - {}'.format(self.nation_code, country )
 		return self.nation_code
-	
+		
 	def get_uci_html( self ):
 		nation_code = self.uci_country
 		uci_code = self.uci_code
@@ -3554,6 +3557,12 @@ class Participant(models.Model):
 	
 		self.role = 0
 		
+		# Uncontitionally get the team based on the hint.
+		if pdv.role < 200:
+			pdv.update_team_hint( TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by(
+				'-effective_date').first()
+			)
+		
 		# Initialize from past participants of the same discipline and category_format.
 		for pp in Participant.objects.filter(
 					license_holder=self.license_holder,
@@ -3590,11 +3599,6 @@ class Participant(models.Model):
 			pdv.update_category_hint( CategoryHint.objects.filter(
 				license_holder=self.license_holder, discipline=self.competition.discipline, category__format=self.competition.category_format
 				).order_by('-effective_date').first()
-			)
-		
-		if not pdv.team and pdv.role < 200:
-			pdv.update_team_hint( TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by(
-				'-effective_date').first()
 			)
 		
 		# If there are time trial events, initialize from past time trials results.
@@ -3812,7 +3816,10 @@ class Participant(models.Model):
 			id=self.id
 		).first()
 		
-		self.bib = compatible_participant.bib if compatible_participant else None
+		if compatible_participant and compatible_participant.bib in category_numbers.get_numbers():
+			self.bib = compatible_participant.bib
+		else:
+			self.bib = None
 	
 	def get_other_category_participants( self ):
 		return list(
@@ -3926,6 +3933,11 @@ class Participant(models.Model):
 	
 	def get_tag_str( self ):
 		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)
+		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+	
+	def get_short_tag_str( self ):
+		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)
+		tags = [t[:8] + '...' if t and len(t) > 8 else t for t in tags]
 		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
 	
 	class Meta:
