@@ -2585,6 +2585,20 @@ class LicenseHolder(models.Model):
 		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) )
 		return mark_safe( u'{}&nbsp;{}'.format(flag, uci_id) )
 	
+	def get_team_for_discipline( self, discipline ):
+		team_hint = TeamHint.objects.filter(license_holder=self, discipline=discipline
+			).order_by('-effective_date').first()
+		q_participant = Participant.objects.filter(license_holder=self,competition__discipline=discipline)
+		if team_hint:
+			q_participant = q_participant.filter(competition__start_date__gt=team_hint.effective_date)
+		participant = q_participant.order_by('-competition__start_date').first()
+		if participant:
+			return participant.team
+		elif team_hint:
+			return team_hint.team
+		else:
+			return None
+	
 	class Meta:
 		verbose_name = _('LicenseHolder')
 		verbose_name_plural = _('LicenseHolders')
