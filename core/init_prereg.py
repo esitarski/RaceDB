@@ -291,12 +291,14 @@ def init_prereg(
 				#------------------------------------------------------------------------------
 				# Get Team
 				#
-				if team_name not in team_lookup:
-					msg = u'Row {:>6}: Added team: {}\n'.format(
-						i, team_name,
-					)
-					ms_write( msg )
-				team = team_lookup[team_name]
+				if Team.is_independent_name(team_name):
+					team = None
+				elif team_name not in team_lookup:
+						msg = u'Row {:>6}: Added team: {}\n'.format(
+							i, team_name,
+						)
+						ms_write( msg )
+					team = team_lookup[team_name]
 				
 				#------------------------------------------------------------------------------
 				participant_keys = { 'competition': competition, 'license_holder': license_holder, }
@@ -318,7 +320,7 @@ def init_prereg(
 				
 				# Now, override default values with specified ones.
 				for attr, value in (
-						('category',category), ('team',team),
+						('category',category),
 						('bib',bib), ('tag',tag), ('note',note),
 						('preregistered',preregistered), ('paid',paid), 
 						('seed_option',seed_option), ('est_kmh',est_kmh), 
@@ -326,6 +328,8 @@ def init_prereg(
 					):
 					if value is not None:
 						setattr( participant, attr, value )
+				if team_name:
+					participant.team = team
 
 				# Ensure the bib number is compatible with the category.
 				participant.update_bib_new_category()

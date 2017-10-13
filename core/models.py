@@ -2095,7 +2095,7 @@ class TeamLookup( object ):
 	def __contains__( self, name ):
 		if name:
 			name = name.strip()
-		if not name or name.lower() == u'independent':
+		if not name or Team.is_independent_name(name):
 			return True		# Independent
 		key = utils.get_search_text([name,])
 		return key in self.map
@@ -2103,7 +2103,7 @@ class TeamLookup( object ):
 	def __getitem__( self, name ):
 		if name:
 			name = name.strip()
-		if not name or name.lower() == u'independent':
+		if not name or Team.is_independent_name(name):
 			return None		# Independent.
 		key = utils.get_search_text([name,])
 		team = self.map.get(key, None)
@@ -3106,6 +3106,12 @@ class TeamHint(models.Model):
 				for discipline in Discipline.objects.all()]
 		)
 		
+	@staticmethod
+	def is_independent_name( team_name ):
+		if team_name is None:
+			return False
+		return team_name.lower() == u'independent'
+	
 	class Meta:
 		verbose_name = _('TeamHint')
 		verbose_name_plural = _('TeamHints')
@@ -3121,21 +3127,13 @@ def update_team_hints():
 		if key not in most_recent:
 			most_recent[key] = (effective_date, team)
 			
-	# Then update with all known teams.
+	# Then update with all known teams (includes None for Independent).
 	for license_holder, discipline, team, effective_date in Participant.objects.filter(
-				team__isnull=False, competition__start_date__gte=latest_competition_date).values_list(
+				competition__start_date__gte=latest_competition_date).values_list(
 				'license_holder', 'competition__discipline', 'team', 'competition__start_date').order_by('-competition__start_date'):
 		key = (license_holder, discipline)
 		if key not in most_recent or effective_date > most_recent[key][0]:
 			most_recent[key] = (effective_date, team)
-	
-	# Remove riders who are no longer on a team.
-	for license_holder, discipline, team, effective_date in Participant.objects.filter(
-				team__isnull=True, competition__start_date__gte=latest_competition_date).values_list(
-				'license_holder', 'competition__discipline', 'team', 'competition__start_date').order_by('-competition__start_date'):
-		key = (license_holder, discipline)
-		if key in most_recent and effective_date > most_recent[key][0]:
-			del most_recent[key]
 	
 	# Update the TeamHints with the latest team information by discipline.
 	TeamHint.objects.all().delete()

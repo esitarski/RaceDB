@@ -360,16 +360,22 @@ def license_holder_import_excel(
 					ms_write( msg )
 					team.save()
 
+				# Get the teams for each discipline.
 				d_team = []
 				for d in discipline_teams:
 					tn = lhr.pop( d.name, None )
-					if d.name not in team_lookup:
+					if not tn:							# Skip empty field.
+						continue:
+					if Team.is_independent_name(tn):	# Explicitly handle independent as null team.
+						d_team.append( (d, None) )
+						continue
+					if tn not in team_lookup:
 						msg = u'Row {:>6}: Added team: {}\n'.format(
 							i,
 							u', '.join( unicode(v) for v in [team_name, team_code,] ),
 						)
 						ms_write( msg )
-					d_team.append( team_lookup[team_name] )
+					d_team.append( (d, team_lookup[tn]) )
 				
 				#------------------------------------------------------------------------------
 				# Get LicenseHolder.
@@ -505,18 +511,16 @@ def license_holder_import_excel(
 						msg += u'            Updated: {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
 					ms_write( msg )
 					
-				if license_holder:
-					for discipline, td in zip(disciplines, d_team):
+				if license_holder and d_team:
+					for discipline, td in d_team:
 						license_holder_discipline_team[(license_holder, discipline)] = td
 					if len(license_holder_discipline_team) >= 200:
 						process_license_holder_discipline_team( license_holder_discipline_team )
 						
-				if license_holder and team and set_team_all_disciplines:
+				if license_holder and team_name and set_team_all_disciplines:
 					license_holder_team[license_holder] = team
 					if len(license_holder_team) >= 200:
 						process_license_holder_team( license_holder_team )
-						
-				
 
 	sheet_name = None
 	if worksheet_contents is not None:
@@ -569,6 +573,7 @@ def license_holder_import_excel(
 			license_holder_rows[:] = []
 			
 	process_license_header_rows( license_holder_rows )
+	
 	process_license_holder_team( license_holder_team )
 	process_license_holder_discipline_team( license_holder_discipline_team )
 		
