@@ -421,7 +421,7 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 				try:
 					team_name = team_map[node_name]
 				except KeyError:
-					if not team or 'independent' in team:
+					if not team or Team.is_independent_name(team):
 						team_count += 1
 						team_name = u'Ind {}'.format(team_count)
 					else:

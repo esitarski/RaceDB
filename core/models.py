@@ -2055,6 +2055,12 @@ class Team(models.Model):
 	def unicode( self ):
 		return u'{}, {}'.format(self.name, self.team_type_display())
 	
+	@staticmethod
+	def is_independent_name( team_name ):
+		if team_name is None:
+			return False
+		return team_name.lower() == u'independent'
+	
 	class Meta:
 		verbose_name = _('Team')
 		verbose_name_plural = _('Teams')
@@ -3106,12 +3112,6 @@ class TeamHint(models.Model):
 				for discipline in Discipline.objects.all()]
 		)
 		
-	@staticmethod
-	def is_independent_name( team_name ):
-		if team_name is None:
-			return False
-		return team_name.lower() == u'independent'
-	
 	class Meta:
 		verbose_name = _('TeamHint')
 		verbose_name_plural = _('TeamHints')
