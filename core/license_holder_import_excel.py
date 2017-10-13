@@ -113,13 +113,27 @@ def license_holder_import_excel(
 	disciplines = list(Discipline.objects.all())
 	effective_date = timezone.now().date()
 	def process_license_holder_team( license_holder_team ):
-		TeamHint.objects.filter( license_holder__in=list(license_holder_team.iterkeys()) ).delete()
-		team_hints = []
-		for lh, t in license_holder_team.iteritems():
-			for d in disciplines:
-				team_hints.append( TeamHint(license_holder=lh, team=t, discipline=d, effective_date=effective_date) )
-		TeamHint.objects.bulk_create( team_hints )
-		license_holder_team.clear()
+		if license_holder_team:
+			TeamHint.objects.filter( license_holder__in=list(license_holder_team.iterkeys()) ).delete()
+			team_hints = []
+			for lh, t in license_holder_team.iteritems():
+				for d in disciplines:
+					team_hints.append( TeamHint(license_holder=lh, team=t, discipline=d, effective_date=effective_date) )
+			TeamHint.objects.bulk_create( team_hints )
+			license_holder_team.clear()
+		
+	license_holder_discipline_team = {}		# Key: (license_holder, discipline), Data: team.
+	def process_license_holder_discipline_team( license_holder_discipline_team ):
+		for (license_holder, discipline), team in license_holder_discipline_team.iteritems():
+			team_hint = TeamHint.objects.filter(license_holder=license_holder, discipline=discipline).order_by('-effective_date').first()
+			if team_hint:
+				TeamHint.objects.filter(license_holder=license_holder, discipline=discipline).exclude(id=team_hint.id).delete()
+				team_hint.team = team
+				team_hint.effective_date = effective_date
+			else:
+				team_hint = TeamHint(license_holder=license_holder, discipline=discipline, effective_date=effective_date, team=team)
+			team_hint.save()
+		license_holder_discipline_team.clear()
 
 	Info, Warning, Error = 0, 1, 2
 	prefix = {i:u'*'*i for i in xrange(3)}
@@ -174,6 +188,13 @@ def license_holder_import_excel(
 				success = True
 
 	ifm = standard_field_map()
+	disciplines = list( Discipline.objects.all() )
+	for d in disciplines:
+		aliases = [u'{} Team'.format(d.name)]
+		if d.name == u'Cyclocross':
+			aliases.append( u'CX Team' )
+		ifm.set_aliases( d.name, aliases )
+	discipline_teams = []
 	
 	status_count = defaultdict( int )
 	
@@ -320,7 +341,6 @@ def license_holder_import_excel(
 				team = None
 				team_name = lhr.pop('team_name', None)
 				team_code = lhr.pop('team_code', None)
-				year_only_dob = lhr.pop('year_only_dob', False)
 				
 				team_args = { 'name':team_name, 'team_code':team_code }
 				team_args = {k:v for k,v in team_args.iteritems() if v}
@@ -339,12 +359,25 @@ def license_holder_import_excel(
 					)
 					ms_write( msg )
 					team.save()
+
+				d_team = []
+				for d in discipline_teams:
+					tn = lhr.pop( d.name, None )
+					if d.name not in team_lookup:
+						msg = u'Row {:>6}: Added team: {}\n'.format(
+							i,
+							u', '.join( unicode(v) for v in [team_name, team_code,] ),
+						)
+						ms_write( msg )
+					d_team.append( team_lookup[team_name] )
 				
 				#------------------------------------------------------------------------------
 				# Get LicenseHolder.
 				#
 				license_holder = None
 				status = 'Unchanged'
+				
+				year_only_dob = lhr.pop('year_only_dob', False)
 				
 				last_name = lhr.get('last_name',u'')
 				first_name = lhr.get('first_name',u'')
@@ -472,10 +505,18 @@ def license_holder_import_excel(
 						msg += u'            Updated: {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
 					ms_write( msg )
 					
+				if license_holder:
+					for discipline, td in zip(disciplines, d_team):
+						license_holder_discipline_team[(license_holder, discipline)] = td
+					if len(license_holder_discipline_team) >= 200:
+						process_license_holder_discipline_team( license_holder_discipline_team )
+						
 				if license_holder and team and set_team_all_disciplines:
 					license_holder_team[license_holder] = team
 					if len(license_holder_team) >= 200:
 						process_license_holder_team( license_holder_team )
+						
+				
 
 	sheet_name = None
 	if worksheet_contents is not None:
@@ -510,6 +551,7 @@ def license_holder_import_excel(
 			fields = [unicode(f.value).strip() for f in row]
 			ifm.set_headers( fields )
 			license_code_aliases = [lh for lh in ifm.name_to_col.iterkeys() if lh.startswith('license_code')]
+			discipline_teams = [d for d in disciplines if d.name in ifm]
 			
 			ms_write( u'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
@@ -527,8 +569,8 @@ def license_holder_import_excel(
 			license_holder_rows[:] = []
 			
 	process_license_header_rows( license_holder_rows )
-	if license_holder_team:
-		process_license_holder_team( license_holder_team )
+	process_license_holder_team( license_holder_team )
+	process_license_holder_discipline_team( license_holder_discipline_team )
 		
 	ms_write( u'\n' )
 	ms_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.iteritems()), key=lambda x:x[0]) ) )

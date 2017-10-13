@@ -1392,7 +1392,7 @@ class Event( models.Model ):
 	
 	@property
 	def note_html( self ):
-		return mark_safe( u'<br/>'.join( self.note.split(u'\n') ) ) if self.note else u''
+		return mark_safe( u'<br/>'.join( escape(v) for v in self.note.split(u'\n') ) ) if self.note else u''
 	
 	@property
 	def is_optional( self ):
@@ -2095,7 +2095,7 @@ class TeamLookup( object ):
 	def __contains__( self, name ):
 		if name:
 			name = name.strip()
-		if not name:
+		if not name or name.lower() == u'independent':
 			return True		# Independent
 		key = utils.get_search_text([name,])
 		return key in self.map
@@ -2103,7 +2103,7 @@ class TeamLookup( object ):
 	def __getitem__( self, name ):
 		if name:
 			name = name.strip()
-		if not name:
+		if not name or name.lower() == u'independent':
 			return None		# Independent.
 		key = utils.get_search_text([name,])
 		team = self.map.get(key, None)
@@ -2586,18 +2586,44 @@ class LicenseHolder(models.Model):
 		return mark_safe( u'{}&nbsp;{}'.format(flag, uci_id) )
 	
 	def get_team_for_discipline( self, discipline ):
-		team_hint = TeamHint.objects.filter(license_holder=self, discipline=discipline
-			).order_by('-effective_date').first()
+		team_hint = TeamHint.objects.filter(license_holder=self, discipline=discipline).order_by('-effective_date').first()
+		
+		# Try to find a participant in this discipline.
 		q_participant = Participant.objects.filter(license_holder=self,competition__discipline=discipline)
 		if team_hint:
 			q_participant = q_participant.filter(competition__start_date__gt=team_hint.effective_date)
 		participant = q_participant.order_by('-competition__start_date').first()
+		
+		if not participant and not team_hint:
+			# Try to find a participant in any discipline.
+			q_participant = Participant.objects.filter(license_holder=self)
+			if team_hint:
+				q_participant = q_participant.filter(competition__start_date__gt=team_hint.effective_date)
+			participant = q_participant.order_by('-competition__start_date').first()
+		
 		if participant:
 			return participant.team
 		elif team_hint:
 			return team_hint.team
-		else:
-			return None
+		return None
+		
+	def get_teams_for_disciplines( self, disciplines ):
+		return [self.get_team_for_discipline(d) for d in disciplines]
+		
+	def get_teams_for_disciplines_html( self, disciplines ):
+		r = []
+		for t in self.get_teams_for_disciplines(disciplines):
+			r.append( u'<td>{}</td>'.format( escape(t.name) if t else u'Independent' ) )
+		return mark_safe(''.join(r))
+	
+	def get_tag_str( self ):
+		tags = (self.existing_tag, self.existing_tag2)
+		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+	
+	def get_short_tag_str( self ):
+		tags = (self.existing_tag, self.existing_tag2)
+		tags = [t[:8] + '...' if t and len(t) > 8 else t for t in tags]
+		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
 	
 	class Meta:
 		verbose_name = _('LicenseHolder')
@@ -3062,7 +3088,7 @@ class CustomCategoryTT(CustomCategory):
 class TeamHint(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
 	discipline = models.ForeignKey( 'Discipline', db_index = True )
-	team = models.ForeignKey( 'Team', db_index = True )
+	team = models.ForeignKey( 'Team', db_index=True, null=True )
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def unicode( self ):

@@ -440,6 +440,7 @@ def LicenseHoldersDisplay( request ):
 	else:
 		form = SearchForm( btns, initial = {'search_text': search_text}, additional_buttons_on_new_row=True )
 	
+	disciplines = list( Discipline.objects.filter(id__in=Competition.objects.all().values_list('discipline',flat=True).distinct() ) )
 	license_holders = license_holders_from_search_text( search_text )
 	isEdit = True
 	return render( request, 'license_holder_list.html', locals() )

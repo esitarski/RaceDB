@@ -16,7 +16,7 @@ data_headers = (
 	'City', 'StateProv', 'Nationality',
 	'Email',
 	'Phone',
-	'License', 'UCICode',
+	'License',
 	'NatCode', 'UCIID',
 	'Emergency Contact', 'Emergency Phone', 'Medical Alert',
 	'ZipPostal',
@@ -52,7 +52,10 @@ def get_license_holder_excel( q = None ):
 	
 	ws = wb.add_worksheet('LicenseHolders')
 	
-	row = write_row_data( ws, 0, data_headers, title_format )
+	disciplines = list( Discipline.objects.filter(id__in=Competition.objects.all().values_list('discipline',flat=True).distinct() ) )
+	local_headers = list(data_headers) + [u'{} Team'.format(d.name) for d in disciplines]
+	
+	row = write_row_data( ws, 0, local_headers, title_format )
 	for lh in LicenseHolder.objects.filter(q):
 		data = [
 			lh.last_name,
@@ -65,7 +68,6 @@ def get_license_holder_excel( q = None ):
 			lh.email,
 			lh.phone,
 			lh.license_code,
-			lh.uci_code,
 			lh.nation_code,
 			lh.uci_id,
 			lh.emergency_contact_name,
@@ -73,6 +75,7 @@ def get_license_holder_excel( q = None ):
 			lh.emergency_medical,
 			lh.zip_postal,
 		]
+		data.extend( (team.name if team else u'Independent') for team in lh.get_teams_for_disciplines(disciplines) )
 		row = write_row_data( ws, row, data )
 			
 	wb.close()

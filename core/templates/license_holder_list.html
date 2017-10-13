@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block content %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% load callargs %}
+{% block content %}
 <h2>{{title}}</h2>
 <hr/>
 {% crispy form %}
@@ -20,6 +21,9 @@
 		<th>{% trans "UCIID" %}</th>
 		<th>{% trans "Existing Tag" %}</th>
 		<th>{% trans "Emergency Contact" %}</th>
+		{% for d in disciplines %}
+			<th>{{d.name}} {% trans "Team"%}</th>
+		{% endfor %}
 		{% if isEdit %}
 		<th class="hidden-print"></th>
 		{% endif %}
@@ -45,11 +49,12 @@
 			<td class="text-nowrap">
 				{% if h.uci_id_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.get_flag_uci_id_html}}
 			</td>
-			<td>{% if h.existing_tag %}{{h.existing_tag}}{% endif %}{% if h.existing_tag2 %}, {{h.existing_tag2}}{% endif %}</td>
+			<td>{{h.get_short_tag_str}}</td>
 			<td class="text-nowrap">
 				{% if h.emergency_contact_incomplete %}<span class="is-warn"/>&nbsp;{% endif %}
 				{{h.emergency_contact_name}}<br/>{{h.emergency_contact_phone}}
 			</td>
+			{{h|args:disciplines|call:'get_teams_for_disciplines_html'}}
 			{% if isEdit %}
 			<td class="hidden-print">
 				<a class="btn btn-warning btn-sm" href="./LicenseHolderDelete/{{h.id}}/">{% trans "Delete" %}</a>
