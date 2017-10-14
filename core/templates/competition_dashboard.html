@@ -93,22 +93,14 @@
 					<a class="btn btn-primary" href="./CompetitionEdit/{{competition.id}}/">{% trans "Edit" %}</a>
 					&nbsp;
 					<a class="btn btn-success" href="./UploadPrereg/{{competition.id}}/">{% trans "Upload Pre-reg" %}</a>
-					&nbsp;
-					<a class="btn btn-primary" href="./CompetitionRegAnalytics/{{competition.id}}/">{% trans "Reg Analytics" %}</a>
 				{% endif %}
-				&nbsp;
-				<button class="btn btn-primary hidden-print" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print" %}</button>
 				{% if competition.has_results %}
 				&nbsp;
 				<a class="btn btn-primary hidden-print" target="_blank" href="/RaceDB/Hub/CompetitionResults/{{competition.id}}/">{% trans "Results Hub" %}</a>
 				{% endif %}
-				&nbsp;
-				<a class="btn btn-primary hidden-print" href="./FinishLynx/{{competition.id}}/"><img src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<a class="btn btn-success" href="./TeamsShow/{{competition.id}}/"><img src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
-				&nbsp;&nbsp;
-				
 				<a class="btn btn-success" href="./Participants/{{competition.id}}/"><img src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
+				
 				&nbsp;&nbsp;
 				{% if competition.using_tags %}
 					<a class="btn btn-success" href="./ParticipantRfidAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
@@ -116,9 +108,22 @@
 					<a class="btn btn-success" href="./ParticipantManualAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
 				{% endif %}
 				
+				&nbsp;&nbsp;
+				<a class="btn btn-success" href="./TeamsShow/{{competition.id}}/"><img src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
+				
+				{% if request.user.is_superuser %}
+					&nbsp;
+					<a class="btn btn-primary hidden-print" href="./FinishLynx/{{competition.id}}/"><img src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
+					&nbsp;
+					<a class="btn btn-primary" href="./CompetitionRegAnalytics/{{competition.id}}/">{% trans "Reg Analytics" %}</a>
+				{% endif %}
+				
+				&nbsp;
+				<button class="btn btn-primary hidden-print" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Competition Summary" %}</button>
+				
 				{% if system_info.print_tag_option != 0 and competition.any_print %}
-					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-					<a class="btn btn-success" href="./CustomLabel/{{competition.id}}/"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Custom Label" %}</a>
+					&nbsp;&nbsp;
+					<a class="btn btn-primary" href="./CustomLabel/{{competition.id}}/"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Custom Label" %}</a>
 				{% endif %}
 			</div>
 		</div>
