@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<h3>
+	<strong>{{license_holder.full_name}}</strong><br/>
+	{% trans "Discipline" %}: <strong>{% if discipline %}{{discipline.name}}{% else %}{% trans 'All' %}{% endif %}</strong><br/>
+	{% trans "Team" %}: <strong>{% if team %}{{team.full_name}}{% else %}{% trans "Independent" %}{% endif %}</strong>
+</h3>
+<hr/>
+{% crispy form %}
+<hr/>
+<p>{% trans 'Only "Active" teams are shown.' %}</p>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Code" %}</th>
+		<th>{% trans "Type" %}</th>
+		<th>{% trans "NatCode" %}</th>
+		<th class="hidden-print"></th>
+	</tr>
+</thead>
+<tbody>
+	<tr onclick="jump('./LicenseHolderTeamSelect/{{license_holder.id}}/{% if discipline %}{{discipline.id}}{% else %}0{% endif %}/0/');">
+		<td></td>
+		<td>-- {% trans "Independent" %} --</td>
+		<td>----</td>
+		<td>----</td>
+		<td>----</td>
+		<td class="hidden-print">
+			<a class="btn btn-success" href="./LicenseHolderTeamSelect/{{license_holder.id}}/{% if discipline %}{{discipline.id}}{% else %}0{% endif %}/0/">{% trans "Select" %}</a>
+		</td>
+	</tr>
+	{% for t in teams %}
+		<tr onclick="jump('./LicenseHolderTeamSelect/{{license_holder.id}}/{% if discipline %}{{discipline.id}}{% else %}0{% endif %}/{{t.id}}/');">
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{t.name}}</td>
+			<td>{{t.code}}</td>
+			<td>{{t.get_team_type_display}}</td>
+			<td>{{t.nation_code}}</td>
+			<td class="hidden-print">
+				<a class="btn btn-primary" href="./TeamEdit/{{t.id}}/">{% trans "Edit" %}</a>&nbsp;
+				<a class="btn btn-success" href="./LicenseHolderTeamSelect/{{license_holder.id}}/{% if discipline %}{{discipline.id}}{% else %}0{% endif %}/{{t.id}}/">{% trans "Select" %}</a>
+			</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+({% trans "maximum 500 results shown" %})
+{% endblock content %}

@@ -390,6 +390,10 @@ class Discipline(models.Model):
 	def __unicode__( self ):
 		return self.name
 		
+	@staticmethod
+	def get_disciplines_in_use():
+		return Discipline.objects.filter( pk__in=Competition.objects.all().values_list('discipline', flat=True).distinct() )
+		
 	class Meta:
 		verbose_name = _('Discipline')
 		verbose_name_plural = _('Disciplines')
@@ -3111,6 +3115,18 @@ class TeamHint(models.Model):
 			[TeamHint(license_holder=license_holder, discipline=discipline, team=team, effective_date=effective_date)
 				for discipline in Discipline.objects.all()]
 		)
+		
+	@staticmethod
+	def set_discipline( license_holder, discipline, team ):
+		th = TeamHint.objects.filter(license_holder=license_holder, discipline=discipline).order_by('-effective_date').first()
+		effective_date = timezone.now().date()
+		if th:
+			TeamHint.objects.filter( license_holder=license_holder, discipline=discipline ).exclude( pk=th.pk ).delete()
+			th.team = team
+			th.effective_date=effective_date
+		else:
+			th = TeamHint( license_holder=license_holder, discipline=discipline, effective_date=effective_date )
+		th.save()
 		
 	class Meta:
 		verbose_name = _('TeamHint')

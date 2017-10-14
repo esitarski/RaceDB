@@ -34,11 +34,48 @@ $("form").submit(function(event) {
 {% crispy form %}
 <div style="text-align:center">
 </div>
-{% with participation=instance.get_participation_as_competitor %}
+
+<hr/>
+<h2>
+	{% trans "Teams" %}
+	{% if isEdit %}
+	<a class="btn btn-primary hidden-print" href="./LicenseHolderTeamChange/{{instance.id}}/0/">{% trans "Change Team for All Disciplines" %}</a>
+	{% endif %}
+</h2>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Discipline" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Type" %}</th>
+		{% if isEdit %}<th class="hidden-print"></th>{% endif %}
+	</tr>
+</thead>
+<tbody>
+	{% for discipline, team in discipline_team %}
+	<tr>
+		<td class="text-right">{{forloop.counter}}.</td>
+		<td>{{discipline.name}}</td>
+		<td>{% if team %}{{team.name}}{% else %}{% trans "Independent" %}{% endif %}</td>
+		<td>{% if team %}{{team.get_team_type_display}}{% endif %}</td>
+		{% if isEdit %}
+		<td>
+			<a class="btn btn-primary btn-xs hidden-print" href="./LicenseHolderTeamChange/{{instance.id}}/{{discipline.id}}/">{% trans "Change" %}</a>
+		</td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+
 {% if instance.has_results %}
 <hr/>
 <a class="btn btn-primary hidden-print" target="_blank" href="/RaceDB/Hub/LicenseHolderResults/{{instance.id}}/">{% trans "Results Hub" %}</a>
 {% endif %}
+{% with participation=instance.get_participation_as_competitor %}
 {% if participation %}
 <hr/>
 <h2>{% trans "Participation" %}</h2>

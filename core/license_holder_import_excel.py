@@ -365,7 +365,7 @@ def license_holder_import_excel(
 				for d in discipline_teams:
 					tn = lhr.pop( d.name, None )
 					if not tn:							# Skip empty field.
-						continue:
+						continue
 					if Team.is_independent_name(tn):	# Explicitly handle independent as null team.
 						d_team.append( (d, None) )
 						continue

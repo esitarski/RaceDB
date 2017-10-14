@@ -185,6 +185,8 @@ urlpatterns = [
 	url(r'^(?i).*LicenseHolderTagChange/(?P<licenseHolderId>\d+)/$', views.LicenseHolderTagChange),
 	url(r'^(?i).*LicenseHolderEdit/(?P<licenseHolderId>\d+)/$', views.LicenseHolderEdit),
 	url(r'^(?i).*LicenseHolderDelete/(?P<licenseHolderId>\d+)/$', views.LicenseHolderDelete),
+	url(r'^(?i).*LicenseHolderTeamChange/(?P<licenseHolderId>\d+)/(?P<disciplineId>\d+)/$', views.LicenseHolderTeamChange),
+	url(r'^(?i).*LicenseHolderTeamSelect/(?P<licenseHolderId>\d+)/(?P<disciplineId>\d+)/(?P<teamId>\d+)/$', views.LicenseHolderTeamSelect),
 	url(r'^(?i).*LicenseHoldersImportExcel/$', views.LicenseHoldersImportExcel),
 	url(r'^(?i).*LicenseHoldersCorrectErrors/$', views.LicenseHoldersCorrectErrors),
 	url(r'^(?i).*LicenseHoldersAutoCreateTags/$', views.LicenseHoldersAutoCreateTags),

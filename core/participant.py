@@ -232,7 +232,7 @@ def Participants( request, competitionId ):
 	
 	team_search = participant_filter.get('team_text','').strip()
 	if team_search:
-		if team_search == '-1':
+		if team_search == '-1' or Team.is_independent_name(team_search):
 			participants = participants.filter( team__isnull = True )
 		else:
 			participants = participants.filter( team__isnull = False )

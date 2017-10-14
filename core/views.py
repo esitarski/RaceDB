@@ -333,7 +333,7 @@ class LicenseHolderForm( ModelForm ):
 				Col( HTML(_('If not Eligible to Compete, this License Holder will not be allowed to participate in races until it is reset.  Always add a note (below) explaining the reason.')), 6 ),
 			),
 			Row(
-				Field('note', cols=80, rows=4),
+				Field('note', cols=80, rows=1),
 			),
 		)
 		
@@ -735,10 +735,12 @@ def LicenseHolderNew( request ):
 	
 @access_validation()
 def LicenseHolderEdit( request, licenseHolderId ):
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	return GenericEdit( LicenseHolder, request,
 		licenseHolderId,
 		LicenseHolderForm,
 		template='license_holder_form.html',
+		additional_context={'discipline_team':[(d, license_holder.get_team_for_discipline(d)) for d in Discipline.get_disciplines_in_use()],},
 	)
 	
 @access_validation()
@@ -748,6 +750,45 @@ def LicenseHolderDelete( request, licenseHolderId ):
 		LicenseHolderForm,
 		template='license_holder_form.html',
 	)
+		
+@access_validation()
+def LicenseHolderTeamChange( request, licenseHolderId, disciplineId ):
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	discipline = get_object_or_404( Discipline, pk=disciplineId ) if int(disciplineId) else None
+	team = license_holder.get_team_for_discipline(discipline) if discipline else None
+	search_text = request.session.get('teams_filter', '')
+	btns = [('new-submit', _('New Team'), 'btn btn-success')]
+	if request.method == 'POST':
+	
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+		if 'new-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'TeamNew') )
+			
+		form = SearchForm( btns, request.POST )
+		if form.is_valid():
+			search_text = form.cleaned_data['search_text']
+			request.session['teams_filter'] = search_text
+	else:
+		form = SearchForm( btns, initial = {'search_text': search_text} )
+		
+	search_text = utils.normalizeSearch(search_text)
+	q = Q( active=True )
+	for n in search_text.split():
+		q &= Q( search_text__contains = n )
+	teams = Team.objects.filter(q)[:MaxReturn]
+	return render( request, 'license_holder_team_select.html', locals() )
+
+def LicenseHolderTeamSelect( request, licenseHolderId, disciplineId, teamId ):
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	discipline = get_object_or_404( Discipline, pk=disciplineId ) if int(disciplineId) else None
+	team = get_object_or_404( Team, pk=teamId ) if int(teamId) else None
+	if not discipline:
+		TeamHint.set_all_disciplines( license_holder, team )
+	else:
+		TeamHint.set_discipline( license_holder, discipline, team )
+	return HttpResponseRedirect(getContext(request,'pop2Url'))
 	
 #-----------------------------------------------------------------------
 
