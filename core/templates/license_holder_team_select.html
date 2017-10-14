@@ -8,6 +8,10 @@
 	{% trans "Discipline" %}: <strong>{% if discipline %}{{discipline.name}}{% else %}{% trans 'All' %}{% endif %}</strong><br/>
 	{% trans "Team" %}: <strong>{% if team %}{{team.full_name}}{% else %}{% trans "Independent" %}{% endif %}</strong>
 </h3>
+<p></p>
+<p>
+{% trans "Note: This sets the team for this LicenseHolder for future Competitions only.  Teams in previous Competitions are unchanged.  To change the teams in a previous Competition, use the Participant Edit screen in that Competition." %}
+</p>
 <hr/>
 {% crispy form %}
 <hr/>
