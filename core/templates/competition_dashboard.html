@@ -122,7 +122,7 @@
 				<button class="btn btn-primary hidden-print" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Competition Summary" %}</button>
 				
 				{% if system_info.print_tag_option != 0 and competition.any_print %}
-					&nbsp;&nbsp;
+					&nbsp;
 					<a class="btn btn-primary" href="./CustomLabel/{{competition.id}}/"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Custom Label" %}</a>
 				{% endif %}
 			</div>
