@@ -338,8 +338,8 @@ def init_prereg(
 				if bib and bib in category_numbers_set[category]:
 					participant.bib = bib
 					# Add the assigned bib to the number set if it exists.
-					if self.competition.number_set:
-						self.competition.number_set.assign_bib( participant.license_holder, participant.bib )
+					if participant.competition.number_set:
+						participant.competition.number_set.assign_bib( participant.license_holder, participant.bib )
 
 				# Do a final check for bib compatibility.
 				if participant.bib and participant.bib not in category_numbers_set[category]:
