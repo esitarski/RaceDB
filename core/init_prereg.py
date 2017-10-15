@@ -294,11 +294,12 @@ def init_prereg(
 				team = None
 				if Team.is_independent_name(team_name):
 					team = None
-				elif team_name not in team_lookup:
-					msg = u'Row {:>6}: Added team: {}\n'.format(
-						i, team_name,
-					)
-					ms_write( msg )
+				else:
+					if team_name not in team_lookup:
+						msg = u'Row {:>6}: Added team: {}\n'.format(
+							i, team_name,
+						)
+						ms_write( msg )
 					team = team_lookup[team_name]
 				
 				#------------------------------------------------------------------------------
