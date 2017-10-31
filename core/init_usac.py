@@ -114,7 +114,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 			print u'{:>6}: {:>8} {:>10} {}, {} {}'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'),
 				removeDiacritic(lh.last_name), removeDiacritic(lh.first_name), removeDiacritic(lh.state_prov) )
 			
-			teams = dict( ((th.discipline, th.team.team_type), th) for th in TeamHint.objects.select_related('team').filter(license_holder=lh) )
+			teams = dict( ((th.discipline, th.team.team_type), th) for th in TeamHint.objects.select_related('team').filter(license_holder=lh, team__isnull=False) )
 			th_used = set()
 			for code, discipline_name in [('rd', 'Road'), ('track', 'Track'), ('cx', 'Cyclocross'), ('mtn', 'MTB')]:
 				discipline_obj = discipline_id.get( discipline_name.lower(), None )

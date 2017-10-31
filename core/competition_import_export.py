@@ -535,7 +535,7 @@ def license_holder_export( stream ):
 		arr.extend( category_format.category_set.all() )
 	
 	update_team_hints()
-	arr.extend( Team.objects.filter( pk__in=TeamHint.objects.all().values_list('team',flat=True).distinct() ) )
+	arr.extend( Team.objects.filter( pk__in=TeamHint.objects.filter(team__isnull=False).values_list('team',flat=True).distinct() ) )
 	arr.extend( LicenseHolder.objects.all() )
 	arr.extend( TeamHint.objects.all() )
 	arr.extend( CategoryHint.objects.all() )

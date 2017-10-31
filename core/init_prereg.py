@@ -254,7 +254,9 @@ def init_prereg(
 				
 				# Update the license_holder record with all new information.
 				if set_attributes( license_holder, {
-						'date_of_birth':date_of_birth if not year_only_dob else None,
+						'date_of_birth':date_of_birth
+							if not year_only_dob and date_of_birth != invalid_date_of_birth
+							else None,
 						'uci_code':uci_code,
 						'email':email,
 						'phone':phone,
