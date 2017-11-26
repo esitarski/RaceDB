@@ -129,7 +129,7 @@ The first command builds the required database structure for all the RaceDB modu
 During the process, you may be required to enter an admin login.
 I recommend calling the admin user "admin" with the password "admin".
 
-The second command will initialize default disciplines and categories.
+The second command initializes default disciplines and categories.
 This data includes:
 
 * Disciplines
