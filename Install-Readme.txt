@@ -123,7 +123,8 @@ Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal enter two commands:
 
   python manage.py migrate
-
+  python manage.py init_data
+  
 The first command builds the required database structure for all the RaceDB modules.
 During the process, you may be required to enter an admin login.
 I recommend calling the admin user "admin" with the password "admin".
@@ -138,7 +139,7 @@ This data includes:
 Step 8.5:  Initialize Demo Data
 
 Ensure you are cd'd to the RaceDB directory (see above).
-If you want the demo data in your database and play with a tutorial, enter the following:
+If you want s some demo data in your database and play with a tutorial, enter the following:
 
   python manage.py init_demo
 
