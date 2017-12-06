@@ -61,7 +61,14 @@ def participation_excel( start_date=None, end_date=None, disciplines=None, race_
 	col += 1
 	
 	for e in events:
-		ws.write( row, col, u'\n'.join([e.competition.name, e.name, e.get_event_type_display(), e.date_time.strftime('%Y-%m-%d %H:%M')]), title_format )
+		ws.write( 
+			row, col,
+			u'\n'.join([
+				e.competition.name, e.name, e.get_event_type_display(),
+				timezone.localtime(e.date_time).strftime('%Y-%m-%d %H:%M')
+			]),
+			title_format,
+		)
 		col += 1
 	row += 1
 	
