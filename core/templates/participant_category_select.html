@@ -9,10 +9,12 @@
 <hr/>
 {% crispy form %}
 <hr/>
-<table class="table table-striped table-hover table-condensed">
+<div style="clear:both;"></div>
+<table class="table table-striped table-hover table-condensed" style="width: auto;">
 <thead>
 	<tr>
 		<th>{% trans "Code (Gender)" %}</th>
+		<th>{% trans "Lic. Rqmt" %}</th>
 		<th>{% trans "Description" %}</th>
 		<th></th>
 	</tr>
@@ -20,7 +22,8 @@
 <tbody>
 	<tr onclick="jump('./ParticipantCategorySelect/{{participant.id}}/0/');">
 		<td>--{% trans "none" %}--</td>
-		<td>----</td>
+		<td></td>
+		<td></td>
 		<td>
 			<a class="btn btn-success" href="./ParticipantCategorySelect/{{participant.id}}/0/">{% trans "Select" %}</a>
 		</td>
@@ -28,6 +31,7 @@
 	{% for c in categories %}
 		<tr {% if c in available_categories %}onclick="jump('./ParticipantCategorySelect/{{participant.id}}/{{c.id}}/');" {% endif %}>
 			<td>{% if c not in available_categories %}<strong>{% endif %}{{c.code_gender}}{% if c not in available_categories %}</strong>{% endif %}</td>
+			<td>{% if c not in available_categories %}<strong>{% endif %}{{c.license_requirement}}{% if c not in available_categories %}</strong>{% endif %}</td>
 			<td>{% if c not in available_categories %}<strong>{% endif %}{{c.description}}{% if c not in available_categories %}</strong>{% endif %}</td>
 			<td>
 				{% if c in available_categories %}

@@ -105,9 +105,12 @@ class CategoryForm( ModelForm ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Col(Field('code', size=10), 2),
+				Col(Field('code', size=20), 3),
 				Col(Field('gender'), 2),
-				Col(Field('description', size=100), 8),
+				Col(Field('license_requirement', size=20), 3),
+			),
+			Row(
+				Col(Field('description', size=80), 12),
 			),
 			Field( 'sequence', type='hidden' ),
 			Field( 'format', type='hidden' ),

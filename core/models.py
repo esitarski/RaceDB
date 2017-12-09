@@ -343,9 +343,10 @@ class Category(models.Model):
 		(1, _('Women')),
 		(2, _('Open')),
 	)
-	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default = 0, verbose_name = _('Gender') )
-	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name = _('Description') )
-	sequence = models.PositiveSmallIntegerField( default = 0, verbose_name = _('Sequence') )
+	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default=0, verbose_name=_('Gender') )
+	description = models.CharField( max_length=80, default='', blank=True, verbose_name=_('Description') )
+	license_requirement = models.CharField( max_length=32, default='', blank=True, verbose_name=_('License Requirement') )
+	sequence = models.PositiveSmallIntegerField( default=0, verbose_name=_('Sequence') )
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_last( Category, self )
@@ -377,7 +378,12 @@ class Category(models.Model):
 		verbose_name_plural = _("Categories")
 		ordering = ['sequence', '-gender', 'code']
 
+'''
 #---------------------------------------------------------------------------------
+class CompetitionCategoryLicenseCheck(models.Model):
+	competition = models.ForeignKey( Competition, db_index=True )
+	category = models.ForeignKey( Category, db_index=True )
+'''
 
 class Discipline(models.Model):
 	name = models.CharField( max_length = 64 )
