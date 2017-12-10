@@ -502,7 +502,10 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	#-------------------------------------------------------------------
 	if not export_as_template:
 		arr.extend( competition.participantoption_set.all() )
-		
+	
+	CompetitionCategoryOption.normalize( competition )
+	arr.extend( competition.competitioncategoryoption_set.all() )
+	
 	if export_as_template:
 		# Clear any references to participant-specific data.
 		arr = [o for o in arr if not (
