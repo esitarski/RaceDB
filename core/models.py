@@ -835,6 +835,7 @@ class Competition(models.Model):
 		event_mass_starts = list(self.eventmassstart_set.all())
 		event_tts = list(self.eventtt_set.all())
 		report_labels = list( self.report_labels.all() )
+		category_options = list( self.competitioncategoryoption_set.all() )
 	
 		start_date_old, start_date_new = self.start_date, timezone.now().date()
 		competition_new = self
@@ -848,6 +849,8 @@ class Competition(models.Model):
 			e.make_copy( competition_new, start_date_old, start_date_new )
 		for e in event_tts:
 			e.make_copy( competition_new, start_date_old, start_date_new )
+		for cco in category_options:
+			cco.make_copy( competition_new )
 		
 		if report_labels:
 			competition_new.report_labels.add( *report_labels )
@@ -5079,6 +5082,12 @@ class CompetitionCategoryOption(models.Model):
 		if created or cco.license_check_required != license_check_required:
 			cco.license_check_required = license_check_required
 			cco.save()
+	
+	def make_copy( self, competition_new ):
+		cco_new = self
+		cco_new.pk = None
+		cco_new.competition = competition_new
+		cco_new.save()
 	
 	class Meta:
 		verbose_name = _('CompetitionCategoryOption')
