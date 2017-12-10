@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block content %}
+
+<h2>{{title}}</h2>
+<hr/>
+<form method="post" action=".">
+	{% csrf_token %}
+    {{ form_set.management_form }}
+	<button type="submit" name="ok-submit" class="btn btn-success">{% trans "OK" %}</button>
+	<button type="submit" name="cancel-submit" class="btn btn-warning">{% trans "Cancel" %}</button>
+	<button type="submit" name="set-all-submit" class="btn btn-primary" style="margin-left:50px">{% trans "Set All" %}</button>
+	<button type="submit" name="clear-all-submit" class="btn btn-primary">{% trans "Clear All" %}</button>
+
+	<table class="table table-striped table-hover" style="width: auto;">
+	<thead>
+		<tr>
+			<th></th>
+			<th>{% trans "Do License Check" %}</th>
+			<th>{% trans "Category" %}</th>
+			<th>{% trans "Lic. Rqmt" %}</th>
+			<th>{% trans "Description" %}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for category, form in category_forms %}
+		<tr>
+		<td class="text-right">{{forloop.counter}}.</td>
+		{% for field in form.visible_fields %}
+			<td class="text-center">{{ field.errors.as_ul }} {{ field }}</td>
+		{% endfor %}
+			<td>{{ category.code_gender }} {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}</td>
+			<td>{{ category.license_requirement }}</td>
+			<td>{{ category.description }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+</form>
+{% endblock content %}

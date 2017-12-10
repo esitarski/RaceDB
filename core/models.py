@@ -5064,7 +5064,7 @@ class CompetitionCategoryOption(models.Model):
 		categories = competition.category_format.category_set.all()
 		CompetitionCategoryOption.objects.filter( competition=competition ).exclude( category__in=categories ).delete()
 		for category in categories:
-			cco = CompetitionCategoryOption.filter( competition=competition, category=category ).first()
+			cco = CompetitionCategoryOption.objects.filter( competition=competition, category=category ).first()
 			if not cco:
 				CompetitionCategoryOption(competition=competition, category=category).save()
 	
@@ -5075,7 +5075,7 @@ class CompetitionCategoryOption(models.Model):
 	
 	@staticmethod
 	def set_license_check_required( competition, category, license_check_required=False ):
-		cco = CompetitionCategoryOption.objects.get_or_create( competition=competition, category=category )
+		cco, created = CompetitionCategoryOption.objects.get_or_create( competition=competition, category=category )
 		cco.license_check_required = license_check_required
 		cco.save()
 	
