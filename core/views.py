@@ -904,7 +904,10 @@ def GetCompetitionForm( competition_cur = None ):
 			
 		def editReportTags( self, request, competition ):
 			return HttpResponseRedirect( pushUrl(request,'ReportLabels') )
-			
+		
+		def setLicenseChecks( self, request, competition ):
+			return HttpResponseRedirect( pushUrl(request,'SetLicenseChecks', competition.id) )
+		
 		def __init__( self, *args, **kwargs ):
 			system_info = SystemInfo.get_singleton()
 		
@@ -987,6 +990,9 @@ def GetCompetitionForm( competition_cur = None ):
 				)
 				self.additional_buttons.append(
 					('edit-report-labels-submit', _('Edit Report Labels'), 'btn btn-primary', self.editReportTags),
+				)
+				self.additional_buttons.append(
+					('set-license-checks-submit', _('Set License Checks'), 'btn btn-primary', self.setLicenseChecks),
 				)
 				
 				if competition_cur and competition_cur.using_tags:

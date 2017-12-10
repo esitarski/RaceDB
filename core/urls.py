@@ -20,6 +20,7 @@ from core import series
 from core import custom_category
 from core import callups
 from core import custom_label
+from core import competition_category_option
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -70,6 +71,8 @@ urlpatterns = [
 	
 	url(r'^(?i).*ApplyNumberSet/(?P<competitionId>\d+)/$', views.ApplyNumberSet),
 	url(r'^(?i).*InitializeNumberSet/(?P<competitionId>\d+)/$', views.InitializeNumberSet),
+	
+	url(r'^(?i).*SetLicenseChecks/(?P<competitionId>\d+)/$', competition_category_option.SetLicenseChecks),
 	
 	url(r'^(?i).*StartListTT/(?P<eventTTId>\d+)/$', views.StartListTT),
 	

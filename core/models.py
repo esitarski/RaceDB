@@ -378,13 +378,7 @@ class Category(models.Model):
 		verbose_name_plural = _("Categories")
 		ordering = ['sequence', '-gender', 'code']
 
-'''
 #---------------------------------------------------------------------------------
-class CompetitionCategoryLicenseCheck(models.Model):
-	competition = models.ForeignKey( Competition, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
-'''
-
 class Discipline(models.Model):
 	name = models.CharField( max_length = 64 )
 	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = 0 )
@@ -5057,6 +5051,37 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	
 	# Final delete.  Cascade delete will clean up old SeasonsPass and Waiver entries.
 	LicenseHolder.objects.filter( pk__in=pks ).delete()
+	
+#-----------------------------------------------------------------------------------------------
+class CompetitionCategoryOption(models.Model):
+	competition = models.ForeignKey( Competition, db_index=True )
+	category = models.ForeignKey( Category, db_index=True )
+	
+	license_check_required = models.BooleanField( default=False, verbose_name=_("License Check Required") )
+	
+	@staticmethod
+	def normalize( competition ):
+		categories = competition.category_format.category_set.all()
+		CompetitionCategoryOption.objects.filter( competition=competition ).exclude( category__in=categories ).delete()
+		for category in categories:
+			cco = CompetitionCategoryOption.filter( competition=competition, category=category ).first()
+			if not cco:
+				CompetitionCategoryOption(competition=competition, category=category).save()
+	
+	@staticmethod
+	def is_license_check_required( competition, category ):
+		cco = CompetitionCategoryOption.objects.filter( competition=competition, category=category ).first()
+		return cco and cco.license_check_required
+	
+	@staticmethod
+	def set_license_check_required( competition, category, license_check_required=False ):
+		cco = CompetitionCategoryOption.objects.get_or_create( competition=competition, category=category )
+		cco.license_check_required = license_check_required
+		cco.save()
+	
+	class Meta:
+		verbose_name = _('CompetitionCategoryOption')
+		unique_together = (("competition", "category"),)
 
 #-----------------------------------------------------------------------------------------------
 # Apply upgrades.
