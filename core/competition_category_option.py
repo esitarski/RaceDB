@@ -29,10 +29,12 @@ def SetLicenseChecks( request, competitionId ):
 			
 		form_set = LicenseCheckFormSet( request.POST )
 		if form_set.is_valid():
+			to_set, to_clear = [], []
 			for f in form_set:
 				fields = f.cleaned_data
-				category = get_object_or_404( Category, pk=fields['category_id'] )
-				CompetitionCategoryOption.set_license_check_required( competition, category, fields['license_check_required'] )
+				(to_set if fields['license_check_required'] else to_clear).append( fields['category_id'] )
+			CompetitionCategoryOption.objects.filter( competition=competition, category__in=to_set ).update( license_check_required=True )
+			CompetitionCategoryOption.objects.filter( competition=competition, category__in=to_clear ).update( license_check_required=False )
 			return HttpResponseRedirect( getContext(request, 'cancelUrl') )
 	else:
 		initial = [

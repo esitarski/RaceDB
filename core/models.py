@@ -5076,8 +5076,9 @@ class CompetitionCategoryOption(models.Model):
 	@staticmethod
 	def set_license_check_required( competition, category, license_check_required=False ):
 		cco, created = CompetitionCategoryOption.objects.get_or_create( competition=competition, category=category )
-		cco.license_check_required = license_check_required
-		cco.save()
+		if created or cco.license_check_required != license_check_required:
+			cco.license_check_required = license_check_required
+			cco.save()
 	
 	class Meta:
 		verbose_name = _('CompetitionCategoryOption')
