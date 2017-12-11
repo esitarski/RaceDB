@@ -5065,11 +5065,12 @@ class CompetitionCategoryOption(models.Model):
 	@staticmethod
 	def normalize( competition ):
 		categories = competition.category_format.category_set.all()
-		CompetitionCategoryOption.objects.filter( competition=competition ).exclude( category__in=categories ).delete()
-		for category in categories:
-			cco = CompetitionCategoryOption.objects.filter( competition=competition, category=category ).first()
-			if not cco:
-				CompetitionCategoryOption(competition=competition, category=category).save()
+		ccos = competition.competitioncategoryoption_set.all()
+		ccos.exclude( category__in=categories ).delete()
+		CompetitionCategoryOption.objects.bulk_create( [
+			CompetitionCategoryOption(competition=competition, category=category)
+			for category in categories.exclude( category__in=ccos.values('category__id') )
+		] )
 	
 	@staticmethod
 	def is_license_check_required( competition, category ):
