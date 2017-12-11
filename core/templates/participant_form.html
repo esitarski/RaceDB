@@ -186,7 +186,7 @@
 	<td>
 		{% if p.category %}
 			<strong>{{p.category.code}}:</strong>
-			{{p.category.description}}, {{p.category.get_gender_display}}{% if p.category.license_requirement %}, {{p.category.license_requirement}}{% endif %}
+			{{p.category.description}}, {{p.category.get_gender_display}}
 		{% else %}
 			{% if p.is_competitor %}<span class="label label-danger">{% endif %}
 				{% trans "No category" %}

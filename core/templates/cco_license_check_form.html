@@ -18,22 +18,21 @@
 	<thead>
 		<tr>
 			<th></th>
-			<th>{% trans "Do License Check" %}</th>
 			<th>{% trans "Category" %}</th>
-			<th>{% trans "Lic. Rqmt" %}</th>
 			<th>{% trans "Description" %}</th>
+			<th>{% trans "Do License Check" %}</th>
+			<th>{% trans "Note to Staff" %}</th>
 		</tr>
 	</thead>
 	<tbody>
 	{% for category, form in category_forms %}
 		<tr>
 		<td class="text-right">{{forloop.counter}}.</td>
+		<td>{{ category.code_gender }} {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}</td>
+		<td>{{ category.description }}</td>
 		{% for field in form.visible_fields %}
 			<td class="text-center">{{ field.errors.as_ul }} {{ field }}</td>
 		{% endfor %}
-			<td>{{ category.code_gender }} {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}</td>
-			<td>{{ category.license_requirement }}</td>
-			<td>{{ category.description }}</td>
 		</tr>
 	{% endfor %}
 	</tbody>

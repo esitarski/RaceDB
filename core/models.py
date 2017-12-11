@@ -345,7 +345,6 @@ class Category(models.Model):
 	)
 	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default=0, verbose_name=_('Gender') )
 	description = models.CharField( max_length=80, default='', blank=True, verbose_name=_('Description') )
-	license_requirement = models.CharField( max_length=32, default='', blank=True, verbose_name=_('License Requirement') )
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name=_('Sequence') )
 	
 	def save( self, *args, **kwargs ):
@@ -5061,6 +5060,7 @@ class CompetitionCategoryOption(models.Model):
 	category = models.ForeignKey( Category, db_index=True )
 	
 	license_check_required = models.BooleanField( default=False, verbose_name=_("License Check Required") )
+	note = models.CharField( max_length=160, default='', blank=True, verbose_name=_('Note') )
 	
 	@staticmethod
 	def normalize( competition ):
