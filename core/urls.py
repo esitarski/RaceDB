@@ -165,6 +165,9 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantBibChange/(?P<participantId>\d+)/$', participant.ParticipantBibChange ),
 	url(r'^(?i).*ParticipantBibSelect/(?P<participantId>\d+)/(?P<bib>\d+)/$', participant.ParticipantBibSelect ),
 	
+	url(r'^(?i).*ParticipantLicenseCheckChange/(?P<participantId>\d+)/$', participant.ParticipantLicenseCheckChange ),
+	url(r'^(?i).*ParticipantLicenseCheckSelect/(?P<participantId>\d+)/(?P<status>\d+)/$', participant.ParticipantLicenseCheckSelect ),
+	
 	url(r'^(?i).*ParticipantTagChange/(?P<participantId>\d+)/$', participant.ParticipantTagChange ),
 	url(r'^(?i).*ParticipantNoteChange/(?P<participantId>\d+)/$', participant.ParticipantNoteChange ),
 	url(r'^(?i).*ParticipantGeneralNoteChange/(?P<participantId>\d+)/$', participant.ParticipantGeneralNoteChange ),

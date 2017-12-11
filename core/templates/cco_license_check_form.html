@@ -20,19 +20,21 @@
 			<th></th>
 			<th>{% trans "Category" %}</th>
 			<th>{% trans "Description" %}</th>
-			<th>{% trans "Do License Check" %}</th>
-			<th>{% trans "Note to Staff" %}</th>
+			<th>{% trans "Check License" %}</th>
+			<th>{% trans "Note" %}</th>
 		</tr>
 	</thead>
 	<tbody>
-	{% for category, form in category_forms %}
+	{% for form in form_set %}
 		<tr>
-		<td class="text-right">{{forloop.counter}}.</td>
-		<td>{{ category.code_gender }} {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}</td>
-		<td>{{ category.description }}</td>
-		{% for field in form.visible_fields %}
-			<td class="text-center">{{ field.errors.as_ul }} {{ field }}</td>
-		{% endfor %}
+		{% with category=form.instance.category %}
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{ category.code_gender }} {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}</td>
+			<td>{{ category.description }}</td>
+			{% for field in form.visible_fields %}
+				<td class="text-center">{{ field.errors.as_ul }} {{ field }}</td>
+			{% endfor %}
+		{% endwith %}
 		</tr>
 	{% endfor %}
 	</tbody>

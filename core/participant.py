@@ -468,6 +468,8 @@ def ParticipantEdit( request, participantId ):
 	is_suspicious_age = not (8 <= competition_age <= 90)
 	isEdit = True
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
+	is_license_checked = participant.is_license_checked()
+	is_license_check_required = participant.is_license_check_required()
 	return render( request, 'participant_form.html', locals() )
 	
 @access_validation()
@@ -711,6 +713,9 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 	
 	participant.update_bib_new_category()
 	
+	if category_changed:
+		participant.licensed_checked = False
+	
 	try:
 		participant.auto_confirm().save()
 	except IntegrityError:
@@ -738,6 +743,21 @@ def ParticipantRoleSelect( request, participantId, role ):
 			participant.team = None
 	else:
 		participant.init_default_values()
+	participant.auto_confirm().save()
+	return HttpResponseRedirect(getContext(request,'pop2Url'))
+	
+#-----------------------------------------------------------------------
+@access_validation()
+def ParticipantLicenseCheckChange( request, participantId ):
+	participant = get_participant( participantId )
+	cco = CompetitionCategoryOption.objects.filter( competition=participant.competition, category=participant.category ).first()
+	note = cco.note if cco else u''
+	return render( request, 'participant_license_check_select.html', locals() )
+
+@access_validation()
+def ParticipantLicenseCheckSelect( request, participantId, status ):
+	participant = get_participant( participantId )
+	participant.license_checked = bool(int(status))
 	participant.auto_confirm().save()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 	

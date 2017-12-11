@@ -3355,6 +3355,7 @@ class Participant(models.Model):
 	tag=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag') )
 	tag2=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag2') )
 
+	license_checked=models.BooleanField( default=False, verbose_name=_('License Checked') )
 	signature=models.TextField( blank=True, default='', verbose_name=_('Signature') )
 	
 	@property
@@ -3370,6 +3371,12 @@ class Participant(models.Model):
 	seed_early=models.BooleanField( default=False, verbose_name=_('Seed Early') )
 	SEED_OPTION_CHOICES = ((1,_('-')),(0,_('Seed Early')),(2,_('Seed Late')),(3,_('Seed Last')),)
 	seed_option=models.SmallIntegerField( choices=SEED_OPTION_CHOICES, default=1, verbose_name=_('Seed Option') )
+	
+	def is_license_check_required( self ):
+		return CompetitionCategoryOption.is_license_check_required(self.competition, self.category)
+	
+	def is_license_checked( self ):
+		return not self.is_license_check_required() or self.license_checked
 	
 	def enforce_tag_constraints( self ):
 		license_holder = self.license_holder
@@ -5069,7 +5076,7 @@ class CompetitionCategoryOption(models.Model):
 		ccos.exclude( category__in=categories ).delete()
 		CompetitionCategoryOption.objects.bulk_create( [
 			CompetitionCategoryOption(competition=competition, category=category)
-			for category in categories.exclude( category__in=ccos.values('category__id') )
+			for category in categories.exclude( id__in=ccos.values('category__id') )
 		] )
 	
 	@staticmethod
@@ -5077,13 +5084,10 @@ class CompetitionCategoryOption(models.Model):
 		cco = CompetitionCategoryOption.objects.filter( competition=competition, category=category ).first()
 		return cco and cco.license_check_required
 	
-	@staticmethod
-	def set_license_check_required( competition, category, license_check_required=False ):
-		cco, created = CompetitionCategoryOption.objects.get_or_create( competition=competition, category=category )
-		if created or cco.license_check_required != license_check_required:
-			cco.license_check_required = license_check_required
-			cco.save()
-	
+	def save( self, *args, **kwargs ):
+		self.note = self.note.strip()
+		return super(CompetitionCategoryOption, self).save( *args, **kwargs )
+		
 	def make_copy( self, competition_new ):
 		cco_new = self
 		cco_new.pk = None
