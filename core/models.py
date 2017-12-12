@@ -3376,7 +3376,7 @@ class Participant(models.Model):
 		return CompetitionCategoryOption.is_license_check_required(self.competition, self.category)
 	
 	def is_license_checked( self ):
-		return not self.is_license_check_required() or self.license_checked
+		return self.license_checked or not self.is_license_check_required()
 	
 	def enforce_tag_constraints( self ):
 		license_holder = self.license_holder
@@ -3712,6 +3712,7 @@ class Participant(models.Model):
 	
 	def good_bib( self ):			return self.is_competitor and self.bib
 	def good_category( self ):		return self.is_competitor and self.category
+	def good_license_check( self ):	return self.is_license_checked()
 	def good_tag( self ):			return not self.needs_tag
 	def good_team( self ):			return self.is_competitor and self.team
 	def good_paid( self ):			return self.is_competitor and self.paid
@@ -3726,6 +3727,7 @@ class Participant(models.Model):
 			self.good_waiver() and
 			self.good_paid() and
 			self.good_category() and
+			self.good_license_check() and
 			self.good_bib() and
 			self.good_tag() and
 			self.good_signature()
@@ -3759,6 +3761,7 @@ class Participant(models.Model):
 			self.good_eligible() and
 			self.good_bib() and
 			self.good_category() and
+			self.good_license_check() and
 			self.good_paid() and
 			self.good_waiver()
 		)
@@ -3799,6 +3802,7 @@ class Participant(models.Model):
 			('good_paid',			_('Missing Payment')),
 			('good_bib',			_('Missing Bib Number')),
 			('good_category',		_('Missing Category')),
+			('good_license_check',	_('Unchecked License')),
 			('good_tag',			_('Missing Tag')),
 			('good_signature',		_('Missing Signature')),
 		)

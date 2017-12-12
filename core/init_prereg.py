@@ -181,6 +181,7 @@ def init_prereg(
 			
 			role			= role_code.get( v('role','').lower().replace(' ', '').replace('.', ''), None )
 			waiver			= to_bool(v('waiver',None))
+			license_checked	= to_bool(v('license_checked',None))
 			
 			#------------------------------------------------------------------------------
 			# Get LicenseHolder.
@@ -329,6 +330,7 @@ def init_prereg(
 						('preregistered',preregistered), ('paid',paid), 
 						('seed_option',seed_option), ('est_kmh',est_kmh), 
 						('role',role),
+						('license_checked',license_checked),
 					):
 					if value is not None:
 						setattr( participant, attr, value )

@@ -25,6 +25,7 @@ data_headers = (
 	'Role',
 	'Confirmed',
 	'Paid',
+	'License Checked',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -100,6 +101,7 @@ def get_participant_excel( q = None ):
 			p.get_role_display(),
 			p.confirmed,
 			p.paid,
+			p.license_checked,
 		]
 		if seasons_pass:
 			data.append( p.is_seasons_pass_holder )
