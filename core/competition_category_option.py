@@ -12,7 +12,7 @@ class CommonForm(forms.Form):
 		label=_('Common License Check Note'),
 		help_text=_('(shown on License Check page for all Categories)'),
 		max_length=240,
-		widget=forms.Textarea(attrs={'rows':3}))
+		widget=forms.Textarea(attrs={'rows':4, 'cols':80}))
 
 CompetitionCategoryOptionFormSet = modelformset_factory(
 	CompetitionCategoryOption, fields='__all__',
@@ -98,6 +98,8 @@ def ccos_to_excel( competition ):
 	row = 0
 	
 	ws.write( row, 0, unicode(_('License Check Note')), title_format )
+	row += 1
+	ws.write( row, 0, competition.license_check_note )
 	
 	wb.close()
 	return output.getvalue()

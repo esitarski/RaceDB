@@ -41,6 +41,9 @@
 	{% endfor %}
 	</tbody>
 	</table>
-	{{ form_common.as_p }}
+	{{ form_common.license_check_note.errors }}<br/>
+	{{ form_common.license_check_note.label_tag }}<br/>
+	{{ form_common.license_check_note }}<br/>
+	{{ form_common.license_check_note.help_text }}
 </form>
 {% endblock content %}
