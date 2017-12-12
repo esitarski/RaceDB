@@ -148,7 +148,6 @@ class UploadCCOForm( Form ):
 				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
 			),
 		)
-		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
 def handle_upload( competition, excel_contents ):
