@@ -5,6 +5,7 @@ from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.forms import formset_factory
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils import timezone
 
 ItemsPerPage = 25
 def getPaginator( request, page_key, items ):
@@ -267,7 +268,7 @@ def SeriesCompetitionEdit( request, seriesId, competitionId ):
 		
 		initial = [{
 			'select': e in events_included,
-			'name': e.date_time.strftime('%a %H:%M') + ': ' + e.name,
+			'name': timezone.localtime(e.date_time).strftime('%a %H:%M') + ': ' + e.name,
 			'points_structure': points_structure.get(e, default_ps),
 			'et': e.event_type,
 			'pk': e.pk,

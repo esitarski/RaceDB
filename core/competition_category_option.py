@@ -1,5 +1,7 @@
 from views_common import *
 from django.forms import modelformset_factory
+from django.utils.translation import ugettext_lazy as _
+
 import xlsxwriter
 from xlrd import open_workbook
 from FieldMap import standard_field_map
@@ -15,6 +17,8 @@ CompetitionCategoryOptionFormSet = modelformset_factory(
 	extra=0,
 )
 	
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
 def SetLicenseChecks( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	CompetitionCategoryOption.normalize( competition )
@@ -33,9 +37,21 @@ def SetLicenseChecks( request, competitionId ):
 			ccos_query.update( license_check_required=False )
 			return HttpResponseRedirect( '.' )
 			
+		if 'import-excel-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request, 'UploadCCOs', competition.id) )
+				
 		form_set = CompetitionCategoryOptionFormSet( request.POST, prefix='cco' )
 		if form_set.is_valid():
 			form_set.save()
+			if 'export-excel-submit' in request.POST:
+				xl = ccos_to_excel( competition )
+				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+				response['Content-Disposition'] = 'attachment; filename={}-CCO-{}.xlsx'.format(
+					timezone.now().strftime('%Y-%m-%d'),
+					utils.cleanFileName(competition.name),
+				)
+				return response
+
 			return HttpResponseRedirect( getContext(request, 'cancelUrl') )
 	else:
 		form_set = CompetitionCategoryOptionFormSet( queryset=ccos_query, prefix='cco' )
@@ -56,26 +72,23 @@ def ccos_to_excel( competition ):
 	row = 0
 	
 	ws.write( row, 0, unicode(_('Category')), title_format )
-	ws.write( row, 1, unicode(_('Check License')), title_format )
+	ws.write( row, 1, unicode(_('License Check Required')), title_format )
 	ws.write( row, 2, unicode(_('Note')), title_format )
 	
 	for cco in ccos_query:
 		row += 1
 		ws.write( row, 0, cco.category.code_gender )
-		ws.write( row, 1, cco.check_license )
+		ws.write( row, 1, cco.license_check_required )
 		ws.write( row, 2, cco.note )
 			
 	wb.close()
-	return sheet_name, output.getvalue()
+	return output.getvalue()
 
 def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	CompetitionCategoryOption.normalize( competition )
 	ccos_query = competition.competitioncategoryoption_set.all().order_by('category__sequence').select_related('category')
 
 	wb = open_workbook( file_contents = worksheet_contents )
-	
-	ur_records = []
-	import_utils.datemode = wb.datemode
 	
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
@@ -86,7 +99,7 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	if not ws:
 		return
 	
-	ccos = {cco.query.code_gender.lower():cco for cco in ccos_query}
+	ccos = {cco.category.code_gender.lower():cco for cco in ccos_query}
 	
 	ifm = standard_field_map()
 
@@ -99,18 +112,19 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 			ifm.set_headers( fields )
 			continue
 		
-		v = ifm.finder( row )
-		code_gender = v('category_code', None)
+		values = [c.value for c in row]
+		v = ifm.finder( values )
+		code_gender = to_str(v('category_code', None))
 		if not code_gender:
 			continue
 		try:
 			cco = ccos[code_gender.strip().lower()]
-		except KeyError:
+		except (ValueError, KeyError):
 			continue
 		
-		check_license = to_bool(v('check_license', None))		
-		if check_license is not None:
-			cco.check_license = check_license
+		license_check_required = to_bool(v('license_check_required', None))		
+		if license_check_required is not None:
+			cco.license_check_required = license_check_required
 		
 		note = v('note', None)
 		if note is not None:
@@ -118,3 +132,43 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 		
 		cco.save()
 		
+#-----------------------------------------------------------------------
+@autostrip
+class UploadCCOForm( Form ):
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	
+	def __init__( self, *args, **kwargs ):
+		super( UploadCCOForm, self ).__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+			),
+		)
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+
+def handle_upload( competition, excel_contents ):
+	worksheet_contents = excel_contents.read()
+	ccos_from_excel( competition, worksheet_contents=worksheet_contents, )
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def UploadCCOs( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	if request.method == 'POST':
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+		form = UploadCCOForm(request.POST, request.FILES)
+		if form.is_valid():
+			handle_upload( competition, request.FILES['excel_file'] )
+			return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	else:
+		form = UploadCCOForm()
+	
+	return render( request, 'generic_form.html', locals() )

@@ -2,6 +2,7 @@ from views_common import *
 import datetime
 from django.utils.translation import ugettext_lazy as _
 from views import license_holders_from_search_text
+from django.utils import timezone
 
 def get_payload_for_result( has_results, result_list, cat_name, cat_type, result=None ):
 	if not result_list or not has_results:
@@ -14,7 +15,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	payload = {}
 	payload['bib'] = result.participant.bib
 	payload['raceName'] = u'{} - {} ({})'.format( competition.title, event.name, competition.discipline.name )
-	payload['raceScheduledStart'] = event.date_time.strftime( '%Y-%m-%d %H:%M' )
+	payload['raceScheduledStart'] = timezone.localtime(event.date_time).strftime( '%Y-%m-%d %H:%M' )
 	payload['winAndOut'] = getattr(event, 'win_and_out', False)
 	payload['isTimeTrial'] = (event.event_type == 1)
 	payload['primes'] = None

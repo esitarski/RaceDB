@@ -4,6 +4,7 @@ import operator
 from collections import defaultdict
 from django.utils.translation import ugettext_lazy as _
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils import timezone
 
 from views_common import *
 from models import *
@@ -406,7 +407,7 @@ def SeriesCategoryResults( request, seriesId, categoryId ):
 		for er in event_results:
 			if not er or er.ignored:
 				continue
-			event_name = u'{}-{}: {}'.format( er.event.competition.title, er.event.name, er.event.date_time.strftime('%Y-%m-%d') )
+			event_name = u'{}-{}: {}'.format( er.event.competition.title, er.event.name, timezone.localtime(er.event.date_time).strftime('%Y-%m-%d') )
 			json_data.append( [
 				event_name,
 				node_name,

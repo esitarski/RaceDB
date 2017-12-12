@@ -1302,8 +1302,8 @@ def StartListExcelDownload( request, eventId, eventType ):
 	response['Content-Disposition'] = 'attachment; filename=RaceDB-{}-{}_{}-{}.xlsx'.format(
 		utils.cleanFileName(event.competition.name),	
 		utils.cleanFileName(event.name),
-		event.date_time.strftime('%Y-%m-%d-%H%M%S'),
-		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+		timezone.localtime(event.date_time).strftime('%Y-%m-%d-%H%M%S'),
+		timezone.now().strftime('%Y-%m-%d-%H%M%S'),
 	)
 	return response
 
@@ -1924,7 +1924,7 @@ def EventMassStartCrossMgr( request, eventId ):
 	xl = get_crossmgr_excel( eventMassStart )
 	response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	response['Content-Disposition'] = 'attachment; filename={}-{}-{}.xlsx'.format(
-		eventMassStart.date_time.strftime('%Y-%m-%d'),
+		timezone.localtime(eventMassStart.date_time).strftime('%Y-%m-%d'),
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventMassStart.name),
 	)
@@ -2182,7 +2182,7 @@ def EventTTCrossMgr( request, eventTTId ):
 	xl = get_crossmgr_excel_tt( eventTT )
 	response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	response['Content-Disposition'] = 'attachment; filename={}-{}-{}.xlsx'.format(
-		eventTT.date_time.strftime('%Y-%m-%d'),
+		timezone.localtime(eventTT.date_time).strftime('%Y-%m-%d'),
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventTT.name),
 	)
