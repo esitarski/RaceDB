@@ -7,6 +7,13 @@ from xlrd import open_workbook
 from FieldMap import standard_field_map
 from import_utils import *
 
+class CommonForm(forms.Form):
+    license_check_note = forms.CharField(
+		label=_('Common License Check Note'),
+		help_text=_('(shown on License Check page for all Categories)'),
+		max_length=240,
+		widget=forms.Textarea(attrs={'rows':3}))
+
 CompetitionCategoryOptionFormSet = modelformset_factory(
 	CompetitionCategoryOption, fields='__all__',
 	widgets={
@@ -39,9 +46,13 @@ def SetLicenseChecks( request, competitionId ):
 			
 		if 'import-excel-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request, 'UploadCCOs', competition.id) )
-				
+		
+		form_common = CommonForm( request.POST, prefix='common' )
 		form_set = CompetitionCategoryOptionFormSet( request.POST, prefix='cco' )
-		if form_set.is_valid():
+		if form_set.is_valid() and form_common.is_valid():
+			competition.license_check_note = form_common.cleaned_data['license_check_note']
+			competition.save()
+			
 			form_set.save()
 			if 'export-excel-submit' in request.POST:
 				xl = ccos_to_excel( competition )
@@ -54,6 +65,7 @@ def SetLicenseChecks( request, competitionId ):
 
 			return HttpResponseRedirect( getContext(request, 'cancelUrl') )
 	else:
+		form_common = CommonForm( initial={'license_check_note':competition.license_check_note}, prefix='common' )
 		form_set = CompetitionCategoryOptionFormSet( queryset=ccos_query, prefix='cco' )
 
 	return render( request, 'cco_license_check_form.html', locals() )
@@ -81,6 +93,12 @@ def ccos_to_excel( competition ):
 		ws.write( row, 1, cco.license_check_required )
 		ws.write( row, 2, cco.note )
 			
+	sheet_name = 'RaceDB-Common'
+	ws = wb.add_worksheet(sheet_name)
+	row = 0
+	
+	ws.write( row, 0, unicode(_('License Check Note')), title_format )
+	
 	wb.close()
 	return output.getvalue()
 
@@ -131,7 +149,37 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 			cco.note = unicode(note)
 		
 		cco.save()
+	
+	ws = None
+	sheet_name = 'RaceDB-Common'
+	for cur_sheet_name in wb.sheet_names():
+		if cur_sheet_name == sheet_name:
+			ws = wb.sheet_by_name(cur_sheet_name)
+			break
+	
+	if not ws:
+		return
+	
+	ifm = standard_field_map()
+
+	num_rows = ws.nrows
+	for r in xrange(num_rows):
+		row = ws.row( r )
+		if r == 0:
+			# Get the header fields from the first row.
+			fields = [unicode(v.value).strip() for v in row]
+			ifm.set_headers( fields )
+			continue
 		
+		values = [c.value for c in row]
+		v = ifm.finder( values )
+		
+		license_check_note = to_str(v('license_check_note', None))
+		if license_check_note is not None:
+			competition.license_check_note = license_check_note
+			
+		competition.save()
+
 #-----------------------------------------------------------------------
 @autostrip
 class UploadCCOForm( Form ):

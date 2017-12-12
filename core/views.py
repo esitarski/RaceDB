@@ -981,6 +981,7 @@ def GetCompetitionForm( competition_cur = None ):
 					Col(Field('show_signature'),4),
 				),
 				Row( HTML('<hr/>') ),
+				Field( 'license_check_note', type='hidden' ),
 			)
 			
 			self.additional_buttons = []

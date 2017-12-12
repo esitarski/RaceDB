@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<p></p>
+<h3><strong>{{participant.license_holder.full_name}}</strong>: {{participant.get_role_display}}</h3>
+<style>
+	th, td { padding:2px; }
+</style>
+<table style="width: auto;">
+	<tbody>
+		<tr><td class="text-right">{% trans "Gender" %}</td><th>{{participant.license_holder.get_gender_display}}</th></tr>
+		<tr><td class="text-right">{% trans "License Code" %}</td><th>{{participant.license_holder.license_code}}</th></tr>
+		<tr><td class="text-right">{% trans "UCI ID" %}</td><th>{{participant.license_holder.get_uci_id_html}}</th></tr>
+		<tr><td class="text-right">{% trans "Team" %}</td><th>{{participant.team_name}}</th></tr>
+		<tr><td class="text-right">{% trans "Nat. Code" %}</td><th>{{participant.license_holder.nation_code}}</th></tr>
+		<tr><td class="text-right">{% trans "Race Category" %}</td><th>{{participant.category.code_gender}}</th></tr>
+	</tbody>
+</table>
+<hr/>
+{% if participant.note or participant.license_holder.note %}
+	<h4>{% trans "Participant Note" %}:</h4>
+	{% if participant.note %}<p>{{participant.note}}</p>{% endif %}
+	{% if participant.license_holder.note %}<p>{{participant.license_holder.note}}</p>{% endif %}
+{% endif %}
+<h4>{% trans "Checklist" %}:</h4>
+<ol>
+	<li>{% trans "License is valid for" %} {% now "Y" %}.</li>
+	<li>{% trans "License is signed" %}.</li>
+	<li>{% trans "Competitor showed photo id" %}.</li>
+	<li>{% trans "Name and Gender is correct" %}.
+		<a class="btn btn-primary btn-xs" href="./LicenseHolderEdit/{{participant.license_holder.id}}/">{% trans "Fix" %}</a>
+	</li>
+	<li>
+		{% trans "UCI ID is correct" %}.
+		<a class="btn btn-primary btn-xs" href="./LicenseHolderEdit/{{participant.license_holder.id}}/">{% trans "Fix" %}</a>
+	</li>
+	<li>
+		{% trans "License Code is correct" %}.
+		<a class="btn btn-primary btn-xs" href="./LicenseHolderEdit/{{participant.license_holder.id}}/">{% trans "Fix" %}</a>
+	</li>
+	<li>
+		{% trans "Team is correct" %}.
+		<a class="btn btn-primary btn-xs" href="./ParticipantTeamChange/{{participant.id}}/">{% trans "Fix" %}</a>
+	</li>
+</ol>
+{% if note or participant.competition.license_check_note %}
+	<h4>{% trans "Notes" %}:</h4>
+	{% if note %}<p>{{note}}</p>{% endif %}
+	{% if participant.competition.license_check_note %}<p>{{participant.competition.license_check_note|linebreaks}}</p>{% endif %}
+{% endif %}
+<hr/>
+<a class="btn btn-success" href="./ParticipantLicenseCheckSelect/{{participant.id}}/1/">{% trans "License Successfully meets all Criteria" %}</a>
+<a class="btn btn-danger" href="./ParticipantLicenseCheckSelect/{{participant.id}}/0/">{% trans "License Check Fails " %}</a>
+<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+{% endblock content %}

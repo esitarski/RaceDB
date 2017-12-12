@@ -766,6 +766,8 @@ class Competition(models.Model):
 	frame_label_print = models.BooleanField( default=False, verbose_name=_("2 Frame Label Print"), help_text=_('2 frame numbers on 2 labels') )
 	frame_label_print_1 = models.BooleanField( default=False, verbose_name=_("1 Frame Label Print"), help_text=_('1 frame number on 1 label') )
 	
+	license_check_note = models.CharField( max_length=240, default='', blank=True, verbose_name=_('License Check Note') )
+	
 	@property
 	def title( self ):
 		return self.long_name or self.name
