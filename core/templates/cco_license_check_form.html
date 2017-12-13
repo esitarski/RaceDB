@@ -41,9 +41,11 @@
 	{% endfor %}
 	</tbody>
 	</table>
-	{{ form_common.license_check_note.errors }}<br/>
-	{{ form_common.license_check_note.label_tag }}<br/>
-	{{ form_common.license_check_note }}<br/>
-	{{ form_common.license_check_note.help_text }}
+	{% with f=form_common.license_check_note %}
+		{{ f.errors }}<br/>
+		{{ f.label_tag }}<br/>
+		{{ f }}<br/>
+		{{ f.help_text }}
+	{% endwith %}
 </form>
 {% endblock content %}
