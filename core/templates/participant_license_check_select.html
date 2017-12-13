@@ -1,8 +1,8 @@
 {% extends "base.html" %}
+{% load i18n %}
+
 {% block content %}
 
-{% load i18n %}
-{% load crispy_forms_tags %}
 <h2>{{title}}</h2>
 <p></p>
 <h3><strong>{{participant.license_holder.full_name}}</strong>: {{participant.get_role_display}}</h3>
