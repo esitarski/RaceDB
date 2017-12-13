@@ -148,7 +148,7 @@ standard_field_aliases = (
 		"Paid",
 	),
 	('license_checked',
-		('License Checked','License Check','LicCheck',),
+		('License Checked','License Check','Lic Checked','Lic Check','LicCheck',),
 		"Licensed has been checked",
 	),
 	('license_check_required',
