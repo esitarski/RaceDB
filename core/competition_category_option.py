@@ -12,6 +12,7 @@ class CommonForm(forms.Form):
 		label=_('Common License Check Note'),
 		help_text=_('(shown on License Check page for all Categories)'),
 		max_length=240,
+		required=False,
 		widget=forms.Textarea(attrs={'rows':4, 'cols':80}))
 
 CompetitionCategoryOptionFormSet = modelformset_factory(
@@ -52,8 +53,8 @@ def SetLicenseChecks( request, competitionId ):
 		if form_set.is_valid() and form_common.is_valid():
 			competition.license_check_note = form_common.cleaned_data['license_check_note']
 			competition.save()
-			
 			form_set.save()
+			
 			if 'export-excel-submit' in request.POST:
 				xl = ccos_to_excel( competition )
 				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
