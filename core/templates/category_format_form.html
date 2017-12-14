@@ -28,7 +28,6 @@ setRowSorter('Category','sort_table_id');
 	<tr>
 		<th></th>
 		<th>{% trans "Code (Gender)" %}</th>
-		<th>{% trans "Lic. Rqmt" %}</th>
 		<th>{% trans "Description" %}</th>
 		{% if isEdit %}
 		<th class="hidden-print"></th>
@@ -40,7 +39,6 @@ setRowSorter('Category','sort_table_id');
 		<tr id={{c.id}}>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{c.code_gender}}</td>
-			<td>{{c.license_requirement}}</td>
 			<td>{{c.description}}</td>
 			{% if isEdit %}
 			<td class="hidden-print">

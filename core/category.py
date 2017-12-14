@@ -107,9 +107,6 @@ class CategoryForm( ModelForm ):
 			Row(
 				Field('code', size=20),
 				Field('gender'),
-				Field('license_requirement', size=30),
-			),
-			Row(
 				Field('description', size=80),
 			),
 			Field( 'sequence', type='hidden' ),
