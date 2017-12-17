@@ -135,8 +135,8 @@
 {% if request.user.is_superuser %}
 {% with categories_without_numbers=competition.get_categories_without_numbers %}
 	{% if categories_without_numbers %}
-		<div class="hidden-print panel panel-primary">
-			<div class="panel-heading">{% trans "Category Numbers Warning" %}!</div>
+		<div class="hidden-print panel panel-danger">
+			<div class="panel-heading"><span class="is-err" style="font-size:150%">&nbsp;{% trans "Category Numbers Error" %}!</span></div>
 			<div class="panel-body">
 				{% trans "The following Categories have no Assigned Number Range" %}:
 				<ol>
