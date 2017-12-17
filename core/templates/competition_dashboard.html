@@ -132,6 +132,24 @@
 	</div>
 </div>
 {% endspaceless %}
+{% if request.user.is_superuser %}
+{% with categories_without_numbers=competition.get_categories_without_numbers %}
+	{% if categories_without_numbers %}
+		<div class="hidden-print panel panel-primary">
+			<div class="panel-heading">{% trans "Category Numbers Warning" %}!</div>
+			<div class="panel-body">
+				{% trans "The following Categories have no Assigned Numbers" %}:
+				<ol>
+					{% for c in categories_without_numbers %}
+						<li>{{c.code_gender}}</li>
+					{% endfor %}
+				</ol>
+				<a class="btn btn-primary btn-sm hidden-print" href="./CategoryNumbersNew/{{competition.id}}/">{% trans "Fix" %}</a>
+			</div>
+		</div>
+	{% endif %}
+{% endwith %}
+{% endif %}
 
 {% if not events_mass_start.exists %}<div class="hidden-print">{% endif %}
 <h3>

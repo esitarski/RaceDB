@@ -961,7 +961,6 @@ class Competition(models.Model):
 		for cn in self.categorynumbers_set.all():
 			categories.extend( list(c for c in cn.categories.all() if c.pk in category_lookup) )
 		return sorted( set(categories), key = lambda c: c.sequence )
-		return categories
 	
 	def get_categories_without_numbers( self ):
 		categories_all = set( Category.objects.filter(format = self.category_format) )
