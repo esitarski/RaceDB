@@ -1108,7 +1108,7 @@ class Competition(models.Model):
 					bib_category = None
 					if p.category:
 						for bib in nses[p.license_holder.pk]:
-							if bib in category_nums[p.category.pk]:
+							if p.category.pk in category_nums and bib in category_nums[p.category.pk]:
 								bib_category = bib
 								break
 					if p.bib != bib_category:
