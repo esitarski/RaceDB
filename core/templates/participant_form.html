@@ -335,7 +335,7 @@
 					<strong>{{w.name}}</strong>,
 					{{w.event.name}},
 					{{w.event.date_time|date:"Y-m-d H:i"}},
-					{% trans 'Strs' %}: {{w.get_starters_str}}
+					{% trans 'Starters' %}: {{w.get_starters_str}}
 					{% if w.is_late %}
 						<span class="label label-warning">{% trans "Late Reg.  Alert Timing Immediately." %}</span>
 					{% endif %}
@@ -359,7 +359,7 @@
 					<strong>{{w.name}}</strong>,
 					{{w.event.name}},
 					{{w.event.date_time|date:"Y-m-d"}},
-					{% trans 'Strs' %}: {{w.get_starters_str}}
+					{% trans "Starters" %}: {{w.get_starters_str}}
 					{% if w.is_late %}
 						<span class="label label-warning">{% trans "Late Reg.  Alert Timing Immediately." %}</span>
 					{% endif %}

@@ -168,7 +168,7 @@
 					<div class="panel-heading">
 						<h3>{{e.name}}, <span style="font-size:75%">{{e.date_time|date:"Y-m-d H:i"}},
 							{% trans "Nations" %}:&nbsp;{{e.get_num_nationalities}},
-							<strong>{% trans "Strs" %}:&nbsp;{{e.get_participant_count}}</strong></span>
+							<strong>{% trans "Starters" %}:&nbsp;{{e.get_participant_count}}</strong></span>
 						</h3>
 					</div>
 					<div class="panel-body">
@@ -239,7 +239,7 @@
 					<div class="panel-heading">
 						<h3>{{e.name}}, <span style="font-size: 80%">{% if e.has_unseeded %} <span class="label label-warning" style="font-size: 110%">{% trans "Warning: Unseeded Riders" %}</span>{% endif %} {{e.date_time|date:"Y-m-d H:i"}},
 						{% trans "Nationalities" %}:&nbsp;{{e.get_num_nationalities}},
-						<strong>{% trans "Strs" %}:&nbsp;{{e.get_participant_count}}</strong></span></h3>
+						<strong>{% trans "Starters" %}:&nbsp;{{e.get_participant_count}}</strong></span></h3>
 					</div>
 					<div class="panel-body">
 						<div class="row hidden-print">
