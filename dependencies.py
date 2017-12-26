@@ -59,7 +59,7 @@ def update_dependencies( upgrade ):
 			if os.path.splitext(fname)[1] == '.pyc':
 				os.remove( fname )
 	
-	# Remove the unecessary TagReadWriteServier directory.
+	# Remove the unnecessary TagReadWriteServier directory.
 	try:
 		shutil.rmtree( 'TagReadWriteServer' )
 	except:
