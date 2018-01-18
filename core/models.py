@@ -3380,24 +3380,21 @@ class Participant(models.Model):
 	seed_option=models.SmallIntegerField( choices=SEED_OPTION_CHOICES, default=1, verbose_name=_('Seed Option') )
 	
 	def is_license_check_required( self ):
-		return (
-			CompetitionCategoryOption.is_license_check_required(self.competition, self.category) and
-			(
-				self.competition.report_label_license_check and
-				not Participant.objects.filter(
-					license_holder=self.license_holder,
-					category=self.category,
-					license_checked=True,
-					competition__in=Competition.objects.filter(
-						start_date__range=(datetime.date(self.competition.start_date.year,1,1),self.competition.start_date),
-						report_labels__in=[self.competition.report_label_license_check],
-					),
-				).order_by().exists()
-			)
-		)
+		return CompetitionCategoryOption.is_license_check_required(self.competition, self.category)
 	
 	def is_license_checked( self ):
-		return self.license_checked or not self.is_license_check_required()
+		return self.license_checked or not self.is_license_check_required() or (
+			self.competition.report_label_license_check and
+			Participant.objects.filter(
+				license_holder=self.license_holder,
+				category=self.category,
+				license_checked=True,
+				competition__in=Competition.objects.filter(
+					start_date__range=(datetime.date(self.competition.start_date.year,1,1),self.competition.start_date),
+					report_labels__in=[self.competition.report_label_license_check],
+				),
+			).exists()
+		)
 	
 	def enforce_tag_constraints( self ):
 		license_holder = self.license_holder
