@@ -976,9 +976,13 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col(Field('report_labels',size=8), 2),
+					Col(Field('report_labels',size=8), 4),
 					Col('ga_tracking_id', 4),
 					Col(Field('show_signature'),4),
+				),
+				Row( HTML('<hr/>') ),
+				Row(
+					Col(Field('report_label_license_check'), 12)
 				),
 				Row( HTML('<hr/>') ),
 				Field( 'license_check_note', type='hidden' ),

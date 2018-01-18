@@ -768,6 +768,12 @@ class Competition(models.Model):
 	
 	license_check_note = models.CharField( max_length=240, default='', blank=True, verbose_name=_('License Check Note') )
 	
+	report_label_license_check = models.ForeignKey( ReportLabel, blank=True, null=True, on_delete=models.SET_NULL,
+		related_name='+',	# no related name.
+		verbose_name=_('Report Label License Check'),
+		help_text=_('Previous Competitions considered for License Check must have this label'),
+	)
+	
 	@property
 	def title( self ):
 		return self.long_name or self.name
@@ -3374,7 +3380,21 @@ class Participant(models.Model):
 	seed_option=models.SmallIntegerField( choices=SEED_OPTION_CHOICES, default=1, verbose_name=_('Seed Option') )
 	
 	def is_license_check_required( self ):
-		return CompetitionCategoryOption.is_license_check_required(self.competition, self.category)
+		return (
+			CompetitionCategoryOption.is_license_check_required(self.competition, self.category) and
+			(
+				self.competition.report_label_license_check and
+				not Participant.objects.filter(
+					license_holder=self.license_holder,
+					category=self.category,
+					license_checked=True,
+					competition__in=Competition.objects.filter(
+						start_date__range=(datetime.date(self.competition.start_date.year,1,1),self.competition.start_date),
+						report_labels__in=[self.competition.report_label_license_check],
+					),
+				).order_by().exists()
+			)
+		)
 	
 	def is_license_checked( self ):
 		return self.license_checked or not self.is_license_check_required()
