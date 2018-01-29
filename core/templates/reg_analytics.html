@@ -159,8 +159,19 @@ function drawCharts() {
 </p>
 </div>
 <h2>{{competition.title}}: {{start|date:"Y-m-d"}}</h2>
-<h3>{% trans "License Holders" %}: {{payload.license_holder_total}}&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Prereg" %}: {{payload.participant_prereg_total}}&nbsp;&nbsp;{% trans "Participants" %}: {{payload.participant_total}} ({% trans "includes attendees in multiple categories" %})</h3>
+<h3>{% trans "Total Participants" %}: {{payload.participant_total}} ({% trans "includes  multiple categories" %})&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Total License Holders" %}: {{payload.license_holder_total}}&nbsp;&nbsp;{% trans "Total Prereg" %}: {{payload.participant_prereg_total}}</h3>
 <br/>
+<table class="table" style="width: auto;">
+<head>
+<tr><th></th>{% for d in dates %}<th>{{d|date:"Y-m-d"}}</th>{% endfor %}</tr>
+</head>
+<body>
+<tr><th>{% trans 'Participants' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.participant_count}}</td>{% endfor %}</tr>
+<tr><th>{% trans 'License Holders' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.license_holder_count}}</td>{% endfor %}</tr>
+<tr><th>{% trans 'Day ofs' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.day_of_count}}</td>{% endfor %}</tr>
+</body>
+</table>
+<hr/>
 <h4>logFileName: "{{logFileName}}"</h4>
 <p>
 {% if not payload.valid %}

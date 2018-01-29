@@ -1219,11 +1219,32 @@ def CompetitionRegAnalytics( request, competitionId ):
 	payload['valid'] = bool(payload)
 	payload['participant_total'] = Participant.objects.filter(competition=competition, role=Participant.Competitor,).count()
 	payload['participant_prereg_total'] = Participant.objects.filter(competition=competition, role=Participant.Competitor, preregistered=True).count()
-	payload['license_holder_total'] = len( set(Participant.objects.filter(competition=competition).values_list('license_holder__pk', flat=True)) )
+	payload['license_holder_total'] = LicenseHolder.objects.filter( pk__in = Participant.objects.filter(competition=competition).distinct().values_list('license_holder__pk', flat=True) ).count()
 	try:
 		payload['transactionPeak'][0] = payload['transactionPeak'][0].strftime('%H:%M').lstrip('0')
 	except:
 		pass
+		
+	dates = [competition.start_date]
+	finish_date = competition.finish_date
+	while dates[-1] != finish_date:
+		dates.append( dates[-1] + timedelta(days=1) )
+	date_info = [{
+			'license_holder_count': set(),
+			'participant_count': set(),
+			'day_of_count': set(),
+		} for d in dates]
+	date_i = {d:i for i, d in enumerate(dates)}
+	for e in competition.get_events():
+		di = date_info[date_i[timezone.localtime(e.date_time).date()]]
+		di['license_holder_count'] |= set(LicenseHolder.objects.filter(pk__in=e.get_participants().values_list('license_holder',flat=True)).values_list('pk',flat=True))
+		di['participant_count'] |= set(e.get_participants().values_list('pk',flat=True))
+		
+	for di in date_info:
+		di['license_holder_count'] = len(di['license_holder_count'])
+		di['participant_count'] = len(di['participant_count'])
+		di['day_of_count'] = len(di['day_of_count'])
+		
 	payload_json = json.dumps(payload, separators=(',',':'))
 	logFileName = WriteLog.logFileName
 	return render( request, 'reg_analytics.html', locals() )
