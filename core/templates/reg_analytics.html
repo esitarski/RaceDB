@@ -166,9 +166,9 @@ function drawCharts() {
 <tr><th></th>{% for d in dates %}<th>{{d|date:"Y-m-d"}}</th>{% endfor %}</tr>
 </head>
 <body>
-<tr><th>{% trans 'Participants' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.participant_count}}</td>{% endfor %}</tr>
-<tr><th>{% trans 'License Holders' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.license_holder_count}}</td>{% endfor %}</tr>
-<tr><th>{% trans 'Day ofs' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.day_of_count}}</td>{% endfor %}</tr>
+<tr><th style="text-align:right">{% trans 'Participants' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.participant_count}}</td>{% endfor %}</tr>
+<tr><th style="text-align:right">{% trans 'License Holders' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.license_holder_count}}</td>{% endfor %}</tr>
+<tr><th style="text-align:right">{% trans 'Day ofs (TEMP, CP or "_")' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.day_of_count}}</td>{% endfor %}</tr>
 </body>
 </table>
 <hr/>

@@ -1239,7 +1239,10 @@ def CompetitionRegAnalytics( request, competitionId ):
 		di = date_info[date_i[timezone.localtime(e.date_time).date()]]
 		di['license_holder_count'] |= set(LicenseHolder.objects.filter(pk__in=e.get_participants().values_list('license_holder',flat=True)).values_list('pk',flat=True))
 		di['participant_count'] |= set(e.get_participants().values_list('pk',flat=True))
-		
+		di['day_of_count'] |= set(LicenseHolder.objects.filter(
+				pk__in=e.get_participants().values_list('license_holder',flat=True)).filter(
+				Q(license_code__startswith="TEMP") | Q(license_code__startswith="_") | Q(license_code__startswith="CP")
+			).values_list('pk',flat=True))
 	for di in date_info:
 		di['license_holder_count'] = len(di['license_holder_count'])
 		di['participant_count'] = len(di['participant_count'])
