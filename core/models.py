@@ -1590,7 +1590,7 @@ class Event( models.Model ):
 	
 	@property
 	def wave_text_html( self ):
-		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}, {}</strong><br/>{}'.format(
+		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}</strong>, {}<br/>{}'.format(
 			w.name, w.get_details_html(True), 
 			w.category_count_html
 		) for w in self.get_wave_set().all() ) + u'</li></ol>'
@@ -1941,12 +1941,13 @@ class WaveBase( models.Model ):
 			else:
 				distance = self.distance
 		s = u', '.join( v for v in (
-			u'{}:&nbsp;{}'.format(u'Offset', self.start_offset) if include_starters and hasattr(self,'start_offset') else None,
-			u'{:.2f}&nbsp;{}'.format(distance, self.distance_unit) if distance else None,
-			u'{}&nbsp;{}'.format(self.laps, u'laps' if self.laps != 1 else u'lap') if self.laps else None,
-			u'{}&nbsp;{}'.format(self.minutes, u'min') if getattr(self, 'minutes', None) else None,
+			u'{}:&nbsp;<strong>{}</strong>'.format(u'Offset', self.start_offset) if include_starters and hasattr(self,'start_offset') else None,
+			u'{}:&nbsp;<strong>{}</strong>'.format(u'Start Time', (self.event.date_time + self.start_offset).strftime('%H:%M:%S')) if include_starters and hasattr(self,'start_offset') else None,
+			u'{:.2f}&nbsp;<strong>{}</strong>'.format(distance, self.distance_unit) if distance else None,
+			u'{}&nbsp;<strong>{}</strong>'.format(self.laps, u'laps' if self.laps != 1 else u'lap') if self.laps else None,
+			u'<strong>{}&nbsp;{}</strong>'.format(self.minutes, u'min') if getattr(self, 'minutes', None) else None,
 			u'Rank&nbsp;Together' if getattr(self, 'rank_categories_together', False) else None,
-			u'{}:&nbsp;{}'.format(u'Strs', self.get_starters_str().replace(' ', '&nbsp;')) if include_starters else None,
+			u'{}:&nbsp;<strong>{}</strong>'.format(u'Starters', self.get_starters_str().replace(' ', '&nbsp;')) if include_starters else None,
 		) if v )
 		return s
 	

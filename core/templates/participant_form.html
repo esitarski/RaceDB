@@ -331,7 +331,7 @@
 				{% for w in sw %}
 					<h3 {% if forloop.counter != 1 %}style="margin-top: 6px;"{% endif %}>
 					{% trans "Mass Start" %} {{forloop.counter}}:
-					<span class="label label-default">{{w.event.date_time|time}}</span>
+					<span class="label label-default">{{w.get_start_time|date:"H:i:s"}}</span>
 					<strong>{{w.name}}</strong>,
 					{{w.event.name}},
 					{{w.event.date_time|date:"Y-m-d H:i"}},
@@ -353,12 +353,12 @@
 						{% if w.clock_time %}
 							{% trans "Start Time" %}: {{w.clock_time|date:"H:i:s"}}
 						{% else %}
-							{% trans "Unseeded" %}: {{w.event.date_time|time}}
+							{% trans "Unseeded" %}: {{w.event.date_time|date:"H:i"}}
 						{% endif %}
 					</span>&nbsp;
 					<strong>{{w.name}}</strong>,
 					{{w.event.name}},
-					{{w.event.date_time|date:"Y-m-d"}},
+					{{w.event.date_time|date:"Y-m-d H:i"}},
 					{% trans "Starters" %}: {{w.get_starters_str}}
 					{% if w.is_late %}
 						<span class="label label-warning">{% trans "Late Reg.  Alert Timing Immediately." %}</span>

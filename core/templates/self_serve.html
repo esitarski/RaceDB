@@ -169,15 +169,15 @@ div.title {
 				<td>{{p.category.code}}</td>
 				<td>
 					{% for w in p.get_start_waves %}
-						{{w.event.name}} <span class="text-nowrap"> ({{w.event.date_time|date:"D, Y-m-d H:i"}})</span><br/>
+						{{w.event.name}} <span class="text-nowrap"> ({{w.get_start_time|date:"D, Y-m-d H:i:s"}})</span><br/>
 					{% endfor %}
 					{% for w in p.get_start_wave_tts %}
 						{{w.event.name}}
 						<span class="text-nowrap">
 							{% if w.clock_time %}
-								({% trans "Start Time"%}: {{w.clock_time|date:"D, Y-m-d H:i"}})
+								({% trans "Start Time"%}: {{w.clock_time|date:"D, Y-m-d H:i:s"}})
 							{% else %}
-								({% trans "Unseeded"%}: {{w.event.date_time|date:"D, Y-m-d H:i"}})
+								({% trans "Unseeded"%}: {{w.event.date_time|date:"D, Y-m-d H:i:s"}})
 							{% endif %}
 						</span><br/>
 					{% endfor %}
