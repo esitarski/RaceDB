@@ -330,7 +330,7 @@
 			<hr/>
 				{% for w in sw %}
 					<h3 {% if forloop.counter != 1 %}style="margin-top: 6px;"{% endif %}>
-					<span style="font-size:60%">{% trans "MS" %} {{forloop.counter}}.</span> {{w.event.name}}:
+					<span style="font-size:60%">{% trans "Mass Start" %} {{forloop.counter}}.</span> {{w.event.name}}:
 					<strong>{{w.name}}</strong>,
 					{% trans "Start Time" %}:
 					<strong>{{w.get_start_time|time:"H:i:s"}},</strong>
@@ -347,7 +347,7 @@
 			<hr/>
 				{% for w in swtt %}
 					<h3 {% if forloop.counter != 1 %}style="margin-top: 6px;"{% endif %}>
-					<span style="font-size:60%">{% trans "TT" %} {{forloop.counter}}.</span> {{w.event.name}}:
+					<span style="font-size:60%">{% trans "Time Trial" %} {{forloop.counter}}.</span> {{w.event.name}}:
 					<strong>{{w.name}}</strong>,			
 					{% if w.clock_time %}
 						{% trans "Start Time" %}: <strong>{{w.clock_time|date:"H:i:s"}}</strong>,
