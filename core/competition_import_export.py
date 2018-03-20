@@ -528,20 +528,33 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 
 #-----------------------------------------------------------------------
 
-def license_holder_export( stream ):
+def license_holder_export( stream ):	
 	arr = []
 	
+	# Add the categories required by LicenseCheckState.
+	LicenseCheckState.refresh()
+	
+	category_format_seen = set()
+	for category_format in CategoryFormat.objects.filter( pk__in=LicenseCheckState.objects.all().values_list('category__format',flat=True).distinct() ):
+		arr.append( category_format )
+		arr.extend( category_format.category_set.all() )
+		category_format_seen.add( category_format.id )
+	
+	# Add the categories required by CategoryHints.
 	update_category_hints()
 	arr.extend( Discipline.objects.filter( pk__in=CategoryHint.objects.all().values_list('discipline',flat=True).distinct() ) )
 	for category_format in CategoryFormat.objects.filter( pk__in=CategoryHint.objects.all().values_list('category__format',flat=True).distinct() ):
-		arr.append( category_format )
-		arr.extend( category_format.category_set.all() )
+		if category_format.id not in category_format_seen:
+			arr.append( category_format )
+			arr.extend( category_format.category_set.all() )
 	
 	update_team_hints()
 	arr.extend( Team.objects.filter( pk__in=TeamHint.objects.filter(team__isnull=False).values_list('team',flat=True).distinct() ) )
 	arr.extend( LicenseHolder.objects.all() )
 	arr.extend( TeamHint.objects.all() )
 	arr.extend( CategoryHint.objects.all() )
+	arr.extend( ReportLabel.objects.filter( pk__in=LicenseCheckState.objects.all().values_list('report_label_license_check',flat=True).distinct() ) )
+	arr.extend( LicenseCheckState.objects.all() )
 	
 	for ns in NumberSet.objects.all():
 		arr.append( ns )
