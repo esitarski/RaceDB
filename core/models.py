@@ -5170,7 +5170,7 @@ class LicenseCheckState(models.Model):
 				to_add.append( LicenseCheckState(
 					license_holder=p.license_holder,
 					category=p.category,
-					report_label_license_check=p.competition__report_label_license_check,
+					report_label_license_check=p.competition.report_label_license_check,
 					check_date=p.competition.start_date )
 				)
 				csd[key] = p.competition.start_date
