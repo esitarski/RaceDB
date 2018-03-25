@@ -700,57 +700,58 @@ class LegalEntity(models.Model):
 
 #-------------------------------------------------------------------
 class Competition(models.Model):
-	name = models.CharField( max_length = 64, verbose_name = _('Name') )
-	long_name = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('Long Name (Title)') )
-	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('Description') )
+	name=models.CharField( max_length=64, verbose_name=_('Name') )
+	long_name=models.CharField( max_length=80, default='', blank=True, verbose_name=_('Long Name (Title)') )
+	description=models.CharField( max_length=80, default='', blank=True, verbose_name=_('Description') )
 	
-	number_set = models.ForeignKey( NumberSet, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Number Set') )
-	seasons_pass = models.ForeignKey( SeasonsPass, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Season's Pass") )
+	number_set=models.ForeignKey( NumberSet, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Number Set') )
+	seasons_pass=models.ForeignKey( SeasonsPass, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Season's Pass") )
 	
-	city = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('City') )
-	stateProv = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('StateProv') )
-	country = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('Country') )
+	city=models.CharField( max_length=64, blank=True, default='', verbose_name=_('City') )
+	stateProv=models.CharField( max_length=64, blank=True, default='', verbose_name=_('StateProv') )
+	country=models.CharField( max_length=64, blank=True, default='', verbose_name=_('Country') )
 	
-	category_format = models.ForeignKey(
+	category_format=models.ForeignKey(
 		'CategoryFormat',
 		verbose_name=_('Category Format') )
 	
-	organizer = models.CharField( max_length = 64, verbose_name=_('Organizer') )
-	organizer_contact = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('Organizer Contact') )
-	organizer_email = models.EmailField( blank = True, verbose_name=_('Organizer Email') )
-	organizer_phone = models.CharField( max_length = 22, blank = True, default = '', verbose_name=_('Organizer Phone') )
+	organizer=models.CharField( max_length=64, verbose_name=_('Organizer') )
+	organizer_contact=models.CharField( max_length=64, blank=True, default='', verbose_name=_('Organizer Contact') )
+	organizer_email=models.EmailField( blank=True, verbose_name=_('Organizer Email') )
+	organizer_phone=models.CharField( max_length=22, blank=True, default='', verbose_name=_('Organizer Phone') )
 	
-	start_date = models.DateField( db_index = True, verbose_name=_('Start Date') )
-	number_of_days = models.PositiveSmallIntegerField( default = 1, verbose_name = _('Number of Days') )
+	start_date=models.DateField( db_index=True, verbose_name=_('Start Date') )
+	number_of_days=models.PositiveSmallIntegerField( default=1, verbose_name=_('Number of Days') )
 	
-	discipline = models.ForeignKey( Discipline, verbose_name=_("Discipline") )
-	race_class = models.ForeignKey( RaceClass, verbose_name=_("Race Class") )
+	discipline=models.ForeignKey( Discipline, verbose_name=_("Discipline") )
+	race_class=models.ForeignKey( RaceClass, verbose_name=_("Race Class") )
 	
-	using_tags = models.BooleanField( default = False, verbose_name = _("Using Tags/Chip Reader") )
-	use_existing_tags = models.BooleanField( default = True, verbose_name = _("Use Competitor's Existing Tags") )
+	using_tags=models.BooleanField( default=False, verbose_name=_("Using Tags/Chip Reader") )
+	use_existing_tags=models.BooleanField( default=True, verbose_name=_("Use Competitor's Existing Tags") )
+	do_tag_validation=models.BooleanField( default=True, verbose_name=_("Do Tag Validation") )
 	
-	DISTANCE_UNIT_CHOICES = (
+	DISTANCE_UNIT_CHOICES=(
 		(0, _('km')),
 		(1, _('miles')),
 	)
-	distance_unit = models.PositiveSmallIntegerField(choices=DISTANCE_UNIT_CHOICES, default = 0, verbose_name = _('Distance Unit') )
+	distance_unit=models.PositiveSmallIntegerField(choices=DISTANCE_UNIT_CHOICES, default=0, verbose_name=_('Distance Unit') )
 	
-	ftp_host = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('FTP Host') )
-	ftp_user = models.CharField( max_length = 80, default = '', blank = True, verbose_name=_('FTP User') )
-	ftp_password = models.CharField( max_length = 64, default = '', blank = True, verbose_name=_('FTP Password') )
-	ftp_path = models.CharField( max_length = 256, default = '', blank = True, verbose_name=_('FTP Path') )
+	ftp_host=models.CharField( max_length=80, default='', blank=True, verbose_name=_('FTP Host') )
+	ftp_user=models.CharField( max_length=80, default='', blank=True, verbose_name=_('FTP User') )
+	ftp_password=models.CharField( max_length=64, default='', blank=True, verbose_name=_('FTP Password') )
+	ftp_path=models.CharField( max_length=256, default='', blank=True, verbose_name=_('FTP Path') )
 	
-	ftp_upload_during_race = models.BooleanField( default = False, verbose_name = _("Live FTP Update During Race") )
+	ftp_upload_during_race=models.BooleanField( default=False, verbose_name=_("Live FTP Update During Race") )
 	
-	show_signature = models.BooleanField( default = True, verbose_name = _("Show Signature in Participant Edit Screen") )
+	show_signature=models.BooleanField( default=True, verbose_name=_("Show Signature in Participant Edit Screen") )
 	
-	ga_tracking_id = models.CharField( max_length = 20, default = '', blank = True, verbose_name=_('Google Analytics Tracking ID') )
+	ga_tracking_id=models.CharField( max_length=20, default='', blank=True, verbose_name=_('Google Analytics Tracking ID') )
 	
-	report_labels = models.ManyToManyField( ReportLabel, blank=True, verbose_name = _('Report Labels') )
+	report_labels=models.ManyToManyField( ReportLabel, blank=True, verbose_name=_('Report Labels') )
 	
-	legal_entity = models.ForeignKey( LegalEntity, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Legal Entity') )
+	legal_entity=models.ForeignKey( LegalEntity, blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Legal Entity') )
 	
-	RECURRING_CHOICES = (
+	RECURRING_CHOICES=(
 		( 0, '-'),
 		( 7, _('Every Week')),
 		(14, _('Every 2 Weeks')),
@@ -3362,6 +3363,7 @@ class Participant(models.Model):
 	
 	tag=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag') )
 	tag2=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag2') )
+	tag_checked=models.BooleanField( default=False, verbose_name=_('Tag Checked') )
 
 	license_checked=models.BooleanField( default=False, verbose_name=_('License Checked') )
 	signature=models.TextField( blank=True, default='', verbose_name=_('Signature') )
@@ -3563,12 +3565,15 @@ class Participant(models.Model):
 		return self.is_competitor and not self.bib
 	
 	@property
-	def needs_tag( self ):
-		return (
-			self.is_competitor and
-			self.competition.using_tags and
-			not (self.license_holder.existing_tag if self.competition.use_existing_tags else self.tag)
-		)
+	def tag_invalid( self ):
+		competition = self.competition
+		if not competition.using_tags or not self.is_competitor:
+			return False
+		tag = self.license_holder.existing_tag if competition.use_existing_tags else self.tag
+		if competition.do_tag_validation:
+			return not (tag and self.tag_checked)
+		else:
+			return not tag
 	
 	@property
 	def name( self ):
@@ -3734,7 +3739,7 @@ class Participant(models.Model):
 	def good_bib( self ):			return self.is_competitor and self.bib
 	def good_category( self ):		return self.is_competitor and self.category
 	def good_license_check( self ):	return self.is_license_checked()
-	def good_tag( self ):			return not self.needs_tag
+	def good_tag( self ):			return not self.tag_invalid
 	def good_team( self ):			return self.is_competitor and self.team
 	def good_paid( self ):			return self.is_competitor and self.paid
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
@@ -4022,6 +4027,16 @@ class Participant(models.Model):
 	def get_tag_str( self ):
 		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)
 		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+	
+	def get_tag( self ):
+		return self.license_holder.existing_tag if self.competition.use_existing_tags else self.tag
+		
+	def set_tag( self, tag ):
+		self.tag = tag
+		if self.competition.use_existing_tags:
+			self.license_holder.existing_tag = tag
+			self.license_holder.save()
+		self.save()
 	
 	def get_short_tag_str( self ):
 		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)

@@ -35,5 +35,5 @@
 {% endif %}
 
 <hr/>
-<a class="btn btn-primary" href="{{path}}">{% trans "OK" %}</a>
+<a class="btn btn-primary" href={% if validate_success %}"{{cancelURL}}"{% else %}"{{path}}"{% endif %}>{% trans "OK" %}</a>
 {% endblock content %}

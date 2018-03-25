@@ -1337,7 +1337,7 @@ def ParticipantWaiverChange( request, participantId ):
 class ParticipantTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
 	make_this_existing_tag = forms.BooleanField( required = False, label = _('Rider keeps tag for other races') )
-	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna to Write Tag') )
+	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna') )
 	
 	def __init__(self, *args, **kwargs):
 		super(ParticipantTagForm, self).__init__(*args, **kwargs)
@@ -1352,13 +1352,16 @@ class ParticipantTagForm( Form ):
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'auto-generate-and-write-tag-submit', _('Auto Generate and Write Tag'), css_class='btn btn-success' ),
+			Submit( 'validate-submit', _('Validate Tag'), css_class = 'btn btn-lg btn-block btn-success' ),
 		]
 		
 		self.helper.layout = Layout(
+			Row( Col(button_args[5], 8), Col(button_args[1], 4) ),
+			Row( HTML('<hr/>') ),
 			Row(
-				Col( Field('tag', rows='2', cols='60'), 4 ),
+				Col( Field('tag', rows='2', cols='60'), 5 ),
 				Col( Field('make_this_existing_tag'), 4 ),
-				Col( Field('rfid_antenna'), 4 ),
+				Col( Field('rfid_antenna'), 3 ),
 			),
 			HTML( '<br/>' ),
 			Row(
@@ -1388,6 +1391,7 @@ def ParticipantTagChange( request, participantId ):
 	license_holder = participant.license_holder
 	system_info = SystemInfo.get_singleton()
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
+	validate_success = False
 	
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
@@ -1402,29 +1406,80 @@ def ParticipantTagChange( request, participantId ):
 			make_this_existing_tag = form.cleaned_data['make_this_existing_tag']
 			rfid_antenna = request.session['rfid_antenna'] = int(form.cleaned_data['rfid_antenna'])
 			
-			if 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
+			if 'validate-submit' in request.POST:
+				if not rfid_antenna:
+					status = False
+					status_entries.append(
+						(_('RFID Antenna Configuration'), (
+							_('RFID Antenna must be specified.'),
+							_('Please specify the RFID Antenna.'),
+						)),
+					)
+				if status and not tag:
+					status = False
+					status_entries.append(
+						(_('Empty Tag'), (
+							_('Cannot validate an empty Tag.'),
+							_('Please generate a Tag, or press Cancel.'),
+						)),
+					)
+				if status:
+					status, response = ReadTag(rfid_antenna)
+					if not status:
+						status_entries = [
+							(_('Tag Read Failure'), response.get('errors',[]) ),
+						]
+					else:
+						tags = response.get('tags', [])
+						try:
+							tag_read = tags[0]
+						except (AttributeError, IndexError) as e:
+							tag_read = None
+							status = False
+							status_entries.append(
+								(_('Tag Read Failure'), [e] ),
+							)
+						if status and len(tags) > 1:
+							status = False
+							status_entries.append(
+								(_('Multiple Tags Read'), tags ),
+							)
+						if status:
+							if tag_read == tag:
+								validate_success = True
+								participant.tag_checked = True
+							else:
+								status = False
+								participant.tag_checked = False
+								participant.save()
+								status_entries.append(
+									(_('Tag Validation Failure'), [tag_read, _('***DOES NOT MATCH***'), tag] ),
+								)								
+					
+			elif 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
 				if (	competition.use_existing_tags and
 						system_info.tag_creation == 0 and get_bits_from_hex(license_holder.existing_tag) == system_info.tag_bits):
 					tag = license_holder.existing_tag
 				else:
 					tag = license_holder.get_unique_tag( system_info )
-				
-			if not tag:
-				status = False
-				status_entries.append(
-					(_('Empty Tag'), (
-						_('Cannot write an empty Tag to the Database.'),
-						_('Please specify a Tag, generate a Tag, or press Cancel.'),
-					)),
-				)
-			elif system_info.tag_all_hex and not utils.allHex(tag):
-				status = False
-				status_entries.append(
-					(_('Non-Hex Characters in Tag'), (
-						_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
-						_('Please change the Tag to all hexadecimal.'),
-					)),
-				)
+			
+			if status:
+				if not tag:
+					status = False
+					status_entries.append(
+						(_('Empty Tag'), (
+							_('Cannot write an empty Tag to the Database.'),
+							_('Please specify a Tag, generate a Tag, or press Cancel.'),
+						)),
+					)
+				elif system_info.tag_all_hex and not utils.allHex(tag):
+					status = False
+					status_entries.append(
+						(_('Non-Hex Characters in Tag'), (
+							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
+							_('Please change the Tag to all hexadecimal.'),
+						)),
+					)
 			if not status:
 				return render( request, 'rfid_write_status.html', locals() )
 			
@@ -1461,7 +1516,7 @@ def ParticipantTagChange( request, participantId ):
 					status = False
 					status_entries.append(
 						(_('RFID Antenna Configuration'), (
-							_('RFID Antenna for Tag Write must be specified.'),
+							_('RFID Antenna must be specified.'),
 							_('Please specify the RFID Antenna.'),
 						)),
 					)
@@ -1472,6 +1527,9 @@ def ParticipantTagChange( request, participantId ):
 						status_entries = [
 							(_('Tag Write Failure'), response.get('errors',[]) ),
 						]
+					else:
+						participant.tag_checked = True
+						participant.save()
 				
 				if not status:
 					return render( request, 'rfid_write_status.html', locals() )

@@ -954,6 +954,7 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col(Field('using_tags'), 4),
 					Col(Field('use_existing_tags'), 4),
+					Col(Field('do_tag_validation'), 4),
 				),
 				Row( HTML('<hr/>') ),
 				Row(
