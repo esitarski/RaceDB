@@ -1357,7 +1357,7 @@ class ParticipantTagForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row( Col(button_args[5], 8), Col(button_args[1], 4) ),
-			Row( HTML('<hr/>') ),
+			Row( HTML('<hr style="margin:32px"/>') ),
 			Row(
 				Col( Field('tag', rows='2', cols='60'), 5 ),
 				Col( Field('make_this_existing_tag'), 4 ),
@@ -1448,6 +1448,7 @@ def ParticipantTagChange( request, participantId ):
 							if tag_read == tag:
 								validate_success = True
 								participant.tag_checked = True
+								# Fallthrough so that the tag format is checked.
 							else:
 								status = False
 								participant.tag_checked = False
@@ -1455,7 +1456,7 @@ def ParticipantTagChange( request, participantId ):
 								status_entries.append(
 									(_('Tag Validation Failure'), [tag_read, _('***DOES NOT MATCH***'), tag] ),
 								)								
-					
+			
 			elif 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
 				if (	competition.use_existing_tags and
 						system_info.tag_creation == 0 and get_bits_from_hex(license_holder.existing_tag) == system_info.tag_bits):
@@ -1466,6 +1467,7 @@ def ParticipantTagChange( request, participantId ):
 			if status:
 				if not tag:
 					status = False
+					participant.tag_checked = False
 					status_entries.append(
 						(_('Empty Tag'), (
 							_('Cannot write an empty Tag to the Database.'),
@@ -1474,6 +1476,7 @@ def ParticipantTagChange( request, participantId ):
 					)
 				elif system_info.tag_all_hex and not utils.allHex(tag):
 					status = False
+					participant.tag_checked = False
 					status_entries.append(
 						(_('Non-Hex Characters in Tag'), (
 							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
