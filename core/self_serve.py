@@ -259,7 +259,13 @@ def SelfServe( request, do_scan=0 ):
 	# If the license holder has a season's pass for the competition, try to add him/her as a participant.
 	if not participants and competition.seasons_pass and competition.seasons_pass.has_license_holder(license_holder):
 		license_holder, participants = add_participant_from_license_holder( competition, license_holder )
-		
+	
+	# We got this far by reading a tag, so, set the tag_checked flag as the tag was valid.
+	for p in participants:
+		if not p.tag_checked:
+			p.tag_checked = True
+			p.save()
+	
 	if not participants:
 		errors.append( _('Not Registered') )
 		
@@ -275,9 +281,6 @@ def SelfServe( request, do_scan=0 ):
 			warnings.extend( w )
 				
 	if not errors:
-		for p in participants:
-			p.confirmed = True
-			p.tag_checked = True		# True because the tag had to be read to enter the rider.
-			p.save()
+		Participant.objects.filter( id__in=[p.id for p in participants if not p.confirmed] ).update( confirmed=True )
 
 	return render( request, 'self_serve.html', locals() )

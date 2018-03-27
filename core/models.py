@@ -3565,15 +3565,15 @@ class Participant(models.Model):
 		return self.is_competitor and not self.bib
 	
 	@property
-	def tag_invalid( self ):
+	def tag_valid( self ):
 		competition = self.competition
 		if not competition.using_tags or not self.is_competitor:
-			return False
+			return True
 		tag = self.license_holder.existing_tag if competition.use_existing_tags else self.tag
 		if competition.do_tag_validation:
-			return not (tag and self.tag_checked)
+			return tag and self.tag_checked
 		else:
-			return not tag
+			return bool(tag)
 	
 	@property
 	def name( self ):
@@ -3739,7 +3739,7 @@ class Participant(models.Model):
 	def good_bib( self ):			return self.is_competitor and self.bib
 	def good_category( self ):		return self.is_competitor and self.category
 	def good_license_check( self ):	return self.is_license_checked()
-	def good_tag( self ):			return not self.tag_invalid
+	def good_tag( self ):			return self.tag_valid
 	def good_team( self ):			return self.is_competitor and self.team
 	def good_paid( self ):			return self.is_competitor and self.paid
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
@@ -3829,7 +3829,7 @@ class Participant(models.Model):
 			('good_bib',			_('Missing Bib Number')),
 			('good_category',		_('Missing Category')),
 			('good_license_check',	_('Unchecked License')),
-			('good_tag',			_('Missing Tag')),
+			('good_tag',			_('Unchecked Tag')),
 			('good_signature',		_('Missing Signature')),
 		)
 		participant_warnings = (
