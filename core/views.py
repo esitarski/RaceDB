@@ -2388,7 +2388,7 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 	except IntegrityError as e:
 		# If this participant exists already, recover silently by going directly to the existing participant.
 		participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
-		if tag_checked:
+		if tag_checked and not participant.tag_checked:
 			participant.tag_checked = True
 			participant.save()
 		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
