@@ -336,7 +336,7 @@
 					<strong>{{w.get_start_time|time:"H:i:s"}},</strong>
 					{% trans 'Starters' %}: {{w.get_starters_str}}
 					{% if w.is_late %}
-						<span class="label label-warning">{% trans "Late Reg.  Alert Timing Immediately." %}</span>
+						<span style="font-size:80%;" class="alert alert-danger" role="alert">{% trans "Late Reg.  Alert Timing Immediately." %}</span>
 					{% endif %}
 					</h3>
 				{% endfor %}
