@@ -116,7 +116,7 @@
 	</td>
 	<td>
 		{% if isEdit %}
-			<a class="btn btn-success hidden-print" href="./ParticipantWaiverChange/{{p.id}}/">{% trans "Change" %}</a>
+			<a class="btn btn-success hidden-print" href="./ParticipantWaiverChange/{{p.id}}/">{% trans "Edit" %}</a>
 		{% endif %}
 	</td>
 </tr>
@@ -134,7 +134,7 @@
 		{% if p.is_seasons_pass_holder %} ({% trans "Season's Pass Holder" %}) {% endif %}
 	</td>
 	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="./ParticipantPaidChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		<td><a class="btn btn-success hidden-print" href="./ParticipantPaidChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 	{% endif %}
 </tr>
 {% endif %}
@@ -155,7 +155,7 @@
 	</td>
 	<td>
 		{% if request.user.is_superuser and isEdit %}
-			<a class="btn btn-success hidden-print" href="./ParticipantRoleChange/{{p.id}}/">{% trans "Change" %}</a>
+			<a class="btn btn-success hidden-print" href="./ParticipantRoleChange/{{p.id}}/">{% trans "Edit" %}</a>
 		{% endif %}
 	</td>
 </tr>
@@ -175,7 +175,7 @@
 	</td>
 	<td>
 		{% if isEdit %}
-			<a class="btn btn-success hidden-print" href="./ParticipantTeamChange/{{p.id}}/">{% trans "Change" %}</a>
+			<a class="btn btn-success hidden-print" href="./ParticipantTeamChange/{{p.id}}/">{% trans "Edit" %}</a>
 		{% endif %}
 	</td>
 </tr>
@@ -195,7 +195,7 @@
 	</td>
 	<td>
 		{% if isEdit %}
-			<a class="btn btn-success hidden-print" href="./ParticipantCategoryChange/{{p.id}}/">{% trans "Change" %}</a>
+			<a class="btn btn-success hidden-print" href="./ParticipantCategoryChange/{{p.id}}/">{% trans "Edit" %}</a>
 		{% endif %}
 	</td>
 </tr>
@@ -207,7 +207,7 @@
 			{% if p.license_checked %} <strong>{% trans "Checked" %}</strong> {% else %} <span class="label label-danger">{% trans "Unchecked" %}</span> {% endif %}
 		</td>
 		{% if isEdit %}
-			<td><a class="btn btn-success hidden-print" href="./ParticipantLicenseCheckChange/{{p.id}}/">{% trans "Change" %}</a></td>
+			<td><a class="btn btn-success hidden-print" href="./ParticipantLicenseCheckChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 		{% endif %}
 	</tr>
 {% endif %}
@@ -218,7 +218,7 @@
 			{% if p.bib %} <strong>{{p.bib}}</strong> {% else %} <span class="label label-danger">{% trans "No bib" %}</span> {% endif %}
 		</td>
 		{% if isEdit %}
-			<td><a class="btn btn-success hidden-print" href="./ParticipantBibChange/{{p.id}}/">{% trans "Change" %}</a></td>
+			<td><a class="btn btn-success hidden-print" href="./ParticipantBibChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 		{% endif %}
 	</tr>
 {% endif %}
@@ -233,7 +233,7 @@
 			{% endif %}
 		</td>
 		{% if isEdit %}
-			<td><a class="btn btn-success hidden-print" href="./ParticipantTagChange/{{p.id}}/">{% trans "Change" %}</a></td>
+			<td><a class="btn btn-success hidden-print" href="./ParticipantTagChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 		{% endif %}
 	</tr>
 {% endif %}
@@ -250,7 +250,7 @@
 		{% endwith %}
 		</td>
 		{% if isEdit %}
-			<td><a class="btn btn-success hidden-print" href="./ParticipantEstSpeedChange/{{p.id}}/">{% trans "Change" %}</a></td>
+			<td><a class="btn btn-success hidden-print" href="./ParticipantEstSpeedChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 		{% endif %}
 	</tr>
 {% endif %}
@@ -269,7 +269,7 @@
 	{% endif %}
 	</td>
 	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="./ParticipantSignatureChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		<td><a class="btn btn-success hidden-print" href="./ParticipantSignatureChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 	{% endif %}
 </tr>
 {% endif %}
@@ -284,7 +284,7 @@
 		{% endif %}
 	</td>
 	{% if request.user.is_superuser and isEdit %}
-		<td><a class="btn btn-success hidden-print" href="./ParticipantPreregisteredChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		<td><a class="btn btn-success hidden-print" href="./ParticipantPreregisteredChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 	{% endif %}
 </tr>
 {% endif %}
@@ -292,14 +292,14 @@
 	<td class="text-right">{% trans "Competition Note" %}:</td>
 	<td>{% if p.note %}{{p.note}}{% endif %}</td>
 	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="./ParticipantNoteChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		<td><a class="btn btn-success hidden-print" href="./ParticipantNoteChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 	{% endif %}
 </tr>
 <tr onclick="jump({% if isEdit %}'./ParticipantGeneralNoteChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
 	<td class="text-right">{% trans "General Note" %}:</td>
 	<td>{% if h.note %}{{h.note}}{% endif %}</td>
 	{% if isEdit %}
-		<td><a class="btn btn-success hidden-print" href="./ParticipantGeneralNoteChange/{{p.id}}/">{% trans "Change" %}</a></td>
+		<td><a class="btn btn-success hidden-print" href="./ParticipantGeneralNoteChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 	{% endif %}
 </tr>
 {% if p.has_optional_events and p.is_competitor %}
@@ -317,7 +317,7 @@
 			{% endfor %}
 		</td>
 		{% if isEdit %}
-			<td><a class="btn btn-success hidden-print" href="./ParticipantOptionChange/{{p.id}}/">{% trans "Change" %}</a></td>
+			<td><a class="btn btn-success hidden-print" href="./ParticipantOptionChange/{{p.id}}/">{% trans "Edit" %}</a></td>
 		{% endif %}
 	</tr>
 {% endif %}

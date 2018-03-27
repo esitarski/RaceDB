@@ -277,7 +277,7 @@ def SelfServe( request, do_scan=0 ):
 	if not errors:
 		for p in participants:
 			p.confirmed = True
-			p.tag_checked = True
+			p.tag_checked = True		# True because the tag had to be read to enter the rider.
 			p.save()
 
 	return render( request, 'self_serve.html', locals() )

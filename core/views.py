@@ -1229,7 +1229,7 @@ def CompetitionRegAnalytics( request, competitionId ):
 	dates = [competition.start_date]
 	finish_date = competition.finish_date
 	while dates[-1] != finish_date:
-		dates.append( dates[-1] + timedelta(days=1) )
+		dates.append( dates[-1] + datetime.timedelta(days=1) )
 	date_info = [{
 			'license_holder_count': set(),
 			'participant_count': set(),
