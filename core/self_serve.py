@@ -277,6 +277,7 @@ def SelfServe( request, do_scan=0 ):
 	if not errors:
 		for p in participants:
 			p.confirmed = True
+			p.tag_checked = True
 			p.save()
 
 	return render( request, 'self_serve.html', locals() )

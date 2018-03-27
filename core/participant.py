@@ -1352,7 +1352,7 @@ class ParticipantTagForm( Form ):
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'auto-generate-and-write-tag-submit', _('Auto Generate and Write Tag'), css_class='btn btn-success' ),
-			Submit( 'validate-submit', _('Validate Tag'), css_class = 'btn btn-lg btn-block btn-success' ),
+			Submit( 'check-tag-submit', _('Check Tag'), css_class = 'btn btn-lg btn-block btn-success' ),
 		]
 		
 		self.helper.layout = Layout(
@@ -1393,36 +1393,72 @@ def ParticipantTagChange( request, participantId ):
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	validate_success = False
 	
+	status = True
+	status_entries = []
+	def check_antenna( rfid_antenna ):
+		if not rfid_antenna:
+			status_entries.append(
+				(_('RFID Antenna Configuration'), (
+					_('RFID Antenna must be specified.'),
+					_('Please specify the RFID Antenna.'),
+				)),
+			)
+			return False
+		return True
+	
+	def check_empty_tag( tag ):
+		if not tag:
+			status_entries.append(
+				(_('Empty Tag'), (
+					_('Cannot validate an empty Tag.'),
+					_('Please generate a Tag, or press Cancel.'),
+				)),
+			)
+			return False
+		return True
+
+	def check_one_tag_read( tags ):
+		if not tags:
+			status_entries.append(
+				(_('Tag Read Failure'), (
+					_('No tags read.  Verify antenna and that tag is close to antenna.'),
+				)),
+			)
+			return False
+		if len(tags) > 1:
+			status_entries.append(
+				(_('Multiple Tags Read'), tags ),
+			)
+			return False
+		return True
+		
+	def participant_save( particiant ):
+		try:
+			participant.auto_confirm().save()
+		except IntegrityError as e:
+			# Report the error - probably a non-unique field.
+			has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
+			status_entries.append(
+				(_('Participant Save Failure'), (
+					u'{}'.format(e),
+				)),
+			)
+			return False
+		return True
+			
 	if request.method == 'POST':
 		if 'cancel-submit' in request.POST:
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
 		form = ParticipantTagForm( request.POST )
 		if form.is_valid():
-			status = True
-			status_entries = []
 
 			tag = form.cleaned_data['tag'].strip().upper()
 			make_this_existing_tag = form.cleaned_data['make_this_existing_tag']
 			rfid_antenna = request.session['rfid_antenna'] = int(form.cleaned_data['rfid_antenna'])
 			
-			if 'validate-submit' in request.POST:
-				if not rfid_antenna:
-					status = False
-					status_entries.append(
-						(_('RFID Antenna Configuration'), (
-							_('RFID Antenna must be specified.'),
-							_('Please specify the RFID Antenna.'),
-						)),
-					)
-				if status and not tag:
-					status = False
-					status_entries.append(
-						(_('Empty Tag'), (
-							_('Cannot validate an empty Tag.'),
-							_('Please generate a Tag, or press Cancel.'),
-						)),
-					)
+			if 'check-tag-submit' in request.POST:
+				status &= check_antenna(rfid_antenna) and check_empty_tag(tag)
 				if status:
 					status, response = ReadTag(rfid_antenna)
 					if not status:
@@ -1431,31 +1467,20 @@ def ParticipantTagChange( request, participantId ):
 						]
 					else:
 						tags = response.get('tags', [])
-						try:
-							tag_read = tags[0]
-						except (AttributeError, IndexError) as e:
-							tag_read = None
-							status = False
-							status_entries.append(
-								(_('Tag Read Failure'), [e] ),
-							)
-						if status and len(tags) > 1:
-							status = False
-							status_entries.append(
-								(_('Multiple Tags Read'), tags ),
-							)
+						status &= check_one_tag_read( tags )
 						if status:
+							tag_read = tags[0]
 							if tag_read == tag:
 								validate_success = True
 								participant.tag_checked = True
 								# Fallthrough so that the tag format is checked.
 							else:
 								status = False
-								participant.tag_checked = False
-								participant.save()
 								status_entries.append(
 									(_('Tag Validation Failure'), [tag_read, _('***DOES NOT MATCH***'), tag] ),
 								)								
+								participant.tag_checked = False
+								status &= participant_save( participant )
 			
 			elif 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
 				if (	competition.use_existing_tags and
@@ -1465,18 +1490,9 @@ def ParticipantTagChange( request, participantId ):
 					tag = license_holder.get_unique_tag( system_info )
 			
 			if status:
-				if not tag:
+				status &= check_empty_tag( tag )
+				if status and system_info.tag_all_hex and not utils.allHex(tag):
 					status = False
-					participant.tag_checked = False
-					status_entries.append(
-						(_('Empty Tag'), (
-							_('Cannot write an empty Tag to the Database.'),
-							_('Please specify a Tag, generate a Tag, or press Cancel.'),
-						)),
-					)
-				elif system_info.tag_all_hex and not utils.allHex(tag):
-					status = False
-					participant.tag_checked = False
 					status_entries.append(
 						(_('Non-Hex Characters in Tag'), (
 							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
@@ -1484,20 +1500,13 @@ def ParticipantTagChange( request, participantId ):
 						)),
 					)
 			if not status:
+				participant.tag_checked = False
+				participant_save( participant )
 				return render( request, 'rfid_write_status.html', locals() )
 			
 			participant.tag = tag
-			try:
-				participant.auto_confirm().save()
-			except IntegrityError as e:
-				# Report the error - probably a non-unique field.
-				has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
-				status = False
-				status_entries.append(
-					(_('Participant Save Failure'), (
-						u'{}'.format(e),
-					)),
-				)
+			status &= participant_save( participant )
+			if not status:
 				return render( request, 'rfid_write_status.html', locals() )
 			
 			if make_this_existing_tag:
@@ -1515,14 +1524,7 @@ def ParticipantTagChange( request, participantId ):
 					return render( request, 'rfid_write_status.html', locals() )
 			
 			if 'write-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
-				if not rfid_antenna:
-					status = False
-					status_entries.append(
-						(_('RFID Antenna Configuration'), (
-							_('RFID Antenna must be specified.'),
-							_('Please specify the RFID Antenna.'),
-						)),
-					)
+				status &= check_antenna( rfid_antenna )
 				
 				if status:
 					status, response = WriteTag(tag, rfid_antenna)
@@ -1532,7 +1534,7 @@ def ParticipantTagChange( request, participantId ):
 						]
 					else:
 						participant.tag_checked = True
-						participant.save()
+						status &= participant_save( participant )
 				
 				if not status:
 					return render( request, 'rfid_write_status.html', locals() )

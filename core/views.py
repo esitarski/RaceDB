@@ -68,7 +68,7 @@ class LicenseHolderTagForm( Form ):
 			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
-			Submit( 'read-validate-tag-submit', _('Read / Validate Tag'), css_class = 'btn btn-primary' ),
+			Submit( 'check-tag-submit', _('Check Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'auto-generate-and-write-tag-submit', _('Auto Generate and Write Tag'), css_class='btn btn-success' ),
 		]
 		
@@ -133,7 +133,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 				return render( request, 'rfid_write_status.html', locals() )
 			
 			# Check for tag actions.
-			if any(submit_btn in request.POST for submit_btn in ('read-validate-tag-submit','write-tag-submit','auto-generate-and-write-tag-submit') ):
+			if any(submit_btn in request.POST for submit_btn in ('check-tag-submit','write-tag-submit','auto-generate-and-write-tag-submit') ):
 			
 				# Check for valid antenna.
 				if not rfid_antenna:
@@ -166,7 +166,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 					)
 				
 				if status:
-					if 'read-validate-tag-submit' in request.POST:
+					if 'check-tag-submit' in request.POST:
 						# Handle reading/validating an existing tag.
 						status, response = ReadTag(rfid_antenna)
 						tagRead = ''
@@ -2359,19 +2359,28 @@ def EventApplyToExistingParticipants( request, eventId, confirmed=False ):
 	return render( request, 'are_you_sure.html', locals() )
 
 @access_validation()
-def LicenseHolderAddConfirm( request, competitionId, licenseHolderId ):
+def LicenseHolderAddConfirm( request, competitionId, licenseHolderId, tag_checked=0 ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	competition_age = competition.competition_age( license_holder )
+	try:
+		tag_checked = int(tag_checked)
+	except:
+		tag_checked = 0
 	return render( request, 'license_holder_add_confirm.html', locals() )
 
 @access_validation()
-def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderId ):
+def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderId, tag_checked=0 ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	try:
+		tag_checked = int(tag_checked)
+	except:
+		tag_checked = 0
 	
 	# Try to create a new participant from the license_holder.
 	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
+	participant.tag_checked = bool( tag_checked )
 	try:
 		participant.auto_confirm().save()
 		participant.add_to_default_optional_events()
@@ -2379,6 +2388,9 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 	except IntegrityError as e:
 		# If this participant exists already, recover silently by going directly to the existing participant.
 		participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
+		if tag_checked:
+			participant.tag_checked = True
+			participant.save()
 		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
 
 #-----------------------------------------------------------------------

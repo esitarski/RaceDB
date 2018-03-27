@@ -139,8 +139,12 @@ urlpatterns = [
 	url(r'^(?i).*ParticipantEditFromLicenseHolder/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', participant.ParticipantEditFromLicenseHolder),
 	url(r'^(?i).*ParticipantRemove/(?P<participantId>\d+)/$', participant.ParticipantRemove),
 	url(r'^(?i).*ParticipantDoDelete/(?P<participantId>\d+)/$', participant.ParticipantDoDelete),
+	
 	url(r'^(?i).*LicenseHolderAddConfirm/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.LicenseHolderAddConfirm),
 	url(r'^(?i).*LicenseHolderConfirmAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', views.LicenseHolderConfirmAddToCompetition),
+	url(r'^(?i).*LicenseHolderAddConfirm/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/(?P<tag_checked>\d)/$', views.LicenseHolderAddConfirm),
+	url(r'^(?i).*LicenseHolderConfirmAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/(?P<tag_checked>\d)/$',
+		views.LicenseHolderConfirmAddToCompetition),
 	
 	url(r'^(?i).*ParticipantCategoryChange/(?P<participantId>\d+)/$', participant.ParticipantCategoryChange ),
 	url(r'^(?i).*ParticipantCategorySelect/(?P<participantId>\d+)/(?P<categoryId>\d+)/$', participant.ParticipantCategorySelect ),
