@@ -257,8 +257,11 @@ def SelfServe( request, do_scan=0 ):
 		return render( request, 'self_serve.html', locals() )
 	
 	# If the license holder has a season's pass for the competition, try to add him/her as a participant.
-	if not participants and competition.seasons_pass and competition.seasons_pass.has_license_holder(license_holder):
-		license_holder, participants = add_participant_from_license_holder( competition, license_holder )
+	if not participants and competition.seasons_pass:
+		if competition.seasons_pass.has_license_holder(license_holder):
+			license_holder, participants = add_participant_from_license_holder( competition, license_holder )
+		else:
+			errors.append( _("Season's Pass required.") )
 	
 	# We got this far by reading a tag, so, set the tag_checked flag as the tag was valid.
 	for p in participants:
