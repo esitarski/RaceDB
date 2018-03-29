@@ -1681,8 +1681,8 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 	
 	status = True
 	status_entries = []
-	tag = None
-	tags = []
+	rfid_tag = None
+	rfid_tags = []
 	
 	add_by_rfid = True
 	if request.method == 'POST':
@@ -1705,31 +1705,31 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 			else:
 				status, response = ReadTag(rfid_antenna)
 				# DEBUG DEBUG
-				#status, response = True, {'tags': ['A7A2102303']}
+				#status, response = True, {'rfid_tags': ['A7A2102303']}
 				if not status:
 					status_entries.append(
 						(_('Tag Read Failure'), response.get('errors',[]) ),
 					)
 				else:
-					tags = response.get('tags', [])
+					rfid_tags = response.get('tags', [])
 					try:
-						tag = tags[0]
+						rfid_tag = rfid_tags[0]
 					except (AttributeError, IndexError) as e:
 						status = False
 						status_entries.append(
 							(_('Tag Read Failure'), [e] ),
 						)
 				
-				if tag and len(tags) > 1:
+				if rfid_tag and len(rfid_tags) > 1:
 					status = False
 					status_entries.append(
-						(_('Multiple Tags Read'), tags ),
+						(_('Multiple Tags Read'), rfid_tags ),
 					)
 			
 			if not status:
 				return render( request, 'participant_scan_rfid.html', locals() )
 				
-			license_holder, participants = participant_key_filter( competition, tag, False )
+			license_holder, participants = participant_key_filter( competition, rfid_tag, False )
 			license_holders = []	# Required for participant_scan_error.
 			if not license_holder:
 				return render( request, 'participant_scan_error.html', locals() )
@@ -1739,7 +1739,7 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 			if len(participants) > 1:
 				return render( request, 'participant_scan_error.html', locals() )
 			
-			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
+			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id, 1))
 	else:
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna), hide_cancel_button=True )
 		

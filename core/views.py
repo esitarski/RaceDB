@@ -513,11 +513,7 @@ class RfidScanForm( Form ):
 			button_args = button_args[:-1]
 			
 		self.helper.layout = Layout(
-			Row( *button_args ),
-			HTML('<br/>' * 12),
-			Row(
-				Col(Field('rfid_antenna'), 6 ),
-			),
+			Row( *(button_args + [HTML('&nbsp;'*12), Field('rfid_antenna')]) ),
 		)
 
 #-----------------------------------------------------------------------

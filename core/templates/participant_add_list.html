@@ -8,6 +8,7 @@
 {% crispy form %}
 {% include "show_count.html" %}
 {% spaceless %}
+{% with using_tags=competition.using_tags %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
 	<tr>
@@ -18,7 +19,7 @@
 		<th>{% trans "UCIID" %}</th>
 		<th>{% trans "Date of Birth" %}</th>
 		<th>{% trans "Location" %}</th>
-		{% if competition.using_tags %}<th>{% trans "Tag" %}</th>{% endif %}
+		{% if using_tags %}<th>{% trans "Tag" %}</th>{% endif %}
 		<th class="hidden-print"></th>
 		<th class="hidden-print"></th>
 	</tr>
@@ -37,7 +38,7 @@
 			<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
 			<td>{{h.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{h.get_location}}</td>
-			{% if competition.using_tags %}<td>{{h.get_existing_tag_str}}</td>{% endif %}
+			{% if using_tags %}<td>{{h.get_existing_tag_str_abbr}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if h.id in license_holders_in_competition %}
 					<a class="btn btn-success btn-sm" href="./ParticipantEditFromLicenseHolder/{{competitionId}}/{{h.id}}/">{% trans "Edit" %}</a>
@@ -51,6 +52,7 @@
 	{% endfor %}
 </tbody>
 </table>
+{% endwith %}
 {% endspaceless %}
 ({% trans "maximum 500 results" %})
 {% endblock content %}

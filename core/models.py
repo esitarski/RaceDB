@@ -2495,6 +2495,13 @@ class LicenseHolder(models.Model):
 	def get_existing_tag_str( self ):
 		return u', '.join( [t for t in [self.existing_tag, self.existing_tag2] if t] )
 	
+	def get_existing_tag_str_abbr( self ):
+		def tag_abbr( tag ):
+			if tag and len(tag) > 8:
+				tag = tag[:8] + u'...'
+			return tag
+		return u', '.join( [t for t in [tag_abbr(self.existing_tag), tag_abbr(self.existing_tag2)] if t] )
+	
 	def get_participation_as_competitor( self ):
 		return Participant.objects.select_related('competition', 'team', 'category').filter(
 			license_holder=self, role=Participant.Competitor, category__isnull=False
