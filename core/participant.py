@@ -152,14 +152,19 @@ def Participants( request, competitionId ):
 	missing_bib_count = competitors.filter( bib__isnull=True ).count()
 	
 	if competition.using_tags:
-		if competition.use_existing_tags:
-			missing_tag_query = Q(license_holder__existing_tag__isnull=True) | Q(license_holder__existing_tag=u'')
+		if competition.do_tag_validation:
+			# Show checked tags.
+			bad_tag_query = Q(tag_checked=False)
 		else:
-			missing_tag_query = Q(tag__isnull=True) | Q(tag=u'')
+			# Show empty tags.
+			if competition.use_existing_tags:
+				bad_tag_query = Q(license_holder__existing_tag__isnull=True) | Q(license_holder__existing_tag=u'')
+			else:
+				bad_tag_query = Q(tag__isnull=True) | Q(tag=u'')
 	else:
-		missing_tag_query = Q()
+		bad_tag_query = Q()
 	
-	missing_tag_count = competitors.filter( missing_tag_query ).count() if competition.using_tags else 0
+	bad_tag_count = competitors.filter( bad_tag_query ).count() if competition.using_tags else 0
 	
 	if participant_filter.get('scan',0):
 		name_text = utils.normalizeSearch( participant_filter['scan'] )
@@ -252,7 +257,7 @@ def Participants( request, competitionId ):
 	if competition.using_tags and participant_filter.get('rfid_text',''):
 		rfid = participant_filter.get('rfid_text','').upper()
 		if rfid == u'-1':
-			participants = participants.filter( missing_tag_query )
+			participants = participants.filter( bad_tag_query )
 		else:
 			if competition.use_existing_tags:
 				participants = participants.filter( license_holder__existing_tag=rfid )

@@ -14,8 +14,8 @@
 {% if missing_bib_count %}
 	<h4>{{missing_bib_count}} {% trans "Missing a Bib (Search Bib: -1)" %}</h4>
 {% endif %}
-{% if missing_tag_count %}
-	<h4>{{missing_tag_count}} {% trans "Missing a RFIDTag (Search RFIDTag: -1)" %}</h4>
+{% if bad_tag_count %}
+	<h4>{{bad_tag_count}} {% trans "Missing/Unchecked RFIDTag (Search RFIDTag: -1)" %}</h4>
 {% endif %}
 <style>
 .table tbody>tr>td {
@@ -71,7 +71,7 @@
 			<td>{% if p.role == 110 %}{% if p.category %}{{p.category.code}}{% else %}<span class="is-err"/>{% endif %}{% endif %}</td>
 			<td class="text-right">{% if p.bib %}{{p.bib|safe}}{% else %}<span class="is-err"/>{% endif %}</td>
 			{% if using_tags %}
-				<td>{% if p.get_short_tag_str %}{{p.get_short_tag_str|safe}}{% else %}<span class="is-err"/>{% endif %}</td>
+				<td>{% if not p.tag_valid %}<span class="is-err"/>{% endif %}{{p.get_short_tag_str|safe}}</td>
 			{% endif %}
 			<td class="text-center">{% if p.role == 110 %}{{h.eligible|good_err_icon}}{% endif %}</td>
 			{% if using_waiver %}
