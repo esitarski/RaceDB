@@ -1488,6 +1488,7 @@ def ParticipantTagChange( request, participantId ):
 								status &= participant_save( participant )
 			
 			elif 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
+				participant.tag_checked = False
 				if (	competition.use_existing_tags and
 						system_info.tag_creation == 0 and get_bits_from_hex(license_holder.existing_tag) == system_info.tag_bits):
 					tag = license_holder.existing_tag
@@ -1534,6 +1535,8 @@ def ParticipantTagChange( request, participantId ):
 				if status:
 					status, response = WriteTag(tag, rfid_antenna)
 					if not status:
+						participant.tag_checked = False
+						participant_save( participant )
 						status_entries = [
 							(_('Tag Write Failure'), response.get('errors',[]) ),
 						]
