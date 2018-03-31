@@ -1743,6 +1743,7 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 				return render( request, 'participant_scan_error.html', locals() )
 			
 			if len(participants) == 1:
+				participants[0].set_tag_checked()
 				return HttpResponseRedirect(pushUrl(request,'ParticipantEdit',participants[0].id))
 			if len(participants) > 1:
 				return render( request, 'participant_scan_error.html', locals() )

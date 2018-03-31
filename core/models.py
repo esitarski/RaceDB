@@ -4050,6 +4050,12 @@ class Participant(models.Model):
 		tags = [t[:8] + '...' if t and len(t) > 8 else t for t in tags]
 		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
 	
+	def set_tag_checked( self, checked=True ):
+		checked = bool( checked )
+		if self.tag_checked != checked:
+			self.tag_checked = checked
+			self.save()
+	
 	class Meta:
 		unique_together = (
 			('competition', 'category', 'license_holder'),

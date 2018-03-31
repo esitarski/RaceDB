@@ -16,6 +16,22 @@
 		if( email_value )
 			window.open('mailto:' + email_value);
 	}
+	function setHeaderStatus( s ) {
+		var h = document.getElementById("header-status");
+		var t = document.getElementById("header-status-text");
+		if( s == 'danger' ) {
+			h.className="alert alert-danger";
+			t.innerHTML = '&#x274c;{% trans "Error" %}:&nbsp;';
+		}
+		else if ( s == 'warning' ) {
+			h.className="alert alert-warning";
+			t.innerHTML = '&#x26a0;{% trans "Warning" %}:&nbsp';
+		}
+		else {
+			h.className="alert alert-success";
+			t.innerHTML = '&#x2705;{% trans "Success" %}:&nbsp';
+		}
+	}
 {% endblock javascript %}
 
 {% block onload %}
@@ -49,15 +65,12 @@
     content: none !important;
   }
 }
-</style>
-{% if title %}<h1 class="hidden-print">{{title}}</h1><br/>{% endif %}
 
+</style>
 <h3 class="visible-print">{% trans "Race Voucher" %}</h3>
 <hr class="visible-print" />
 {% with p=participant h=participant.license_holder c=participant.competition %}
-<h2><strong>{{c.name}}</strong>: {{c.date_range_year_str}}
-</h2>
-<hr/>
+<div id="header-status"><h2><span id="header-status-text"></span><strong>{{c.name}}</strong>: {{c.date_range_year_str}}</h2></div>
 {% spaceless %}
 {% if not h.eligible %}
 	<div class="alert alert-danger">
@@ -421,25 +434,30 @@
 					<a class="btn btn-success hidden-print" href="{{cancelUrl}}">
 						{% trans "Complete and Accurate.  Proceed." %}
 					</a>
+					<script>setHeaderStatus('success');</script>
 				{% else %}
 					<a class="btn btn-danger hidden-print" href="{{cancelUrl}}">
 						{% trans "No Events Selected.  Proceed anyway?" %}
 					</a>
-				{% endif %}
+					<script>setHeaderStatus('danger');</script>
+			{% endif %}
 			{% elif not ewbac.0 %}
 				{% if participant.has_any_events %}
 					<a class="btn btn-warning hidden-print" href="{{cancelUrl}}">
 						{% trans "Warnings.  Proceed anyway?" %}
 					</a>
+					<script>setHeaderStatus('warning');</script>
 				{% else %}
 					<a class="btn btn-danger hidden-print" href="{{cancelUrl}}">
 						{% trans "No Events Selected.  Proceed anyway?" %}
 					</a>
+					<script>setHeaderStatus('danger');</script>
 				{% endif %}
 			{% else %}
 				<a class="btn btn-danger hidden-print" href="{{cancelUrl}}">
 					{% trans "Errors.  Cannot Start.  Proceed anyway?" %}
 				</a>
+				<script>setHeaderStatus('danger');</script>
 			{% endif %}
 		{% endwith %}
 		
