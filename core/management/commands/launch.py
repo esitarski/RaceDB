@@ -22,7 +22,7 @@ from core.views_common import set_hub_mode
 from core.init_data import init_data_if_necessary
 
 def check_connection( host, port ):
-	print 'Checking connection {}:{}'.format(host,port)
+	print 'Checking web server connection {}:{}'.format(host,port)
 	
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -36,7 +36,7 @@ def check_connection( host, port ):
 	s.close()
 	
 	if success:
-		print 'Connection check succeeded.'
+		print 'Web Server connection check succeeded.'
 	
 	return success
 
