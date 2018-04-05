@@ -97,7 +97,7 @@ If multiple matches are found, an error will be reported.</td></tr>
 <tr><td><strong>Paid</strong></td><td>Optional.  Indicates that the rider has paid.  Default is False. **</td></tr>
 <tr><td><strong>License Checked</strong> or <strong>Lic Checked</strong></td><td>Optional.  Indicates that the rider's license has been checked.  Default is False. **</td></tr>
 <tr><td><strong>Bib</strong> or <strong>Bib Number</strong> or <strong>BibNum</strong> or <strong>Bib #</strong> or <strong>Rider Num</strong></td>
-	<td>Optional.  Bib number for the rider.  Bib numbers can also be assigned from RaceDB beforehand, or given out on race day on-the-fly.  Not required if using <strong>Number Sets</strong>.  If this column exists, all existng Participants in the Competition will be cleared first.</td>
+	<td>Optional.  Bib number for the rider.  Bib numbers can also be assigned from RaceDB beforehand, or given out on race day on-the-fly.  Not required if using <strong>Number Sets</strong>.  If the value is "auto", an available Bib number will be assigned if the Rider does not already have one.  If this column exists, all existng Participants in the Competition will be cleared first to avoid Bib number conflicts.</td>
 </tr>
 <tr><td><strong>Tag</strong> or <strong>Chip</strong> or <strong>Chip ID</strong></td><td>Optional.  RFID tag for the rider.  Not required if auto-generated tags or if re-using existing tags.</td></tr>
 <tr><td><strong>Note</strong></td><td>Optional.  Participant Note field (specific to this Competition).</td></tr>
