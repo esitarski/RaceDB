@@ -140,6 +140,7 @@ def init_prereg(
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))
 			bib				= (to_int(v('bib', None)) or None)
+			bib_auto		= (bib is None and unicode(v('bib',u'')).lower() == u'auto')
 			tag				= to_int_str(v('tag', None))
 			note		 	= to_str(v('note', None))
 			team_name		= to_str(v('team', None))
@@ -337,8 +338,12 @@ def init_prereg(
 				if team_name:
 					participant.team = team
 
-				# Ensure the bib number is compatible with the category.
+				# Ensure the existing bib number is compatible with the category.
 				participant.update_bib_new_category()
+				
+				# Only auto-assign a bib only if there isn't one already.
+				if bib_auto and not self.bib:
+					bib = participant.get_bib_auto()
 				
 				# If we have an assigned bib, ensure it is respected.
 				if bib and bib in category_numbers_set[category]:
