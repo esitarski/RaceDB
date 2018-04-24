@@ -133,8 +133,9 @@ def add_categories_page( wb, title_format, event ):
 	#
 	ws = wb.add_worksheet('--CrossMgr-Categories')
 	
+	competition = event.competition
 	participant_categories = set( Category.objects.filter(pk__in =
-			Participant.objects.filter(competition=event.competition,role=Participant.Competitor).order_by('category__pk').values_list('category__pk',flat=True).distinct()
+			Participant.objects.filter(competition=competition,role=Participant.Competitor).order_by('category__pk').values_list('category__pk',flat=True).distinct()
 		)
 	)
 	
@@ -181,7 +182,7 @@ def add_categories_page( wb, title_format, event ):
 					category_intervals.get(category,''),
 					unicode(getattr(wave,'start_offset',u'')),
 					wave.laps if wave.laps else u'',
-					wave.distance if wave.distance else u'',
+					competition.to_local_distance(wave.distance) if wave.distance else u'',
 					getattr(wave, 'minutes', None) or u'',
 					True, True, True,
 				]
@@ -195,7 +196,7 @@ def add_categories_page( wb, title_format, event ):
 				u'',	# No ranges here - these come from the categories.
 				unicode(getattr(wave,'start_offset',u'')),
 				wave.laps if wave.laps else u'',
-				wave.distance if wave.distance else u'',
+				competition.to_local_distance(wave.distance) if wave.distance else u'',
 				getattr(wave, 'minutes', None) or u'',
 				wave_flag, wave_flag, wave_flag,
 			]
