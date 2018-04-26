@@ -63,11 +63,34 @@ def read_results_crossmgr( payload ):
 	data = {int(k):v for k, v in payload['data'].iteritems()}
 	
 	# Get the category for each bib.
+	reGender = re.compile( r'(\([^)]+\))$' )
 	def get_name_gender( cat_str ):
-		for gender_code, g in enumerate(('(Men)', '(Women)', '(Open)')):
-			if cat_str.endswith(g):
-				return cat_str[:-len(g)].strip(), gender_code
-		return cat_str, None
+		try:
+			gender_in_brackets = reGender.search( cat_str ).group(1)
+		except:
+			return cat_str, None
+		
+		cat_name = cat_str[:-len(gender_in_brackets)].strip()
+		gender_name = gender_in_brackets[1:-1].strip().upper()
+		
+		gender_code = None
+		if   gender_name in (u'MEN', u'HOMMES', u'HOMBRES'):
+			gender_code = 0
+		elif gender_name in (u'WOMEN', u'FEMMES', u'MUJER'):
+			gender_code = 1
+		elif gender_name in (u'OPEN', u'OUVRIR', u'ABIERTO'):
+			gender_code = 2
+		
+		if gender_code is None:
+			gender_char = gender_name.strip()[0]
+			if   gender_char in 'MH':
+				gender_code = 0
+			elif gender_char in 'WF':
+				gender_code = 1
+			else:
+				gender_code = 2
+		
+		return cat_name, gender_code
 				
 	def format_gap( cd, rank ):
 		try:
@@ -79,7 +102,7 @@ def read_results_crossmgr( payload ):
 		elif g < 0:
 			return '{} {}'.format(g, 'lap'  if g == -1 else 'laps')
 		return u''
-	
+		
 	bib_category = {}
 	bib_category_rank = {}
 	bib_category_gap = {}
