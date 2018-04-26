@@ -1138,22 +1138,40 @@ class Competition(models.Model):
 			self.number_set.validate()
 	
 	def prereg_detect( self ):
-		prereg_count = 0
-		total_count = 0
-		run_count = 1
+		off_site_count = prereg_count = total_count = 0
+		off_site_count_run, off_site_count_run_max, off_site_prereg_count = 1, 5, 0
 		prev = None
-		for cur in self.get_participants().order_by('registration_timestamp').values_list('registration_timestamp', flat=True):
+		
+		#--------------------------------------------------------------------------
+		# off_site registration is defined by registration through Excel import.
+		# Excel import will have registration_timestamp of less than 0.2 seconds.
+		# off_site registration is also pre-registration even if the preregistered flag is not set.
+		#
+		for registration_timestamp, preregistered in self.get_participants().order_by('registration_timestamp').values_list(
+				'registration_timestamp', 'preregistered'):
+			cur = registration_timestamp
 			if prev:
 				if (cur-prev).total_seconds() < 0.2:
-					run_count += 1
+					off_site_count_run += 1								# Track a run of automatic imports.
 				else:
-					if run_count >= 5:
-						prereg_count += run_count
-					run_count = 1
+					if off_site_count_run >= off_site_count_run_max:	# Process the run.
+						off_site_count += off_site_count_run
+						prereg_count += off_site_count_run - off_site_prereg_count
+					off_site_prereg_count = 0
+					off_site_count_run = 1								# Reset the run to the current participant.
 			prev = cur
+			
+			if preregistered:
+				prereg_count += 1
+				off_site_prereg_count += 1
 			total_count += 1
 		
-		on_site = total_count - prereg_count
+		# Finalize run processing.
+		if off_site_count_run >= off_site_count_run_max:
+			off_site_count += off_site_count_run
+			prereg_count += off_site_count_run - off_site_prereg_count
+		
+		on_site = total_count - off_site_count
 		
 		seasons_pass_count = SeasonsPassHolder.objects.filter(
 			seasons_pass=self.seasons_pass,
