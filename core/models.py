@@ -5189,14 +5189,16 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 				r.save()
 				events_seen.add( r.event_id )
 	
-	# Ensure the merged entry is added to every Season's Passes.
-	sph_duplicates = set( SeasonsPassHolder.objects.filter(license_holder__pk__in=pks) )
-	sph_merge = set( SeasonsPassHolder.objects.filter(license_holder=license_holder_merge) )
-	sph_missing = sph_duplicates.difference( sph_merge )
-	for sph in sph_missing:
-		sph.pk = None
-		sph.license_holder = license_holder_merge
-		sph.save()
+	# Ensure the merged entry is added to every Seasons Pass held by a duplicate.
+	# Get all the seasons passes held by any duplicate (includes the license holder)
+	# Resolve these to memory as lazy evaluation won't work after the delete tbat follows.
+	seasons_passes = set(
+		SeasonsPass.object.filter( pk__in=SeasonsPassHolder.objects.filter(license_holder__pk__in=[d.pk for d in duplicates]).values('seasons_pass__pk').distinct() )
+	)
+	# Remove the duplicates from all season's passes.
+	SeasonsPassHolder.object.filter( license_holder__pk__in=[d.pk for d in duplicates] ).delete()
+	# Add the representative license holder to all the seasons passes held by any duplicate.
+	SeasonsPassHolder.objects.bulk_create( [SeasonsPassHolder(seasons_pass=sp, license_holder=license_holder_merge) for sp in seasons_passes] )
 	
 	# Ensure that numbers in the number set are owned by the remaining license_holder.
 	for ns in NumberSet.objects.all():
