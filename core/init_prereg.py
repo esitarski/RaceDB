@@ -346,14 +346,14 @@ def init_prereg(
 					bib = participant.get_bib_auto()
 				
 				# If we have an assigned bib, ensure it is respected.
-				if bib and bib in category_numbers_set[category]:
+				if bib and bib in category_numbers_set[participant.category]:
 					participant.bib = bib
 					# Add the assigned bib to the number set if it exists.
 					if competition.number_set:
 						competition.number_set.assign_bib( participant.license_holder, participant.bib )
 
 				# Do a final check for bib compatibility.
-				if participant.bib and participant.bib not in category_numbers_set[category]:
+				if participant.bib and participant.bib not in category_numbers_set[participant.category]:
 					participant.bib = None
 				
 				participant.preregistered = True
