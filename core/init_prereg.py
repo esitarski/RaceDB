@@ -353,6 +353,7 @@ def init_prereg(
 						competition.number_set.assign_bib( participant.license_holder, participant.bib )
 
 				# Do a final check for bib compatibility.
+				category = participant.category
 				if participant.bib and participant.bib not in category_numbers_set[participant.category]:
 					participant.bib = None
 				
