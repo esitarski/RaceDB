@@ -342,10 +342,11 @@ def init_prereg(
 				participant.update_bib_new_category()
 				
 				# Only auto-assign a bib only if there isn't one already.
-				if bib_auto and not self.bib:
+				if bib_auto and not participant.bib:
 					bib = participant.get_bib_auto()
 				
 				# If we have an assigned bib, ensure it is respected.
+				category = participant.category		# Finalize the category if it has a default value.
 				if bib and bib in category_numbers_set[participant.category]:
 					participant.bib = bib
 					# Add the assigned bib to the number set if it exists.
@@ -353,7 +354,6 @@ def init_prereg(
 						competition.number_set.assign_bib( participant.license_holder, participant.bib )
 
 				# Do a final check for bib compatibility.
-				category = participant.category
 				if participant.bib and participant.bib not in category_numbers_set[participant.category]:
 					participant.bib = None
 				
