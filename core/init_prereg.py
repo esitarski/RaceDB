@@ -13,10 +13,37 @@ import import_utils
 from import_utils import *
 from models import *
 
+from collections import defaultdict
+import operator
+class TimeTracker( object ):
+	def __init__( self ):
+		self.startTime = None
+		self.curLabel = None
+		self.totals = defaultdict( float )
+		
+	def start( self, label ):
+		t = datetime.datetime.now()
+		if self.curLabel and self.startTime:
+			self.totals[self.curLabel] += (t - self.startTime).total_seconds()
+		self.curLabel = label
+		self.startTime = t
+		
+	def end( self ):
+		self.start( None )
+		
+	def __repr__( self ):
+		s = []
+		for lab, t in sorted( self.totals.iteritems(), key=operator.itemgetter(1), reverse=True ):
+			s.append( '{:<32}: {:6.2f}'.format(lab, t) )
+		s.append( '' )
+		return '\n'.join( s )
+
 def init_prereg(
 		competition_name='', worksheet_name='', clear_existing=False,
 		competitionId=None, worksheet_contents=None, message_stream=sys.stdout ):
 
+	tt = TimeTracker()
+		
 	team_lookup = TeamLookup()
 		
 	tstart = datetime.datetime.now()
@@ -88,6 +115,8 @@ def init_prereg(
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
+		
+			tt.start( 'get_fields_from_row' )
 		
 			v = ifm.finder( ur )
 			date_of_birth	= v('date_of_birth', None)
@@ -190,6 +219,8 @@ def init_prereg(
 			license_holder = None
 			#with transaction.atomic():
 			if True:
+				tt.start( 'get_license_holder' )
+			
 				if uci_id:
 					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
 					
@@ -255,6 +286,7 @@ def init_prereg(
 						continue
 				
 				# Update the license_holder record with all new information.
+				tt.start( 'update_license_holder' )
 				if set_attributes( license_holder, {
 						'date_of_birth':date_of_birth
 							if not year_only_dob and date_of_birth != invalid_date_of_birth
@@ -286,6 +318,7 @@ def init_prereg(
 				#
 				category = None
 				if category_code:
+					tt.start( 'get_category_from_code' )
 					category = get_category( category_code, license_holder.gender )
 					if category is None:
 						ms_write( u'**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
@@ -295,6 +328,7 @@ def init_prereg(
 				#------------------------------------------------------------------------------
 				# Get Team
 				#
+				tt.start( 'get_team' )
 				team = None
 				if Team.is_independent_name(team_name):
 					team = None
@@ -307,6 +341,7 @@ def init_prereg(
 					team = team_lookup[team_name]
 				
 				#------------------------------------------------------------------------------
+				tt.start( 'get_participant' )
 				participant_keys = { 'competition': competition, 'license_holder': license_holder, }
 				if category is not None:
 					participant_keys['category'] = category
@@ -322,9 +357,11 @@ def init_prereg(
 					continue
 				
 				# First get the defaults based on previous hints and categories.
+				tt.start( 'init_participant_defaults' )
 				participant.init_default_values()
 				
 				# Now, override default values with specified ones.
+				tt.start( 'override_participant_defaults' )
 				for attr, value in (
 						('category',category),
 						('bib',bib), ('tag',tag), ('note',note),
@@ -339,13 +376,16 @@ def init_prereg(
 					participant.team = team
 
 				# Ensure the existing bib number is compatible with the category.
+				tt.start( 'update_bib_new_category' )
 				participant.update_bib_new_category()
 				
 				# Only auto-assign a bib only if there isn't one already.
 				if bib_auto and not participant.bib:
+					tt.start( 'get_bib_auto' )
 					bib = participant.get_bib_auto()
 				
 				# If we have an assigned bib, ensure it is respected.
+				tt.start( 'validate_bib' )
 				category = participant.category		# Finalize the category if it has a default value.
 				if bib and bib in category_numbers_set[participant.category]:
 					participant.bib = bib
@@ -359,6 +399,7 @@ def init_prereg(
 				
 				participant.preregistered = True
 				
+				tt.start( 'participant_save' )
 				try:
 					participant.save()
 				except IntegrityError as e:
@@ -372,6 +413,7 @@ def init_prereg(
 						ms_write( u'{}\n'.format(conflict_participant) )
 					continue
 				
+				tt.start( 'add_to_default_optional_events' )
 				participant.add_to_default_optional_events()
 				
 				if participant_optional_events:
@@ -388,10 +430,13 @@ def init_prereg(
 					override_events_str = ''
 				
 				if waiver is not None:
+					tt.start( 'waiver' )
 					if waiver:
 						participant.sign_waiver_now( waiver_signed_date )
 					else:
 						participant.unsign_waiver_now()
+						
+				tt.end()
 				
 				ms_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
 							row=i,
@@ -486,3 +531,5 @@ def init_prereg(
 		ms_write( u'{}={:.6f}\n'.format(section, total) )
 	ms_write( u'\n' )
 	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( u'\n' )
+	ms_write( tt.__repr__() )

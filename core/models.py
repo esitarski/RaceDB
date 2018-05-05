@@ -3639,17 +3639,22 @@ class Participant(models.Model):
 	
 	def sign_waiver_now( self, backdate = None ):
 		legal_entity = self.competition.legal_entity
-		if legal_entity:
-			waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
-			if waiver:
-				waiver.date_signed = (backdate or timezone.now().date())
-				waiver.save()
-			else:
-				Waiver(
-					license_holder=self.license_holder,
-					legal_entity=legal_entity,
-					date_signed=(backdate or timezone.now().date())
-				).save()
+		if not legal_entity:
+			return
+		
+		date_signed = (backdate or timezone.now().date())
+		waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
+		if waiver:
+			if waiver.date_signed == date_signed:
+				return
+			waiver.date_signed = date_signed
+		else:
+			waiver = Waiver(
+				license_holder=self.license_holder,
+				legal_entity=legal_entity,
+				date_signed=date_signed
+			)
+		waiver.save()
 	
 	def unsign_waiver_now( self ):
 		legal_entity = self.competition.legal_entity
@@ -4602,10 +4607,11 @@ class ParticipantOption( models.Model ):
 	@transaction.atomic
 	def set_option_ids( participant, option_ids = [] ):
 		ParticipantOption.objects.filter(competition=participant.competition, participant=participant).delete()
-		ParticipantOption.objects.bulk_create(
-			[ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id )
-				for option_id in set(option_ids)]
-		)
+		if option_ids:
+			ParticipantOption.objects.bulk_create(
+				[ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id )
+					for option_id in set(option_ids)]
+			)
 	
 	@staticmethod
 	@transaction.atomic
