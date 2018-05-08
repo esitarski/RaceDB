@@ -273,7 +273,7 @@ def license_holder_import_excel(
 		gender			= gender_from_str(gender) if gender else None
 		
 		email			= to_str(v('email', None))
-		phone			= to_str(v('phone', None))
+		phone			= to_phone(v('phone', None))
 		city			= to_str(v('city', None))
 		state_prov		= to_str(v('state_prov', None))
 		zip_postal		= to_str(v('zip_postal', None))
@@ -289,7 +289,7 @@ def license_holder_import_excel(
 		note		 	= to_str(v('note', None))
 		
 		emergency_contact_name = to_str(v('emergency_contact_name', None))
-		emergency_contact_phone = to_str(v('emergency_contact_phone', None))
+		emergency_contact_phone = to_phone(v('emergency_contact_phone', None))
 		emergency_medical = to_str(v('emergency_medical', None))
 
 		team_name		= to_str(v('team', None))

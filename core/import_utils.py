@@ -94,6 +94,12 @@ def to_str( v ):
 		return v
 	return toUnicode(v).strip()
 	
+def to_phone( v ):
+	if v is None:
+		return v
+	v = to_int_str( v )
+	return v[:-2] if v.endswith(u'.0') else v
+	
 def to_bool( v ):
 	if v is None:
 		return None
