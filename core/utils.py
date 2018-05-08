@@ -115,7 +115,7 @@ def toUnicode( s ):
 	encodings = (
 		'utf-8', 'iso-8859-1', 'iso-8859-2', 'iso-8859-3', 'iso-8859-4', 'iso-8859-5',
 		'iso-8859-7', 'iso-8859-8', 'iso-8859-9', 'iso-8859-10', 'iso-8859-11',
-		'iso-8859-13', 'iso-8859-14', 'iso-8859-15',' utf-8', 
+		'iso-8859-13', 'iso-8859-14', 'iso-8859-15',
 	)
 	for encoding in encodings:
 		try:

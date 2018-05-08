@@ -5304,7 +5304,7 @@ class LicenseCheckState(models.Model):
 				license_checked=True, category__isnull=False,
 				competition__report_label_license_check__isnull=False,
 				competition__start_date__gte=datetime.date(year_cur,1,1)
-			).order_by('-competition__start_date'):
+			).defer('signature').order_by('-competition__start_date'):
 			key = (p.license_holder_id, p.category_id, p.competition.report_label_license_check_id)
 			if key not in csd:
 				to_add.append( LicenseCheckState(
