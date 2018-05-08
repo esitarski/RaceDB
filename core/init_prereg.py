@@ -34,7 +34,7 @@ class TimeTracker( object ):
 	def __repr__( self ):
 		s = []
 		for lab, t in sorted( self.totals.iteritems(), key=operator.itemgetter(1), reverse=True ):
-			s.append( '{:<32}: {:6.2f}'.format(lab, t) )
+			s.append( '{:<50}: {:6.2f}'.format(lab, t) )
 		s.append( '' )
 		return '\n'.join( s )
 
@@ -509,7 +509,13 @@ def init_prereg(
 			
 			fields_lower = [f.lower() for f in fields]
 			if clear_existing or 'bib' in ifm:
+				ms_write( u'Recording previous license checkes...\n' )
+				if competition.report_label_license_check:
+					tt.start( 'license_check_state_refresh' )
+					LicenseCheckState.refresh()
+	
 				ms_write( u'Clearing existing Participants...\n' )
+				tt.start( 'clearing_existing_participants' )
 				large_delete_all( Participant, Q(competition=competition) )
 			
 			if 'license_code' not in ifm and 'uci_id' not in ifm:
