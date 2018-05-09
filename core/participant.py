@@ -469,12 +469,14 @@ def ParticipantEdit( request, participantId ):
 	
 	system_info = SystemInfo.get_singleton()
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
+	
 	competition_age = participant.competition.competition_age( participant.license_holder )
-	is_suspicious_age = not (8 <= competition_age <= 90)
-	isEdit = True
-	rfid_antenna = int(request.session.get('rfid_antenna', 0))
+	is_suspicious_age = not (5 <= competition_age <= 95)
 	is_license_checked = participant.is_license_checked()
 	is_license_check_required = participant.is_license_check_required()
+	
+	isEdit = True
+	rfid_antenna = int(request.session.get('rfid_antenna', 0))
 	return render( request, 'participant_form.html', locals() )
 	
 @access_validation()

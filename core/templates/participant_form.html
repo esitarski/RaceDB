@@ -215,9 +215,9 @@
 {% endif %}
 {% if p.category and is_license_check_required %}
 	<tr onclick="jump({% if isEdit %}'./ParticipantLicenseCheckChange/{{p.id}}/'{% else %}'{{path}}'{% endif %});">
-		<td class="text-right">{% trans "License Check" %}{% if not p.license_checked %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
+		<td class="text-right">{% trans "License Check" %}{% if not is_license_checked %}&nbsp;<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>{% endif %}:</td>
 		<td>
-			{% if p.license_checked %} <strong>{% trans "Checked" %}</strong> {% else %} <span class="label label-danger">{% trans "Unchecked" %}</span> {% endif %}
+			{% if is_license_checked %} <strong>{% trans "Checked" %}</strong> {% else %} <span class="label label-danger">{% trans "Unchecked" %}</span> {% endif %}
 		</td>
 		{% if isEdit %}
 			<td><a class="{{edit_btn_style}}" href="./ParticipantLicenseCheckChange/{{p.id}}/">{% trans "Edit" %}</a></td>

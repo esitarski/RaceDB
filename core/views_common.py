@@ -36,6 +36,8 @@ from django.forms.formsets import formset_factory
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from django.utils import timezone
+
 from django.contrib.staticfiles.templatetags.staticfiles import static
 
 from crispy_forms.helper import FormHelper
@@ -49,6 +51,7 @@ from context_processors import getContext
 from django.views.decorators.cache import patch_cache_control
 
 from functools import wraps
+import inspect
 
 #-----------------------------------------------------------------------
 
@@ -68,12 +71,40 @@ def access_validation( selfserve_ok=False, no_cache=True ):
 		
 		@wraps( decorated_func )
 		def wrap( request, *args, **kwargs ):
+			response = None
 			if hub_mode and '/RaceDB/Hub' not in request.path:
+				# If hub mode, default to hub search page.
 				response = HttpResponseRedirect('/RaceDB/Hub/SearchCompetitions/')
 			elif request.user.username == 'serve' and not selfserve_ok:
+				# If self-serve, reject page that is not self-serve.
 				response = HttpResponseRedirect('/RaceDB/SelfServe')
-			else:
-				response = decorated_func( request, *args, **kwargs )
+			elif not hub_mode and request.user.username != 'super':
+				# Unless superuser, cannot access a competition in the past.				
+				competition = None
+				if 'competitionId' in kwargs:
+					competition = Competition.objects.filter(id=kwargs['competitionId']).first()
+				elif 'participantId' in kwargs:
+					participant = Competition.objects.filter(id=kwargs['participantId']).defer('signature').first()
+					if participant:
+						competition = participant.competition
+				elif 'eventId' in kwargs and 'eventType' in kwargs:
+					try:
+						eventType = int(kwargs['eventType'])
+					except:
+						eventType = -1
+					if eventType == 0:
+						event = EventMassStart.objects.filter(id=kwargs['eventId']).first()
+					elif eventType == 1:
+						event = EventTT.objects.filter(id=kwargs['eventId']).first()
+					else:
+						event = None
+					if event:
+						competition = event.competition
+				
+				if competition and competition.is_finished():
+					response = HttpResponseRedirect('/RaceDB/PastCompetition')
+							
+			response = response or decorated_func( request, *args, **kwargs )
 			
 			if no_cache:
 				patch_cache_control(
@@ -461,5 +492,3 @@ def format_column_time( values ):
 	
 def format_column_gap( values ):
 	return [None if v is None else formatTimeGap(v) for v in values]
-
-

@@ -799,6 +799,33 @@ class Competition(models.Model):
 		return ResultMassStart.objects.filter(event__competition=self).exists() or ResultTT.objects.filter(event__competition=self).exists()
 	
 	@property
+	def last_event_date_time( self ):
+		date_times = []
+		e = EventMassStart.objects.filter(competition=self).order_by('-date_time').first()
+		if e:
+			date_times.append( e.date_time )
+		e = EventTT.objects.filter(competition=self).order_by('-date_time').first()
+		if e:
+			date_times.append( e.date_time )
+		return max( date_times ) if date_times else None
+	
+	@property
+	def first_event_date_time( self ):
+		date_times = []
+		e = EventMassStart.objects.filter(competition=self).order_by('date_time').first()
+		if e:
+			date_times.append( e.date_time )
+		e = EventTT.objects.filter(competition=self).order_by('date_time').first()
+		if e:
+			date_times.append( e.date_time )
+		return min( date_times ) if date_times else None
+	
+	@property
+	def first_last_event_date_time( self ):
+		events = self.get_events()
+		return (min(e.date_time for e in events), max(e.date_time for e in events)) if events else (None, None)
+	
+	@property
 	def event_types_text( self ):
 		types = []
 		if EventMassStart.objects.filter( competition=self ).exists():
@@ -834,7 +861,8 @@ class Competition(models.Model):
 					datetime.datetime.combine(competition_original.start_date, datetime.time(0,0,0))
 				)
 				self.adjust_event_times( time_delta )
-			
+		
+		
 		return super(Competition, self).save(*args, **kwargs)
 	
 	@transaction.atomic
@@ -881,6 +909,10 @@ class Competition(models.Model):
 	reMatchLeadingZeros = re.compile( '^0| 0' )
 	def fix_date_leading_zeros( self, s ):
 		return self.reMatchLeadingZeros.sub(' ', s).strip()
+	
+	def is_finished( self, dNow=None ):
+		dNow = dNow or timezone.now().date()
+		return self.start_date + datetime.timedelta(days=(self.number_of_days or 1)-1) < dNow
 	
 	@property
 	def date_range_str( self ):
@@ -3411,20 +3443,27 @@ class Participant(models.Model):
 		return CompetitionCategoryOption.is_license_check_required(self.competition, self.category)
 	
 	def is_license_checked( self ):
-		return self.license_checked or not self.is_license_check_required() or (
-			self.competition.report_label_license_check and (
-				Participant.objects.filter(
+		# Check trival cases.
+		if (	self.license_checked or
+				not self.competition.report_label_license_check or
+				not self.is_license_check_required()
+			):
+			return True
+		
+		# Check if the license has been checked this year in competitions matching the report_label_license_check.
+		if Participant.objects.filter(
 					license_holder__id=self.license_holder_id,
 					category__id=self.category_id,
 					license_checked=True,
 					competition__in=Competition.objects.filter(
 						start_date__gte=datetime.date(self.competition.start_date.year,1,1),
-						report_labels__in=[self.competition.report_label_license_check],
+						report_label_license_check=self.competition.report_label_license_check,
 					),
-				).exists() or
-				LicenseCheckState.check_participant( self )
-			)
-		)
+				).exists():
+			return True
+		
+		# Check if the license check has been cached.
+		return LicenseCheckState.check_participant( self )
 	
 	def enforce_tag_constraints( self ):
 		license_holder = self.license_holder

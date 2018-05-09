@@ -1058,10 +1058,8 @@ def CompetitionsDisplay( request ):
 	else:	
 		# If not super user, only show the competitions for today and after.
 		dNow = timezone.now().date()
-		competitions = competitions.filter( start_date__gte = dNow - datetime.timedelta(days=365) )
-		competitions = [c for c in competitions
-			if c.start_date + datetime.timedelta(days=(c.number_of_days or 1)) >= dNow
-		]
+		competitions = competitions.filter( start_date__gte = dNow - datetime.timedelta(days=120) )
+		competitions = [c for c in competitions if not c.is_finished(dNow)]
 	
 	competitions = sorted( competitions, key = operator.attrgetter('start_date'), reverse=True )
 	return render( request, 'competition_list.html', locals() )
@@ -3019,6 +3017,10 @@ def Resequence( request, modelClassName, instanceId, newSequence ):
 					obj.sequence = i
 					obj.save()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+#-----------------------------------------------------------------------
+def PastCompetition( request ):
+	return render( request, 'past_competition.html', locals() )
 
 #-----------------------------------------------------------------------
 

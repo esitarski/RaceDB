@@ -358,6 +358,8 @@ urlpatterns = [
 		
 	url(r'^(?i).*Resequence_(?P<modelClassName>[^_]+)_Class/(?P<instanceId>\d+)/(?P<newSequence>\d+)/$', views.Resequence),
 	
+	url(r'^PastCompetition/$', views.PastCompetition),
+	
 	url(r'^(?i)login/$', login, {'template_name': 'login.html'}, name='login'),
 	url(r'^(?i).*logout/$', views.Logout),
 ]

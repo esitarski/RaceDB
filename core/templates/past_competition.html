@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+<h1>Past Competition Access Error</h1>
+<hr/>
+<p>
+You must be super user to access a Competition that has finished.<br/>
+Please select a Competition from the following screen.
+</p>
+<a class="btn btn-success" href="/RaceDB/Competitions/">{% trans "OK" %}</a>
+{% endblock content %}
