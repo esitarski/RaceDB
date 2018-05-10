@@ -372,10 +372,13 @@ def license_holders_from_search_text( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(license_code = search_text.upper().lstrip('0')))
 
 	if not license_holders:
-		q = Q()
-		for n in search_text.split():
-			q &= Q( search_text__contains = n )
-		license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
+		if search_text:
+			q = Q()
+			for n in search_text.split():
+				q &= Q( search_text__contains = n )
+			license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
+		else:
+			license_holders = LicenseHolder.objects.all()[:MaxReturn]
 	
 	return license_holders
 	
@@ -440,7 +443,6 @@ def LicenseHoldersDisplay( request ):
 	else:
 		form = SearchForm( btns, initial = {'search_text': search_text}, additional_buttons_on_new_row=True )
 	
-	disciplines = list( Discipline.objects.filter(id__in=Competition.objects.all().values_list('discipline',flat=True).distinct() ) )
 	license_holders = license_holders_from_search_text( search_text )
 	isEdit = True
 	return render( request, 'license_holder_list.html', locals() )

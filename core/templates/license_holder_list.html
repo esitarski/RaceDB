@@ -21,9 +21,6 @@
 		<th>{% trans "UCIID" %}</th>
 		<th>{% trans "Existing Tag" %}</th>
 		<th>{% trans "Emergency Contact" %}</th>
-		{% for d in disciplines %}
-			<th>{{d.name}} {% trans "Team"%}</th>
-		{% endfor %}
 		{% if isEdit %}
 		<th class="hidden-print"></th>
 		{% endif %}
@@ -54,7 +51,6 @@
 				{% if h.emergency_contact_incomplete %}<span class="is-warn"/>&nbsp;{% endif %}
 				{{h.emergency_contact_name}}<br/>{{h.emergency_contact_phone}}
 			</td>
-			{{h|args:disciplines|call:'get_teams_for_disciplines_html'}}
 			{% if isEdit %}
 			<td class="hidden-print">
 				<a class="btn btn-warning btn-sm" href="./LicenseHolderDelete/{{h.id}}/">{% trans "Delete" %}</a>

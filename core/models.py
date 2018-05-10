@@ -2663,8 +2663,10 @@ class LicenseHolder(models.Model):
 		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) )
 		return mark_safe( u'{}&nbsp;{}'.format(flag, uci_id) )
 	
-	def get_team_for_discipline( self, discipline ):
+	def get_team_for_discipline( self, discipline, teamHintOnly=False ):
 		team_hint = TeamHint.objects.filter(license_holder=self, discipline=discipline).order_by('-effective_date').first()
+		if teamHintOnly:
+			return team_hint.team if team_hint else None
 		
 		# Try to find a participant in this discipline.
 		q_participant = Participant.objects.filter(license_holder=self,competition__discipline=discipline)
@@ -2685,12 +2687,12 @@ class LicenseHolder(models.Model):
 			return team_hint.team
 		return None
 		
-	def get_teams_for_disciplines( self, disciplines ):
-		return [self.get_team_for_discipline(d) for d in disciplines]
+	def get_teams_for_disciplines( self, disciplines, teamHintOnly=False ):
+		return [self.get_team_for_discipline(d, teamHintOnly) for d in disciplines]
 		
-	def get_teams_for_disciplines_html( self, disciplines ):
+	def get_teams_for_disciplines_html( self, disciplines, teamHintOnly=False ):
 		r = []
-		for t in self.get_teams_for_disciplines(disciplines):
+		for t in self.get_teams_for_disciplines(disciplines, teamHintOnly):
 			r.append( u'<td>{}</td>'.format( escape(t.name) if t else u'Independent' ) )
 		return mark_safe(''.join(r))
 	
