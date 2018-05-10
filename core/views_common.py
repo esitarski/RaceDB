@@ -84,7 +84,7 @@ def access_validation( selfserve_ok=False, no_cache=True ):
 				if 'competitionId' in kwargs:
 					competition = Competition.objects.filter(id=kwargs['competitionId']).first()
 				elif 'participantId' in kwargs:
-					participant = Competition.objects.filter(id=kwargs['participantId']).defer('signature').first()
+					participant = Participant.objects.filter(id=kwargs['participantId']).defer('signature').first()
 					if participant:
 						competition = participant.competition
 				elif 'eventId' in kwargs and 'eventType' in kwargs:
