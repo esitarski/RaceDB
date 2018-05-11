@@ -386,7 +386,6 @@ def init_prereg(
 				
 				# If we have an assigned bib, ensure it is respected.
 				tt.start( 'validate_bib' )
-				category = participant.category		# Finalize the category if it has a default value.
 				if bib and bib in category_numbers_set[participant.category]:
 					participant.bib = bib
 					# Add the assigned bib to the number set if it exists.
@@ -436,6 +435,10 @@ def init_prereg(
 					else:
 						participant.unsign_waiver_now()
 						
+				if not category and not participant_optional_events:
+					tt.start( 'add_other_categories' )
+					participant.add_other_categories()
+				
 				tt.end()
 				
 				ms_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(

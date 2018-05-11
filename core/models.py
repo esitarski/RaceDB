@@ -28,6 +28,7 @@ import os
 import math
 from heapq import heappush
 import datetime
+import deepcopy
 import base64
 import operator
 from django.utils.translation import ugettext_lazy as _
@@ -3712,12 +3713,64 @@ class Participant(models.Model):
 				if self.category else []
 		)
 	
+	def add_other_categories( self ):
+		# Add another participant if this license holder participanted in another category.
+		if self.role != Participant.Competitor or self.category is None:
+			return
+			
+		# Collect a list of all categories for this participant from hints.
+		categories_from_hint = list( CategoryHint.objects.filter(
+				license_holder=self.license_holder,
+				discipline=self.competition.discipline,
+				category__format=self.competition.category_format,
+			).values_list( 'category__id', 'effective_date' )
+		)
+		effective_date_max = max( c[1] for c in categories_from_hint ) if categories_from_hint else datetime.date.min
+		
+		# Find the most recent past competition for this license holder.
+		previous = Participant.objects.filter(
+			license_holder=self.license_holder,
+			competition__discipline=self.competition.discipline,
+			competition__category_format=self.competition.category_format,
+			role=Participant.Competitor,
+			bib__isnull=False,
+			competition__start_date__lt=self.competition.start_date,
+		).exclude(category__isnull=True, competition=self.competition).defer('signature').select_related('competition').order_by(
+			'-competition__start_date',
+		).first()
+		
+		if previous and previous.competition.start_date > effective_date_max:
+			# Get all other categories represented by this license holder at the previous event.
+			other_categories_previous = list(
+				Participant.objects.filter(
+					license_holder=self.license_holder,
+					competition=previous.competition,
+					role=Participant.Competitor,
+					bib__isnull=False,
+				).exclude(category__isnull=True, category=self.category).defer('signature').values_list('category__id',flat=True)
+			)
+		else:
+			# Add corresponding participants from the hints.
+			other_categories_previous = [c[0] for c in categories_from_hint]
+		
+		if other_categories_previous:
+			for category in Category.objects.filter( id__in=other_categories_previous ):
+				self.category = category
+				self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category ) if self.competition.number_set else None
+				self.id = self.pk = None
+				try:
+					self.save()
+				except IntegrityError as e:
+					# Handle integrity error if this participant was already added in this category.
+					continue
+				self.add_to_default_optional_events()
+	
 	def init_default_values( self ):
 		pdv = ParticipantDefaultValues( self.competition )
 	
 		self.role = 0
 		
-		# Uncontitionally get the team based on the hint.
+		# Unconditionally get the team based on the hint.
 		if pdv.role < 200:
 			pdv.update_team_hint( TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by(
 				'-effective_date').first()
