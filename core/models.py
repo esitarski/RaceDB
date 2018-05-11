@@ -3713,7 +3713,7 @@ class Participant(models.Model):
 		)
 	
 	def add_other_categories( self ):
-		# Add another participant if this license holder participanted in another category.
+		# Add participants if this license holder participanted in other categories in this race format.
 		if self.role != Participant.Competitor or self.category is None:
 			return
 			
@@ -3756,11 +3756,12 @@ class Participant(models.Model):
 			for category in Category.objects.filter( id__in=other_categories_previous ):
 				self.category = category
 				self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category ) if self.competition.number_set else None
-				self.id = self.pk = None
+				self.id = None
+				self.pk = None
 				try:
 					self.save()
 				except IntegrityError as e:
-					# Handle integrity error if this participant was already added in this category.
+					# Handle integrity error if this participant is already added.
 					continue
 				self.add_to_default_optional_events()
 	
