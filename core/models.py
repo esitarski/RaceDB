@@ -28,7 +28,6 @@ import os
 import math
 from heapq import heappush
 import datetime
-import deepcopy
 import base64
 import operator
 from django.utils.translation import ugettext_lazy as _
