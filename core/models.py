@@ -3761,7 +3761,7 @@ class Participant(models.Model):
 				try:
 					self.save()
 				except IntegrityError as e:
-					# Handle integrity error if this participant is already added.
+					# Integrity error is expected if this participant is already added.
 					continue
 				self.add_to_default_optional_events()
 	
