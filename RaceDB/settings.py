@@ -107,7 +107,8 @@ except ImportError:
 	}
 
 try:
-	sys.stderr.write( 'databaseFile="{}"\n'.format( DATABASES['default']['NAME'] ) )
+	sys.stderr.write( 'databaseEngine="{}"\n'.format( DATABASES['default']['ENGINE'] ) )
+	sys.stderr.write( 'databaseName="{}"\n'.format( DATABASES['default']['NAME'] ) )
 except Exception as e:
 	pass
 

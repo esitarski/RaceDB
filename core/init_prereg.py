@@ -271,7 +271,7 @@ def init_prereg(
 									}.iteritems() if value is not None
 								}
 							)
-							license_holder.save()
+							truncate_char_fields(license_holder).save()
 						except Exception as e:
 							ms_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
 									i, e, name,
@@ -305,7 +305,8 @@ def init_prereg(
 						'existing_tag':tag if competition.use_existing_tags else None,
 					} ):
 					try:
-						license_holder.save()
+						truncate_char_fields(license_holder).save()
+						truncate_char_fields( license_holder )
 					except Exception as e:
 						ms_write( u'**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
 								i, e, name,
@@ -400,7 +401,7 @@ def init_prereg(
 				
 				tt.start( 'participant_save' )
 				try:
-					participant.save()
+					truncate_char_fields(participant).save()
 				except IntegrityError as e:
 					ms_write( u'**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
 						i, e,

@@ -358,7 +358,7 @@ def license_holder_import_excel(
 						u', '.join( unicode(v) for v in [team_name, team_code,] ),
 					)
 					ms_write( msg )
-					team.save()
+					truncate_char_fields(team).save()
 
 				# Get the teams for each discipline.
 				d_team = []
@@ -432,7 +432,7 @@ def license_holder_import_excel(
 						
 						ensure_unique( license_code, existing_tag )
 						license_holder = LicenseHolder( **lhr )
-						license_holder.save()
+						truncate_char_fields(license_holder).save()
 						status = 'Added'
 					
 					else:
@@ -453,7 +453,7 @@ def license_holder_import_excel(
 						# No match.  Create a new license holder using the given license code.
 						ensure_unique( license_code, existing_tag )
 						license_holder = LicenseHolder( **lhr )
-						license_holder.save()
+						truncate_char_fields(license_holder).save()
 						del lhr['license_code'] # Delete license_code after creating a record to prevent update.
 						status = 'Added'
 							
@@ -468,7 +468,7 @@ def license_holder_import_excel(
 						lhr['license_code'] = license_code = random_temp_license()
 						ensure_unique( license_code, existing_tag )
 						license_holder = LicenseHolder( **lhr )
-						license_holder.save()
+						truncate_char_fields(license_holder).save()
 						del lhr['license_code'] # Delete license_code after creating a record to prevent the update.
 						status = 'Added'
 					
@@ -489,7 +489,7 @@ def license_holder_import_excel(
 				fields_changed = set_attributes_changed( license_holder, lhr, False )
 				if fields_changed:
 					ensure_unique( license_code, existing_tag, license_holder.id )
-					license_holder.save()
+					truncate_char_fields(license_holder).save()
 					if status != 'Added':
 						status = 'Changed'
 				

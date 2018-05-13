@@ -219,7 +219,7 @@ class SystemInfo(models.Model):
 	RFID_SERVER_PORT_DEFAULT = 50111
 	
 	rfid_server_host = models.CharField( max_length = 32, default = RFID_SERVER_HOST_DEFAULT, verbose_name = _('RFID Reader Server Host')  )
-	rfid_server_port = models.PositiveSmallIntegerField( default = RFID_SERVER_PORT_DEFAULT, verbose_name = _('RFID Reader Server Port') )
+	rfid_server_port = models.PositiveIntegerField( default = RFID_SERVER_PORT_DEFAULT, verbose_name = _('RFID Reader Server Port') )
 	
 	reg_closure_minutes = models.IntegerField( default = -1, verbose_name = _('Reg Closure Minutes'), help_text=_('Minutes before race start to close registration for "reg" users.  Use -1 for None.') )
 	
@@ -2073,7 +2073,7 @@ class Team(models.Model):
 
 	contact = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('Contact') )
 	contact_email = models.EmailField( blank = True, verbose_name=_('Contact Email') )
-	contact_phone = models.CharField( max_length = 22, blank = True, default = '', verbose_name=_('Contact Phone') )
+	contact_phone = models.CharField( max_length = 64, blank = True, default = '', verbose_name=_('Contact Phone') )
 	
 	@property
 	def license_holder_pks( self ):
@@ -2225,7 +2225,7 @@ class LicenseHolder(models.Model):
 	zip_postal = models.CharField( max_length=12, blank=True, default='', verbose_name=_('Zip/Postal') )
 	
 	email = models.EmailField( blank=True )
-	phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Phone') )
+	phone = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Phone') )
 	
 	uci_code = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI Code') )
 	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCIID') )
@@ -2247,8 +2247,8 @@ class LicenseHolder(models.Model):
 	note = models.TextField( null=True, blank=True, verbose_name=_('LicenseHolder Note') )
 	
 	emergency_contact_name = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact') )
-	emergency_contact_phone = models.CharField( max_length=26, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
-	emergency_medical = models.CharField( max_length=64, blank=True, default='',
+	emergency_contact_phone = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
+	emergency_medical = models.CharField( max_length=128, blank=True, default='',
 		verbose_name=_('Medical Alert'), help_text = _('eg. diabetic, drug alergy, etc.') )
 
 	def get_age( self ):
@@ -5427,6 +5427,14 @@ class LicenseCheckState(models.Model):
 		LicenseCheckState.objects.bulk_create( to_add )
 		
 #-----------------------------------------------------------------------------------------------
+def truncate_char_fields( obj ):
+	for f in type(obj)._meta.get_fields():
+		if isinstance(f, models.CharField) and len(getattr(obj, f.name) or u'') > f.max_length:
+			v = getattr( obj, f.name )
+			setattr( obj, f.name, v[:f.max_length] )
+	return obj
+			
+#-----------------------------------------------------------------------------------------------
 # Apply upgrades.
 #
 '''
@@ -5449,6 +5457,24 @@ def bad_data_test():
 	print list(LicenseHolder.objects.filter(last_name='00-TEST-LAST-NAME'))
 '''
 
+def fix_bad_category_hints():
+	print 'fix_bad_category_hints...'
+	CategoryHint.objects.all().exclude(discipline__id__in=Discipline.objects.all().values_list('id',flat=True)).delete()
+
+def fix_phone_numbers():
+	print 'fix_phone_numbers...'
+	with BulkSave() as bs:
+		for lh in LicenseHolder.objects.filter(Q(phone__endswith='.0') | Q(emergency_contact_phone__endswith='.0')):
+			if lh.phone and lh.phone.endswith('.0'):
+				lh.phone = lh.phone[:-2]
+			if lh.emergency_contact_phone and lh.emergency_contact_phone.endswith('.0'):
+				lh.emergency_contact_phone = lh.emergency_contact_phone[:-2]
+			bs.append( lh )
+	with BulkSave() as bs:
+		for t in Team.objects.filter(contact_phone__endswith='.0'):
+			t.contact_phone = t.contact_phone[:-2]
+			bs.append( t )
+	
 def fix_bad_license_codes():
 	print 'fix_bad_license_codes and emergency contacts...'
 	q = (
@@ -5480,6 +5506,8 @@ def models_fix_data():
 	fix_bad_license_codes()
 	fix_nation_code()
 	fix_non_unique_number_set_entries()
+	fix_bad_category_hints()
+	fix_phone_numbers()
 
 
 

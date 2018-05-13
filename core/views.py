@@ -1042,7 +1042,7 @@ def CompetitionsDisplay( request ):
 		if request.user.is_superuser:
 			form = CompetitionSearchForm( initial=search_fields, request=request )
 	
-	competitions = Competition.objects.all()
+	competitions = Competition.objects.all().prefetch_related('report_labels')
 	
 	if request.user.is_superuser:
 		year = int( search_fields.get( 'year', -1 ) )

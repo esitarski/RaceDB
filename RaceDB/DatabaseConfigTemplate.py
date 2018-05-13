@@ -15,7 +15,7 @@
 # **** Convert from Existing RaceDB:
 #
 # You have an existing RaceDB sqlite3 database, you can transfer all the data
-# from your existing sqlite3 database to your new database.
+# to your new database.
 # This is a one-time process - you can't merge changes between the databases.
 # You have to use one and *only* one going forward.
 #
@@ -25,7 +25,7 @@
 #
 #    python manage.py dumpdata core > mydata.json
 #
-# This can take a while, so be patient.
+# This can take a few minutes, so be patient.
 #
 # Now, configure your new database.
 # Copy this file to DatabaseConfig.py in the same folder.
@@ -45,7 +45,7 @@
 #
 # That will read all the data into your new database.
 # This can take a while, so be patient.
-# For safety, delete they "mydata.json" file.
+# For safety, delete they "mydata.json" file afterwards.
 #
 
 DatabaseConfig = {
