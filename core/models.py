@@ -5441,11 +5441,11 @@ class LicenseCheckState(models.Model):
 	def key( self ):
 		return self.license_holder_id, self.category_id, self.discipline_id, self.report_label_license_check_id
 		
-	def participant_key( self, p ):
-		return p.license_holder_id, p.category_id, p.competition.discipline_id, p.competition.report_label_license_check_id
-	
 	@staticmethod
 	def refresh():
+		def participant_key( p ):
+			return p.license_holder_id, p.category_id, p.competition.discipline_id, p.competition.report_label_license_check_id
+	
 		year_cur = datetime.datetime.now().year
 		LicenseCheckState.objects.filter( check_date__lt=datetime.date(year_cur, 1, 1) ).delete()
 		
@@ -5473,7 +5473,7 @@ class LicenseCheckState(models.Model):
 			).defer('signature',
 			).select_related('competition','category','competition__discipline','competition__report_label_license_check',
 			).order_by('-competition__start_date'):
-			key = self.participant_key( p )
+			key = participant_key( p )
 			if key not in csd:
 				to_add.append( LicenseCheckState(
 					license_holder=p.license_holder,
