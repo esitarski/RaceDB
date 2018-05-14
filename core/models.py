@@ -1089,15 +1089,15 @@ class Competition(models.Model):
 		return sorted( set(categories_remaining), key=lambda c: c.sequence )
 		
 	def is_category_conflict( self, categories ):
+		if not isinstance(categories, set):
+			categories = set(categories)
 		if len(categories) <= 1:
 			return False
+		# Check if the set of categories would cause racing in the same event simultaneously in different waves.
 		for e in self.get_events():
-			event_categories = set( e.get_categories_with_wave() )
-			for a in categories:
-				if a in event_categories:
-					for b in categories:
-						if a != b and b in event_categories:
-							return True
+			compete_categories = categories & set( e.get_categories_with_wave() )
+			if len(compete_categories) > 1:
+				return True
 		return False
 	
 	@transaction.atomic
@@ -1861,6 +1861,40 @@ class WaveBase( models.Model ):
 	
 	def get_participants( self ):
 		return self.get_participants_unsorted().select_related('category', 'license_holder').order_by('bib')
+		
+	def get_participants_within_max( self ):
+		if not self.max_participants or self.max_participants < 0:
+			return self.get_participants()
+		with transaction.atomic():
+			count = self.get_participant_count()
+			if count <= self.max_participants:
+				return self.get_participants()
+			participants = list(self.get_participants_unsorted().defer('signature').order_by('registration_timestamp','bib')[:self.max_participants])
+			participants.sort( key=lambda p: (p.bib or 999999) )
+			return participants		
+		
+	def get_particpants_standby( self ):
+		if not self.max_participants or self.max_participants < 0:
+			return []
+		with transaction.atomic():
+			count = self.get_participant_count()
+			if count <= self.max_participants:
+				return []
+			standby = list(self.get_participants_unsorted().defer('signature').order_by('-registration_timestamp','-bib')[:self.max_participants-count])
+			standby.reverse()
+			return standby
+		
+	def get_standby_rank( self, participant ):
+		standby = self.get_particpants_standby()
+		for rank, p in enumerate(standby,1):
+			if participant.registration_timestamp < p.registration_timestamp:
+				break
+			if participant.id == p.id:
+				return rank, len(standby)
+		return 0, len(standby)
+		
+	def is_standby( self, participant ):
+		return self.get_standby_rank(participant)[0] != 0
 		
 	def get_num_nationalities( self ):
 		return get_num_nationalities( self.get_participants_unsorted() )
@@ -3450,21 +3484,7 @@ class Participant(models.Model):
 				not self.competition.report_label_license_check or
 				not self.is_license_check_required()
 			):
-			return True
-		
-		# Check if the license has been checked this year in competitions matching the report_label_license_check.
-		if Participant.objects.filter(
-					license_holder__id=self.license_holder_id,
-					category__id=self.category_id,
-					license_checked=True,
-					competition__in=Competition.objects.filter(
-						start_date__gte=datetime.date(self.competition.start_date.year,1,1),
-						report_label_license_check=self.competition.report_label_license_check,
-					),
-				).exists():
-			return True
-		
-		# Check if the license check has been cached.
+			return True			
 		return LicenseCheckState.check_participant( self )
 	
 	def enforce_tag_constraints( self ):
@@ -3764,6 +3784,16 @@ class Participant(models.Model):
 					# Integrity error is expected if this participant is already added.
 					continue
 				self.add_to_default_optional_events()
+	
+	def get_waves_on_standby( self ):
+		if not self.category:
+			return []
+		q = Q(event__competition=self.competition, max_participants__is_null=False, max_participants__gt=0, categories=self.category)
+		waves = (
+			[w for w in Wave.objects.filter(q) if w.is_participating(self)] +
+			[w for w in WaveTT.objects.filter(q) if w.is_participating(self)]
+		)
+		return [w for w in waves if w.get_participant_count() > w.max_participants]
 	
 	def init_default_values( self ):
 		pdv = ParticipantDefaultValues( self.competition )
@@ -5361,18 +5391,59 @@ class CompetitionCategoryOption(models.Model):
 class LicenseCheckState(models.Model):
 	license_holder = models.ForeignKey( LicenseHolder, db_index=True )
 	category = models.ForeignKey( Category, db_index=True )
+	discipline = models.ForeignKey( Discipline, db_index=True, default=1 )
 	report_label_license_check = models.ForeignKey( ReportLabel, db_index=True )
 	check_date = models.DateField( db_index=True )
 	
 	@staticmethod
 	def check_participant( participant ):
-		return LicenseCheckState.objects.filter(
+		q = Participant.objects.filter(
 			license_holder__id=participant.license_holder_id,
 			category__id=participant.category_id,
+			license_checked=True,
+			competition__discipline__id=participant.competition.discipline.id,
+			competition__start_date__gte=datetime.date(participant.competition.start_date.year,1,1),
+			competition__start_date__lte=participant.competition.start_date,
+			competition__report_label_license_check=participant.competition.report_label_license_check,
+		)
+		if q.exists():
+			return True
+		q = LicenseCheckState.objects.filter(
+			license_holder__id=participant.license_holder_id,
+			category__id=participant.category_id,
+			discipline__id=participant.competition.discipline.id,
 			report_label_license_check=participant.competition.report_label_license_check,
 			check_date__gte=datetime.date(participant.competition.start_date.year,1,1),
-		).exists()
+			check_date__lte=participant.competition.start_date,
+		)
+		return q.exists()
 
+	@staticmethod
+	def uncheck_participant( participant ):
+		LicenseCheckState.objects.filter(
+			license_holder__id=participant.license_holder_id,
+			category__id=participant.category_id,
+			discipline__id=participant.competition.discipline_id,
+			report_label_license_check=participant.competition.report_label_license_check,
+			check_date__gte=datetime.date(participant.competition.start_date.year,1,1),
+			check_date__lte=participant.competition.start_date,
+		).delete()
+		Participant.objects.filter(
+			license_holder__id=participant.license_holder_id,
+			competition__discipline__id=participant.competition.discipline_id,
+			category__id=participant.category_id,
+			license_checked=True,
+			competition__start_date__gte=datetime.date(participant.competition.start_date.year,1,1),
+			competition__start_date__lte=participant.competition.start_date,
+			competition__report_label_license_check=participant.competition.report_label_license_check,
+		).update( license_checked=False )
+	
+	def key( self ):
+		return self.license_holder_id, self.category_id, self.discipline_id, self.report_label_license_check_id
+		
+	def participant_key( self, p ):
+		return p.license_holder_id, p.category_id, p.competition.discipline_id, p.competition.report_label_license_check_id
+	
 	@staticmethod
 	def refresh():
 		year_cur = datetime.datetime.now().year
@@ -5381,7 +5452,7 @@ class LicenseCheckState(models.Model):
 		to_delete = []
 		csd = {}
 		for cs in LicenseCheckState.objects.all().order_by('-check_date'):
-			key = (cs.license_holder_id, cs.category_id, cs.report_label_license_check_id)
+			key = cs.key()
 			if key not in csd:
 				csd[key] = cs.check_date
 			else:
@@ -5397,29 +5468,34 @@ class LicenseCheckState(models.Model):
 		for p in Participant.objects.filter(
 				license_checked=True, category__isnull=False,
 				competition__report_label_license_check__isnull=False,
-				competition__start_date__gte=datetime.date(year_cur,1,1)
-			).defer('signature').order_by('-competition__start_date'):
-			key = (p.license_holder_id, p.category_id, p.competition.report_label_license_check_id)
+				competition__start_date__gte=datetime.date(year_cur,1,1),
+				competition__start_date__lte=datetime.date.today(),
+			).defer('signature',
+			).select_related('competition','category','competition__discipline','competition__report_label_license_check',
+			).order_by('-competition__start_date'):
+			key = self.participant_key( p )
 			if key not in csd:
 				to_add.append( LicenseCheckState(
 					license_holder=p.license_holder,
 					category=p.category,
+					discipline=p.competition.discipline,
 					report_label_license_check=p.competition.report_label_license_check,
 					check_date=p.competition.start_date )
 				)
 				csd[key] = p.competition.start_date
 			elif csd[key] < p.competition.start_date:
-				to_update[key] =  p.competition.start_date
+				to_update[key] = p.competition.start_date
 				csd[key] = p.competition.start_date
 		
 		# Update existing records to the most recent check date.
 		to_update = [(k,v) for k,v in to_update.iteritems()]
 		while to_update:
 			with transaction.atomic():
-				for (license_holder_id, category_id, report_label_license_check_id), d in to_update[-256:]:
+				for (license_holder_id, category_id, discipline_id, report_label_license_check_id), d in to_update[-256:]:
 					LicenseCheckState.objects.filter(
 						license_holder__id=license_holder_id,
 						category__id = category_id,
+						discipline__id = discipline_id,
 						report_label_license_check__id=report_label_license_check_id ).update(check_date=d)
 			del to_update[-256:]
 			

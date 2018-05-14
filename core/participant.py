@@ -700,20 +700,25 @@ def ParticipantCategoryChange( request, participantId ):
 def ParticipantCategorySelect( request, participantId, categoryId ):
 	participant = get_participant( participantId )
 	competition = participant.competition
-	if int(categoryId):
-		category = get_object_or_404( Category, pk=categoryId )
-	else:
-		category = None
-	
-	categories = set()
-	for p in Participant.objects.filter(competition=competition, license_holder=participant.license_holder):
-		if p != participant and participant.category:
-			categories.add( participant.category )
-	if competition.is_category_conflict(categories):
-		has_error, conflict_explanation, conflict_participant = True, _('Cannot assign to another Category that already exists in an Event.'), None
-		return render( request, 'participant_integrity_error.html', locals() )
+	category = get_object_or_404( Category, pk=categoryId ) if int(categoryId) else None
 	
 	category_changed = (participant.category != category)
+	if category and category_changed:
+		categories = set( p.category
+			for p in Participant.objects.filter(
+				competition=competition, license_holder=participant.license_holder).exclude(
+				id=participant.id, category__isnull=True).select_related('category').defer('signature')
+		)
+		if category in categories:
+			has_error, conflict_explanation, conflict_participant = True, _('LicenseHolde is already participating in this Category.'), None
+			return render( request, 'participant_integrity_error.html', locals() )
+			
+		categories.add( category )
+	
+		if competition.is_category_conflict(categories):
+			has_error, conflict_explanation, conflict_participant = True, _('Cannot assign to another Category that already exists in an Event.'), None
+			return render( request, 'participant_integrity_error.html', locals() )
+	
 	participant.category = category
 	if category and participant.role != Participant.Competitor:
 		participant.role = Participant.Competitor
@@ -721,7 +726,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 	participant.update_bib_new_category()
 	
 	if category_changed:
-		participant.licensed_checked = False
+		participant.license_checked = False
 	
 	try:
 		participant.auto_confirm().save()
@@ -765,6 +770,8 @@ def ParticipantLicenseCheckChange( request, participantId ):
 def ParticipantLicenseCheckSelect( request, participantId, status ):
 	participant = get_participant( participantId )
 	participant.license_checked = bool(int(status))
+	if not participant.license_checked:
+		LicenseCheckState.uncheck_participant( participant )
 	participant.auto_confirm().save()
 	return HttpResponseRedirect(getContext(request,'pop2Url'))
 	
