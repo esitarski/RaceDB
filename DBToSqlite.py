@@ -78,7 +78,7 @@ def switch_configuration( to_database ):
 with open(DatabaseConfigFName, 'r') as fp:
 	database_config = fp.read()
 	
-def hande_call( args ):
+def handle_call( args ):
 	try:
 		check_call( args )
 	except:
