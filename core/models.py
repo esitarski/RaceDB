@@ -911,7 +911,8 @@ class Competition(models.Model):
 		return self.reMatchLeadingZeros.sub(' ', s).strip()
 	
 	def is_finished( self, dNow=None ):
-		dNow = dNow or timezone.now().date()
+		if not dNow:
+			dNow = datetime.date.today()
 		return self.start_date + datetime.timedelta(days=(self.number_of_days or 1)-1) < dNow
 	
 	@property
@@ -1091,14 +1092,14 @@ class Competition(models.Model):
 	def is_category_conflict( self, categories ):
 		if not isinstance(categories, set):
 			categories = set(categories)
-		if len(categories) <= 1:
-			return False
-		# Check if the set of categories would cause racing in the same event simultaneously in different waves.
-		for e in self.get_events():
-			compete_categories = categories & set( e.get_categories_with_wave() )
-			if len(compete_categories) > 1:
-				return True
-		return False
+		if len(categories) > 1:
+			# Check if the set of categories would cause racing in the same event simultaneously in different waves.
+			for e in self.get_events():
+				event_categories = e.get_categories_with_wave()
+				compete_categories = categories & set( event_categories )
+				if len(compete_categories) > 1:
+					return True, e, event_categories
+		return False, None, None
 	
 	@transaction.atomic
 	def auto_generate_missing_tags( self ):

@@ -20,17 +20,35 @@
 </table>
 {% endwith %}
 
+{% if conflict_participant %}
 <h2>{% trans "Conflict" %}</h2>
 {% with p=conflict_participant %}
 <table class="table table-hover table-condensed">
 	<tr><td>{% trans "Name" %}</td><td><strong>{{p.license_holder.full_name}}</strong></td></tr>
-	<tr><td>{% trans "Category" %}</td><td><strong>{{p.category.code}}</strong></td></tr>
+	<tr><td>{% trans "Category" %}</td><td><strong>{{p.category.code_gender}}</strong></td></tr>
 	<tr><td>{% trans "Bib" %}</td><td><strong>{{p.bib}}</strong></td></tr>
 	{% if competition.using_tags %}
 		<tr><td>{% trans "Tag"%}</td><td><strong>{{p.get_tag_str}}</strong></td></tr>
 	{% endif %}
 </table>
 {% endwith %}
+{% endif %}
+
+{% if is_category_conflict %}
+<h2>{% trans "Category Conflict" %}</h2>
+<p>
+Cannot assign to Category {{category.code_gender}}.
+<br/>
+This License Holder cannot be simultaneously registered in categories:
+<ul>{% for c in categories %}<li>{{c.code_gender}}</li>{% endfor %}</ul>
+<br/>
+Because event <strong>{{category_conflict_event.name}} ({{category_conflict_event.date_time}})</strong> has Categories:
+<ul>{% for c in category_conflict_categories %}<li>{{c.code_gender}}</li>{% endfor %}</ul>
+<br/>
+A License Holder cannot compete in the same event in multple categories at the same time.
+</p>
+{% endif %}
+
 {% endspaceless %}
 
 <hr/>

@@ -1059,7 +1059,7 @@ def CompetitionsDisplay( request ):
 			competitions = applyFilter( search_fields['search_text'], competitions, Competition.get_search_text )
 	else:	
 		# If not super user, only show the competitions for today and after.
-		dNow = timezone.now().date()
+		dNow = datetime.date.today()
 		competitions = competitions.filter( start_date__gte = dNow - datetime.timedelta(days=120) )
 		competitions = [c for c in competitions if not c.is_finished(dNow)]
 	

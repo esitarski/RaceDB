@@ -707,16 +707,20 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 		categories = set( p.category
 			for p in Participant.objects.filter(
 				competition=competition, license_holder=participant.license_holder).exclude(
-				id=participant.id, category__isnull=True).select_related('category').defer('signature')
+				category__isnull=True).select_related('category').defer('signature')
 		)
 		if category in categories:
-			has_error, conflict_explanation, conflict_participant = True, _('LicenseHolde is already participating in this Category.'), None
+			has_error, conflict_explanation, conflict_participant = True, _('LicenseHolder is already participating in this Category.'), None
 			return render( request, 'participant_integrity_error.html', locals() )
-			
+		
+		categories.discard( participant.category )
 		categories.add( category )
 	
-		if competition.is_category_conflict(categories):
+		is_category_conflict, category_conflict_event, category_conflict_categories = competition.is_category_conflict(categories)
+		if is_category_conflict:
 			has_error, conflict_explanation, conflict_participant = True, _('Cannot assign to another Category that already exists in an Event.'), None
+			categories = sorted(categories, key=lambda c: c.sequence)
+			category_conflict_categories = sorted(category_conflict_categories, key=lambda c: c.sequence)
 			return render( request, 'participant_integrity_error.html', locals() )
 	
 	participant.category = category
