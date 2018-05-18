@@ -464,9 +464,12 @@ def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId,
 
 @access_validation()
 def ParticipantEdit( request, participantId ):
-	participant = get_participant( participantId )
+	try:
+		participant = Participant.objects.get( pk=participantId )
+	except:
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))		
 	participant.enforce_tag_constraints()
-	
+
 	system_info = SystemInfo.get_singleton()
 	add_multiple_categories = request.user.is_superuser or SystemInfo.get_singleton().reg_allow_add_multiple_categories
 	
@@ -501,6 +504,7 @@ def ParticipantRemove( request, participantId ):
 	
 @access_validation()
 def ParticipantDoDelete( request, participantId ):
+	
 	participant = get_participant( participantId )
 	participant.delete()
 	return HttpResponseRedirect( getContext(request,'cancelUrl') )

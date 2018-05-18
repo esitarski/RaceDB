@@ -69,6 +69,7 @@
 </style>
 <h3 class="visible-print">{% trans "Race Voucher" %}</h3>
 <hr class="visible-print" />
+{% if not isEdit %}<h2>{% trans "Participant Delete" %}</h2><hr/>{% endif %}
 {% with p=participant h=participant.license_holder c=participant.competition edit_btn_style="btn btn-sm btn-success hidden-print"%}
 <div id="header-status"><h2><span id="header-status-text"></span><strong>{{c.name}}</strong>: {{c.date_range_year_str}}</h2></div>
 {% spaceless %}
@@ -494,6 +495,8 @@
 			{% endif %}
 		{% endif %}
 		<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Voucher" %}</button>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<a class="btn btn-warning hidden-print" href="./ParticipantRemove/{{p.id}}/">{% trans "Delete" %}</a>
 	{% else %}
 		<a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 		<a class="btn btn-warning hidden-print" href="{{cancelUrl}}ParticipantDoDelete/{{p.id}}/">{% trans "OK" %}</a>
