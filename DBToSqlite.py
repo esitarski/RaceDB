@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import fnmatch
 import shutil
 import datetime
@@ -15,6 +16,20 @@ DatabaseConfigFName = os.path.join(RaceDBDir, 'DatabaseConfig.py')
 DatabaseConfigFNameSave = os.path.splitext(DatabaseConfigFName)[0] + '.py.Save'
 JsonFName = 'RaceDB.json'
 Sqlite3FName = 'RaceDB.sqlite3'
+
+def json_cleanse( fname ):
+	with open(fname, 'r') as pf:
+		rows = json.load( pf )
+		
+	for r in rows:
+		fields = r.get('fields',{})
+		for f in list(fields.iterkeys()):
+			v = fields[f]
+			if isinstance(v, unicode):
+				fields[f] = v.replace(u'\u200b', '')
+				
+	with open(fname, 'w') as pf:
+		json.dump( rows, pf )
 
 def format_time( secs ):
 	t = '{:.2f}'.format( secs )
@@ -92,6 +107,10 @@ tt = TimeTracker()
 tt.start( 'extracting json data' )
 sys.stderr.write( '**** Extracting database data to {}...\n'.format(JsonFName) )
 handle_call( ['python', 'manage.py', 'dumpdata', 'core', '--output', JsonFName] )
+
+tt.start( 'cleansing json data' )
+sys.stderr.write( '**** Cleansing Json File...\n' )
+json_cleanse( JsonFName )
 
 sys.stderr.write( '**** Initializing {}...\n'.format(Sqlite3FName) )
 tt.start( 'initializing sqlite3 database' )
