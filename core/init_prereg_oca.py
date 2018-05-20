@@ -215,12 +215,12 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 	ws = None
 	for cur_sheet_name in wb.sheet_names():
 		if cur_sheet_name == sheet_name or sheet_name is None:
-			safe_print( 'Reading sheet: {}'.format(cur_sheet_name) )
+			safe_print( u'Reading sheet: {}'.format(cur_sheet_name) )
 			ws = wb.sheet_by_name(cur_sheet_name)
 			break
 	
 	if not ws:
-		safe_print( 'Cannot find sheet "{}"'.format(sheet_name) )
+		safe_print( u'Cannot find sheet "{}"'.format(sheet_name) )
 		return
 		
 	num_rows = ws.nrows
@@ -231,7 +231,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			# Get the header fields from the first row.
 			fields = [html_parser.unescape(unicode(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
 			fields = ['f{}'.format(i) if not f else f.strip() for i, f in enumerate(fields)]
-			safe_print( '\n'.join( fields ) )
+			safe_print( u'\n'.join( fields ) )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
@@ -242,4 +242,4 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			
 	process_ur_records( ur_records )
 	
-	safe_print( 'Initialization in: ', datetime.datetime.now() - tstart )
+	safe_print( u'Initialization in: ', datetime.datetime.now() - tstart )

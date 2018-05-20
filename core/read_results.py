@@ -24,18 +24,18 @@ def get_event_from_payload( payload ):
 	
 	events = EventClass.objects.filter(date_time=raceScheduledStart)
 	if not events.exists():
-		safe_print( "Cannot find any Events starting at {}".format( raceScheduledStart.strftime('%Y-%m-%d %H:%M %z') ) )
+		safe_print( u"Cannot find any Events starting at {}".format( raceScheduledStart.strftime('%Y-%m-%d %H:%M %z') ) )
 	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
 		raceNameTextCur = u'-'.join( [event.competition.name, event.name] )
-		safe_print( 'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
+		safe_print( u'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
 		if raceNameText == raceNameTextCur:
 			return event
 	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
 		for wave in event.get_wave_set().all():
 			raceNameTextCur = u'-'.join( [event.competition.name, wave.name] )
-			safe_print( 'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
+			safe_print( u'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
 			if raceNameText == raceNameTextCur:
 				return event	
 	

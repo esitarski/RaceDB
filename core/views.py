@@ -1356,7 +1356,7 @@ def UCIExcelDownload( request, eventId, eventType, startList=1 ):
 			utils.cleanFileName(event.name),
 			utils.cleanFileName(category.code_gender),
 		)
-		safe_print( 'adding', fname, '...' )
+		safe_print( u'adding', fname, '...' )
 		zip_handler.writestr( fname, uci_excel(event, category, startList) )
 
 	zip_handler.close()
@@ -1544,9 +1544,9 @@ def LicenseHolderCloudDownload( request ):
 	if not authorization.validate_secret_request(request):
 		return HttpResponseForbidden()
 	
-	safe_print( 'LicenseHolderCloudDownload: processing...' )
+	safe_print( u'LicenseHolderCloudDownload: processing...' )
 	response = handle_export_license_holders()
-	safe_print( 'LicenseHolderCloudDownload: response returned.' )
+	safe_print( u'LicenseHolderCloudDownload: response returned.' )
 	response['Authorization'] = authorization.get_secret_authorization()
 	return response
 
@@ -1555,7 +1555,7 @@ def LicenseHolderCloudDownload( request ):
 def LicenseHoldersCloudImport( request, confirmed=False ):
 	if confirmed:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'LicenseHolderCloudDownload' )
-		safe_print( 'LicenseHoldersCloudImport: sending request to:', url )
+		safe_print( u'LicenseHoldersCloudImport: sending request to:', url )
 		
 		response = requests.get( url, stream=True, headers={'Authorization':authorization.get_secret_authorization()} )
 		
@@ -1563,11 +1563,11 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 		try:
 			response.raise_for_status()
 		except Exception as e:
-			safe_print( 'LicenseHoldersCloudImport: ', e )
+			safe_print( u'LicenseHoldersCloudImport: ', e )
 			errors.append( e )
 		
 		if not errors:
-			safe_print( 'LicenseHoldersCloudImport: received response from:', url )
+			safe_print( u'LicenseHoldersCloudImport: received response from:', url )
 			try:
 				# Download the content and save it into a temporary file.
 				gzip_stream = tempfile.TemporaryFile()
@@ -1578,7 +1578,7 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 				gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode='rb' )
 				license_holder_import( gzip_handler )
 			except Exception as e:
-				safe_print( 'LicenseHoldersCloudImport: ', e )
+				safe_print( u'LicenseHoldersCloudImport: ', e )
 				errors.append( e )
 		
 		return render( request, 'license_holder_cloud_import.html', locals() )
@@ -1616,9 +1616,9 @@ def CompetitionCloudExport( request, competitionId ):
 		return HttpResponseForbidden()
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
-	safe_print( 'CompetitionCloudExport: processing Competition id:', competitionId )
+	safe_print( u'CompetitionCloudExport: processing Competition id:', competitionId )
 	response = handle_export_competition( competition )
-	safe_print( 'CompetitionCloudExport: processing completed.' )
+	safe_print( u'CompetitionCloudExport: processing completed.' )
 	return response
 
 class CompetitionCloudForm( Form ):
@@ -1682,7 +1682,7 @@ def CompetitionCloudImportList( request ):
 			return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	else:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudQuery' )
-		safe_print( 'CompetitionCloudImportList: sending request:', url )
+		safe_print( u'CompetitionCloudImportList: sending request:', url )
 		response = requests.get( url, headers={'Authorization':authorization.get_secret_authorization()} )
 		
 		cloud_competitions = response.json()
@@ -1967,10 +1967,10 @@ def UploadCrossMgr( request ):
 	else:
 		response['errors'].append( u'Request must be of type POST with json payload.' )
 	
-	safe_print( 'UploadCrossMgr: processing...' )
+	safe_print( u'UploadCrossMgr: processing...' )
 	if payload:
 		response = read_results.read_results_crossmgr( payload )
-	safe_print( 'UploadCrossMgr: Done.' )
+	safe_print( u'UploadCrossMgr: Done.' )
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------
@@ -2979,7 +2979,7 @@ def CompetitionImport( request ):
 	
 @csrf_exempt
 def CompetitionCloudUpload( request ):
-	safe_print( 'CompetitionCloudUpload: processing...' )
+	safe_print( u'CompetitionCloudUpload: processing...' )
 	response = {'errors':[], 'warnings':[], 'message':''}
 	if request.method == "POST":
 		if not authorization.validate_secret_request( request ):
@@ -2992,12 +2992,12 @@ def CompetitionCloudUpload( request ):
 				response['errors'].append( 'Competition Upload Error: {}'.format(e) )
 	else:
 		response['errors'].append( u'Request must be of type POST with gzip json payload.' )
-	safe_print( 'CompetitionCloudUpload: done.' )
+	safe_print( u'CompetitionCloudUpload: done.' )
 	safe_print( response['message'] )
 	for e in response['errors']:
-		safe_print( 'Error:', e )
+		safe_print( u'Error:', e )
 	for w in response['warnings']:
-		safe_print( 'Error:', w )
+		safe_print( u'Error:', w )
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------

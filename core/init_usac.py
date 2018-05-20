@@ -82,7 +82,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 			try:
 				date_of_birth	= date_from_str( ur.birthdate )
 			except Exception as e:
-				safe_print( 'Line {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.birthdate, ur, e ) )
+				safe_print( u'Line {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.birthdate, ur, e ) )
 				continue
 			
 			attributes = {

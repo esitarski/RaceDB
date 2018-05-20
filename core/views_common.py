@@ -13,7 +13,7 @@ from models import *
 try:
 	locale.setlocale(locale.LC_ALL, "")
 except Exception as e:
-	safe_print( 'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e) )
+	safe_print( u'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e) )
 
 from django.db.models import Q
 from django.db import transaction, IntegrityError

@@ -91,11 +91,11 @@ def init_ccn( fname = fnameDefault ):
 			try:
 				date_of_birth	= date_from_value( ur.get('DOB', '') )
 			except Exception as e:
-				safe_print( 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DOB',''), ur, e ) )
+				safe_print( u'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DOB',''), ur, e ) )
 				continue
 				
 			if not ur.get('License Numbers',''):
-				safe_print( 'Row {}: Missing License Code '.format(i) )
+				safe_print( u'Row {}: Missing License Code '.format(i) )
 				continue
 			
 			attributes = {
@@ -158,7 +158,7 @@ def init_ccn( fname = fnameDefault ):
 			break
 	
 	if not ws:
-		safe_print( 'Cannot find sheet ending with "{}"'.format(suffix) )
+		safe_print( u'Cannot find sheet ending with "{}"'.format(suffix) )
 		return
 		
 	num_rows = ws.nrows

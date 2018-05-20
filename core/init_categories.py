@@ -250,7 +250,7 @@ def init_categories():
 					code, gender, description = cat.split( '\t' )
 				except ValueError:
 					continue
-				safe_print( '    ', code, gender, description )
+				safe_print( u'    ', code, gender, description )
 				c = Category(	format = rf,
 								code = code,
 								gender = ['Men','Women','Open'].index(gender),

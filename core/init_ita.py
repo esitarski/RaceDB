@@ -56,11 +56,11 @@ def init_ccn( fname ):
 			try:
 				date_of_birth	= date_from_value( ur.get('DateBirth', '') )
 			except Exception as e:
-				safe_print( 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e ) )
+				safe_print( u'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e ) )
 				continue
 				
 			if not ur.get('License',''):
-				safe_print( 'Row {}: Missing License '.format(i) )
+				safe_print( u'Row {}: Missing License '.format(i) )
 				continue
 			
 			attributes = {
@@ -107,12 +107,12 @@ def init_ccn( fname ):
 	
 	ws = None
 	for sheet_name in wb.sheet_names():
-		safe_print( 'Reading sheet: {}'.format(sheet_name) )
+		safe_print( u'Reading sheet: {}'.format(sheet_name) )
 		ws = wb.sheet_by_name(sheet_name)
 		break
 	
 	if not ws:
-		safe_print( 'Cannot find sheet.' )
+		safe_print( u'Cannot find sheet.' )
 		return
 		
 	num_rows = ws.nrows
@@ -133,4 +133,4 @@ def init_ccn( fname ):
 			
 	process_ur_records( ur_records )
 	
-	safe_print( 'Initialization in: ', datetime.datetime.now() - tstart )
+	safe_print( u'Initialization in: ', datetime.datetime.now() - tstart )
