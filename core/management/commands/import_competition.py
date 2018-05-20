@@ -39,11 +39,11 @@ class Command(BaseCommand):
 		)
 					
 	def handle(self, *args, **options):
-		print 'Performing Competition Import.'
+		safe_print( 'Performing Competition Import.' )
 				
 		if not options['competition_file']:
 			# FIXLATER.  Support pipes.
-			print 'Error: Missing Competition file.'
+			safe_print( 'Error: Missing Competition file.' )
 			return						
 		
 		name, start_date = None, None
@@ -51,18 +51,18 @@ class Command(BaseCommand):
 			try:
 				name, d = options['name_date'].split('+')
 			except Exception as e:
-				print 'Error: name_date must be of the form "CompetitionName+YYYY-MM-DD"'
+				safe_print( 'Error: name_date must be of the form "CompetitionName+YYYY-MM-DD"' )
 				return
 			if not name:
-				print 'Error: name must note be blank.'
+				safe_print( 'Error: name must note be blank.' )
 				return
 			if not re.match( r'^\d\d\d\d-\d\d-\d\d$', d ):
-				print 'Error: date must be of the form "YYYY-MM-DD"'
+				safe_print( 'Error: date must be of the form "YYYY-MM-DD"' )
 				return
 			try:
 				start_date = datetime.date( *[int(f) for f in d.split('-')] )
 			except Exception as e:
-				print 'Error: date must be valid ({})'.format(e)
+				safe_print( 'Error: date must be valid ({})'.format(e) )
 				return
 		
 		try:
@@ -71,13 +71,13 @@ class Command(BaseCommand):
 			else:
 				fs = open(options['competition_file'], 'rb')
 		except Exception as e:
-			print 'Error: Cannot read Competition "{}" ({})'.format(options['competition_file'], e)
+			safe_print( 'Error: Cannot read Competition "{}" ({})'.format(options['competition_file'], e) )
 			return			
 
 		try:
 			name, start_date, pydata = get_competition_name_start_date( stream=fs, name=name, start_date=start_date )
 		except Exception as e:
-			print 'Error: Cannot read Competition "{}" ({})'.format(options['competition_file'], e)
+			safe_print( 'Error: Cannot read Competition "{}" ({})'.format(options['competition_file'], e) )
 			return			
 
 		try:
@@ -87,20 +87,20 @@ class Command(BaseCommand):
 		
 		if competition:
 			if options['replace']:
-				print 'Replacing existing Competition "{}", {}'.format(name, start_date)
+				safe_print( 'Replacing existing Competition "{}", {}'.format(name, start_date) )
 				competition.delete()
 			else:
-				print 'Error: Competition "{}", {} already exists.  To replace it,  use the "--replace" option.'.format(name, start_date)
+				safe_print( 'Error: Competition "{}", {} already exists.  To replace it,  use the "--replace" option.'.format(name, start_date) )
 				return			
 		
-		print 'Importing: "{}", {} ({} objects)'.format( name, start_date, len(pydata) )
+		safe_print( 'Importing: "{}", {} ({} objects)'.format( name, start_date, len(pydata) ) )
 		competition_import( pydata=pydata )
 		'''
 		try:
 			competition_import( pydata=pydata )
 		except Exception as e:
-			print 'Error: Cannot import Competition "{}", {} ({})'.format(name, start_date, e)
+			safe_print( 'Error: Cannot import Competition "{}", {} ({})'.format(name, start_date, e) )
 			return
 		'''
 
-		print 'Success: Imported Competition "{}", {}'.format(name, start_date)
+		safe_print( 'Success: Imported Competition "{}", {}'.format(name, start_date) )

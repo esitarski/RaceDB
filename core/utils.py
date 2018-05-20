@@ -85,8 +85,6 @@ def format_time( secs, highPrecision=False, forceHours=False ):
 	else:
 		return "{}{:02d}:{}".format(sign, minutes, secStr)
 
-
-		
 def removeDiacritic( s ):
 	'''
 	Accept a unicode string, and return a normal string (bytes in Python 3)
@@ -96,6 +94,9 @@ def removeDiacritic( s ):
 		return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore')
 	else:
 		return s
+
+def safe_print( *args ):
+	print removeDiacritic( u' '.join(unicode(a) for a in args) )
 
 def cleanExcelSheetName( s ):
 	return re.sub( '[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]

@@ -32,6 +32,7 @@ import base64
 import operator
 from django.utils.translation import ugettext_lazy as _
 import utils
+from utils import safe_print
 import random
 import itertools
 from collections import defaultdict
@@ -5531,15 +5532,15 @@ def bad_data_test():
 	LicenseHolder.objects.bulk_create([
 		LicenseHolder( **fields ),
 	] )
-	print list(LicenseHolder.objects.filter(last_name='00-TEST-LAST-NAME'))
+	safe_print( list(LicenseHolder.objects.filter(last_name='00-TEST-LAST-NAME')) )
 '''
 
 def fix_bad_category_hints():
-	print 'fix_bad_category_hints...'
+	safe_print( 'fix_bad_category_hints...' )
 	CategoryHint.objects.all().exclude(discipline__id__in=Discipline.objects.all().values_list('id',flat=True)).delete()
 
 def fix_phone_numbers():
-	print 'fix_phone_numbers...'
+	safe_print( 'fix_phone_numbers...' )
 	with BulkSave() as bs:
 		for lh in LicenseHolder.objects.filter(Q(phone__endswith='.0') | Q(emergency_contact_phone__endswith='.0')):
 			if lh.phone and lh.phone.endswith('.0'):
@@ -5553,7 +5554,7 @@ def fix_phone_numbers():
 			bs.append( t )
 	
 def fix_bad_license_codes():
-	print 'fix_bad_license_codes and emergency contacts...'
+	safe_print( 'fix_bad_license_codes and emergency contacts...' )
 	q = (
 		Q(license_code__startswith='0') | Q(existing_tag__startswith='0') | Q(existing_tag2__startswith='0') |
 		Q(emergency_contact_name='0.0') | Q(emergency_contact_phone='0')
@@ -5568,12 +5569,12 @@ def fix_bad_license_codes():
 			bs.append( p )
 
 def fix_non_unique_number_set_entries():
-	print 'fix_non_unique_number_set_entries...'
+	safe_print( 'fix_non_unique_number_set_entries...' )
 	for ns in NumberSet.objects.all():
 		ns.validate()
 
 def fix_nation_code():
-	print 'fix_nation_codes...'
+	safe_print( 'fix_nation_codes...' )
 	with BulkSave() as bs:
 		for lh in LicenseHolder.objects.filter(nation_code__exact='').exclude(uci_code__exact=''):
 			if lh.uci_code[:3].upper() in uci_country_codes_set:

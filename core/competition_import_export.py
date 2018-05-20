@@ -42,12 +42,13 @@ class processing_status( object ):
 			ave_rate = self.instance_count / ((t_cur - self.t_start).total_seconds() + 0.000001 )
 			
 			s_remaining = (self.instance_total - self.instance_count) / ave_rate
-			print '{:4.1f}%   {:7.1f} objs/sec   {:4.0f} secs  {:4.0f} est secs remaining ({})...'.format(
-				(100.0*self.instance_count)/self.instance_total,
-				rate,
-				(t_cur - self.t_start).total_seconds(),
-				s_remaining,
-				model_name,
+			safe_print( '{:4.1f}%   {:7.1f} objs/sec   {:4.0f} secs  {:4.0f} est secs remaining ({})...'.format(
+					(100.0*self.instance_count)/self.instance_total,
+					rate,
+					(t_cur - self.t_start).total_seconds(),
+					s_remaining,
+					model_name,
+				)
 			)
 			self.t_last = t_cur
 			
@@ -369,9 +370,9 @@ def competition_deserializer( object_list, **options ):
 				elif Model == Participant:
 					lh_cat = (instance.license_holder_id, instance.category_id if instance.category else None)
 					if lh_cat in existing_license_holder_category:
-						print '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.'
+						safe_print( '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.' )
 						lh = instance.license_holder
-						print removeDiacritic(u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
+						safe_print( u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
 					else:
 						existing_license_holder_category.add( lh_cat )
 						ts.save( Model, db_object, instance, pk_old )

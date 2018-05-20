@@ -1,5 +1,5 @@
 from django.db import transaction
-from models import CategoryFormat, Category
+from models import *
 from large_delete_all import large_delete_all
 
 uci_road = u'''
@@ -239,7 +239,7 @@ def init_categories():
 	large_delete_all( CategoryFormat )
 
 	for (name, description, catStr) in rfs:
-		print name, description
+		safe_print( name, description )
 		rf = CategoryFormat( name = name + ' - Reference', description = description )
 		rf.save()
 		
@@ -250,7 +250,7 @@ def init_categories():
 					code, gender, description = cat.split( '\t' )
 				except ValueError:
 					continue
-				print '    ', code, gender, description
+				safe_print( '    ', code, gender, description )
 				c = Category(	format = rf,
 								code = code,
 								gender = ['Men','Women','Open'].index(gender),

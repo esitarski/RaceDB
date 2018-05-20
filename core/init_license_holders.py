@@ -238,9 +238,7 @@ def init_license_holders():
 			
 			uci_code = nationality_code + date_of_birth.strftime( '%Y%m%d' )
 			
-			print removeDiacritic(first_name), removeDiacritic(last_name), \
-				removeDiacritic(gender), removeDiacritic(date_of_birth), removeDiacritic(nationality), \
-				removeDiacritic(uci_code), removeDiacritic(team)
+			safe_print( first_name, last_name, gender, date_of_birth, nationality, uci_code, team )
 			fields = {
 				'first_name': first_name,
 				'last_name': last_name,

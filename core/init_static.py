@@ -1,5 +1,5 @@
 from django.db import transaction
-from models import Discipline, RaceClass, NumberSet
+from models import *
 from large_delete_all import large_delete_all
 
 disciplines = [
@@ -43,6 +43,6 @@ def init_static():
 		large_delete_all( cls )
 		with transaction.atomic():
 			for i, name in enumerate(values):
-				print i, name
+				safe_print( i, name )
 				cls( name = name, sequence = i ).save()
 				

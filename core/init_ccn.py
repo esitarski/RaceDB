@@ -91,11 +91,11 @@ def init_ccn( fname = fnameDefault ):
 			try:
 				date_of_birth	= date_from_value( ur.get('DOB', '') )
 			except Exception as e:
-				print 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DOB',''), ur, e )
+				safe_print( 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DOB',''), ur, e ) )
 				continue
 				
 			if not ur.get('License Numbers',''):
-				print 'Row {}: Missing License Code '.format(i)
+				safe_print( 'Row {}: Missing License Code '.format(i) )
 				continue
 			
 			attributes = {
@@ -123,13 +123,14 @@ def init_ccn( fname = fnameDefault ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			print u'{i:>6}: {license:>8} {dob:>10} {uci_code} {last}, {first}, {city}, {state_prov}'.format(
+			safe_print( u'{i:>6}: {license:>8} {dob:>10} {uci_code} {last}, {first}, {city}, {state_prov}'.format(
 				i=i,
 				license=removeDiacritic(lh.license_code),
 				dob=lh.date_of_birth.strftime('%Y/%m/%d'),
 				uci_code=lh.uci_code,
 				last=removeDiacritic(lh.last_name), first=removeDiacritic(lh.first_name),
 				city=removeDiacritic(lh.city), state_prov=removeDiacritic(lh.state_prov) )
+			)
 			TeamHint.objects.filter( license_holder=lh ).delete()
 			
 			teams = [t.strip() for t in ur.get('Afiliates','').split(',')]
@@ -152,12 +153,12 @@ def init_ccn( fname = fnameDefault ):
 	ws = None
 	for sheet_name in wb.sheet_names():
 		if sheet_name.endswith(suffix):
-			print 'Reading sheet: {}'.format(sheet_name)
+			safe_print( 'Reading sheet: {}'.format(sheet_name) )
 			ws = wb.sheet_by_name(sheet_name)
 			break
 	
 	if not ws:
-		print 'Cannot find sheet ending with "{}"'.format(suffix)
+		safe_print( 'Cannot find sheet ending with "{}"'.format(suffix) )
 		return
 		
 	num_rows = ws.nrows
@@ -167,7 +168,7 @@ def init_ccn( fname = fnameDefault ):
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [toUnicode(f.value).strip() for f in row]
-			print u'\n'.join( fields )
+			safe_print( u'\n'.join( fields ) )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
@@ -178,4 +179,4 @@ def init_ccn( fname = fnameDefault ):
 			
 	process_ur_records( ur_records )
 	
-	print 'Initialization in: ', datetime.datetime.now() - tstart
+	safe_print( 'Initialization in: ', datetime.datetime.now() - tstart )

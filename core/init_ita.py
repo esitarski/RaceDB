@@ -60,7 +60,7 @@ def init_ccn( fname ):
 				continue
 				
 			if not ur.get('License',''):
-				print 'Row {}: Missing License '.format(i)
+				safe_print( 'Row {}: Missing License '.format(i) )
 				continue
 			
 			attributes = {
@@ -89,7 +89,7 @@ def init_ccn( fname ):
 			
 			fields = {u'i': i}
 			fields.update( attributes )
-			print removeDiacritic(
+			safe_print(
 				u'{i:>6}: {license_code:>8} {date_of_birth:%Y/%m/%d} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}, {nationality}'.format( **fields )
 			)
 			TeamHint.objects.filter( license_holder=lh ).delete()
@@ -107,12 +107,12 @@ def init_ccn( fname ):
 	
 	ws = None
 	for sheet_name in wb.sheet_names():
-		print 'Reading sheet: {}'.format(sheet_name)
+		safe_print( 'Reading sheet: {}'.format(sheet_name) )
 		ws = wb.sheet_by_name(sheet_name)
 		break
 	
 	if not ws:
-		print 'Cannot find sheet.'
+		safe_print( 'Cannot find sheet.' )
 		return
 		
 	num_rows = ws.nrows
@@ -122,7 +122,7 @@ def init_ccn( fname ):
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unicode(f.value).strip() for f in row]
-			print removeDiacritic( u'\n'.join(fields) )
+			safe_print( u'\n'.join(fields) )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )

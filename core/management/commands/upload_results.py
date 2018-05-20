@@ -2,6 +2,7 @@ import json
 
 from django.core.management.base import BaseCommand, CommandError
 from core.read_results import read_results_crossmgr
+from core.utils import safe_print
 
 class Command(BaseCommand):
 	
@@ -18,10 +19,10 @@ class Command(BaseCommand):
 			payload = json.load( fp )
 		result = read_results_crossmgr( payload )
 		if result['errors']:
-			print 'Upload FAILED.  Errors.'
+			safe_print( 'Upload FAILED.  Errors.' )
 			for e in result['errors']:
-				print '    Error:', e
+				safe_print( '    Error:', e )
 		if result['errors']:
 			print 'Upload Succeeded.'
 			for w in result['warnings']:
-				print '    Warning: ', w
+				safe_print( '    Warning: ', w )

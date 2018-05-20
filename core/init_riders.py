@@ -228,7 +228,7 @@ def init_riders():
 			date_of_birth = datetime.date( 2012 - years_old, 3, 3 )
 			license = years_old
 			
-			print utils.removeDiacritic(' '.join([first_name, last_name, team, gender, date_of_birth, license]))
+			safe_print( first_name, last_name, team, gender, date_of_birth, license )
 			r = Rider( first_name=unicode(first_name, 'iso-8859-1'), last_name=unicode(last_name, 'iso-8859-1'), team=unicode(team, 'iso-8859-1'), gender=gender, date_of_birth=date_of_birth, license=license )
 			r.save()
 
