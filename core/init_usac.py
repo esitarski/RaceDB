@@ -143,10 +143,11 @@ def init_usac( fname = fnameDefault, states = '' ):
 				except KeyError:
 					th = TeamHint( **attributes )
 					th.save()
-				print u'{} {}: {} ({})'.format( ' '*16,
-					removeDiacritic(discipline_name),
-					removeDiacritic(attributes['team'].name),
-					['Club', 'Team'][ttype]
+				safe_print( u'{} {}: {} ({})'.format( ' '*16,
+						discipline_name,
+						attributes['team'].name,
+						['Club', 'Team'][ttype]
+					)
 				)
 				th_used.add( th )
 				

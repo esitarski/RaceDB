@@ -23,6 +23,6 @@ class Command(BaseCommand):
 			for e in result['errors']:
 				safe_print( '    Error:', e )
 		if result['errors']:
-			print 'Upload Succeeded.'
+			safe_print( 'Upload Succeeded.' )
 			for w in result['warnings']:
 				safe_print( '    Warning: ', w )

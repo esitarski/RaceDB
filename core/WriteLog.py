@@ -7,7 +7,7 @@ import traceback
 import threading
 import random
 import time
-from utils import removeDiacritic
+from utils import removeDiacritic, safe_print
 from os.path import expanduser
 import threading, Queue
 
@@ -37,7 +37,7 @@ def messageWriter():
 					fp.write( ''.join(output) )
 				output = []
 			except Exception as e:
-				print e
+				safe_print( e )
 		
 		# Sleep a random duration to minimize file write collisions between multiple RaceDB instances.
 		time.sleep( 60.0 + random.random() * 60.0 * 4.0 )

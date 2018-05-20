@@ -170,7 +170,7 @@ def SeasonsPassLicenseHolderAdd( request, seasonsPassId, licenseHolderId ):
 	try:
 		SeasonsPassHolder( seasons_pass=seasons_pass, license_holder=license_holder ).save()
 	except Exception as e:
-		print e
+		safe_print( e )
 		pass
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
@@ -181,7 +181,7 @@ def SeasonsPassLicenseHolderRemove( request, seasonsPassId, licenseHolderId ):
 	try:
 		SeasonsPassHolder.objects.get( seasons_pass=seasons_pass, license_holder=license_holder ).delete()
 	except Exception as e:
-		print e
+		safe_print( e )
 		pass
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 

@@ -56,7 +56,7 @@ def init_ccn( fname ):
 			try:
 				date_of_birth	= date_from_value( ur.get('DateBirth', '') )
 			except Exception as e:
-				print 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e )
+				safe_print( 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e ) )
 				continue
 				
 			if not ur.get('License',''):
@@ -133,4 +133,4 @@ def init_ccn( fname ):
 			
 	process_ur_records( ur_records )
 	
-	print 'Initialization in: ', datetime.datetime.now() - tstart
+	safe_print( 'Initialization in: ', datetime.datetime.now() - tstart )
