@@ -19,7 +19,7 @@ JsonFName = 'RaceDB.json'
 Sqlite3FName = 'RaceDB.sqlite3'
 
 reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
-reAllSpace = re.compile(u'\s', flags=re.UNICODE)
+reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
 	if v and isinstance(v, unicode):
 		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
