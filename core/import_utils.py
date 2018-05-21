@@ -69,10 +69,20 @@ def set_attributes_changed( obj, attributes, accept_empty_values=False ):
 			setattr(obj, key, value)
 			changed.append( (key, value) )
 	return changed
+
+reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
+reAllSpace = re.compile(u'\s', flags=re.UNICODE)
+def fix_spaces( v ):
+	if v and isinstance(v, unicode):
+		v = reNoSpace.sub( u'', v )	# Replace zero space with nothing.
+		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
+		v = v.strip()
+	return v
 	
 def to_int_str( v ):
 	if v is None:
 		return None
+	fix_spaces( v )
 	try:
 		return unicode(long(v))
 	except:
@@ -92,7 +102,7 @@ def to_uci_id( v ):
 def to_str( v ):
 	if v is None:
 		return v
-	return toUnicode(v).strip()
+	return fix_spaces(toUnicode(v)).strip()
 	
 def to_phone( v ):
 	if v is None:
@@ -103,12 +113,13 @@ def to_phone( v ):
 def to_bool( v ):
 	if v is None:
 		return None
-	s = unicode(v).strip()
+	s = fix_spaces(unicode(v)).strip()
 	return s[:1] in u'YyTt1' if s else None
 
 def to_int( v ):
 	if v is None:
 		return None
+	fix_spaces( v )
 	try:
 		return int(v)
 	except:
@@ -117,6 +128,7 @@ def to_int( v ):
 def to_float( v ):
 	if v is None:
 		return None
+	fix_spaces( v )
 	try:
 		return float(v)
 	except:

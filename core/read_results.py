@@ -47,7 +47,7 @@ def read_results_crossmgr( payload ):
 
 	event = get_event_from_payload( payload )
 	if not event:
-		errors.append( 'Cannot find Event "{}", "{}"'.format(payload['raceNameText'], payload['raceScheduledStart']) )
+		errors.append( u'Cannot find Event "{}", "{}"'.format(payload['raceNameText'], payload['raceScheduledStart']) )
 		return { 'errors': errors, 'warnings': warnings }
 		
 	competition = event.competition
@@ -155,7 +155,7 @@ def read_results_crossmgr( payload ):
 			try:
 				category = bib_category[bib]
 			except KeyError:
-				warnings.append( 'Cannot find category for bib={}'.format(bib) )
+				warnings.append( u'Cannot find category for bib={}'.format(bib) )
 				continue
 				
 			participant = None
@@ -170,7 +170,7 @@ def read_results_crossmgr( payload ):
 				).first()
 			
 			if not participant:
-				warnings.append( 'Cannot find Participant bib={} name="{}, {}", category="{}"'.format(
+				warnings.append( u'Cannot find Participant bib={} name="{}, {}", category="{}"'.format(
 					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name()) )
 				continue
 			
@@ -223,7 +223,7 @@ def read_results_crossmgr( payload ):
 					if any( len(objs) >= 999 for objs in rtcs_cache.itervalues() ):
 						flush_cache()
 			except Exception as e:
-				warnings.append( 'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(
+				warnings.append( u'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(
 					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name(), e) )
 				continue
 
