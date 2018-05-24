@@ -2724,7 +2724,7 @@ class LicenseHolder(models.Model):
 		return None
 		
 	def get_teams_for_disciplines( self, disciplines, teamHintOnly=False ):
-		return [self.get_team_for_discipline(d, teamHintOnly) for d in disciplines]
+		return [self.get_team_for_discipline(d, teamHintOnly) for d in disciplines] if disciplines else []
 		
 	def get_teams_for_disciplines_html( self, disciplines, teamHintOnly=False ):
 		r = []

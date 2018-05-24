@@ -4,6 +4,7 @@ import datetime
 import utils
 
 from django.utils.translation import ugettext_lazy as _
+from django.db.models.aggregates import Max
 
 from models import *
 
@@ -52,7 +53,8 @@ def get_license_holder_excel( q = None ):
 	
 	ws = wb.add_worksheet('LicenseHolders')
 	
-	disciplines = list( Discipline.objects.filter(id__in=Competition.objects.all().values_list('discipline',flat=True).distinct() ) )
+	#disciplines = list( Discipline.objects.filter(id__in=Competition.objects.all().values_list('discipline',flat=True).distinct() ) )
+	disciplines = []
 	local_headers = list(data_headers) + [u'{} Team'.format(d.name) for d in disciplines]
 	
 	row = write_row_data( ws, 0, local_headers, title_format )
