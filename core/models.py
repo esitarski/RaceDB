@@ -2084,8 +2084,8 @@ class WaveCallup( models.Model ):
 	
 #-------------------------------------------------------------------------------------
 class Team(models.Model):
-	name = models.CharField( max_length = 64, db_index = True, verbose_name = _('Name') )
-	team_code = models.CharField( max_length = 16, blank = True, db_index = True, verbose_name = _('Team Code') )
+	name = models.CharField( max_length=64, db_index = True, verbose_name = _('Name') )
+	team_code = models.CharField( max_length=16, blank = True, db_index = True, verbose_name = _('Team Code') )
 	TYPE_CHOICES = (
 		(0, _('Club')),
 		(1, _('Regional')),

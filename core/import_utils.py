@@ -74,7 +74,7 @@ reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
 reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
 	if v and isinstance(v, unicode):
-		v = reNoSpace.sub( u'', v )	# Replace zero space with nothing.
+		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
 		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
 		v = v.strip()
 	return v
