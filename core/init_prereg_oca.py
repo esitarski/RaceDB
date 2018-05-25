@@ -8,6 +8,7 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q
 
 from import_utils import *
+from large_delete_all import large_delete_all
 
 datemode = None
 
@@ -53,12 +54,6 @@ def set_attributes( obj, attributes ):
 			changed = True
 	return changed
 	
-def large_delete_all( Object ):
-	while Object.objects.count():
-		with transaction.atomic():
-			ids = Object.objects.values_list('pk', flat=True)[:999]
-			Object.objects.filter(pk__in = ids).delete()
-
 def to_int_str( v ):
 	try:
 		return unicode(long(v))

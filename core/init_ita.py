@@ -10,6 +10,7 @@ from utils import toUnicode, removeDiacritic, gender_from_str
 import import_utils
 from import_utils import *
 from django.utils import timezone
+from large_delete_all import large_delete_all
 
 def set_attributes( obj, attributes ):
 	changed = False
@@ -19,12 +20,6 @@ def set_attributes( obj, attributes ):
 			changed = True
 	return changed
 	
-def large_delete_all( Object ):
-	while Object.objects.count():
-		with transaction.atomic():
-			ids = Object.objects.values_list('pk', flat=True)[:999]
-			Object.objects.filter(pk__in = ids).delete()
-
 def to_int_str( v ):
 	try:
 		return unicode(long(v))

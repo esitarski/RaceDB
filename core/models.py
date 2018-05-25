@@ -4367,10 +4367,7 @@ class EventTT( Event ):
 	group_size_gap = DurationField.DurationField( verbose_name=_('Group Size Gap'), default = 5*60 )
 	
 	def create_initial_seeding( self ):
-		while EntryTT.objects.filter(event=self).exists():
-			with transaction.atomic():
-				ids = EntryTT.objects.filter(event=self).values_list('pk', flat=True)[:999]
-				EntryTT.objects.filter(pk__in=ids).delete()
+		large_delete_all( EntryTT, Q(event=self) )
 		
 		min_gap = datetime.timedelta( seconds=10 )
 		zero_gap = datetime.timedelta( seconds=0 )

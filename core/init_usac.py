@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.db.utils import IntegrityError
 import csv, codecs
 from models import *
+from large_delete_all import large_delete_all
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
@@ -53,12 +54,6 @@ def set_attributes( obj, attributes ):
 			changed = True
 	return changed
 	
-def large_delete_all( Object ):
-	while Object.objects.exists():
-		with transaction.atomic():
-			ids = Object.objects.values_list('pk', flat=True)[:999]
-			Object.objects.filter(pk__in = ids).delete()
-
 def init_usac( fname = fnameDefault, states = '' ):
 	#large_delete_all( LicenseHolder )
 	#large_delete_all( Team )

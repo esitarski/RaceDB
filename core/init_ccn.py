@@ -10,6 +10,7 @@ from django.db.models import Q
 from fix_utf8 import fix_utf8
 import import_utils
 from import_utils import get_key
+from large_delete_all import large_delete_all
 
 today = timezone.now().date()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
@@ -53,12 +54,6 @@ def set_attributes( obj, attributes ):
 			changed = True
 	return changed
 	
-def large_delete_all( Object ):
-	while Object.objects.count():
-		with transaction.atomic():
-			ids = Object.objects.values_list('pk', flat=True)[:999]
-			Object.objects.filter(pk__in = ids).delete()
-
 def to_int_str( v ):
 	try:
 		return unicode(long(v))
