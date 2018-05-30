@@ -1309,6 +1309,7 @@ class ParticipantTagForm( Form ):
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'auto-generate-and-write-tag-submit', _('Auto Generate and Write Tag'), css_class='btn btn-success' ),
 			Submit( 'check-tag-submit', _('Check Tag'), css_class = 'btn btn-lg btn-block btn-success' ),
+			Submit( 'associate-existing-tag-submit', _('Update Database from Tag'), css_class='btn btn-primary' ),
 		]
 		
 		self.helper.layout = Layout(
@@ -1321,9 +1322,9 @@ class ParticipantTagForm( Form ):
 			),
 			HTML( '<br/>' ),
 			Row(
-				button_args[4],
-				HTML( '&nbsp;' * 5 ),
-				button_args[3],
+				button_args[4], HTML( '&nbsp;' * 5 ),
+				button_args[3], HTML( '&nbsp;' * 5 ),
+				button_args[6],
 			),
 			HTML( '<br/>' * 2 ),
 			Row(
@@ -1373,20 +1374,51 @@ def ParticipantTagChange( request, participantId ):
 			return False
 		return True
 
+	def check_unique_tag( tag, make_this_existing_tag ):
+		if make_this_existing_tag:
+			lh = LicenseHolder.objects.filter( existing_tag=tag ).exclude( pk=license_holder.pk ).first()
+			if lh:
+				status_entries.append(
+					(_('Duplicate Tag'), (
+						_('Tag already in use by LicenseHolder.'),
+						__repr__(lh),
+					)),
+				)
+				return False
+		p = Participant.objects.filter( competition=competition, tag=tag ).exclude( license_holder=license_holder ).first()
+		if p:
+			status_entries.append(
+				(_('Duplicate Tag'), (
+					_('Tag already in use by Participant.'),
+					__repr__(p.license_holder),
+				)),
+			)
+			return False
+		return True
+
 	def check_one_tag_read( tags ):
 		if not tags:
 			status_entries.append(
 				(_('Tag Read Failure'), (
-					_('No tags read.  Verify antenna and that tag is close to antenna.'),
+					_('No tags read.  Verify antenna number and that tag is close to antenna.'),
 				)),
 			)
 			return False
 		if len(tags) > 1:
 			status_entries.append(
-				(_('Multiple Tags Read'), tags ),
+				(_('Multiple Tags Read'), [add_name_to_tag(t, make_this_existing_tag) for t in tags] ),
 			)
 			return False
 		return True
+		
+	def add_name_to_tag( tag, make_this_existing_tag ):
+		lh = None
+		p = Participant.objects.filter( competition=competition, tag=tag ).first()
+		if p:
+			lh = p.license_holder
+		if not lh and make_this_existing_tag:
+			lh = LicenseHolder.objects.filter( existing_tag=tag ).first()
+		return u'{}: {}'.format( tag, lh.first_last ) if lh else tag
 		
 	def participant_save( particiant ):
 		try:
@@ -1446,6 +1478,23 @@ def ParticipantTagChange( request, participantId ):
 				else:
 					tag = license_holder.get_unique_tag( system_info )
 			
+			elif 'associate-existing-tag-submit' in request.POST:
+				status &= check_antenna(rfid_antenna)
+				if status:
+					status, response = ReadTag(rfid_antenna)
+					if not status:
+						status_entries = [
+							(_('Tag Read Failure'), response.get('errors',[]) ),
+						]
+					else:
+						tags = response.get('tags', [])
+						status &= check_one_tag_read( tags )
+						if status:
+							tag = tags[0]
+							status &= check_unique_tag( tag, make_this_existing_tag )
+							if status:
+								participant.tag_checked = True
+			
 			if status:
 				status &= check_empty_tag( tag )
 				if status and system_info.tag_all_hex and not utils.allHex(tag):
@@ -1456,6 +1505,7 @@ def ParticipantTagChange( request, participantId ):
 							_('Please change the Tag to all hexadecimal.'),
 						)),
 					)
+			
 			if not status:
 				participant.tag_checked = False
 				participant_save( participant )
@@ -1466,7 +1516,7 @@ def ParticipantTagChange( request, participantId ):
 			if not status:
 				return render( request, 'rfid_write_status.html', locals() )
 			
-			if make_this_existing_tag:
+			if make_this_existing_tag and license_holder.existing_tag != tag:
 				license_holder.existing_tag = tag
 				try:
 					license_holder.save()

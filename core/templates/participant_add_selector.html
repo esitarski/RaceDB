@@ -9,7 +9,7 @@
 	</li>
 	<li role="presentation" {% if add_by_barcode %}class="active"{% endif %}>
 		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
-			<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode Add" %}
+			<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode/License Add" %}
 		</a>
 	</li>
 	<li role="presentation" {% if add_by_bib %}class="active"{% endif %}>
@@ -26,4 +26,15 @@
 {% endif %}
 </ul>
 <br/>
-<h2><strong>{{competition.name}}</strong>, {{competition.start_date}}</h2>
+<h2>
+	{% if add_by_manual %}
+		<img src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;
+	{% elif add_by_barcode %}
+		<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;
+	{% elif add_by_bib %}
+		<img src="{% static "images/bib_icon_blue.png" %}"/>&nbsp;
+	{% elif add_by_rfid %}	
+		<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;
+	{% endif %}
+	<strong>{{competition.name}}</strong>, {{competition.start_date}}
+</h2>
