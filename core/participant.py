@@ -1412,13 +1412,25 @@ def ParticipantTagChange( request, participantId ):
 		return True
 		
 	def add_name_to_tag( tag, make_this_existing_tag ):
+		s = [tag]
 		lh = None
-		p = Participant.objects.filter( competition=competition, tag=tag ).first()
-		if p:
-			lh = p.license_holder
+		bibs = []
+		
+		for p in Participant.objects.filter( competition=competition, tag=tag ).defer('signature'):
+			if not lh:
+				lh = p.license_holder
+			if p.bib and p.license_holder == lh:
+				bibs.append( p.bib )
+				
 		if not lh and make_this_existing_tag:
 			lh = LicenseHolder.objects.filter( existing_tag=tag ).first()
-		return u'{}: {}'.format( tag, lh.first_last ) if lh else tag
+		
+		if lh:
+			s.extend( [u': ', lh.first_last] )
+		if bibs:
+			s.extend( [u'; ', _('Bib'), u' '] )
+			s.append( u', '.join( u'{}'.format(b) for b in bibs ) )
+		return string_concat( *s )
 		
 	def participant_save( particiant ):
 		try:
