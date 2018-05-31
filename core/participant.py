@@ -1406,31 +1406,10 @@ def ParticipantTagChange( request, participantId ):
 			return False
 		if len(tags) > 1:
 			status_entries.append(
-				(_('Multiple Tags Read'), [add_name_to_tag(t, make_this_existing_tag) for t in tags] ),
+				(_('Multiple Tags Read'), [add_name_to_tag(compeition, t) for t in tags] ),
 			)
 			return False
 		return True
-		
-	def add_name_to_tag( tag, make_this_existing_tag ):
-		s = [tag]
-		lh = None
-		bibs = []
-		
-		for p in Participant.objects.filter( competition=competition, tag=tag ).defer('signature'):
-			if not lh:
-				lh = p.license_holder
-			if p.bib and p.license_holder == lh:
-				bibs.append( p.bib )
-				
-		if not lh and make_this_existing_tag:
-			lh = LicenseHolder.objects.filter( existing_tag=tag ).first()
-		
-		if lh:
-			s.extend( [u': ', lh.first_last] )
-		if bibs:
-			s.extend( [u'; ', _('Bib'), u' '] )
-			s.append( u', '.join( u'{}'.format(b) for b in bibs ) )
-		return string_concat( *s )
 		
 	def participant_save( particiant ):
 		try:

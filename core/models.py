@@ -2746,6 +2746,26 @@ class LicenseHolder(models.Model):
 		verbose_name_plural = _('LicenseHolders')
 		ordering = ['search_text']
 
+def add_name_to_tag( competition, tag ):
+	s = [tag]
+	lh = None
+	bibs = []
+	
+	for p in Participant.objects.filter( competition=competition, tag=tag ).defer('signature'):
+		if not lh:
+			lh = p.license_holder
+		if p.bib and p.license_holder == lh:
+			bibs.append( p.bib )
+			
+	if not lh and competition.use_existing_tags:
+		lh = LicenseHolder.objects.filter( existing_tag=tag ).first()
+	
+	if lh:
+		s.extend( [u': ', lh.first_last] )
+	if bibs:
+		s.extend( [u'; ', _('Bib'), u' ', u', '.join( u'{}'.format(b) for b in bibs )] )
+	return string_concat( *s )
+		
 #---------------------------------------------------------------
 class Waiver(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True )

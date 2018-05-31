@@ -239,10 +239,11 @@ def SelfServe( request, do_scan=0 ):
 	
 	if tag and len(tags) > 1:
 		status = False
+		tags = [add_name_to_tag(competition, t) for t in tags]
 		if len(tags) > 4:
 			tags = tags[:4] + [u'...']
 		status_entries.append(
-			(_('Multiple Tags Read (check that only one tag is near the antenna).'), [u', '.join(tags)] )
+			(_('Multiple Tags Read (ensure only ONE tag is near the antenna).'), tags )
 		)
 
 	if not status:
