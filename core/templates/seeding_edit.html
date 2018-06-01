@@ -21,13 +21,15 @@
 <div class="hidden-print">
 <hr/>
 {% trans "Change the seeding by entering values in the <strong>Adjust</strong> field, then pressing the <strong>Apply Adjustments</strong> button  (or press Enter)." %}<br/>
-{% trans "Adjustments can be made relative to the current position by enter a number leading with +/-, or you can specify a new position by entering the number on its own." %}<br/>
+{% trans "Adjustments can be made relative to the current position by enter a number leading with +/-, or you can specify a position from the end by entering the number on its own." %}<br/>
 {% trans "Examples" %}:
 <p>
 <ul>
+<li>{% trans "Adjust 5 to move a Participant to position 5 from the end." %}</li>
+<li>{% trans "Adjust r to move a Participant to a random position." %}</li>
 <li>{% trans "Adjust -2 to move a Participant two places earlier." %}</li>
 <li>{% trans "Adjust +3 to move a Participant three places later." %}</li>
-<li>{% trans "Adjust 11 to move a Participant to position 11." %}</li>
+<li>{% trans "Adjust s11 to move a Participant to position 11 from the start." %}</li>
 </ul>
 </p>
 <p>

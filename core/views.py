@@ -1741,6 +1741,7 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 
 def SeedingEdit( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
+	competition = instance.competition
 	if request.method == 'POST':
 		adjustment_formset = AdjustmentFormSet( request.POST )
 		reNum = re.compile( '[^0-9]' )
@@ -1748,6 +1749,8 @@ def SeedingEdit( request, eventTTId ):
 			def get_eda():
 				''' Get the entry_tt, direction and adjustment for each line in the form. '''
 				''' Also commit the est_speed to the entry. '''
+				entries = { int(ett.pk):ett for ett in EntryTT.objects.filter(event=instance).select_related('participant').defer('participant__signature') }
+				
 				eda = []
 				for d in adjustment_formset.cleaned_data:
 					pk = d['entry_tt_pk']
@@ -1757,14 +1760,14 @@ def SeedingEdit( request, eventTTId ):
 						pass
 					
 					try:
-						entry_tt = EntryTT.objects.get( pk=pk )
-					except EntryTT.DoesNotExist:
+						entry_tt = entries[pk]
+					except KeyError:
 						continue
 					
 					participant_changed = False
 					
 					try:
-						est_kmh = entry_tt.participant.competition.to_kmh(float(d['est_speed']))
+						est_kmh = competition.to_kmh(float(d['est_speed']))
 						if entry_tt.participant.est_kmh != est_kmh:
 							entry_tt.participant.est_kmh = est_kmh
 							participant_changed = True
@@ -1783,39 +1786,85 @@ def SeedingEdit( request, eventTTId ):
 						entry_tt.participant.save()
 					
 					adjustment = d['adjustment'].strip()
-					if not adjustment:
-						continue
-
-					direction = adjustment[0] if adjustment[0] in ('+','-') else None
-						
+					if adjustment:
+						direction = adjustment[0] if adjustment[0] in ('+','-','r','s','e') else 'e'
+					else:
+						direction = None
 					try:
 						adjustment = int( reNum.sub(u'', adjustment) )
 					except ValueError:
-						continue
+						adjustment = None
+					
+					if not adjustment:
+						direction, adjustment = None, None
 					
 					eda.append( (entry_tt, direction, adjustment) )
+
 				return eda
 			
-			with transaction.atomic():
+			if "apply_adjustments" in request.POST:
 				eda = get_eda()
-				if "apply_adjustments" in request.POST:
-					for entry_tt, direction, adjustment in eda:
-						if direction == '-':
-							entry_tt.move_to( entry_tt.start_sequence - adjustment )
-					for entry_tt, direction, adjustment in reversed(eda):
-						if direction == '+':
-							entry_tt.move_to( entry_tt.start_sequence + adjustment )
+			
+				def safe_i( i ):
+					return min( max(i, 0), len(eda) - 1 )
+				
+				def swap( i, j ):
+					eda[i][0].swap_position( eda[j][0] )
+					eda[i], eda[j] = eda[j], eda[i]
+				
+				def move_to( i, iNew ):
+					i, iNew = safe_i(i), safe_i(iNew)
+					dir = -1 if iNew < i else 1
+					while i != iNew:
+						swap( i, i+dir )
+						i += dir
+				
+				# Process all random entries.
+				i_rand = []	# Only randomize with other random positions.
+				for i, (entry_tt, direction, adjustment) in enumerate(eda):
+					if direction == 'r':
+						i_rand.append( i )
+				for i in i_rand:
+					swap( i_rand[i], i_rand[random.randint(0,len(i_rand)-1)] )
+				del i_rand
+				
+				# Process relative moves by bubbling.
+				for i in xrange(len(eda)):
+					entry_tt, direction, adjustment = eda[i]
+					if direction == '-':				# Move backwards going forward.
+						move_to( i, i - adjustment )				
+				for i in xrange(len(eda)-1, -1, -1):
+					entry_tt, direction, adjustment = eda[i]
+					if direction == '+':				# Move forward going backwards.
+						move_to( i, i + adjustment )
+				
+				# Process absolute starts.
+				for i in xrange(len(eda)):
+					entry_tt, direction, adjustment = eda[i]
+					if direction == 's' and adjustment-1 < i:	# Move backwards going forward.
+						move_to( i, adjustment-1 )
+				for i in xrange(len(eda)-1, -1, -1):
+					entry_tt, direction, adjustment = eda[i]
+					if direction == 's' and adjustment-1 > i:	# Move backwards going forward.
+						move_to( i, adjustment-1 )
+				
+				# Process absolute ends.
+				for i in xrange(len(eda)):
+					entry_tt, direction, adjustment = eda[i]
+					if direction == 'e' and len(eda) - adjustment < i:
+						move_to( i, len(eda) - adjustment )
+				for i in xrange(len(eda)-1, -1, -1):
+					entry_tt, direction, adjustment = eda[i]
+					if direction == 'e' and len(eda) - adjustment > i:
+						move_to( i, len(eda) - adjustment )
+			
+				# And save it.
+				with BulkSave() as bs:
+					for e in eda:
+						bs.append( e[0] )
 					
-					eda.sort( key = lambda v: (v[2], v[0].start_sequence) )
-					
-					for entry_tt, direction, adjustment in eda:
-						if direction is None and adjustment < entry_tt.start_sequence:
-							entry_tt.move_to( adjustment )
-					for entry_tt, direction, adjustment in reversed(eda):
-						if direction is None and adjustment > entry_tt.start_sequence:
-							entry_tt.move_to( adjustment )
-				if "regenerate_start_times" in request.POST:
-					instance.create_initial_seeding()
+			if "regenerate_start_times" in request.POST:
+				instance.create_initial_seeding()
 	
 	instance.repair_seeding()
 	entry_tts=list(instance.entrytt_set.all())

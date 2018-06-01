@@ -4339,6 +4339,10 @@ class EntryTT( models.Model ):
 	adjustment_time = DurationField.DurationField( null = True, blank = True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length = 128, default = '', verbose_name=_('Adjustment Note') )
 	
+	def swap_position( self, tt ):
+		self.start_sequence, tt.start_sequence = tt.start_sequence, self.start_sequence
+		self.start_time, tt.start_time = tt.start_time, self.start_time
+	
 	@transaction.atomic
 	def move_to( self, start_sequence_target ):
 		if self.start_sequence == start_sequence_target:
