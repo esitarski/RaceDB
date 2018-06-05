@@ -4310,7 +4310,33 @@ class Participant(models.Model):
 			if bib not in allocated_numbers and bib not in lost_bibs:
 				return bib
 		return None
-		
+	
+	@static
+	def most_recent():
+		participants = Participant.objects.all()
+		mr_team_q = participants.exclude(team__isnull=True).values_list('license_holder','competition__discipline','team').annotate(Max('competition__start_date'))
+		mr_team = {}
+		for lh, disc, team, dt in mr_team_q:
+			key = (lh, disc)
+			if key not in mr_team or mr_team[key][1] < dt:
+				mr_team[key] = (team, dt)
+		mr_category_q = participants.exclude(category__isnull=True).values_list('license_holder','competition__discipline','category').annotate(Max('competition__start_date'))
+		mr_category = {}
+		for lh, disc, cat, dt in mr_category_q:
+			key = (lh, disc)
+			if key not in mr_category or mr_category[key][1] < dt:
+				mr_category[key] = (cat, dt)
+		'''
+		SELECT  c1.province, c1.city, c1.population
+		FROM  Canada AS c1
+		JOIN
+		  ( SELECT  province, MAX(population) AS population
+				FROM  Canada
+				GROUP BY  province
+		  ) AS c2 USING (province, population)
+		ORDER BY c1.province;
+		'''
+	
 	class Meta:
 		unique_together = (
 			('competition', 'category', 'license_holder'),
