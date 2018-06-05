@@ -10,6 +10,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 import zipfile
 import operator
 import itertools
+import traceback
 
 from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from get_seasons_pass_excel import get_seasons_pass_excel
@@ -2433,10 +2434,17 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 	except IntegrityError as e:
 		# If this participant exists already, recover silently by going directly to the existing participant.
 		participant = Participant.objects.filter(competition=competition, license_holder=license_holder).first()
-		if tag_checked and not participant.tag_checked:
-			participant.tag_checked = True
-			participant.save()
-		return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
+		if participant:
+			if tag_checked and not participant.tag_checked:
+				participant.tag_checked = True
+				participant.save()
+			return HttpResponseRedirect(pushUrl(request, 'ParticipantEdit', participant.id, cancelUrl=True))
+		else:
+			# Integrity error, but not a duplicate?  Something weird going on.
+			error = _('Integrity Error')
+			context = '{}\n\n{}'.format( e, traceback.format_exc() )
+			href = getContext(request,'cancelUrl')
+			return render( request, 'generic_error.html', locals() )
 
 #-----------------------------------------------------------------------
 	

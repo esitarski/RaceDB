@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+<h1>{{title}}</h1>
+<hr/>
+<h2>{{error}}</h2>
+<br/>
+<pre>
+{{context}}
+</pre>
+<a class="btn btn-success" href='{{href}}'>{% trans "OK" %}</a>
+{% endblock content %}
