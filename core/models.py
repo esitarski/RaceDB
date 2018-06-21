@@ -551,6 +551,7 @@ class NumberSet(models.Model):
 			if not nse:
 				return False
 			nse.license_holder = license_holder
+			nse.date_issued = datetime.date.today()
 			nse.date_lost = None
 			nse.save()
 		
@@ -3335,13 +3336,16 @@ class NumberSetEntry(models.Model):
 	number_set = models.ForeignKey( 'NumberSet', db_index = True )
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
 	bib = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Bib') )
+	date_issued = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Issued') )
 	
 	# If date_lost is null, the number is in use.
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
-
+	
 	def save( self ):
 		if self.date_lost is None and self.id is None and self.number_set.get_bib_available(self.bib) <= 0:
 			raise IntegrityError()
+		if self.date_issued is None:
+			self.date_issued = datetime.date.today()
 		return super( NumberSetEntry, self ).save()
 	
 	class Meta:
