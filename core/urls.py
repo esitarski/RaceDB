@@ -130,6 +130,7 @@ urlpatterns = [
 	url(r'^(?i).*Participants/(?P<competitionId>\d+)/$', participant.Participants),
 	url(r'^(?i).*ParticipantsInEvents/(?P<competitionId>\d+)/$', participant.ParticipantsInEvents),
 	url(r'^(?i).*ParticipantManualAdd/(?P<competitionId>\d+)/$', participant.ParticipantManualAdd),
+	url(r'^(?i).*ParticipantNotFound/(?P<competitionId>\d+)/$', participant.ParticipantNotFound),
 	url(r'^(?i).*ParticipantAddToCompetition/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$', participant.ParticipantAddToCompetition),
 	url(r'^(?i).*ParticipantAddToCompetitionDifferentCategory/(?P<competitionId>\d+)/(?P<licenseHolderId>\d+)/$',
 				participant.ParticipantAddToCompetitionDifferentCategory),

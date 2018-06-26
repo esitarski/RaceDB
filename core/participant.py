@@ -391,7 +391,7 @@ def ParticipantManualAdd( request, competitionId ):
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
 		if 'new-submit' in request.POST:
-			return HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )
+			return HttpResponseRedirect( pushUrl(request,'ParticipantNotFound', competition.id) )
 			
 		form = SearchForm( btns, request.POST, hide_cancel_button=True )
 		if form.is_valid():
@@ -1661,16 +1661,18 @@ def ParticipantBarcodeAdd( request, competitionId ):
 		form = BarcodeScanForm( hide_cancel_button=True )
 		
 	return render( request, 'participant_scan_form.html', locals() )
+
+'''	
+@access_validation()
+def ParticipantNotFoundError( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	return render( request, 'participant_not_found_error.html', locals() )
 	
 @access_validation()
-def ParticipantNotFound( request, competitionId ):
+def ParticipantMultiFoundError( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	return render( request, 'participant_not_found.html', locals() )
-	
-@access_validation()
-def ParticipantMultiFound( request, competitionId ):
-	competition = get_object_or_404( Competition, pk=competitionId )
-	return render( request, 'participant_multi_found.html', locals() )
+	return render( request, 'participant_multi_found_error.html', locals() )
+'''
 	
 #-----------------------------------------------------------------------
 
@@ -1900,4 +1902,85 @@ def ParticipantConfirm( request, participantId ):
 		form = ParticipantConfirmForm( initial=ParticipantConfirmForm.get_initial(participant), participant=participant )
 
 	return render( request, 'participant_confirm.html', locals() )
+	
+#--------------------------------------------------------------------------------------
+
+@autostrip
+class ParticipantNotFoundForm( Form ):
+	last_name = forms.CharField( label = _('Last Name') )
+	gender = forms.ChoiceField( choices = ((0, _('Men')), (1, _('Women'))) )
+	date_of_birth = forms.DateField( label = _('Date of Birth') )
+	
+	def __init__(self, *args, **kwargs):
+		from_post = kwargs.pop('from_post', False)
+		has_matches = kwargs.pop('has_matches', False)
+		super(ParticipantNotFoundForm, self).__init__(*args, **kwargs)
+			
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline search'
+		
+		button_args = [Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' )]
+		if from_post:
+			button_args.append( Submit( 'new-submit', _('Not Found - Create New License Holder'), css_class = 'btn btn-success' ) )
+		button_args.append( Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ) )
+		
+		self.helper.layout = Layout(
+			Row(
+				Field('last_name', size=44),
+				Field('gender'),
+				Field('date_of_birth'),
+			),
+			Row( *button_args ),
+		)
+
+@access_validation()
+def ParticipantNotFound( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	has_matches = False
+	matches = []
+	
+	if request.method == 'POST':
+	
+		if 'cancel-submit' in request.POST:
+			return HttpResponseRedirect( getContext(request,'cancelUrl') )
+		
+		form = ParticipantNotFoundForm( request.POST, from_post=True )
+		if form.is_valid():
+			if 'cancel-submit' in request.POST:
+				return HttpResponseRedirect(getContext(request,'cancelUrl'))
+			
+			last_name = form.cleaned_data['last_name']
+			gender = int(form.cleaned_data['gender'])
+			date_of_birth = form.cleaned_data['date_of_birth']
+			
+			if 'search-submit' in request.POST:
+				matches = LicenseHolder.objects.filter( gender=gender, date_of_birth=date_of_birth, search_text__startswith=utils.get_search_text(last_name) )
+				secondary_matches = LicenseHolder.objects.filter( search_text__contains=utils.get_search_text(last_name) ).exclude( pk__in=matches.values_list('pk',flat=True) )
+				has_matches = matches.exists() or secondary_matches.exists()
+				if has_matches:
+					form = ParticipantNotFoundForm( initial={'last_name':last_name, 'gender':gender, 'date_of_birth':date_of_birth}, has_matches=has_matches, from_post=True )
+					return render( request, 'participant_not_found.html', locals() )
+		
+			if 'new-submit' in request.POST or not has_matches:
+				license_holder = LicenseHolder( last_name=last_name, first_name=last_name[:1], gender=gender, date_of_birth=date_of_birth )
+				license_holder.save()
+				participant = Participant( competition=competition, license_holder=license_holder )
+				participant.save()
+				return HttpResponseRedirect( getContext(request,'cancelUrl') +
+					'ParticipantEdit/{}/'.format(participant.id) +
+					'LicenseHolderEdit/{}/'.format(license_holder.id)
+				)
+	else:
+		form = ParticipantNotFoundForm()
+
+	return render( request, 'participant_not_found.html', locals() )
+
+@access_validation()
+def ParticipantLicenseHolderFound( request, competitionId, licenseHolderId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	return HttpResponseRedirect( getContext(request,'pop2Url') +
+		'ParticipantAddToCompetition/{}/{}/'.format(competition.id, license_holder.id)
+	)
 	
