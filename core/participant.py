@@ -1940,6 +1940,18 @@ def ParticipantNotFound( request, competitionId ):
 	has_matches = False
 	matches = []
 	
+	key = 'participant_not_found'
+	def set_form_fields( last_name, gender, date_of_birth ):
+		request.session[key] = {'last_name':last_name, 'gender':gender, 'date_of_birth':date_of_birth.strftime('%Y-%m-%d')}
+	
+	def get_form_fields():
+		fields = request.session.get(key, {})
+		try:
+			fields['date_of_birth'] = datetime.date( *[int(f) for f in fields['date_of_birth'].split('-')] )
+		except KeyError:
+			pass
+		return fields
+	
 	if request.method == 'POST':
 	
 		if 'cancel-submit' in request.POST:
@@ -1951,8 +1963,10 @@ def ParticipantNotFound( request, competitionId ):
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
 			
 			last_name = form.cleaned_data['last_name']
+			last_name = last_name[:1].upper() + last_name[1:]
 			gender = int(form.cleaned_data['gender'])
 			date_of_birth = form.cleaned_data['date_of_birth']
+			set_form_fields( last_name, gender, date_of_birth )
 			
 			if 'search-submit' in request.POST:
 				matches = LicenseHolder.objects.filter( gender=gender, date_of_birth=date_of_birth, search_text__startswith=utils.get_search_text(last_name) )
@@ -1972,7 +1986,7 @@ def ParticipantNotFound( request, competitionId ):
 					'LicenseHolderEdit/{}/'.format(license_holder.id)
 				)
 	else:
-		form = ParticipantNotFoundForm()
+		form = ParticipantNotFoundForm( initial=get_form_fields() )
 
 	return render( request, 'participant_not_found.html', locals() )
 

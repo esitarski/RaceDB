@@ -18,35 +18,38 @@
 		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Date of Birth" %}</th>
 		<th>{% trans "Location" %}</th>
+		<th>{% trans "License" %}</th>
 		<th>{% trans "UCIID" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
 <tbody>
 	{% for lh in matches %}
-		<tr onclick="jump('./ParticipantAddToCompetition/{{competition.id}}/{{lh.id}}/');">
+		<tr onclick="jump('./LicenseHolderAddConfirm/{{competition.id}}/{{lh.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{lh.full_name}}</td>
 			<td>{{lh.get_gender_display}}</td>
 			<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{lh.get_location}}</td>
+			<td>{{lh.license_code_trunc}}</td>
 			<td>{{lh.get_flag_uci_id_html}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-success btn-sm" href="./ParticipantAddToCompetition/{{competition.id}}/{{lh.id}}/">{% trans "Add" %}</a>
+				<a class="btn btn-success btn-sm" href="./LicenseHolderAddConfirm/{{competition.id}}/{{lh.id}}/">{% trans "Add" %}</a>
 			</td>
 		</tr>
 	{% endfor %}
 	<tr style="border-bottom:1px solid black"><td colspan="100%"></td></tr>
 	{% for lh in secondary_matches %}
-		<tr onclick="jump('./ParticipantAddToCompetition/{{competition.id}}/{{lh.id}}/');">
+		<tr onclick="jump('./LicenseHolderAddConfirm/{{competition.id}}/{{lh.id}}/');">
 			<td class="text-right">{{forloop.counter}}.&nbsp;<img src="{% static "images/warning.png" %}"</img></td>
 			<td>{{lh.full_name}}</td>
 			<td>{{lh.get_gender_display}}</td>
 			<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{lh.get_location}}</td>
+			<td>{{lh.license_code_trunc}}</td>
 			<td>{{lh.get_flag_uci_id_html}}</td>
 			<td class="hidden-print">
-				<a class="btn btn-success btn-sm" href="./ParticipantAddToCompetition/{{competition.id}}/{{lh.id}}/">{% trans "Add" %}</a>&nbsp;<img src="{% static "images/warning.png" %}"</img>
+				<a class="btn btn-success btn-sm" href="./LicenseHolderAddConfirm/{{competition.id}}/{{lh.id}}/">{% trans "Add" %}</a>&nbsp;<img src="{% static "images/warning.png" %}"</img>
 			</td>
 		</tr>
 	{% endfor %}
