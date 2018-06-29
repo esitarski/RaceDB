@@ -83,8 +83,7 @@ def getSrcStr( fname ):
 	if ftype == 'jpeg':
 		ftype = 'jpg'
 	with open(fname, 'rb') as f:
-		src = 'data:image/{};base64,{}'.format(ftype, base64.encodestring(f.read()))
-	return src
+		return 'data:image/{};base64,{}'.format(ftype, base64.encodestring(f.read()))
 
 KmToMiles = 0.621371192
 MilesToKm = 1.0 / KmToMiles
