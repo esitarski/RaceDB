@@ -79,13 +79,9 @@ def fixNullUpper( s ):
 		return None
 
 def getSrcStr( fname ):
-	fileExtension = os.path.splitext(fname)[1]
-	ftype = {
-		'.png':		'png',
-		'.gif':		'gif',
-		'.jpeg':	'jpg',
-		'.jpg':		'jpg',
-	}[fileExtension.lower()]
+	ftype = os.path.splitext(fname)[1][1:].lower()
+	if ftype == 'jpeg':
+		ftype = 'jpg'
 	with open(fname, 'rb') as f:
 		src = 'data:image/{};base64,{}'.format(ftype, base64.encodestring(f.read()))
 	return src
