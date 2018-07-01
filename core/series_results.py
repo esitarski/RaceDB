@@ -54,6 +54,15 @@ class EventResult( object ):
 		if self.status != Result.cFinisher:
 			return next(v for v in Result.STATUS_CODE_NAMES if v[0] == self.status)[1]
 		return ordinal( self.rank )
+		
+	def __repr__( self ):
+		return utils.removeDiacritic(
+			u'("{}",{}: event="{}",{}, rank={}, strs={}, vfr={}, oc={})'.format(
+				self.license_holder.full_name(), self.license_holder.pk,
+				self.event.name, self.event.pk,
+				self.rank, self.starters, self.value_for_rank, self.original_category.code_gender
+			)
+		)
 
 def extract_event_results( sce, filter_categories=None, filter_license_holders=None ):
 	series = sce.series
@@ -80,15 +89,15 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	
 	if get_points:
 		if series.consider_primes:
-			def get_value_for_rank( rr, rank, rrWinner ):
+			def get_value_for_rank( rr, rank, rr_winner ):
 				return get_points( rank, rr.status ) + rr.points
 		else:
-			def get_value_for_rank( rr, rank, rrWinner ):
+			def get_value_for_rank( rr, rank, rr_winner ):
 				return get_points( rank, rr.status )
 	elif series.ranking_criteria == 1:	# Time
 		if series.consider_primes:
-			def get_value_for_rank( rr, rank, rrWinner ):
-				if rr.get_num_laps_fast() != rrWinner.get_num_laps_fast():
+			def get_value_for_rank( rr, rank, rr_winner ):
+				if rr.get_num_laps_fast() != rr_winner.get_num_laps_fast():
 					return None
 				try:
 					t = rr.finish_time.total_seconds()
@@ -100,8 +109,8 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 					t -= rr.time_bonus.total_seconds()
 				return t
 		else:
-			def get_value_for_rank( rr, rank, rrWinner ):
-				if rr.get_num_laps_fast() != rrWinner.get_num_laps_fast():
+			def get_value_for_rank( rr, rank, rr_winner ):
+				if rr.get_num_laps_fast() != rr_winner.get_num_laps_fast():
 					return None
 				try:
 					t = rr.finish_time.total_seconds()
@@ -111,11 +120,14 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 					t += rr.adjustment_time.total_seconds()
 				return t
 	elif series.ranking_criteria == 2:	# % Winner / Time
-		def get_value_for_rank( rr, rank, rrWinner ):
-			if rr.get_num_laps_fast() != rrWinner.get_num_laps_fast():
+		def get_value_for_rank( rr, rank, rr_winner ):
+			def fix_percent( t ):
+				return int( t * 10000.0 ) / 10000.0
+				
+			if rr.get_num_laps_fast() != rr_winner.get_num_laps_fast():
 				return None
 			try:
-				v = 100.0 * rrWinner.finish_time.total_seconds() / rr.finish_time.total_seconds()
+				v = fix_percent( 100.0 * rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds() )
 			except:
 				v = 0
 			return v if v <= 100.0 else 0
@@ -131,7 +143,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 
 	if not category_wave:
 		return []
-			
+	
 	# Organize the results by wave based on the event results.
 	wave_results = defaultdict( list )
 	for rr in sce.event.get_results().filter(
@@ -143,14 +155,14 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	eventResults = []
 	for w, results in wave_results.iteritems():
 		if w.rank_categories_together:
-			get_rank     = lambda rr: rr.wave_rank
-			get_starters = lambda rr: rr.wave_starters
+			get_rank     = operator.attrgetter('wave_rank')
+			get_starters = operator.attrgetter('wave_starters')
 		else:
-			get_rank     = lambda rr: rr.category_rank
-			get_starters = lambda rr: rr.category_starters
+			get_rank     = operator.attrgetter('category_rank')
+			get_starters = operator.attrgetter('category_starters')
 	
 		rr_winner = None
-		
+				
 		for rr in results:
 			if w.rank_categories_together:
 				if not rr_winner:
@@ -161,9 +173,10 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 
 			if filter_license_holders and rr.participant.license_holder not in filter_license_holders:
 				continue
-				
+			
 			rank = get_rank( rr )
 			value_for_rank = get_value_for_rank(rr, rank, rr_winner)
+			
 			if value_for_rank:
 				eventResults.append( EventResult(rr, rank, get_starters(rr), value_for_rank) )
 
