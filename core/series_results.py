@@ -121,8 +121,8 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				return t
 	elif series.ranking_criteria == 2:	# % Winner / Time
 		def get_value_for_rank( rr, rank, rr_winner ):
-			def fix_percent( t ):
-				return int( t * 10000.0 ) / 10000.0
+			def fix_percent( v ):
+				return int( v * 10000.0 ) / 10000.0
 				
 			if rr.get_num_laps_fast() != rr_winner.get_num_laps_fast():
 				return None
