@@ -145,11 +145,15 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	wave_results = defaultdict( list )
 	event_results = (sce.event.get_results()
 		.filter(participant__category__in=filter_categories)
-		.prefetch_related('participant', 'participant__license_holder', 'participant__category', 'participant__team')
-		.order_by('wave_rank')
 	)
 	if series.ranking_criteria != 0:	# If not rank by points, compute lap counts in the query.
 		event_results = sce.event.add_laps_to_results_query( event_results )
+	event_results = (event_results
+		.order_by('wave_rank')
+		.select_related('participant', 'participant__license_holder', 'participant__category', 'participant__team')
+		.defer('participant__signature')
+	)
+	print event_results.query
 	for rr in event_results:
 		wave_results[category_wave[rr.participant.category]].append( rr )
 	
