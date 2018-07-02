@@ -97,7 +97,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	elif series.ranking_criteria == 1:	# Time
 		if series.consider_primes:
 			def get_value_for_rank( rr, rank, rr_winner ):
-				if rr.get_num_laps_fast() != rr_winner.get_num_laps_fast():
+				if rr.laps != rr_winner.laps:
 					return None
 				try:
 					t = rr.finish_time.total_seconds()
@@ -110,7 +110,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				return t
 		else:
 			def get_value_for_rank( rr, rank, rr_winner ):
-				if rr.get_num_laps_fast() != rr_winner.get_num_laps_fast():
+				if rr.laps != rr_winner.laps:
 					return None
 				try:
 					t = rr.finish_time.total_seconds()
@@ -121,7 +121,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 				return t
 	elif series.ranking_criteria == 2:	# % Winner / Time
 		def get_value_for_rank( rr, rank, rr_winner ):
-			if rr.get_num_laps_fast() != rr_winner.get_num_laps_fast():
+			if rr.laps != rr_winner.laps:
 				return None
 			try:
 				v = min( 100.0, 100.0 * rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds() )
@@ -143,9 +143,14 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	
 	# Organize the results by wave based on the event results.
 	wave_results = defaultdict( list )
-	for rr in sce.event.get_results().filter(
-			participant__category__in=filter_categories ).prefetch_related(
-			'participant', 'participant__license_holder', 'participant__category', 'participant__team').order_by('wave_rank'):
+	event_results = (sce.event.get_results()
+		.filter( participant__category__in=filter_categories)
+		.prefetch_related( 'participant', 'participant__license_holder', 'participant__category', 'participant__team')
+		.order_by('wave_rank')
+	)
+	if series.ranking_criteria != 0:	# If not rank by points, compute lap counts in the query.
+		event_results = sce.event.add_laps_to_results_query( event_results )
+	for rr in event_results:
 		wave_results[category_wave[rr.participant.category]].append( rr )
 	
 	# Report the results by wave.

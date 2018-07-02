@@ -1486,11 +1486,17 @@ class Event( models.Model ):
 	def get_result_class( self ):
 		raise NotImplementedError("Please Implement this method")
 		
+	def get_race_time_class( self ):
+		raise NotImplementedError("Please Implement this method")
+		
 	def get_custom_category_class( self ):
 		raise NotImplementedError("Please Implement this method")
 			
 	def get_results( self ):
 		return self.get_result_class().objects.filter( event=self )
+		
+	def add_laps_to_results_query( self, results ):
+		return results.annotate( laps=Count(self.get_race_time_class().__name__.lower()) )
 
 	def has_results( self ):
 		return self.get_results().exists()
@@ -1750,10 +1756,13 @@ class EventMassStart( Event ):
 	def __init__( self, *args, **kwargs ):
 		kwargs['event_type'] = 0
 		super( EventMassStart, self ).__init__( *args, **kwargs )
-	
+		
 	def get_result_class( self ):
 		return ResultMassStart
 		
+	def get_race_time_class( self ):
+		return RaceTimeMassStart
+	
 	def get_custom_category_class( self ):
 		return CustomCategoryMassStart
 		
@@ -2978,10 +2987,9 @@ class Result(models.Model):
 
 class ResultMassStart(Result):
 	event = models.ForeignKey( 'EventMassStart', db_index=True )
-	
 	def get_race_time_class( self ):
 		return RaceTimeMassStart
-	
+		
 	class Meta:
 		unique_together = (
 			('participant', 'event'),
@@ -4405,6 +4413,9 @@ class EventTT( Event ):
 	def get_result_class( self ):
 		return ResultTT
 		
+	def get_race_time_class( self ):
+		return RaceTimeTT
+	
 	def get_custom_category_class( self ):
 		return CustomCategoryTT
 		
