@@ -144,8 +144,8 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	# Organize the results by wave based on the event results.
 	wave_results = defaultdict( list )
 	event_results = (sce.event.get_results()
-		.filter( participant__category__in=filter_categories)
-		.prefetch_related( 'participant', 'participant__license_holder', 'participant__category', 'participant__team')
+		.filter(participant__category__in=filter_categories)
+		.prefetch_related('participant', 'participant__license_holder', 'participant__category', 'participant__team')
 		.order_by('wave_rank')
 	)
 	if series.ranking_criteria != 0:	# If not rank by points, compute lap counts in the query.
