@@ -153,7 +153,6 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 		.select_related('participant', 'participant__license_holder', 'participant__category', 'participant__team')
 		.defer('participant__signature')
 	)
-	print event_results.query
 	for rr in event_results:
 		wave_results[category_wave[rr.participant.category]].append( rr )
 	
