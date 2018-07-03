@@ -124,7 +124,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 			if rr.laps != rr_winner.laps:
 				return None
 			try:
-				v = min( 100.0, 100.0 * rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds() )
+				v = min( 100.0, 100.0 * (rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds()) )
 			except:
 				v = 0
 			return v
@@ -178,7 +178,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 
 			if filter_license_holders and rr.participant.license_holder not in filter_license_holders:
 				continue
-			
+				
 			rank = get_rank( rr )
 			value_for_rank = get_value_for_rank(rr, rank, rr_winner)
 			
