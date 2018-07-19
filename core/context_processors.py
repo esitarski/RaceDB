@@ -1,4 +1,3 @@
-
 from utils import Breadcrumbs
 
 def standard( request ):
@@ -15,4 +14,3 @@ def standard( request ):
 
 def getContext( request, key ):
 	return standard(request)[key]
-
