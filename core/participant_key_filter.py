@@ -68,18 +68,15 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 		tag_query = None
 	
 	uci_id = is_uci_id( key )
-	if uci_id:
-		uci_id_query = Q(license_holder__uci_id=uci_id)
-	else:
-		uci_id_query = None
 	
 	# Check for an existing participant.
 	if license_code:
 		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor, license_holder__license_code=license_code ) )
+	elif uci_id:
+		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor, license_holder__uci_id=uci_id ) )
 	else:
 		or_query = Q(license_holder__license_code=key)
 		if tag_query: 		or_query |= tag_query
-		if uci_id_query:	or_query |= uci_id_query
 		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor ).filter( or_query ) )
 	
 	if participants:
@@ -98,6 +95,8 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 	# Second, check for a license holder matching the key.
 	if license_code:
 		q = Q(license_code=license_code)
+	elif uci_id:
+		q = Q(uci_id=uci_id)
 	elif competition.using_tags and competition.use_existing_tags:
 		q = Q(license_code=key) | Q(existing_tag=key) | Q(existing_tag2=key)
 	else:
