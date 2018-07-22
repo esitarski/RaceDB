@@ -8,6 +8,20 @@ from models import SystemInfo
 
 import re
 
+def is_uci_id( uci_id ):
+	if not uci_id:
+		return None
+	uci_id = unicode(uci_id).upper().replace(u' ', u'')
+	if not uci_id.isdigit():
+		return None
+	if uci_id.startswith('0'):
+		return None
+	if len(uci_id) != 11:
+		return None
+	if int(uci_id[:-2]) % 97 != int(uci_id[-2:]):
+		return None
+	return uci_id
+
 def add_participant_from_license_holder( competition, license_holder ):
 	# Try to create a new participant from the license_holder and return that.
 	participant = Participant( competition=competition, license_holder=license_holder, preregistered=False ).init_default_values()
@@ -37,7 +51,7 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 				break
 			except Exception as e:
 				pass
-			
+	
 	# Convert the key to upper.
 	# The license_code, tag and tag2 are all stored in upper-case, so it is safe to do exact matches.
 	key = key.upper().lstrip('0')
@@ -51,14 +65,22 @@ def participant_key_filter( competition, key, auto_add_participant=True ):
 		else:
 			tag_query = Q(tag=key) | Q(tag2=key)
 	else:
-		tag_query = Q(tag=u'---')   # This will always fail as tags must be letters/numbers.
+		tag_query = None
+	
+	uci_id = is_uci_id( key )
+	if uci_id:
+		uci_id_query = Q(license_holder__uci_id=uci_id)
+	else:
+		uci_id_query = None
 	
 	# Check for an existing participant.
 	if license_code:
 		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor, license_holder__license_code=license_code ) )
 	else:
-		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor ).filter(
-			Q(license_holder__license_code=key) | tag_query) )
+		or_query = Q(license_holder__license_code=key)
+		if tag_query: 		or_query |= tag_query
+		if uci_id_query:	or_query |= uci_id_query
+		participants = list( Participant.objects.filter( competition=competition, role=Participant.Competitor ).filter( or_query ) )
 	
 	if participants:
 		participants.sort( key = lambda p: (p.category.sequence if p.category else 999999, p.bib or 999999) )

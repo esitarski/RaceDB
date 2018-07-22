@@ -359,9 +359,7 @@ def license_holders_from_search_text( search_text ):
 		
 	if not license_holders and search_text.startswith( 'scan=' ):
 		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
-		license_holders = list(LicenseHolder.objects.filter(
-			Q(license_code=arg) | Q(uci_id=arg) | Q(uci_code=arg) | Q(existing_tag=arg) | Q(existing_tag2=arg))
-		)
+		license_holders = list(LicenseHolder.objects.filter( Q(license_code=arg) | Q(uci_id=arg) ))
 
 	if not license_holders and is_uci_id( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_id = search_text.replace(' ','')))
