@@ -1406,7 +1406,7 @@ def ParticipantTagChange( request, participantId ):
 			return False
 		if len(tags) > 1:
 			status_entries.append(
-				(_('Multiple Tags Read'), [add_name_to_tag(compeition, t) for t in tags] ),
+				(_('Multiple Tags Read'), [add_name_to_tag(competition, t) for t in tags] ),
 			)
 			return False
 		return True
