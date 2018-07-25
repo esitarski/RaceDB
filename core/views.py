@@ -2287,6 +2287,11 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 			categories_field.choices = [(category.id, category.full_name()) for category in category_list]
 			categories_field.label = _('Available Categories')
 			
+			series_for_seeding_field = self.fields['series_for_seeding']
+			series_for_seeding_field.choices = [(u'', u'----')] + [
+				(series.id, series.name) for series in Series.objects.filter(category_format=event_tt.competition.category_format)
+			]
+			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline hidden-print'
@@ -2309,7 +2314,8 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 					Col(Field('num_fastest_participants'), 3),
 				),
 				Row(
-					Col(Field('sequence_option'), 6),
+					Col(Field('sequence_option'), 3),
+					Col(Field('series_for_seeding'), 3),
 				),
 				Row(
 					Col(Field('categories', size=12, css_class='hidden-print'), 6),

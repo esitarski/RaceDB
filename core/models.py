@@ -4438,7 +4438,11 @@ class EventTT( Event ):
 		groupCount = 0
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
-			participants = sorted( [p for p in wave_tt.get_participants_unsorted() if p.can_tt_start()], key=wave_tt.get_sequence_key() )
+			participants = sorted(
+				[p for p in wave_tt.get_participants_unsorted()
+					.select_related('license_holder','category') if p.can_tt_start()
+				],
+				key=wave_tt.get_sequence_key() )
 			
 			# Carry the "before gaps" of empty waves.
 			if not participants:
@@ -4608,6 +4612,7 @@ class WaveTT( WaveBase ):
 	bib_increasing = 2
 	age_decreasing = 3
 	bib_decreasing = 4
+	series_decreasing = 5
 	SEQUENCE_CHOICES = (
 		(_("Increasing"), (
 				(est_speed_increasing, _("Est. Speed - Increasing")),
@@ -4620,12 +4625,19 @@ class WaveTT( WaveBase ):
 				(bib_decreasing, _("Bib - Decreasing")),
 			),
 		),
+		(_("Series"), (
+				(series_decreasing, _("Series Rank")),
+			),
+		),
 	)
 	sequence_option = models.PositiveSmallIntegerField(
 		verbose_name=_('Sequence Option'),
 		choices = SEQUENCE_CHOICES,
 		help_text = 'Criteria used to order participants in the wave',
 		default=0 )
+		
+	series_for_seeding=models.ForeignKey( "Series", blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Series for Seeding'),
+		help_text=_('Must be specified if Sequence Option is Series') )
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_last( WaveTT, self )
@@ -4646,13 +4658,25 @@ class WaveTT( WaveBase ):
 			return None
 	
 	def get_sequence_key( self ):
-		if self.sequence_option == self.est_speed_increasing:
+		if self.sequence_option == self.series_decreasing and self.series_for_seeding:
+			
+			from series_results import get_results_for_category		# import this here to avoid a circular dependency.
+
+			licence_holder_series_rank = {}
+			categories_seen = set()
+			for category in self.categories.all():
+				if category in categories_seen:
+					continue
+				categoryResult, events = get_results_for_category(self.series_for_seeding, category)
+				for rank, r in enumerate(categoryResult, 1):
+					licence_holder_series_rank[r[0].id] = rank
+				# If this is category is scored as a group, record the group so we don't compute the series more than necessary.
+				categories_seen.update( self.series_for_seeding.get_group_related_categories(category) )
+				
 			return lambda p: (
 				p.seed_option,
-				p.est_kmh,
-				-(p.bib or 0),
-				p.license_holder.get_tt_metric(timezone.now().date()),
-				p.id,
+				-licence_holder_series_rank.get(p.license_holder_id, 999999),	# If no rank in series, rank high and fallback to random.
+				random.random(),	# Break ties randomly.
 			)
 		elif self.sequence_option == self.age_increasing:
 			return lambda p: (
@@ -4679,6 +4703,14 @@ class WaveTT( WaveBase ):
 		elif self.sequence_option == self.bib_decreasing:
 			return lambda p: (
 				p.seed_option,
+				-(p.bib or 0),
+				p.license_holder.get_tt_metric(timezone.now().date()),
+				p.id,
+			)
+		else:	# self.sequence_option == self.est_speed_increasing.
+			return lambda p: (
+				p.seed_option,
+				p.est_kmh,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(timezone.now().date()),
 				p.id,
@@ -4775,6 +4807,22 @@ class WaveTT( WaveBase ):
 		
 	def get_bad_start_count( self ):
 		return sum( 1 for p in self.get_participants_unsorted() if not p.can_start() )
+	
+	def get_details_html( self, include_starters=False ):
+		distance = None
+		if self.distance:
+			if self.laps:
+				distance = self.distance * self.laps
+			else:
+				distance = self.distance
+		
+		details = [u'{:.2f}&nbsp;<strong>{}</strong>'.format(distance, self.distance_unit) if distance else None]
+		if self.sequence_option == self.series_decreasing:
+			details.append( u'{}: {}'.format( self.get_sequence_option_display(), self.series_for_seeding.name if self.series_for_seeding else _('Missing')) )
+		else:
+			details.append( self.get_sequence_option_display() )
+		s = u', '.join( v for v in details if v )
+		return s
 	
 	class Meta:
 		verbose_name = _('TTWave')
