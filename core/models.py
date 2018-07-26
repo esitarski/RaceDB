@@ -1718,7 +1718,7 @@ class Event( models.Model ):
 				participant__competition=self.competition,
 				participant__category__in=self.get_categories_query(),
 			).count()
-
+			
 	def get_ineligible( self ):
 		return self.get_participants().filter( license_holder__eligible=False ).order_by('license_holder__search_text')
 			
@@ -1958,8 +1958,8 @@ class WaveBase( models.Model ):
 	def is_full( self ):
 		return self.max_participants is not None and self.spots_remaining <= 0
 		
-	def get_starters_str( self ):
-		count = self.get_participant_count()
+	def get_starters_str( self, count=None ):
+		count = self.get_participant_count() if count is None else count
 		if not self.max_participants:
 			return '{}'.format( count )
 		else:
@@ -1999,19 +1999,19 @@ class WaveBase( models.Model ):
 	
 	@property
 	def category_text( self ):
-		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) )
+		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) )
 	
 	def get_category_count( self ):
 		category_count = defaultdict( int )
 		for p in self.get_participants_unsorted():
 			category_count[p.category] += 1
-		return [(category, category_count[category]) for category in sorted(self.categories.all(), key=lambda c: c.sequence)]
+		return [(category, category_count[category]) for category in sorted(self.categories.all(), key=operator.attrgetter('sequence'))]
 	
 	def get_results_category_count( self ):
 		category_count = defaultdict( int )
 		for rr in self.get_results():
 			category_count[rr.participant.category] += 1
-		return [(category, category_count[category]) for category in sorted(self.categories.all(), key=lambda c: c.sequence) if category_count[category] > 0]
+		return [(category, category_count[category]) for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) if category_count[category] > 0]
 	
 	@property
 	def category_count_text( self ):
@@ -2023,7 +2023,7 @@ class WaveBase( models.Model ):
 	
 	@property
 	def category_text_html( self ):
-		return u'<ol><li>' + u'</li><li>'.join( category.code_gender for category in sorted(self.categories.all(), key=lambda c: c.sequence) ) + u'</li></ol>'
+		return u'<ol><li>' + u'</li><li>'.join( category.code_gender for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) ) + u'</li></ol>'
 		
 	def get_details_html( self, include_starters=False ):
 		distance = None
@@ -4807,6 +4807,12 @@ class WaveTT( WaveBase ):
 		
 	def get_bad_start_count( self ):
 		return sum( 1 for p in self.get_participants_unsorted() if not p.can_start() )
+	
+	def get_sequence_option_str( self ):
+		if self.sequence_option == self.series_decreasing:
+			return string_concat( self.get_sequence_option_display(), u": ", self.series_for_seeding.name if self.series_for_seeding else _('Missing'))
+		else:
+			return self.get_sequence_option_display()
 	
 	def get_details_html( self, include_starters=False ):
 		distance = None

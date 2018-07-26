@@ -1306,11 +1306,47 @@ def StartList( request, eventId ):
 	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
 	return render( request, 'mass_start_start_list.html', locals() )
 	
+def get_annotated_waves( event ):
+	try:
+		waves = list(event.wave_set.all())
+	except:
+		waves = list(event.wavett_set.all())
+		
+	category_wave = {}
+	for w in waves:
+		for c in w.categories.all():
+			category_wave[c] = w
+			
+	latest_reg_timestamp = event.date_time - datetime.timedelta( minutes=SystemInfo.get_reg_closure_minutes() )
+	
+	wave_starter_count = defaultdict( int )
+	wave_bad_start_count = defaultdict( int )
+	wave_late_reg_count = defaultdict( int )
+	num_nationalities = defaultdict( set )
+	for p in event.get_participants().defer('signature').select_related('license_holder','category'):
+		w = category_wave[p.category]
+		wave_starter_count[w] += 1
+		if not p.can_start():
+			wave_bad_start_count[w] += 1
+		if p.registration_timestamp >= latest_reg_timestamp:
+			wave_late_reg_count[w] += 1
+		if p.license_holder.nation_code:
+			num_nationalities[w].add( p.license_holder.nation_code )
+		
+	for w in waves:
+		w.get_bad_start_count = wave_bad_start_count[w]
+		w.get_starters_str = w.get_starters_str( wave_starter_count[w] )
+		w.get_late_reg_count = wave_late_reg_count[w]
+		w.get_num_nationalities = len(num_nationalities[w])
+	
+	return waves
+	
 @access_validation()
 def StartListTT( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	time_stamp = datetime.datetime.now()
 	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
+	wave_tts = get_annotated_waves( instance )
 	return render( request, 'tt_start_list.html', locals() )
 
 def StartListExcelDownload( request, eventId, eventType ):
@@ -1870,6 +1906,7 @@ def SeedingEdit( request, eventTTId ):
 	for e in entry_tts:
 		e.clock_time = instance.date_time + e.start_time
 	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts )
+	wave_tts = get_annotated_waves( instance )
 	return render( request, 'seeding_edit.html', locals() )
 
 def GenerateStartTimes( request, eventTTId ):

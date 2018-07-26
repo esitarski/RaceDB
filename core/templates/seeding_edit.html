@@ -73,12 +73,12 @@
 	</tr>
 </thead>
 <tbody>
-	{% for w in instance.wavett_set.all %}
+	{% for w in wave_tts %}
 		<tr onclick="jump('./WaveTTEdit/{{w.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{w.name}}</td>
-			<td>{{w.category_count_text}}</td>
-			<td>{{w.get_sequence_option_display}}</td>
+			<td>{{w.category_text}}</td>
+			<td>{{w.get_sequence_option_str}}</td>
 			<td>{{w.gap_rules_text}}</td>
 			<td class="text-center">{{w.get_starters_str}}</td>
 			{% if late_reg_exists %}<td class="text-center">{{w.get_late_reg.count}}</td>{% endif %}

@@ -13,7 +13,7 @@
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time|date:"Y-m-d H:i"}}</h2>
 <br/>
 <h4>
-{% trans "Nationalities" %}: {{instance.get_num_nationalities}},
+{% trans "Nations" %}: {{instance.get_num_nationalities}},
 {% trans "Starters" %}: {{instance.get_participant_count}}
 </h4>
 {% with bsc=instance.get_bad_start_count %}
@@ -28,7 +28,7 @@
 {% endwith %}
 <div class="hidden-print">
 <hr/>
-<button class="btn btn-primary" id="focus" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
+<button class="btn btn-primary" id="focus" onclick="window.print();"><img src="{% static "images/glyphicons_015_print.png" %}" >&nbsp;&nbsp;{% trans "Print" %}</button>
 {% if instance.create_seeded_startlist %}
 	&nbsp;&nbsp;&nbsp;&nbsp;
 	<a class="btn btn-success" href="./SeedingEdit/{{instance.id}}/">{% trans "Edit Seeding" %}</a>
@@ -59,7 +59,7 @@
 	<tr>
 		<th></th>
 		<th>{% trans "Wave" %}</th>
-		<th>{% trans "Bad Starts" %}</th>
+		<th class="text-center">{% trans "Bad Starts" %}</th>
 		<th>{% trans "Details" %}</th>
 		<th>{% trans "Categories" %}</th>
 		<th class="text-center">{% trans "Nations" %}</th>
@@ -69,16 +69,16 @@
 	</tr>
 </thead>
 <tbody>
-	{% for w in instance.wavett_set.all %}
+	{% for w in wave_tts %}
 		<tr onclick="jump('./WaveTTEdit/{{w.id}}/');">
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{w.name}}</td>
-			<td>{{w.get_bad_start_count}}</td>
+			<td class="text-center">{{w.get_bad_start_count}}</td>
 			<td>{{w.get_details_html|safe}}</td>
-			<td>{{w.category_count_text}}</td>
+			<td>{{w.category_text}}</td>
 			<td class="text-center">{{w.get_num_nationalities}}</td>
 			<td class="text-center">{{w.get_starters_str}}</td>
-			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg.count}}</td>{% endif %}
+			{% if late_reg_exists %}<td class="text-center hidden-print">{{w.get_late_reg_count}}</td>{% endif %}
 			<td class="hidden-print">
 				{% if request.user.is_superuser %}
 					<a class="btn btn-success btn-xs" href="./WaveTTEdit/{{w.id}}/">{% trans "Edit" %}</a>
