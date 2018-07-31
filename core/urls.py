@@ -59,6 +59,7 @@ urlpatterns = [
 	url(r'^(?i).*CompetitionDelete/(?P<competitionId>\d+)/$', views.CompetitionDelete),
 	url(r'^(?i).*CompetitionDashboard/(?P<competitionId>\d+)/$', views.CompetitionDashboard),
 	url(r'^(?i).*CompetitionRegAnalytics/(?P<competitionId>\d+)/$', views.CompetitionRegAnalytics),
+	url(r'^(?i).*CompetitionParticipationSummary/(?P<competitionId>\d+)/$', views.CompetitionParticipationSummary),
 	url(r'^(?i).*CompetitionApplyOptionalEventChangesToExistingParticipants/(?P<competitionId>\d+)/$', views.CompetitionApplyOptionalEventChangesToExistingParticipants),
 	url(r'^(?i).*CompetitionApplyOptionalEventChangesToExistingParticipants/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', views.CompetitionApplyOptionalEventChangesToExistingParticipants),
 	url(r'^(?i).*TeamsShow/(?P<competitionId>\d+)/$', views.TeamsShow),

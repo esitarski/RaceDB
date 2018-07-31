@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+<h2>{% trans "Unique Participant Summary" %}</h2>
+<h2>{{competition.name}}: {{competition.start_date|date:"Y-m-d"}} <a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "OK" %}</a></h2>
+<hr/>
+	
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed" style="width:auto">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Category" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Participants" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for c, count in category_participants %}
+		<tr>
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{c.code}}</td>
+			<td>{{c.get_gender_display}}</td>
+			<td style="text-align:right">{{count}}</td>
+		</tr>
+	{% endfor %}
+	<tr>
+		<td></td>
+		<th>{% trans "Total" %}</th>
+		<td></td>
+		<th style="text-align:right">{{total}}</th>
+	</tr>
+</tbody>
+</table>
+{% endspaceless %}
+{% endblock content %}

@@ -1160,6 +1160,21 @@ def CompetitionDashboard( request, competitionId ):
 	
 	return render( request, 'competition_dashboard.html', locals() )
 
+@access_validation()
+def CompetitionParticipationSummary( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	
+	category_participants = defaultdict( int )
+	for p in (Participant.objects
+			.filter(competition=competition, role=Participant.Competitor, bib__isnull=False, category__isnull=False)
+			.defer('signature')
+			.select_related('category') ):
+		category_participants[p.category] += 1
+		
+	category_participants = sorted( ((c, count) for c, count in category_participants.iteritems()), key=lambda x: x[0].sequence )
+	total = sum(count for c, count in category_participants)
+	return render( request, 'competition_summary.html', locals() )
+
 def GetRegAnalyticsForm( competition ):
 	class RegAnalyticsForm( Form ):
 		finish_date = competition.finish_date

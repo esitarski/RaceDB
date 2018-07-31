@@ -117,7 +117,9 @@
 					&nbsp;
 					<a class="btn btn-primary hidden-print" href="./FinishLynx/{{competition.id}}/"><img src="{% static "images/glyphicons_181_download_alt.png" %}"/>&nbsp;&nbsp;{% trans "FinishLinx" %}</a>
 					&nbsp;
-					<a class="btn btn-primary" href="./CompetitionRegAnalytics/{{competition.id}}/">{% trans "Reg Analytics" %}</a>
+					<a class="btn btn-primary hidden-print" href="./CompetitionRegAnalytics/{{competition.id}}/">{% trans "Reg Analytics" %}</a>
+					&nbsp;
+					<a class="btn btn-primary hidden-print" href="./CompetitionParticipationSummary/{{competition.id}}/">{% trans "Participation Summary" %}</a>
 				{% endif %}
 				
 				&nbsp;
