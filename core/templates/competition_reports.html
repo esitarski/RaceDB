@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block content %}
+<div class="container"/>
+	<div class="panel panel-default">
+		<div class="panel-heading">{% trans "Reports" %}</div>
+		<div class="panel-body">
+			<div class="row">
+				<div class="col-md-3">
+					<a class="btn btn-primary btn-block active" href="./CompetitionRegAnalytics/{{competition.id}}/">{% trans "Reg Analytics" %}</a>
+				</div>
+				<div class="col-md-9">
+					{% trans "Statistics and reporting about registration for this Competition (by day)." %}
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-3">
+					<a class="btn btn-primary btn-block active" href="./CompetitionParticipationSummary/{{competition.id}}/">{% trans "Participation Summary" %}</a>
+				</div>
+				<div class="col-md-9">
+					{% trans "Summary of all Participants by Category in this Competition." %}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<hr/>
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
+{% endblock content %}
