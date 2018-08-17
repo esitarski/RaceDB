@@ -80,7 +80,6 @@ def get_participant_excel( q = None ):
 			row = write_row_data( ws, 0, headers, title_format )
 			
 		lh = p.license_holder
-		print p, lh
 		data = [
 			lh.last_name,
 			lh.first_name,
