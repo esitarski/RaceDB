@@ -80,6 +80,7 @@ def get_participant_excel( q = None ):
 			row = write_row_data( ws, 0, headers, title_format )
 			
 		lh = p.license_holder
+		print p, lh
 		data = [
 			lh.last_name,
 			lh.first_name,
@@ -96,7 +97,7 @@ def get_participant_excel( q = None ):
 			lh.zip_postal,
 			p.category.code_gender if p.category else u'',
 			p.bib if p.bib else u'',
-			p.existing_tag if p.existing_tag else u'',
+			p.tag if p.tag else u'',
 			p.team.name if p.team else u'',
 			p.get_role_display(),
 			p.confirmed,

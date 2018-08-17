@@ -44,6 +44,10 @@ from WriteLog import writeLog
 
 invalid_date_of_birth = datetime.date(1900,1,1)
 
+import locale
+def date_format_encoding():
+	return locale.getlocale(locale.LC_TIME)[1] or locale.getpreferredencoding()
+
 class BulkSave( object ):
 	def __init__( self ):
 		self.objects = []
@@ -916,25 +920,27 @@ class Competition(models.Model):
 	def date_range_str( self ):
 		sd = self.start_date
 		ed = self.finish_date
+		dfe = date_format_encoding()
 		if sd == ed:
-			return self.fix_date_leading_zeros(sd.strftime('%b %d, %Y'))
+			return self.fix_date_leading_zeros(sd.strftime('%b %d, %Y').decode(dfe))
 		if sd.month == ed.month and sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%d, %Y') ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d').decode(dfe), ed.strftime('%d, %Y').decode(dfe) ))
 		if sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%b %d, %Y') ))
-		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d, %Y'), ed.strftime('%b %d, %Y') ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d').decode(dfe), ed.strftime('%b %d, %Y').decode(dfe) ))
+		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d, %Y').decode(dfe), ed.strftime('%b %d, %Y').decode(dfe) ))
 	
 	@property
 	def date_range_year_str( self ):
 		sd = self.start_date
 		ed = self.finish_date
+		dfe = date_format_encoding()
 		if sd == ed:
-			return self.fix_date_leading_zeros(sd.strftime('%Y %b %d'))
+			return self.fix_date_leading_zeros(sd.strftime('%Y %b %d').decode(dfe))
 		if sd.month == ed.month and sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%d') ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d').decode(dfe), ed.strftime('%d').decode(dfe) ))
 		if sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%b %d') ))
-		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%Y %b %d') ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d').decode(dfe), ed.strftime('%b %d').decode(dfe) ))
+		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d').decode(dfe), ed.strftime('%Y %b %d').decode(dfe) ))
 	
 	@property
 	def has_optional_events( self ):
