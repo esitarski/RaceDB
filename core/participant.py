@@ -542,8 +542,10 @@ def print_pdf( request, participant, pdf_str, print_type ):
 				stdin=PIPE, stdout=PIPE, stderr=PIPE,
 			)
 			stdout_info, stderr_info = p.communicate( pdf_str )
+			returncode = p.returncode
 		except Exception as e:
 			stdout_info, stderr_info = '', e
+			returncode = None
 		
 		try:
 			os.remove( tmp_file )

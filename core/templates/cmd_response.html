@@ -15,10 +15,14 @@
 	<h2>{{participant.bib}}{% if participant.license_holder.full_name %}: {{participant.license_holder.full_name}}{% endif %}</h2>
 {% endif %}
 
-{% if stderr_info %}
+{% if stderr_info or returncode %}
 <p>
 <div class="alert alert-error">
 <pre>
+{% if returncode %}
+returncode={{returncode}}
+{% endif %}
+
 {{stderr_info}}
 
 (STDERR)
@@ -29,8 +33,16 @@
 
 {% if stdout_info %}
 <p>
+{% if not returncode %}
+<div class="alert alert-primary">
+{% else %}
 <div class="alert alert-error">
+{% endif %}
 <pre>
+{% if returncode and not stderr_info %}
+returncode={{returncode}}
+{% endif %}
+
 {{stdout_info}}
 
 (STDOUT)
