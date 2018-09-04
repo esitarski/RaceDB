@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+
+{% block javascript %}
+	setTimeout(function(){ location.replace("{{cancelUrl}}"); }, 10*1000);
+{% endblock javascript %}
+
 {% block content %}
 
 {% load i18n %}
@@ -11,19 +16,27 @@
 {% endif %}
 
 {% if stderr_info %}
-	<p>
-	<div class="alert alert-error">
-		{{stderr_info}}
-	</div>
-	</p>
+<p>
+<div class="alert alert-error">
+<pre>
+{{stderr_info}}
+
+(STDERR)
+</pre>
+</div>
+</p>
 {% endif %}
 
 {% if stdout_info %}
-	<p>
-	<div class="alert alert-success">
-		{{stdout_info}}
-	</div>
-	</p>
+<p>
+<div class="alert alert-error">
+<pre>
+{{stdout_info}}
+
+(STDOUT)
+</pre>
+</div>
+</p>
 {% endif %}
 
 <p>

@@ -11,6 +11,9 @@
 {% endblock srcjavascript %}
 
 {% block javascript %}
+
+	setTimeout( function(){ location.assign("{{cancelUrl}}"); }, 5*60*1000 );
+
 	function sendEmail() {
 		var email_value = "{{participant.license_holder.email}}";
 		if( email_value )
