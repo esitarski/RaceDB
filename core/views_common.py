@@ -77,7 +77,7 @@ def access_validation( selfserve_ok=False, no_cache=True ):
 			elif request.user.username == 'serve' and not selfserve_ok:
 				# If self-serve, reject page that is not self-serve.
 				response = HttpResponseRedirect('/RaceDB/SelfServe')
-			elif not hub_mode and request.user.is_superuser:
+			elif not hub_mode and not request.user.is_superuser:
 				# Unless superuser, cannot access a competition in the past.				
 				competition = None
 				if 'competitionId' in kwargs:
