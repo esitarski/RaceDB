@@ -12,7 +12,9 @@ Normally this field is __True__.
 Set it to __False__ if you there is a problem with the LicenseHolder that must be corrected before he/she can be allowed to compete.
 This could include lack of payment or if you need to talk to the competitor about language or behavior.
 
-If __False__, RaceDB will not allow the LicenseHolder to self-serve check-in, and alerts will show on the Partcipant screen.
+There is a subtlety with __Eligible to Compete__.  It works with 
+
+If ineligible, RaceDB will not allow the LicenseHolder to self-serve check-in, and alerts will show on the Partcipant screen.
 The LicenseHolder can also pre-reg and be seeded in Time Trails.
 
 Always enter a reason in the __Note__ field if the LicenseHolder is ineligible.

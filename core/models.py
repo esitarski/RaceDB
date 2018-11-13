@@ -3964,13 +3964,14 @@ class Participant(models.Model):
 		
 	@classmethod
 	def get_can_start_query( cls, competition ):
+		q_ineligible = Q(license_holder__eligible=False) & (Q(license_holder__ineligible_on_date_time__isnull=True) | Q(license_holder__ineligible_on_date_time__ge=timezone.now()))
 		q = Q(
 			role=Participant.Competitor,
 			bib__isnull=False,
 			category__isnull=False,
 			paid=True,
-			license_holder__eligible=True,
-		)
+		) & ~q_ineligible
+		
 		if competition.using_tags:
 			q &= Q( tag__isnull=False )
 		if competition.show_signature:
