@@ -39,7 +39,7 @@ def init_ccn( fname ):
 	
 	discipline_id = dict( (discipline, Discipline.objects.get(name=discipline)) for discipline in ['Road', 'Track', 'Cyclocross', 'MTB'] )
 
-	effective_date = timezone.now().date()
+	effective_date = timezone.localtime(timezone.now()).date()
 	
 	# Process the records in large transactions for efficiency.
 	invalid_date_of_birth = datetime.date(1900, 1, 1)

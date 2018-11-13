@@ -569,7 +569,7 @@ class NumberSet(models.Model):
 		
 		nse = self.numbersetentry_set.filter(q1).filter(q2).first()
 		if nse:
-			nse.date_lost = date_lost or timezone.now().date()
+			nse.date_lost = date_lost or timezone.localtime(timezone.now()).date()
 			nse.save()
 	
 	def return_to_pool( self, bib, license_holder=None ):
@@ -874,7 +874,7 @@ class Competition(models.Model):
 		report_labels = list( self.report_labels.all() )
 		category_options = list( self.competitioncategoryoption_set.all() )
 	
-		start_date_old, start_date_new = self.start_date, timezone.now().date()
+		start_date_old, start_date_new = self.start_date, timezone.localtime(timezone.now()).date()
 		competition_new = self
 		competition_new.pk = None
 		competition_new.start_date = start_date_new
@@ -1726,7 +1726,11 @@ class Event( models.Model ):
 			).count()
 			
 	def get_ineligible( self ):
-		return self.get_participants().filter( license_holder__eligible=False ).order_by('license_holder__search_text')
+		return (self.get_participants()
+			.filter( license_holder__eligible=False )
+			.exclude( Q(ineligible_on_date_time__isnull=False) & Q(ineligible_on_date_time__lt=timezone.now()) )
+			.order_by('license_holder__search_text')
+		)
 			
 	def __unicode__( self ):
 		return u'{}, {} ({})'.format(self.date_time, self.name, self.competition.name)
@@ -2292,14 +2296,24 @@ class LicenseHolder(models.Model):
 	
 	eligible = models.BooleanField( default=True, verbose_name=_('Eligible to Compete'), db_index=True )
 	note = models.TextField( null=True, blank=True, verbose_name=_('LicenseHolder Note') )
+	ineligible_on_date_time = models.DateTimeField( auto_now_add=False, blank=True, null=True, default=None, verbose_name=_('Ineligible Starting at'),
+		help_text=_('Date/Time when the License Holder starts to be ineligible.  Defaults to the next day.  If blank, the License Holder will be ineligible immediately.  ') )
 	
 	emergency_contact_name = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact') )
 	emergency_contact_phone = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
 	emergency_medical = models.CharField( max_length=128, blank=True, default='',
 		verbose_name=_('Medical Alert'), help_text = _('eg. diabetic, drug alergy, etc.') )
 
+	@property
+	def is_eligible( self ):
+		if self.eligible:
+			return True
+		if self.ineligible_on_date_time is None:
+			return False
+		return timezone.now() < self.ineligible_on_date_time
+	
 	def get_age( self ):
-		today = timezone.now().date()
+		today = timezone.localtime( timezone.now() ).date()
 		return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
 
 	def get_nationality( self ):
@@ -2309,7 +2323,7 @@ class LicenseHolder(models.Model):
 				nationality = self.nation_code
 			else:
 				nationality = nationality[:24]
-		if nationality == 'CANADA':
+		if nationality.upper() == 'CANADA':
 			nationality = 'Canada'
 		return nationality
 
@@ -2487,7 +2501,7 @@ class LicenseHolder(models.Model):
 		if d != self.date_of_birth:
 			return _(u'inconsistent with date of birth')
 		
-		age = timezone.now().date().year - d.year
+		age = timezone.localtime(timezone.now()).date().year - d.year
 		if age < self.MinAge:
 			return _(u'date too recent')
 		if age > self.MaxAge:
@@ -2498,7 +2512,7 @@ class LicenseHolder(models.Model):
 	def date_of_birth_error( self ):
 		if not self or not self.date_of_birth:
 			return None
-		age = timezone.now().date().year - self.date_of_birth.year
+		age = timezone.localtime(timezone.now()).date().year - self.date_of_birth.year
 		if age < self.MinAge:
 			return _(u'age too young')
 		if age > self.MaxAge:
@@ -3246,7 +3260,7 @@ class TeamHint(models.Model):
 	@staticmethod
 	def set_all_disciplines( license_holder, team ):
 		TeamHint.objects.filter(license_holder=license_holder, team=team).delete()
-		effective_date = timezone.now().date()
+		effective_date = timezone.localtime(timezone.now()).date()
 		TeamHint.objects.bulk_create( 
 			[TeamHint(license_holder=license_holder, discipline=discipline, team=team, effective_date=effective_date)
 				for discipline in Discipline.objects.all()]
@@ -3255,7 +3269,7 @@ class TeamHint(models.Model):
 	@staticmethod
 	def set_discipline( license_holder, discipline, team ):
 		th = TeamHint.objects.filter(license_holder=license_holder, discipline=discipline).order_by('-effective_date').first()
-		effective_date = timezone.now().date()
+		effective_date = timezone.localtime(timezone.now()).date()
 		if th:
 			TeamHint.objects.filter( license_holder=license_holder, discipline=discipline ).exclude( pk=th.pk ).delete()
 			th.team = team
@@ -3269,7 +3283,7 @@ class TeamHint(models.Model):
 		verbose_name_plural = _('TeamHints')
 
 def update_team_hints():
-	latest_competition_date = timezone.now().date() - datetime.timedelta( days=365*2 )
+	latest_competition_date = timezone.localtime(timezone.now()).date() - datetime.timedelta( days=365*2 )
 	most_recent = {}
 	
 	# Add all the known TeamHints.
@@ -3312,7 +3326,7 @@ class CategoryHint(models.Model):
 		verbose_name_plural = _('CategoryHints')
 
 def update_category_hints():
-	latest_competition_date = timezone.now().date() - datetime.timedelta( days=365*2 )
+	latest_competition_date = timezone.localtime(timezone.now()).date() - datetime.timedelta( days=365*2 )
 	most_recent = {}
 	
 	# Add all the known CategoryHints.
@@ -3738,7 +3752,7 @@ class Participant(models.Model):
 		if not legal_entity:
 			return
 		
-		date_signed = (backdate or timezone.now().date())
+		date_signed = (backdate or timezone.localtime(timezone.now()).date())
 		waiver = Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).first()
 		if waiver:
 			if waiver.date_signed == date_signed:
@@ -3934,7 +3948,7 @@ class Participant(models.Model):
 	def good_signature( self ):		return self.signature or (not self.competition.show_signature)
 	def good_est_kmh( self ):		return self.est_kmh or not self.has_tt_events()
 	def good_waiver( self ):		return not self.has_unsigned_waiver
-	def good_eligible( self ):		return not self.is_competitor or self.license_holder.eligible
+	def good_eligible( self ):		return not self.is_competitor or self.license_holder.is_eligible
 	
 	def can_start( self ):
 		return (
@@ -4058,7 +4072,7 @@ class Participant(models.Model):
 		return all( p.is_done for p in self.get_category_participants() )
 		
 	def auto_confirm( self ):
-		if self.competition.start_date <= timezone.now().date() <= self.competition.finish_date and self.show_confirm:
+		if self.competition.start_date <= timezone.localtime(timezone.now()).date() <= self.competition.finish_date and self.show_confirm:
 			self.confirmed = True
 		return self
 	
@@ -4695,7 +4709,7 @@ class WaveTT( WaveBase ):
 			return lambda p: (
 				p.seed_option,
 				p.bib or 0,
-				p.license_holder.get_tt_metric(timezone.now().date()),
+				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
 		elif self.sequence_option == self.age_decreasing:
@@ -4703,14 +4717,14 @@ class WaveTT( WaveBase ):
 				p.seed_option,
 				datetime.date(3000,1,1) - p.license_holder.date_of_birth,
 				-(p.bib or 0),
-				p.license_holder.get_tt_metric(timezone.now().date()),
+				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
 		elif self.sequence_option == self.bib_decreasing:
 			return lambda p: (
 				p.seed_option,
 				-(p.bib or 0),
-				p.license_holder.get_tt_metric(timezone.now().date()),
+				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
 		else:	# self.sequence_option == self.est_speed_increasing.
@@ -4718,7 +4732,7 @@ class WaveTT( WaveBase ):
 				p.seed_option,
 				p.est_kmh,
 				-(p.bib or 0),
-				p.license_holder.get_tt_metric(timezone.now().date()),
+				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
 	
@@ -5637,7 +5651,7 @@ def bad_data_test():
 	fields = dict(
 		last_name = '00-TEST-LAST-NAME',
 		first_name = '00-TEST-FIRST-NAME',
-		date_of_birth = timezone.now().date(),
+		date_of_birth = timezone.localtime(timezone.now()).date(),
 	
 		license_code = '0000{}'.format( random.randint(0,10000) ),
 	

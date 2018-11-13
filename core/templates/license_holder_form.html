@@ -13,9 +13,24 @@
 		else
 			alert( '{% trans "Missing Email!" %}' );
 	}
+	
+	function eligibleCB() {
+		var eligible = document.getElementById("id_eligible");
+		var ineligible_on_date_time = document.getElementById("id_ineligible_on_date_time");
+		if( eligible.checked )
+			ineligible_on_date_time.value = "";
+		else {
+			// Make the license holder ineligible starting the next day.
+			var d = new Date();
+			d.setDate( d.getDate() + 1 );
+			ineligible_on_date_time.value = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + ' ' + '00:00:00';
+		}
+	}
 {% endblock javascript %}
 
 {% block onload %}
+document.getElementById("id_eligible").onchange = eligibleCB;
+
 var uci_code = $('#id_uci_id');
 uci_code.val( uci_code.val().replace(/(\d\d\d)/g, '$1 ') );
 

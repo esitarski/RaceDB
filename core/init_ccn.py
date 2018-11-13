@@ -12,7 +12,7 @@ import import_utils
 from import_utils import get_key
 from large_delete_all import large_delete_all
 
-today = timezone.now().date()
+today = timezone.localtime(timezone.now()).date()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
 

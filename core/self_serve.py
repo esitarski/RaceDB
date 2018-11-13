@@ -8,7 +8,7 @@ from ReadWriteTag import ReadTag, WriteTag
 from participant import ParticipantSignatureForm
 
 def get_valid_competitions():
-	dNow = timezone.now().date()
+	dNow = timezone.localtime(timezone.now()).date()
 	return [
 		c for c in Competition.objects.filter(
 			start_date__gte=dNow-datetime.timedelta(days=365)).order_by(
