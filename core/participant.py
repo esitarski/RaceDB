@@ -922,7 +922,7 @@ def ParticipantTeamSelectDiscipline( request, participantId, teamId ):
 		participant.team = team
 		participant.auto_confirm().save()
 		
-		today = timezone.now().date()
+		today = timezone.localtime(timezone.now()).date()
 		for id in disciplines:
 			if team:
 				try:
@@ -1383,7 +1383,7 @@ def ParticipantTagChange( request, participantId ):
 				status_entries.append(
 					(_('Duplicate Tag'), (
 						_('Tag already in use by LicenseHolder.'),
-						__repr__(lh),
+						lh.__repr__(),
 					)),
 				)
 				return False
@@ -1392,7 +1392,7 @@ def ParticipantTagChange( request, participantId ):
 			status_entries.append(
 				(_('Duplicate Tag'), (
 					_('Tag already in use by Participant.'),
-					__repr__(p.license_holder),
+					p.license_holder.__repr__(),
 				)),
 			)
 			return False

@@ -111,7 +111,7 @@ def license_holder_import_excel(
 		
 	license_holder_team = {}
 	disciplines = list(Discipline.objects.all())
-	effective_date = timezone.now().date()
+	effective_date = timezone.localtime(timezone.now()).date()
 	def process_license_holder_team( license_holder_team ):
 		if license_holder_team:
 			TeamHint.objects.filter( license_holder__in=list(license_holder_team.iterkeys()) ).delete()

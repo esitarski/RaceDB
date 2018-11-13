@@ -331,7 +331,8 @@ class LicenseHolderForm( ModelForm ):
 			),
 			Row(
 				Col('eligible', 2),
-				Col( HTML(_('If not Eligible to Compete, this License Holder will not be allowed to participate in races until it is reset.  Always add a note (below) explaining the reason.')), 6 ),
+				Col( HTML(_('If not Eligible, this License Holder will not be allowed to participate.  Always add a note (below) explaining the reason.')), 4 ),
+				Col('ineligible_on_date_time', 6),
 			),
 			Row(
 				Field('note', cols=80, rows=1),
@@ -1656,7 +1657,7 @@ def CompetitionCloudQuery( request ):
 		return HttpResponseForbidden()
 	
 	# Gets all Competitions from up to a year ago.
-	d_ref = (timezone.now() - datetime.timedelta(days=366*2)).date()
+	d_ref = (timezone.localtime(timezone.now()) - datetime.timedelta(days=366*2)).date()
 	competitions = Competition.objects.filter( start_date__gte=d_ref
 		).select_related('category_format','discipline','race_class').order_by('-start_date')
 	
@@ -2881,7 +2882,7 @@ def YearOnYearAnalytics( request ):
 
 def GetEvents( request, date=None ):
 	if date is None:
-		date = timezone.now().date()
+		date = timezone.localtime(timezone.now()).date()
 	else:
 		date = datetime.date( *[int(d) for d in date.split('-')] )
 	

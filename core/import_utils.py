@@ -7,7 +7,7 @@ from django.utils import timezone
 
 datemode = None
 
-dNow = timezone.now().date()
+dNow = timezone.localtime(timezone.now()).date()
 earliest_year = (dNow - datetime.timedelta( days=106*365 )).year
 latest_year = (dNow - datetime.timedelta( days=7*365 )).year
 

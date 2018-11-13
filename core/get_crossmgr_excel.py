@@ -150,7 +150,7 @@ def add_categories_page( wb, title_format, event ):
 			categories = sorted( categories, key = lambda c: c.sequence )
 			if not categories:
 				continue
-			participants = list( p for p in wave.get_participants_unsorted() if p.license_holder.eligible )
+			participants = list( p for p in wave.get_participants_unsorted() if p.license_holder.is_eligible )
 			for category in categories:
 				numbers.append( set(p.bib for p in participants if p.category == category and p.bib) )
 				cat_sequence.append( category )
@@ -171,7 +171,7 @@ def add_categories_page( wb, title_format, event ):
 		wave_flag = getattr( wave, 'rank_categories_together', False )
 		component_flag = not wave_flag
 		
-		participants = list( p for p in wave.get_participants_unsorted() if p.license_holder.eligible )
+		participants = list( p for p in wave.get_participants_unsorted() if p.license_holder.is_eligible )
 		if len(categories) == 1:	# If only one category, do not output Component waves.
 			for category in categories:
 				row_data = [

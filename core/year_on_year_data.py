@@ -38,7 +38,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		if not event.has_participants():
 			continue
 		
-		event_date = event.date_time.date()
+		event_date = timezone.localtime(event.date_time).date()
 		event_year = event_date.year
 		if not year_on_year or year_on_year[-1]['year'] != event_year:
 			year_on_year.append( {'year':event_year} )
