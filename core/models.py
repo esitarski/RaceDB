@@ -1727,8 +1727,8 @@ class Event( models.Model ):
 			
 	def get_ineligible( self ):
 		return (self.get_participants()
-			.filter( license_holder__eligible=False )
-			.exclude( Q(ineligible_on_date_time__isnull=False) & Q(ineligible_on_date_time__lt=timezone.now()) )
+			.exclude( license_holder__eligible=True )
+			.exclude( Q(license_holder__ineligible_on_date_time__isnull=False) & Q(license_holder__ineligible_on_date_time__lt=timezone.now()) )
 			.order_by('license_holder__search_text')
 		)
 			
