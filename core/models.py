@@ -5383,19 +5383,11 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	
 	#-------------------------------------------------------------------
 	# Change duplicate participants to point back to the correct license holder.
-	to_delete_pks = []
 	for p in Participant.objects.filter( license_holder__pk__in=license_holder_duplicate_pks ):
 		# Ensure we don't create an integrity error if the license_holder_merge is already entered in this category.
-		if Participant.objects.filter(competition=p.competition, category=p.category, license_holder=license_holder_merge).exists():
-			to_delete_pks.append( p.pk )
-		p.license_holder = license_holder_merge
-		p.save()
-	if to_delete_pks:
-		# We only get here if there are duplicate license holders participating in the same category at the same competition.
-		# This should not happen, so we delete them.
-		# When we delete these participants, all start lists and results will be cleaned up through cascade delete.
-		Participant.objects.filter( pk_in=to_delete_pks ).delete()
-	del to_delete_pks
+		if not Participant.objects.filter(competition=p.competition, category=p.category, license_holder=license_holder_merge).exists():
+			p.license_holder = license_holder_merge
+			p.save()
 	
 	'''
 	#-------------------------------------------------------------------
