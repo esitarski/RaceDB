@@ -5,6 +5,13 @@
 {% load format_time_no_decimals %}
 {% load to_js %}
 
+{% block style %}
+.main-container {
+	margin-left:-10px;
+	margin-right:-10px;
+}
+{% endblock style %}
+
 {% block srcjavascript %}
 <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
        'version':'1','packages':['corechart']}]}"></script>

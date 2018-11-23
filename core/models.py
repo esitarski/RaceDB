@@ -4208,10 +4208,6 @@ class Participant(models.Model):
 		if participant:
 			return True, _('This LicenseHolder is already in this Category'), participant
 			
-		participant = Participant.objects.filter(competition=self.competition, category=self.category, license_holder=self.license_holder).first()
-		if participant:
-			return True, _('This LicenseHolder is already in this Category'), participant
-			
 		participant = Participant.objects.filter(competition=self.competition, category=self.category, bib=self.bib).first()
 		if participant:
 			return True, _('A Participant is already in this Category with the same Bib.  Assign "No Bib" first, then try again.'), participant
@@ -5361,10 +5357,11 @@ def clean_up_event_option_id( sender, **kwargs ):
 
 def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	duplicates = list( set(list(duplicates) + [license_holder_merge]) )
-	pks = [lh.pk for lh in duplicates if lh != license_holder_merge]
-	if not pks:
+	license_holder_duplicate_pks = [lh.pk for lh in duplicates if lh != license_holder_merge]
+	if not license_holder_duplicate_pks:
 		return
 
+	#-------------------------------------------------------------------
 	# Record the merge in the log.
 	def get_lh_info( lh ):
 		return u'"{}" license="{}" uciid="{}" dob={} gender={}\n'.format(
@@ -5376,7 +5373,7 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 		)
 	
 	description = StringIO()
-	for lh in LicenseHolder.objects.filter( pk__in=pks ):
+	for lh in LicenseHolder.objects.filter( pk__in=license_holder_duplicate_pks ):
 		description.write( get_lh_info(lh) )
 	description.write( u'--->\n' )
 	lh = license_holder_merge
@@ -5384,17 +5381,35 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	UpdateLog( update_type=0, description=description.getvalue() ).save()
 	description.close()
 	
+	#-------------------------------------------------------------------
+	# Change duplicate participants to point back to the correct license holder.
+	to_delete_pks = []
+	for p in Participant.objects.filter( license_holder__pk__in=license_holder_duplicate_pks ):
+		# Ensure we don't create an integrity error if the license_holder_merge is already entered in this category.
+		if Participant.objects.filter(competition=p.competition, category=p.category, license_holder=license_holder_merge).exists():
+			to_delete_pks.append( p.pk )
+		p.license_holder = license_holder_merge
+		p.save()
+	if to_delete_pks:
+		# We only get here if there are duplicate license holders participating in the same category at the same competition.
+		# This should not happen, so we delete them.
+		# When we delete these participants, all start lists and results will be cleaned up through cascade delete.
+		Participant.objects.filter( pk_in=to_delete_pks ).delete()
+	del to_delete_pks
+	
+	'''
+	#-------------------------------------------------------------------
 	# Cache and delete the Participant Options.
 	participant_options = [(po.participant.pk, po) for po in ParticipantOption.objects.filter( participant__license_holder__pk__in=[lh.pk for lh in duplicates] ) ]
 	for participant_pk, po in participant_options:
 		po.delete()
 	
 	# Cache the participants and results.
-	participant_pks = Participant.objects.filter(license_holder__pk__in=[lh.pk for lh in duplicates]).values_list('pk', flat=True)
-	participants = list(Participant.objects.filter(pk__in=participant_pks))
-	entry_tt = list(EntryTT.objects.filter(participant__pk__in=participant_pks))
-	results_mass_start = list(ResultMassStart.objects.filter(participant__pk__in=participant_pks))
-	results_tt = list(ResultTT.objects.filter(participant__pk__in=participant_pks))
+	participant_license_holder_duplicate_pks = Participant.objects.filter(license_holder__pk__in=[lh.pk for lh in duplicates]).values_list('pk', flat=True)
+	participants = list(Participant.objects.filter(pk__in=participant_license_holder_duplicate_pks))
+	entry_tt = list(EntryTT.objects.filter(participant__pk__in=participant_license_holder_duplicate_pks))
+	results_mass_start = list(ResultMassStart.objects.filter(participant__pk__in=participant_license_holder_duplicate_pks))
+	results_tt = list(ResultTT.objects.filter(participant__pk__in=participant_license_holder_duplicate_pks))
 	
 	# Delete the participants.
 	participants.sort( key = lambda p: 0 if p.license_holder == license_holder_merge else 1 )
@@ -5452,7 +5467,9 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 					continue
 				r.save()
 				events_seen.add( r.event_id )
+	'''	
 	
+	#--------------------------------------------------------------------
 	# Ensure the merged entry is added to every Seasons Pass held by a duplicate.
 	# Get all the seasons passes held by any duplicate (includes the license holder)
 	# Resolve these to memory as lazy evaluation won't work after the delete tbat follows.
@@ -5466,14 +5483,14 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	
 	# Ensure that numbers in the number set are owned by the remaining license_holder.
 	for ns in NumberSet.objects.all():
-		nse_existing = list( NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=pks).values_list('bib', 'date_lost') )
-		NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=pks).delete()
+		nse_existing = list( NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=license_holder_duplicate_pks).values_list('bib', 'date_lost') )
+		NumberSetEntry.objects.filter(number_set=ns, license_holder__pk__in=license_holder_duplicate_pks).delete()
 		for bib, date_lost in nse_existing:
 			if not NumberSetEntry.objects.filter( number_set=ns, bib=bib ).exists():
 				NumberSetEntry( number_set=ns, bib=bib, license_holder=license_holder_merge, date_lost=date_lost ).save()
 	
 	# Combine waivers.  Preserve most recent date_signed for all legal entities.
-	for w in Waiver.objects.filter( license_holder__pk__in=pks ):
+	for w in Waiver.objects.filter( license_holder__pk__in=license_holder_duplicate_pks ):
 		w_merge = Waiver.objects.filter( license_holder=license_holder_merge, legal_entity=w.legal_entity ).first()
 		if not w_merge:								# Add waiver if it doesn't exist.
 			Waiver( license_holder=license_holder_merge, legal_entity=w.legal_entity, date_signed=w.date_signed ).save()
@@ -5481,8 +5498,8 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 			w_merge.date_signed = w.date_signed
 			w_merge.save()
 	
-	# Final delete.  Cascade delete will clean up old SeasonsPass and Waiver entries.
-	LicenseHolder.objects.filter( pk__in=pks ).delete()
+	# Final delete.  Cascade delete will clean up all old SeasonsPass and Waiver entries.
+	LicenseHolder.objects.filter( pk__in=license_holder_duplicate_pks ).delete()
 	
 #-----------------------------------------------------------------------------------------------
 class CompetitionCategoryOption(models.Model):
