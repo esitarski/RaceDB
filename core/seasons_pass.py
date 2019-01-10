@@ -230,9 +230,6 @@ def UploadSeasonsPass( request, seasonsPassId ):
 	seasons_pass = get_object_or_404( SeasonsPass, pk=seasonsPassId )
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = UploadSeasonsPassForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_upload_seasons_pass( seasonsPassId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )

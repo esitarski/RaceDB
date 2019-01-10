@@ -72,7 +72,7 @@ class ParticipantSearchForm( Form ):
 		button_args = [
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
 			Submit( 'clear-submit', _('Clear Search'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('OK'), css_class = 'btn btn-primary' ),
+			CancelButton( _('OK'), css_class='btn btn-primary' ),
 			Submit( 'emails-submit', _('Emails'), css_class = 'btn btn-primary' ),
 			Submit( 'export-excel-submit', _('Export to Excel'), css_class = 'btn btn-primary' ),
 		]
@@ -117,9 +117,6 @@ def Participants( request, competitionId ):
 		return participants, paginator
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		if 'clear-submit' in request.POST:
 			request.session[pfKey] = {}
 			request.session[pageKey] = None
@@ -337,7 +334,7 @@ class BibScanForm( Form ):
 		
 		button_args = [
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		if hide_cancel_button:
 			button_args = button_args[:-1]
@@ -355,9 +352,6 @@ def ParticipantBibAdd( request, competitionId ):
 	
 	add_by_bib = True
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = BibScanForm( request.POST, hide_cancel_button=True )
 		if form.is_valid():
 			bib = form.cleaned_data['bib']
@@ -385,11 +379,7 @@ def ParticipantManualAdd( request, competitionId ):
 	search_text = request.session.get('participant_new_filter', '')
 	btns = [('new-submit', 'New License Holder', 'btn btn-success')]
 	add_by_manual = True
-	if request.method == 'POST':
-	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
+	if request.method == 'POST':	
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'ParticipantNotFound', competition.id) )
 			
@@ -658,7 +648,7 @@ class ParticipantCategorySelectForm( Form ):
 		
 		button_args = [
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		
 		self.helper.layout = Layout(
@@ -678,9 +668,6 @@ def ParticipantCategoryChange( request, participantId ):
 	
 	gender = None
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-		
 		form = ParticipantCategorySelectForm( request.POST )
 		if form.is_valid():
 			gender = int(form.cleaned_data['gender'])
@@ -889,7 +876,7 @@ class TeamDisciplineForm( Form ):
 		buttons = [
 			Submit( 'set-all-submit', _('Same Team for All Disciplines'), css_class = 'btn btn-primary' ),
 			Submit( 'set-selected-submit', _('Team for Selected Disciplines Only'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		
 		self.helper.layout = Layout(
@@ -908,9 +895,6 @@ def ParticipantTeamSelectDiscipline( request, participantId, teamId ):
 		team = None
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'pop2Url'))
-		
 		disciplines = []
 		if 'set-all-submit' in request.POST:
 			disciplines = list( Discipline.objects.all().values_list('id', flat=True) )
@@ -1048,7 +1032,7 @@ class ParticipantNoteForm( Form ):
 		
 		button_args = [
 			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		
 		self.helper.layout = Layout(
@@ -1068,9 +1052,6 @@ def ParticipantNoteChange( request, participantId ):
 	license_holder = participant.license_holder
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = ParticipantNoteForm( request.POST )
 		if form.is_valid():
 			note = form.cleaned_data['note']
@@ -1089,9 +1070,6 @@ def ParticipantGeneralNoteChange( request, participantId ):
 	license_holder = participant.license_holder
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = ParticipantNoteForm( request.POST )
 		if form.is_valid():
 			note = form.cleaned_data['note']
@@ -1122,7 +1100,7 @@ def GetParticipantOptionForm( participation_optional_events ):
 			
 			button_args = [
 				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
-				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+				CancelButton(),
 			]
 			
 			self.helper.layout = Layout(
@@ -1147,9 +1125,6 @@ def ParticipantOptionChange( request, participantId ):
 	participation_optional_events = [(event, is_participating) for event, optional, is_participating in participation_events if optional]
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = GetParticipantOptionForm( participation_optional_events )( request.POST )
 		if form.is_valid():
 			options = form.cleaned_data['options']
@@ -1192,7 +1167,7 @@ def GetParticipantEstSpeedForm( participant ):
 			
 			button_args = [
 				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
-				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+				CancelButton(),
 			]
 			
 			self.helper.layout = Layout(
@@ -1216,9 +1191,6 @@ def ParticipantEstSpeedChange( request, participantId ):
 	license_holder = participant.license_holder
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = GetParticipantEstSpeedForm(participant)( request.POST )
 		if form.is_valid():
 			est_speed = form.cleaned_data['est_speed']
@@ -1263,7 +1235,7 @@ class ParticipantWaiverForm( Form ):
 		button_args = [
 			Submit( 'ok-submit', _('Waiver Correct and Signed'), css_class = 'btn btn-success' ),
 			Submit( 'not-ok-submit', _('Waiver Incorrect or Unsigned'), css_class = 'btn btn-danger' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		
 		self.helper.layout = Layout(
@@ -1306,7 +1278,7 @@ class ParticipantTagForm( Form ):
 		
 		button_args = [
 			Submit( 'ok-submit', _('Update Tag in Database'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'auto-generate-and-write-tag-submit', _('Auto Generate and Write Tag'), css_class='btn btn-success' ),
@@ -1428,9 +1400,6 @@ def ParticipantTagChange( request, participantId ):
 		return True
 			
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-		
 		form = ParticipantTagForm( request.POST )
 		if form.is_valid():
 
@@ -1569,13 +1538,13 @@ class ParticipantSignatureForm( Form ):
 		if is_jsignature:
 			button_args = [
 				Submit( 'ok-submit', ('&nbsp;'*10) + unicode(_('OK')) + ('&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
-				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning hidden-print', style='font-size:200%' ),
+				CancelButton( style='font-size:200%' ),
 				HTML(u'<button class="btn btn-warning hidden-print" onClick="reset_signature()">{}</button>'.format(_('Reset'))),
 			]
 		else:
 			button_args = [
 				HTML('&nbsp;'*24),
-				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning hidden-print', style='font-size:150%' )
+				CancelButton( style='font-size:150%' )
 			]
 		
 		if is_jsignature:
@@ -1605,9 +1574,6 @@ def ParticipantSignatureChange( request, participantId ):
 	signature_with_touch_screen = int(request.session.get('signature_with_touch_screen', True))
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = ParticipantSignatureForm( request.POST, is_jsignature=signature_with_touch_screen )
 		if form.is_valid():
 			signature = form.cleaned_data['signature']
@@ -1639,9 +1605,6 @@ def ParticipantBarcodeAdd( request, competitionId ):
 	
 	add_by_barcode = True
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = BarcodeScanForm( request.POST, hide_cancel_button=True )
 		if form.is_valid():
 			scan = form.cleaned_data['scan'].strip()
@@ -1690,9 +1653,6 @@ def ParticipantRfidAdd( request, competitionId, autoSubmit=False ):
 	
 	add_by_rfid = True
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-		
 		form = RfidScanForm( request.POST, hide_cancel_button=True )
 		if form.is_valid():
 		
@@ -1837,7 +1797,7 @@ class ParticipantConfirmForm( Form ):
 		button_args = [
 			Submit( 'save-submit', _('Save'), css_class = 'btn btn-primary' ),
 			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		
 		change_team = ('change-team-submit', _('Change'), 'btn btn-primary', self.changeTeamCB)
@@ -1883,11 +1843,7 @@ def ParticipantConfirm( request, participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
 	competition_age = participant.competition.competition_age( participant.license_holder )
 	
-	if request.method == 'POST':
-	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect( getContext(request,'cancelUrl') )
-		
+	if request.method == 'POST':		
 		form = ParticipantConfirmForm( request.POST, participant=participant )
 		if form.is_valid():
 			form.save( request )
@@ -1925,7 +1881,7 @@ class ParticipantNotFoundForm( Form ):
 		button_args = [Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' )]
 		if from_post:
 			button_args.append( Submit( 'new-submit', _('Not Found - Create New License Holder'), css_class = 'btn btn-success' ) )
-		button_args.append( Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ) )
+		button_args.append( CancelButton() )
 		
 		self.helper.layout = Layout(
 			Row(
@@ -1956,14 +1912,8 @@ def ParticipantNotFound( request, competitionId ):
 	
 	if request.method == 'POST':
 	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect( getContext(request,'cancelUrl') )
-		
 		form = ParticipantNotFoundForm( request.POST, from_post=True )
 		if form.is_valid():
-			if 'cancel-submit' in request.POST:
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 			last_name = form.cleaned_data['last_name']
 			last_name = last_name[:1].upper() + last_name[1:]
 			gender = int(form.cleaned_data['gender'])

@@ -9,7 +9,7 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, Field, MultiField, ButtonHolder, Div, Submit
+from crispy_forms.layout import Layout, Fieldset, Field, MultiField, ButtonHolder, Div, Submit, BUtton
 
 from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
@@ -24,11 +24,11 @@ EDIT_BUTTONS	= 0xFFFF
 def addFormButtons( form, button_mask = EDIT_BUTTONS, additional_buttons = [] ):
 	btns = []
 	if button_mask & SAVE_BUTTON != 0:
-		btns.append( Submit('save-submit', _('Save'), css_class='btn btn-primary') )
+		btns.append( Submit('save-submit', _('Save'), css_class='btn btn-primary hidden-print') )
 	if button_mask & OK_BUTTON:
-		btns.append( Submit('ok-submit', _('OK'), css_class='btn btn-primary') )
+		btns.append( Submit('ok-submit', _('OK'), css_class='btn btn-primary hidden-print') )
 	if button_mask & CANCEL_BUTTON:
-		btns.append( Submit('cancel-submit', _('Cancel'), css_class='btn btn-warning') )
+		btns.append( Button('cancel-button', _('Cancel'), css_class='btn btn-warning hidden-print'), onclick="skip_back()" )
 		
 	if additional_buttons:
 		btns.append( HTML('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') )

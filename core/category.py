@@ -38,9 +38,6 @@ def CategoryFormatsDisplay( request ):
 	
 	if request.method == 'POST':
 	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CategoryFormatNew') )
 			
@@ -123,9 +120,6 @@ def CategoryNew( request, categoryFormatId ):
 	title = unicode(_('New {}')).format(Category._meta.verbose_name.title())
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = CategoryForm( request.POST )
 		if form.is_valid():
 			category = form.save( commit = False )

@@ -34,9 +34,6 @@ def SetLicenseChecks( request, competitionId ):
 	ccos_query = competition.competitioncategoryoption_set.all().order_by('category__sequence').select_related('category')
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect( getContext(request, 'cancelUrl') )
-			
 		if 'set-all-submit' in request.POST:
 			ccos_query.update( license_check_required=True )
 			return HttpResponseRedirect( '.' )
@@ -211,9 +208,6 @@ def UploadCCOs( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = UploadCCOForm(request.POST, request.FILES)
 		if form.is_valid():
 			handle_upload( competition, request.FILES['excel_file'] )

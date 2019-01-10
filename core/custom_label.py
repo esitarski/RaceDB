@@ -63,9 +63,6 @@ def CustomLabel( request, competitionId ):
 	custom_label_text = unicode(request.session.get('custom_label_text', u''))
 
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = CustomLabelForm( request.POST, system_info=SystemInfo.get_singleton(), competition=competition )
 		if form.is_valid():
 			text = form.cleaned_data['text'].upper()

@@ -42,9 +42,6 @@ def LegalEntitiesDisplay( request ):
 	search_text = request.session.get('legal_entities_filter', '')
 	btns = [('new-submit', _('New LegalEntity'), 'btn btn-success')]
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'LegalEntityNew') )
 			

@@ -136,6 +136,9 @@ def Col( field, cols=1 ):
 
 def ColKey( *args, **kwargs ):
 	return Div( *args, css_class = 'col-md-{}'.format(kwargs.get('cols',1)) )
+	
+def CancelButton( name=None, css_class=None, style=None ):
+	return Button( 'cancel-button', name or _('Cancel'), css_class=css_class or 'btn btn-warning hidden-print', style=style or '', onclick='skip_back()' )
 
 @autostrip
 class SearchForm( Form ):
@@ -165,7 +168,7 @@ class SearchForm( Form ):
 				
 		# Add cancel button.
 		if not hide_cancel_button:
-			button_args.append( Submit( 'cancel-submit', 'Cancel', css_class = 'btn btn-warning hidden-print' ) )
+			button_args.append( CancelButton() )
 			
 		# Add non-search buttons.
 		if additional_buttons:
@@ -199,7 +202,7 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 	if button_mask & OK_BUTTON:
 		btns.append( Submit('ok-submit', _('OK'), css_class='btn btn-primary hidden-print') )
 	if button_mask & CANCEL_BUTTON:
-		btns.append( Submit('cancel-submit', (cancel_alias or _('Cancel')), css_class='btn btn-warning hidden-print') )
+		btns.append( CancelButton(cancel_alias) )
 	
 	if print_button:
 		btns.append( HTML(u'&nbsp;' * 4) )
@@ -254,9 +257,6 @@ def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additio
 	isEdit = False
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = ModelFormClass( request.POST, button_mask=NEW_BUTTONS )
 		if form.is_valid():
 			instance = form.save()
@@ -286,9 +286,6 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass=None, template=
 	
 	title = string_concat( _('Edit'), ' ', ModelClass._meta.verbose_name )
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
 		if form.is_valid():
 			formInstance = form.save( commit = False )
@@ -326,8 +323,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	
 	title = string_concat( _('Delete'), ' ', ModelClass._meta.verbose_name, u' ', _('(are you sure? - there is no undo.)') )
 	if request.method == 'POST':
-		if 'cancel-submit' not in request.POST:
-			instance.delete()
+		instance.delete()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		if pre_edit_func:

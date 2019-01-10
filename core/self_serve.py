@@ -94,9 +94,6 @@ def SelfServeSignature( request ):
 	
 	participant = participants[0]
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = ParticipantSignatureForm( request.POST )
 		if form.is_valid():
 			signature = form.cleaned_data['signature']

@@ -63,9 +63,6 @@ def TeamsDisplay( request ):
 	]
 
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'TeamNew') )
 			
@@ -135,9 +132,6 @@ TeamManageDuplicatesSelectFormSet = formset_factory(TeamManageDuplicatesSelectFo
 @access_validation()
 def TeamManageDuplicates( request ):
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form_set = TeamManageDuplicatesSelectFormSet( request.POST )
 		if form_set.is_valid():
 			ids = [ d['id'] for d in form_set.cleaned_data if d['selected'] ]
@@ -198,7 +192,7 @@ def get_team_cannonical_select_form( ids ):
 			
 			button_args = [
 				Submit( 'select-cannonical-submit', _('Merge Teams with Representative Team'), css_class = 'btn btn-primary' ),
-				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),	# Keep this as a Submit button.
 			]
 			self.helper.layout = Layout(
 				Row(
@@ -272,6 +266,7 @@ def TeamManageDuplicatesSelect( request ):
 			team_merge_duplicates( ids, cannonical )
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
+		request.session['team_manage_duplicate_ids'] = []
 		form = get_team_cannonical_select_form(ids)()
 	
 	title = _('Select the Representative Team to merge the Duplicate to')
