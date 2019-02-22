@@ -179,9 +179,6 @@ def UploadNumberSet( request, numberSetId ):
 	number_set = get_object_or_404( NumberSet, pk=numberSetId )
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = UploadNumberSetForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_upload_number_set( numberSetId, request.FILES['excel_file'] )

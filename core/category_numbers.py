@@ -32,9 +32,6 @@ def CategoryNumbersNew( request, competitionId ):
 	category_numbers_list = CategoryNumbers.objects.filter( competition = competition )
 
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = GetCategoryNumbersForm(competition)(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
 			instance = form.save()

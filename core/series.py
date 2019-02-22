@@ -277,9 +277,6 @@ def SeriesCompetitionEdit( request, seriesId, competitionId ):
 		return EventFormSet( initial=initial )
 
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form_set = EventFormSet( request.POST )
 		if form_set.is_valid():
 
@@ -393,9 +390,6 @@ class CategorySelectForm( Form ):
 def SeriesCategoriesChange( request, seriesId ):
 	series = get_object_or_404( Series, pk=seriesId )
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = CategorySelectForm( request.POST, button_mask=EDIT_BUTTONS, series=series )
 		if form.is_valid():
 			categories = form.cleaned_data['categories']
@@ -565,9 +559,6 @@ def SeriesCategoryGroupEdit( request, categoryGroupId ):
 	series = category_group.series
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = CategoryGroupForm( request.POST, button_mask=EDIT_BUTTONS, category_group=category_group )
 		if form.is_valid():
 			categories = form.cleaned_data['categories']

@@ -85,6 +85,21 @@ function setRowSorter( className, sId ) {
 	});
 }
 
+function skip_back() {
+	var components = window.location.href.split( '/' );
+	while( components.length > 0 && !components[components.length-1] )
+		components.pop();		// Remove training slashes.
+	while( components.length > 0 ) {
+		if( !/^[0-9]+$/.test(components[components.length-1]) ) {
+			components.pop();	// Skip url function name.
+			break;
+		}
+		components.pop();		// Skip parameter.
+	}
+	components.push( '' );		// Ensure there is a trailing slash.
+	window.location.href = components.join('/');
+}
+
 {% block javascript %}
 {% endblock javascript %}
 

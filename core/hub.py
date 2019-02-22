@@ -91,9 +91,6 @@ def SearchCompetitions( request ):
 	competition_filter = request.session.get(key, {})
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = CompetitionSearchForm( request.POST )
 		if form.is_valid():
 			competition_filter = form.cleaned_data
@@ -309,9 +306,6 @@ def SearchLicenseHolders( request ):
 	license_holder_filter = request.session.get(key, {})
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = LicenseHolderSearchForm( request.POST )
 		if form.is_valid():
 			license_holder_filter = form.cleaned_data

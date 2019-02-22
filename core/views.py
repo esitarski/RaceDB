@@ -66,7 +66,7 @@ class LicenseHolderTagForm( Form ):
 		
 		button_args = [
 			Submit( 'ok-submit', _('Update Tag in Database'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 			Submit( 'auto-generate-tag-submit', _('Auto Generate Tag Only - Do Not Write'), css_class = 'btn btn-primary' ),
 			Submit( 'write-tag-submit', _('Write Existing Tag'), css_class = 'btn btn-primary' ),
 			Submit( 'check-tag-submit', _('Check Tag'), css_class = 'btn btn-primary' ),
@@ -106,9 +106,6 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 	system_info = SystemInfo.get_singleton()
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-		
 		form = LicenseHolderTagForm( request.POST )
 		if form.is_valid():
 			status = True
@@ -411,7 +408,6 @@ def LicenseHoldersDisplay( request ):
 			return HttpResponseRedirect( '.' )
 
 		for submit_btn, action in (
-				('cancel-submit',				lambda: HttpResponseRedirect( getContext(request,'cancelUrl')) ),
 				('search-by-barcode-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHolderBarcodeScan') )),
 				('search-by-tag-submit', 		lambda: HttpResponseRedirect( pushUrl(request,'LicenseHolderRfidScan') )),
 				('new-submit',					lambda: HttpResponseRedirect( pushUrl(request,'LicenseHolderNew') )),
@@ -462,7 +458,7 @@ class BarcodeScanForm( Form ):
 		
 		button_args = [
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		if hide_cancel_button:
 			button_args = button_args[:-1]
@@ -477,9 +473,6 @@ class BarcodeScanForm( Form ):
 @access_validation()
 def LicenseHolderBarcodeScan( request ):
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = BarcodeScanForm( request.POST )
 		if form.is_valid():
 			scan = form.cleaned_data['scan'].strip()
@@ -509,7 +502,7 @@ class RfidScanForm( Form ):
 		
 		button_args = [
 			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary  btn-lg', id='focus' ),
-			Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+			CancelButton(),
 		]
 		if hide_cancel_button:
 			button_args = button_args[:-1]
@@ -529,9 +522,6 @@ def LicenseHolderRfidScan( request ):
 	tags = []
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-		
 		form = RfidScanForm( request.POST )
 		if form.is_valid():
 		
@@ -649,7 +639,7 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 			
 			button_args = [
 				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
-				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+				CancelButton(),
 			]
 			
 			self.helper.layout = Layout(
@@ -671,11 +661,7 @@ def LicenseHoldersSelectDuplicates( request, duplicateIds ):
 	if duplicates.count() != len(pks):
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
-	if request.method == 'POST':
-	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
+	if request.method == 'POST':	
 		form = GetLicenseHolderSelectDuplicatesForm( duplicates )( request.POST )
 		if form.is_valid():
 			pks = form.cleaned_data['pks']
@@ -757,10 +743,6 @@ def LicenseHolderTeamChange( request, licenseHolderId, disciplineId ):
 	search_text = request.session.get('teams_filter', '')
 	btns = [('new-submit', _('New Team'), 'btn btn-success')]
 	if request.method == 'POST':
-	
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'TeamNew') )
 			
@@ -839,7 +821,7 @@ class CompetitionSearchForm( Form ):
 		
 		button_args = [
 			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
-			Submit( 'cancel-submit', _('OK'), css_class = 'btn btn-warning' ),
+			CancelButton( _('OK') ),
 		]
 		
 		if is_superuser:
@@ -1022,9 +1004,6 @@ def CompetitionsDisplay( request ):
 	if not isinstance(search_fields, dict):
 		search_fields = {}
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionNew') )
 		
@@ -1076,9 +1055,6 @@ def CompetitionNew( request ):
 		return render( request, 'missing_elements.html', locals() )
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = GetCompetitionForm()(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
 			instance = form.save()
@@ -1204,7 +1180,7 @@ def GetRegAnalyticsForm( competition ):
 			
 			button_args = [
 				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
-				Submit( 'cancel-submit', _('Cancel'), css_class = 'btn btn-warning' ),
+				CancelButton(),
 			]
 			
 			self.helper.layout = Layout(
@@ -1494,9 +1470,6 @@ def UploadPrereg( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = UploadPreregForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )
@@ -1550,9 +1523,6 @@ def handle_license_holder_import_excel( excel_contents, update_license_codes, se
 @user_passes_test( lambda u: u.is_superuser )
 def LicenseHoldersImportExcel( request ):
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = ImportExcelForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_license_holder_import_excel(
@@ -2021,9 +1991,6 @@ def EventMassStartNew( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = EventMassStartForm(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
 			instance = form.save()
@@ -2278,9 +2245,6 @@ def EventTTNew( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = EventTTForm(request.POST, button_mask = NEW_BUTTONS)
 		if form.is_valid():
 			instance = form.save( commit=False )
@@ -2680,9 +2644,6 @@ def get_participant_report_form():
 def ParticipantReport( request ):
 	start_date, end_date, discipline, race_classes = get_search_start_date(), get_search_end_date(), None, None
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = get_participant_report_form()( request.POST )
 		start_date, end_date, discipline, race_classes = None, None, None, None
 		if form.is_valid():
@@ -2717,9 +2678,6 @@ def AttendanceAnalytics( request ):
 	)
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-		
 		form = get_participant_report_form()( request.POST )
 		if form.is_valid():
 			initial = {
@@ -2838,9 +2796,6 @@ def YearOnYearAnalytics( request ):
 	)
 	
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-			
 		form = get_year_on_year_form()( request.POST )
 		if form.is_valid():
 			initial = {
@@ -2984,9 +2939,6 @@ def CompetitionExport( request, competitionId ):
 	
 	response = {}
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = ExportCompetitionForm(request.POST)
 		if form.is_valid():
 			if 'ok-cloud-submit' in request.POST:
@@ -3081,9 +3033,6 @@ def handle_import_competition( json_file_request, import_as_template=False, name
 @user_passes_test( lambda u: u.is_superuser )
 def CompetitionImport( request ):
 	if request.method == 'POST':
-		if 'cancel-submit' in request.POST:
-			return HttpResponseRedirect(getContext(request,'cancelUrl'))
-	
 		form = ImportCompetitionForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_import_competition(
