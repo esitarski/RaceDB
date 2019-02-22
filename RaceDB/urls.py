@@ -6,5 +6,5 @@ admin.autodiscover()
 
 urlpatterns = [
 	url(r'^(?i)RaceDB/', include('core.urls')),
-	url(r'^(?i)admin/', include(admin.site.urls)),
+#	url(r'^(?i)admin/', include(admin.site.urls)),
 ]

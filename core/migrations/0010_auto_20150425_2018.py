@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='seasonspassholder',
             name='license_holder',
-            field=models.ForeignKey(verbose_name='LicenseHolder', to='core.LicenseHolder'),
+            field=models.ForeignKey(verbose_name='LicenseHolder', to='core.LicenseHolder', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterUniqueTogether(

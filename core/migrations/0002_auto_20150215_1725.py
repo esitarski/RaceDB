@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('optional', models.BooleanField(default=False, help_text='Allows Participants to choose whether to enter.  Otherwise the Event is included for all participants.', verbose_name='Optional')),
                 ('option_id', models.PositiveIntegerField(default=0, verbose_name='Option Id')),
                 ('create_seeded_startlist', models.BooleanField(default=True, help_text='If True, seeded start times will be generated in the startlist for CrossMgr.  If False, no seeded times will be generated, and the TT time will start on the first recorded time in CrossMgr.', verbose_name='Create Seeded Startlist')),
-                ('competition', models.ForeignKey(to='core.Competition')),
+                ('competition', models.ForeignKey(to='core.Competition', on_delete=models.CASCADE )),
             ],
             options={
                 'verbose_name': 'Time Trial Event',
@@ -54,8 +54,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('option_id', models.PositiveIntegerField(verbose_name=b'Option Id')),
-                ('competition', models.ForeignKey(to='core.Competition')),
-                ('participant', models.ForeignKey(to='core.Participant')),
+                ('competition', models.ForeignKey(to='core.Competition', on_delete=models.CASCADE) ),
+                ('participant', models.ForeignKey(to='core.Participant', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Participant Option',
@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                 ('fastest_participants_start_gap', core.DurationField.DurationField(default=120, verbose_name='Fastest Participants Start Gap (FSG)')),
                 ('num_fastest_participants', models.PositiveSmallIntegerField(default=5, help_text=b'Participants to get the Fastest gap', verbose_name='Number of Fastest Participants (NFP)', choices=[(0, b'0'), (1, b'1'), (2, b'2'), (3, b'3'), (4, b'4'), (5, b'5'), (6, b'6'), (7, b'7'), (8, b'8'), (9, b'9'), (10, b'10'), (11, b'11'), (12, b'12'), (13, b'13'), (14, b'14'), (15, b'15')])),
                 ('categories', models.ManyToManyField(to='core.Category', verbose_name='Categories')),
-                ('event', models.ForeignKey(to='core.EventTT')),
+                ('event', models.ForeignKey(to='core.EventTT', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['sequence'],
@@ -96,13 +96,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='entrytt',
             name='event',
-            field=models.ForeignKey(verbose_name='Event', to='core.EventTT'),
+            field=models.ForeignKey(verbose_name='Event', to='core.EventTT', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='entrytt',
             name='participant',
-            field=models.ForeignKey(verbose_name='Participant', to='core.Participant'),
+            field=models.ForeignKey(verbose_name='Participant', to='core.Participant', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterUniqueTogether(

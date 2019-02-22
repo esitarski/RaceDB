@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('effective_date', models.DateField(verbose_name='Effective Date', db_index=True)),
-                ('category', models.ForeignKey(to='core.Category')),
+                ('category', models.ForeignKey(to='core.Category', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'CategoryHint',
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
                 ('using_tags', models.BooleanField(default=False, verbose_name='Using Tags/Chip Reader')),
                 ('use_existing_tags', models.BooleanField(default=True, verbose_name="Use Competitor's Existing Tags")),
                 ('distance_unit', models.PositiveSmallIntegerField(default=0, verbose_name='Distance Unit', choices=[(0, 'km'), (1, 'miles')])),
-                ('category_format', models.ForeignKey(verbose_name='Category Format', to='core.CategoryFormat')),
+                ('category_format', models.ForeignKey(verbose_name='Category Format', to='core.CategoryFormat', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['-start_date', 'name'],
@@ -116,7 +116,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=80, verbose_name='Name')),
                 ('date_time', models.DateTimeField(verbose_name='Date Time', db_index=True)),
                 ('event_type', models.PositiveSmallIntegerField(default=0, verbose_name=b'Event Type', choices=[(0, 'Mass Start'), (1, 'Time Trial')])),
-                ('competition', models.ForeignKey(to='core.Competition')),
+                ('competition', models.ForeignKey(to='core.Competition', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Mass Start Event',
@@ -171,8 +171,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('bib', models.PositiveSmallIntegerField(verbose_name='Bib', db_index=True)),
-                ('license_holder', models.ForeignKey(to='core.LicenseHolder')),
-                ('number_set', models.ForeignKey(to='core.NumberSet')),
+                ('license_holder', models.ForeignKey(to='core.LicenseHolder', on_delete=models.CASCADE)),
+                ('number_set', models.ForeignKey(to='core.NumberSet', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'NumberSetEntry',
@@ -194,9 +194,9 @@ class Migration(migrations.Migration):
                 ('paid', models.BooleanField(default=False, verbose_name='Paid')),
                 ('confirmed', models.BooleanField(default=False, verbose_name='Confirmed')),
                 ('note', models.TextField(default=b'', verbose_name='Note', blank=True)),
-                ('category', models.ForeignKey(blank=True, to='core.Category', null=True)),
-                ('competition', models.ForeignKey(to='core.Competition')),
-                ('license_holder', models.ForeignKey(to='core.LicenseHolder')),
+                ('category', models.ForeignKey(blank=True, to='core.Category', null=True, on_delete=models.SET_NULL)),
+                ('competition', models.ForeignKey(to='core.Competition', on_delete=models.CASCADE)),
+                ('license_holder', models.ForeignKey(to='core.LicenseHolder', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['license_holder__search_text'],
@@ -237,8 +237,8 @@ class Migration(migrations.Migration):
             name='SeasonsPassHolder',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('license_holder', models.ForeignKey(verbose_name='LicenseHolder', to='core.LicenseHolder', unique=True)),
-                ('seasons_pass', models.ForeignKey(verbose_name="Season's Pass", to='core.SeasonsPass')),
+                ('license_holder', models.ForeignKey(verbose_name='LicenseHolder', to='core.LicenseHolder', unique=True, on_delete=models.CASCADE)),
+                ('seasons_pass', models.ForeignKey(verbose_name="Season's Pass", to='core.SeasonsPass', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['license_holder__search_text'],
@@ -285,9 +285,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('effective_date', models.DateField(verbose_name='Effective Date', db_index=True)),
-                ('discipline', models.ForeignKey(to='core.Discipline')),
-                ('license_holder', models.ForeignKey(to='core.LicenseHolder')),
-                ('team', models.ForeignKey(to='core.Team')),
+                ('discipline', models.ForeignKey(to='core.Discipline', on_delete=models.CASCADE)),
+                ('license_holder', models.ForeignKey(to='core.LicenseHolder', on_delete=models.CASCADE)),
+                ('team', models.ForeignKey(to='core.Team', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'TeamHint',
@@ -305,7 +305,7 @@ class Migration(migrations.Migration):
                 ('laps', models.PositiveSmallIntegerField(null=True, verbose_name='Laps', blank=True)),
                 ('minutes', models.PositiveSmallIntegerField(null=True, verbose_name='Race Minutes', blank=True)),
                 ('categories', models.ManyToManyField(to='core.Category', verbose_name='Categories')),
-                ('event', models.ForeignKey(to='core.EventMassStart')),
+                ('event', models.ForeignKey(to='core.EventMassStart', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['start_offset', 'name'],
@@ -319,8 +319,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('order', models.PositiveSmallIntegerField(default=9999, verbose_name='Callup Order', blank=True)),
-                ('participant', models.ForeignKey(to='core.Participant')),
-                ('wave', models.ForeignKey(to='core.Wave')),
+                ('participant', models.ForeignKey(to='core.Participant', on_delete=models.CASCADE)),
+                ('wave', models.ForeignKey(to='core.Wave', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['order'],
@@ -342,7 +342,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='competition',
             name='discipline',
-            field=models.ForeignKey(verbose_name='Discipline', to='core.Discipline'),
+            field=models.ForeignKey(verbose_name='Discipline', to='core.Discipline', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -354,7 +354,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='competition',
             name='race_class',
-            field=models.ForeignKey(verbose_name='Race Class', to='core.RaceClass'),
+            field=models.ForeignKey(verbose_name='Race Class', to='core.RaceClass', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -366,25 +366,25 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='categorynumbers',
             name='competition',
-            field=models.ForeignKey(to='core.Competition'),
+            field=models.ForeignKey(to='core.Competition', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='categoryhint',
             name='discipline',
-            field=models.ForeignKey(to='core.Discipline'),
+            field=models.ForeignKey(to='core.Discipline', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='categoryhint',
             name='license_holder',
-            field=models.ForeignKey(to='core.LicenseHolder'),
+            field=models.ForeignKey(to='core.LicenseHolder', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='category',
             name='format',
-            field=models.ForeignKey(to='core.CategoryFormat'),
+            field=models.ForeignKey(to='core.CategoryFormat', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

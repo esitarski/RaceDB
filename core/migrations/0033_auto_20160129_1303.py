@@ -35,8 +35,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('date_signed', models.DateField(default=None, null=True, verbose_name='Waiver Signed on', db_index=True)),
-                ('legal_entity', models.ForeignKey(to='core.LegalEntity')),
-                ('license_holder', models.ForeignKey(to='core.LicenseHolder')),
+                ('legal_entity', models.ForeignKey(to='core.LegalEntity', on_delete=models.CASCADE)),
+                ('license_holder', models.ForeignKey(to='core.LicenseHolder', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Waiver',

@@ -336,7 +336,7 @@ def init_sequence_first( Class, obj ):
 		obj.sequence = 1
 		
 class Category(models.Model):
-	format = models.ForeignKey( CategoryFormat, db_index = True )
+	format = models.ForeignKey( CategoryFormat, db_index = True, on_delete=models.CASCADE )
 	code = models.CharField( max_length=16, default='', verbose_name = _('Code') )
 	GENDER_CHOICES = (
 		(0, _('Men')),
@@ -656,8 +656,8 @@ class SeasonsPass(models.Model):
 		ordering = ['sequence']
 
 class SeasonsPassHolder(models.Model):
-	seasons_pass = models.ForeignKey( 'SeasonsPass', db_index = True, verbose_name = _("Season's Pass") )
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name = _("LicenseHolder") )
+	seasons_pass = models.ForeignKey( 'SeasonsPass', db_index = True, verbose_name = _("Season's Pass"), on_delete=models.CASCADE )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name = _("LicenseHolder"), on_delete=models.CASCADE )
 	
 	def __unicode__( self ):
 		return u''.join( [unicode(self.seasons_pass), u': ', unicode(self.license_holder)] )
@@ -714,7 +714,7 @@ class Competition(models.Model):
 	
 	category_format=models.ForeignKey(
 		'CategoryFormat',
-		verbose_name=_('Category Format') )
+		verbose_name=_('Category Format'), on_delete=models.CASCADE )
 	
 	organizer=models.CharField( max_length=64, verbose_name=_('Organizer') )
 	organizer_contact=models.CharField( max_length=64, blank=True, default='', verbose_name=_('Organizer Contact') )
@@ -724,8 +724,8 @@ class Competition(models.Model):
 	start_date=models.DateField( db_index=True, verbose_name=_('Start Date') )
 	number_of_days=models.PositiveSmallIntegerField( default=1, verbose_name=_('Number of Days') )
 	
-	discipline=models.ForeignKey( Discipline, verbose_name=_("Discipline") )
-	race_class=models.ForeignKey( RaceClass, verbose_name=_("Race Class") )
+	discipline=models.ForeignKey( Discipline, verbose_name=_("Discipline"), on_delete=models.CASCADE )
+	race_class=models.ForeignKey( RaceClass, verbose_name=_("Race Class"), on_delete=models.CASCADE )
 	
 	using_tags=models.BooleanField( default=False, verbose_name=_("Using Tags/Chip Reader") )
 	use_existing_tags=models.BooleanField( default=True, verbose_name=_("Use Competitor's Existing Tags") )
@@ -1346,7 +1346,7 @@ def get_numbers( range_str ):
 	return include
 	
 class CategoryNumbers( models.Model ):
-	competition = models.ForeignKey( Competition, db_index = True )
+	competition = models.ForeignKey( Competition, db_index = True, on_delete=models.CASCADE )
 	categories = models.ManyToManyField( Category )
 	range_str = models.TextField( default = '1-99,120-129,-50-60,181,-87', verbose_name=_('Range') )
 	
@@ -1423,7 +1423,7 @@ def get_num_nationalities( participants ):
 	return participants.exclude(license_holder__nation_code='').values('license_holder__nation_code').distinct().count()
 
 class Event( models.Model ):
-	competition = models.ForeignKey( Competition, db_index = True )
+	competition = models.ForeignKey( Competition, db_index = True, on_delete=models.CASCADE )
 	name = models.CharField( max_length = 80, verbose_name=_('Name') )
 	date_time = models.DateTimeField( db_index = True, verbose_name=_('Date Time') )
 	
@@ -2059,7 +2059,7 @@ class WaveBase( models.Model ):
 		abstract = True
 
 class Wave( WaveBase ):
-	event = models.ForeignKey( EventMassStart, db_index = True )
+	event = models.ForeignKey( EventMassStart, db_index = True, on_delete=models.CASCADE )
 	start_offset = DurationField.DurationField( default = 0, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
@@ -2088,8 +2088,8 @@ class Wave( WaveBase ):
 		ordering = ['start_offset', 'name']
 
 class WaveCallup( models.Model ):
-	wave = models.ForeignKey( Wave, db_index = True )
-	participant = models.ForeignKey( 'Participant', db_index = True )
+	wave = models.ForeignKey( Wave, db_index = True, on_delete=models.CASCADE )
+	participant = models.ForeignKey( 'Participant', db_index = True, on_delete=models.CASCADE )
 	order = models.PositiveSmallIntegerField( blank = True, default = 9999, verbose_name = _('Callup Order') )
 	
 	class Meta:
@@ -2183,7 +2183,7 @@ class Team(models.Model):
 		ordering = ['search_text']
 
 class TeamAlias(models.Model):
-	team = models.ForeignKey( 'Team', db_index=True )
+	team = models.ForeignKey( 'Team', db_index=True, on_delete=models.CASCADE )
 	alias = models.CharField( max_length = 64, db_index = True, verbose_name = _('Alias') )
 	
 	@staticmethod
@@ -2793,8 +2793,8 @@ def add_name_to_tag( competition, tag ):
 		
 #---------------------------------------------------------------
 class Waiver(models.Model):
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True )
-	legal_entity = models.ForeignKey( 'LegalEntity', db_index=True )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
+	legal_entity = models.ForeignKey( 'LegalEntity', db_index=True, on_delete=models.CASCADE )
 	date_signed = models.DateField( null=True, default=None, db_index=True, verbose_name=_('Waiver Signed on') )
 	
 	class Meta:
@@ -2807,7 +2807,7 @@ class Waiver(models.Model):
 #---------------------------------------------------------------
 
 class Result(models.Model):
-	participant = models.ForeignKey( 'Participant', db_index=True )
+	participant = models.ForeignKey( 'Participant', db_index=True, on_delete=models.CASCADE )
 	# Figure out how to translate these (FIXLATER).
 	cFinisher, cPUL, cOTB, cDNF, cDQ, cDNS, cNP = range(7)
 	STATUS_CODE_NAMES = (
@@ -3006,7 +3006,7 @@ class Result(models.Model):
 		ordering = ['status', 'wave_rank']
 
 class ResultMassStart(Result):
-	event = models.ForeignKey( 'EventMassStart', db_index=True )
+	event = models.ForeignKey( 'EventMassStart', db_index=True, on_delete=models.CASCADE )
 	def get_race_time_class( self ):
 		return RaceTimeMassStart
 		
@@ -3018,7 +3018,7 @@ class ResultMassStart(Result):
 		verbose_name_plural = _('ResultsMassStart')
 
 class ResultTT(Result):
-	event = models.ForeignKey( 'EventTT', db_index=True )
+	event = models.ForeignKey( 'EventTT', db_index=True, on_delete=models.CASCADE )
 	def get_race_time_class( self ):
 		return RaceTimeTT
 	
@@ -3042,14 +3042,14 @@ class RaceTime(models.Model):
 		abstract = True
 
 class RaceTimeMassStart(RaceTime):
-	result = models.ForeignKey( 'ResultMassStart', verbose_name=_('ResultMassStart') )
+	result = models.ForeignKey( 'ResultMassStart', verbose_name=_('ResultMassStart'), on_delete=models.CASCADE )
 	
 	class Meta:
 		verbose_name = _('RaceTimeMassStart')
 		verbose_name_plural = _('RaceTimesMassStart')
 
 class RaceTimeTT(RaceTime):
-	result = models.ForeignKey( 'ResultTT', verbose_name=_('ResultTT') )
+	result = models.ForeignKey( 'ResultTT', verbose_name=_('ResultTT'), on_delete=models.CASCADE )
 	
 	class Meta:
 		verbose_name = _('RaceTimeTT')
@@ -3223,7 +3223,7 @@ class CustomCategory(Sequence):
 		abstract = True
 
 class CustomCategoryMassStart(CustomCategory):
-	event = models.ForeignKey( 'EventMassStart', verbose_name=_('EventMassSart') )
+	event = models.ForeignKey( 'EventMassStart', verbose_name=_('EventMassSart'), on_delete=models.CASCADE )
 	
 	def get_container( self ):
 		return self.event.customcategorymassstart_set.all()
@@ -3233,7 +3233,7 @@ class CustomCategoryMassStart(CustomCategory):
 		verbose_name_plural = _('CustomCategoriesMassStart')
 
 class CustomCategoryTT(CustomCategory):
-	event = models.ForeignKey( 'EventTT', verbose_name=_('EventTT') )
+	event = models.ForeignKey( 'EventTT', verbose_name=_('EventTT'), on_delete=models.CASCADE )
 	
 	def get_container( self ):
 		return self.event.customcategorytt_set.all()
@@ -3246,9 +3246,9 @@ class CustomCategoryTT(CustomCategory):
 #---------------------------------------------------------------
 
 class TeamHint(models.Model):
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
-	discipline = models.ForeignKey( 'Discipline', db_index = True )
-	team = models.ForeignKey( 'Team', db_index=True, null=True )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, on_delete=models.CASCADE )
+	discipline = models.ForeignKey( 'Discipline', db_index = True, on_delete=models.CASCADE )
+	team = models.ForeignKey( 'Team', db_index=True, null=True, on_delete=models.CASCADE )
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def unicode( self ):
@@ -3313,9 +3313,9 @@ def update_team_hints():
 			b.append( th )
 
 class CategoryHint(models.Model):
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
-	discipline = models.ForeignKey( 'Discipline', db_index = True )
-	category = models.ForeignKey( 'Category', db_index = True )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, on_delete=models.CASCADE )
+	discipline = models.ForeignKey( 'Discipline', db_index = True, on_delete=models.CASCADE )
+	category = models.ForeignKey( 'Category', db_index = True, on_delete=models.CASCADE )
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def unicode( self ):
@@ -3356,8 +3356,8 @@ def update_category_hints():
 			b.append( ch )
 
 class NumberSetEntry(models.Model):
-	number_set = models.ForeignKey( 'NumberSet', db_index = True )
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
+	number_set = models.ForeignKey( 'NumberSet', db_index = True, on_delete=models.CASCADE )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, on_delete=models.CASCADE )
 	bib = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Bib') )
 	date_issued = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Issued') )
 	
@@ -3452,8 +3452,8 @@ class ParticipantDefaultValues( object ):
 				self.est_kmh = (ave_kmh[m-1] + ave_kmh[m]) / 2.0
 		
 class Participant(models.Model):
-	competition = models.ForeignKey( 'Competition', db_index=True )
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True )
+	competition = models.ForeignKey( 'Competition', db_index=True, on_delete=models.CASCADE )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
 	team = models.ForeignKey( 'Team', null=True, db_index=True, on_delete=models.SET_NULL  )
 	
 	ROLE_NAMES = ( '',	# No zero code.
@@ -3499,7 +3499,7 @@ class Participant(models.Model):
 	preregistered=models.BooleanField( default=False, verbose_name=_('Preregistered') )
 	
 	registration_timestamp=models.DateTimeField( auto_now_add=True )
-	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True )
+	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True, on_delete=models.SET_NULL )
 	
 	bib=models.PositiveSmallIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
 	
@@ -4375,8 +4375,8 @@ class Participant(models.Model):
 #---------------------------------------------------------------------------------------------------------
 
 class EntryTT( models.Model ):
-	event = models.ForeignKey( 'EventTT', db_index = True, verbose_name=_('Event') )
-	participant = models.ForeignKey( 'Participant', db_index = True, verbose_name=_('Participant') )
+	event = models.ForeignKey( 'EventTT', db_index = True, verbose_name=_('Event'), on_delete=models.CASCADE )
+	participant = models.ForeignKey( 'Participant', db_index = True, verbose_name=_('Participant'), on_delete=models.CASCADE )
 	
 	est_speed = models.FloatField( default=0.0, verbose_name=_('Est. Speed') )
 	hint_sequence = models.PositiveIntegerField( default=0, verbose_name = _('Hint Sequence') )
@@ -4609,7 +4609,7 @@ class EventTT( Event ):
 #---------------------------------------------------------------------------------------------
 
 class WaveTT( WaveBase ):
-	event = models.ForeignKey( EventTT, db_index = True )
+	event = models.ForeignKey( EventTT, db_index = True, on_delete=models.CASCADE )
 	
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
 	
@@ -4853,8 +4853,8 @@ class WaveTT( WaveBase ):
 		ordering = ['sequence']
 
 class ParticipantOption( models.Model ):
-	competition = models.ForeignKey( Competition, db_index = True )
-	participant = models.ForeignKey( Participant, db_index = True )
+	competition = models.ForeignKey( Competition, db_index = True, on_delete=models.CASCADE )
+	participant = models.ForeignKey( Participant, db_index = True, on_delete=models.CASCADE )
 	option_id = models.PositiveIntegerField( verbose_name = _('Option Id') )
 	
 	@staticmethod
@@ -4925,7 +4925,7 @@ class Series( Sequence ):
 	name = models.CharField( max_length=32, default = 'MySeries', verbose_name=_('Name') )
 	description = models.CharField( max_length=80, blank=True, default='', verbose_name=_('Description') )
 
-	category_format = models.ForeignKey( CategoryFormat, db_index=True )
+	category_format = models.ForeignKey( CategoryFormat, db_index=True, on_delete=models.CASCADE )
 	
 	RANKING_CRITERIA = (
 		(0, _('Points')),
@@ -5087,7 +5087,7 @@ class Series( Sequence ):
 		
 #-----------------------------------------------------------------------
 class SeriesPointsStructure( Sequence ):
-	series = models.ForeignKey( Series, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
 	name = models.CharField( max_length=32, default='SeriesPoints', verbose_name=_('Name') )
 	
 	points_for_place = models.CharField( max_length=512, default='30,25,20,15,10,5,3,1,1,1', verbose_name=_('Points for Place') )
@@ -5151,11 +5151,11 @@ class SeriesPointsStructure( Sequence ):
 
 #-----------------------------------------------------------------------
 class SeriesCompetitionEvent( models.Model ):
-	series = models.ForeignKey( Series, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
 	event_mass_start = models.ForeignKey( EventMassStart, models.CASCADE, blank=True, null=True, default=None, db_index=True )
 	event_tt = models.ForeignKey( EventTT, models.CASCADE, blank=True, null=True, default=None, db_index=True )
 	
-	points_structure = models.ForeignKey( SeriesPointsStructure, blank=True, null=True, db_index=True )
+	points_structure = models.ForeignKey( SeriesPointsStructure, blank=True, null=True, db_index=True, on_delete=models.CASCADE )
 	
 	def make_copy( self, series_new ):
 		points_structure_new = (
@@ -5218,8 +5218,8 @@ class UpdateLog( models.Model ):
 #-----------------------------------------------------------------------
 class SeriesIncludeCategory( models.Model ):
 	# Selects which Categories are to be part of the Series.
-	series = models.ForeignKey( Series, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	def make_copy( self, series_new ):
 		self_pk = self.pk
@@ -5238,7 +5238,7 @@ class SeriesIncludeCategory( models.Model ):
 class CategoryGroup( Sequence ):
 	# Used to create Category groups for a combined category Series.
 	name = models.CharField( max_length=32, default='MyGroup', verbose_name=_('Name') )
-	series = models.ForeignKey( Series, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
 	
 	def make_copy( self, series_new ):
 		categories = self.get_categories()
@@ -5275,8 +5275,8 @@ class CategoryGroup( Sequence ):
 		verbose_name_plural = _("CategoryGroups")
 
 class CategoryGroupElement( models.Model ):
-	category_group = models.ForeignKey( CategoryGroup, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	category_group = models.ForeignKey( CategoryGroup, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	class Meta:
 		verbose_name = _("CategoryGroupElement")
@@ -5285,7 +5285,7 @@ class CategoryGroupElement( models.Model ):
 
 #-----------------------------------------------------------------------
 class SeriesUpgradeProgression( Sequence ):
-	series = models.ForeignKey( Series, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
 	factor = models.FloatField( default=0.5, verbose_name = _('Factor') )
 
 	def make_copy( self, series_new ):
@@ -5333,8 +5333,8 @@ class SeriesUpgradeProgression( Sequence ):
 		verbose_name_plural = _("SeriesUpgradeProgressions")
 	
 class SeriesUpgradeCategory( Sequence ):
-	upgrade_progression = models.ForeignKey( SeriesUpgradeProgression, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	upgrade_progression = models.ForeignKey( SeriesUpgradeProgression, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	def get_container( self ):
 		return self.upgrade_progression.seriesupgradecategory_set.all()
@@ -5495,8 +5495,8 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	
 #-----------------------------------------------------------------------------------------------
 class CompetitionCategoryOption(models.Model):
-	competition = models.ForeignKey( Competition, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	competition = models.ForeignKey( Competition, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	license_check_required = models.BooleanField( default=False, verbose_name=_("License Check Required") )
 	note = models.CharField( max_length=160, default='', blank=True, verbose_name=_('Note') )
@@ -5532,10 +5532,10 @@ class CompetitionCategoryOption(models.Model):
 
 #-----------------------------------------------------------------------------------------------
 class LicenseCheckState(models.Model):
-	license_holder = models.ForeignKey( LicenseHolder, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
-	discipline = models.ForeignKey( Discipline, db_index=True, default=1 )
-	report_label_license_check = models.ForeignKey( ReportLabel, db_index=True )
+	license_holder = models.ForeignKey( LicenseHolder, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
+	discipline = models.ForeignKey( Discipline, db_index=True, default=1, on_delete=models.CASCADE )
+	report_label_license_check = models.ForeignKey( ReportLabel, db_index=True, on_delete=models.CASCADE )
 	check_date = models.DateField( db_index=True )
 	
 	@staticmethod

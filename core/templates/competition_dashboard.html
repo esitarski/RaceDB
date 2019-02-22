@@ -191,7 +191,7 @@
 							<div class="col-md-1">{% trans "Waves" %}:</div>
 							<div class="col-md-11">{{e.wave_text_html|safe}}</div>
 						</div>
-						{% if e.get_custom_categories %}
+						{% if 0 or e.get_custom_categories %}
 							<div class="row">
 								<div class="col-md-1">{% trans "Custom Categories" %}:</div>
 								<div class="col-md-11">{{e.custom_category_text_html|safe}}</div>

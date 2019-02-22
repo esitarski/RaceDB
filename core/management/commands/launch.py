@@ -164,7 +164,7 @@ def launch_server( command, **options ):
 		safe_print( u'To stop the server, click in this window and press Ctrl-c.' )
 		
 		# Add Cling to serve up static files efficiently.
-		serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
+		serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10, clear_untrusted_proxy_headers=False )
 	else:
 		time.sleep( 0.5 )
 		

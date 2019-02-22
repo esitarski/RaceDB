@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
             options={
                 'ordering': ['-created'],
                 'verbose_name': 'UpdateLog',
-                'verbose_name_plural': 'UpdateLogs',
+                'verbose_name_plural': 'UpdateLog',
             },
         ),
         migrations.AlterField(

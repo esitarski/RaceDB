@@ -12,8 +12,8 @@ is_windows = (platform.system() == 'Windows')
 pyllrp = 'pip-install-pyllrp-0.1.4.zip'
 
 dependencies = [
-	'django==1.9.9',
-	'django-crispy-forms==1.6',
+	'django==2.1.7',
+	'django-crispy-forms==1.7.2',
 	'django-extensions',
 	'requests',
 	'dj_static',
