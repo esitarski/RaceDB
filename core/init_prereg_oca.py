@@ -1,7 +1,7 @@
 import sys
 import datetime
 from xlrd import open_workbook, xldate_as_tuple
-import HTMLParser
+from six.moves.html_parser import HTMLParser
 from collections import namedtuple
 from models import *
 from django.db import transaction, IntegrityError
@@ -48,7 +48,7 @@ def gender_from_str( s ):
 
 def set_attributes( obj, attributes ):
 	changed = False
-	for key, value in attributes.iteritems():
+	for key, value in six.iteritems(attributes):
 		if getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -59,17 +59,17 @@ def to_int_str( v ):
 		return unicode(long(v))
 	except:
 		pass
-	return unicode(v)
+	return u'{}'.format(v)
 		
 def to_str( v ):
 	if v is None:
 		return v
-	return unicode(v)
+	return u'{}'.format(v)
 	
 def to_bool( v ):
 	if v is None:
 		return None
-	s = unicode(v)
+	s = u'{}'.format(v)
 	return s[:1] in 'YyTt1'
 
 def to_int( v ):
@@ -83,14 +83,14 @@ def to_int( v ):
 def to_tag( v ):
 	if v is None:
 		return None
-	return unicode(v).split('.')[0]
+	return u'{}'.format(v).split('.')[0]
 
 def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 	global datemode
 	
 	tstart = datetime.datetime.now()
 	
-	html_parser = HTMLParser.HTMLParser()
+	html_parser = HTMLParser()
 
 	try:
 		competition = Competition.objects.get( name=competition_name )
@@ -220,11 +220,11 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 		
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [html_parser.unescape(unicode(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
+			fields = [html_parser.unescape(u'{}'.format(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
 			fields = ['f{}'.format(i) if not f else f.strip() for i, f in enumerate(fields)]
 			safe_print( u'\n'.join( fields ) )
 			continue

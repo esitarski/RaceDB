@@ -1,10 +1,10 @@
-from views_common import *
+import re
+
 from django.utils.translation import ugettext_lazy as _
 
-from get_number_set_excel import get_number_set_excel
-from init_number_set import init_number_set
-
-import re
+from .views_common import *
+from .get_number_set_excel import get_number_set_excel
+from .init_number_set import init_number_set
 
 @autostrip
 class NumberSetDisplayForm( Form ):
@@ -119,8 +119,7 @@ def BibReturn( request, numberSetEntryId, confirmed=False ):
 		nse.number_set.return_to_pool( nse.bib, nse.license_holder )
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	page_title = _('Return Bib to NumberSet')
-	message = string_concat('<strong>', unicode(nse.bib), u'</strong>: ', nse.license_holder.full_name(), u'<br/><br/>',
-		_('Return Bib to the NumberSet so it can be used again.'))
+	message = format_lazy( u'<strong>{}</strong>: {}<br/><br/>{}', nse.bib, nse.license_holder.full_name(), _('Return Bib to the NumberSet so it can be used again.') )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'BibReturn/{}/{}/'.format(numberSetEntryId,1)
 	return render( request, 'are_you_sure.html', locals() )
@@ -133,8 +132,7 @@ def BibLost( request, numberSetEntryId, confirmed=False ):
 		nse.save()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	page_title = _('Record Bib as Lost (and unavailable)')
-	message = string_concat('<strong>', unicode(nse.bib), u'</strong>: ', nse.license_holder.full_name(), u'<br/><br/>',
-		_('Record Bib as Lost and no longer available.'))
+	message = format_lazy( u'<strong>{}</strong>: {}<br/><br/>{}', nse.bib, nse.license_holder.full_name(), _('Record Bib as Lost and no longer available.') )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'BibLost/{}/{}/'.format(numberSetEntryId,1)
 	return render( request, 'are_you_sure.html', locals() )

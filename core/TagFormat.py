@@ -1,6 +1,6 @@
 import re
-import utils
 from math import log, ceil
+from . import utils
 
 reTemplate = re.compile( u'#+' )
 validChars = set( u'0123456789ABCDEF#' )
@@ -20,7 +20,7 @@ def getTagFormatStr( template ):
 		template = template[:m.start(0)] + u'{{n:0{}d}}'.format(len(m.group(0))) + template[m.end(0):]
 	return template
 
-bytes_from_digits = tuple( int(ceil(log(10**n, 256))) for n in xrange(0, 16) )
+bytes_from_digits = tuple( int(ceil(log(10**n, 256))) for n in range(0, 16) )
 reNumEnd = re.compile( '[0-9]+$' )
 def getTagFromLicense( license, tag_from_license_id=0 ):
 	license = utils.removeDiacritic(license.strip().upper())
@@ -90,7 +90,7 @@ def getLicenseFromTag( tag, tag_from_license_id=0 ):
 	# Get the ascii characters.
 	prefix_count += 2
 	try:
-		text = ''.join( chr(int(tag[i:i+2], 16)) for i in xrange(prefix_count, prefix_count+text_count*2, 2) )
+		text = ''.join( chr(int(tag[i:i+2], 16)) for i in range(prefix_count, prefix_count+text_count*2, 2) )
 	except ValueError:
 		return None
 	
@@ -117,13 +117,13 @@ def getLicenseFromTag( tag, tag_from_license_id=0 ):
 		return None
 	
 	# Return the ascii and number formatted to the correct length.
-	return text + str(num).rjust( num_count, '0' )
+	return text + u'{}'.format(num).rjust( num_count, '0' )
 
 if __name__ == '__main__':
 	for license in ('CAN19650922', 'ON0123', 'BC0567', 'SK9999', '123567', 'ALLTEXT', '', '999999999999999', 'ABCDEFGHIJ', '_XXX_UMM2TLHSTBNI94ESDHQYIG81LFA'):
 		tag = getTagFromLicense( license )
 		license_new = getLicenseFromTag( tag )
-		print '"{}" {} ({}) "{}"'.format(license, tag, len(tag), license_new)
+		print ( '"{}" {} ({}) "{}"'.format(license, tag, len(tag), license_new) )
 		assert license.startswith('_') or license == license_new
 	
 	assert getLicenseFromTag( 'FE00' ) == None

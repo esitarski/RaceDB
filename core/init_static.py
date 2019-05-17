@@ -1,6 +1,6 @@
 from django.db import transaction
-from models import *
-from large_delete_all import large_delete_all
+from .models import *
+from .large_delete_all import large_delete_all
 
 disciplines = [
 	'Road',

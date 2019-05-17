@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from utils import removeDiacritic
-
 import os
 import io
+import six
 import json
+
+from .utils import removeDiacritic
 
 # from https://github.com/mledoze/countries
 fname = os.path.join( os.path.dirname(__file__), 'static', 'flags', 'countries.json' )
-with io.open(fname, mode='r', encoding='utf8') as fp:
+with io.open(fname, mode='r') as fp:
 	country_info = json.loads( fp.read() )
 
 uci_country_codes = {}
@@ -24,7 +25,7 @@ country_short_forms = {
 for c in country_info:
 	names = set()
 	def scan( d ):
-		for k, v in d.iteritems():
+		for k, v in six.iteritems(d):
 			if isinstance(v, dict):
 				scan( v )
 			elif k in ('common', 'official'):
@@ -70,7 +71,7 @@ ison3_uci_country_codes.pop( u'', None )
 
 #-----------------------------------------------------------------------
 
-uci_country_codes_set = set( n.upper() for n in uci_country_codes.itervalues() )
+uci_country_codes_set = set( n.upper() for n in six.itervalues(uci_country_codes) )
 
 country_info = None
 

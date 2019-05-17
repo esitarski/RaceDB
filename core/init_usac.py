@@ -1,23 +1,19 @@
+import io
 import csv
+import six
 import datetime
-import HTMLParser
+from six.moves.html_parser import HTMLParser
 from collections import namedtuple
-from utils import toUnicode, removeDiacritic
+from utils import removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 from django.db.utils import IntegrityError
-import csv, codecs
 from models import *
 from large_delete_all import large_delete_all
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
-
-def unicode_csv_reader(utf8_data, dialect=csv.excel, **kwargs):
-    csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
-    for row in csv_reader:
-        yield [toUnicode(cell) for cell in row]
 
 fnameDefault = 'wp_p_universal.csv'
 
@@ -40,7 +36,7 @@ def date_from_str( s ):
 	try:
 		return datetime.date( year = yy, month = mm, day = dd )
 	except Exception as e:
-		print yy, mm, dd
+		print ( yy, mm, dd )
 		raise e
 		
 def gender_from_str( s ):
@@ -48,7 +44,7 @@ def gender_from_str( s ):
 
 def set_attributes( obj, attributes ):
 	changed = False
-	for key, value in attributes.iteritems():
+	for key, value in six.iteritems(attributes):
 		if getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -68,7 +64,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 
 	effective_date = datetime.date.today()
 	
-	html_parser = HTMLParser.HTMLParser()
+	html_parser = HTMLParser()
 	
 	# Process the records in larger transactions for performance.
 	@transaction.atomic
@@ -151,8 +147,8 @@ def init_usac( fname = fnameDefault, states = '' ):
 				TeamHint.objects.filter( id__in = [th.id for th in th_delete] ).delete()
 
 	ur_records = []
-	with open(fname, 'rU') as fp:
-		usac_reader = unicode_csv_reader( fp )
+	with io.open(fname, 'r', encoding='utf-8', errors='replace') as fp:
+		usac_reader = csv.reader( fp )
 		for i, row in enumerate(usac_reader):
 			if i == 0:
 				# Get the header fields from the first row.
@@ -172,4 +168,4 @@ def init_usac( fname = fnameDefault, states = '' ):
 			
 	process_ur_records( ur_records )
 	
-	print 'Initialization in: ', datetime.datetime.now() - tstart
+	print ( 'Initialization in: {}'.format(datetime.datetime.now() - tstart) )

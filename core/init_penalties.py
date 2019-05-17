@@ -1,7 +1,6 @@
-# coding=utf-8
 
-# track_penalties = \
-# u'''For not holding his/her line during the sprint
+# track_penalties = u'''
+# For not holding his/her line during the sprint
 # Pour avoir quitté sa ligne pendant le sprint final
 # Por desviarse de su linea durante el sprint final
 
@@ -10,7 +9,7 @@
 # Por pasar por la zona azul durante el sprint
 
 # For not having hel his/her line during the last 200 meters of the race
-# Pour ne pas avoir tenu sa ligne dans les 200 derniears metres de l’épreuve
+# Pour ne pas avoir tenu sa ligne dans les 200 derniears metres de l'épreuve
 # Por no mantener su linea en los últimos 200 metros de la prueba
 
 # For irregular movement to prevent his opponent from passing
@@ -22,31 +21,31 @@
 # Por maniobra peligrosa en la ultima curva
 
 # For dangerous riding in the race
-# Pour manoeuvre dangereuse au cours de l’épreuve
+# Pour manoeuvre dangereuse au cours de l'épreuve
 # Por movimientos peligrosos durante la prueba
 
-# For entering the sprinter’s lane when the opponent was already there
-# Pour être entré dan le couloirs des sprinters alors que son adveraire s’y trouvait déjà
+# For entering the sprinter's lane when the opponent was already there
+# Pour être entré dan le couloirs des sprinters alors que son adveraire s'y trouvait déjà
 # Por entrar en el passillio de sprinters cuanda estaba ocupado por su adversario
 
 # For moving down towards the inside of the track when a rival was already there
-# Pour s’être rabattu vers l’interieur alors que son concurrent s’y trouvait déjà
+# Pour s'être rabattu vers l'interieur alors que son concurrent s'y trouvait déjà
 # Por movimeinto brusco hacia el interior donde se encontraba su openente
 
 # For moving down towards the inside of the track and forcing the other competitor off the track
-# Pour s’être rabattu á la corde obligeant ainsi son adversaire à sortir de la piste
+# Pour s'être rabattu á la corde obligeant ainsi son adversaire à sortir de la piste
 # Por desplazamiento hacia el interior forzando a su adversario a salir de la pista
 
 # For crowding his/her opponent with the intention of causing him to slow down
-# Pour avoir tassé l’adversaire dans le but de le faire ralentir
+# Pour avoir tassé l'adversaire dans le but de le faire ralentir
 # Por presionar cerrando al adversario para obligarie a disminuir su marcha
 
 # For moving outward with the intention of forcing the opponentto go up
-# Pour avoir dévié de sa trajectoure et avoir conduit son adversaire vers l’extérieur de la piste
+# Pour avoir dévié de sa trajectoure et avoir conduit son adversaire vers l'extérieur de la piste
 # Por presionar cerrando al adversario para obligarie a subir hacia el exterior
 
 # For going down to quickly after overtaking his/her opponent
-# Pour s’être rabattu trop rapidement après avoir dépassé son adversaire
+# Pour s'être rabattu trop rapidement après avoir dépassé son adversaire
 # Por descender demasiado rápido y cerrar a su adversario después de adelantarie
 
 # For deliberate and flagrant fault against {license_holder_victim}

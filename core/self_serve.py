@@ -1,11 +1,11 @@
-from views_common import *
 import operator
 
 from django.utils.translation import ugettext_lazy as _
 
-from participant_key_filter import participant_key_filter, add_participant_from_license_holder
-from ReadWriteTag import ReadTag, WriteTag
-from participant import ParticipantSignatureForm
+from .views_common import *
+from .participant_key_filter import participant_key_filter, add_participant_from_license_holder
+from .ReadWriteTag import ReadTag, WriteTag
+from .participant import ParticipantSignatureForm
 
 def get_valid_competitions():
 	dNow = timezone.localtime(timezone.now()).date()
@@ -20,7 +20,7 @@ def get_valid_competitions():
 @autostrip
 class SelfServeCompetitionForm( Form ):
 	competition_choice = forms.ChoiceField(
-				choices = lambda: [(c.pk, string_concat(c.name, ' - ', c.date_range_str))
+				choices = lambda: [(c.pk, format_lazy(u'{} - {}', c.name, c.date_range_str))
 					for c in get_valid_competitions()],
 				label = _('Choose a Competition') )
 	
@@ -42,7 +42,7 @@ class SelfServeCompetitionForm( Form ):
 		
 @autostrip
 class SelfServeAntennaForm( Form ):
-	rfid_antenna = forms.ChoiceField( choices = [(i, mark_safe('&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;'.format(i))) for i in xrange(1,5)], label = _('Antenna to Read Tags') )
+	rfid_antenna = forms.ChoiceField( choices = [(i, mark_safe('&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;'.format(i))) for i in range(1,5)], label = _('Antenna to Read Tags') )
 	
 	def __init__(self, *args, **kwargs):
 		super(SelfServeAntennaForm, self).__init__(*args, **kwargs)
@@ -69,7 +69,7 @@ def SelfServeQRCode( request ):
 	exclude_breadcrumbs = True
 	qrpath = request.build_absolute_uri()
 	
-	for i in xrange(2):
+	for i in range(2):
 		qrpath = os.path.dirname( qrpath )
 	qrpath += '/login/?next=/RaceDB/SelfServe/'
 
@@ -251,7 +251,7 @@ def SelfServe( request, do_scan=0 ):
 	
 	if not license_holder:
 		request.session['tag'] = None
-		errors.append( string_concat(_('Tag not found '), u' (', tag, u').') )
+		errors.append( format_lazy(u'{} ({}).', _('Tag not found'), tag) )
 		return render( request, 'self_serve.html', locals() )
 	
 	# If the license holder has a season's pass for the competition, try to add him/her as a participant.

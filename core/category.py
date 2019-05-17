@@ -1,5 +1,6 @@
-from views_common import *
 from django.utils.translation import ugettext_lazy as _
+
+from .views_common import *
 
 @autostrip
 class CategoryFormatForm( ModelForm ):
@@ -117,7 +118,7 @@ class CategoryForm( ModelForm ):
 def CategoryNew( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
 
-	title = unicode(_('New {}')).format(Category._meta.verbose_name.title())
+	title = u'{} {}'.format(_('New'), Category._meta.verbose_name.title())
 	
 	if request.method == 'POST':
 		form = CategoryForm( request.POST )

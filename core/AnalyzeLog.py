@@ -1,7 +1,8 @@
 import re
+import six
 import datetime
 from collections import defaultdict
-import WriteLog
+from . import WriteLog
 
 reNonDigits = re.compile('[^0-9]+')
 reDigits = re.compile( '[0-9]+' )
@@ -99,20 +100,20 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	if not transactionRateOverTime:
 		return None
 	
-	bMin = min( b for b in transactionRateOverTime.iterkeys() )
-	bMax = max( b for b in transactionRateOverTime.iterkeys() ) + 1
-	buckets = [epoch + datetime.timedelta(seconds=b*bucketSize) for b in xrange(bMin, bMax)]
+	bMin = min( b for b in six.iterkeys(transactionRateOverTime) )
+	bMax = max( b for b in six.iterkeys(transactionRateOverTime) ) + 1
+	buckets = [epoch + datetime.timedelta(seconds=b*bucketSize) for b in six.moves.range(bMin, bMax)]
 	
-	transactionRateOverTime = [transactionRateOverTime[b] for b in xrange(bMin, bMax)]
+	transactionRateOverTime = [transactionRateOverTime[b] for b in six.moves.range(bMin, bMax)]
 	tcr = []
-	for remote_addr, cp in transactionClientRateOverTime.iteritems():
-		tcr.append( {'remote_addr': remote_addr, 'rate': [cp[b] for b in xrange(bMin, bMax)], 'total': sum(cp[b] for b in xrange(bMin, bMax))} )
+	for remote_addr, cp in six.iteritems(transactionClientRateOverTime):
+		tcr.append( {'remote_addr': remote_addr, 'rate': [cp[b] for b in six.moves.range(bMin, bMax)], 'total': sum(cp[b] for b in six.moves.range(bMin, bMax))} )
 	tcr.sort( key=lambda x: (x['total'], x['remote_addr']), reverse=True )
 
 	participantTransactionCount = []
-	for v in participantCount.itervalues():
+	for v in six.itervalues(participantCount):
 		if v >= len(participantTransactionCount):
-			participantTransactionCount.extend( [0 for i in xrange(len(participantTransactionCount), v+1)] )
+			participantTransactionCount.extend( [0 for i in six.moves.range(len(participantTransactionCount), v+1)] )
 		participantTransactionCount[v] += 1
 	total = sum(participantTransactionCount)
 	participantTransactionCountPercentage = [(100.0*t) / total for t in participantTransactionCount]
@@ -123,7 +124,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 			transactionPeak = [buckets[b], p]
 			
 	functionCount = sorted( ([re.sub('Participant|Select|Change', '', fname), count]
-		for fname, count in functionCount.iteritems() if count), key=lambda fc: fc[1], reverse=True )
+		for fname, count in six.iteritems(functionCount) if count), key=lambda fc: fc[1], reverse=True )
 
 	return {
 		'transactionTotal': transactionTotal,
@@ -143,6 +144,6 @@ if __name__ == '__main__':
 	r = AnalyzeLog( 'RaceDBLog.txt', datetime.datetime(2015, 10, 10), datetime.datetime(2015, 10, 11) )
 	for k in (	'averageTransactionsPerParticipant', 'participantTransactionCount', 'participantTransactionCountPercentage',
 				'stations', 'functionCount'):
-		print '{}={}'.format(k, r[k])
+		print ( '{}={}'.format(k, r[k]) )
 	t = r['buckets'][r['transactionPeak'][0]]
-	print 'transactionPeak={} at {}-{}'.format(r['transactionPeak'][0], t, t + datetime.timedelta(seconds=bucketSize))
+	print ( 'transactionPeak={} at {}-{}'.format(r['transactionPeak'][0], t, t + datetime.timedelta(seconds=bucketSize)) )

@@ -1,4 +1,4 @@
-from utils import Breadcrumbs
+from .utils import Breadcrumbs
 
 def standard( request ):
 	bc = Breadcrumbs( request.path )

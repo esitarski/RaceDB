@@ -1,14 +1,12 @@
+from django.utils.translation import ugettext_lazy as _
+from django.db.models.aggregates import Max
+import xlsxwriter
 
 import os
 import datetime
-import utils
 
-from django.utils.translation import ugettext_lazy as _
-from django.db.models.aggregates import Max
-
-from models import *
-
-import xlsxwriter
+from . import utils
+from .models import *
 
 data_headers = (
 	'LastName', 'FirstName',
@@ -46,7 +44,7 @@ def write_row_data( ws, row, row_data, format = None ):
 def get_license_holder_excel( q = None ):
 	q = q or Q()
 	
-	output = StringIO()
+	output = BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )

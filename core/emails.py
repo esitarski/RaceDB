@@ -1,5 +1,4 @@
-from views_common import *
-from django.utils.translation import ugettext_lazy as _
+from .views_common import *
 
 def show_emails( request, participants=[], license_holders=[], emails=[], okUrl='' ):
 	emails = set( email for email in emails if email )

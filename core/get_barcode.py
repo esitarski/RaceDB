@@ -11,7 +11,7 @@ def barcode_encode( id ):
 	s = [int(v) for v in '{:012}'.format(id)]
 	s.reverse()
 	sPrev = 0
-	for i in xrange( 0, 12 ):
+	for i in range( 0, 12 ):
 		s[i] += sPrev + x[i]
 		sPrev += s[i]
 	s = s[6:] + s[:6]
@@ -27,8 +27,8 @@ def barcode_validate( s ):
 		return False
 		
 	check_digit_given = s.pop()
-	sum_even = sum( s[i] for i in xrange(0, len(s), 2) )
-	sum_odd = sum( s[i] for i in xrange(1, len(s), 2) )
+	sum_even = sum( s[i] for i in range(0, len(s), 2) )
+	sum_odd = sum( s[i] for i in range(1, len(s), 2) )
 	sum_weighted = sum_even + sum_odd * 3
 	check_digit = (10 - sum_weighted % 10) % 10
 	
@@ -45,7 +45,7 @@ def barcode_decode( s ):
 	s = [int(v) for v in '{:012}'.format(n)]
 	s = s[6:] + s[:6]
 	sPrev = sum( s )
-	for i in xrange( 11, -1, -1 ):
+	for i in range( 11, -1, -1 ):
 		sPrev -= s[i]
 		s[i] -= sPrev + x[i]
 	s.reverse()
@@ -55,10 +55,10 @@ def get_barcode( id ):
 	return barcode.get( 'ean13', '{:012}'.format(barcode_encode(id)) ).render()
 
 if __name__ == '__main__':
-	for id in xrange(1, 2000):
+	for id in range(1, 2000):
 		n = barcode_encode( id )
 		d = barcode_decode( n )
 		assert id == d
-		print id, n, d
+		print ( id, n, d )
 		
-	print barcode_validate( '1781106520911' )
+	print ( barcode_validate( '1781106520911' ) )

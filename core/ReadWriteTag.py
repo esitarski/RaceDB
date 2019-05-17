@@ -1,6 +1,5 @@
-
-from LLRPClientServer import LLRPClient
 import traceback
+from .LLRPClientServer import LLRPClient
 
 def _get_client():
 	return LLRPClient()

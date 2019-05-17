@@ -1,10 +1,11 @@
 import pytz
 import re
+import six
 import datetime
 from collections import defaultdict
 
-from models import *
-import DurationField
+from .models import *
+from .DurationField import formatted_timedelta
 
 reNonDigit = re.compile( r'[^\d]' )
 def get_event_from_payload( payload ):
@@ -60,7 +61,7 @@ def read_results_crossmgr( payload ):
 	name_gender_to_category = { (c.code, c.gender):c for c in event.get_categories() }
 	
 	# Data is indexed by integer bib number.
-	data = {int(k):v for k, v in payload['data'].iteritems()}
+	data = {int(k):v for k, v in six.iteritems(payload['data'])}
 	
 	# Get the category for each bib.
 	reGender = re.compile( r'(\([^)]+\))$' )
@@ -132,12 +133,12 @@ def read_results_crossmgr( payload ):
 	# To get results by category, select by that category and order by rank.
 	rtcs_cache = defaultdict( list )
 	def flush_cache():
-		for cls, objs in rtcs_cache.iteritems():
+		for cls, objs in six.iteritems(rtcs_cache):
 			cls.objects.bulk_create( objs )
 			del objs[:]
 	
 	prime_points = {p['winnerBib']:p['points'] for p in payload.get('primes',[]) if p.get('points',None) }
-	prime_time_bonus = {p['winnerBib']:DurationField.formatted_timedelta(seconds=p['timeBonus']) for p in payload.get('primes',[]) if p.get('timeBonus',None) }
+	prime_time_bonus = {p['winnerBib']:formatted_timedelta(seconds=p['timeBonus']) for p in payload.get('primes',[]) if p.get('timeBonus',None) }
 	
 	for cd in payload['catDetails']:
 		if cd['catType'] != 'Start Wave' or cd['name'] == 'All':
@@ -193,7 +194,7 @@ def read_results_crossmgr( payload ):
 				event=event,
 				participant=participant,
 				status=name_to_status_code.get(d['status'], 'Finisher'),
-				finish_time=DurationField.formatted_timedelta(seconds=race_times[-1]) if race_times else None,
+				finish_time=formatted_timedelta(seconds=race_times[-1]) if race_times else None,
 				
 				category_rank=bib_category_rank[bib],
 				category_starters=category_starters[category],
@@ -220,7 +221,7 @@ def read_results_crossmgr( payload ):
 				rtcs = result.set_race_times( race_times, lap_speeds, do_create=False )
 				if rtcs:
 					rtcs_cache[type(rtcs[0])].extend( rtcs )
-					if any( len(objs) >= 999 for objs in rtcs_cache.itervalues() ):
+					if any( len(objs) >= 999 for objs in six.itervalues(rtcs_cache) ):
 						flush_cache()
 			except Exception as e:
 				warnings.append( u'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(

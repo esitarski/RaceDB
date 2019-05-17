@@ -1,8 +1,9 @@
 import operator
 from collections import defaultdict
 
-from views_common import *
 from django.utils.translation import ugettext_lazy as _
+
+from .views_common import *
 
 def GetCustomCategoryForm( cls ):
 	@autostrip
@@ -97,7 +98,7 @@ def CustomCategoryDelete( request, eventId, eventType, customCategoryId, confirm
 	if int(confirmed):
 		custom_category.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = string_concat( _('Delete: '), custom_category.name )
+	message = format_lazy( u'{}: {}', _('Delete'), custom_category.name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )

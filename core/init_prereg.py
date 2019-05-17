@@ -1,20 +1,21 @@
 import re
 import sys
+import six
 import datetime
+import operator
+from collections import defaultdict
 from fnmatch import fnmatch
 from xlrd import open_workbook, xldate_as_tuple
-import HTMLParser
 from collections import namedtuple, defaultdict
 from django.db import transaction, IntegrityError
 from django.db.models import Q
-from large_delete_all import large_delete_all
-from FieldMap import standard_field_map, normalize
-import import_utils
-from import_utils import *
-from models import *
 
-from collections import defaultdict
-import operator
+from .large_delete_all import large_delete_all
+from .FieldMap import standard_field_map, normalize
+from . import import_utils
+from .import_utils import *
+from .models import *
+
 class TimeTracker( object ):
 	def __init__( self ):
 		self.startTime = None
@@ -33,7 +34,7 @@ class TimeTracker( object ):
 		
 	def __repr__( self ):
 		s = []
-		for lab, t in sorted( self.totals.iteritems(), key=operator.itemgetter(1), reverse=True ):
+		for lab, t in sorted( six.iteritems(self.totals), key=operator.itemgetter(1), reverse=True ):
 			s.append( '{:<50}: {:6.2f}'.format(lab, t) )
 		s.append( '' )
 		return '\n'.join( s )
@@ -54,7 +55,7 @@ def init_prereg(
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def ms_write( s, flush=False ):
-			message_stream.write( unicode(s) )
+			message_stream.write( u'{}'.format(s) )
 			sys.stdout.write( removeDiacritic(s) )
 			if flush:
 				sys.stdout.flush()
@@ -81,13 +82,13 @@ def init_prereg(
 	for event in competition.get_events():
 		if event.optional:
 			event_name_count[event.name] += 1
-	for event_name, count in event_name_count.iteritems():
+	for event_name, count in six.iteritems(event_name_count):
 		if count > 1:
 			ms_write( u'**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
 	
 	role_code = {}
 	for role_type, roles in Participant.COMPETITION_ROLE_CHOICES:
-		role_code.update( { unicode(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
+		role_code.update( { u'{}'.format(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
 		
 	# Construct a cache to find categories quicker.
 	category_code_gender_suffix = re.compile( r'\(Open\)$|\(Men\)$|\(Women\)$' )
@@ -169,7 +170,7 @@ def init_prereg(
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))
 			bib				= (to_int(v('bib', None)) or None)
-			bib_auto		= (bib is None and unicode(v('bib',u'')).lower() == u'auto')
+			bib_auto		= (bib is None and u'{}'.format(v('bib',u'')).lower() == u'auto')
 			tag				= to_int_str(v('tag', None))
 			note		 	= to_str(v('note', None))
 			team_name		= to_str(v('team', None))
@@ -203,7 +204,7 @@ def init_prereg(
 			emergency_medical = to_str(v('emergency_medical', None))
 			
 			participant_optional_events = []
-			for pattern, events in pattern_optional_events.iteritems():
+			for pattern, events in six.iteritems(pattern_optional_events):
 				included = to_bool(v(pattern, False))
 				participant_optional_events.extend( (event, included) for event in events )
 			
@@ -250,7 +251,7 @@ def init_prereg(
 						# Create a temporary license holder.
 						try:
 							license_holder = LicenseHolder(
-								**{ attr:value for attr, value in {
+								**{ attr:value for attr, value in six.iteritems({
 										'license_code':'TEMP',
 										'last_name':last_name,
 										'first_name':first_name,
@@ -268,7 +269,7 @@ def init_prereg(
 										'emergency_contact_phone':emergency_contact_phone,
 										'emergency_medical':emergency_medical,
 										'existing_tag':tag if competition.use_existing_tags else None,
-									}.iteritems() if value is not None
+									}) if value is not None
 								}
 							)
 							truncate_char_fields(license_holder).save()
@@ -421,7 +422,7 @@ def init_prereg(
 						event:(included and event.could_participate(participant))
 						for event, included in participant_optional_events
 					}
-					option_included = { event.option_id:included for event, included in participant_optional_events.iteritems() }
+					option_included = { event.option_id:included for event, included in six.iteritems(participant_optional_events) }
 					ParticipantOption.sync_option_ids( participant, option_included )
 					override_events_str = u' ' + u', '.join(
 						u'"{}"={}'.format(event.name, included) for event, included in sorted(participant_optional_events.iteritems())
@@ -481,11 +482,11 @@ def init_prereg(
 		
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unicode(v.value).strip() for v in row]
+			fields = [u'{}'.format(v.value).strip() for v in row]
 			
 			# Add all Optional Event patterns.
 			for field in fields:
@@ -493,10 +494,10 @@ def init_prereg(
 					pattern = normalize( field )
 				except:
 					continue
-				for event_name, event in optional_events.iteritems():
+				for event_name, event in six.iteritems(optional_events):
 					if fnmatch(event_name, pattern):
 						pattern_optional_events[pattern].append( event )
-			for pattern in pattern_optional_events.iterkeys():
+			for pattern in six.iterkeys(pattern_optional_events):
 				ifm.set_aliases( pattern, (pattern,) )
 			
 			ifm.set_headers( fields )
@@ -537,7 +538,7 @@ def init_prereg(
 	process_ur_records( ur_records )
 	
 	ms_write( u'\n' )
-	for section, total in sorted( times.iteritems(), key = lambda e: e[1], reverse=True ):
+	for section, total in sorted( six.iteritems(times), key = operator.itemgetter(1), reverse=True ):
 		ms_write( u'{}={:.6f}\n'.format(section, total) )
 	ms_write( u'\n' )
 	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )

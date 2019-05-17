@@ -1,4 +1,5 @@
 import os
+import six
 from random import seed, randint
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 
@@ -7,7 +8,7 @@ racedb_secret_fname = os.path.join( os.path.dirname(os.path.dirname(os.path.absp
 def get_secret_key():
 	username = 'cloud'
 	try:
-		with open(racedb_secret_fname, 'rb') as f:
+		with open(racedb_secret_fname, 'r') as f:
 			password = f.read().strip().split('\n')[0]
 	except:
 		password = 'secret'
@@ -23,13 +24,13 @@ def get_secret_authorization():
 	
 	ac = [chr(k)]
 	seed()
-	for i in xrange(4):
+	for i in six.moves.range(4):
 		ac.append( chr(randint(0,127)) )
 	for c in a:
-		for i in xrange(randint(0,2)):
+		for i in six.moves.range(randint(0,2)):
 			ac.append( add_k(chr(randint(0,7))) )
 		ac.append( add_k(c) )
-	for i in xrange(randint(0,4)):
+	for i in six.moves.range(randint(0,4)):
 		ac.append( add_k(chr(randint(0,7))) )
 	return 'Basic ' + urlsafe_b64encode(''.join(ac))
 	
@@ -50,7 +51,7 @@ def validate_secret_request( request ):
 	return request.META.has_key('HTTP_AUTHORIZATION') and validate_secret_authorization(request.META['HTTP_AUTHORIZATION'])
 		
 if __name__ == '__main__':
-	for i in xrange(50):
+	for i in six.moves.range(50):
 		a = get_secret_authorization()
 		v = validate_secret_authorization( a )
-		print a, v
+		print ( '{}, {}'.format(a, v) )

@@ -1,7 +1,7 @@
 import sys
+import six
 import datetime
 from xlrd import open_workbook, xldate_as_tuple
-import HTMLParser
 from collections import namedtuple
 from models import *
 from utils import toUnicode, removeDiacritic
@@ -19,7 +19,7 @@ latest_year = (today - datetime.timedelta( days=7*365 )).year
 def date_from_value( s ):
 	if isinstance(s, datetime.date):
 		return s
-	if isinstance(s, (float, int)):
+	if isinstance(s, float) or isinstance(s, six.integer_types):
 		return datetime.date( *(xldate_as_tuple(s, import_utils.datemode)[:3]) )
 	
 	# Assume month, day, year format.
@@ -40,7 +40,7 @@ def date_from_value( s ):
 	try:
 		return datetime.date( year = yy, month = mm, day = dd )
 	except Exception as e:
-		print yy, mm, dd
+		print ( yy, mm, dd )
 		raise e
 		
 def gender_from_str( s ):
@@ -48,7 +48,7 @@ def gender_from_str( s ):
 
 def set_attributes( obj, attributes ):
 	changed = False
-	for key, value in attributes.iteritems():
+	for key, value in six.iteritems(attributes):
 		if getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -56,7 +56,7 @@ def set_attributes( obj, attributes ):
 	
 def to_int_str( v ):
 	try:
-		return unicode(long(v))
+		return u'{}'.format(v)
 	except:
 		pass
 	return toUnicode(v)
@@ -104,7 +104,7 @@ def init_ccn( fname = fnameDefault ):
 				'nationality':  to_str(ur.get('Nationality','')),
 				'zip_postal':	to_str(get_key(ur,('ZipPostal','Zip''Postal','ZipCode','PostalCode','Zip Code','Postal Code',), None))
 			}
-			attributes = { a:v for a, v in attributes.iteritems() if v is not None }
+			attributes = { a:v for a, v in six.iteritems(attributes) if v is not None }
 			
 			if ur.get('Tag','').strip():
 				attributes['existing_tag'] = to_int_str(ur.get('Tag','')).strip()
@@ -135,7 +135,7 @@ def init_ccn( fname = fnameDefault ):
 					team = Team.objects.get_or_create( name=t )[0]
 					last_team = team
 				pcd = ur.get('Primary Cycling Discipline','').strip().lower()
-				for id, d in discipline_id.iteritems():
+				for id, d in six.iteritems(discipline_id):
 					if d.name.lower() in pcd:
 						TeamHint( discipline=d, license_holder=lh, effective_date=effective_date, team=last_team )
 						break
@@ -158,7 +158,7 @@ def init_ccn( fname = fnameDefault ):
 		
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.

@@ -1,26 +1,27 @@
 import socket
 import select
 import json
+import six
 import time
 import datetime
 import threading
 import argparse
 import random
-from Queue import Queue, Empty
+from six.moves.queue import Queue, Empty
 
 import traceback
 
 from pyllrp import *
 from pyllrp.TagInventory import TagInventory
 from pyllrp.TagWriter import TagWriter
-from AutoDetect import AutoDetect
+from .AutoDetect import AutoDetect
 
 #-----------------------------------------------------------------------
 # Find a unique port for the LLRPServer.
 # Required for simultaneous instances of RaceDB.
 #
 def findUnusedPort( host='localhost', portStart=50111, portRange=10 ):
-	ports = list(xrange(portStart, portStart+portRange))
+	ports = list(six.moves.range(portStart, portStart+portRange))
 	random.shuffle( ports )
 	for port in ports:
 		try:
@@ -43,13 +44,13 @@ def getDefaultPort( host='localhost' ):
 	
 #-----------------------------------------------------------------------
 
-terminator = bytes('\r\n')
+terminator = '\r\n'
 HexChars = set( '0123456789ABCDEF' )
 
 def receiveAll( s ):
 	data = ''
 	while not data.endswith( terminator ):
-		data += s.recv( 1024 )
+		data += s.recv( 1024 ).encode()
 	return data
 
 def marshal( message ):
@@ -62,7 +63,7 @@ def unmarshal( messageStr ):
 	return json.loads( messageStr )
 
 def sendMessage( s, message ):
-	s.sendall( marshal(message) )
+	s.sendall( marshal(message).encode() )
 
 def receiveMessage( s ):
 	return unmarshal( receiveAll(s) )
@@ -77,7 +78,7 @@ class LLRPServer( threading.Thread ):
 		
 		self.host = host
 		self.port = getDefaultPort( host=self.host ) if port is None else port
-		print 'LLRPServer: init: ', self.host, self.port
+		print ( 'LLRPServer: init: {}:{}'.format(self.host, self.port) )
 		
 		self.tagWriter = None
 		self.transmitPower = transmitPower
@@ -96,7 +97,7 @@ class LLRPServer( threading.Thread ):
 		s = self.getClientSocket()
 		
 		try:
-			sendMessage( s, dict(cmd='shutdown') )
+			sendMessage( s, {'cmd':'shutdown'} )
 		except Exception as e:
 			self.logMessage( 'shutdown exception:', e )
 		
@@ -145,14 +146,14 @@ class LLRPServer( threading.Thread ):
 				return marshal( dict(success=success, tag=message['tag'], antenna=message['antenna'], errors=errors) ), True
 			except Exception as e:
 				return marshal( dict(success=False, tag=message['tag'], antenna=message['antenna'],
-								errors=[unicode(e), traceback.format_exc()]) ), True
+								errors=[u'{}'.format(e), traceback.format_exc()]) ), True
 		
 		elif cmd == 'read':
 			try:
 				tags, errors = self.readTags( antenna=message['antenna'] )
 				return marshal( dict(success=not errors, tags=tags, antenna=message['antenna'], errors=errors) ), True
 			except Exception as e:
-				return marshal( dict(success=False, antenna=message['antenna'], errors=[unicode(e), traceback.format_exc()]) ), True
+				return marshal( dict(success=False, antenna=message['antenna'], errors=[u'{}'.format(e), traceback.format_exc()]) ), True
 		
 		elif cmd == 'status':
 			return marshal( dict(success=True) ), True
@@ -352,7 +353,7 @@ class LLRPClient( object ):
 		return self.sendCmd( cmd='status' )
 	
 def writeLog( message ):
-	print u'[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message )
+	print ( u'[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message ) )
 
 def doAutoDetect():
 	LLRPHost = AutoDetect( callback=lambda m: writeLog('AutoDetect Checking: ' + m) )

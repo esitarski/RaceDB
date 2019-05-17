@@ -1,10 +1,11 @@
+import six
 from django import template
 register = template.Library()
 
 def non_empty( v ):
-	if isinstance(v, (int,long,float)):
+	if isinstance(v, six.integer_types) or isinstance(v, float):
 		return True
-	if isinstance(v, (str, unicode)):
+	if isinstance(v, six.string_types):
 		return v
 	return True
 

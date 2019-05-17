@@ -1,23 +1,17 @@
+import io
 import csv
 import sys
 import datetime
-import HTMLParser
+from six.moves.html_parser import HTMLParser
 from collections import namedtuple
 from models import *
 from django.db import transaction
 from django.db.models import Q
-from utils import gender_from_str, toUnicode, removeDiacritic
-import csv, codecs
-from large_delete_all import large_delete_all
+from utils import gender_from_str, removeDiacritic
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
 latest_year = (today - datetime.timedelta( days=7*365 )).year
-
-def unicode_csv_reader(utf8_data, dialect=csv.excel, **kwargs):
-    csv_reader = csv.reader(utf8_data, dialect=dialect, **kwargs)
-    for row in csv_reader:
-        yield [toUnicode(cell) for cell in row]
 
 fnameDefault = 'GFRR/14_Apr_2015_12_10_22_PM-oca-dougs-report-8fc93c.csv'
 fnameDefault = 'GFRR/April 17.csv'
@@ -45,12 +39,12 @@ def date_from_str( s ):
 	try:
 		return datetime.date( year = yy, month = mm, day = dd )
 	except Exception as e:
-		print yy, mm, dd
+		print ( yy, mm, dd )
 		raise e
 		
 def set_attributes( obj, attributes ):
 	changed = False
-	for key, value in attributes.iteritems():
+	for key, value in six.iteritems(attributes):
 		if getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -66,11 +60,8 @@ def init_oca( fname, message_stream=sys.stdout ):
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def messsage_stream_write( s ):
-			message_stream.write( unicode(s) )
+			message_stream.write( u'{}'.format(s) )
 			
-	#large_delete_all( LicenseHolder )
-	#large_delete_all( Team )
-	
 	tstart = datetime.datetime.now()
 	
 	fix_bad_license_codes()
@@ -86,7 +77,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 	
 	effective_date = datetime.date.today()
 	
-	html_parser = HTMLParser.HTMLParser()
+	html_parser = HTMLParser()
 	
 	# Process the records in larger transactions for performance.
 	@transaction.atomic
@@ -136,15 +127,15 @@ def init_oca( fname, message_stream=sys.stdout ):
 				for count, team_name in enumerate(team_names):
 					team = Team.objects.get_or_create( name=team_name )[0]
 					if count == len(team_names)-1:
-						for discipline_name, discipline in discipline_id.iteritems():
+						for discipline_name, discipline in six.iteritems(discipline_id):
 							for col_name in discipline_cols[discipline_name]:
 								if getattr(ur, col_name, None):
 									TeamHint( license_holder=lh, team=team, discipline=discipline, effective_date=effective_date ).save()
 									break
 
 	ur_records = []
-	with open(fname, 'rU') as fp:
-		oca_reader = unicode_csv_reader( fp )
+	with io.open(fname, 'r', encoding='utf-8', errors='replace') as fp:
+		oca_reader = csv.reader( fp )
 		for i, row in enumerate(oca_reader):
 			if i == 0:
 				# Get the header fields from the first row.

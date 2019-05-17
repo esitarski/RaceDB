@@ -32,18 +32,13 @@ def CreateShortcut( cmd="launch" ):
 	)
 	
 	fd, fname = tempfile.mkstemp( suffix='.vbs' )
-	f = os.fdopen( fd, 'wb' )
-	
-	#fname = os.path.join( current_folder, 'create_shortcut.vbs' )
-	#f = open( fname, 'w' )
-	
-	f.write( vbStr )
-	f.close()
+	with os.fdopen( fd, 'w' ) as f:
+		f.write( vbStr )
 	
 	try:
 		subprocess.call( ['cscript.exe', '//Nologo', fname], shell=True )
 	except Exception as e:
-		print 'Failed: ', e
+		print ( 'Failed: {}'.format(e) )
 	finally:
 		os.remove( fname )
 		pass

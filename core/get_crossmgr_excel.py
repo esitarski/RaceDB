@@ -1,17 +1,16 @@
 import re
 import os
+import six
 import sys
 import locale
 import datetime
-import utils
-import scramble
-import minimal_intervals
-
+import xlsxwriter
 from django.utils.translation import ugettext_lazy as _
 
-from models import *
-
-import xlsxwriter
+from . import utils
+from . import scramble
+from . import minimal_intervals
+from .models import *
 
 data_headers = (
 	'Bib#',
@@ -72,19 +71,19 @@ def get_number_range_str( numbers ):
 	# Combine consecutive numbers into range pairs.
 	numbers = sorted( set(numbers) )
 	if len(numbers) <= 1:
-		return u','.join( unicode(n) for n in numbers )
+		return u','.join( u'{}'.format(n) for n in numbers )
 	pairs = [[numbers[0], numbers[0]]]
 	for n in numbers[1:]:
 		if n == pairs[-1][1] + 1:
 			pairs[-1][1] += 1
 		else:
 			pairs.append( [n, n] )
-	return u','.join( unicode(p[0]) if p[0] == p[1] else u'{}-{}'.format(*p) for p in pairs )
+	return u','.join( u'{}'.format(p[0]) if p[0] == p[1] else u'{}-{}'.format(*p) for p in pairs )
 
 def get_subset_number_range_str( bib_all, bib_subset ):
 	bib_subset = sorted( bib_subset )
 	if len(bib_subset) <= 1:
-		return u','.join( unicode(n) for n in bib_subset )
+		return u','.join( u'{}'.format(n) for n in bib_subset )
 	bib_all = sorted( bib_all )
 	
 	bib_i = {bib:i for i, bib in enumerate(bib_all)}
@@ -97,15 +96,15 @@ def get_subset_number_range_str( bib_all, bib_subset ):
 			pairs.append( [n, n] )
 	
 	i_bib = {i:bib for i, bib in enumerate(bib_all)}
-	return u','.join( unicode(i_bib[p[0]]) if p[0] == p[1] else u'{}-{}'.format(i_bib[p[0]],i_bib[p[1]]) for p in pairs )	
+	return u','.join( u'{}'.format(i_bib[p[0]]) if p[0] == p[1] else u'{}-{}'.format(i_bib[p[0]],i_bib[p[1]]) for p in pairs )	
 	
 def get_gender_str( g ):
 	return (u'Men', u'Women', u'Open')[g]
 
 def safe_xl( v ):
-	if v is None or isinstance(v, (unicode, int, long, float, bool, datetime.datetime, datetime.date) ):
+	if v is None or isinstance(v, six.string_types) or isinstance(v, six.integer_types) or isinstance(v, (float, bool, datetime.datetime, datetime.date) ):
 		return v
-	return unicode(v)
+	return u'{}'.format(v)
 	
 def write_row_data( ws, row, row_data, format = None ):
 	if format is None:
@@ -180,7 +179,7 @@ def add_categories_page( wb, title_format, event ):
 					get_gender_str(category.gender),
 					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
 					category_intervals.get(category,''),
-					unicode(getattr(wave,'start_offset',u'')),
+					u'{}'.format(getattr(wave,'start_offset',u'')),
 					wave.laps if wave.laps else u'',
 					competition.to_local_distance(wave.distance) if wave.distance else u'',
 					getattr(wave, 'minutes', None) or u'',
@@ -194,7 +193,7 @@ def add_categories_page( wb, title_format, event ):
 				wave.name,
 				get_gender_str( 2 if len(genders) != 1 else genders[0] ),
 				u'',	# No ranges here - these come from the categories.
-				unicode(getattr(wave,'start_offset',u'')),
+				u'{}'.format(getattr(wave,'start_offset',u'')),
 				wave.laps if wave.laps else u'',
 				competition.to_local_distance(wave.distance) if wave.distance else u'',
 				getattr(wave, 'minutes', None) or u'',
@@ -208,7 +207,7 @@ def add_categories_page( wb, title_format, event ):
 					category.code,
 					get_gender_str(category.gender),
 					category_intervals.get(category,''),
-					unicode(getattr(wave,'start_offset',u'')),
+					u'{}'.format(getattr(wave,'start_offset',u'')),
 					u'',
 					u'',
 					u'',
@@ -274,7 +273,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 def get_crossmgr_excel( event_mass_start ):
 	competition = event_mass_start.competition
 
-	output = StringIO()
+	output = BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
@@ -290,7 +289,7 @@ def get_crossmgr_excel( event_mass_start ):
 		row_data = [
 			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			unicode(p.team_name), p.team.team_code if p.team else u'',
+			u'{}'.format(p.team_name), p.team.team_code if p.team else u'',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code_export,
@@ -302,14 +301,14 @@ def get_crossmgr_excel( event_mass_start ):
 		table.append( row_data )
 	
 	# Remove empty columns.  Keep Bib column.
-	for col in xrange(len(table[0])-1, 0, -1):
-		if not any( table[row][col] for row in xrange(1, len(table)) ):
-			for row in xrange(0, len(table)):
+	for col in six.moves.range(len(table[0])-1, 0, -1):
+		if not any( table[row][col] for row in six.moves.range(1, len(table)) ):
+			for row in six.moves.range(0, len(table)):
 				del table[row][col]
 	
 	# Write the rider data.
 	write_row_data( ws, 0, table[0], title_format )
-	for row in xrange(1, len(table)):
+	for row in six.moves.range(1, len(table)):
 		write_row_data( ws, row, table[row] )
 	
 	table = None
@@ -331,7 +330,7 @@ def get_crossmgr_excel( event_mass_start ):
 def get_crossmgr_excel_tt( event_tt ):
 	competition = event_tt.competition
 
-	output = StringIO()
+	output = BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
@@ -371,15 +370,15 @@ def get_crossmgr_excel_tt( event_tt ):
 		table.append( row_data )
 	
 	# Remove empty columns.  Keep Bib and StartTime column.
-	for col in xrange(len(table[0])-1, 1, -1):
-		if not any( table[row][col] for row in xrange(1, len(table)) ):
-			for row in xrange(0, len(table)):
+	for col in six.moves.range(len(table[0])-1, 1, -1):
+		if not any( table[row][col] for row in six.moves.range(1, len(table)) ):
+			for row in six.moves.range(0, len(table)):
 				del table[row][col]
 	
 	# Write the rider data.
 	write_row_data( ws, 0, table[0], title_format )
 	format = [time_format]
-	for row in xrange(1, len(table)):
+	for row in six.moves.range(1, len(table)):
 		write_row_data( ws, row, table[row], format )
 	
 	table = None

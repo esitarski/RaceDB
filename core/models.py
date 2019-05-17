@@ -1,3 +1,5 @@
+from . import patch_sqlite_text_factory	# Must be first.
+
 from django.db import models, connection
 from django.db import transaction, IntegrityError
 from django.db.models import Q, F, Max, Count
@@ -9,44 +11,45 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 from django.utils.safestring import mark_safe
-from django.utils.translation import string_concat
+from django.utils.text import format_lazy
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.utils.html import escape
 
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
-import patch_sqlite_text_factory
-
-import DurationField
-from get_abbrev import get_abbrev
-
-from get_id import get_id
-
 import re
 import os
+import six
 import math
 from heapq import heappush
 import datetime
 import base64
 import operator
 from django.utils.translation import ugettext_lazy as _
-import utils
-from utils import safe_print
 import random
 import itertools
 from collections import defaultdict
-from StringIO import StringIO
-from TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
-from CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes, ioc_from_code
-from large_delete_all import large_delete_all
-from WriteLog import writeLog
+try:
+	from StringIO import StringIO
+	BytesIO = StringIO
+except:
+	from io import StringIO, BytesIO
+import locale
+
+from . import DurationField
+from .get_abbrev import get_abbrev
+
+from .get_id import get_id
+
+from . import utils
+from .utils import safe_print
+from .TagFormat import getValidTagFormatStr, getTagFormatStr, getTagFromLicense, getLicenseFromTag
+from .CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country_codes, country_from_ioc, province_codes, ioc_from_code
+from .large_delete_all import large_delete_all
+from .WriteLog import writeLog
 
 invalid_date_of_birth = datetime.date(1900,1,1)
-
-import locale
-def date_format_encoding():
-	return locale.getlocale(locale.LC_TIME)[1] or locale.getpreferredencoding()
 
 class BulkSave( object ):
 	def __init__( self ):
@@ -208,7 +211,7 @@ class SystemInfo(models.Model):
 	tag_from_license = models.BooleanField( default = False, verbose_name = _("RFID Tag from License"),
 			 help_text=_('Generate RFID tag from license (not database id)'))
 	
-	ID_CHOICES = [(i, u'{}'.format(i)) for i in xrange(32)]
+	ID_CHOICES = [(i, u'{}'.format(i)) for i in six.moves.range(32)]
 	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'),
 		help_text=_('Identifier for generating tags from License Code.') )
 		
@@ -257,7 +260,7 @@ class SystemInfo(models.Model):
 	
 	@classmethod
 	def get_tag_template_default( cls ):
-		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in xrange(4))
+		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in six.moves.range(4))
 		tt = '{}######{:02}'.format( rs, datetime.datetime.now().year % 100 )
 		return tt
 	
@@ -318,7 +321,7 @@ class CategoryFormat(models.Model):
 	def get_search_text( self ):
 		return utils.get_search_text( [self.name, self.description] )
 		
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 		
 	class Meta:
@@ -336,7 +339,7 @@ def init_sequence_first( Class, obj ):
 		obj.sequence = 1
 		
 class Category(models.Model):
-	format = models.ForeignKey( CategoryFormat, db_index = True )
+	format = models.ForeignKey( CategoryFormat, db_index = True, on_delete=models.CASCADE )
 	code = models.CharField( max_length=16, default='', verbose_name = _('Code') )
 	GENDER_CHOICES = (
 		(0, _('Men')),
@@ -369,7 +372,7 @@ class Category(models.Model):
 	def get_search_text( self ):
 		return utils.normalizeSearch(u' '.join( u'"{}"'.format(f) for f in [self.code, self.get_gender_display(), self.description] ) )
 		
-	def __unicode__( self ):
+	def __str__( self ):
 		return u'{} ({}) [{}]'.format(self.code, self.description, self.format.name)
 		
 	class Meta:
@@ -386,7 +389,7 @@ class Discipline(models.Model):
 		init_sequence_first( Discipline, self )
 		return super( Discipline, self ).save( *args, **kwargs )
 	
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 		
 	@staticmethod
@@ -406,7 +409,7 @@ class RaceClass(models.Model):
 		init_sequence_first( RaceClass, self )
 		return super( RaceClass, self ).save( *args, **kwargs )
 	
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 
 	class Meta:
@@ -419,7 +422,7 @@ class NumberSet(models.Model):
 	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = 0 )
 
 	reRangeExcept = re.compile( r'[^\d,-]' )
-	range_str = models.CharField( max_length=120, default='', blank = True, verbose_name = _('Ranges') )
+	range_str = models.TextField( default='', blank = True, verbose_name = _('Ranges') )
 	
 	sponsor = models.CharField( max_length = 80, default = '', blank = True, verbose_name  = _('Sponsor') )
 	description = models.CharField( max_length = 80, default = '', blank = True, verbose_name = _('Description') )
@@ -487,7 +490,7 @@ class NumberSet(models.Model):
 				break
 			c += v
 			if c > 0:
-				for bib in xrange(bib, bib_next):
+				for bib in six.moves.range(bib, bib_next):
 					counts[bib] = c
 		return counts
 	
@@ -587,7 +590,7 @@ class NumberSet(models.Model):
 		# Do nothing - FIXLATER.
 		return False
 	
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 	
 	def validate( self ):
@@ -597,7 +600,7 @@ class NumberSet(models.Model):
 		duplicates = defaultdict( list )
 		for nse in self.numbersetentry_set.order_by('bib', 'date_lost'):
 			duplicates[nse.bib].append( nse.pk )
-		for bib, pks in duplicates.iteritems():
+		for bib, pks in six.iteritems(duplicates):
 			bib_max_count = self.get_bib_max_count(bib, range_events)
 			if len(pks) > bib_max_count:
 				NumberSetEntry.objects.filter( pk__in=pks[:-bib_max_count] ).delete()
@@ -616,12 +619,12 @@ class SeasonsPass(models.Model):
 		init_sequence_first( SeasonsPass, self )
 		return super( SeasonsPass, self ).save( *args, **kwargs )
 	
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 		
 	def clone( self ):
 		name_new = None
-		for i in xrange(1, 1000):
+		for i in six.moves.range(1, 1000):
 			name_new = u'{} Copy({})'.format( self.name.split( ' Copy(' )[0], i )
 			if not SeasonsPass.objects.filter( name=name_new ).exists():
 				break
@@ -656,11 +659,11 @@ class SeasonsPass(models.Model):
 		ordering = ['sequence']
 
 class SeasonsPassHolder(models.Model):
-	seasons_pass = models.ForeignKey( 'SeasonsPass', db_index = True, verbose_name = _("Season's Pass") )
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name = _("LicenseHolder") )
+	seasons_pass = models.ForeignKey( 'SeasonsPass', db_index = True, verbose_name = _("Season's Pass"), on_delete=models.CASCADE )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name = _("LicenseHolder"), on_delete=models.CASCADE )
 	
-	def __unicode__( self ):
-		return u''.join( [unicode(self.seasons_pass), u': ', unicode(self.license_holder)] )
+	def __str__( self ):
+		return u''.join( [u'{}'.format(self.seasons_pass), u': ', u'{}'.format(self.license_holder)] )
 	
 	class Meta:
 		ordering = ['license_holder__search_text']
@@ -674,7 +677,7 @@ class ReportLabel( models.Model ):
 	name = models.CharField( max_length = 32, verbose_name = _('Report Label'), help_text=_("Label used for reporting.") )
 	sequence = models.PositiveSmallIntegerField( default = 0, verbose_name = _('Sequence') )
 	
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 	
 	class Meta:
@@ -691,7 +694,7 @@ class LegalEntity(models.Model):
 	
 	waiver_expiry_date = models.DateField( default=datetime.date(1970,1,1), db_index=True, verbose_name=_('Waiver Expiry Date') )
 	
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 	
 	class Meta:
@@ -712,9 +715,7 @@ class Competition(models.Model):
 	stateProv=models.CharField( max_length=64, blank=True, default='', verbose_name=_('StateProv') )
 	country=models.CharField( max_length=64, blank=True, default='', verbose_name=_('Country') )
 	
-	category_format=models.ForeignKey(
-		'CategoryFormat',
-		verbose_name=_('Category Format') )
+	category_format=models.ForeignKey( 'CategoryFormat', verbose_name=_('Category Format'), on_delete=models.CASCADE )
 	
 	organizer=models.CharField( max_length=64, verbose_name=_('Organizer') )
 	organizer_contact=models.CharField( max_length=64, blank=True, default='', verbose_name=_('Organizer Contact') )
@@ -724,8 +725,8 @@ class Competition(models.Model):
 	start_date=models.DateField( db_index=True, verbose_name=_('Start Date') )
 	number_of_days=models.PositiveSmallIntegerField( default=1, verbose_name=_('Number of Days') )
 	
-	discipline=models.ForeignKey( Discipline, verbose_name=_("Discipline") )
-	race_class=models.ForeignKey( RaceClass, verbose_name=_("Race Class") )
+	discipline=models.ForeignKey( Discipline, verbose_name=_("Discipline"), on_delete=models.CASCADE )
+	race_class=models.ForeignKey( RaceClass, verbose_name=_("Race Class"), on_delete=models.CASCADE )
 	
 	using_tags=models.BooleanField( default=False, verbose_name=_("Using Tags/Chip Reader") )
 	use_existing_tags=models.BooleanField( default=True, verbose_name=_("Use Competitor's Existing Tags") )
@@ -837,7 +838,7 @@ class Competition(models.Model):
 			types.append( _('TT') )
 		if types:
 			types = ['('] + types + [')']
-			return string_concat( *types )
+			return format_lazy( u'{}'*len(types), *types )
 		return u''
 	
 	def to_local_speed( self, kmh ):
@@ -920,27 +921,25 @@ class Competition(models.Model):
 	def date_range_str( self ):
 		sd = self.start_date
 		ed = self.finish_date
-		dfe = date_format_encoding()
 		if sd == ed:
-			return self.fix_date_leading_zeros(sd.strftime('%b %d, %Y').decode(dfe))
+			return self.fix_date_leading_zeros(sd.strftime('%b %d, %Y'))
 		if sd.month == ed.month and sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d').decode(dfe), ed.strftime('%d, %Y').decode(dfe) ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%d, %Y') ))
 		if sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d').decode(dfe), ed.strftime('%b %d, %Y').decode(dfe) ))
-		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d, %Y').decode(dfe), ed.strftime('%b %d, %Y').decode(dfe) ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%b %d, %Y') ))
+		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%b %d, %Y'), ed.strftime('%b %d, %Y') ))
 	
 	@property
 	def date_range_year_str( self ):
 		sd = self.start_date
 		ed = self.finish_date
-		dfe = date_format_encoding()
 		if sd == ed:
-			return self.fix_date_leading_zeros(sd.strftime('%Y %b %d').decode(dfe))
+			return self.fix_date_leading_zeros(sd.strftime('%Y %b %d'))
 		if sd.month == ed.month and sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d').decode(dfe), ed.strftime('%d').decode(dfe) ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%d') ))
 		if sd.year == ed.year:
-			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d').decode(dfe), ed.strftime('%b %d').decode(dfe) ))
-		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d').decode(dfe), ed.strftime('%Y %b %d').decode(dfe) ))
+			return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%b %d') ))
+		return self.fix_date_leading_zeros(u'{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%Y %b %d') ))
 	
 	@property
 	def has_optional_events( self ):
@@ -1142,7 +1141,7 @@ class Competition(models.Model):
 					'license_holder__pk', 'bib'):
 				nses[pk].append( bib )
 				
-			for bibs in nses.itervalues():
+			for bibs in six.itervalues(nses):
 				bibs.sort()
 			
 			with transaction.atomic():
@@ -1299,7 +1298,7 @@ def validate_range_str( range_str ):
 				n = int(pair[0])
 			except:
 				continue
-			pairs.append( exclude + unicode(n) )
+			pairs.append( exclude + u'{}'.format(n) )
 		elif len(pair) >= 2:
 			try:
 				nBegin = int(pair[0])
@@ -1311,7 +1310,7 @@ def validate_range_str( range_str ):
 				continue
 			nBegin = min( nBegin, num_max )
 			nEnd = min( max(nBegin,nEnd), num_max )
-			pairs.append( exclude + unicode(nBegin) + u'-' + unicode(nEnd) )
+			pairs.append( exclude + u'{}'.format(nBegin) + u'-' + u'{}'.format(nEnd) )
 	
 	return u', '.join( pairs )
 
@@ -1339,14 +1338,14 @@ def get_numbers( range_str ):
 			nBegin, nEnd = [int(v) for v in pair[:2]]
 			nBegin, nEnd = max(nBegin, 1), min(nEnd, 99999)
 			if exclude:
-				include.difference_update( xrange(nBegin, nEnd+1) )
+				include.difference_update( six.moves.range(nBegin, nEnd+1) )
 			else:
-				include.update( xrange(nBegin, nEnd+1) )
+				include.update( six.moves.range(nBegin, nEnd+1) )
 	
 	return include
 	
 class CategoryNumbers( models.Model ):
-	competition = models.ForeignKey( Competition, db_index = True )
+	competition = models.ForeignKey( Competition, db_index = True, on_delete=models.CASCADE )
 	categories = models.ManyToManyField( Category )
 	range_str = models.TextField( default = '1-99,120-129,-50-60,181,-87', verbose_name=_('Range') )
 	
@@ -1423,7 +1422,7 @@ def get_num_nationalities( participants ):
 	return participants.exclude(license_holder__nation_code='').values('license_holder__nation_code').distinct().count()
 
 class Event( models.Model ):
-	competition = models.ForeignKey( Competition, db_index = True )
+	competition = models.ForeignKey( Competition, db_index = True, on_delete=models.CASCADE )
 	name = models.CharField( max_length = 80, verbose_name=_('Name') )
 	date_time = models.DateTimeField( db_index = True, verbose_name=_('Date Time') )
 	
@@ -1574,10 +1573,12 @@ class Event( models.Model ):
 			for c in w.categories.all():
 				for p in Participant.objects.filter( competition=self.competition, role=Participant.Competitor, category=c, bib__isnull=False ):
 					if p.bib in bibParticipant:
-						duplicates.append( string_concat(
-							w.name, ': ', bibParticipant[p.bib].name,
-							' ( ', bibParticipant[p.bib].category.code, ') and ',
-							p.name, ' (', p.category.code, ' ) ', _('have duplicate Bib'), p.bib) )
+						s = format_lazy( u'{}: {} ({}) and {} ({}) {} {}',
+								w.name, bibParticipant[p.bib].name, bibParticipant[p.bib].category.code,
+								p.name, p.category.code,
+								_('have duplicate Bib'), p.bib
+							)
+						duplicates.append( s )
 					else:
 						bibParticipant[p.bib] = p
 		return duplicates
@@ -1633,7 +1634,7 @@ class Event( models.Model ):
 			'name':	self.name,
 			'pk': self.pk,
 			'competition_name': self.competition.name,
-			'date_time': unicode(server_date_time),
+			'date_time': u'{}'.format(server_date_time),
 			'event_type': self.event_type,
 			'optional':	self.optional,
 			'select_by_default': self.select_by_default,
@@ -1732,7 +1733,7 @@ class Event( models.Model ):
 			.order_by('license_holder__search_text')
 		)
 			
-	def __unicode__( self ):
+	def __str__( self ):
 		return u'{}, {} ({})'.format(self.date_time, self.name, self.competition.name)
 	
 	@property
@@ -2059,7 +2060,7 @@ class WaveBase( models.Model ):
 		abstract = True
 
 class Wave( WaveBase ):
-	event = models.ForeignKey( EventMassStart, db_index = True )
+	event = models.ForeignKey( EventMassStart, db_index = True, on_delete=models.CASCADE )
 	start_offset = DurationField.DurationField( default = 0, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
@@ -2088,8 +2089,8 @@ class Wave( WaveBase ):
 		ordering = ['start_offset', 'name']
 
 class WaveCallup( models.Model ):
-	wave = models.ForeignKey( Wave, db_index = True )
-	participant = models.ForeignKey( 'Participant', db_index = True )
+	wave = models.ForeignKey( Wave, db_index = True, on_delete=models.CASCADE )
+	participant = models.ForeignKey( 'Participant', db_index = True, on_delete=models.CASCADE )
 	order = models.PositiveSmallIntegerField( blank = True, default = 9999, verbose_name = _('Callup Order') )
 	
 	class Meta:
@@ -2152,7 +2153,7 @@ class Team(models.Model):
 		for ta in team_aliases:
 			strings.extend( [u'<li>', escape(ta.alias), u'</li>'] )
 		strings.append( u'</ul>' )
-		return mark_safe( string_concat(*strings) )
+		return mark_safe( format_lazy(u'{}'*len(strings), *strings) )
 
 	def save( self, *args, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
@@ -2168,7 +2169,7 @@ class Team(models.Model):
 	def short_name( self ):
 		return self.name
 		
-	def unicode( self ):
+	def __str__( self ):
 		return u'{}, {}'.format(self.name, self.team_type_display())
 	
 	@staticmethod
@@ -2183,7 +2184,7 @@ class Team(models.Model):
 		ordering = ['search_text']
 
 class TeamAlias(models.Model):
-	team = models.ForeignKey( 'Team', db_index=True )
+	team = models.ForeignKey( 'Team', db_index=True, on_delete=models.CASCADE )
 	alias = models.CharField( max_length = 64, db_index = True, verbose_name = _('Alias') )
 	
 	@staticmethod
@@ -2241,7 +2242,7 @@ def validate_postal_code( postal ):
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
 
 def random_temp_license( prefix = u'TEMP_'):
-	return u'{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in xrange(15)) )
+	return u'{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in six.moves.range(15)) )
 
 def format_phone( phone ):
 	if len(phone) == len('AAA333NNNN') and phone.isdigit():
@@ -2452,7 +2453,7 @@ class LicenseHolder(models.Model):
 		if not self or not self.uci_id:
 			return None
 			
-		self.uci_id = unicode(self.uci_id).upper().replace(u' ', u'')
+		self.uci_id = u'{}'.format(self.uci_id).upper().replace(u' ', u'')
 		
 		if not self.uci_id.isdigit():
 			return _(u'uci id must be all digits')
@@ -2472,7 +2473,7 @@ class LicenseHolder(models.Model):
 		if not self or not self.uci_code:
 			return None
 			
-		self.uci_code = unicode(self.uci_code).upper().replace(u' ', u'')
+		self.uci_code = u'{}'.format(self.uci_code).upper().replace(u' ', u'')
 		
 		if len(self.uci_code) != 11:
 			return _(u'invalid length for uci code')
@@ -2496,7 +2497,7 @@ class LicenseHolder(models.Model):
 		try:
 			d = datetime.date(year, month, day)
 		except ValueError as e:
-			return unicode(e)
+			return u'{}'.format(e)
 		
 		if d != self.date_of_birth:
 			return _(u'inconsistent with date of birth')
@@ -2531,7 +2532,7 @@ class LicenseHolder(models.Model):
 	def has_error( self ):
 		return self.uci_id_error or self.license_code_error
 		
-	def __unicode__( self ):
+	def __str__( self ):
 		return '{}, {} ({}, {}, {}, {})'.format(
 			self.last_name.upper(), self.first_name,
 			self.date_of_birth.isoformat(), self.get_gender_display(),
@@ -2654,7 +2655,7 @@ class LicenseHolder(models.Model):
 			)
 			duplicates[key].append( pk )
 			if uci_id:
-				duplicates[(u'{} UCIID'.format(u' '.join( uci_id[i:i+3] for i in xrange(0, len(uci_id), 3) )),None,None)].append( pk )
+				duplicates[(u'{} UCIID'.format(u' '.join( uci_id[i:i+3] for i in six.moves.range(0, len(uci_id), 3) )),None,None)].append( pk )
 			
 			# Check for reversed day/month
 			if date_of_birth.day != date_of_birth.month and date_of_birth.day <= 12:
@@ -2677,10 +2678,10 @@ class LicenseHolder(models.Model):
 		
 		duplicates = [{
 				'key': key,
-				'duplicateIds': u','.join(unicode(pk) for pk in pks),
+				'duplicateIds': u','.join(u'{}'.format(pk) for pk in pks),
 				'license_holders': LicenseHolder.objects.filter(pk__in=pks).order_by('search_text'),
 				'license_holders_len': len(pks),
-			} for key, pks in duplicates.iteritems() if len(pks) > 1]
+			} for key, pks in six.iteritems(duplicates) if len(pks) > 1]
 			
 		duplicates.sort( key=lambda r: r['key'] )
 		return duplicates
@@ -2711,17 +2712,17 @@ class LicenseHolder(models.Model):
 			return self.nation_code
 	
 	def get_uci_id_text( self ):
-		return u' '.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) )
+		return u' '.join( self.uci_id[i:i+3] for i in six.moves.range(0, len(self.uci_id), 3) )
 	
 	def get_uci_id_html( self ):
-		return mark_safe( u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) ) )
+		return mark_safe( u'&nbsp;'.join( self.uci_id[i:i+3] for i in six.moves.range(0, len(self.uci_id), 3) ) )
 	
 	def get_flag_uci_id_html( self ):
 		if self.nation_code and self.nation_code in uci_country_codes_set:
 			flag = '<img src="{}/{}.png" title="{}"/>'.format(static('flags'), self.nation_code, self.nation_title)
 		else:
 			flag = self.nation_code
-		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in xrange(0, len(self.uci_id), 3) )
+		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in six.moves.range(0, len(self.uci_id), 3) )
 		return mark_safe( u'{}&nbsp;{}'.format(flag, uci_id) )
 	
 	def get_team_for_discipline( self, discipline, teamHintOnly=False ):
@@ -2789,12 +2790,12 @@ def add_name_to_tag( competition, tag ):
 		s.extend( [u': ', lh.first_last] )
 	if bibs:
 		s.extend( [u'; ', _('Bib'), u' ', u', '.join( u'{}'.format(b) for b in bibs )] )
-	return string_concat( *s )
+	return format_lazy( u'{}'*len(s), *s )
 		
 #---------------------------------------------------------------
 class Waiver(models.Model):
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True )
-	legal_entity = models.ForeignKey( 'LegalEntity', db_index=True )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
+	legal_entity = models.ForeignKey( 'LegalEntity', db_index=True, on_delete=models.CASCADE )
 	date_signed = models.DateField( null=True, default=None, db_index=True, verbose_name=_('Waiver Signed on') )
 	
 	class Meta:
@@ -2807,7 +2808,7 @@ class Waiver(models.Model):
 #---------------------------------------------------------------
 
 class Result(models.Model):
-	participant = models.ForeignKey( 'Participant', db_index=True )
+	participant = models.ForeignKey( 'Participant', db_index=True, on_delete=models.CASCADE )
 	# Figure out how to translate these (FIXLATER).
 	cFinisher, cPUL, cOTB, cDNF, cDQ, cDNS, cNP = range(7)
 	STATUS_CODE_NAMES = (
@@ -3006,7 +3007,7 @@ class Result(models.Model):
 		ordering = ['status', 'wave_rank']
 
 class ResultMassStart(Result):
-	event = models.ForeignKey( 'EventMassStart', db_index=True )
+	event = models.ForeignKey( 'EventMassStart', db_index=True, on_delete=models.CASCADE )
 	def get_race_time_class( self ):
 		return RaceTimeMassStart
 		
@@ -3018,7 +3019,7 @@ class ResultMassStart(Result):
 		verbose_name_plural = _('ResultsMassStart')
 
 class ResultTT(Result):
-	event = models.ForeignKey( 'EventTT', db_index=True )
+	event = models.ForeignKey( 'EventTT', db_index=True, on_delete=models.CASCADE )
 	def get_race_time_class( self ):
 		return RaceTimeTT
 	
@@ -3042,14 +3043,14 @@ class RaceTime(models.Model):
 		abstract = True
 
 class RaceTimeMassStart(RaceTime):
-	result = models.ForeignKey( 'ResultMassStart', verbose_name=_('ResultMassStart') )
+	result = models.ForeignKey( 'ResultMassStart', verbose_name=_('ResultMassStart'), on_delete=models.CASCADE )
 	
 	class Meta:
 		verbose_name = _('RaceTimeMassStart')
 		verbose_name_plural = _('RaceTimesMassStart')
 
 class RaceTimeTT(RaceTime):
-	result = models.ForeignKey( 'ResultTT', verbose_name=_('ResultTT') )
+	result = models.ForeignKey( 'ResultTT', verbose_name=_('ResultTT'), on_delete=models.CASCADE )
 	
 	class Meta:
 		verbose_name = _('RaceTimeTT')
@@ -3088,7 +3089,7 @@ class CustomCategory(Sequence):
 	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Born Before') )
 	
 	def full_name( self ):
-		return string_concat(self.name, u', ', Category.GENDER_CHOICES[self.gender][1])
+		return format_lazy( u'{}, {}', self.name, Category.GENDER_CHOICES[self.gender][1] )
 	
 	@property
 	def code( self ):
@@ -3096,7 +3097,7 @@ class CustomCategory(Sequence):
 	
 	@property
 	def code_gender( self ):
-		return string_concat(self.name, u' (', Category.GENDER_CHOICES[self.gender][1], u')')
+		return format_lazy(u'{} ({})', self.name, Category.GENDER_CHOICES[self.gender][1] )
 	
 	def validate( self ):
 		self.range_str = validate_range_str( self.range_str )
@@ -3223,7 +3224,7 @@ class CustomCategory(Sequence):
 		abstract = True
 
 class CustomCategoryMassStart(CustomCategory):
-	event = models.ForeignKey( 'EventMassStart', verbose_name=_('EventMassSart') )
+	event = models.ForeignKey( 'EventMassStart', verbose_name=_('EventMassSart'), on_delete=models.CASCADE )
 	
 	def get_container( self ):
 		return self.event.customcategorymassstart_set.all()
@@ -3233,7 +3234,7 @@ class CustomCategoryMassStart(CustomCategory):
 		verbose_name_plural = _('CustomCategoriesMassStart')
 
 class CustomCategoryTT(CustomCategory):
-	event = models.ForeignKey( 'EventTT', verbose_name=_('EventTT') )
+	event = models.ForeignKey( 'EventTT', verbose_name=_('EventTT'), on_delete=models.CASCADE )
 	
 	def get_container( self ):
 		return self.event.customcategorytt_set.all()
@@ -3246,16 +3247,16 @@ class CustomCategoryTT(CustomCategory):
 #---------------------------------------------------------------
 
 class TeamHint(models.Model):
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
-	discipline = models.ForeignKey( 'Discipline', db_index = True )
-	team = models.ForeignKey( 'Team', db_index=True, null=True )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, on_delete=models.CASCADE )
+	discipline = models.ForeignKey( 'Discipline', db_index = True, on_delete=models.CASCADE )
+	team = models.ForeignKey( 'Team', db_index=True, null=True, on_delete=models.CASCADE )
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
-	def unicode( self ):
-		return u', '.join((unicode(self.license_holder), unicode(self.discipline), unicode(self.team), unicode(self.effective_date)))
+	def __str__( self ):
+		return u', '.join((u'{}'.format(self.license_holder), u'{}'.format(self.discipline), u'{}'.format(self.team), u'{}'.format(self.effective_date)))
 	
 	def __repr__( self ):
-		return u'TeamHint({})'.format(self.unicode())
+		return u'TeamHint({})'.format(self.__str__())
 
 	@staticmethod
 	def set_all_disciplines( license_holder, team ):
@@ -3304,7 +3305,7 @@ def update_team_hints():
 	# Update the TeamHints with the latest team information by discipline.
 	TeamHint.objects.all().delete()
 	with BulkSave() as b:
-		for (license_holder, discipline), (effective_date, team) in most_recent.iteritems():
+		for (license_holder, discipline), (effective_date, team) in six.iteritems(most_recent):
 			th = TeamHint()
 			th.license_holder_id = license_holder
 			th.discipline_id = discipline
@@ -3313,13 +3314,13 @@ def update_team_hints():
 			b.append( th )
 
 class CategoryHint(models.Model):
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
-	discipline = models.ForeignKey( 'Discipline', db_index = True )
-	category = models.ForeignKey( 'Category', db_index = True )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, on_delete=models.CASCADE )
+	discipline = models.ForeignKey( 'Discipline', db_index = True, on_delete=models.CASCADE )
+	category = models.ForeignKey( 'Category', db_index = True, on_delete=models.CASCADE )
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
-	def unicode( self ):
-		return unicode(self.license_holder) + ' ' + unicode(self.discipline) + ' ' + unicode(self.category) + ' ' + unicode(self.effective_date)
+	def __str__( self ):
+		return u'{}'.format(self.license_holder) + ' ' + u'{}'.format(self.discipline) + ' ' + u'{}'.format(self.category) + ' ' + u'{}'.format(self.effective_date)
 	
 	class Meta:
 		verbose_name = _('CategoryHint')
@@ -3347,7 +3348,7 @@ def update_category_hints():
 	# Update the CategoryHints with the latest category information by discipline.
 	CategoryHint.objects.all().delete()
 	with BulkSave() as b:
-		for (license_holder, category_format, discipline), (effective_date, category) in most_recent.iteritems():
+		for (license_holder, category_format, discipline), (effective_date, category) in six.iteritems(most_recent):
 			ch = CategoryHint()
 			ch.license_holder_id = license_holder
 			ch.discipline_id = discipline
@@ -3356,8 +3357,8 @@ def update_category_hints():
 			b.append( ch )
 
 class NumberSetEntry(models.Model):
-	number_set = models.ForeignKey( 'NumberSet', db_index = True )
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True )
+	number_set = models.ForeignKey( 'NumberSet', db_index = True, on_delete=models.CASCADE )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, on_delete=models.CASCADE )
 	bib = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Bib') )
 	date_issued = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Issued') )
 	
@@ -3381,8 +3382,8 @@ class FormatTimeDelta( datetime.timedelta ):
 		seconds = int(seconds)
 		return '{}:{:02d}:{:02.3f}'.format(seconds // (60*60), (seconds // 60) % 60, seconds % 60 + fraction)
 	
-	def __unicode( self ):
-		return unicode( self.__repr__() )
+	def __str__( self ):
+		return u'{}'.format( self.__repr__() )
 
 class ParticipantDefaultValues( object ):
 	def __init__( self, competition ):
@@ -3452,9 +3453,9 @@ class ParticipantDefaultValues( object ):
 				self.est_kmh = (ave_kmh[m-1] + ave_kmh[m]) / 2.0
 		
 class Participant(models.Model):
-	competition = models.ForeignKey( 'Competition', db_index=True )
-	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True )
-	team = models.ForeignKey( 'Team', null=True, db_index=True, on_delete=models.SET_NULL  )
+	competition = models.ForeignKey( 'Competition', db_index=True, on_delete=models.CASCADE )
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
+	team = models.ForeignKey( 'Team', null=True, db_index=True, on_delete=models.SET_NULL )
 	
 	ROLE_NAMES = ( '',	# No zero code.
 		_('Team'), _('Official'), _('Organizer'), _('Press'),
@@ -3499,7 +3500,7 @@ class Participant(models.Model):
 	preregistered=models.BooleanField( default=False, verbose_name=_('Preregistered') )
 	
 	registration_timestamp=models.DateTimeField( auto_now_add=True )
-	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True )
+	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True, on_delete=models.CASCADE )
 	
 	bib=models.PositiveSmallIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
 	
@@ -3771,7 +3772,7 @@ class Participant(models.Model):
 		if legal_entity:
 			Waiver.objects.filter(license_holder=self.license_holder, legal_entity=legal_entity).delete()
 	
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 	
 	def add_to_default_optional_events( self ):
@@ -4046,10 +4047,8 @@ class Participant(models.Model):
 			if not getattr(self, check)():
 				if check in ('good_bib', 'good_paid'):
 					errors.append(
-						string_concat(
-							message,
-							u' (', self.category.code if self.category else _('Missing Category'),u')'
-					))
+						format_lazy( u'{} ({})', message, self.category.code if self.category else _('Missing Category') )
+					)
 				else:
 					errors.append( message )
 		
@@ -4300,7 +4299,7 @@ class Participant(models.Model):
 				current_bibs[nse.license_holder].add( nse.bib )
 			
 			# Handle the case of only one bib in the number set.
-			for lh, bibs in current_bibs.iteritems():
+			for lh, bibs in six.iteritems(current_bibs):
 				if len(bibs) == 1:
 					bib = next(iter(bibs))
 					if bib_max.get(bib, 0) == 1:
@@ -4309,7 +4308,7 @@ class Participant(models.Model):
 			# Otherwise, scan past participants to check if a license holder in this category owns the bib.
 			pprevious = Participant.objects.filter( competition__number_set=number_set, category__in=category_numbers.categories.all() )
 			pprevious = pprevious.filter( bib_query ).defer( 'signature' )
-			pprevious = pprevious.exclude( bib__in=list(allocated_numbers.iterkeys())[:200] )
+			pprevious = pprevious.exclude( bib__in=list(allocated_numbers.keys())[:200] )
 			pprevious = pprevious.order_by('-competition__start_date')
 			
 			for p in pprevious.exclude(license_holder=self.license_holder).select_related('license_holder'):
@@ -4335,7 +4334,7 @@ class Participant(models.Model):
 				return bib
 		return None
 	
-	@static
+	@staticmethod
 	def most_recent():
 		participants = Participant.objects.all()
 		mr_team_q = participants.exclude(team__isnull=True).values_list('license_holder','competition__discipline','team').annotate(Max('competition__start_date'))
@@ -4350,16 +4349,6 @@ class Participant(models.Model):
 			key = (lh, disc)
 			if key not in mr_category or mr_category[key][1] < dt:
 				mr_category[key] = (cat, dt)
-		'''
-		SELECT  c1.province, c1.city, c1.population
-		FROM  Canada AS c1
-		JOIN
-		  ( SELECT  province, MAX(population) AS population
-				FROM  Canada
-				GROUP BY  province
-		  ) AS c2 USING (province, population)
-		ORDER BY c1.province;
-		'''
 	
 	class Meta:
 		unique_together = (
@@ -4375,8 +4364,8 @@ class Participant(models.Model):
 #---------------------------------------------------------------------------------------------------------
 
 class EntryTT( models.Model ):
-	event = models.ForeignKey( 'EventTT', db_index = True, verbose_name=_('Event') )
-	participant = models.ForeignKey( 'Participant', db_index = True, verbose_name=_('Participant') )
+	event = models.ForeignKey( 'EventTT', db_index = True, verbose_name=_('Event'), on_delete=models.CASCADE )
+	participant = models.ForeignKey( 'Participant', db_index = True, verbose_name=_('Participant'), on_delete=models.CASCADE )
 	
 	est_speed = models.FloatField( default=0.0, verbose_name=_('Est. Speed') )
 	hint_sequence = models.PositiveIntegerField( default=0, verbose_name = _('Hint Sequence') )
@@ -4609,7 +4598,7 @@ class EventTT( Event ):
 #---------------------------------------------------------------------------------------------
 
 class WaveTT( WaveBase ):
-	event = models.ForeignKey( EventTT, db_index = True )
+	event = models.ForeignKey( EventTT, db_index = True, on_delete=models.CASCADE )
 	
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
 	
@@ -4619,7 +4608,7 @@ class WaveTT( WaveBase ):
 	fastest_participants_start_gap = DurationField.DurationField( verbose_name=_('Fastest Participants Start Gap'), default = 2*60 )
 	num_fastest_participants = models.PositiveSmallIntegerField(
 						verbose_name=_('Number of Fastest Participants'),
-						choices=[(i, '%d' % i) for i in xrange(0, 16)],
+						choices=[(i, '%d' % i) for i in six.moves.range(0, 16)],
 						help_text = 'Participants to get the Fastest gap',
 						default = 5)
 						
@@ -4744,7 +4733,7 @@ class WaveTT( WaveBase ):
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
 				if value is not None:
-					summary.append( u'<tr><td class="text-right">{}&nbsp&nbsp</td><td class="text-right">{}</td><tr>'.format(label, unicode(value)) )
+					summary.append( u'<tr><td class="text-right">{}&nbsp&nbsp</td><td class="text-right">{}</td><tr>'.format(label, u'{}'.format(value)) )
 		except Exception as e:
 			return e
 		summary.append( '</table>' )
@@ -4761,7 +4750,7 @@ class WaveTT( WaveBase ):
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
 				if value is not None:
-					summary.append( u'{}={}'.format(label, unicode(value)) )
+					summary.append( u'{}={}'.format(label, u'{}'.format(value)) )
 		except Exception as e:
 			return e
 		return u' '.join( summary )
@@ -4793,7 +4782,7 @@ class WaveTT( WaveBase ):
 		participants.sort( key=lambda p: (p.start_time if p.start_time else datetime.timedelta(days=100), p.bib or 0) )
 		
 		tDelta = datetime.timedelta(seconds = 0)
-		for i in xrange(1, len(participants)):
+		for i in six.moves.range(1, len(participants)):
 			pPrev = participants[i-1]
 			p = participants[i]
 			try:
@@ -4827,7 +4816,7 @@ class WaveTT( WaveBase ):
 	
 	def get_sequence_option_str( self ):
 		if self.sequence_option == self.series_decreasing:
-			return string_concat( self.get_sequence_option_display(), u": ", self.series_for_seeding.name if self.series_for_seeding else _('Missing'))
+			return format_lazy( u'{}: {}', self.get_sequence_option_display(), self.series_for_seeding.name if self.series_for_seeding else _('Missing'))
 		else:
 			return self.get_sequence_option_display()
 	
@@ -4853,8 +4842,8 @@ class WaveTT( WaveBase ):
 		ordering = ['sequence']
 
 class ParticipantOption( models.Model ):
-	competition = models.ForeignKey( Competition, db_index = True )
-	participant = models.ForeignKey( Participant, db_index = True )
+	competition = models.ForeignKey( Competition, db_index = True, on_delete=models.CASCADE )
+	participant = models.ForeignKey( Participant, db_index = True, on_delete=models.CASCADE )
 	option_id = models.PositiveIntegerField( verbose_name = _('Option Id') )
 	
 	@staticmethod
@@ -4876,7 +4865,7 @@ class ParticipantOption( models.Model ):
 			participant=participant,
 			option_id__in = option_id_included.keys()
 		).delete()
-		for option_id, included in option_id_included.iteritems():
+		for option_id, included in six.iteritems(option_id_included):
 			if included:
 				ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id ).save()
 	
@@ -4897,7 +4886,7 @@ class ParticipantOption( models.Model ):
 			ids |= set( EventClass.objects.filter(competition=competition)
 							.exclude(option_id=0)
 							.values_list('option_id', flat=True) )
-		for id in xrange(1, 1000000):
+		for id in six.moves.range(1, 1000000):
 			if id not in ids:
 				break
 		event.option_id = id
@@ -4925,7 +4914,7 @@ class Series( Sequence ):
 	name = models.CharField( max_length=32, default = 'MySeries', verbose_name=_('Name') )
 	description = models.CharField( max_length=80, blank=True, default='', verbose_name=_('Description') )
 
-	category_format = models.ForeignKey( CategoryFormat, db_index=True )
+	category_format = models.ForeignKey( CategoryFormat, db_index=True, on_delete=models.CASCADE )
 	
 	RANKING_CRITERIA = (
 		(0, _('Points')),
@@ -4952,13 +4941,13 @@ class Series( Sequence ):
 	consider_primes = models.BooleanField( default=True, verbose_name=_('Consider Points or Time Primes') )
 	
 	BEST_RESULTS_CHOICES = [(0, _('All Results')), (1, _('Best Result Only'))] + [
-		(i, string_concat('{} '.format(i), _('Best Results Only'))) for i in xrange(2,31)
+		(i, format_lazy(u'{} {}', i, _('Best Results Only'))) for i in range(2,31)
 	]
 	best_results_to_consider = models.PositiveSmallIntegerField( default=0, choices=BEST_RESULTS_CHOICES,
 		verbose_name=_('Consider')
 	)
 	
-	MUST_HAVE_COMPLETED_CHOICES = [(i, string_concat('{} '.format(i), _('or more Events'))) for i in xrange(31)]
+	MUST_HAVE_COMPLETED_CHOICES = [(i, format_lazy('{} {}', i, _('or more Events'))) for i in range(31)]
 	must_have_completed = models.PositiveSmallIntegerField( default=0, choices=MUST_HAVE_COMPLETED_CHOICES,
 		verbose_name=_('Must have completed')
 	)
@@ -5077,7 +5066,7 @@ class Series( Sequence ):
 		
 		return related_categories
 		
-	def __unicode__( self ):
+	def __str__( self ):
 		return self.name
 	
 	class Meta:
@@ -5087,7 +5076,7 @@ class Series( Sequence ):
 		
 #-----------------------------------------------------------------------
 class SeriesPointsStructure( Sequence ):
-	series = models.ForeignKey( Series, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
 	name = models.CharField( max_length=32, default='SeriesPoints', verbose_name=_('Name') )
 	
 	points_for_place = models.CharField( max_length=512, default='30,25,20,15,10,5,3,1,1,1', verbose_name=_('Points for Place') )
@@ -5135,7 +5124,7 @@ class SeriesPointsStructure( Sequence ):
 			return 0
 		return points_getter
 
-	def __unicode__( self ):
+	def __str__( self ):
 		f = [u'{}: Points for place: {}'.format( self.name, self.points_for_place )]
 		if self.finish_points:
 			f.append( u' finish={}'.format(self.finish_points) )
@@ -5151,11 +5140,11 @@ class SeriesPointsStructure( Sequence ):
 
 #-----------------------------------------------------------------------
 class SeriesCompetitionEvent( models.Model ):
-	series = models.ForeignKey( Series, db_index=True )
-	event_mass_start = models.ForeignKey( EventMassStart, models.CASCADE, blank=True, null=True, default=None, db_index=True )
-	event_tt = models.ForeignKey( EventTT, models.CASCADE, blank=True, null=True, default=None, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
+	event_mass_start = models.ForeignKey( EventMassStart, on_delete=models.CASCADE, blank=True, null=True, default=None, db_index=True )
+	event_tt = models.ForeignKey( EventTT, on_delete=models.CASCADE, blank=True, null=True, default=None, db_index=True )
 	
-	points_structure = models.ForeignKey( SeriesPointsStructure, blank=True, null=True, db_index=True )
+	points_structure = models.ForeignKey( SeriesPointsStructure, blank=True, null=True, db_index=True, on_delete=models.CASCADE )
 	
 	def make_copy( self, series_new ):
 		points_structure_new = (
@@ -5208,7 +5197,7 @@ class UpdateLog( models.Model ):
 			if i != 0:
 				html.append( u'<br/>' )
 			html.append( escape(d) )
-		return mark_safe( string_concat(*html) )
+		return mark_safe( u''.join(html) )
 	
 	class Meta:
 		verbose_name = _("UpdateLog")
@@ -5218,8 +5207,8 @@ class UpdateLog( models.Model ):
 #-----------------------------------------------------------------------
 class SeriesIncludeCategory( models.Model ):
 	# Selects which Categories are to be part of the Series.
-	series = models.ForeignKey( Series, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	def make_copy( self, series_new ):
 		self_pk = self.pk
@@ -5238,7 +5227,7 @@ class SeriesIncludeCategory( models.Model ):
 class CategoryGroup( Sequence ):
 	# Used to create Category groups for a combined category Series.
 	name = models.CharField( max_length=32, default='MyGroup', verbose_name=_('Name') )
-	series = models.ForeignKey( Series, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
 	
 	def make_copy( self, series_new ):
 		categories = self.get_categories()
@@ -5268,15 +5257,15 @@ class CategoryGroup( Sequence ):
 			text.extend( [cge.category.code_gender, ', '] )
 		if text:
 			text = text[:-1]
-		return string_concat( *text )
+		return u''.join( text )
 	
 	class Meta:
 		verbose_name = _("CategoryGroup")
 		verbose_name_plural = _("CategoryGroups")
 
 class CategoryGroupElement( models.Model ):
-	category_group = models.ForeignKey( CategoryGroup, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	category_group = models.ForeignKey( CategoryGroup, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	class Meta:
 		verbose_name = _("CategoryGroupElement")
@@ -5285,7 +5274,7 @@ class CategoryGroupElement( models.Model ):
 
 #-----------------------------------------------------------------------
 class SeriesUpgradeProgression( Sequence ):
-	series = models.ForeignKey( Series, db_index=True )
+	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
 	factor = models.FloatField( default=0.5, verbose_name = _('Factor') )
 
 	def make_copy( self, series_new ):
@@ -5315,7 +5304,7 @@ class SeriesUpgradeProgression( Sequence ):
 		if not s:
 			return _('Empty')
 		s = s[:-1]
-		return string_concat( *s )
+		return format_lazy( u'{}'*len(s), *s )
 		
 	def harmonize_categories( self, allowed_categories ):
 		self.seriesupgradecategory_set.exclude( category__in=allowed_categories ).delete()
@@ -5333,8 +5322,8 @@ class SeriesUpgradeProgression( Sequence ):
 		verbose_name_plural = _("SeriesUpgradeProgressions")
 	
 class SeriesUpgradeCategory( Sequence ):
-	upgrade_progression = models.ForeignKey( SeriesUpgradeProgression, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	upgrade_progression = models.ForeignKey( SeriesUpgradeProgression, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	def get_container( self ):
 		return self.upgrade_progression.seriesupgradecategory_set.all()
@@ -5495,8 +5484,8 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	
 #-----------------------------------------------------------------------------------------------
 class CompetitionCategoryOption(models.Model):
-	competition = models.ForeignKey( Competition, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
+	competition = models.ForeignKey( Competition, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
 	
 	license_check_required = models.BooleanField( default=False, verbose_name=_("License Check Required") )
 	note = models.CharField( max_length=160, default='', blank=True, verbose_name=_('Note') )
@@ -5532,10 +5521,10 @@ class CompetitionCategoryOption(models.Model):
 
 #-----------------------------------------------------------------------------------------------
 class LicenseCheckState(models.Model):
-	license_holder = models.ForeignKey( LicenseHolder, db_index=True )
-	category = models.ForeignKey( Category, db_index=True )
-	discipline = models.ForeignKey( Discipline, db_index=True, default=1 )
-	report_label_license_check = models.ForeignKey( ReportLabel, db_index=True )
+	license_holder = models.ForeignKey( LicenseHolder, db_index=True, on_delete=models.CASCADE )
+	category = models.ForeignKey( Category, db_index=True, on_delete=models.CASCADE )
+	discipline = models.ForeignKey( Discipline, db_index=True, default=1, on_delete=models.CASCADE )
+	report_label_license_check = models.ForeignKey( ReportLabel, db_index=True, on_delete=models.CASCADE )
 	check_date = models.DateField( db_index=True )
 	
 	@staticmethod
@@ -5631,7 +5620,7 @@ class LicenseCheckState(models.Model):
 				csd[key] = p.competition.start_date
 		
 		# Update existing records to the most recent check date.
-		to_update = [(k,v) for k,v in to_update.iteritems()]
+		to_update = [(k,v) for k,v in six.iteritems(to_update)]
 		while to_update:
 			with transaction.atomic():
 				for (license_holder_id, category_id, discipline_id, report_label_license_check_id), d in to_update[-256:]:

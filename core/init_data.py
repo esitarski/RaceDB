@@ -1,6 +1,6 @@
-import init_static
-import init_categories
-from models import *
+from .models import *
+from . import init_static
+from . import init_categories
 
 def init_data():
 	init_static.init_static()

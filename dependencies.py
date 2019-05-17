@@ -4,26 +4,24 @@ import sys
 import shutil
 import argparse
 import subprocess
-import compileall
 import platform
 
 is_windows = (platform.system() == 'Windows')
 
-pyllrp = 'pip-install-pyllrp-0.1.4.zip'
+pyllrp = 'pip-install-pyllrp-3.0.0.zip'
 
 dependencies = [
-	'django==1.9.9',
-	'django-crispy-forms==1.6',
+	'django,
+	'django-crispy-forms',
 	'django-extensions',
 	'requests',
 	'dj_static',
 	'waitress',
 	'xlsxwriter',
-	'pygments',
 	'xlrd',
 	'pytz',
 	'fpdf',
-	'natural-keys',
+	'netifaces',
 	pyllrp,
 ]
 
@@ -34,11 +32,11 @@ uninstall_dependencies = [
 def update_dependencies( upgrade ):
 	print( 'Updating Dependencies...' )
 	
-	pip = 'C:/Python27/Scripts/pip.exe'
+	pip = os.path.join( os.path.split(sys.executable)[0], 'pip3' )
 	if os.path.isfile(pip):
 		print( 'Found "pip" at "{}".'.format(pip) )
 	else:
-		pip = 'pip'
+		pip = 'pip3'
 	
 	for d in dependencies:
 		args = [pip, 'install', d]
@@ -64,14 +62,6 @@ def update_dependencies( upgrade ):
 		shutil.rmtree( 'TagReadWriteServer' )
 	except:
 		pass
-		
-	try:
-		os.path.remove( os.path.join( 'core', 'migrations', '0002_auto_20150201_1649.py' ) )
-	except:
-		pass
-		
-	print( 'Pre-compiling source code...' )
-	compileall.compile_dir( '.', quiet=True )
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser( description='Update RaceDB Dependencies' )

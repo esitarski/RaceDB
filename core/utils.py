@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import six
 import math
 import string
 import urllib
@@ -87,43 +88,37 @@ def format_time( secs, highPrecision=False, forceHours=False ):
 
 def removeDiacritic( s ):
 	'''
-	Accept a unicode string, and return a normal string (bytes in Python 3)
+	Accept a unicode string, and return a normal string
 	without any diacritical marks.
 	'''
-	if isinstance(s, unicode):
-		return unicodedata.normalize('NFKD', s).encode('ASCII', 'ignore')
-	else:
-		return s
-
+	return unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ASCII', 'ignore').decode()
+	
 def safe_print( *args ):
-	print removeDiacritic( u' '.join(unicode(a) for a in args) )
+	print ( removeDiacritic( u' '.join(u'{}'.format(a) for a in args) ) )
 
 def cleanExcelSheetName( s ):
 	return re.sub( '[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]
 
-validFilenameChars = set( "-_.() " + string.ascii_letters + string.digits )
+reInvalidFilenameChars = re.compile( '[^-_.() a-zA-Z0-9]' )
 def cleanFileName( filename ):
-	cleanedFilename = unicodedata.normalize('NFKD', unicode(filename)).encode('ASCII', 'ignore')
-	cleanedFilename = cleanedFilename.replace( '/', '_' )
-	return ''.join(c for c in cleanedFilename if c in validFilenameChars)
+	cleanedFilename = removeDiacritic( filename ).replace( '/', '_' )
+	return reInvalidFilenameChars.sub( '', cleanedFilename )
 	
 def toUnicode( s ):
-	if isinstance( s, unicode ):
-		return s
-	if not isinstance( s, str ):
-		return unicode(s)
-		
-	encodings = (
-		'utf-8', 'iso-8859-1', 'iso-8859-2', 'iso-8859-3', 'iso-8859-4', 'iso-8859-5',
-		'iso-8859-7', 'iso-8859-8', 'iso-8859-9', 'iso-8859-10', 'iso-8859-11',
-		'iso-8859-13', 'iso-8859-14', 'iso-8859-15',
-	)
-	for encoding in encodings:
-		try:
-			return unicode( s, encoding )
-		except UnicodeDecodeError as e:
-			pass
-	raise e
+	if isinstance( s, bytes ):			
+		encodings = (
+			'utf-8', 'iso-8859-1', 'iso-8859-2', 'iso-8859-3', 'iso-8859-4', 'iso-8859-5',
+			'iso-8859-7', 'iso-8859-8', 'iso-8859-9', 'iso-8859-10', 'iso-8859-11',
+			'iso-8859-13', 'iso-8859-14', 'iso-8859-15',
+		)
+		for encoding in encodings:
+			try:
+				return s.decode(encoding)
+			except:
+				pass
+		return s.decode('utf-8', 'ignore')
+	
+	return u'{}'.format(s)
 
 def getHeaderFields( fields ):
 	fields = [removeDiacritic(v) for v in fields]
@@ -132,7 +127,7 @@ def getHeaderFields( fields ):
 		try:
 			f_new = f.encode('ascii')
 		except:
-			f_new = 'valid_field_name_created_in_col_{}'.format(i)
+			f_new = 'field_name_created_in_col_{}'.format(i)
 		fields_new.append( f_new )
 	fields = fields_new
 	fields = [v.replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_') for v in fields]
@@ -148,23 +143,23 @@ def normalizeSearch( s ):
 	return normalizeSeparators(removeDiacritic(s.strip())).lower()
 	
 def matchSearchFields( search, field ):
-	if isinstance(search, (unicode, bytes)):
+	if isinstance(search, six.string_types):
 		search = normalizeSearch( search ).split()
 	field = removeDiacritic( field.strip() ).lower()
 	return all( s in field for s in search )
 	
 escChars = set( r".^$*+?()[{\|" )
 def matchSearchToRegEx( search ):
-	if isinstance(search, (unicode, bytes)):
+	if isinstance(search, six.string_types):
 		search = normalizeSearch( search ).split()
 	return re.compile( u''.join([
 		u'^',
-		''.join( u'(?=.*{})'.format(u''.join(u'\\{}'.format(c) if c in escChars else c for c in s) for s in search)),
+		u''.join( u'(?=.*{})'.format(u''.join(u'\\{}'.format(c) if c in escChars else c for c in s) for s in search)),
 		u'.*$'])
 	)
 
 def get_search_text( fields ):
-	if isinstance(fields, (unicode, bytes)):
+	if not isinstance(fields, list):
 		fields = [fields]
 	
 	return removeDiacritic(
@@ -277,4 +272,4 @@ def cancelUrl( url ):
 	return Breadcrumbs(url).cancelUrl
 
 if __name__ == '__main__':
-	print uniquify([4,4,4,4,3,3,3,2,2,1])
+	print ( uniquify([4,4,4,4,3,3,3,2,2,1]) )

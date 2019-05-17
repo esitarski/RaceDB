@@ -1,7 +1,8 @@
+import six
 from django import forms
 
 def autostrip(cls):
-	fields = [(key, value) for key, value in cls.base_fields.iteritems() if isinstance(value, forms.CharField)]
+	fields = [(key, value) for key, value in six.iteritems(cls.base_fields) if isinstance(value, forms.CharField)]
 	for field_name, field_object in fields:
 		def get_clean_func(original_clean):
 			return lambda value: original_clean(value and value.strip())

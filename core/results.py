@@ -1,8 +1,9 @@
-from views_common import *
 import datetime
 from django.utils.translation import ugettext_lazy as _
-from views import license_holders_from_search_text
 from django.utils import timezone
+
+from .views_common import *
+from .views import license_holders_from_search_text
 
 def get_payload_for_result( has_results, result_list, cat_name, cat_type, result=None ):
 	if not result_list or not has_results:

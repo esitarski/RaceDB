@@ -6,12 +6,12 @@ def get_id( bits = 122 ):
 		v = 0
 		for b in os.urandom( (bits >> 3) + int((bits & 7) != 0) ):
 			v = (v << 8) | ord(b)
-		v &= (1L << bits)-1L
+		v &= (1 << bits)-1
 	except NotImplementedError:
 		v = random.getrandbits( bits )
 	
 	if not (v & 0xf << (bits-4)):
-		v ^= (1L << bits)-1L
+		v ^= (1 << bits)-1
 	return '{:X}'.format( v )
 	
 	'''
@@ -47,6 +47,6 @@ def get_id( bits = 122 ):
 	'''
 	
 if __name__ == '__main__':
-	us = [get_id(96) for i in xrange(20)]
+	us = [get_id(96) for i in range(20)]
 	for u in us:
-		print u, len(u)
+		print ( u, len(u) )

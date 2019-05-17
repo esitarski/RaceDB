@@ -1,13 +1,16 @@
 import csv
+import socket
 import getpass
 import zipfile
+import operator
 import datetime
-import socket
+try:
+	from StringIO import StringIO
+	BytesIO = StringIO
+except:
+	from io import BytesIO, StringIO
 
-from models import *
-
-def toUtf8( row ):
-	return [unicode(v).encode('utf-8') for v in row]
+from .models import *
 
 def getWriterIO():
 	io = StringIO()
@@ -23,42 +26,43 @@ def FinishLynxExport( competition ):
 	fnameIOs = (('lynx.ppl', pplIO), ('lynx.evt', evtIO), ('lynx.sch', schIO))
 	
 	timestamp = datetime.datetime.now().strftime('%Y/%d/%m %H:%M:%S.%f')
-	sep = ';' + '-' * 78 + '\n'
-	for fname, io in fnameIOs:
+	sep = u';' + u'-' * 78 + u'\n'
+	for fname, io_stream in fnameIOs:
 		header = [
-			'{}: FinishLynx database file'.format(fname),
-			'',
-			'Created by: RaceDB v{} (www.sites.google.com/site/crossmgrsoftware/)'.format(RaceDBVersion),
-			'Timestamp: {}'.format( timestamp ),
-			'Server: {}'.format( socket.gethostname() ),
-			'UserName: {}'.format( getpass.getuser() ),
-			'',
-			'See FinishLynx documentation for details (http://www.finishlynx.com/).',
+			u'{}: FinishLynx database file'.format(fname),
+			u'',
+			u'Created by: RaceDB v{} (www.sites.google.com/site/crossmgrsoftware/)'.format(RaceDBVersion),
+			u'Timestamp: {}'.format( timestamp ),
+			u'Server: {}'.format( socket.gethostname() ),
+			u'UserName: {}'.format( getpass.getuser() ),
+			u'',
+			u'See FinishLynx documentation for details (http://www.finishlynx.com/).',
 		]
-		io.write( sep )
+		io_stream.write( sep )
 		for h in header:
-			io.write( unicode('; {}\n'.format(h)).encode('utf-8') )
-		io.write( sep )
+			io_stream.write( u'{}'.format('; {}\n'.format(h)) )
+		io_stream.write( sep )
 			
 	bibs = set()
 	
 	finishLynxEventNum = 0
 
-	for event in sorted( competition.get_events(), key = lambda e: e.date_time ):
+	for event in sorted( competition.get_events(), key=operator.attrgetter('date_time') ):
 		finishLynxEventNum += 1
-		evtWriter.writerow( toUtf8([finishLynxEventNum, 1, 1, u'{}-{}'.format(event.name, competition.name)]) )
-		schWriter.writerow( toUtf8([finishLynxEventNum, 1, 1]) )
+		evtWriter.writerow( [u'{}'.format(v) for v in ([finishLynxEventNum, 1, 1, u'{}-{}'.format(event.name, competition.name)])] )
+		schWriter.writerow( [u'{}'.format(v) for v in ([finishLynxEventNum, 1, 1])] )
 		for p in sorted( event.get_participants(), key = lambda participant: participant.bib if participant.bib else -1 ):
 			if not p.bib:
 				continue
 			if p.bib not in bibs:
 				bibs.add( p.bib )
-				pplWriter.writerow( toUtf8(
-					[p.bib, p.license_holder.last_name, p.license_holder.first_name, p.team.name if p.team else u'']
-				) )
-			evtWriter.writerow( toUtf8([u'', p.bib]) )
+				pplWriter.writerow( [u'{}'.format(v) for v in 
+						(p.bib, p.license_holder.last_name, p.license_holder.first_name, p.team.name if p.team else u'')
+					]
+				)
+			evtWriter.writerow( [u'{}'.format(v) for v in ([u'', p.bib])] )
 	
-	zipIO = StringIO()
+	zipIO = BytesIO()
 	with zipfile.ZipFile(zipIO, 'w') as zip:
 		for fname, io in fnameIOs:
 			zip.writestr( fname, io.getvalue() )

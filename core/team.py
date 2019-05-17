@@ -1,7 +1,8 @@
-from views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
-from WriteLog import writeLog
+
+from .views_common import *
+from .WriteLog import writeLog
 
 def GetTeamForm( request ):
 	is_superuser = request.user.is_superuser
@@ -99,7 +100,7 @@ class TeamManageDuplicatesSelectForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		initial = kwargs.get('initial', {})
 		self.team_fields = {}
-		for k in list(initial.iterkeys()):
+		for k in list(initial.keys()):
 			if k not in ('id', 'selected'):
 				self.team_fields[k] = initial.pop(k)
 		self.team_id = initial.get('id', None)
@@ -117,12 +118,12 @@ class TeamManageDuplicatesSelectForm( Form ):
 				v = int(self.team_fields.get(f,False))
 				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['is-err', 'is-good'][v]) )
 			elif f in self.output_center_fields:
-				s.write( u'<td class="text-center">{}</td>'.format(escape(unicode(self.team_fields.get(f,u'')))) )
+				s.write( u'<td class="text-center">{}</td>'.format(escape(u'{}'.format(self.team_fields.get(f,u'')))) )
 			elif f == 'name':
 				team = Team.objects.get(id=self.team_id)
 				s.write( u'<td>{}<br/>{}</td>'.format(team.name, team.get_team_aliases_html()) )
 			else:
-				s.write( u'<td>{}</td>'.format(escape(unicode(self.team_fields.get(f,u'')))) )
+				s.write( u'<td>{}</td>'.format(escape(u'{}'.format(self.team_fields.get(f,u'')))) )
 		p = super(TeamManageDuplicatesSelectForm, self).as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
 		ln = len('</tr>')
 		return mark_safe( (p[:-ln] + s.getvalue() + p[-ln:]).replace('<tr>','').replace('</tr>','') )
@@ -158,7 +159,7 @@ def TeamManageDuplicates( request ):
 	
 	title = _('Select Duplicates, press Enter to proceed')
 	if search_text:
-		title = string_concat( title, u' (', _('search'), u'="', search_text, u'")' )
+		title = format_lazy( u'{} ({}={})', title,  _('search'), search_text )
 	headers = [_('Select')] + list(TeamManageDuplicatesSelectForm.output_hdrs)
 	return render( request, 'team_manage_duplicates.html', locals() )
 
@@ -175,7 +176,7 @@ def get_team_cannonical_select_form( ids ):
 		if team.nation_code:
 			fields.extend( [u', ', team.nation_code] )
 		fields.extend( [u', ', [_('Inactive'), _('Active')][int(team.active)]] )
-		choices.append( (i, string_concat(*fields) ) )
+		choices.append( (i, format_lazy(u'{}'*len(fields), *fields) ) )
 	
 	class TeamCannonicalSelectForm( Form ):
 		cannonical = forms.ChoiceField(

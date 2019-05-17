@@ -57,7 +57,7 @@ code_state = {
         'WV': 'West Virginia',
         'WY': 'Wyoming'
 }
-state_code = dict( (state, code) for code, state in code_state.iteritems() )
+state_code = {state:code for code, state in code_state.items()}
 
 code_prov_terr = {
     'AB': 'Alberta',
@@ -74,12 +74,12 @@ code_prov_terr = {
     'SK': 'Saskatchewan',
     'YT': 'Yukon'
 }
-prov_terr_code = dict( (prov, code) for code, prov in code_prov_terr.iteritems() )
+prov_terr_code = {prov:code for code, prov in code_prov_terr.items() }
 
 def get_abbrev( s ):
 	t = prov_terr_code.get(s, None) or state_code.get(s, None) or s
 	return prov_terr_code.get(s, None) or state_code.get(s, None) or s
 	
 if __name__ == '__main__':
-	print get_abbrev( 'British Columbia' )
-	print get_abbrev( 'Ontario' )
+	print ( get_abbrev( 'British Columbia' ) )
+	print ( get_abbrev( 'Ontario' ) )

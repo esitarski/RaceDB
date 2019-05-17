@@ -7,7 +7,7 @@ def remove_pyc( directory = '.', pattern = '*.pyc' ):
 		for basename in files:
 			if fnmatch.fnmatch(basename, pattern):
 				fname = os.path.join(root, basename)
-				print fname
+				print ( fname )
 				os.remove( os.path.join(root, basename) )
 				
 if __name__ == '__main__':

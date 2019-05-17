@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import six
 import datetime
 from collections import defaultdict, deque
 
@@ -13,10 +14,10 @@ from django.utils import six
 from django.utils.encoding import force_text
 from django.db import transaction
 
-from utils import get_search_text, removeDiacritic
-from get_id import get_id
+from .utils import get_search_text, removeDiacritic
+from .get_id import get_id
 
-from models import *
+from .models import *
 
 def merge( *args ):
 	merged = {}
@@ -73,7 +74,7 @@ class transaction_save( object ):
 		
 	def flush( self, model=None ):
 		if model != self.model and self.pending:
-			for i in xrange(0, len(self.pending), self.MaxTransactionRecords):
+			for i in six.moves.range(0, len(self.pending), self.MaxTransactionRecords):
 				with transaction.atomic():
 					for dbo, inst, pko in self.pending[i:i+self.MaxTransactionRecords]:
 						dbo.save()
@@ -522,7 +523,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	json_serializer.serialize(arr, indent=0, stream=stream)
 
 	if remove_ftp_info:
-		for k, v in ftp_info_save.iteritems():
+		for k, v in six.iteritems(ftp_info_save):
 			setattr( competition, k, v )
 
 	return arr

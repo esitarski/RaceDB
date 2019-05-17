@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import six
 import json
 import fnmatch
 import shutil
@@ -21,7 +22,7 @@ Sqlite3FName = 'RaceDB.sqlite3'
 reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
 reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
-	if v and isinstance(v, unicode):
+	if v and isinstance(v, six.string_types):
 		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
 		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
 		v = v.strip()
@@ -35,7 +36,7 @@ def json_cleanse( fname ):
 		fields = r.get('fields',{})
 		for f in list(fields.iterkeys()):
 			v = fields[f]
-			if isinstance(v, unicode):
+			if isinstance(v, six.string_types):
 				fields[f] = fix_spaces( v )
 				
 	with open(fname, 'w') as pf:
@@ -69,7 +70,7 @@ class TimeTracker( object ):
 	def __repr__( self ):
 		s = []
 		tTotal = 0.0
-		for lab, t in sorted( self.totals.iteritems(), key=operator.itemgetter(1), reverse=True ):
+		for lab, t in sorted( six.iteritems(self.totals), key=operator.itemgetter(1), reverse=True ):
 			s.append( '{:<50}: {:>12}'.format(lab, format_time(t)) )
 			tTotal += t
 		s.append( '-' * 64 )

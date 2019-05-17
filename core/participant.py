@@ -1,26 +1,21 @@
-from views_common import *
 import uuid
 from subprocess import Popen, PIPE
-from get_id import get_id
 import traceback
 
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-from views import BarcodeScanForm, RfidScanForm
-
-from CountryIOC import ioc_country
-
-from print_bib import print_bib_tag_label, print_id_label, print_body_bib, print_shoulder_bib
-
-from participant_key_filter import participant_key_filter, participant_bib_filter
-
-from get_participant_excel import get_participant_excel
-from emails import show_emails
-from gs_cmd import gs_cmd
-
-from ReadWriteTag import ReadTag, WriteTag
+from .views_common import *
+from .views import BarcodeScanForm, RfidScanForm
+from .get_id import get_id
+from .CountryIOC import ioc_country
+from .print_bib import print_bib_tag_label, print_id_label, print_body_bib, print_shoulder_bib
+from .participant_key_filter import participant_key_filter, participant_bib_filter
+from .get_participant_excel import get_participant_excel
+from .emails import show_emails
+from .gs_cmd import gs_cmd
+from .ReadWriteTag import ReadTag, WriteTag
 
 def get_participant( participantId ):
 	participant = get_object_or_404( Participant, pk=participantId )
@@ -299,7 +294,7 @@ def ParticipantsInEvents( request, competitionId ):
 		p = event.get_participants()
 		event_participants[event] = p
 	
-	participants = sorted( set.union(*[p for p in event_participants.itervalues()]), key=lambda p: p.license_holder.search_text )
+	participants = sorted( set.union(*[p for p in six.itervalues(event_participants)]), key=lambda p: p.license_holder.search_text )
 	
 	check_codes = {
 		'optional_selected':	u"\u2611",
@@ -826,7 +821,7 @@ def ParticipantTeamSelect( request, participantId, teamId ):
 	return HttpResponseRedirect(getContext(request,'popUrl') + 'ParticipantTeamSelectDiscipline/{}/{}/'.format(participantId,teamId))
 
 def get_ioc_countries():
-	countries = [(name, code) for code, name in ioc_country.iteritems()]
+	countries = [(name, code) for code, name in six.iteritems(ioc_country)]
 	countries.sort( key=operator.itemgetter(1) )
 	return countries
 
@@ -856,7 +851,7 @@ def LicenseHolderNationCodeChange( request, licenseHolderId ):
 			break
 	rows = []
 	cols = 4
-	for i in xrange(0, len(countries), cols):
+	for i in six.moves.range(0, len(countries), cols):
 		rows.append( countries[i:i+cols] )
 	return render( request, 'license_holder_nation_code_select.html', locals() )
 
@@ -1146,12 +1141,12 @@ def GetParticipantEstSpeedForm( participant ):
 	@autostrip
 	class ParticipantEstSpeedForm( Form ):
 		est_speed = forms.FloatField( required = False,
-			label=string_concat(_('Estimated Speed for Time Trial'), ' (', competition.speed_unit_display, ')'),
+			label=format_lazy(u'{} ({})', _('Estimated Speed for Time Trial'), competition.speed_unit_display),
 			help_text=_('Enter a value or choose from the grid below.')
 		)
 		if km:
 			est_duration = DurationField.DurationFormField( required = False,
-			label=string_concat(_('or Estimated Time for Time Trial'), ' (', participant.get_tt_distance_text(), ')' ),
+			label=format_lazy(u'{} ({})', _('or Estimated Time for Time Trial'), participant.get_tt_distance_text() ),
 			help_text=_('In [HH:]MM:SS format.')
 		)
 		seed_option = forms.ChoiceField( required = False, choices=Participant.SEED_OPTION_CHOICES, label=_('Seed Option'),
@@ -1205,18 +1200,18 @@ def ParticipantEstSpeedChange( request, participantId ):
 	
 	speed_rc = {}
 	if competition.distance_unit == 0:
-		for col, kmh in enumerate(xrange(20, 51)):
-			for row, decimal in enumerate(xrange(0, 10)):
+		for col, kmh in enumerate(six.moves.range(20, 51)):
+			for row, decimal in enumerate(six.moves.range(0, 10)):
 				speed_rc[(col, row)] = u'{}.{:01d}'.format(kmh, decimal)
 	else:
-		for col, mph in enumerate(xrange(12, 32)):
-			for row, decimal in enumerate(xrange(0, 10)):
+		for col, mph in enumerate(six.moves.range(12, 32)):
+			for row, decimal in enumerate(six.moves.range(0, 10)):
 				speed_rc[(col, row)] = u'{}.{:01d}'.format(mph, decimal)
 	
-	row_max = max( row for row, col in speed_rc.iterkeys() ) + 1
-	col_max = max( col for row, col in speed_rc.iterkeys() ) + 1
+	row_max = max( row for row, col in six.iterkeys(speed_rc) ) + 1
+	col_max = max( col for row, col in six.iterkeys(speed_rc) ) + 1
 	
-	speed_table = [ [ speed_rc[(row, col)] for col in xrange(col_max) ] for row in xrange(row_max) ]
+	speed_table = [ [ speed_rc[(row, col)] for col in six.moves.range(col_max) ] for row in six.moves.range(row_max) ]
 	speed_table.reverse()
 	
 	return render( request, 'participant_est_speed_change.html', locals() )
@@ -1486,9 +1481,10 @@ def ParticipantTagChange( request, participantId ):
 					# Report the error - probably a non-unique field.
 					status = False
 					status_entries.append(
-						(string_concat(_('LicenseHolder'), u': ', _('Existing Tag Save Exception:')), (
-							unicode(e),
-						)),
+						(
+							format_lazy(u'{}: {}', _('LicenseHolder'), _('Existing Tag Save Exception:')),
+							(u'{}'.format(e),)
+						),
 					)
 					return render( request, 'rfid_write_status.html', locals() )
 			
@@ -1537,7 +1533,7 @@ class ParticipantSignatureForm( Form ):
 		
 		if is_jsignature:
 			button_args = [
-				Submit( 'ok-submit', ('&nbsp;'*10) + unicode(_('OK')) + ('&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
+				Submit( 'ok-submit', format_lazy( u'{}{}{}', '&nbsp;'*10, _('OK'), '&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
 				CancelButton( style='font-size:200%' ),
 				HTML(u'<button class="btn btn-warning hidden-print" onClick="reset_signature()">{}</button>'.format(_('Reset'))),
 			]

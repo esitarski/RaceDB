@@ -1,13 +1,10 @@
-
 import os
 import datetime
-import utils
-
+import xlsxwriter
 from django.utils.translation import ugettext_lazy as _
 
-from models import *
-
-import xlsxwriter
+from . import utils
+from .models import *
 
 data_headers = (
 	'Wave',
@@ -49,7 +46,7 @@ def write_row_data( ws, row, row_data, format = None ):
 	return row + 1
 
 def get_start_list_excel( event ):
-	output = StringIO()
+	output = BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
@@ -73,7 +70,7 @@ def get_start_list_excel( event ):
 					p.category.code if p.category else u'None',
 					p.bib if p.bib else 'None',
 					lh.last_name, lh.first_name,
-					unicode(p.team_name),
+					u'{}'.format(p.team_name),
 					lh.get_gender_display(),
 					lh.date_of_birth.strftime('%Y-%m-%d'),
 					lh.city, lh.state_prov,
@@ -96,7 +93,7 @@ def get_start_list_excel( event ):
 				p.category.code if p.category else u'None',
 				p.bib if p.bib else 'None',
 				lh.last_name, lh.first_name,
-				unicode(p.team_name),
+				u'{}'.format(p.team_name),
 				lh.get_gender_display(),
 				lh.date_of_birth.strftime('%Y-%m-%d'),
 				lh.city, lh.state_prov,

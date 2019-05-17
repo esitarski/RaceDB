@@ -1,5 +1,5 @@
-from waitress import serve
-from ConfigParser import SafeConfigParser, NoOptionError
+import waitress
+from configparser import ConfigParser, NoOptionError
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -78,7 +78,7 @@ class KWArgs( object ):
 def launch_server( command, **options ):
 
 	# Migrate the database.
-	cmd_args = {'noinput':True}
+	cmd_args = {'no_input':True}
 	if options['database']:
 		cmd_args['database'] = options['database']
 	management.call_command( 'migrate', **cmd_args )
@@ -94,7 +94,7 @@ def launch_server( command, **options ):
 	init_data_if_necessary()
 	
 	# Read the config file and adjust any options.
-	config_parser = SafeConfigParser()
+	config_parser = ConfigParser()
 	try:
 		with open(options['config'], 'r') as fp:
 			config_parser.readfp( fp, options['config'] )
@@ -164,7 +164,7 @@ def launch_server( command, **options ):
 		safe_print( u'To stop the server, click in this window and press Ctrl-c.' )
 		
 		# Add Cling to serve up static files efficiently.
-		serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=10 )
+		waitress.serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=8, clear_untrusted_proxy_headers=False )
 	else:
 		time.sleep( 0.5 )
 		

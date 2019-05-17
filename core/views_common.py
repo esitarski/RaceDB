@@ -5,10 +5,9 @@ import json
 import datetime
 import string
 
-import utils
-from WriteLog import logCall
-
-from models import *
+from . import utils
+from .models import *
+from .WriteLog import logCall
 
 try:
 	locale.setlocale(locale.LC_ALL, "")
@@ -17,9 +16,12 @@ except Exception as e:
 
 from django.db.models import Q
 from django.db import transaction, IntegrityError
-from django.utils.translation import string_concat
+from django.utils.text import format_lazy
 
-from django.contrib.auth.views import logout
+try:
+	from django.contrib.auth.views import logout
+except:
+	from django.contrib.auth import logout
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import Template
@@ -44,8 +46,8 @@ from crispy_forms.layout import Layout, Div, Submit, HTML, Button
 from crispy_forms.layout import Fieldset, Field, MultiField, ButtonHolder
 from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions, FieldWithButtons
 
-from autostrip import autostrip
-from context_processors import getContext
+from .autostrip import autostrip
+from .context_processors import getContext
 
 from django.views.decorators.cache import patch_cache_control
 
@@ -206,13 +208,7 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 	
 	if print_button:
 		btns.append( HTML(u'&nbsp;' * 4) )
-		btns.append( HTML(string_concat(
-					u'<button class="btn btn-primary hidden-print" onClick="window.print()">',
-					print_button,
-					'</button>'
-				)
-			)
-		)
+		btns.append( HTML(format_lazy( u'<button class="btn btn-primary hidden-print" onClick="window.print()">{}</button>', print_button) ) )
 	
 	if additional_buttons:
 		if additional_buttons_on_new_row:
@@ -251,7 +247,7 @@ def GenericModelForm( ModelClass ):
 	return GMForm
 
 def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
-	title = string_concat(_('New'), ' ', ModelClass._meta.verbose_name)
+	title = format_lazy(u'{} {}', _('New'), ModelClass._meta.verbose_name)
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
@@ -284,7 +280,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass=None, template=
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = True
 	
-	title = string_concat( _('Edit'), ' ', ModelClass._meta.verbose_name )
+	title = format_lazy(u'{} {}', _('Edit'), ModelClass._meta.verbose_name)
 	if request.method == 'POST':
 		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
 		if form.is_valid():
@@ -321,7 +317,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
 	
-	title = string_concat( _('Delete'), ' ', ModelClass._meta.verbose_name, u' ', _('(are you sure? - there is no undo.)') )
+	title = format_lazy( u'{} {} ({})', _('Delete'), ModelClass._meta.verbose_name, _('are you sure? - there is no undo.') )
 	if request.method == 'POST':
 		instance.delete()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -377,7 +373,7 @@ def pushUrl( request, name, *args, **kwargs ):
 		name = name[:-1]
 	target = getContext(request, 'cancelUrl' if cancelUrl else 'path')
 	if args:
-		url = u'{}{}/{}/'.format( target, name, u'/'.join( unicode(a) for a in args ) )
+		url = u'{}{}/{}/'.format( target, name, u'/'.join( u'{}'.format(a) for a in args ) )
 	else:
 		url = u'{}{}/'.format( target, name )
 	return url
@@ -389,7 +385,7 @@ def popPushUrl( request, name, *args, **kwargs ):
 def setFormReadOnly( form ):
 	instance = getattr( form, 'instance', None )
 	if instance:
-		for name, field in form.fields.iteritems():
+		for name, field in six.iteritems(form.fields):
 			field.required = False
 			field.widget.attrs['readonly'] = True
 			field.widget.attrs['disabled'] = True
@@ -403,7 +399,7 @@ def getQuery( filter_name, request, queryName = 'q' ):
 	request.session[filter_name] = query
 	return query
 
-def applyFilter( query, objects, keyFunc = unicode, doSort = True, reverse = False ):
+def applyFilter( query, objects, keyFunc = lambda x: u'{}'.format(x), doSort = True, reverse = False ):
 	query = utils.normalizeSearch( query )
 	if query:
 		qFields = query.split()

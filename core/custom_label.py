@@ -1,9 +1,9 @@
-from views_common import *
 from django.utils.translation import ugettext_lazy as _
-import utils
 
-from participant import print_pdf
-from print_bib import print_bib_tag_label, print_body_bib, print_shoulder_bib
+from .views_common import *
+from . import utils
+from .participant import print_pdf
+from .print_bib import print_bib_tag_label, print_body_bib, print_shoulder_bib
 
 @autostrip
 class CustomLabelForm( Form ):
@@ -60,7 +60,7 @@ class CustomParticipant( object ):
 def CustomLabel( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	custom_label_text = unicode(request.session.get('custom_label_text', u''))
+	custom_label_text = u'{}'.format(request.session.get('custom_label_text', u''))
 
 	if request.method == 'POST':
 		form = CustomLabelForm( request.POST, system_info=SystemInfo.get_singleton(), competition=competition )

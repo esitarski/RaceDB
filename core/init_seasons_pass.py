@@ -1,14 +1,14 @@
 import sys
 import datetime
 from xlrd import open_workbook, xldate_as_tuple
-import HTMLParser
 from django.db import transaction, IntegrityError
 from django.db.models import Q
-from large_delete_all import large_delete_all
-import import_utils
-from FieldMap import standard_field_map
-from import_utils import *
-from models import *
+
+from .large_delete_all import large_delete_all
+from . import import_utils
+from .FieldMap import standard_field_map
+from .import_utils import *
+from .models import *
 
 def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None, message_stream=sys.stdout, clear_existing=False ):
 	
@@ -19,7 +19,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def ms_write( s ):
-			message_stream.write( unicode(s) )
+			message_stream.write( u'{}'.format(s) )
 			sys.stdout.write( removeDiacritic(s) )
 	
 	try:
@@ -112,11 +112,11 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 		
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unicode(f.value).strip() for f in row]
+			fields = [u'{}'.format(f.value).strip() for f in row]
 			ifm.set_headers( fields )
 			ms_write( u'Header Row:\n' )
 			for col, f in enumerate(fields, 1):

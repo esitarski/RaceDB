@@ -1,17 +1,14 @@
-from models import *
-
+import re
 from django.db.models import Q
 from django.db import transaction, IntegrityError
 
-from TagFormat import getLicenseFromTag
-from models import SystemInfo
-
-import re
+from .TagFormat import getLicenseFromTag
+from .models import *
 
 def is_uci_id( uci_id ):
 	if not uci_id:
 		return None
-	uci_id = unicode(uci_id).upper().replace(u' ', u'')
+	uci_id = u'{}'.format(uci_id).upper().replace(u' ', u'')
 	if not uci_id.isdigit():
 		return None
 	if uci_id.startswith('0'):

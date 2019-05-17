@@ -2,8 +2,8 @@ import copy
 import xlsxwriter
 import operator
 
-import utils
-from models import *
+from . import utils
+from .models import *
 
 def uci_excel( event, category, fname, startList=True ):
 	Finisher = Result.cFinisher
@@ -38,7 +38,7 @@ def uci_excel( event, category, fname, startList=True ):
 			return u''
 			
 	def getIRM( rr ):
-		if 'REL' in unicode(rr.pos):
+		if 'REL' in u'{}'.format(rr.pos):
 			return 'REL'
 		return u'' if rr.status == Finisher else statusNames[rr.status].replace('DQ', 'DSQ')
 	
@@ -87,7 +87,7 @@ def uci_excel( event, category, fname, startList=True ):
 				rr.finish_time = None
 			results.append( rr )
 	
-	output = StringIO()
+	output = BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(font_size=24, valign='vcenter') )
@@ -119,7 +119,7 @@ def uci_excel( event, category, fname, startList=True ):
 			ws.write( row, col, v, fmt )
 		else:
 			ws.write( row, col, v )
-		colWidths[col] = max( colWidths.get(col, 0), len(unicode(v)) )
+		colWidths[col] = max( colWidths.get(col, 0), len(u'{}'.format(v)) )
 	
 	fmt = general_header_format
 	for row, r in enumerate(general, 3):
@@ -127,7 +127,7 @@ def uci_excel( event, category, fname, startList=True ):
 			ww( row, col, v, fmt )
 		fmt = general_format
 
-	for col, width in colWidths.iteritems():
+	for col, width in six.iteritems(colWidths):
 		ws.set_column( col, col, width+2 )
 
 	#-------------------------------------------------------------------------------------------------------	
@@ -160,7 +160,7 @@ def uci_excel( event, category, fname, startList=True ):
 		for col, name in enumerate(colNames):
 			ww( row, col, getValue.get(name, lambda rr:u'')(rr), getFmt(name, row) )
 	
-	for col, width in colWidths.iteritems():
+	for col, width in six.iteritems(colWidths):
 		ws.set_column( col, col, width+2 )
 	
 	ws.autofilter( 0, 0, len(results)+1, len(colNames) )	

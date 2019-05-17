@@ -1,9 +1,10 @@
 import re
+import six
 import time
 import datetime
 from xlrd import xldate_as_tuple
-from utils import toUnicode, removeDiacritic, gender_from_str
 from django.utils import timezone
+from .utils import toUnicode, removeDiacritic, gender_from_str
 
 datemode = None
 
@@ -51,12 +52,12 @@ def date_from_value( s ):
 	try:
 		return datetime.date( year=yy, month=mm, day=dd )
 	except Exception as e:
-		print yy, mm, dd
+		print ( yy, mm, dd )
 		raise e
 		
 def set_attributes( obj, attributes, accept_empty_values=False ):
 	changed = False
-	for key, value in attributes.iteritems():
+	for key, value in six.iteritems(attributes):
 		if (accept_empty_values or value) and getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -64,7 +65,7 @@ def set_attributes( obj, attributes, accept_empty_values=False ):
 	
 def set_attributes_changed( obj, attributes, accept_empty_values=False ):
 	changed = []
-	for key, value in attributes.iteritems():
+	for key, value in six.iteritems(attributes):
 		if (accept_empty_values or value) and getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed.append( (key, value) )
@@ -73,7 +74,7 @@ def set_attributes_changed( obj, attributes, accept_empty_values=False ):
 reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
 reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
-	if v and isinstance(v, unicode):
+	if v and isinstance(v, six.string_types):
 		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
 		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
 		v = v.strip()
@@ -84,7 +85,7 @@ def to_int_str( v ):
 		return None
 	fix_spaces( v )
 	try:
-		return unicode(long(v))
+		return u'{}'.format(int(v))
 	except:
 		pass
 	return toUnicode(v)
@@ -94,7 +95,7 @@ def to_uci_id( v ):
 	if v is None:
 		return None
 	try:
-		v = unicode(long(v))
+		v = u'{}'.format(int(v))
 	except:
 		v = toUnicode(v)
 	return reUCIID.sub( u'', v )
@@ -113,13 +114,13 @@ def to_phone( v ):
 def to_bool( v ):
 	if v is None:
 		return None
-	s = fix_spaces(unicode(v)).strip()
+	s = fix_spaces(u'{}'.format(v)).strip()
 	return s[:1] in u'YyTt1' if s else None
 
 def to_int( v ):
 	if v is None:
 		return None
-	fix_spaces( v )
+	v = fix_spaces( v )
 	try:
 		return int(v)
 	except:
@@ -128,7 +129,7 @@ def to_int( v ):
 def to_float( v ):
 	if v is None:
 		return None
-	fix_spaces( v )
+	v = fix_spaces( v )
 	try:
 		return float(v)
 	except:

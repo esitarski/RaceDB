@@ -39,4 +39,4 @@ def gs_cmd():
 	return None
 	
 if __name__ == '__main__':
-	print gs_cmd()
+	print ( gs_cmd() )

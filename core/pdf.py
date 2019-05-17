@@ -1,4 +1,9 @@
+import six
 import fpdf
+
+def normalize_text( text ):
+	''' Make sure we only have characters supported by the font. '''
+	return u'{}'.format(text).encode('latin-1', 'replace').decode('latin-1')
 
 class PDF( fpdf.FPDF ):
 	def __init__( self, orientation='L', format='Letter' ):
@@ -8,7 +13,7 @@ class PDF( fpdf.FPDF ):
 		'''
 			Make the text fit by stretching the font vertically or horizontally as necessary.
 		'''
-		text = unicode(text).encode('windows-1252', 'ignore')
+		text = normalize_text( text )
 		asc_correct = 1.5 if self.font_family.endswith('-e') else 1.45
 		
 		t_height = 72.0*5.0
@@ -38,7 +43,7 @@ class PDF( fpdf.FPDF ):
 		'''
 			Make the font bigger/smaller to make it fit but to not stretch it.
 		'''
-		text = unicode(text).encode('windows-1252', 'ignore')
+		text = normalize_text( text )
 		
 		lineFactor = 1.15
 		fs = height
@@ -67,12 +72,11 @@ class PDF( fpdf.FPDF ):
 			return
 		leftJustifyCols = set( leftJustifyCols or [] )
 		
-		# Encode the entire table as windows-1252.
-		table = [[unicode(v).encode('windows-1252', 'ignore') for v in row] for row in table]
+		table = [[normalize_text(v) for v in row] for row in table]
 		colMax = max( len(row) for row in table )
 		for row in table:
 			if len(row) < colMax:
-				row.extend( [''] * (colMax - len(row)) )
+				row.extend( [u''] * (colMax - len(row)) )
 				
 		lineFactor = 1.15
 		fs, fsMin, fsMax = 0.0, 0.0, 144.0
@@ -81,7 +85,7 @@ class PDF( fpdf.FPDF ):
 		
 		def maxColWidths():
 			cellPad = self.get_string_width( cellSpace )
-			widths = [max(self.get_string_width(row[col]) for row in table) + cellPad for col in xrange(colMax) ]
+			widths = [max(self.get_string_width(row[col]) for row in table) + cellPad for col in range(colMax) ]
 			return widths
 		
 		def widthHeight( fs ):
@@ -134,10 +138,13 @@ class PDF( fpdf.FPDF ):
 			yCur += lineHeight
 		
 		self.yRow = [y + lineHeight * 0.08]
-		for i in xrange(len(table)+1):
+		for i in range(len(table)+1):
 			self.yRow.append( self.yRow[-1] + lineHeight )
 		
 		self.xCol = [x+cellPad]
 		for w in widths:
 			self.xCol.append( self.xCol[-1] + w )
 		return widthMax, heightMax
+	
+	def to_bytes( self ):
+		return self.output( dest='S' ).encode('latin-1', 'replace') if six.PY3 else self.output( dest='S' )

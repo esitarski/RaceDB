@@ -1,4 +1,5 @@
 import re
+import six
 import socket
 import subprocess
 from pyllrp.pyllrp import *
@@ -29,7 +30,7 @@ def findImpinjHost( impinjPort, callback = None ):
 	''' Search ip addresses adjacent to the computer in an attempt to find the reader. '''
 	ip = [int(i) for i in GetDefaultHost().split('.')]
 	j = 0
-	for i in xrange(14):
+	for i in range(14):
 		j = -j if j > 0 else -j + 1
 		
 		ipTest = list( ip )
@@ -71,6 +72,6 @@ def AutoDetect( impinjPort = 5084, callback = None ):
 		
 if __name__ == '__main__':
 	def cb( message ):
-		print 'message:',  message, '...'
+		print ( 'message: {}...',format(message) )
 	ret = AutoDetect(5084, cb)
-	print 'AutoDetect returned:', ret
+	print ( 'AutoDetect returned: {}'.format(ret) )

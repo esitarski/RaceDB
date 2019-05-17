@@ -1,12 +1,11 @@
-# coding=utf-8
 from django.db import transaction
 import datetime
-import string
-from models import *
-import utils
-from large_delete_all import large_delete_all
 
-tdf = '''
+from .models import *
+from . import utils
+from .large_delete_all import large_delete_all
+
+tdf = b'''
 1	Alberto Contador	 Spain	Saxo Bank-SunGard	28	5
 2	Jesús Hernández	 Spain	Saxo Bank-SunGard	29	92
 3	Daniel Navarro	 Spain	Saxo Bank-SunGard	27	62
@@ -188,7 +187,7 @@ tdf = '''
 198	Egor Silin	 Russia	Team Katusha	23*	73
 199	Yuri Trofimov	 Russia	Team Katusha	27	30
 201	Romain Feillu	 France	Vacansoleil-DCM	27	DNS-12
-202	Borut Božic	 Slovenia	Vacansoleil-DCM	30	136
+202	Borut Boic	 Slovenia	Vacansoleil-DCM	30	136
 203	Thomas De Gendt	 Belgium	Vacansoleil-DCM	24*	63
 204	Johnny Hoogerland	 Netherlands	Vacansoleil-DCM	28	74
 205	Björn Leukemans	 Belgium	Vacansoleil-DCM	34	HD-19
@@ -229,6 +228,6 @@ def init_riders():
 			license = years_old
 			
 			safe_print( first_name, last_name, team, gender, date_of_birth, license )
-			r = Rider( first_name=unicode(first_name, 'iso-8859-1'), last_name=unicode(last_name, 'iso-8859-1'), team=unicode(team, 'iso-8859-1'), gender=gender, date_of_birth=date_of_birth, license=license )
+			r = Rider( first_name=first_name.encode('iso-8859-1'), last_name=last_name.encode('iso-8859-1'), team=team.encode('iso-8859-1'), gender=gender, date_of_birth=date_of_birth, license=license )
 			r.save()
 

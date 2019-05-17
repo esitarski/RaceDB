@@ -1,9 +1,10 @@
 import operator
 from collections import defaultdict
 
-from views_common import *
-from series_results import extract_event_results, get_callups_for_wave
 from django.utils.translation import ugettext_lazy as _
+
+from .views_common import *
+from .series_results import extract_event_results, get_callups_for_wave
 
 @access_validation()
 def Callups( request, eventId, eventType, seriesId ):

@@ -1,6 +1,6 @@
 from django.db import transaction
-from models import *
-from large_delete_all import large_delete_all
+from .models import *
+from .large_delete_all import large_delete_all
 
 uci_road = u'''
 RWU13	Women	Road Girls Under 13 <age 10-12>

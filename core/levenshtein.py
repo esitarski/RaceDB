@@ -89,7 +89,7 @@ def searchRecursive( node, letter, word, previousRow, results, maxCost ):
 
 	# Build one row for the letter, with a column for each letter in the target
 	# word, plus one for the empty string at column 0
-	for column in xrange( 1, columns ):
+	for column in six.moves.range( 1, columns ):
 
 		insertCost = currentRow[column - 1] + 1
 		deleteCost = previousRow[column] + 1
@@ -117,11 +117,11 @@ start = time.time()
 results = search( TARGET, MAX_COST )
 end = time.time()
 
-for result in results: print result        
+for result in results: print ( result )
 
 print "Search took %g s" % (end - start)
 	
 if __name__ == '__main__':
-	print levenshtein( 'abc', 'abc' )
-	print levenshtein( 'abc1', 'abc' )
-	print levenshtein( 'abc1', 'abc2' )
+	print ( levenshtein( 'abc', 'abc' ) )
+	print ( levenshtein( 'abc1', 'abc' ) )
+	print ( levenshtein( 'abc1', 'abc2' ) )

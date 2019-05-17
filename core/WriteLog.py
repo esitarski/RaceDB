@@ -1,15 +1,17 @@
 from django.db import models
 from django.http import HttpRequest
 import sys
+import six
 import datetime
 import platform
 import traceback
 import threading
 import random
 import time
-from utils import removeDiacritic, safe_print
 from os.path import expanduser
-import threading, Queue
+import threading
+from six.moves.queue import Queue, Empty
+from .utils import removeDiacritic, safe_print
 
 logFileName = '{}/RaceDBLog.txt'.format(expanduser("~"))
 sys.stderr.write( 'logFileName="{}"\n'.format(logFileName) )
@@ -25,7 +27,7 @@ def messageWriter():
 		while 1:
 			try:
 				message = messageQ.get( False )
-			except Queue.Empty:
+			except Empty:
 				break
 			output.append( message )
 			messageQ.task_done()
@@ -47,7 +49,7 @@ def writeLog( message ):
 	global logThread, messageQ
 	
 	if not logThread:
-		messageQ = Queue.Queue()
+		messageQ = Queue()
 		logThread = threading.Thread( target=messageWriter )
 		logThread.daemon = True
 		logThread.start()
@@ -78,7 +80,7 @@ def logCall( f ):
 		return u'{}'.format(x)
 	
 	def new_f( *args, **kwargs ):
-		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in kwargs.iteritems() ]
+		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in six.iteritems(kwargs) ]
 		writeLog( '{}({})'.format(f.__name__, removeDiacritic(u', '.join(parameters))) )
 		return f( *args, **kwargs)
 	return new_f

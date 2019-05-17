@@ -22,7 +22,20 @@ SECRET_KEY = '+m^ehjjzj=%rk+9)%zc@y2x%cfwno-$nb+4o(5ttez6kw)9)8w'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Importing socket library 
+from netifaces import interfaces, ifaddresses, AF_INET
+def get_host_ips():
+	addresses = []
+	for ifaceName in interfaces():
+		addresses.extend( [i['addr'] for i in ifaddresses(ifaceName).setdefault(AF_INET, [{'addr':'No IP addr'}] )] )
+	return addresses
+
+try:
+	from . import AllowedHosts
+	ALLOWED_HOSTS = AllowedHosts.ALLOWED_HOSTS
+except ImportError:
+	ALLOWED_HOSTS = ['127.0.1.1'] + get_host_ips()
+print( ALLOWED_HOSTS )
 
 LOGIN_URL='/RaceDB/Login/'
 
@@ -40,14 +53,25 @@ INSTALLED_APPS = (
     'core',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE_CLASSES = [
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+]
+MIDDLEWARE = [
+'django.middleware.security.SecurityMiddleware',
+'django.contrib.sessions.middleware.SessionMiddleware',
+'django.middleware.common.CommonMiddleware',
+'django.middleware.csrf.CsrfViewMiddleware',
+'django.contrib.auth.middleware.AuthenticationMiddleware',
+'django.contrib.messages.middleware.MessageMiddleware',
+'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
 ROOT_URLCONF = 'RaceDB.urls'
 
@@ -92,7 +116,7 @@ def get_database_from_args():
 
 try:
 	# Pull in a user-defined database if it defined.
-	from DatabaseConfig import DatabaseConfig
+	from .DatabaseConfig import DatabaseConfig
 	DATABASES = { 'default': DatabaseConfig, }
 except ImportError:
 	# Otherwise, use the default sqlite3 database.
@@ -118,7 +142,7 @@ except Exception as e:
 LANGUAGE_CODE = 'en-us'
 
 try:
-	import time_zone
+	from . import time_zone
 	TIME_ZONE = time_zone.TIME_ZONE
 except ImportError:
 	TIME_ZONE = 'America/Toronto'

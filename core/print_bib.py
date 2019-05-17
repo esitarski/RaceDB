@@ -1,19 +1,22 @@
-from django.utils.translation import ugettext_lazy as _
-
+import re
 import os
+import six
 import copy
 import math
 import getpass
 import glob
 
-from models import *
-from pdf import PDF
-from encode_code128 import encode_code128
+from django.utils.translation import ugettext_lazy as _
+
+from .models import *
+from .pdf import PDF
+from .encode_code128 import encode_code128
 
 inches_to_points = 72.0
 
+reDescenders = re.compile( '[jygpq]' )
 def has_descenders( text ):
-	return any( d in text for d in 'jygpq' )
+	return bool(reDescenders.search(text))
 	
 def get_font_file( fname ):
 	parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -115,7 +118,7 @@ class Rect( object ):
 	
 	def draw_text_to_fit( self, pdf, text, options=AlignCenter|AlignMiddle, consider_descenders=False, convert_to_text=True ):
 		if convert_to_text:
-			text = unicode(text).encode('windows-1252', 'ignore')
+			text = u'{}'.format(text).encode('windows-1252', 'ignore')
 		
 		descenders = has_descenders(text) if consider_descenders else False
 		
@@ -224,7 +227,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 			if license_code:
 				draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
 		
-	pdf_str = pdf.output( dest='s' )
+	pdf_str = pdf.to_bytes()
 	return pdf_str
 
 def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches=5.9, heightInches=3.9, copies=1, onePage=False ):
@@ -248,7 +251,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	text_margin = margin
 	text_height = margin*0.4
 	
-	for c in xrange(copies):
+	for c in six.moves.range(copies):
 		if c == 0 or not onePage:
 			pdf.add_page()
 			page_y = 0
@@ -275,7 +278,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 			name_rect = Rect( x, page_height-margin+page_y, page_width-text_margin - x, text_height )
 			name_rect.draw_text_to_fit( pdf, name, Rect.AlignRight|Rect.AlignMiddle )
 	
-	pdf_str = pdf.output( dest='s' )
+	pdf_str = pdf.to_bytes()
 	return pdf_str
 	
 def print_body_bib( participant, copies=2, onePage=False ):
@@ -347,10 +350,10 @@ def print_uci_bib( participant, copies=2 ):
 	pdf.set_subject( 'Bib number and rider info in uci format.' )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 
-	for c in xrange(copies):
+	for c in six.moves.range(copies):
 		uci_bib( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
 		
-	return pdf.output( dest='s' )
+	return pdf.to_bytes()
 	
 #---------------------------------------------------------------------------------------------------------
 def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
@@ -412,10 +415,10 @@ def print_aso_bib( participant, copies=2 ):
 	pdf.set_subject( 'Bib number and rider info in aso format.' )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 
-	for c in xrange(copies):
+	for c in six.moves.range(copies):
 		aso_bib( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
 		
-	return pdf.output( dest='s' )
+	return pdf.to_bytes()
 
 def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_name='' ):
 	if first_name:
@@ -444,7 +447,7 @@ def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_nam
 	
 	pdf.add_page()
 
-	for p in xrange(0, 2):
+	for p in six.moves.range(0, 2):
 		y_text = y + h_name_header + y_text_margin
 
 		pdf.rect( x, y, w_bib, h_name_header )
@@ -479,7 +482,7 @@ def print_aso_bib_two_per_page( participant ):
 	license_holder = participant.license_holder
 	aso_bib_two_per_page( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
 		
-	return pdf.output( dest='s' )
+	return pdf.to_bytes()
 
 #---------------------------------------------------------------------------------------------------------
 
@@ -567,5 +570,5 @@ def print_id_label( participant ):
 	
 	footer.draw_text_to_fit( pdf, system_name, Rect.AlignRight, True )
 	
-	pdf_str = pdf.output( dest='s' )
+	pdf_str = pdf.to_bytes()
 	return pdf_str

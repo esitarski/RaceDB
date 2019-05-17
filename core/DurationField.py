@@ -6,6 +6,7 @@ from django.forms.fields import CharField
 from django.forms.utils import ValidationError as FormValidationError
 
 import re
+import six
 import datetime
 import math
 
@@ -42,7 +43,7 @@ class formatted_timedelta(datetime.timedelta):
 		return format_seconds( self.total_seconds(), False )
 
 	def __unicode__( self ):
-		return unicode(self.__repr__())
+		return u'{}'.format(self.__repr__())
 		
 	def __str__( self ):
 		return self.__repr__()
@@ -66,8 +67,9 @@ class DurationField( FloatField ):
 	description = "Floating point representation of timedelta."
 
 	def __init__( self, *args, **kwargs ):
-		if isinstance(kwargs.get('default',None), (int, long, float)):
-			kwargs['default'] = formatted_timedelta( seconds=kwargs['default'] )
+		d = kwargs.get('default',None)
+		if isinstance(d, six.integer_types) or isinstance(d, float):
+			kwargs['default'] = formatted_timedelta( seconds=d )
 		super( DurationField, self ).__init__( *args, **kwargs )
 	
 	def to_python( self, value ):
@@ -80,7 +82,7 @@ class DurationField( FloatField ):
 		if isinstance(value, datetime.timedelta):
 			return formatted_timedelta( seconds=value.total_seconds() )
 			
-		if isinstance(value, (int, long, float)):
+		if isinstance(value, six.integer_types) or isinstance(value, float):
 			return formatted_timedelta( seconds=value )
 			
 		if isinstance(value, datetime.time):

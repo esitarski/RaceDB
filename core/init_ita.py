@@ -14,7 +14,7 @@ from large_delete_all import large_delete_all
 
 def set_attributes( obj, attributes ):
 	changed = False
-	for key, value in attributes.iteritems():
+	for key, value in six.iteritems(attributes):
 		if getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -25,7 +25,7 @@ def to_int_str( v ):
 		return unicode(long(v))
 	except:
 		pass
-	return unicode(v)
+	return u'{}'.format(v)
 		
 def to_str( v ):
 	return toUnicode(v)
@@ -92,7 +92,7 @@ def init_ccn( fname ):
 			team_name = ur.get('Team','')
 			if team_name:
 				team = Team.objects.get_or_create( name=team_name )[0]
-				for id, d in discipline_id.iteritems():
+				for id, d in six.iteritems(discipline_id):
 					TeamHint( discipline=d, license_holder=lh, effective_date=effective_date, team=team )
 					break
 				
@@ -112,11 +112,11 @@ def init_ccn( fname ):
 		
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unicode(f.value).strip() for f in row]
+			fields = [u'{}'.format(f.value).strip() for f in row]
 			safe_print( u'\n'.join(fields) )
 			continue
 			

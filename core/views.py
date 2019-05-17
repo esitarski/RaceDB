@@ -1,9 +1,13 @@
-from views_common import *
+from .views_common import *
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.utils.html import escape
-from django.contrib.auth.views import logout
+try:
+	from django.contrib.auth.views import logout
+except:
+	from django.contrib.auth import logout
+
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseForbidden
 
@@ -12,31 +16,31 @@ import operator
 import itertools
 import traceback
 
-from get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
-from get_seasons_pass_excel import get_seasons_pass_excel
-from get_number_set_excel import get_number_set_excel
-from get_start_list_excel import get_start_list_excel
-from get_license_holder_excel import get_license_holder_excel
-from participation_excel import participation_excel
-from participation_data import participation_data, get_competitions
-from year_on_year_data import year_on_year_data
-from license_holder_import_excel import license_holder_import_excel, license_holder_msg_to_html
-from uci_excel_dataride import uci_excel
-import authorization
+from .get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
+from .get_seasons_pass_excel import get_seasons_pass_excel
+from .get_number_set_excel import get_number_set_excel
+from .get_start_list_excel import get_start_list_excel
+from .get_license_holder_excel import get_license_holder_excel
+from .participation_excel import participation_excel
+from .participation_data import participation_data, get_competitions
+from .year_on_year_data import year_on_year_data
+from .license_holder_import_excel import license_holder_import_excel, license_holder_msg_to_html
+from .uci_excel_dataride import uci_excel
+from . import authorization
 
-from participant_key_filter import participant_key_filter, participant_bib_filter
-from init_prereg import init_prereg
-from emails import show_emails
+from .participant_key_filter import participant_key_filter, participant_bib_filter
+from .init_prereg import init_prereg
+from .emails import show_emails
 
-import read_results
+from . import read_results
 
-from ReadWriteTag import ReadTag, WriteTag
-from FinishLynx import FinishLynxExport
-from AnalyzeLog import AnalyzeLog
-import WriteLog
+from .ReadWriteTag import ReadTag, WriteTag
+from .FinishLynx import FinishLynxExport
+from .AnalyzeLog import AnalyzeLog
+from . import WriteLog
 
 #-----------------------------------------------------------------------
-from context_processors import getContext
+from .context_processors import getContext
 
 from django.views.decorators.cache import patch_cache_control
 
@@ -125,7 +129,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 				status = False
 				status_entries.append(
 					(_('LicenseHolder') + u': ' + _('Existing Tag Save Exception:'), (
-						unicode(e),
+						u'{}'.format(e),
 					)),
 				)
 				return render( request, 'rfid_write_status.html', locals() )
@@ -593,7 +597,7 @@ def LicenseHoldersAutoCreateTags( request, confirmed=False ):
 		message.append(_('Existing tags *may* not work anymore.'))
 	else:
 		message.append(_('Existing tags will work if the License Codes have not changed.'))
-	message = string_concat( *message )
+	message = format_lazy( u'{}'*len(message), *message )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'LicenseHoldersAutoCreateTags/1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -606,7 +610,7 @@ def LicenseHoldersManageDuplicates( request ):
 
 def format_uci_id( uci_id ):
 	uci_id = uci_id or u''
-	return u' '.join( uci_id[i:i+3] for i in xrange(0, len(uci_id), 3) )
+	return u' '.join( uci_id[i:i+3] for i in six.moves.range(0, len(uci_id), 3) )
 
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 	
@@ -809,7 +813,7 @@ class CompetitionSearchForm( Form ):
 			year_min = competition.start_date.year if competition else year_cur
 			competition = competitions.last()
 			year_max = competition.start_date.year if competition else year_cur
-			self.fields['year'].choices = [(-1, '---')] + [(y,'{}'.format(y)) for y in xrange(year_max, year_min-1, -1)]
+			self.fields['year'].choices = [(-1, '---')] + [(y,'{}'.format(y)) for y in six.moves.range(year_max, year_min-1, -1)]
 			
 			disciplines = Discipline.objects.filter(
 				pk__in=competitions.values_list('discipline',flat=True).distinct() ).order_by('sequence')
@@ -1156,7 +1160,7 @@ def CompetitionParticipationSummary( request, competitionId ):
 	for p in query:
 		category_participants[p.category] += 1
 		
-	category_participants = sorted( ((c, count) for c, count in category_participants.iteritems()), key=lambda x: x[0].sequence )
+	category_participants = sorted( ((c, count) for c, count in six.iteritems(category_participants)), key=lambda x: x[0].sequence )
 	total = sum(count for c, count in category_participants)
 	return render( request, 'competition_summary.html', locals() )
 
@@ -1260,7 +1264,7 @@ def TeamsShow( request, competitionId ):
 		} for team in competition.get_teams() ]
 	team_info.append(
 		{
-			'team_name':unicode(_('<<No Team>>')),
+			'team_name':u'{}'.format(_('<<No Team>>')),
 			'staff':[],
 			'competitor_count':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).count(),
 			'competitors':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).order_by('bib'),
@@ -1275,7 +1279,7 @@ def TeamsShow( request, competitionId ):
 			list(ti['competitors']),
 			key=lambda p: (getCategorySeq(p), p.bib if p.bib else 99999, p.license_holder.search_text),
 		)
-		for i in xrange( 1, len(competitors) ):
+		for i in six.moves.range( 1, len(competitors) ):
 			if getCategorySeq(competitors[i-1]) != getCategorySeq(competitors[i]):
 				competitors[i].different_category = True
 	
@@ -1657,7 +1661,7 @@ class CompetitionCloudForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		initial = kwargs.get('initial', {})
 		self.competition_fields = {}
-		for k in list(initial.iterkeys()):
+		for k in list(initial.keys()):
 			if k not in ('id', 'selected'):
 				self.competition_fields[k] = initial.pop(k)
 		super(CompetitionCloudForm, self).__init__( *args, **kwargs )
@@ -1673,7 +1677,7 @@ class CompetitionCloudForm( Form ):
 				v = int(self.competition_fields.get(f,False))
 				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['blank', 'is-good'][v]) )
 			else:
-				s.write( u'<td>{}</td>'.format(escape(unicode(self.competition_fields.get(f,u'')))) )
+				s.write( u'<td>{}</td>'.format(escape(u'{}'.format(self.competition_fields.get(f,u'')))) )
 		p = super(CompetitionCloudForm, self).as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
 		ln = len('</tr>')
 		return mark_safe( p[:-ln] + s.getvalue() + p[-ln:] )
@@ -1693,7 +1697,7 @@ def CompetitionCloudImportList( request ):
 					continue
 				
 				url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudExport/{}'.format(d['id']) )
-				print 'CompetitionCloudImportList: sending request:', url
+				print ( 'CompetitionCloudImportList: sending request: {}'.format(url) )
 				response = requests.get( url, stream=True, headers={'Authorization':authorization.get_secret_authorization()} )
 				gzip_stream = tempfile.TemporaryFile()
 				for c in response.iter_content(None):
@@ -1701,7 +1705,7 @@ def CompetitionCloudImportList( request ):
 				gzip_stream.seek( 0 )
 				
 				# Unzip the content and do the import.
-				print 'CompetitionCloudImportList: processing content...'
+				print ( 'CompetitionCloudImportList: processing content...' )
 				gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode='rb' )
 				competition_import( gzip_handler )
 				success = True
@@ -1740,7 +1744,7 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 					'est_speed':u'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
 					'seed_option': e.participant.seed_option,
 					'adjustment': '',
-					'entry_tt_pk': unicode(e.pk),
+					'entry_tt_pk': u'{}'.format(e.pk),
 				} for e in entry_tts]
 			)
 			
@@ -1858,31 +1862,31 @@ def SeedingEdit( request, eventTTId ):
 				del i_rand
 				
 				# Process relative moves by bubbling.
-				for i in xrange(len(eda)):
+				for i in six.moves.range(len(eda)):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == '-':				# Move backwards going forward.
 						move_to( i, i - adjustment )				
-				for i in xrange(len(eda)-1, -1, -1):
+				for i in six.moves.range(len(eda)-1, -1, -1):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == '+':				# Move forward going backwards.
 						move_to( i, i + adjustment )
 				
 				# Process absolute starts.
-				for i in xrange(len(eda)):
+				for i in six.moves.range(len(eda)):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 's' and adjustment-1 < i:	# Move backwards going forward.
 						move_to( i, adjustment-1 )
-				for i in xrange(len(eda)-1, -1, -1):
+				for i in six.moves.range(len(eda)-1, -1, -1):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 's' and adjustment-1 > i:	# Move backwards going forward.
 						move_to( i, adjustment-1 )
 				
 				# Process absolute ends.
-				for i in xrange(len(eda)):
+				for i in six.moves.range(len(eda)):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 'e' and len(eda) - adjustment < i:
 						move_to( i, len(eda) - adjustment )
-				for i in xrange(len(eda)-1, -1, -1):
+				for i in six.moves.range(len(eda)-1, -1, -1):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 'e' and len(eda) - adjustment > i:
 						move_to( i, len(eda) - adjustment )
@@ -2039,7 +2043,7 @@ def UploadCrossMgr( request ):
 		try:
 			payload = json.loads( request.body.decode('utf-8') )
 		except Exception as e:
-			response['errors'].append( unicode(e) )
+			response['errors'].append( u'{}'.format(e) )
 	else:
 		response['errors'].append( u'Request must be of type POST with json payload.' )
 	
@@ -2858,14 +2862,14 @@ def GetEvents( request, date=None ):
 def QRCode( request ):
 	exclude_breadcrumbs = True
 	qrpath = request.build_absolute_uri()
-	for i in xrange(2):
+	for i in six.moves.range(2):
 		qrpath = os.path.dirname( qrpath )
 	qrpath += '/'
 	return render( request, 'qrcode.html', locals() )
 	
 #-----------------------------------------------------------------------
-from competition_import_export import competition_import, competition_export, get_competition_name_start_date
-from competition_import_export import license_holder_import, license_holder_export
+from .competition_import_export import competition_import, competition_export, get_competition_name_start_date
+from .competition_import_export import license_holder_import, license_holder_export
 import tempfile
 from wsgiref.util import FileWrapper
 import json
@@ -2935,7 +2939,7 @@ def handle_export_competition( competition, export_as_template=False, remove_ftp
 def CompetitionExport( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	title = string_concat( _('Export'), u': ', competition.name )
+	title = format_lazy( u'{}: {}', _('Export'), competition.name )
 	
 	response = {}
 	if request.method == 'POST':
@@ -3098,4 +3102,7 @@ def PastCompetition( request ):
 #-----------------------------------------------------------------------
 
 def Logout( request ):
-	return logout( request, next_page=getContext(request, 'cancelUrl') )
+	next = request.path[:-len('logout/')]
+	logout( request )
+	return HttpResponseRedirect('/RaceDB/Login/?next={}'.format(next))
+

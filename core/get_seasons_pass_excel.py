@@ -1,13 +1,11 @@
-
 import os
 import datetime
-import utils
+import xlsxwriter
 
 from django.utils.translation import ugettext_lazy as _
 
-from models import *
-
-import xlsxwriter
+from . import utils
+from .models import *
 
 data_headers = (
 	'LastName', 'FirstName',
@@ -38,7 +36,7 @@ def write_row_data( ws, row, row_data, format = None ):
 	return row + 1
 
 def get_seasons_pass_excel( seasons_pass ):
-	output = StringIO()
+	output = BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )

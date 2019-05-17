@@ -1,5 +1,6 @@
-from views_common import *
 from django.utils.translation import ugettext_lazy as _
+
+from .views_common import *
 
 @autostrip
 class LegalEntityForm( ModelForm ):

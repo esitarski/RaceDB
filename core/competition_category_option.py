@@ -1,11 +1,12 @@
-from views_common import *
 from django.forms import modelformset_factory
 from django.utils.translation import ugettext_lazy as _
 
 import xlsxwriter
 from xlrd import open_workbook
-from FieldMap import standard_field_map
-from import_utils import *
+
+from .views_common import *
+from .FieldMap import standard_field_map
+from .import_utils import *
 
 class CommonForm(forms.Form):
     license_check_note = forms.CharField(
@@ -72,18 +73,18 @@ def ccos_to_excel( competition ):
 	CompetitionCategoryOption.normalize( competition )
 	ccos_query = competition.competitioncategoryoption_set.all().order_by('category__sequence').select_related('category')
 		
-	output = StringIO()
+	output = BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	title_format = wb.add_format( dict(bold=True) )
 	
-	sheet_name = 'RaceDB-CCO'
+	sheet_name = u'RaceDB-CCO'
 	ws = wb.add_worksheet(sheet_name)
 	
 	row = 0
 	
-	ws.write( row, 0, unicode(_('Category')), title_format )
-	ws.write( row, 1, unicode(_('License Check Required')), title_format )
-	ws.write( row, 2, unicode(_('Note')), title_format )
+	ws.write( row, 0, u'{}'.format(_('Category')), title_format )
+	ws.write( row, 1, u'{}'.format(_('License Check Required')), title_format )
+	ws.write( row, 2, u'{}'.format(_('Note')), title_format )
 	
 	for cco in ccos_query:
 		row += 1
@@ -91,11 +92,11 @@ def ccos_to_excel( competition ):
 		ws.write( row, 1, cco.license_check_required )
 		ws.write( row, 2, cco.note )
 			
-	sheet_name = 'RaceDB-Common'
+	sheet_name = u'RaceDB-Common'
 	ws = wb.add_worksheet(sheet_name)
 	row = 0
 	
-	ws.write( row, 0, unicode(_('License Check Note')), title_format )
+	ws.write( row, 0, u'{}'.format(_('License Check Note')), title_format )
 	row += 1
 	ws.write( row, 0, competition.license_check_note )
 	
@@ -122,11 +123,11 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	ifm = standard_field_map()
 
 	num_rows = ws.nrows
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unicode(v.value).strip() for v in row]
+			fields = [u'{}'.format(v.value).strip() for v in row]
 			ifm.set_headers( fields )
 			continue
 		
@@ -146,7 +147,7 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 		
 		note = v('note', None)
 		if note is not None:
-			cco.note = unicode(note)
+			cco.note = u'{}'.format(note)
 		
 		cco.save()
 	
@@ -163,11 +164,11 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	ifm = standard_field_map()
 
 	num_rows = ws.nrows
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unicode(v.value).strip() for v in row]
+			fields = [u'{}'.format(v.value).strip() for v in row]
 			ifm.set_headers( fields )
 			continue
 		

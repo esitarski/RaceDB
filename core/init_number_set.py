@@ -1,12 +1,11 @@
 import sys
 import datetime
 from xlrd import open_workbook, xldate_as_tuple
-import HTMLParser
 from django.db import transaction, IntegrityError
 from django.db.models import Q
-import import_utils
-from import_utils import *
-from models import *
+from . import import_utils
+from .import_utils import *
+from .models import *
 
 def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, message_stream=sys.stdout ):
 	
@@ -17,7 +16,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def messsage_stream_write( s ):
-			message_stream.write( unicode(s) )
+			message_stream.write( u'{}'.format(s) )
 	
 	try:
 		number_set = NumberSet.objects.get( pk=numberSetId )
@@ -101,11 +100,11 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 		
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in xrange(num_rows):
+	for r in six.moves.range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unicode(f.value).strip() for f in row]
+			fields = [u'{}'.format(f.value).strip() for f in row]
 			messsage_stream_write( u'Header Row:\n' )
 			for f in fields:
 				messsage_stream_write( u'   {}\n'.format(f) )

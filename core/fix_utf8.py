@@ -31,14 +31,14 @@ def fix_utf8( dbFileName = dbFileNameDefault ):
 	try:
 		db = sqlite3.connect( dbFileName )
 	except Exception as e:
-		print e
+		print ( e )
 		sys.exit()
 		
 	db.text_factory = toUnicode
 	cursor = db.cursor()
 	
 	for table, fields in table_fields:
-		print 'Scanning:', table
+		print ( 'Scanning: {}'.format(table) )
 		cursor.execute( 'SELECT {}, id FROM {}'.format( ', '.join(fields), table ) )
 		info = [[field.encode('utf-8') if field is not None else None for field in row[:-1]] + [row[-1]] for row in cursor.fetchall()]
 		cursor.executemany( 'UPDATE {} SET {} where id=?'.format( table, ', '.join('{}=?'.format(field_name) for field_name in fields)), info )

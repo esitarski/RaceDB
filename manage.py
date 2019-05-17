@@ -2,8 +2,12 @@
 import os
 import sys
 from helptxt.version import version
-import __builtin__
-__builtin__.__dict__['RaceDBVersion'] = version
+try:
+	import __builtin__
+	__builtin__.__dict__['RaceDBVersion'] = version
+except:
+	import builtins
+	builtins.__dict__['RaceDBVersion'] = version
 
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "RaceDB.settings")
