@@ -8,8 +8,8 @@ from utils import removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 from django.db.utils import IntegrityError
-from models import *
-from large_delete_all import large_delete_all
+from .models import *
+from .large_delete_all import large_delete_all
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
