@@ -70,7 +70,7 @@ In the new RaceDB folder, enter:
   python dependencies.py
 
 ***********************************************************************
-Step 7: Initialize the database.
+Step 7: Initialize the new database.
 
 If you are using the default RaceDB.sqlite3 database, in the new RaceDB folder, enter:
 
@@ -107,7 +107,7 @@ Step 9: Launch RaceDB
 
   python manage.py launch
 
-Congradulations!  You have upgraded RaceDB to Python 3!
+Congradulations!  You have upgraded RaceDB!
 Going forward, you can apply upgrades as usual as described in Install-Readme.txt.
 
 If after a few weeks everything is working properly, you can delete the RaceDB_old folder.
