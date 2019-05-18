@@ -715,13 +715,7 @@ class Competition(models.Model):
 	stateProv=models.CharField( max_length=64, blank=True, default='', verbose_name=_('StateProv') )
 	country=models.CharField( max_length=64, blank=True, default='', verbose_name=_('Country') )
 	
-<<<<<<< HEAD
 	category_format=models.ForeignKey( 'CategoryFormat', verbose_name=_('Category Format'), on_delete=models.CASCADE )
-=======
-	category_format=models.ForeignKey(
-		'CategoryFormat',
-		verbose_name=_('Category Format'), on_delete=models.CASCADE )
->>>>>>> f5647cd4ed68400d2e879c2adb50eda13f8802be
 	
 	organizer=models.CharField( max_length=64, verbose_name=_('Organizer') )
 	organizer_contact=models.CharField( max_length=64, blank=True, default='', verbose_name=_('Organizer Contact') )
@@ -3461,11 +3455,7 @@ class ParticipantDefaultValues( object ):
 class Participant(models.Model):
 	competition = models.ForeignKey( 'Competition', db_index=True, on_delete=models.CASCADE )
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
-<<<<<<< HEAD
 	team = models.ForeignKey( 'Team', null=True, db_index=True, on_delete=models.SET_NULL )
-=======
-	team = models.ForeignKey( 'Team', null=True, db_index=True, on_delete=models.SET_NULL  )
->>>>>>> f5647cd4ed68400d2e879c2adb50eda13f8802be
 	
 	ROLE_NAMES = ( '',	# No zero code.
 		_('Team'), _('Official'), _('Organizer'), _('Press'),
@@ -3510,11 +3500,7 @@ class Participant(models.Model):
 	preregistered=models.BooleanField( default=False, verbose_name=_('Preregistered') )
 	
 	registration_timestamp=models.DateTimeField( auto_now_add=True )
-<<<<<<< HEAD
-	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True, on_delete=models.CASCADE )
-=======
 	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True, on_delete=models.SET_NULL )
->>>>>>> f5647cd4ed68400d2e879c2adb50eda13f8802be
 	
 	bib=models.PositiveSmallIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
 	
@@ -5155,13 +5141,8 @@ class SeriesPointsStructure( Sequence ):
 #-----------------------------------------------------------------------
 class SeriesCompetitionEvent( models.Model ):
 	series = models.ForeignKey( Series, db_index=True, on_delete=models.CASCADE )
-<<<<<<< HEAD
 	event_mass_start = models.ForeignKey( EventMassStart, on_delete=models.CASCADE, blank=True, null=True, default=None, db_index=True )
 	event_tt = models.ForeignKey( EventTT, on_delete=models.CASCADE, blank=True, null=True, default=None, db_index=True )
-=======
-	event_mass_start = models.ForeignKey( EventMassStart, models.CASCADE, blank=True, null=True, default=None, db_index=True )
-	event_tt = models.ForeignKey( EventTT, models.CASCADE, blank=True, null=True, default=None, db_index=True )
->>>>>>> f5647cd4ed68400d2e879c2adb50eda13f8802be
 	
 	points_structure = models.ForeignKey( SeriesPointsStructure, blank=True, null=True, db_index=True, on_delete=models.CASCADE )
 	

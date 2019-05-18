@@ -99,7 +99,8 @@ Windows:
 Linux:
   python3 manage.py loaddata ../RaceDB_old/RaceDB.json
   
-This may take a few minutes.  Be patient, and don't worry!
+This may take a few minutes and the program may appear to have hung.
+Be patient!  Everything will be fine - just let it run to completion.
 
 ***********************************************************************
 Step 9: Launch RaceDB
