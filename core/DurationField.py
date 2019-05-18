@@ -111,7 +111,7 @@ class DurationField( FloatField ):
 			raise ValidationError('Unable to convert {} to time ({}).'.format(value, e) )
 		return value
 	
-	def from_db_value( self, value, expression, connection, context ):
+	def from_db_value( self, value, expression, connection ):
 		return formatted_timedelta( seconds=value ) if value is not None else None
 	
 	def get_db_prep_value(self, value, connection, prepared=False):

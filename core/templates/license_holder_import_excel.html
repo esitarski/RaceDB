@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
 {% block onload %}
 	$( "form" ).submit(function( event ) {
 		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );

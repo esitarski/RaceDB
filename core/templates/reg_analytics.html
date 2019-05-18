@@ -136,7 +136,7 @@ function drawCharts() {
 }
  </script>
 {% endblock srcjavascript %}
-{% load staticfiles %}
+{% load static %}
 {% block onload %}
 	$( "form" ).submit(function( event ) {
 		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 2500 );
@@ -145,7 +145,6 @@ function drawCharts() {
 {% block content %}
 
 {% load i18n %}
-{% load staticfiles %}
 {% load crispy_forms_tags %}
 <div class='hidden-print'>
 <img src="{% static "images/RaceDB.png" %}" alt="RaceDB"></img>

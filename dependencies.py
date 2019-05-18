@@ -11,7 +11,7 @@ is_windows = (platform.system() == 'Windows')
 pyllrp = 'pip-install-pyllrp-3.0.0.zip'
 
 dependencies = [
-	'django,
+	'django',
 	'django-crispy-forms',
 	'django-extensions',
 	'requests',
@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 uninstall_dependencies = [
-	'south',
+	#'south',
 ]
 
 def update_dependencies( upgrade ):

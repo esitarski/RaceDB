@@ -8,7 +8,7 @@ from dependencies import pyllrp
 from helptxt.version import version
 
 # Delete any existing releases that are unofficial.
-officialRelease = '1.32.83'
+officialRelease = '1.32.115'
 	
 def pypi():
 	CompileHelp( 'helptxt' )
@@ -35,7 +35,7 @@ def pypi():
 		for f in files:
 		
 			# Don't include local configuration in the install.
-			if f in ('time_zone.py', 'DatabaseConfig.py'):
+			if f in ('time_zone.py', 'DatabaseConfig.py', 'RaceDB.json', 'AllowedHosts.py'):
 				print( '****************************************' )
 				print( 'skipping: {}'.format(f) )
 				print( '****************************************' )
@@ -72,7 +72,7 @@ def pypi():
 				print( 'removing: {}'.format(fname) )
 				os.remove( fname )
 	
-	for fname in [zfname, 'Install-Readme.txt']:
+	for fname in [zfname, 'Install-Readme.txt', 'RaceDB-3-Upgrade.txt']:
 		print( 'releasing: {}'.format(fname) )
 		shutil.copy( fname, googleDrive )
 
