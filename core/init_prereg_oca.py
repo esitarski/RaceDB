@@ -3,12 +3,12 @@ import datetime
 from xlrd import open_workbook, xldate_as_tuple
 from six.moves.html_parser import HTMLParser
 from collections import namedtuple
-from models import *
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 
-from import_utils import *
-from large_delete_all import large_delete_all
+from .models import *
+from .import_utils import *
+from .large_delete_all import large_delete_all
 
 datemode = None
 

@@ -4,7 +4,7 @@
 import os
 import sys
 from pytz import all_timezones
-from Tkinter import *
+from tkinter import *
 import tkMessageBox
 
 def get_list(event):

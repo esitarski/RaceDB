@@ -145,7 +145,8 @@ try:
 	from . import time_zone
 	TIME_ZONE = time_zone.TIME_ZONE
 except ImportError:
-	TIME_ZONE = 'America/Toronto'
+	import tzlocal
+	TIME_ZONE =  tzlocal.get_localzone().zone
 
 USE_I18N = True
 USE_L10N = True

@@ -6,7 +6,7 @@ follow the instructions for upgrading at the end of this document.
 
 Otherwise, you will need to do a full install.
 
-RaceDB is written in Python 2.7 in the Django web server framework.
+RaceDB is written in Python 3.X in the Django web server framework.
 As a web server and a database, installation and initialization is more
 complicated than just installing a desktop app.
 
@@ -17,7 +17,7 @@ Try to get a reasonably fast connection as there is much to download.
 After installation, RaceDB will run without the internet.
 
 ***********************************************************************
-Step 1:  Install Python 2.7:
+Step 1:  Install Python 3.X:
 
 If you are running Mac or Linux, you likely have this already.
 
@@ -25,7 +25,7 @@ If not,
 
 Go to https://www.python.org/downloads/
 
-Choose the latest installer of python 2.7.xx for your platform:
+Choose the latest installer of python 3 for your platform:
 
 ***********************************************************************
 Step 2:  Unzip RaceDB.zip
@@ -44,31 +44,7 @@ clicking on the launch button in the lower left.
 On other platforms, launch a terminal.
 
 ***********************************************************************
-Step 4:  Install "pip"
-
-"pip" is the python package installer.
-If you have python 2.7.9 or greater (but not python 3!) you can skip this step.
-To check what version of python you have, on the command line, enter:
-
-  python --version
-
-If this is earlier than python 2.7.9, you need to install pip.
-
-First, make sure you are connect to the internet.
-In your cmd/terminal window, make sure you are in the RaceDB install folder.  Do a:
-
-  cd C:\RaceDB
-  
-or wherever you unzipped RaceDB.
-Then, enter:
-
-  Windows:     python get-pip.py
-  Linux/Mac:   sudo python get-pip.py
-
-You will see a bunch of text scroll up as pip installs.
-
-***********************************************************************
-Step 5:  If on Windows, check and fix your Path.
+Step 4:  If on Windows, check and fix your Path.
 
 In a cmd window, type:
     python
@@ -86,7 +62,7 @@ c)  Return to Step 3 - make sure you close the old "cmd" window and open a new o
 
 
 ***********************************************************************
-Step 6:  Install the RaceDB Dependencies
+Step 5:  Install the RaceDB Dependencies
 
 In your cmd/terminal window, make sure you are in the RaceDB install folder.  Do a:
 
@@ -105,7 +81,7 @@ By patient!
 This may take a few minutes as the modules are downloaded and configured.
 
 ***********************************************************************
-Step 7:  Set your time zone.
+Step 6:  Set your time zone.
 
 Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal entry:
@@ -117,7 +93,7 @@ This will configure RaceDB for your timezone.
 If you change timezones, make sure you run set_timezone again.
 
 ***********************************************************************
-Step 8:  Initialize the Database
+Step 7:  Initialize the Database
 
 Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal enter two commands:
@@ -136,7 +112,7 @@ This data includes:
 * Some starter Category Formats and Categories
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-Step 8.5:  Initialize Demo Data
+Step 7.5:  Initialize Demo Data
 
 Ensure you are cd'd to the RaceDB directory (see above).
 If you want s some demo data in your database and play with a tutorial, enter the following:
@@ -149,7 +125,7 @@ This data includes:
 * Some Tdf Teams
 
 ***********************************************************************
-Step 9:  Start the RaceDB Server (run RaceDB)
+Step 8:  Start the RaceDB Server (run RaceDB)
 
 If you are running on Windows, the install will create a desktop shortcut called "RaceDB Launch".
 This does the same as "python manage.py launch" shown below.
@@ -191,7 +167,7 @@ This is what the registration staff should use.  It disables access to configura
 It is OK if multiple people log in with the same username.
 
 ***********************************************************************
-Step 10:  Windows Only:  Create Launch Icons with different options
+Step 9:  Windows Only:  Create Launch Icons with different options
 
 On Windows, you can customize the desktop icon to include additional parameters.
 For example, say you want to launch RaceDB with the "--rfid_read" option from a desktop icon.

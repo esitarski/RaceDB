@@ -20,6 +20,7 @@ dependencies = [
 	'xlsxwriter',
 	'xlrd',
 	'pytz',
+	'tzlocal',
 	'fpdf',
 	'netifaces',
 	pyllrp,

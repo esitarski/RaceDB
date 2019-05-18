@@ -4,10 +4,10 @@ import sys
 import datetime
 from six.moves.html_parser import HTMLParser
 from collections import namedtuple
-from models import *
 from django.db import transaction
 from django.db.models import Q
-from utils import gender_from_str, removeDiacritic
+from .models import *
+from .utils import gender_from_str, removeDiacritic
 
 today = datetime.date.today()
 earliest_year = (today - datetime.timedelta( days=106*365 )).year
