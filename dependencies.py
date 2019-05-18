@@ -22,7 +22,6 @@ dependencies = [
 	'pytz',
 	'tzlocal',
 	'fpdf',
-	'netifaces',
 	pyllrp,
 ]
 

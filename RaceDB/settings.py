@@ -19,20 +19,7 @@ SECRET_KEY = '+m^ehjjzj=%rk+9)%zc@y2x%cfwno-$nb+4o(5ttez6kw)9)8w'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Importing socket library 
-from netifaces import interfaces, ifaddresses, AF_INET
-def get_host_ips():
-	addresses = []
-	for ifaceName in interfaces():
-		addresses.extend( [i['addr'] for i in ifaddresses(ifaceName).setdefault(AF_INET, [{'addr':'No IP addr'}] )] )
-	return addresses
-
-try:
-	from . import AllowedHosts
-	ALLOWED_HOSTS = AllowedHosts.ALLOWED_HOSTS
-except ImportError:
-	ALLOWED_HOSTS = ['127.0.1.1'] + get_host_ips()
-print( 'ALLOWED_HOSTS={}'.format(ALLOWED_HOSTS) )
+ALLOWED_HOSTS = ['*']
 
 LOGIN_URL='/RaceDB/Login/'
 
