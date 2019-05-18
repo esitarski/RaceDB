@@ -13,9 +13,6 @@ import os
 import sys
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '+m^ehjjzj=%rk+9)%zc@y2x%cfwno-$nb+4o(5ttez6kw)9)8w'
 
@@ -35,7 +32,7 @@ try:
 	ALLOWED_HOSTS = AllowedHosts.ALLOWED_HOSTS
 except ImportError:
 	ALLOWED_HOSTS = ['127.0.1.1'] + get_host_ips()
-print( ALLOWED_HOSTS )
+print( 'ALLOWED_HOSTS={}'.format(ALLOWED_HOSTS) )
 
 LOGIN_URL='/RaceDB/Login/'
 

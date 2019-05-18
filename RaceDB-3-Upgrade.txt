@@ -1,0 +1,116 @@
+If you are currently running a RaceDB 1.X.X, you need to follow these upgrade steps to get to 3.X.X.
+You only need to do this once.
+After you are on RaceDB 3.X.X, upgrades will work as described in Install-Readme.txt (easier).
+
+These instructions are designed so that you can return to the old RaceDB if something goes wrong.
+THe reality is that Python2.7 going out of support in 2020.  The upgrade to Python3 is a necessary
+requirement for continue support.
+
+***********************************************************************
+Step 1: Make sure you are on RaceDB 1.32.115.
+
+If you have installed and lanched RaceDB in version 1.32.115 already, go to Step 2.
+
+To get on RaceDB 1.32.115, download it and follow the normal upgrade instructions in the Install-Readme.txt.
+After doing the install, make sure you launch RaceDB with:
+
+  python manage.py launch
+  
+This will apply all required upgrades to your database.
+
+***********************************************************************
+Step 2: Make a .json file of your current database.
+
+In the folder with your existing RaceDB, run the following command:
+
+  python manage.py dumpdata core -o RaceDB.json
+  
+This will create a file called RaceDB.json containing all your database data in json format.
+It may be large (50-100Meg).
+
+***********************************************************************
+Step 3: Rename your existing RaceDB folder to RaceDB_old.
+
+Rename your existing RaceDB folder to RaceDB_old.
+Note: on Windows, make sure you don't have any cmd windows cd'd into this folder.  If you do, the rename won't work.  Close these windows, or cd to \.
+
+***********************************************************************
+Step 4: Install Python 3.
+
+Windows:
+First de-install Python 2.7.
+Now, check that ...\Python2\... is no longer in your PATH environment variable.
+Install Python 3.X from https://www.python.org/.
+
+Linux:
+Python3 may already be installed.  Check your distro if de-installing Python 2.7 will cause instability.
+
+After installing python, test your install.  On a command line, type:
+
+  python --version
+  
+You should see:
+
+  Python 3.X.X
+
+Where X.X is the specific version.
+If you still see Python 2.7, check your path.
+If you are on Linux, try "python3 --version".  If "python3" works, you will need to type "python3" to run RaceDB going forward.
+
+***********************************************************************
+Step 5: Install the new version of RaceDB.
+
+Download RaceDB and unzip it next to the RaceDB_old folder.
+
+***********************************************************************
+Step 6: Update the dependencies.
+
+In the new RaceDB folder, enter:
+
+  python dependencies.py
+
+***********************************************************************
+Step 7: Initialize the database.
+
+If you are using the default RaceDB.sqlite3 database, in the new RaceDB folder, enter:
+
+  python manage.py migrate
+
+If you are running on a hosted server:
+  - copy your time_zone.py file from RaceDB_old/RaceDB to RaceDB/RaceDB.
+
+If you have configured RaceDB to use another database (eg. MySql, PostGres), follow these steps:
+  - copy your DatabaseConfig.py file from RaceDB_old/RaceDB to RaceDB/RaceDB.
+  - log into your database and rename your existing RaceDB database to something else (I recommend the same name with '_old' on the end).
+  - while logged into your database, create a new RaceDB database and give it the same username and password as the old database.
+  - exit the database prompt
+  - in the new RaceDB folder enter:
+  
+      python manage.py migrate
+
+***********************************************************************
+Step 8: Transfer your existing data.
+
+In the new RaceDB folder, enter:
+
+Windows:
+  python manage.py loaddata ..\RaceDB_old\RaceDB.json
+
+Linux:
+  python3 manage.py loaddata ../RaceDB_old/RaceDB.json
+  
+This may take a few minutes.  Be patient, and don't worry!
+
+***********************************************************************
+Step 9: Launch RaceDB
+
+  python manage.py launch
+
+Congradulations!  You have upgraded RaceDB to Python 3!
+Going forward, you can apply upgrades as usual as described in Install-Readme.txt.
+
+If after a few weeks everything is working properly, you can delete the RaceDB_old folder.
+
+**Note:  if you have created additional RaceDB users, or gave changed the passwords of the stock RaceDB users, you will have to configure this again.
+
+

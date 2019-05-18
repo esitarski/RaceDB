@@ -57,12 +57,6 @@ def update_dependencies( upgrade ):
 			fname = os.path.join( root, f )
 			if os.path.splitext(fname)[1] == '.pyc':
 				os.remove( fname )
-	
-	# Remove the unnecessary TagReadWriteServier directory.
-	try:
-		shutil.rmtree( 'TagReadWriteServer' )
-	except:
-		pass
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser( description='Update RaceDB Dependencies' )

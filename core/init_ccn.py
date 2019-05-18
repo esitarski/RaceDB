@@ -48,7 +48,7 @@ def gender_from_str( s ):
 
 def set_attributes( obj, attributes ):
 	changed = False
-	for key, value in six.iteritems(attributes):
+	for key, value in attributes.items():
 		if getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -104,7 +104,7 @@ def init_ccn( fname = fnameDefault ):
 				'nationality':  to_str(ur.get('Nationality','')),
 				'zip_postal':	to_str(get_key(ur,('ZipPostal','Zip''Postal','ZipCode','PostalCode','Zip Code','Postal Code',), None))
 			}
-			attributes = { a:v for a, v in six.iteritems(attributes) if v is not None }
+			attributes = { a:v for a, v in attributes.items() if v is not None }
 			
 			if ur.get('Tag','').strip():
 				attributes['existing_tag'] = to_int_str(ur.get('Tag','')).strip()

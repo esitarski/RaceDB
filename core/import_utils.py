@@ -57,7 +57,7 @@ def date_from_value( s ):
 		
 def set_attributes( obj, attributes, accept_empty_values=False ):
 	changed = False
-	for key, value in six.iteritems(attributes):
+	for key, value in attributes.items():
 		if (accept_empty_values or value) and getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
@@ -65,7 +65,7 @@ def set_attributes( obj, attributes, accept_empty_values=False ):
 	
 def set_attributes_changed( obj, attributes, accept_empty_values=False ):
 	changed = []
-	for key, value in six.iteritems(attributes):
+	for key, value in attributes.items():
 		if (accept_empty_values or value) and getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed.append( (key, value) )

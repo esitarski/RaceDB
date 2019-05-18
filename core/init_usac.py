@@ -44,7 +44,7 @@ def gender_from_str( s ):
 
 def set_attributes( obj, attributes ):
 	changed = False
-	for key, value in six.iteritems(attributes):
+	for key, value in attributes.items():
 		if getattr(obj, key) != value:
 			setattr(obj, key, value)
 			changed = True
