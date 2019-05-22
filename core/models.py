@@ -3851,7 +3851,7 @@ class Participant(models.Model):
 		self.role = 0
 		
 		# Unconditionally get the team based on the hint.
-		if (pdv.role or self.Competitor) < 200:
+		if (pdv.role or 0) < 200:
 			pdv.update_team_hint( TeamHint.objects.filter(license_holder=self.license_holder, discipline=self.competition.discipline).order_by(
 				'-effective_date').first()
 			)
