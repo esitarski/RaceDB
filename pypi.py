@@ -8,7 +8,7 @@ from dependencies import pyllrp
 from helptxt.version import version
 
 # Delete any existing releases that are unofficial.
-officialRelease = '1.32.115'
+officialReleases = ['1.32.116',]
 	
 def pypi():
 	CompileHelp( 'helptxt' )
@@ -67,7 +67,7 @@ def pypi():
 			if (
 					os.path.splitext(fname)[1] == '.zip' and
 					os.path.basename(fname) != os.path.basename(zfname) and
-					not officialRelease in fname
+					not any( officialRelease in fname for officialRelease in officialReleases )
 				):
 				print( 'removing: {}'.format(fname) )
 				os.remove( fname )

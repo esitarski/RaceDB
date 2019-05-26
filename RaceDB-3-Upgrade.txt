@@ -20,11 +20,11 @@ If everything works, you can delete the RaceDB_old folder you created.
 Make sense?  Let's get started:
 
 ***********************************************************************
-Step 1: Make sure you are current on RaceDB 1.32.115.
+Step 1: Make sure you are current on RaceDB 1.32.116.
 
-If you have installed and launched RaceDB in version 1.32.115 already, go to Step 2.
+If you have installed and launched RaceDB in version 1.32.116 already, go to Step 2.
 
-To get on RaceDB 1.32.115, download it and follow the normal upgrade instructions in the Install-Readme.txt.
+To get on RaceDB 1.32.116, download it and follow the normal upgrade instructions in the Install-Readme.txt.
 After doing the install, make sure you launch RaceDB after installing it with:
 
   python manage.py launch
