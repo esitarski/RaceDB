@@ -12,18 +12,32 @@ import sys
 import glob
 import shutil
 import zipfile
-import cStringIO as StringIO
 from contextlib import contextmanager
-from version import version
+from .version import version
 
 HtmlDocFolder = 'core/static/docs'
 
 settings.configure(
 	DEBUG=True,
 	TEMPLATE_DEBUG=True,
-	TEMPLATE_DIRS=(
-		'.',
-	),
+	TEMPLATES = [{
+		'BACKEND': 'django.template.backends.django.DjangoTemplates',
+		'APP_DIRS': True,
+		'DIRS': ['.'],
+		'OPTIONS': {
+			'debug': True,
+			'context_processors': [
+				'core.context_processors.standard',
+				'django.contrib.auth.context_processors.auth',
+				'django.template.context_processors.debug',
+				'django.template.context_processors.i18n',
+				'django.template.context_processors.media',
+				'django.template.context_processors.static',
+				'django.template.context_processors.tz',
+				'django.contrib.messages.context_processors.messages',
+			],
+		},
+	}],
 )
 django.setup()
 
@@ -77,9 +91,9 @@ def CompileHelp( dir = '.' ):
 			links = f.read()
 			
 		for fname in glob.glob("./*.txt"):
-			print fname, '...'
+			print ( fname, '...' )
 			with open(fname) as f:
-				input = StringIO.StringIO()
+				input = io.StringIO()
 				input.write( links )
 				
 				t = template.Template( f.read() )

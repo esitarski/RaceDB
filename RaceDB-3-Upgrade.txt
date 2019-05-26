@@ -2,6 +2,11 @@ If you are currently running a RaceDB 1.X.X, you need to follow these upgrade st
 You only need to do this once.
 After you are on RaceDB 3.X.X, upgrades will work as described in Install-Readme.txt (easier).
 
+RaceDB should work the same after the upgrade including the interface to the chip reader, CrossMgr download/upload, PDF generation, etc. etc.
+However, leave yourself some time before an event to do the upgrade and to check out things afterward.
+Testing has been extensive, but there is always the case there is something in your data that doesn't work.
+All related fixes are generally easy and I should be able to turn the around quickly.
+
 These instructions are designed to be safe - you can return to the old RaceDB if something goes wrong.
 THe reality is that Python2.7 going out of support in 2020.  Python3 is a necessary
 requirement for continued support.
