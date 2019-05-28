@@ -39,7 +39,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from django.utils import timezone
 
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.templatetags.static import static
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, HTML, Button
@@ -141,6 +141,9 @@ def ColKey( *args, **kwargs ):
 	
 def CancelButton( name=None, css_class=None, style=None ):
 	return Button( 'cancel-button', name or _('Cancel'), css_class=css_class or 'btn btn-warning hidden-print', style=style or '', onclick='skip_back()' )
+
+def CancelButton2( name=None, css_class=None, style=None ):
+	return Button( 'cancel-button', name or _('Cancel'), css_class=css_class or 'btn btn-warning hidden-print', style=style or '', onclick='skip_back_n(2)' )
 
 @autostrip
 class SearchForm( Form ):

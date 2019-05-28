@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from django.utils.safestring import mark_safe
 from django.utils.text import format_lazy
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.templatetags.static import static
 from django.utils.html import escape
 
 from django.db.models.signals import pre_delete

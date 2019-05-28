@@ -643,7 +643,7 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 			
 			button_args = [
 				Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
-				CancelButton(),
+				CancelButton2(),
 			]
 			
 			self.helper.layout = Layout(
