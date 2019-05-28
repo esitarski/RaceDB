@@ -1,23 +1,5 @@
 from . import patch_sqlite_text_factory	# Must be first.
 
-from django.db import models, connection
-from django.db import transaction, IntegrityError
-from django.db.models import Q, F, Max, Count
-
-from django.contrib.contenttypes.models import ContentType
-
-from django.utils.timezone import get_default_timezone
-from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
-
-from django.utils.safestring import mark_safe
-from django.utils.text import format_lazy
-from django.templatetags.static import static
-from django.utils.html import escape
-
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
-
 import re
 import os
 import six
@@ -26,7 +8,6 @@ from heapq import heappush
 import datetime
 import base64
 import operator
-from django.utils.translation import ugettext_lazy as _
 import random
 import itertools
 from collections import defaultdict
@@ -36,6 +17,25 @@ try:
 except:
 	from io import StringIO, BytesIO
 import locale
+
+from django.db import models, connection
+from django.db import transaction, IntegrityError
+from django.db.models import Q, F, Max, Count
+
+from django.contrib.contenttypes.models import ContentType
+
+from django.utils import timezone
+from django.utils.timezone import get_default_timezone
+from django.utils.translation import ugettext_lazy as _
+from django.utils.safestring import mark_safe
+from django.utils.text import format_lazy
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.templatetags.static import static
+from django.utils.html import escape
+
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 from . import DurationField
 from .get_abbrev import get_abbrev
