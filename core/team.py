@@ -267,7 +267,6 @@ def TeamManageDuplicatesSelect( request ):
 			team_merge_duplicates( ids, cannonical )
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
-		request.session['team_manage_duplicate_ids'] = []
 		form = get_team_cannonical_select_form(ids)()
 	
 	title = _('Select the Representative Team to merge the Duplicate to')

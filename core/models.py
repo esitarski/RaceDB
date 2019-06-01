@@ -1372,7 +1372,7 @@ class CategoryNumbers( models.Model ):
 		category_numbers_new.competition = competition_new
 		category_numbers_new.save()
 		
-		category_numbers_new.categories = categories
+		category_numbers_new.categories.set( categories )
 		return category_numbers_new
 	
 	def validate( self ):
@@ -1817,7 +1817,7 @@ class WaveBase( models.Model ):
 		wave_new.id = None
 		wave_new.event = event_new
 		wave_new.save()
-		wave_new.categories = categories
+		wave_new.categories.set( categories )
 		return wave_new
 	
 	def get_potential_duplicate_bibs( self ):
