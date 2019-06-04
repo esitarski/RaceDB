@@ -32,21 +32,17 @@ uninstall_dependencies = [
 def update_dependencies( upgrade ):
 	print( 'Updating Dependencies...' )
 	
-	pip = os.path.join( os.path.split(sys.executable)[0], 'pip3' )
-	if os.path.isfile(pip):
-		print( 'Found "pip" at "{}".'.format(pip) )
-	else:
-		pip = 'pip3'
+	py = sys.executable
 	
 	for d in dependencies:
-		args = [pip, 'install', d]
+		args = [py, '-m', 'pip', 'install', d]
 		if upgrade:
 			args.append('--upgrade')
 		print( ' '.join(args) )
 		subprocess.call( args )
 
 	for d in uninstall_dependencies:
-		args = [pip, 'uninstall', d]
+		args = [py, '-m', 'pip', 'uninstall', d]
 		print( ' '.join(args) )
 		subprocess.call( args )
 
