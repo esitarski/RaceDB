@@ -53,8 +53,12 @@ Step 4: Install Python 3.
 Windows:
 First de-install Python 2.7.
 Now, check that ...\Python2\... is no longer in your PATH environment variable.
-Install Python 3.X from https://www.python.org/.
-If give the option, add Python3 to the PATH variable.
+
+Install Python 3.X 64bit from https://www.python.org/.
+Look for "Download Windows x86-64 executable installer" and click on it.
+Python 32 bit will also work, but not as well.
+
+If given the option, add Python3 to your PATH variable.
 
 Linux:
 Python3 may already be installed.  Check your distro if de-installing Python 2.7 will cause instability.
