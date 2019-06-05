@@ -33,5 +33,6 @@ if __name__ == "__main__":
 	
     from django.conf import settings
     sys.stderr.write( 'ServerTimeZone="{}"\n'.format(settings.TIME_ZONE) )
+    sys.stderr.write( 'python="{}"\n'.format(sys.version) )
     
     execute_from_command_line(sys.argv)
