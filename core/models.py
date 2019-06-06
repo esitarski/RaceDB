@@ -49,6 +49,13 @@ from .CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country
 from .large_delete_all import large_delete_all
 from .WriteLog import writeLog
 
+def duration_field_0():  return 0
+def duration_field_1m(): return 60
+def duration_field_2m(): return 2*60
+def duration_field_3m(): return 3*60
+def duration_field_4m(): return 4*60
+def duration_field_5m(): return 5*60
+
 invalid_date_of_birth = datetime.date(1900,1,1)
 
 class BulkSave( object ):
@@ -2061,7 +2068,7 @@ class WaveBase( models.Model ):
 
 class Wave( WaveBase ):
 	event = models.ForeignKey( EventMassStart, db_index = True, on_delete=models.CASCADE )
-	start_offset = DurationField.DurationField( default = 0, verbose_name = _('Start Offset') )
+	start_offset = DurationField.DurationField( default = duration_field_0, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
 	
@@ -2832,7 +2839,7 @@ class Result(models.Model):
 	wave_gap = models.CharField( max_length=8, blank=True, default='' )
 	
 	finish_time = DurationField.DurationField( null=True, blank=True, verbose_name=_('Finish Time') )
-	adjustment_time = DurationField.DurationField( default=0.0, null=True, blank=True, verbose_name=_('Adjustment Time') )
+	adjustment_time = DurationField.DurationField( default=duration_field_0, null=True, blank=True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length=128, default='', blank=True, verbose_name=_('Adjustment Note') )
 	
 	ave_kmh = models.FloatField( default=0.0, null=True, blank=True, verbose_name=_('Ave km/h') )
@@ -4430,7 +4437,7 @@ class EventTT( Event ):
 
 	group_size = models.PositiveSmallIntegerField( default=0, verbose_name = _('Group Size'),
 		help_text=_('Maximum number of starters without a Group Size Gap.  The Group Size Gap will be inserted between riders of Group Size (if non-zero).') )
-	group_size_gap = DurationField.DurationField( verbose_name=_('Group Size Gap'), default = 5*60 )
+	group_size_gap = DurationField.DurationField( verbose_name=_('Group Size Gap'), default = duration_field_5m )
 	
 	def create_initial_seeding( self ):
 		large_delete_all( EntryTT, Q(event=self) )
@@ -4603,9 +4610,9 @@ class WaveTT( WaveBase ):
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
 	
 	# Fields for assigning start times.	
-	gap_before_wave = DurationField.DurationField( verbose_name=_('Gap Before Wave'), default = 5*60 )
-	regular_start_gap = DurationField.DurationField( verbose_name=_('Regular Start Gap'), default = 1*60 )
-	fastest_participants_start_gap = DurationField.DurationField( verbose_name=_('Fastest Participants Start Gap'), default = 2*60 )
+	gap_before_wave = DurationField.DurationField( verbose_name=_('Gap Before Wave'), default = duration_field_5m )
+	regular_start_gap = DurationField.DurationField( verbose_name=_('Regular Start Gap'), default = duration_field_1m )
+	fastest_participants_start_gap = DurationField.DurationField( verbose_name=_('Fastest Participants Start Gap'), default = duration_field_2m )
 	num_fastest_participants = models.PositiveSmallIntegerField(
 						verbose_name=_('Number of Fastest Participants'),
 						choices=[(i, '%d' % i) for i in six.moves.range(0, 16)],
