@@ -78,7 +78,7 @@ class KWArgs( object ):
 def launch_server( command, **options ):
 
 	# Migrate the database.
-	cmd_args = {'no_input':True}
+	cmd_args = {'no_input':True, 'verbosity':3}
 	if options['database']:
 		cmd_args['database'] = options['database']
 	management.call_command( 'migrate', **cmd_args )

@@ -327,7 +327,7 @@ def SearchLicenseHolders( request ):
 		elif search_type == 1:
 			license_holders = LicenseHolder.objects.filter( license_code=search_text.upper() )
 		elif search_type == 2:
-			license_holders = LicenseHolder.objects.filter( uci_code=search_text.replace(' ', '') )
+			license_holders = LicenseHolder.objects.filter( uci_id=search_text.replace(' ', '') )
 		
 		# Only return license holders with results.
 		license_holders = license_holders.filter(

@@ -35,7 +35,7 @@ def pypi():
 		for f in files:
 		
 			# Don't include local configuration in the install.
-			if f in ('time_zone.py', 'DatabaseConfig.py', 'RaceDB.json', 'AllowedHosts.py'):
+			if f in ('time_zone.py', 'DatabaseConfig.py', 'RaceDB.json', 'AllowedHosts.py', 'FixJsonImport.py'):
 				print( '****************************************' )
 				print( 'skipping: {}'.format(f) )
 				print( '****************************************' )

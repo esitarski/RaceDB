@@ -304,12 +304,6 @@ class LicenseHolderForm( ModelForm ):
 					HTML(error_html(lh and lh.uci_id_error)),
 					cols=4,
 				),
-				ColKey(
-					HTML(warning_html(lh and lh.uci_code_error)),
-					Field('uci_code'),
-					HTML(error_html(lh and lh.uci_code_error)),
-					cols=3,
-				),
 				Col(HTML(nation_code_html()), 2),
 			),
 			Row(
@@ -338,6 +332,7 @@ class LicenseHolderForm( ModelForm ):
 			Row(
 				Field('note', cols=80, rows=1),
 			),
+			Field( 'uci_code', type='hidden' ),
 		)
 		
 		self.additional_buttons = []
