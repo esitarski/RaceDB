@@ -56,7 +56,7 @@ def set_attributes( obj, attributes ):
 	
 def to_int_str( v ):
 	try:
-		return unicode(long(v))
+		return u'{}'.format(int(v))
 	except:
 		pass
 	return u'{}'.format(v)

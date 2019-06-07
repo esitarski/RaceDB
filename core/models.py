@@ -2353,7 +2353,7 @@ class LicenseHolder(models.Model):
 		
 		self.gender = self.gender or 0
 		
-		if not( self.existing_bib is None or isinstance(self.existing_bib, (int,long)) ):
+		if not( self.existing_bib is None or isinstance(self.existing_bib, int) ):
 			self.existing_bib = None
 		
 		for f in ('last_name', 'first_name', 'city', 'state_prov', 'nationality', 'nation_code'):
