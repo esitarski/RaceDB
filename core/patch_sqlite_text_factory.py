@@ -1,6 +1,5 @@
 import six
 import types
-from django.db.backends.sqlite3.base import DatabaseWrapper
 
 # Put the encodings you expect in sequence.
 # Right-to-left charsets are not included in the following list.
@@ -29,15 +28,19 @@ def to_unicode(s):
 	# If we don't find a valid encoding, use utf-8 and ignore any errors.
 	return s.decode('utf-8', 'ignore')
 
-if not hasattr(DatabaseWrapper, 'get_new_connection_is_patched'):
-	_get_new_connection = DatabaseWrapper.get_new_connection
-	def get_new_connection_tolerant(self, conn_params):
-		conn = _get_new_connection( self, conn_params )
-		conn.text_factory = to_unicode
-		return conn
+try:
+	from django.db.backends.sqlite3.base import DatabaseWrapper
+	if not hasattr(DatabaseWrapper, 'get_new_connection_is_patched'):
+		_get_new_connection = DatabaseWrapper.get_new_connection
+		def get_new_connection_tolerant(self, conn_params):
+			conn = _get_new_connection( self, conn_params )
+			conn.text_factory = to_unicode
+			return conn
 
-	if six.PY2:
-		DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, None, DatabaseWrapper )
-	else:
-		DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, DatabaseWrapper )
-	DatabaseWrapper.get_new_connection_is_patched = True
+		if six.PY2:
+			DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, None, DatabaseWrapper )
+		else:
+			DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, DatabaseWrapper )
+		DatabaseWrapper.get_new_connection_is_patched = True
+except Exception as e:
+	pass	# If we get an sqlite version error, ignore and let another part of Django raise it.
