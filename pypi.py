@@ -25,7 +25,7 @@ def pypi():
 		'txt', 'md',
 		'html', 'css', 'js',
 		'png', 'gif', 'jpg', 'ico',
-		# 'json',
+		'json',
 		'xls', 'xlsx',
 		'gz',
 		'ttf',
@@ -42,7 +42,7 @@ def pypi():
 				continue
 			
 			fname = os.path.join( root, f )
-			if any( d in fname for d in ['EV', 'GFRR', 'usac_heatmap', 'usac_bug', 'test_data', 'migrations_old', "bugs"] ):
+			if any( d in fname for d in ['RaceDB','EV', 'GFRR', 'usac_heatmap', 'usac_bug', 'test_data', 'migrations_old', "bugs"] ):
 				continue
 			if os.path.splitext(fname)[1][1:] in suffixes:
 				print( 'writing: {}'.format(fname) )
