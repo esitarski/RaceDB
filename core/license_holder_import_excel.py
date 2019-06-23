@@ -1,6 +1,6 @@
 import re
 import sys
-import cgi
+import html
 import datetime
 import operator
 from collections import namedtuple, defaultdict
@@ -65,7 +65,7 @@ def license_holder_msg_to_html( msg ):
 				with tag(s, 'td', {'class':'text-right'}):
 					s.write( u'{}'.format(row) )
 				with tag(s, 'td'):
-					m = cgi.escape( m )
+					m = html.escape( m )
 					m = re.sub(r'Added:|Unchanged:|Changed:|Updated:|Warning:|Error:',
 						lambda match: u'<strong>{}</strong>'.format(match.group(0)), m, flags=re.I)
 					s.write( m )
