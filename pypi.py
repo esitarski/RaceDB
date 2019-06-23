@@ -42,7 +42,7 @@ def pypi():
 				continue
 			
 			fname = os.path.join( root, f )
-			if 'RaceDB' in fname and fname.endswith('.json'):
+			if 'racedb' in fname.lower() and fname.lower().endswith('.json'):
 				continue
 			if any( d in fname for d in ['EV', 'GFRR', 'usac_heatmap', 'usac_bug', 'test_data', 'migrations_old', "bugs"] ):
 				continue
