@@ -378,15 +378,15 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	#
 	def getCategoryAverageMax():
 		cct = defaultdict( lambda: defaultdict(int) )
-		for competition, category_name_total in six.iteritems(category_competition_total):
-			for category_name, total in six.iteritems(category_name_total):
+		for competition, category_name_total in category_competition_total.items():
+			for category_name, total in category_name_total.items():
 				cct[category_name][competition] = total
 		category_average_max = [
 			[
 				category_name,
-				sum(competition_total.itervalues()) / float(len(competition_total)),
-				max(competition_total.itervalues()),
-			] for category_name, competition_total in six.iteritems(cct)
+				sum(competition_total.values()) / float(len(competition_total)),
+				max(competition_total.values()),
+			] for category_name, competition_total in cct.items()
 		]
 		category_average_max.sort( key=operator.itemgetter(2), reverse=True )
 		#category_average_max.insert( 0, ['Category', 'Ave', 'Max'] )
