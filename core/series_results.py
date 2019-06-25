@@ -222,7 +222,7 @@ def adjust_for_upgrades( series, eventResults ):
 				continue
 			
 			highestPos, highestCategory = -1, None
-			for cat in six.iterkeys(upgradeCategories):
+			for cat in upgradeCategories.keys():
 				pos = position[cat]
 				if pos > highestPos:
 					highestPos, highestCategory = pos, cat

@@ -119,10 +119,10 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	participants_total.insert( 0, ['Year', 'Total'] )
 	
 	if license_holders_profile:
-		max_profile = max( max(six.iterkeys(ap)) for ap in license_holders_profile ) + 1
+		max_profile = max( max(ap.keys()) for ap in license_holders_profile ) + 1
 		license_holders_profile_list = [[0] * max_profile for ap in license_holders_profile]
 		for apl, app in zip(license_holders_profile_list, license_holders_profile):
-			for k, v in six.iteritems(app):
+			for k, v in app.items():
 				apl[k] = v
 		license_holders_profile = license_holders_profile_list
 		license_holders_profile = [['{}'.format(y)] + [{'v':v, 'f':'{}: {:.2f}%'.format(v, 0.0 if not att else (v*100.0/att))} for v in ap]

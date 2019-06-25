@@ -1208,10 +1208,10 @@ def ParticipantEstSpeedChange( request, participantId ):
 			for row, decimal in enumerate(six.moves.range(0, 10)):
 				speed_rc[(col, row)] = u'{}.{:01d}'.format(mph, decimal)
 	
-	row_max = max( row for row, col in six.iterkeys(speed_rc) ) + 1
-	col_max = max( col for row, col in six.iterkeys(speed_rc) ) + 1
+	row_max = max( row for row, col in speed_rc.keys() ) + 1
+	col_max = max( col for row, col in speed_rc.keys() ) + 1
 	
-	speed_table = [ [ speed_rc[(row, col)] for col in six.moves.range(col_max) ] for row in six.moves.range(row_max) ]
+	speed_table = [ [ speed_rc[(row, col)] for col in range(col_max) ] for row in range(row_max) ]
 	speed_table.reverse()
 	
 	return render( request, 'participant_est_speed_change.html', locals() )

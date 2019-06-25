@@ -345,7 +345,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	discipline_men_total = len( safe_union( *[v for v in six.itervalues(discipline_men)] ) )
 	discipline_women_total = len( safe_union( *[v for v in six.itervalues(discipline_women)] ) )
 	
-	discipline_used = list(six.iterkeys(discipline_overall))
+	discipline_used = list(discipline_overall.keys())
 	discipline_used.sort( key=lambda d: len(discipline_overall[d]), reverse=True )
 	
 	discipline_overall = [[d, format_percent(len(discipline_overall[d]), discipline_total)] for d in discipline_used]
@@ -358,7 +358,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		] for d in discipline_used]
 	discipline_gender.insert( 0, ['Discipline', 'Men', 'Women'] )
 	
-	buckets_used = safe_union( *[set(b for b in discipline_bucket[d].iterkeys()) for d in discipline_used] )
+	buckets_used = safe_union( *[set(b for b in discipline_bucket[d].keys()) for d in discipline_used] )
 	bucket_min = min( buckets_used ) if buckets_used else 0
 	bucket_max = max( buckets_used ) + 1 if buckets_used else 0
 	discipline_bucket_total = {b: len( safe_union(*[discipline_bucket[d].get(b,set())

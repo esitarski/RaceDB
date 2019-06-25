@@ -2838,8 +2838,8 @@ class Result(models.Model):
 	wave_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Wave Starters') )
 	wave_gap = models.CharField( max_length=8, blank=True, default='' )
 	
-	finish_time = DurationField.DurationField( null=True, blank=True, verbose_name=_('Finish Time') )
-	adjustment_time = DurationField.DurationField( default=duration_field_0, null=True, blank=True, verbose_name=_('Adjustment Time') )
+	finish_time = DurationField.DurationField( default=None, null=True, blank=True, verbose_name=_('Finish Time') )
+	adjustment_time = DurationField.DurationField( default=None, null=True, blank=True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length=128, default='', blank=True, verbose_name=_('Adjustment Note') )
 	
 	ave_kmh = models.FloatField( default=0.0, null=True, blank=True, verbose_name=_('Ave km/h') )
