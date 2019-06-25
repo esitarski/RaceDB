@@ -1,4 +1,3 @@
-import six
 import datetime
 import operator
 from collections import defaultdict
@@ -43,12 +42,12 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	competition_category_event = defaultdict( dict )
 	
 	age_increment = 5
-	age_range_license_holders = [set() for i in six.moves.range(0, 120, age_increment)]
-	age_range_attendee_count = [0 for i in six.moves.range(0, 120, age_increment)]
-	age_range_men_license_holders = [set() for i in six.moves.range(0, 120, age_increment)]
-	age_range_men_attendee_count = [0 for i in six.moves.range(0, 120, age_increment)]
-	age_range_women_license_holders = [set() for i in six.moves.range(0, 120, age_increment)]
-	age_range_women_attendee_count = [0 for i in six.moves.range(0, 120, age_increment)]
+	age_range_license_holders = [set() for i in range(0, 120, age_increment)]
+	age_range_attendee_count = [0 for i in range(0, 120, age_increment)]
+	age_range_men_license_holders = [set() for i in range(0, 120, age_increment)]
+	age_range_men_attendee_count = [0 for i in range(0, 120, age_increment)]
+	age_range_women_license_holders = [set() for i in range(0, 120, age_increment)]
+	age_range_women_attendee_count = [0 for i in range(0, 120, age_increment)]
 	license_holders_set = set()
 	
 	profile_year = 0
@@ -238,19 +237,19 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	
 	age_range_average = [
 		0 if not age_range_license_holders[i] else age_range_attendee_count[i] / float(len(age_range_license_holders[i]))
-		for i in six.moves.range(len(age_range_attendee_count))
+		for i in range(len(age_range_attendee_count))
 	]
 	age_range_men_average = [
 		0 if not age_range_men_license_holders[i] else age_range_men_attendee_count[i] / float(len(age_range_men_license_holders[i]))
-		for i in six.moves.range(len(age_range_men_attendee_count))
+		for i in range(len(age_range_men_attendee_count))
 	]
 	age_range_women_average = [
 		0 if not age_range_women_license_holders[i] else age_range_women_attendee_count[i] / float(len(age_range_women_license_holders[i]))
-		for i in six.moves.range(len(age_range_women_attendee_count))
+		for i in range(len(age_range_women_attendee_count))
 	]
 	
 	def trim_right_zeros( a ):
-		for i in six.moves.range(len(a)-1, -1, -1):
+		for i in range(len(a)-1, -1, -1):
 			if a[i]:
 				del a[i+1:]
 				break
@@ -285,7 +284,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		return {'v':percent, 'f':'{:.2f}%'.format(percent)}
 	
 	# Initialize the category total.
-	category_total = [['Category', 'Total']] + sorted( ([k, v] for k, v in six.iteritems(category_total_overall)), key=lambda x: x[1], reverse=True )
+	category_total = [['Category', 'Total']] + sorted( ([k, v] for k, v in category_total_overall.items()), key=lambda x: x[1], reverse=True )
 	category_total_men = [['Category', 'Total']] + [[re.sub(r' \(Men\)$', '', c), t] for c, t in category_total[1:] if c.endswith( ' (Men)' )]
 	category_total_women = [['Category', 'Total']] + [[re.sub(r' \(Women\)$', '', c), t] for c, t in category_total[1:] if c.endswith( ' (Women)' )]
 	category_total_open = [['Category', 'Total']] + [[re.sub(r' \(Open\)$', '', c), t] for c, t in category_total[1:] if c.endswith( ' (Open)' )]
@@ -309,31 +308,31 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 			cumulativePercent += 100.0*c[-1] / ct_total
 			c.append( cumulativePercent )
 	
-	event_max = max(len(events) for events in six.itervalues(event_competition_participants_total)) if event_competition_participants_total else 0
-	eee = [['Competition'] + ['{}'.format(i+1) for i in six.moves.range(event_max)]]
-	for competition in sorted( (six.iterkeys(event_competition_participants_total)), key=operator.attrgetter('start_date') ):
-		events = sorted( ((event, count) for event, count in six.iteritems(event_competition_participants_total[competition])), key=lambda x: x[0].date_time )
+	event_max = max(len(events) for events in event_competition_participants_total.values()) if event_competition_participants_total else 0
+	eee = [['Competition'] + ['{}'.format(i+1) for i in range(event_max)]]
+	for competition in sorted( (event_competition_participants_total.keys()), key=operator.attrgetter('start_date') ):
+		events = sorted( ((event, count) for event, count in event_competition_participants_total[competition].items()), key=lambda x: x[0].date_time )
 		eee.append( [competition.name] +
 			[format_event_int_percent(
 					events[i][1],
 					competition_participants_total[competition],
 					events[i][0].name,
-				) if i < len(events) else 0 for i in six.moves.range(event_max)] )
+				) if i < len(events) else 0 for i in range(event_max)] )
 	
 	def get_expected_age( ac ):
 		if not ac:
 			return None
-		most_frequent = max( v for v in six.itervalues(ac) )
-		for a, c in six.iteritems(ac):
+		most_frequent = max( v for v in ac.values() )
+		for a, c in ac.items():
 			if c == most_frequent:
 				return a
 		return None
 		
 	# Create a postal code hierarchy.
 	postal_codes = defaultdict( int )
-	for lh in six.iterkeys(license_holders_attendance_total):
+	for lh in license_holders_attendance_total.keys():
 		postal_codes['Unknown' if not lh.zip_postal else lh.zip_postal.replace(' ','')[:4]] += 1
-	postal_code_data = [['/All/' + ('Unknown' if p == 'Unknown' else '/'.join( p[:i] for i in six.moves.range(1, len(p)+1))), total] for p, total in six.iteritems(postal_codes)]
+	postal_code_data = [['/All/' + ('Unknown' if p == 'Unknown' else '/'.join( p[:i] for i in range(1, len(p)+1))), total] for p, total in postal_codes.items()]
 	
 	#-----------------------------------------------
 	# Discipline data.
@@ -341,9 +340,9 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	def safe_union( *args ):
 		return set.union( *args ) if args else set()
 
-	discipline_total = len( safe_union( *[v for v in six.itervalues(discipline_overall)] ) )
-	discipline_men_total = len( safe_union( *[v for v in six.itervalues(discipline_men)] ) )
-	discipline_women_total = len( safe_union( *[v for v in six.itervalues(discipline_women)] ) )
+	discipline_total = len( safe_union( *[v for v in discipline_overall.values()] ) )
+	discipline_men_total = len( safe_union( *[v for v in discipline_men.values()] ) )
+	discipline_women_total = len( safe_union( *[v for v in discipline_women.values()] ) )
 	
 	discipline_used = list(discipline_overall.keys())
 	discipline_used.sort( key=lambda d: len(discipline_overall[d]), reverse=True )
@@ -363,14 +362,14 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	bucket_max = max( buckets_used ) + 1 if buckets_used else 0
 	discipline_bucket_total = {b: len( safe_union(*[discipline_bucket[d].get(b,set())
 		for d in discipline_used]))
-			for b in six.moves.range(bucket_min, bucket_max)
+			for b in range(bucket_min, bucket_max)
 	}
 	
 	discipline_age = [[d] + [format_percent(len(discipline_bucket[d].get(b, set())), discipline_bucket_total.get(b, 0))
-		for b in six.moves.range(bucket_min, bucket_max)]
+		for b in range(bucket_min, bucket_max)]
 			for d in discipline_used]
 	discipline_age.insert( 0, ['Discipline'] + ['{}-{}'.format(b*age_increment, (b+1)*age_increment-1)
-		for b in six.moves.range(bucket_min, bucket_max)]
+		for b in range(bucket_min, bucket_max)]
 	)
 	
 	#-----------------------------------------------
@@ -408,9 +407,9 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		'license_holders_men_total': len(license_holders_men_total),
 		'license_holders_women_total': len(license_holders_women_total),
 		
-		'attendance_average': sum(v for v in six.itervalues(license_holders_attendance_total)) / (float(len(license_holders_attendance_total)) or 1),
-		'attendance_men_average': sum(v for v in six.itervalues(license_holders_men_total)) / (float(len(license_holders_men_total)) or 1),
-		'attendance_women_average': sum(v for v in six.itervalues(license_holders_women_total)) / (float(len(license_holders_women_total)) or 1),
+		'attendance_average': sum(v for v in license_holders_attendance_total.values()) / (float(len(license_holders_attendance_total)) or 1),
+		'attendance_men_average': sum(v for v in license_holders_men_total.values()) / (float(len(license_holders_men_total)) or 1),
+		'attendance_women_average': sum(v for v in license_holders_women_total.values()) / (float(len(license_holders_women_total)) or 1),
 		
 		'age_range_average':age_range_average,
 		'age_range_men_average':age_range_men_average,
@@ -430,7 +429,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		'event_competition_count':eee,
 		
 		'postal_code_data':postal_code_data,
-		'postal_codes':[[k,v] for k, v in six.iteritems(postal_codes) if k != 'Unknown'],
+		'postal_codes':[[k,v] for k, v in postal_codes.items() if k != 'Unknown'],
 		
 		'competitions': data,
 		
