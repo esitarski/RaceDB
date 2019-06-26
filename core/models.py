@@ -3095,6 +3095,8 @@ class CustomCategory(Sequence):
 	date_of_birth_minimum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Born After') )
 	date_of_birth_maximum = models.DateField( default=None, null=True, blank=True, verbose_name=_('Born Before') )
 	
+	in_category = models.ForeignKey( 'Category', blank=True, default=None, null=True, on_delete=models.SET_NULL, verbose_name=_('In Category') )
+	
 	def full_name( self ):
 		return format_lazy( u'{}, {}', self.name, Category.GENDER_CHOICES[self.gender][1] )
 	
@@ -3135,6 +3137,8 @@ class CustomCategory(Sequence):
 			q &= Q(license_holder__nation_code__iregex=u'^({})$'.format(self.nation_code_str.replace(',','|')))
 		if self.state_prov_str:
 			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace('.',r'\.').replace(',','|')))
+		if self.in_category:
+			q &= Q(category=self.in_category)
 		return q
 	
 	def get_bibs( self ):

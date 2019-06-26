@@ -20,9 +20,14 @@ def GetCustomCategoryForm( cls ):
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
 			
+			self.fields['in_category'].choices = [('', _('Any'))] + [(c.pk, c.code_gender()) for c in self.event.get_categories()]
+			
 			self.helper.layout = Layout(
 				Row(
 					Field('name', size=60),
+				),
+				Row(
+					Field('in_category'),
 				),
 				Row(
 					Field('range_str', size=60),
