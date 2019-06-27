@@ -93,6 +93,7 @@
 					<td class="text-right">{{forloop.counter}}.</td>
 					<td>{{cc.name}}</td>
 					<td>
+						{% if cc.in_category %}{% trans "InCat"%}="{{cc.in_category.code_gender}}"&nbsp;&nbsp;{% endif %}
 						{% if cc.range_str %}{% trans "Bibs"%}="{{cc.range_str}}"&nbsp;&nbsp;{% endif %}
 						{% if cc.nation_code_str %}{% trans "NationCodes"%}="{{cc.nation_code_str}}"&nbsp;&nbsp;{% endif %}
 						{% if cc.state_prov_str %}{% trans "StateProv"%}="{{cc.state_prov_str}}"&nbsp;&nbsp;{% endif %}
