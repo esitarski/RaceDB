@@ -81,19 +81,7 @@ By patient!
 This may take a few minutes as the modules are downloaded and configured.
 
 ***********************************************************************
-Step 6:  Set your time zone.
-
-Ensure you are cd'd to the RaceDB directory (see above).
-In your cmd/terminal entry:
-
-    python set_timezone.py
-
-Select you time zone from the list and press OK.
-This will configure RaceDB for your timezone.
-If you change timezones, make sure you run set_timezone again.
-
-***********************************************************************
-Step 7:  Initialize the Database
+Step 6:  Initialize the Database
 
 Ensure you are cd'd to the RaceDB directory (see above).
 In your cmd/terminal enter two commands:
@@ -112,7 +100,7 @@ This data includes:
 * Some starter Category Formats and Categories
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-Step 7.5:  Initialize Demo Data
+Step 6.5:  Initialize Demo Data
 
 Ensure you are cd'd to the RaceDB directory (see above).
 If you want s some demo data in your database and play with a tutorial, enter the following:
@@ -125,7 +113,7 @@ This data includes:
 * Some Tdf Teams
 
 ***********************************************************************
-Step 8:  Start the RaceDB Server (run RaceDB)
+Step 7:  Start the RaceDB Server (run RaceDB)
 
 If you are running on Windows, the install will create a desktop shortcut called "RaceDB Launch".
 This does the same as "python manage.py launch" shown below.
@@ -167,7 +155,7 @@ This is what the registration staff should use.  It disables access to configura
 It is OK if multiple people log in with the same username.
 
 ***********************************************************************
-Step 9:  Windows Only:  Create Launch Icons with different options
+Step 8:  Windows Only:  Create Launch Icons with different options
 
 On Windows, you can customize the desktop icon to include additional parameters.
 For example, say you want to launch RaceDB with the "--rfid_read" option from a desktop icon.
@@ -210,8 +198,6 @@ port=8080
 ***********************************************************************
 ***********************************************************************
 Upgrading:
-
-These instructions assume that you are running RaceDB 0.3.145 or later.
 
 The upgrade will preserve your existing database and keep all your information.
 (But, make a backup of your database file, just in case).
