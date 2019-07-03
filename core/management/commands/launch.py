@@ -135,8 +135,8 @@ def launch_server( command, **options ):
 		if options['rfid_receiver_sensitivity'] > 0:
 			kwargs['receiverSensitivity'] = options['rfid_receiver_sensitivity']
 		safe_print( u'Launching RFID server thread...' )
-		for k, v in kwargs.iteritems():
-			safe_print( u'    {}={}'.format( k, v if isinstance(v, (int,long,float)) else '"{}"'.format(v) ) )
+		for k, v in kwargs.items():
+			safe_print( u'    {}={}'.format( k, v if isinstance(v, (int,float)) else '"{}"'.format(v) ) )
 		thread = threading.Thread( target=runServer, kwargs=kwargs )
 		thread.name = 'LLRPServer'
 		thread.daemon = True
