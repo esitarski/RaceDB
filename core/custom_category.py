@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from .views_common import *
 
-def GetCustomCategoryForm( cls ):
+def GetCustomCategoryForm( cls, event ):
 	@autostrip
 	class CustomCategoryForm( ModelForm ):
 		class Meta:
@@ -20,7 +20,7 @@ def GetCustomCategoryForm( cls ):
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
 			
-			self.fields['in_category'].choices = [('', _('Any'))] + [(c.pk, c.code_gender()) for c in self.event.get_categories()]
+			self.fields['in_category'].choices = [('', _('Any'))] + [(c.pk, c.code_gender) for c in event.get_categories()]
 			
 			self.helper.layout = Layout(
 				Row(
@@ -60,7 +60,7 @@ def CustomCategoryNew( request, eventId, eventType ):
 	event = get_object_or_404( (EventMassStart, EventTT)[eventType], pk=eventId )
 	CCC = event.get_custom_category_class()
 	return GenericNew(
-		CCC, request, GetCustomCategoryForm(CCC),
+		CCC, request, GetCustomCategoryForm(CCC, event),
 		instance_fields=dict(event=event, name=datetime.datetime.now().strftime('Custom Category %Y-%m-%d %H:%M:%S'))
 	)
 
@@ -74,23 +74,25 @@ def CustomCategoryEdit( request, eventId, eventType, customCategoryId ):
 	custom_category.validate_sequence()
 	return GenericEdit( CCC, request,
 		customCategoryId,
-		GetCustomCategoryForm(CCC),
+		GetCustomCategoryForm(CCC, event),
 	)	
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CustomCategoryMassStartEdit( request, customCategoryId ):
+	custom_category = get_object_or_404( CustomCategoryMassStart, pk=customCategoryId )
 	return GenericEdit( CustomCategoryMassStart, request,
 		customCategoryId,
-		GetCustomCategoryForm(CustomCategoryMassStart),
+		GetCustomCategoryForm(CustomCategoryMassStart, custom_category.event),
 	)	
 
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def CustomCategoryTTEdit( request, customCategoryId ):
+	custom_category = get_object_or_404( CustomCategoryTT, pk=customCategoryId )
 	return GenericEdit( CustomCategoryTT, request,
 		customCategoryId,
-		GetCustomCategoryForm(CustomCategoryTT),
+		GetCustomCategoryForm(CustomCategoryTT, custom_category.event),
 	)	
 
 @access_validation()
