@@ -4677,7 +4677,7 @@ class WaveTT( WaveBase ):
 	def get_sequence_key( self ):
 		if self.sequence_option == self.series_decreasing and self.series_for_seeding:
 			
-			from series_results import get_results_for_category		# import this here to avoid a circular dependency.
+			from .series_results import get_results_for_category		# import this here to avoid a circular dependency.
 
 			licence_holder_series_rank = {}
 			categories_seen = set()
