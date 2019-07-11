@@ -4743,8 +4743,8 @@ class WaveTT( WaveBase ):
 		summary = [u'<table>']
 		try:
 			for label, value in (
-					(_('GapBefore'), self.gap_before_wave),
-					(_('RegularGap'), self.regular_start_gap),
+					(_('GapBefore'), self.gap_before_wave if self.gap_before_wave else None),
+					(_('RegularGap'), self.regular_start_gap if self.regular_start_gap else None),
 					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
@@ -4760,8 +4760,8 @@ class WaveTT( WaveBase ):
 		summary = []
 		try:
 			for label, value in (
-					(_('GapBefore'), self.gap_before_wave),
-					(_('RegularGap'), self.regular_start_gap),
+					(_('GapBefore'), self.gap_before_wave if self.gap_before_wave else None),
+					(_('RegularGap'), self.regular_start_gap if self.regular_start_gap else None),
 					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
