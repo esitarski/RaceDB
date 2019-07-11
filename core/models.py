@@ -4455,6 +4455,11 @@ class EventTT( Event ):
 		groupCount = 0
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
+			
+			gap_before_wave = wave_tt.gap_before_wave or zero_gap
+			regular_start_gap = wave_tt.regular_start_gap or zero_gap
+			fastest_participants_start_gap = wave_tt.fastest_participants_start_gap or zero_gap
+
 			participants = sorted(
 				[p for p in wave_tt.get_participants_unsorted()
 					.select_related('license_holder','category') if p.can_tt_start()
@@ -4463,18 +4468,18 @@ class EventTT( Event ):
 			
 			# Carry the "before gaps" of empty waves.
 			if not participants:
-				empty_gap_before_wave = max( empty_gap_before_wave, wave_tt.gap_before_wave )
+				empty_gap_before_wave = max( empty_gap_before_wave, gap_before_wave or zero_gap )
 				continue
 			
 			last_fastest = len(participants) - wave_tt.num_fastest_participants
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
 				rider_gap = max(
-					wave_tt.fastest_participants_start_gap if i >= last_fastest else zero_gap,
-					wave_tt.regular_start_gap,
+					fastest_participants_start_gap if i >= last_fastest else zero_gap,
+					regular_start_gap,
 					min_gap,
 				)
-				gap = max( max(empty_gap_before_wave, wave_tt.gap_before_wave) if i == 0 else zero_gap, rider_gap )
+				gap = max( max(empty_gap_before_wave, gap_before_wave) if i == 0 else zero_gap, rider_gap )
 				if self.group_size:
 					if gap >= self.group_size_gap:
 						groupCount = 0		# If there was already a gap larger than the group size gap, reset the group count.
@@ -4614,9 +4619,9 @@ class WaveTT( WaveBase ):
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
 	
 	# Fields for assigning start times.	
-	gap_before_wave = DurationField.DurationField( verbose_name=_('Gap Before Wave'), default = duration_field_5m )
-	regular_start_gap = DurationField.DurationField( verbose_name=_('Regular Start Gap'), default = duration_field_1m )
-	fastest_participants_start_gap = DurationField.DurationField( verbose_name=_('Fastest Participants Start Gap'), default = duration_field_2m )
+	gap_before_wave = DurationField.DurationField( null=True, blank=True, verbose_name=_('Gap Before Wave'), default = duration_field_5m )
+	regular_start_gap = DurationField.DurationField( null=True, blank=True, verbose_name=_('Regular Start Gap'), default = duration_field_1m )
+	fastest_participants_start_gap = DurationField.DurationField( null=True, blank=True, verbose_name=_('Fastest Participants Start Gap'), default = duration_field_2m )
 	num_fastest_participants = models.PositiveSmallIntegerField(
 						verbose_name=_('Number of Fastest Participants'),
 						choices=[(i, '%d' % i) for i in six.moves.range(0, 16)],
