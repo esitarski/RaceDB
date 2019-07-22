@@ -54,7 +54,7 @@ def isTerminated( s ):
 def receiveAll( s ):
 	data = ''
 	while not isTerminated(data):
-		data += s.recv( 1024 ).encode()
+		data += s.recv(1024).decode()
 	return data
 
 def marshal( message ):
@@ -325,13 +325,14 @@ class LLRPServer( threading.Thread ):
 					s.close() 
 			
 			for s in outputready:
-				count = s.send( outputdata[s] )
-				if count == len(outputdata[s]):
+				to_send = outputdata[s].encode()
+				count = s.send( to_send )
+				if count == len(to_send):
 					output.remove( s )
 					del outputdata[s]
 					s.close()
 				else:
-					outputdata[s] = outputdata[s][count:]
+					outputdata[s] = to_send[count:].decode()
 		
 		server.close()
 
