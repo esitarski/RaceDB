@@ -119,12 +119,6 @@ standard_field_aliases = (
 			'License Nums','LicenseNums',
 			'License Code','LicenseCode','LicenseCodes',
 			
-			'Licence','Licence #', 
-			'Licence Number','LicenceNumber',
-			'Licence Numbers','LicenceNumbers',
-			'Licence Num', 'LicenceNum',
-			'Licence Nums','LicenceNums',
-			'Licence Code','LicenceCode','LicenceCodes',
 			'Rider License #',
 		),
 		"License code (not UCI code)",

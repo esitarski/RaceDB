@@ -2068,7 +2068,7 @@ class WaveBase( models.Model ):
 
 class Wave( WaveBase ):
 	event = models.ForeignKey( EventMassStart, db_index = True, on_delete=models.CASCADE )
-	start_offset = DurationField.DurationField( default = duration_field_0, verbose_name = _('Start Offset') )
+	start_offset = DurationField.DurationField( default = duration_field_0, null = True, blank = True, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
 	
@@ -2076,6 +2076,7 @@ class Wave( WaveBase ):
 		return super( Wave, self ).get_results( category ).select_related('participant', 'participant__license_holder')
 	
 	def get_json( self ):
+		self.start_offset = self.start_offset or datetime.timedelta( seconds=0.0 )
 		js = super(Wave, self).get_json()
 		try:
 			seconds = self.start_offset.total_seconds()
@@ -2085,6 +2086,7 @@ class Wave( WaveBase ):
 		return js
 	
 	def get_start_time( self ):
+		self.start_offset = self.start_offset or datetime.timedelta( seconds=0.0 )
 		try:
 			return self.event.date_time + self.start_offset
 		except TypeError:

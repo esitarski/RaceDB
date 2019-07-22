@@ -45,11 +45,15 @@ def getDefaultPort( host='localhost' ):
 #-----------------------------------------------------------------------
 
 terminator = '\r\n'
+terminator_bytes = terminator.encode()
 HexChars = set( '0123456789ABCDEF' )
+
+def isTerminated( s ):
+	return s.endswith(terminator_bytes) if isinstance(s, bytes) else s.endswith(terminator) 
 
 def receiveAll( s ):
 	data = ''
-	while not data.endswith( terminator ):
+	while not isTerminated(data):
 		data += s.recv( 1024 ).encode()
 	return data
 
@@ -58,8 +62,11 @@ def marshal( message ):
 	return ''.join([json.dumps(message), terminator])
 
 def unmarshal( messageStr ):
-	if messageStr.endswith( terminator ):
-		messageStr = messageStr[:-len(terminator)]
+	if isTerminated(messageStr):
+		if isinstance(messageStr, bytes):
+			messageStr = messageStr[:-len(terminator_bytes)]
+		else:
+			messageStr = messageStr[:-len(terminator)]
 	return json.loads( messageStr )
 
 def sendMessage( s, message ):
@@ -293,7 +300,7 @@ class LLRPServer( threading.Thread ):
 				data = s.recv( size )
 				if data:
 					inputdata[s] += data
-					if inputdata[s].endswith( terminator ):
+					if isTerminated(inputdata[s]):
 					
 						self.logMessage( 'Request:', inputdata[s] )
 						try:
