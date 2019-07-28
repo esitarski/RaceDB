@@ -1,3 +1,4 @@
+import re
 import socket
 import select
 import json
@@ -46,16 +47,16 @@ def getDefaultPort( host='localhost' ):
 
 terminator = '\r\n'
 terminator_bytes = terminator.encode()
-HexChars = set( '0123456789ABCDEF' )
+reHex = re.compile( '[0-9A-F]+' )
 
 def isTerminated( s ):
 	return s.endswith(terminator_bytes) if isinstance(s, bytes) else s.endswith(terminator) 
 
 def receiveAll( s ):
-	data = ''
-	while not isTerminated(data):
-		data += s.recv(1024).decode()
-	return data
+	data = s.recv(4096)
+	while not data.endswith(terminator_bytes):
+		data += s.recv(4096)
+	return data.decode()
 
 def marshal( message ):
 	message['timestamp'] = datetime.datetime.now().strftime( '%Y-%m-%d %H:%M:%S.%f' )[:-3]
@@ -179,7 +180,7 @@ class LLRPServer( threading.Thread ):
 			errors.append( 'Tag Write Failure: Tag is empty.  Nothing written.' )
 			return False, errors
 			
-		if not all( c in HexChars for c in tag ):
+		if not reHex.fullmatch(tag):
 			errors.append( 'Tag Write Failure: Tag has non-hex characters.' )
 			return False, errors
 			
@@ -305,6 +306,7 @@ class LLRPServer( threading.Thread ):
 						self.logMessage( 'Request:', inputdata[s] )
 						try:
 							outputdata[s], running = self.handleRequest( inputdata[s] )
+							outputdata[s] = outputdata[s].encode()
 						except Exception as e:
 							self.exception_termination = True
 							self.logMessage( 'Exception:', e )
@@ -325,14 +327,13 @@ class LLRPServer( threading.Thread ):
 					s.close() 
 			
 			for s in outputready:
-				to_send = outputdata[s].encode()
-				count = s.send( to_send )
-				if count == len(to_send):
+				count = s.send( outputdata[s] )
+				if count == len(outputdata[s]):
 					output.remove( s )
 					del outputdata[s]
 					s.close()
 				else:
-					outputdata[s] = to_send[count:].decode()
+					outputdata[s] = outputdata[s][count:]
 		
 		server.close()
 
