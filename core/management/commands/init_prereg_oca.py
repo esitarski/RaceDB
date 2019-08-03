@@ -27,7 +27,6 @@ class Command(BaseCommand):
 			help='If specified, all existing Participants in the Competition will cleared first.'),
 	)
 
-	args = ''
 	help = 'Initialize a Competition with prereg data.'
 
 	def handle(self, *args, **options):

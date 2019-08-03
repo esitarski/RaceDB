@@ -2,6 +2,7 @@ import sys
 import datetime
 from xlrd import open_workbook, xldate_as_tuple
 from six.moves.html_parser import HTMLParser
+from html import unescape
 from collections import namedtuple
 from django.db import transaction, IntegrityError
 from django.db.models import Q
@@ -224,7 +225,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [html_parser.unescape(u'{}'.format(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
+			fields = [unescape(u'{}'.format(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
 			fields = ['f{}'.format(i) if not f else f.strip() for i, f in enumerate(fields)]
 			safe_print( u'\n'.join( fields ) )
 			continue

@@ -3,6 +3,7 @@ import csv
 import sys
 import datetime
 from six.moves.html_parser import HTMLParser
+from html import unescape
 from collections import namedtuple
 from django.db import transaction
 from django.db.models import Q
@@ -139,7 +140,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 		for i, row in enumerate(oca_reader):
 			if i == 0:
 				# Get the header fields from the first row.
-				fields = utils.getHeaderFields( [html_parser.unescape(v.strip()) for v in row] )
+				fields = utils.getHeaderFields( [unescape(v.strip()) for v in row] )
 				messsage_stream_write( u'Recognized Header Fields:\n' )
 				messsage_stream_write( u'----------------------------\n' )
 				messsage_stream_write( u'\n'.join(fields) + u'\n' )
@@ -148,7 +149,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 				oca_record = namedtuple('oca_record', fields)
 				continue
 			
-			ur = oca_record( *[html_parser.unescape(v.strip()) for v in row] )
+			ur = oca_record( *[unescape(v.strip()) for v in row] )
 			
 			ur_records.append( (i, ur) )
 			if len(ur_records) == 3000:

@@ -4,8 +4,13 @@ import core.init_ccn
 
 class Command(BaseCommand):
 
-	args = '<ccn_sheet.xls>'
 	help = 'Initialize the database with CCN data'
 
+	def add_arguments(self, parser):
+		parser.add_argument('fname',
+			type=str,
+			default='',
+			help='import filename.xlsx')
+
 	def handle(self, *args, **options):
-		core.init_ccn.init_ccn( *args )
+		core.init_ccn.init_ccn( options['fname'] )

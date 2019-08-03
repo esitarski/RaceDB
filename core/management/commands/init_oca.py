@@ -4,8 +4,13 @@ import core.init_oca
 
 class Command(BaseCommand):
 
-	args = '<oca_format_data_file.csv>'
 	help = 'Initialize the database with OCA rider data'
 
+	def add_arguments(self, parser):
+		parser.add_argument('fname',
+			type=str,
+			default='',
+			help='import filename.csv')
+
 	def handle(self, *args, **options):
-		core.init_oca.init_oca( *args )
+		core.init_oca.init_oca( optione['fname'] )

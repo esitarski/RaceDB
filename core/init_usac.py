@@ -3,6 +3,7 @@ import csv
 import six
 import datetime
 from six.moves.html_parser import HTMLParser
+from html import unescape
 from collections import namedtuple
 from django.db import transaction
 from django.db.models import Q
@@ -51,9 +52,11 @@ def set_attributes( obj, attributes ):
 			changed = True
 	return changed
 	
-def init_usac( fname = fnameDefault, states = '' ):
+def init_usac( fname=None, states='' ):
 	#large_delete_all( LicenseHolder )
 	#large_delete_all( Team )
+	
+	fname = fname or fnameDefault
 	
 	tstart = datetime.datetime.now()
 	
@@ -153,12 +156,12 @@ def init_usac( fname = fnameDefault, states = '' ):
 		for i, row in enumerate(usac_reader):
 			if i == 0:
 				# Get the header fields from the first row.
-				fields = [html_parser.unescape(v.strip()).replace(' ','_').replace('#','').lower() for v in row]
+				fields = [unescape(v.strip()).replace(' ','_').replace('#','').lower() for v in row]
 				safe_print( u'\n'.join(fields) )
 				usac_record = namedtuple('usac_record', fields)
 				continue
 			
-			ur = usac_record( *[html_parser.unescape(v.strip()) for v in row] )
+			ur = usac_record( *[unescape(v.strip()) for v in row] )
 			if state_set and ur.state not in state_set:
 				continue
 			
