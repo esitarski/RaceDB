@@ -88,8 +88,8 @@ def init_usac( fname=None, states='' ):
 				'date_of_birth':date_of_birth,
 				'city':			ur.city,
 				'state_prov':	ur.state,
-				'nationality': 'USA',
-				'uci_code':		ur.uci_code or None,
+				'nationality': 	ur.nationality,
+				'uci_id':		ur.uci_id or None,
 				'zip_postal':	ur.zip,
 			}
 			
