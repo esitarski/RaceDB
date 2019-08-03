@@ -4,11 +4,12 @@ import six
 import datetime
 from six.moves.html_parser import HTMLParser
 from collections import namedtuple
-from utils import removeDiacritic
 from django.db import transaction
 from django.db.models import Q
 from django.db.utils import IntegrityError
+
 from .models import *
+from .utils import removeDiacritic
 from .large_delete_all import large_delete_all
 
 today = datetime.date.today()
@@ -147,7 +148,7 @@ def init_usac( fname = fnameDefault, states = '' ):
 				TeamHint.objects.filter( id__in = [th.id for th in th_delete] ).delete()
 
 	ur_records = []
-	with io.open(fname, 'r', encoding='utf-8', errors='replace') as fp:
+	with open(fname, 'r', errors='replace') as fp:
 		usac_reader = csv.reader( fp )
 		for i, row in enumerate(usac_reader):
 			if i == 0:
