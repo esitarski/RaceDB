@@ -364,7 +364,7 @@ def SeriesPointsStructureDelete( request, seriesPointsStructureId, confirmed=0 )
 #-----------------------------------------------------------------------
 class CategorySelectForm( Form ):
 	categories = forms.MultipleChoiceField( label=_("Categories in the Series"), widget=forms.CheckboxSelectMultiple )
-	custom_categories = forms.MultipleChoiceField( label=_("Custom Categories in the Series"), widget=forms.CheckboxSelectMultiple )
+	custom_categories = forms.MultipleChoiceField( label=_("Custom Categories in the Series"), required=False, widget=forms.CheckboxSelectMultiple )
 	
 	def __init__( self, *args, **kwargs ):
 		series = kwargs.pop( 'series' )
@@ -385,8 +385,7 @@ class CategorySelectForm( Form ):
 		self.helper.form_class = ''
 		
 		self.helper.layout = Layout(
-			Row( Field('categories', size=30), ),
-			Row( Field('custom_categories', size=30), ),
+			Row( Col(Field('categories', size=30), 6), Col(Field('custom_categories', size=30),6), ),
 		)
 		addFormButtons( self, button_mask )
 
@@ -425,7 +424,7 @@ def SeriesCategoriesChange( request, seriesId ):
 		for name in series.custom_category_names.split(',\n'):
 			try:
 				custom_category_i.append( name_id[name] )
-			except IndexError:
+			except KeyError:
 				pass
 		form = CategorySelectForm(
 			button_mask=EDIT_BUTTONS,
