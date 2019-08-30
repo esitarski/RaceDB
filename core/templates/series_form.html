@@ -113,6 +113,11 @@ for (var i = 0; i < model_ids.length; ++i ) {
 <h4>{% trans "Include Categories" %} <a class="btn btn-success" href="./SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>
 <div class="well">
 	{% for c in included_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
+	{% if series.custom_category_names %}
+		<br/>
+		{% trans "Custom Categories:" %}
+		{{series.custom_category_names}}
+	{% endif %}
 </div>
 {% if excluded_categories %}
 	<h4>{% trans "Exclude Categories" %} <a class="btn btn-success" href="./SeriesCategoriesChange/{{series.id}}/">{% trans "Change" %}</a></h4>

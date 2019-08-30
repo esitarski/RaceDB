@@ -85,7 +85,11 @@ table.results-table tr th {
 			<th colspan="2" class="text-center col-border-right hidden-print">
 				{{e.competition.title}}<br/>
 				{{e.date_time|date:"Y-m-d H:i"}}<br/>
+				{% if is_custom_category %}
+				<a href='/RaceDB/Hub/CustomCategoryResults/{{e.id}}/{{e.event_type}}/{{e.custom_category_cur.id}}/'>
+				{% else %}
 				<a href='/RaceDB/Hub/CategoryResults/{{e.id}}/{{e.event_type}}/{{category.id}}/'>
+				{% endif %}
 					<span style="white-space: nowrap;">{{e.name}}</span>
 				</a><br/>
 			</th>

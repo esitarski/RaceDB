@@ -76,60 +76,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	if not isinstance(filter_categories, set):
 		filter_categories = set( filter_categories )
 	
-	points_structure = sce.points_structure if series.ranking_criteria == 0 else None
-	status_keep = [Result.cFinisher, Result.cPUL]
-	if points_structure:
-		get_points = points_structure.get_points_getter()
-		if points_structure.dnf_points:
-			status_keep.append( Result.cDNF )
-		if points_structure.dnf_points:
-			status_keep.append( Result.cDNS )
-	else:
-		get_points = None
-	
-	if get_points:
-		if series.consider_primes:
-			def get_value_for_rank( rr, rank, rr_winner ):
-				return get_points( rank, rr.status ) + rr.points
-		else:
-			def get_value_for_rank( rr, rank, rr_winner ):
-				return get_points( rank, rr.status )
-	elif series.ranking_criteria == 1:	# Time
-		if series.consider_primes:
-			def get_value_for_rank( rr, rank, rr_winner ):
-				if rr.laps != rr_winner.laps:
-					return None
-				try:
-					t = rr.finish_time.total_seconds()
-				except:
-					return None
-				if rr.adjustment_time:
-					t += rr.adjustment_time.total_seconds()
-				if rr.time_bonus:
-					t -= rr.time_bonus.total_seconds()
-				return t
-		else:
-			def get_value_for_rank( rr, rank, rr_winner ):
-				if rr.laps != rr_winner.laps:
-					return None
-				try:
-					t = rr.finish_time.total_seconds()
-				except:
-					return None
-				if rr.adjustment_time:
-					t += rr.adjustment_time.total_seconds()
-				return t
-	elif series.ranking_criteria == 2:	# % Winner / Time
-		def get_value_for_rank( rr, rank, rr_winner ):
-			if rr.laps != rr_winner.laps:
-				return None
-			try:
-				v = min( 100.0, 100.0 * (rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds()) )
-			except:
-				v = 0
-			return v
-	else:
-		assert False, 'Unknown ranking criteria'
+	get_value_for_rank = sce.get_value_for_rank_func()
 	
 	# Create a map between categories and waves.
 	category_pk = [c.pk for c in filter_categories]
@@ -184,6 +131,29 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 			
 			if value_for_rank:
 				eventResults.append( EventResult(rr, rank, get_starters(rr), value_for_rank) )
+
+	return eventResults
+
+def extract_event_results_custom_category( sce, custom_category_name ):
+	custom_category = sce.event.get_custom_category_set.filter(name=custom_category_name).first()
+	if not custom_category:
+		return []
+	
+	series = sce.series
+	
+	get_value_for_rank = sce.get_value_for_rank_func()
+		
+	results = custom_category.get_results()	
+	eventResults = []
+	rr_winner = None
+	for rank, rr in enumerate(results, 1):
+		if not rr_winner:
+			rr_winner = rr
+
+		value_for_rank = get_value_for_rank(rr, rank, rr_winner)
+		
+		if value_for_rank:
+			eventResults.append( EventResult(rr, rank, len(results), value_for_rank) )
 
 	return eventResults
 
@@ -251,9 +221,10 @@ def series_results( series, categories, eventResults ):
 	considerMostEventsCompleted = series.consider_most_events_completed
 	numPlacesTieBreaker = series.tie_breaking_rule
 	
-	# Get all results for this category.
-	categories = set( list(categories) )
-	eventResults = [rr for rr in eventResults if rr.category in categories]
+	# Filter all results for this category.
+	if categories is not None:
+		categories = set( list(categories) )
+		eventResults = [rr for rr in eventResults if rr.category in categories]
 	
 	# If not scoring by points, trim out all non-finisher status (DNF, DNS, etc.) as any finish time does not count.
 	if not scoreByPoints:
@@ -357,6 +328,13 @@ def get_results_for_category( series, category ):
 	adjust_for_upgrades( series, eventResults )
 	
 	return series_results( series, series.get_group_related_categories(category), eventResults )
+
+def get_results_for_custom_category_name( series, custom_category_name ):
+	eventResults = []
+	for sce in series.seriescompetitionevent_set.all():
+		eventResults.extend( extract_event_results_custom_category(sce, custom_category_name) )
+	
+	return series_results( series, None, eventResults )
 
 def get_callups_for_wave( series, wave, eventResultsAll=None ):
 	event = wave.event

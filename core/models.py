@@ -4973,6 +4973,8 @@ class Series( Sequence ):
 	callup_max = models.PositiveSmallIntegerField( default=0, verbose_name=_('Callup Maximum') )
 	randomize_if_no_results = models.BooleanField( default=False, verbose_name=_("Randomize callups if no results") )
 	
+	custom_category_names = models.TextField( default='', blank=True, verbose_name=_('Custom Categories') )
+	
 	def make_copy( self ):
 		self_pk = self.pk
 		collections = (
@@ -5083,6 +5085,15 @@ class Series( Sequence ):
 				related_categories |= p_categories
 		
 		return related_categories
+	
+	def get_all_custom_category_names( self ):
+		names = set()
+		for ce in self.seriescompetitionevent_set.all():
+			if   ce.event_mass_start:
+				names |= { cc.name for cc in ce.event_mass_start.customcategorymassstart_set.all() }
+			elif ce.event_tt:
+				names |= { cc.name for cc in ce.event_tt.customcategorytt_set.all() }
+		return sorted( names )
 		
 	def __str__( self ):
 		return self.name
@@ -5194,6 +5205,59 @@ class SeriesCompetitionEvent( models.Model ):
 	def competition( self ):
 		return (self.event_mass_start or self.event_tt).competition
 
+	def get_value_for_rank_func( self ):
+		points_structure = self.points_structure if self.series.ranking_criteria == 0 else None
+		if points_structure:
+			get_points = points_structure.get_points_getter()
+		else:
+			get_points = None
+		
+		if get_points:
+			if self.series.consider_primes:
+				def get_value_for_rank( rr, rank, rr_winner ):
+					return get_points( rank, rr.status ) + rr.points
+			else:
+				def get_value_for_rank( rr, rank, rr_winner ):
+					return get_points( rank, rr.status )
+		elif self.series.ranking_criteria == 1:	# Time
+			if self.series.consider_primes:
+				def get_value_for_rank( rr, rank, rr_winner ):
+					if rr.laps != rr_winner.laps:
+						return None
+					try:
+						t = rr.finish_time.total_seconds()
+					except:
+						return None
+					if rr.adjustment_time:
+						t += rr.adjustment_time.total_seconds()
+					if rr.time_bonus:
+						t -= rr.time_bonus.total_seconds()
+					return t
+			else:
+				def get_value_for_rank( rr, rank, rr_winner ):
+					if rr.laps != rr_winner.laps:
+						return None
+					try:
+						t = rr.finish_time.total_seconds()
+					except:
+						return None
+					if rr.adjustment_time:
+						t += rr.adjustment_time.total_seconds()
+					return t
+		elif self.series.ranking_criteria == 2:	# % Winner / Time
+			def get_value_for_rank( rr, rank, rr_winner ):
+				if rr.laps != rr_winner.laps:
+					return None
+				try:
+					v = min( 100.0, 100.0 * (rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds()) )
+				except:
+					v = 0
+				return v
+		else:
+			assert False, 'Unknown ranking criteria'
+			
+		return get_value_for_rank
+		
 	class Meta:
 		verbose_name = _("SeriesCompetitionEvent")
 		verbose_name_plural = _("SeriesCompetitionEvents")

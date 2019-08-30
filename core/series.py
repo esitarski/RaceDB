@@ -111,6 +111,7 @@ class SeriesForm( ModelForm ):
 			),
 			Field('category_format', type='hidden'),
 			Field('sequence', type='hidden'),
+			Field('custom_category_names', type='hidden'),
 		)
 		addFormButtons( self, button_mask )
 
@@ -363,9 +364,12 @@ def SeriesPointsStructureDelete( request, seriesPointsStructureId, confirmed=0 )
 #-----------------------------------------------------------------------
 class CategorySelectForm( Form ):
 	categories = forms.MultipleChoiceField( label=_("Categories in the Series"), widget=forms.CheckboxSelectMultiple )
+	custom_categories = forms.MultipleChoiceField( label=_("Custom Categories in the Series"), widget=forms.CheckboxSelectMultiple )
 	
 	def __init__( self, *args, **kwargs ):
 		series = kwargs.pop( 'series' )
+		custom_category_names = series.get_all_custom_category_names()
+		
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
 		super(CategorySelectForm, self).__init__(*args, **kwargs)
@@ -374,15 +378,15 @@ class CategorySelectForm( Form ):
 			(c.id, format_lazy( u'{}: {} ({})', c.get_gender_display(), c.code, c.description))
 				for c in series.category_format.category_set.all()
 		]
+		self.fields['custom_categories'].choices = [(i, cc.name) for i, cc in enumerate(custom_category_names)]
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = ''
 		
 		self.helper.layout = Layout(
-			Row(
-				Field('categories', size=30),
-			)
+			Row( Field('categories', size=30), ),
+			Row( Field('custom_categories', size=30), ),
 		)
 		addFormButtons( self, button_mask )
 
@@ -399,15 +403,34 @@ def SeriesCategoriesChange( request, seriesId ):
 			for pk in categories:
 				series.seriesincludecategory_set.create( category=Category.objects.get(pk=pk) )
 			
+			# Set the custom categories string.
+			cc_names = []
+			custom_category_names = series.get_all_custom_category_names()
+			for v in form.cleaned_data['custom_categories']:
+				try:
+					cc_names.append( custom_category_names[int(v)] )
+				except:
+					pass
+			series.custom_category_names = ',\n'.join( cc_names )
+			series.save()
+			
 			series.validate()
 			
 			if 'ok-submit' in request.POST:
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
+		custom_category_names = series.get_all_custom_category_names()
+		name_id = {cc:i for i, cc in enumerate(custom_category_names)}
+		custom_category_i = []
+		for name in series.custom_category_names.split(',\n'):
+			try:
+				custom_category_i.append( name_id[name] )
+			except IndexError:
+				pass
 		form = CategorySelectForm(
 			button_mask=EDIT_BUTTONS,
 			series=series,
-			initial={'categories':[ic.category.id for ic in series.seriesincludecategory_set.all()]}
+			initial={'categories':[ic.category.id for ic in series.seriesincludecategory_set.all()], 'custom_category_names':custom_category_i, }
 		)
 	
 	return render( request, 'generic_form.html', locals() )
