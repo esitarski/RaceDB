@@ -5095,6 +5095,9 @@ class Series( Sequence ):
 				names |= { cc.name for cc in ce.event_tt.customcategorytt_set.all() }
 		return sorted( names )
 		
+	def get_custom_category_names( self ):
+		return self.custom_category_names.split( ',\n' )
+		
 	def __str__( self ):
 		return self.name
 	
@@ -5222,7 +5225,7 @@ class SeriesCompetitionEvent( models.Model ):
 		elif self.series.ranking_criteria == 1:	# Time
 			if self.series.consider_primes:
 				def get_value_for_rank( rr, rank, rr_winner ):
-					if rr.laps != rr_winner.laps:
+					if getattr(rr,'laps',0) != getattr(rr_winner,'laps',0):
 						return None
 					try:
 						t = rr.finish_time.total_seconds()
@@ -5235,7 +5238,7 @@ class SeriesCompetitionEvent( models.Model ):
 					return t
 			else:
 				def get_value_for_rank( rr, rank, rr_winner ):
-					if rr.laps != rr_winner.laps:
+					if getattr(rr,'laps',0) != getattr(rr_winner,'laps',0):
 						return None
 					try:
 						t = rr.finish_time.total_seconds()
@@ -5246,7 +5249,7 @@ class SeriesCompetitionEvent( models.Model ):
 					return t
 		elif self.series.ranking_criteria == 2:	# % Winner / Time
 			def get_value_for_rank( rr, rank, rr_winner ):
-				if rr.laps != rr_winner.laps:
+				if getattr(rr,'laps',0) != getattr(rr_winner,'laps',0):
 					return None
 				try:
 					v = min( 100.0, 100.0 * (rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds()) )

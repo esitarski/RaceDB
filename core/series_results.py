@@ -135,7 +135,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	return eventResults
 
 def extract_event_results_custom_category( sce, custom_category_name ):
-	custom_category = sce.event.get_custom_category_set.filter(name=custom_category_name).first()
+	custom_category = sce.event.get_custom_category_set().filter(name=custom_category_name).first()
 	if not custom_category:
 		return []
 	

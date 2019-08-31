@@ -62,6 +62,7 @@ table.results-table tr th {
 <h1>
 	<strong><a href='/RaceDB/Hub/SeriesCategories/{{series.id}}/'>{{series.name}}</strong></a> <span style="font-size: 75%">{{series.description}}</span><br/>
 	<span style="font-size: 75%">
+		{% if custom_category_name %}<strong>{{custom_category_name}}</strong>{% endif %}
 		{% for c in group_categories %}{{c.code_gender}}{% if not forloop.last %}, {% endif %}{% endfor %}
 	</span>
 </h1>

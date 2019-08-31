@@ -33,6 +33,26 @@
 {% endfor %}
 </div>
 
+{% if series.custom_category_names %}
+<div class="row">
+	<div class="col-md-{{col_gender}}">
+		<h3>{% trans "Custom Categories" %}</h3>
+		<p/>
+		{% spaceless %}
+		<table class="table table-condensed table-striped table-hover" style="width: auto;">
+		<tbody>
+			{% for custom_category in series.get_custom_category_names %}
+				<tr>
+					<td><a href='/RaceDB/Hub/SeriesCategoryResults/{{series.id}}/0/{{forloop.counter0}}/'>{{custom_category}}</a></td>
+				</tr>
+			{% endfor %}
+		</tbody>
+		</table>
+		{% endspaceless %}
+	</div>
+</div>
+{% endif %}
+
 <h3>{% trans "Competitions" %}</h3>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">

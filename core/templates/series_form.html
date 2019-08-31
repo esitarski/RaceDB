@@ -115,7 +115,7 @@ for (var i = 0; i < model_ids.length; ++i ) {
 	{% for c in included_categories %}{% if not forloop.first %}, {% endif %}{{c.code_gender}}{% endfor %}
 	{% if series.custom_category_names %}
 		<br/>
-		{% trans "Custom Categories:" %}
+		<strong>{% trans "Custom Categories" %}:</strong>
 		{{series.custom_category_names}}
 	{% endif %}
 </div>

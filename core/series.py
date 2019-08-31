@@ -378,7 +378,7 @@ class CategorySelectForm( Form ):
 			(c.id, format_lazy( u'{}: {} ({})', c.get_gender_display(), c.code, c.description))
 				for c in series.category_format.category_set.all()
 		]
-		self.fields['custom_categories'].choices = [(i, cc.name) for i, cc in enumerate(custom_category_names)]
+		self.fields['custom_categories'].choices = [(i, cc) for i, cc in enumerate(custom_category_names)]
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -418,18 +418,15 @@ def SeriesCategoriesChange( request, seriesId ):
 			if 'ok-submit' in request.POST:
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
-		custom_category_names = series.get_all_custom_category_names()
-		name_id = {cc:i for i, cc in enumerate(custom_category_names)}
-		custom_category_i = []
-		for name in series.custom_category_names.split(',\n'):
-			try:
-				custom_category_i.append( name_id[name] )
-			except KeyError:
-				pass
+		name_id = {cc:i for i, cc in enumerate(series.get_all_custom_category_names())}
+		custom_category_i = [name_id[name] for name in series.custom_category_names.split(',\n') if name in name_id]
 		form = CategorySelectForm(
 			button_mask=EDIT_BUTTONS,
 			series=series,
-			initial={'categories':[ic.category.id for ic in series.seriesincludecategory_set.all()], 'custom_category_names':custom_category_i, }
+			initial={
+				'categories':[ic.category.id for ic in series.seriesincludecategory_set.all()],
+				'custom_categories':custom_category_i,
+			}
 		)
 	
 	return render( request, 'generic_form.html', locals() )

@@ -377,19 +377,21 @@ from . import series_results
 
 def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=None ):
 	series = get_object_or_404( Series, pk=seriesId )
+	categoryId = int(categoryId)
+	
 	if categoryId:
-		category = get_object_or_404( Category, pk=categoryId )	
+		category = get_object_or_404( Category, pk=categoryId )
 		custom_category_name = None
 		results, events = series_results.get_results_for_category( series, category )
 		group_categories = series.get_group_related_categories( category )
 		is_custom_category = False
 	else:
 		category = None
-		custom_category_name = series.custom_category_names.split( '|' )[int(customCategoryIndex)]
+		custom_category_name = series.custom_category_names.split(',\n')[int(customCategoryIndex)]
 		results, events = series_results.get_results_for_custom_category_name( series, custom_category_name )
 		for e in events:
-			e.custom_category_cur = e.get_custom_category_set.filter( name=custom_category_name )
-		group_categories = sorted( {r.participant.category for r in results}, key=operator.attrgetter('code') )
+			e.custom_category_cur = e.get_custom_category_set().filter( name=custom_category_name )
+		group_categories = []
 		is_custom_category = True
 	
 	# Create data for a Sankey diagram.

@@ -44,6 +44,7 @@ urlpatterns = [
 	re_path(r'^.*Hub/Series/$', hub.SeriesList),
 	re_path(r'^.*Hub/SeriesCategories/(?P<seriesId>\d+)/$', hub.SeriesCategories),
 	re_path(r'^.*Hub/SeriesCategoryResults/(?P<seriesId>\d+)/(?P<categoryId>\d+)/$', hub.SeriesCategoryResults),
+	re_path(r'^.*Hub/SeriesCategoryResults/(?P<seriesId>\d+)/(?P<categoryId>\d+)/(?P<customCategoryIndex>\d+)/$', hub.SeriesCategoryResults),
 	
 	re_path(r'^.*SelfServe/$', self_serve.SelfServe),
 	re_path(r'^.*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
