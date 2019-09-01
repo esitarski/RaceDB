@@ -1,6 +1,7 @@
 import uuid
 from subprocess import Popen, PIPE
 import traceback
+import operator
 
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
@@ -288,13 +289,9 @@ def Participants( request, competitionId ):
 def ParticipantsInEvents( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	competition_events = sorted( competition.get_events(), key=lambda e: e.date_time )
-	event_participants = {}
-	for event in competition_events:
-		p = event.get_participants()
-		event_participants[event] = p
-	
-	participants = sorted( set.union(*[p for p in six.itervalues(event_participants)]), key=lambda p: p.license_holder.search_text )
+	competition_events = sorted( competition.get_events(), key=operator.attrgetter('date_time') )
+	event_participants = { event:set(event.get_participants().defer('signature')) for event in competition_events }
+	participants = sorted( set.union(*[p for p in event_participants.values()]), key=lambda p: p.license_holder.search_text )
 	
 	check_codes = {
 		'optional_selected':	u"\u2611",
@@ -821,7 +818,7 @@ def ParticipantTeamSelect( request, participantId, teamId ):
 	return HttpResponseRedirect(getContext(request,'popUrl') + 'ParticipantTeamSelectDiscipline/{}/{}/'.format(participantId,teamId))
 
 def get_ioc_countries():
-	countries = [(name, code) for code, name in six.iteritems(ioc_country)]
+	countries = [(name, code) for code, name in ioc_country.items()]
 	countries.sort( key=operator.itemgetter(1) )
 	return countries
 
@@ -851,7 +848,7 @@ def LicenseHolderNationCodeChange( request, licenseHolderId ):
 			break
 	rows = []
 	cols = 4
-	for i in six.moves.range(0, len(countries), cols):
+	for i in range(0, len(countries), cols):
 		rows.append( countries[i:i+cols] )
 	return render( request, 'license_holder_nation_code_select.html', locals() )
 
@@ -1200,12 +1197,12 @@ def ParticipantEstSpeedChange( request, participantId ):
 	
 	speed_rc = {}
 	if competition.distance_unit == 0:
-		for col, kmh in enumerate(six.moves.range(20, 51)):
-			for row, decimal in enumerate(six.moves.range(0, 10)):
+		for col, kmh in enumerate(range(20, 51)):
+			for row, decimal in enumerate(range(0, 10)):
 				speed_rc[(col, row)] = u'{}.{:01d}'.format(kmh, decimal)
 	else:
-		for col, mph in enumerate(six.moves.range(12, 32)):
-			for row, decimal in enumerate(six.moves.range(0, 10)):
+		for col, mph in enumerate(range(12, 32)):
+			for row, decimal in enumerate(range(0, 10)):
 				speed_rc[(col, row)] = u'{}.{:01d}'.format(mph, decimal)
 	
 	row_max = max( row for row, col in speed_rc.keys() ) + 1

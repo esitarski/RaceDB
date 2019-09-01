@@ -102,18 +102,18 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	
 	bMin = min( b for b in six.iterkeys(transactionRateOverTime) )
 	bMax = max( b for b in six.iterkeys(transactionRateOverTime) ) + 1
-	buckets = [epoch + datetime.timedelta(seconds=b*bucketSize) for b in six.moves.range(bMin, bMax)]
+	buckets = [epoch + datetime.timedelta(seconds=b*bucketSize) for b in range(bMin, bMax)]
 	
-	transactionRateOverTime = [transactionRateOverTime[b] for b in six.moves.range(bMin, bMax)]
+	transactionRateOverTime = [transactionRateOverTime[b] for b in range(bMin, bMax)]
 	tcr = []
 	for remote_addr, cp in six.iteritems(transactionClientRateOverTime):
-		tcr.append( {'remote_addr': remote_addr, 'rate': [cp[b] for b in six.moves.range(bMin, bMax)], 'total': sum(cp[b] for b in six.moves.range(bMin, bMax))} )
+		tcr.append( {'remote_addr': remote_addr, 'rate': [cp[b] for b in range(bMin, bMax)], 'total': sum(cp[b] for b in range(bMin, bMax))} )
 	tcr.sort( key=lambda x: (x['total'], x['remote_addr']), reverse=True )
 
 	participantTransactionCount = []
 	for v in six.itervalues(participantCount):
 		if v >= len(participantTransactionCount):
-			participantTransactionCount.extend( [0 for i in six.moves.range(len(participantTransactionCount), v+1)] )
+			participantTransactionCount.extend( [0 for i in range(len(participantTransactionCount), v+1)] )
 		participantTransactionCount[v] += 1
 	total = sum(participantTransactionCount)
 	participantTransactionCountPercentage = [(100.0*t) / total for t in participantTransactionCount]

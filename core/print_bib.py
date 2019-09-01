@@ -1,6 +1,5 @@
 import re
 import os
-import six
 import copy
 import math
 import getpass
@@ -251,7 +250,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	text_margin = margin
 	text_height = margin*0.4
 	
-	for c in six.moves.range(copies):
+	for c in range(copies):
 		if c == 0 or not onePage:
 			pdf.add_page()
 			page_y = 0
@@ -350,7 +349,7 @@ def print_uci_bib( participant, copies=2 ):
 	pdf.set_subject( 'Bib number and rider info in uci format.' )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 
-	for c in six.moves.range(copies):
+	for c in range(copies):
 		uci_bib( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
 		
 	return pdf.to_bytes()
@@ -415,7 +414,7 @@ def print_aso_bib( participant, copies=2 ):
 	pdf.set_subject( 'Bib number and rider info in aso format.' )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 
-	for c in six.moves.range(copies):
+	for c in range(copies):
 		aso_bib( pdf, participant.bib, license_holder.first_name, license_holder.last_name, participant.competition.name )
 		
 	return pdf.to_bytes()
@@ -447,7 +446,7 @@ def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_nam
 	
 	pdf.add_page()
 
-	for p in six.moves.range(0, 2):
+	for p in range(0, 2):
 		y_text = y + h_name_header + y_text_margin
 
 		pdf.rect( x, y, w_bib, h_name_header )

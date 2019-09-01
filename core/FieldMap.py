@@ -242,7 +242,7 @@ def standard_field_map( exclude = [] ):
 	for a in standard_field_aliases:
 		fm.set_aliases( *a )
 		if a[0] == 'license_code':
-			for i in six.moves.range(1,9):
+			for i in range(1,9):
 				i_str = '{}'.format(i)
 				lci = (
 					a[0] + i_str,

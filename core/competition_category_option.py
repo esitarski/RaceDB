@@ -123,7 +123,7 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	ifm = standard_field_map()
 
 	num_rows = ws.nrows
-	for r in six.moves.range(num_rows):
+	for r in range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
@@ -164,7 +164,7 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	ifm = standard_field_map()
 
 	num_rows = ws.nrows
-	for r in six.moves.range(num_rows):
+	for r in range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.

@@ -22,7 +22,7 @@ from .AutoDetect import AutoDetect
 # Required for simultaneous instances of RaceDB.
 #
 def findUnusedPort( host='localhost', portStart=50111, portRange=10 ):
-	ports = list(six.moves.range(portStart, portStart+portRange))
+	ports = list(range(portStart, portStart+portRange))
 	random.shuffle( ports )
 	for port in ports:
 		try:

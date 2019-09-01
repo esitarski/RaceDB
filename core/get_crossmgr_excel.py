@@ -301,14 +301,14 @@ def get_crossmgr_excel( event_mass_start ):
 		table.append( row_data )
 	
 	# Remove empty columns.  Keep Bib column.
-	for col in six.moves.range(len(table[0])-1, 0, -1):
-		if not any( table[row][col] for row in six.moves.range(1, len(table)) ):
-			for row in six.moves.range(0, len(table)):
+	for col in range(len(table[0])-1, 0, -1):
+		if not any( table[row][col] for row in range(1, len(table)) ):
+			for row in range(0, len(table)):
 				del table[row][col]
 	
 	# Write the rider data.
 	write_row_data( ws, 0, table[0], title_format )
-	for row in six.moves.range(1, len(table)):
+	for row in range(1, len(table)):
 		write_row_data( ws, row, table[row] )
 	
 	table = None
@@ -370,15 +370,15 @@ def get_crossmgr_excel_tt( event_tt ):
 		table.append( row_data )
 	
 	# Remove empty columns.  Keep Bib and StartTime column.
-	for col in six.moves.range(len(table[0])-1, 1, -1):
-		if not any( table[row][col] for row in six.moves.range(1, len(table)) ):
-			for row in six.moves.range(0, len(table)):
+	for col in range(len(table[0])-1, 1, -1):
+		if not any( table[row][col] for row in range(1, len(table)) ):
+			for row in range(0, len(table)):
 				del table[row][col]
 	
 	# Write the rider data.
 	write_row_data( ws, 0, table[0], title_format )
 	format = [time_format]
-	for row in six.moves.range(1, len(table)):
+	for row in range(1, len(table)):
 		write_row_data( ws, row, table[row], format )
 	
 	table = None

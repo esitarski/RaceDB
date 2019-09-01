@@ -95,7 +95,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	last_year_but_not_this_year = [0]
 	some_year_but_not_this_year = [0]
 	license_holders_previous = set(list(license_holders_year[0]))
-	for i in six.moves.range(1,len(license_holders_year)):
+	for i in range(1,len(license_holders_year)):
 		last_year_but_not_this_year.append( 0 )
 		some_year_but_not_this_year.append( 0 )
 		for lh in license_holders_year[i-1]:
@@ -106,10 +106,10 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 				some_year_but_not_this_year[-1] += 1
 		license_holders_previous |= license_holders_year[i]
 	
-	license_holders_profile = [defaultdict(int) for i in six.moves.range(len(license_holders_year))]
-	for i in six.moves.range(len(license_holders_year)):
+	license_holders_profile = [defaultdict(int) for i in range(len(license_holders_year))]
+	for i in range(len(license_holders_year)):
 		for lh in license_holders_year[i]:
-			for j in six.moves.range(i, -1, -1):
+			for j in range(i, -1, -1):
 				if lh not in license_holders_year[j]:
 					break
 			prev_years = i - j - 1 if i != 0 else 0
@@ -127,7 +127,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		license_holders_profile = license_holders_profile_list
 		license_holders_profile = [['{}'.format(y)] + [{'v':v, 'f':'{}: {:.2f}%'.format(v, 0.0 if not att else (v*100.0/att))} for v in ap]
 			for y, ap, att in zip(years, license_holders_profile, license_holders_total_year)]
-		license_holders_profile.insert( 0, ['Year'] + ['{}'.format(i) for i in six.moves.range(max_profile)] )
+		license_holders_profile.insert( 0, ['Year'] + ['{}'.format(i) for i in range(max_profile)] )
 	
 	def format_competitions_events( d, events ):
 		events.sort( key=lambda e: (e.competition.name, e.date_time) )
@@ -154,7 +154,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 		out.write( u'</ul></div>' )
 		return [[d.year, d.month-1, d.day], participants_total, out.getvalue()]
 		
-	calendar = sorted( format_competitions_events(d, v) for d, v in six.iteritems(events_by_day) )
+	calendar = sorted( format_competitions_events(d, v) for d, v in events_by_day.items() )
 	if calendar:
 		year_min, year_max = min( c[0][0] for c in calendar ), max( c[0][0] for c in calendar )
 	else:

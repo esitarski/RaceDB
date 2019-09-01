@@ -24,7 +24,7 @@ class tag(object):
 	def __enter__(self):
 		self.stream.write( u'<{}'.format(self.name) )
 		if self.attr:
-			self.stream.write( u' {}'.format(u' '.join( u'{}="{}"'.format(k,v) for k,v in six.iteritems(self.attr)) ) )
+			self.stream.write( u' {}'.format(u' '.join( u'{}="{}"'.format(k,v) for k,v in self.attr.items()) ) )
 		self.stream.write( u'>' )
 		return self
 	def __exit__(self, type, value, traceback):
@@ -75,7 +75,7 @@ def license_holder_msg_to_html( msg ):
 			m = m.strip()
 			icon_str = u''
 			bg = None
-			for type in six.moves.range(2, 0, -1):
+			for type in range(2, 0, -1):
 				if m.startswith(u'*'*type):
 					m = m[type:].strip()
 					icon_str = icon.get(type, u'')
@@ -88,7 +88,7 @@ def license_holder_msg_to_html( msg ):
 			m = m.strip()
 			icon_str = u''
 			bg = None
-			for type in six.moves.range(2, 0, -1):
+			for type in range(2, 0, -1):
 				if m.startswith(u'*'*type):
 					m = m[type:].strip()
 					icon_str = icon.get(type, u'')
@@ -116,7 +116,7 @@ def license_holder_import_excel(
 		if license_holder_team:
 			TeamHint.objects.filter( license_holder__in=list(license_holder_team.keys()) ).delete()
 			team_hints = []
-			for lh, t in six.iteritems(license_holder_team):
+			for lh, t in license_holder_team.items():
 				for d in disciplines:
 					team_hints.append( TeamHint(license_holder=lh, team=t, discipline=d, effective_date=effective_date) )
 			TeamHint.objects.bulk_create( team_hints )
@@ -124,7 +124,7 @@ def license_holder_import_excel(
 		
 	license_holder_discipline_team = {}		# Key: (license_holder, discipline), Data: team.
 	def process_license_holder_discipline_team( license_holder_discipline_team ):
-		for (license_holder, discipline), team in six.iteritems(license_holder_discipline_team):
+		for (license_holder, discipline), team in license_holder_discipline_team.items():
 			team_hint = TeamHint.objects.filter(license_holder=license_holder, discipline=discipline).order_by('-effective_date').first()
 			if team_hint:
 				TeamHint.objects.filter(license_holder=license_holder, discipline=discipline).exclude(id=team_hint.id).delete()
@@ -136,7 +136,7 @@ def license_holder_import_excel(
 		license_holder_discipline_team.clear()
 
 	Info, Warning, Error = 0, 1, 2
-	prefix = {i:u'*'*i for i in six.moves.range(3)}
+	prefix = {i:u'*'*i for i in range(3)}
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def ms_write( s, flush=False, type=Info ):
 			s = prefix[type] + u'{}'.format(s)
@@ -327,7 +327,7 @@ def license_holder_import_excel(
 			'team_name':team_name,
 			'team_code':team_code,
 		}
-		return i, { a:v for a, v in six.iteritems(license_holder_attr_value) if v }
+		return i, { a:v for a, v in license_holder_attr_value.items() if v }
 	
 	def process_license_header_rows( license_holder_rows ):
 		# Put all the cleansed data into the database in one transaction.
@@ -343,7 +343,7 @@ def license_holder_import_excel(
 				team_code = lhr.pop('team_code', None)
 				
 				team_args = { 'name':team_name, 'team_code':team_code }
-				team_args = {k:v for k,v in six.iteritems(team_args) if v}
+				team_args = {k:v for k,v in team_args.items() if v}
 				
 				if team_name not in team_lookup:
 					msg = u'Row {:>6}: Added team: {}\n'.format(
@@ -548,13 +548,13 @@ def license_holder_import_excel(
 	
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in six.moves.range(num_rows):
+	for r in range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [u'{}'.format(f.value).strip() for f in row]
 			ifm.set_headers( fields )
-			license_code_aliases = [lh for lh in six.iterkeys(ifm.name_to_col) if lh.startswith('license_code')]
+			license_code_aliases = [lh for lh in ifm.name_to_col.keys() if lh.startswith('license_code')]
 			discipline_teams = [d for d in disciplines if d.name in ifm]
 			
 			ms_write( u'Header Row:\n' )
@@ -578,7 +578,7 @@ def license_holder_import_excel(
 	process_license_holder_discipline_team( license_holder_discipline_team )
 		
 	ms_write( u'\n' )
-	ms_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((six.iteritems(status_count)), key=operator.itemgetter(0)) ) )
+	ms_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.items()), key=operator.itemgetter(0)) ) )
 	ms_write( u'\n' )
 	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
 	ms_write( u'', True )

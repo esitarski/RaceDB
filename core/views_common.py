@@ -388,7 +388,7 @@ def popPushUrl( request, name, *args, **kwargs ):
 def setFormReadOnly( form ):
 	instance = getattr( form, 'instance', None )
 	if instance:
-		for name, field in six.iteritems(form.fields):
+		for name, field in form.fields.items():
 			field.required = False
 			field.widget.attrs['readonly'] = True
 			field.widget.attrs['disabled'] = True

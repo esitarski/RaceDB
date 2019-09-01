@@ -24,13 +24,13 @@ def get_secret_authorization():
 	
 	ac = [chr(k)]
 	seed()
-	for i in six.moves.range(4):
+	for i in range(4):
 		ac.append( chr(randint(0,127)) )
 	for c in a:
-		for i in six.moves.range(randint(0,2)):
+		for i in range(randint(0,2)):
 			ac.append( add_k(chr(randint(0,7))) )
 		ac.append( add_k(c) )
-	for i in six.moves.range(randint(0,4)):
+	for i in range(randint(0,4)):
 		ac.append( add_k(chr(randint(0,7))) )
 	return 'Basic ' + urlsafe_b64encode(''.join(ac))
 	
@@ -51,7 +51,7 @@ def validate_secret_request( request ):
 	return request.META.has_key('HTTP_AUTHORIZATION') and validate_secret_authorization(request.META['HTTP_AUTHORIZATION'])
 		
 if __name__ == '__main__':
-	for i in six.moves.range(50):
+	for i in range(50):
 		a = get_secret_authorization()
 		v = validate_secret_authorization( a )
 		print ( '{}, {}'.format(a, v) )

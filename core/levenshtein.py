@@ -89,7 +89,7 @@ def searchRecursive( node, letter, word, previousRow, results, maxCost ):
 
 	# Build one row for the letter, with a column for each letter in the target
 	# word, plus one for the empty string at column 0
-	for column in six.moves.range( 1, columns ):
+	for column in range( 1, columns ):
 
 		insertCost = currentRow[column - 1] + 1
 		deleteCost = previousRow[column] + 1

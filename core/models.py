@@ -218,7 +218,7 @@ class SystemInfo(models.Model):
 	tag_from_license = models.BooleanField( default = False, verbose_name = _("RFID Tag from License"),
 			 help_text=_('Generate RFID tag from license (not database id)'))
 	
-	ID_CHOICES = [(i, u'{}'.format(i)) for i in six.moves.range(32)]
+	ID_CHOICES = [(i, u'{}'.format(i)) for i in range(32)]
 	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'),
 		help_text=_('Identifier for generating tags from License Code.') )
 		
@@ -267,7 +267,7 @@ class SystemInfo(models.Model):
 	
 	@classmethod
 	def get_tag_template_default( cls ):
-		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in six.moves.range(4))
+		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in range(4))
 		tt = '{}######{:02}'.format( rs, datetime.datetime.now().year % 100 )
 		return tt
 	
@@ -497,7 +497,7 @@ class NumberSet(models.Model):
 				break
 			c += v
 			if c > 0:
-				for bib in six.moves.range(bib, bib_next):
+				for bib in range(bib, bib_next):
 					counts[bib] = c
 		return counts
 	
@@ -631,7 +631,7 @@ class SeasonsPass(models.Model):
 		
 	def clone( self ):
 		name_new = None
-		for i in six.moves.range(1, 1000):
+		for i in range(1, 1000):
 			name_new = u'{} Copy({})'.format( self.name.split( ' Copy(' )[0], i )
 			if not SeasonsPass.objects.filter( name=name_new ).exists():
 				break
@@ -1345,9 +1345,9 @@ def get_numbers( range_str ):
 			nBegin, nEnd = [int(v) for v in pair[:2]]
 			nBegin, nEnd = max(nBegin, 1), min(nEnd, 99999)
 			if exclude:
-				include.difference_update( six.moves.range(nBegin, nEnd+1) )
+				include.difference_update( range(nBegin, nEnd+1) )
 			else:
-				include.update( six.moves.range(nBegin, nEnd+1) )
+				include.update( range(nBegin, nEnd+1) )
 	
 	return include
 	
@@ -2251,7 +2251,7 @@ def validate_postal_code( postal ):
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
 
 def random_temp_license( prefix = u'TEMP_'):
-	return u'{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in six.moves.range(15)) )
+	return u'{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in range(15)) )
 
 def format_phone( phone ):
 	if len(phone) == len('AAA333NNNN') and phone.isdigit():
@@ -2664,7 +2664,7 @@ class LicenseHolder(models.Model):
 			)
 			duplicates[key].append( pk )
 			if uci_id:
-				duplicates[(u'{} UCIID'.format(u' '.join( uci_id[i:i+3] for i in six.moves.range(0, len(uci_id), 3) )),None,None)].append( pk )
+				duplicates[(u'{} UCIID'.format(u' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )),None,None)].append( pk )
 			
 			# Check for reversed day/month
 			if date_of_birth.day != date_of_birth.month and date_of_birth.day <= 12:
@@ -2721,17 +2721,17 @@ class LicenseHolder(models.Model):
 			return self.nation_code
 	
 	def get_uci_id_text( self ):
-		return u' '.join( self.uci_id[i:i+3] for i in six.moves.range(0, len(self.uci_id), 3) )
+		return u' '.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) )
 	
 	def get_uci_id_html( self ):
-		return mark_safe( u'&nbsp;'.join( self.uci_id[i:i+3] for i in six.moves.range(0, len(self.uci_id), 3) ) )
+		return mark_safe( u'&nbsp;'.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) ) )
 	
 	def get_flag_uci_id_html( self ):
 		if self.nation_code and self.nation_code in uci_country_codes_set:
 			flag = '<img src="{}/{}.png" title="{}"/>'.format(static('flags'), self.nation_code, self.nation_title)
 		else:
 			flag = self.nation_code
-		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in six.moves.range(0, len(self.uci_id), 3) )
+		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) )
 		return mark_safe( u'{}&nbsp;{}'.format(flag, uci_id) )
 	
 	def get_team_for_discipline( self, discipline, teamHintOnly=False ):
@@ -4626,7 +4626,7 @@ class WaveTT( WaveBase ):
 	fastest_participants_start_gap = DurationField.DurationField( null=True, blank=True, verbose_name=_('Fastest Participants Start Gap'), default = duration_field_2m )
 	num_fastest_participants = models.PositiveSmallIntegerField(
 						verbose_name=_('Number of Fastest Participants'),
-						choices=[(i, '%d' % i) for i in six.moves.range(0, 16)],
+						choices=[(i, '%d' % i) for i in range(0, 16)],
 						help_text = 'Participants to get the Fastest gap',
 						default = 5)
 						
@@ -4800,7 +4800,7 @@ class WaveTT( WaveBase ):
 		participants.sort( key=lambda p: (p.start_time if p.start_time else datetime.timedelta(days=100), p.bib or 0) )
 		
 		tDelta = datetime.timedelta(seconds = 0)
-		for i in six.moves.range(1, len(participants)):
+		for i in range(1, len(participants)):
 			pPrev = participants[i-1]
 			p = participants[i]
 			try:
@@ -4904,7 +4904,7 @@ class ParticipantOption( models.Model ):
 			ids |= set( EventClass.objects.filter(competition=competition)
 							.exclude(option_id=0)
 							.values_list('option_id', flat=True) )
-		for id in six.moves.range(1, 1000000):
+		for id in range(1, 1000000):
 			if id not in ids:
 				break
 		event.option_id = id

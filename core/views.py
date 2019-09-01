@@ -605,7 +605,7 @@ def LicenseHoldersManageDuplicates( request ):
 
 def format_uci_id( uci_id ):
 	uci_id = uci_id or u''
-	return u' '.join( uci_id[i:i+3] for i in six.moves.range(0, len(uci_id), 3) )
+	return u' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )
 
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 	
@@ -808,7 +808,7 @@ class CompetitionSearchForm( Form ):
 			year_min = competition.start_date.year if competition else year_cur
 			competition = competitions.last()
 			year_max = competition.start_date.year if competition else year_cur
-			self.fields['year'].choices = [(-1, '---')] + [(y,'{}'.format(y)) for y in six.moves.range(year_max, year_min-1, -1)]
+			self.fields['year'].choices = [(-1, '---')] + [(y,'{}'.format(y)) for y in range(year_max, year_min-1, -1)]
 			
 			disciplines = Discipline.objects.filter(
 				pk__in=competitions.values_list('discipline',flat=True).distinct() ).order_by('sequence')
@@ -1155,7 +1155,7 @@ def CompetitionParticipationSummary( request, competitionId ):
 	for p in query:
 		category_participants[p.category] += 1
 		
-	category_participants = sorted( ((c, count) for c, count in six.iteritems(category_participants)), key=lambda x: x[0].sequence )
+	category_participants = sorted( category_participants.items(), key=lambda x: x[0].sequence )
 	total = sum(count for c, count in category_participants)
 	return render( request, 'competition_summary.html', locals() )
 
@@ -1274,7 +1274,7 @@ def TeamsShow( request, competitionId ):
 			list(ti['competitors']),
 			key=lambda p: (getCategorySeq(p), p.bib if p.bib else 99999, p.license_holder.search_text),
 		)
-		for i in six.moves.range( 1, len(competitors) ):
+		for i in range( 1, len(competitors) ):
 			if getCategorySeq(competitors[i-1]) != getCategorySeq(competitors[i]):
 				competitors[i].different_category = True
 	
@@ -1857,31 +1857,31 @@ def SeedingEdit( request, eventTTId ):
 				del i_rand
 				
 				# Process relative moves by bubbling.
-				for i in six.moves.range(len(eda)):
+				for i in range(len(eda)):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == '-':				# Move backwards going forward.
 						move_to( i, i - adjustment )				
-				for i in six.moves.range(len(eda)-1, -1, -1):
+				for i in range(len(eda)-1, -1, -1):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == '+':				# Move forward going backwards.
 						move_to( i, i + adjustment )
 				
 				# Process absolute starts.
-				for i in six.moves.range(len(eda)):
+				for i in range(len(eda)):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 's' and adjustment-1 < i:	# Move backwards going forward.
 						move_to( i, adjustment-1 )
-				for i in six.moves.range(len(eda)-1, -1, -1):
+				for i in range(len(eda)-1, -1, -1):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 's' and adjustment-1 > i:	# Move backwards going forward.
 						move_to( i, adjustment-1 )
 				
 				# Process absolute ends.
-				for i in six.moves.range(len(eda)):
+				for i in range(len(eda)):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 'e' and len(eda) - adjustment < i:
 						move_to( i, len(eda) - adjustment )
-				for i in six.moves.range(len(eda)-1, -1, -1):
+				for i in range(len(eda)-1, -1, -1):
 					entry_tt, direction, adjustment = eda[i]
 					if direction == 'e' and len(eda) - adjustment > i:
 						move_to( i, len(eda) - adjustment )
@@ -2857,7 +2857,7 @@ def GetEvents( request, date=None ):
 def QRCode( request ):
 	exclude_breadcrumbs = True
 	qrpath = request.build_absolute_uri()
-	for i in six.moves.range(2):
+	for i in range(2):
 		qrpath = os.path.dirname( qrpath )
 	qrpath += '/'
 	return render( request, 'qrcode.html', locals() )
