@@ -1,5 +1,4 @@
 import os
-import six
 import math
 import operator
 import datetime
@@ -105,7 +104,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	
 	# Report the results by wave.
 	eventResults = []
-	for w, results in six.iteritems(wave_results):
+	for w, results in wave_results.items():
 		if w.rank_categories_together:
 			get_rank     = operator.attrgetter('wave_rank')
 			get_starters = operator.attrgetter('wave_starters')
@@ -182,12 +181,12 @@ def adjust_for_upgrades( series, eventResults ):
 		if rr.category in upgradeCategoriesAll:
 			competitionCategories[rr.license_holder][rr.category].append( rr )
 	
-	for lh_categories in six.itervalues(competitionCategories):
+	for lh_categories in competitionCategories.values():
 		if len(lh_categories) == 1:
 			continue
 		
 		for factor, path, position in factorPathPositions:
-			upgradeCategories = { cat: rrs for cat, rrs in six.iteritems(lh_categories) if cat in path }
+			upgradeCategories = { cat: rrs for cat, rrs in lh_categories.items() if cat in path }
 			if len(upgradeCategories) <= 1:
 				continue
 			
@@ -197,7 +196,7 @@ def adjust_for_upgrades( series, eventResults ):
 				if pos > highestPos:
 					highestPos, highestCategory = pos, cat
 		
-			for cat, rrs in six.iteritems(upgradeCategories):
+			for cat, rrs in upgradeCategories.items():
 				if cat == highestCategory:
 					continue
 				power = highestPos - position[cat]
@@ -260,11 +259,11 @@ def series_results( series, categories, eventResults ):
 		lhEventsCompleted[lh] += 1
 	
 	# Remove if minimum events not completed.
-	lhOrder = [lh for lh, results in six.iteritems(lhResults) if lhEventsCompleted[lh] >= mustHaveCompleted]
+	lhOrder = [lh for lh, results in lhResults.items() if lhEventsCompleted[lh] >= mustHaveCompleted]
 	
 	# Adjust for the best results.
 	if bestResultsToConsider > 0:
-		for lh, rrs in six.iteritems(lhResults):
+		for lh, rrs in lhResults.items():
 			iResults = [(i, rr) for i, rr in enumerate(rrs) if rr is not None]
 			if len(iResults) > bestResultsToConsider:
 				if scoreByTime:
@@ -281,7 +280,7 @@ def series_results( series, categories, eventResults ):
 		# Sort by decreasing events completed, then increasing time.
 		lhOrder.sort( key = lambda r: tuple(itertools.chain(
 				[-lhEventsCompleted[r], lhValue[r]],
-				[-lhPlaceCount[r][k] for k in six.moves.range(1, numPlacesTieBreaker+1)],
+				[-lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1)],
 				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
 			))
 		)
@@ -297,7 +296,7 @@ def series_results( series, categories, eventResults ):
 		lhOrder.sort( key = lambda r: tuple(itertools.chain(
 				[-lhValue[r]],
 				([-lhEventsCompleted[r]] if considerMostEventsCompleted else []),
-				[-lhPlaceCount[r][k] for k in six.moves.range(1, numPlacesTieBreaker+1)],
+				[-lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1)],
 				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
 			))
 		)

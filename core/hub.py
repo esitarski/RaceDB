@@ -1,5 +1,4 @@
 import re
-import six
 import datetime
 import operator
 from collections import defaultdict
@@ -46,7 +45,7 @@ class CompetitionSearchForm( Form ):
 		year_min = competition.start_date.year if competition else year_cur
 		competition = competitions.order_by('-start_date').first()
 		year_max = competition.start_date.year if competition else year_cur
-		self.fields['year'].choices =  [(-1, '----')] + [(y, u'{:04d}'.format(y)) for y in six.moves.range(year_max, year_min-1, -1)]
+		self.fields['year'].choices =  [(-1, '----')] + [(y, u'{:04d}'.format(y)) for y in range(year_max, year_min-1, -1)]
 		
 		disciplines = Discipline.objects.filter( pk__in=competitions.values_list('discipline', flat=True).distinct() )
 		self.fields['discipline'].choices =  [(-1, '----')] + [(d.pk, d.name) for d in disciplines]
@@ -132,7 +131,7 @@ def CompetitionResults( request, competitionId ):
 	event_days = sorted( set( timezone.localtime(e.date_time).strftime('%Y-%m-%d') for e in events ) )
 	get_day = {d:i for i, d in enumerate(event_days)}
 	
-	category_results = defaultdict(lambda: [[] for i in six.moves.range(len(event_days))])
+	category_results = defaultdict(lambda: [[] for i in range(len(event_days))])
 	for e in events:
 		day = get_day[timezone.localtime(e.date_time).strftime('%Y-%m-%d')]
 		for w in e.get_wave_set().all():
@@ -143,8 +142,7 @@ def CompetitionResults( request, competitionId ):
 				for c in Category.objects.filter( pk__in=set( p.category.pk for p in w.get_participants() if p.category ) ):
 					category_results[c][day].append( (e, w) )				
 
-	category_results = [(k,v) for k,v in six.iteritems(category_results)]
-	category_results.sort( key=lambda p:(p[0].gender, p[0].sequence) )
+	category_results = sorted( category_results.items(), key=lambda p:(p[0].gender, p[0].sequence) )
 	
 	gender_category_results = [[],[],[]]
 	for v in category_results:
@@ -168,7 +166,7 @@ def CompetitionResults( request, competitionId ):
 	if custom_category_results:
 		row_max = max( len(ccr) for ccr in custom_category_results )
 		col_max = len( custom_category_results )
-		ccr_table = [ [(None,[]) for r in six.moves.range(col_max)] for c in six.moves.range(row_max) ]
+		ccr_table = [ [(None,[]) for r in range(col_max)] for c in range(row_max) ]
 		for i, ccr in enumerate(custom_category_results):
 			for j, ecc in enumerate(ccr):
 				ccr_table[j][i] = ecc
@@ -442,10 +440,10 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 				team_arc[(node_name, team_name)] += er.value_for_rank
 				team_total[team_name] += er.value_for_rank
 
-	tt = [(n,v) for n,v in six.iteritems(team_total)]
+	tt = [(n,v) for n,v in team_total.items()]
 	team_total = { n:f for (n,v), f in zip(tt, format_column_float( [t[1] for t in tt] )) }
 		
-	for node_name, team_name, value in sorted( ((n, t, v) for (n,t), v in six.iteritems(team_arc)), key=operator.itemgetter(2), reverse=True ):
+	for node_name, team_name, value in sorted( ((n, t, v) for (n,t), v in team_arc.items()), key=operator.itemgetter(2), reverse=True ):
 		json_data.append( [
 			node_name,
 			u'{} ({})'.format(team_name, team_total[team_name]),
@@ -473,12 +471,12 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	if series.ranking_criteria == 1:
 		total_values = format_column_time( total_values )
 		gaps = [(v or u'') for v in format_column_gap(gaps)]
-		for erv in six.itervalues(event_results_values):
+		for erv in event_results_values.values():
 			erv[:] = format_column_time( erv )
 	else:
 		total_values = format_column_float( total_values )
 		gaps = format_column_float( gaps )
-		for erv in six.itervalues(event_results_values):
+		for erv in event_results_values.values():
 			erv[:] = format_column_float( erv )
 
 	for row, r in enumerate(results):
@@ -493,7 +491,7 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	if series.ranking_criteria == 0:
 		for ce in series.seriescompetitionevent_set.all():
 			points_structure_summary[ce.points_structure].append( ce.event )
-		points_structure_summary = [(k, v) for k, v in six.iteritems(points_structure_summary)]
+		points_structure_summary = [(k, v) for k, v in points_structure_summary.items()]
 		points_structure_summary.sort( key=lambda v: v[0].sequence )
 				
 	time_stamp = timezone.datetime.now()
