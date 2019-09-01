@@ -390,7 +390,7 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 		custom_category_name = series.custom_category_names.split(',\n')[int(customCategoryIndex)]
 		results, events = series_results.get_results_for_custom_category_name( series, custom_category_name )
 		for e in events:
-			e.custom_category_cur = e.get_custom_category_set().filter( name=custom_category_name )
+			e.custom_category_cur = e.get_custom_category_set().filter( name=custom_category_name ).first()
 		group_categories = []
 		is_custom_category = True
 	
