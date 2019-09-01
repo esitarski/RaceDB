@@ -74,7 +74,7 @@ class transaction_save( object ):
 		
 	def flush( self, model=None ):
 		if model != self.model and self.pending:
-			for i in six.moves.range(0, len(self.pending), self.MaxTransactionRecords):
+			for i in range(0, len(self.pending), self.MaxTransactionRecords):
 				with transaction.atomic():
 					for dbo, inst, pko in self.pending[i:i+self.MaxTransactionRecords]:
 						dbo.save()
@@ -257,7 +257,7 @@ def competition_deserializer( object_list, **options ):
 
 		# Handle each field
 		has_dependency = False
-		for (field_name, field_value) in six.iteritems(d["fields"]):
+		for (field_name, field_value) in d["fields"].items():
 
 			if has_dependency:
 				break
@@ -523,7 +523,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	json_serializer.serialize(arr, indent=0, stream=stream)
 
 	if remove_ftp_info:
-		for k, v in six.iteritems(ftp_info_save):
+		for k, v in ftp_info_save.items():
 			setattr( competition, k, v )
 
 	return arr

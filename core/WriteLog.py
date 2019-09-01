@@ -80,7 +80,7 @@ def logCall( f ):
 		return u'{}'.format(x)
 	
 	def new_f( *args, **kwargs ):
-		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in six.iteritems(kwargs) ]
+		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
 		writeLog( '{}({})'.format(f.__name__, removeDiacritic(u', '.join(parameters))) )
 		return f( *args, **kwargs)
 	return new_f

@@ -61,7 +61,7 @@ def read_results_crossmgr( payload ):
 	name_gender_to_category = { (c.code, c.gender):c for c in event.get_categories() }
 	
 	# Data is indexed by integer bib number.
-	data = {int(k):v for k, v in six.iteritems(payload['data'])}
+	data = {int(k):v for k, v in payload['data'].items()}
 	
 	# Get the category for each bib.
 	reGender = re.compile( r'(\([^)]+\))$' )
@@ -133,7 +133,7 @@ def read_results_crossmgr( payload ):
 	# To get results by category, select by that category and order by rank.
 	rtcs_cache = defaultdict( list )
 	def flush_cache():
-		for cls, objs in six.iteritems(rtcs_cache):
+		for cls, objs in rtcs_cache.items():
 			cls.objects.bulk_create( objs )
 			del objs[:]
 	
@@ -221,7 +221,7 @@ def read_results_crossmgr( payload ):
 				rtcs = result.set_race_times( race_times, lap_speeds, do_create=False )
 				if rtcs:
 					rtcs_cache[type(rtcs[0])].extend( rtcs )
-					if any( len(objs) >= 999 for objs in six.itervalues(rtcs_cache) ):
+					if any( len(objs) >= 999 for objs in rtcs_cache.values() ):
 						flush_cache()
 			except Exception as e:
 				warnings.append( u'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(

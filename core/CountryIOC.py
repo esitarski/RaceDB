@@ -25,7 +25,7 @@ country_short_forms = {
 for c in country_info:
 	names = set()
 	def scan( d ):
-		for k, v in six.iteritems(d):
+		for k, v in d.items():
 			if isinstance(v, dict):
 				scan( v )
 			elif k in ('common', 'official'):
@@ -71,7 +71,7 @@ ison3_uci_country_codes.pop( u'', None )
 
 #-----------------------------------------------------------------------
 
-uci_country_codes_set = set( n.upper() for n in six.itervalues(uci_country_codes) )
+uci_country_codes_set = set( n.upper() for n in uci_country_codes.values() )
 
 country_info = None
 

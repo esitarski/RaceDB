@@ -607,7 +607,7 @@ class NumberSet(models.Model):
 		duplicates = defaultdict( list )
 		for nse in self.numbersetentry_set.order_by('bib', 'date_lost'):
 			duplicates[nse.bib].append( nse.pk )
-		for bib, pks in six.iteritems(duplicates):
+		for bib, pks in duplicates.items():
 			bib_max_count = self.get_bib_max_count(bib, range_events)
 			if len(pks) > bib_max_count:
 				NumberSetEntry.objects.filter( pk__in=pks[:-bib_max_count] ).delete()
@@ -1148,7 +1148,7 @@ class Competition(models.Model):
 					'license_holder__pk', 'bib'):
 				nses[pk].append( bib )
 				
-			for bibs in six.itervalues(nses):
+			for bibs in nses.values():
 				bibs.sort()
 			
 			with transaction.atomic():
@@ -2690,7 +2690,7 @@ class LicenseHolder(models.Model):
 				'duplicateIds': u','.join(u'{}'.format(pk) for pk in pks),
 				'license_holders': LicenseHolder.objects.filter(pk__in=pks).order_by('search_text'),
 				'license_holders_len': len(pks),
-			} for key, pks in six.iteritems(duplicates) if len(pks) > 1]
+			} for key, pks in duplicates.items() if len(pks) > 1]
 			
 		duplicates.sort( key=lambda r: r['key'] )
 		return duplicates
@@ -3318,7 +3318,7 @@ def update_team_hints():
 	# Update the TeamHints with the latest team information by discipline.
 	TeamHint.objects.all().delete()
 	with BulkSave() as b:
-		for (license_holder, discipline), (effective_date, team) in six.iteritems(most_recent):
+		for (license_holder, discipline), (effective_date, team) in most_recent.items():
 			th = TeamHint()
 			th.license_holder_id = license_holder
 			th.discipline_id = discipline
@@ -4312,7 +4312,7 @@ class Participant(models.Model):
 				current_bibs[nse.license_holder].add( nse.bib )
 			
 			# Handle the case of only one bib in the number set.
-			for lh, bibs in six.iteritems(current_bibs):
+			for lh, bibs in current_bibs.items():
 				if len(bibs) == 1:
 					bib = next(iter(bibs))
 					if bib_max.get(bib, 0) == 1:
@@ -4883,7 +4883,7 @@ class ParticipantOption( models.Model ):
 			participant=participant,
 			option_id__in = option_id_included.keys()
 		).delete()
-		for option_id, included in six.iteritems(option_id_included):
+		for option_id, included in option_id_included.items():
 			if included:
 				ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id ).save()
 	
@@ -5705,7 +5705,7 @@ class LicenseCheckState(models.Model):
 				csd[key] = p.competition.start_date
 		
 		# Update existing records to the most recent check date.
-		to_update = [(k,v) for k,v in six.iteritems(to_update)]
+		to_update = [(k,v) for k,v in to_update.items()]
 		while to_update:
 			with transaction.atomic():
 				for (license_holder_id, category_id, discipline_id, report_label_license_check_id), d in to_update[-256:]:

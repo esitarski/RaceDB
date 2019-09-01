@@ -57,4 +57,4 @@ if __name__ == '__main__':
 	s = "this_is_a_test"
 	for i in range(10):
 		c = encode( s )
-		six.print_( s, c, decode(c) )
+		print( s, c, decode(c) )

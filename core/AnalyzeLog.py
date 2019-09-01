@@ -100,18 +100,18 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	if not transactionRateOverTime:
 		return None
 	
-	bMin = min( b for b in six.iterkeys(transactionRateOverTime) )
-	bMax = max( b for b in six.iterkeys(transactionRateOverTime) ) + 1
+	bMin = min( b for b in transactionRateOverTime.keys() )
+	bMax = max( b for b in transactionRateOverTime.keys() ) + 1
 	buckets = [epoch + datetime.timedelta(seconds=b*bucketSize) for b in range(bMin, bMax)]
 	
 	transactionRateOverTime = [transactionRateOverTime[b] for b in range(bMin, bMax)]
 	tcr = []
-	for remote_addr, cp in six.iteritems(transactionClientRateOverTime):
+	for remote_addr, cp in transactionClientRateOverTime.items():
 		tcr.append( {'remote_addr': remote_addr, 'rate': [cp[b] for b in range(bMin, bMax)], 'total': sum(cp[b] for b in range(bMin, bMax))} )
 	tcr.sort( key=lambda x: (x['total'], x['remote_addr']), reverse=True )
 
 	participantTransactionCount = []
-	for v in six.itervalues(participantCount):
+	for v in participantCount.values():
 		if v >= len(participantTransactionCount):
 			participantTransactionCount.extend( [0 for i in range(len(participantTransactionCount), v+1)] )
 		participantTransactionCount[v] += 1
@@ -124,7 +124,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 			transactionPeak = [buckets[b], p]
 			
 	functionCount = sorted( ([re.sub('Participant|Select|Change', '', fname), count]
-		for fname, count in six.iteritems(functionCount) if count), key=lambda fc: fc[1], reverse=True )
+		for fname, count in functionCount.items() if count), key=lambda fc: fc[1], reverse=True )
 
 	return {
 		'transactionTotal': transactionTotal,

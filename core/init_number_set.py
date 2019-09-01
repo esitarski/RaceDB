@@ -100,7 +100,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 		
 	num_rows = ws.nrows
 	num_cols = ws.ncols
-	for r in six.moves.range(num_rows):
+	for r in range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
