@@ -1,4 +1,3 @@
-import six
 from django import forms
 
 def autostrip(cls):

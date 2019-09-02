@@ -132,7 +132,7 @@ def SeriesEdit( request, seriesId ):
 	competitions = defaultdict( list )
 	for ce in ces:
 		competitions[ce.event.competition].append( ce )
-	competitions.sorted( competitions.items(), key=lambda ce: ce[0].start_date, reverse=True )
+	competitions = sorted( competitions.items(), key=lambda ce: ce[0].start_date, reverse=True )
 	for c, ces in competitions:
 		ces.sort( key=lambda ce:ce.event.date_time )
 
