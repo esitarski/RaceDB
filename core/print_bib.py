@@ -15,7 +15,7 @@ inches_to_points = 72.0
 
 reDescenders = re.compile( '[jygpq]' )
 def has_descenders( text ):
-	return bool(reDescenders.search(text))
+	return bool(reDescenders.search('{}'.format(text)))
 	
 def get_font_file( fname ):
 	parent = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
