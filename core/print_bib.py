@@ -115,9 +115,9 @@ class Rect( object ):
 		else:
 			return Rect( self.top, self.right, self.height, self.width )
 	
-	def draw_text_to_fit( self, pdf, text, options=AlignCenter|AlignMiddle, consider_descenders=False, convert_to_text=True ):
-		if convert_to_text:
-			text = u'{}'.format(text).encode('windows-1252', 'ignore')
+	def draw_text_to_fit( self, pdf, text, options=AlignCenter|AlignMiddle, consider_descenders=False ):
+		if not isinstance(text, str):
+			text = u'{}'.format(text)
 		
 		descenders = has_descenders(text) if consider_descenders else False
 		
@@ -190,7 +190,6 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 		pdf.set_font( 'Arrows' )
 		arrowWidth = arrow.draw_text_to_fit( pdf, leftArrow if lp else rightArrow, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle,
 			consider_descenders=True,
-			convert_to_text=False,
 		)
 		arrowWidth += pdf.get_string_width('  ')
 		
@@ -200,7 +199,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 		header_remain.width -= arrowWidth
 		
 		pdf.set_font( font_name )
-		header_remain.draw_text_to_fit( pdf, sponsor_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, True )
+		header_remain.draw_text_to_fit( pdf, sponsor_name, (Rect.AlignLeft if lp else Rect.AlignRight)|Rect.AlignMiddle, consider_descenders=True )
 		
 		pdf.set_font('din1451alt', '', 16)
 		field.draw_text_to_fit( pdf, bib, Rect.AlignCenter|Rect.AlignMiddle )
@@ -526,7 +525,7 @@ def print_id_label( participant ):
 	pdf.add_page()
 	pdf.set_font( font_name, 'b' )
 	
-	header.draw_text_to_fit( pdf, name, Rect.AlignLeft, True )
+	header.draw_text_to_fit( pdf, name, Rect.AlignLeft, consider_descenders=True )
 	
 	pdf.set_font( font_name )
 	info = []
@@ -567,7 +566,7 @@ def print_id_label( participant ):
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,
 		leftJustifyCols = [0,1], hasHeader=False, horizontalLines=False )
 	
-	footer.draw_text_to_fit( pdf, system_name, Rect.AlignRight, True )
+	footer.draw_text_to_fit( pdf, system_name, Rect.AlignRight, consider_descenders=True )
 	
 	pdf_str = pdf.to_bytes()
 	return pdf_str
