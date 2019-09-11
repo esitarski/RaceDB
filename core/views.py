@@ -11,6 +11,7 @@ except:
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseForbidden
 
+import io
 import zipfile
 import operator
 import itertools
@@ -2902,8 +2903,10 @@ def get_compressed_competition_json( competition, export_as_template=False, remo
 	gzip_stream = tempfile.TemporaryFile()
 	# Create a gzip and connect it to the temp file.
 	gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode="wb", filename='{}.json'.format(competition.get_filename_base()) )
-	# Write the competition json to the gzip obj, which compresses it and writes it to the temp file.
-	competition_export( competition, gzip_handler, export_as_template=export_as_template, remove_ftp_info=remove_ftp_info )
+	# Wrap the handler so that text is encoded to bytes.  Specify write_through so there is no buffering.
+	gzip_wrapper = io.TextIOWrapper( gzip_handler, write_through=True )
+	# Write the competition json to the gzip_wrapper, which compresses it and writes it to the temp file.
+	competition_export( competition, gzip_wrapper, export_as_template=export_as_template, remove_ftp_info=remove_ftp_info )
 	# Make sure gzip flushes all its buffers.
 	gzip_handler.flush()
 	gzip_handler.close()	# Does not close underlying fileobj.

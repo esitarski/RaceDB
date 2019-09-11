@@ -32,7 +32,7 @@ def get_secret_authorization():
 		ac.append( add_k(c) )
 	for i in range(randint(0,4)):
 		ac.append( add_k(chr(randint(0,7))) )
-	return 'Basic ' + urlsafe_b64encode(''.join(ac))
+	return 'Basic ' + urlsafe_b64encode(''.join(ac).encode()).decode()
 	
 def validate_secret_authorization( a ):
 	try:
