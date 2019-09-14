@@ -36,7 +36,7 @@ def get_secret_authorization():
 	
 def validate_secret_authorization( a ):
 	try:
-		a = urlsafe_b64decode(a.split()[1])
+		a = urlsafe_b64decode(a.split()[1].encode()).decode()
 		k = ord(a[0])
 		def sub_k( c ):
 			return chr((ord(c)+127-k)%127)
@@ -44,6 +44,7 @@ def validate_secret_authorization( a ):
 		s = ''.join( c for c in s if ord(c) > 7 )
 		username, password = s.split(':', 1)
 	except Exception as e:
+		print( e )
 		return False
 	return (username, password) == get_secret_key()
 
