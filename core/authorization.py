@@ -44,7 +44,6 @@ def validate_secret_authorization( a ):
 		s = ''.join( c for c in s if ord(c) > 7 )
 		username, password = s.split(':', 1)
 	except Exception as e:
-		print( e )
 		return False
 	return (username, password) == get_secret_key()
 
