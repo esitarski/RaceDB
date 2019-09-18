@@ -1,4 +1,5 @@
 import csv
+import codecs
 import socket
 import getpass
 import zipfile
@@ -65,7 +66,8 @@ def FinishLynxExport( competition ):
 	zipIO = BytesIO()
 	with zipfile.ZipFile(zipIO, 'w') as zip:
 		for fname, io in fnameIOs:
-			zip.writestr( fname, io.getvalue() )
+			# Write as BOM-encoded UTF-16 so Windows can read it.
+			zip.writestr( fname, codecs.BOM_UTF16_LE + io.getvalue().encode('UTF-16-LE', errors='replace') )
 			io.close()
 	
 	return zipIO.getvalue()
