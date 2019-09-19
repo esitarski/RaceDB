@@ -30,14 +30,16 @@ def FinishLynxExport( competition ):
 	sep = u';' + u'-' * 78 + u'\n'
 	for fname, io_stream in fnameIOs:
 		header = [
-			u'{}: FinishLynx database file'.format(fname),
+			u'{}: FinishLynx Database File'.format(fname),
+			u'',
+			u'*** The Unicode option must be set in FinishLynx for these files to import properly. ***',
+			u'',
+			u'See FinishLynx documentation for full details (http://www.finishlynx.com/).',
 			u'',
 			u'Created by: RaceDB v{} (www.sites.google.com/site/crossmgrsoftware/)'.format(RaceDBVersion),
 			u'Timestamp: {}'.format( timestamp ),
 			u'Server: {}'.format( socket.gethostname() ),
 			u'UserName: {}'.format( getpass.getuser() ),
-			u'',
-			u'See FinishLynx documentation for details (http://www.finishlynx.com/).',
 		]
 		io_stream.write( sep )
 		for h in header:
@@ -66,7 +68,7 @@ def FinishLynxExport( competition ):
 	zipIO = BytesIO()
 	with zipfile.ZipFile(zipIO, 'w') as zip:
 		for fname, io in fnameIOs:
-			# Write as BOM-encoded UTF-16 so Windows can read it.
+			# Write as UTF-16-LE with appropriate BOM (Byte Order Mark).
 			zip.writestr( fname, codecs.BOM_UTF16_LE + io.getvalue().encode('UTF-16-LE', errors='replace') )
 			io.close()
 	
