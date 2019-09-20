@@ -42,6 +42,5 @@ try:
 		else:
 			DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, DatabaseWrapper )
 		DatabaseWrapper.get_new_connection_is_patched = True
-		print ( 'patch_sqlite_text_factor: successfully applied multi-encoding text decoder' )
 except Exception as e:
 	pass	# If we get an sqlite version error, ignore and let another part of Django raise it.
