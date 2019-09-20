@@ -347,7 +347,7 @@ def init_sequence_first( Class, obj ):
 		
 class Category(models.Model):
 	format = models.ForeignKey( CategoryFormat, db_index = True, on_delete=models.CASCADE )
-	code = models.CharField( max_length=16, default='', verbose_name = _('Code') )
+	code = models.CharField( max_length=32, default='', verbose_name = _('Code') )
 	GENDER_CHOICES = (
 		(0, _('Men')),
 		(1, _('Women')),

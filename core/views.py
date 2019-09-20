@@ -2476,8 +2476,6 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 			return render( request, 'generic_error.html', locals() )
 
 #-----------------------------------------------------------------------
-	
-#-----------------------------------------------------------------------
 
 @autostrip
 class SystemInfoForm( ModelForm ):
