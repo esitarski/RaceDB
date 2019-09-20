@@ -103,7 +103,7 @@ class CategoryForm( ModelForm ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Field('code', size=20),
+				Field('code', size=32),
 				Field('gender'),
 				Field('description', size=80),
 			),
