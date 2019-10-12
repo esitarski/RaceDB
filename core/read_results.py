@@ -12,6 +12,11 @@ def get_event_from_payload( payload ):
 	raceScheduledLocalList = [int(f) for f in reNonDigit.sub( ' ', payload['raceScheduledStart'] ).split()]
 	raceScheduledLocal = datetime.datetime(*raceScheduledLocalList)
 	
+	info = []
+	def info_append( info_text ):
+		info.append( info_text )
+		safe_print( info_text )
+	
 	try:
 		tz = pytz.timezone(payload['raceTimeZone'])
 	except Exception as e:
@@ -23,33 +28,35 @@ def get_event_from_payload( payload ):
 	
 	EventClass = EventTT if payload.get('isTimeTrial', False) else EventMassStart
 	
-	events = EventClass.objects.filter(date_time=raceScheduledStart)
-	if not events.exists():
-		safe_print( u"Cannot find any Events starting at {}".format( raceScheduledStart.strftime('%Y-%m-%d %H:%M %z') ) )
+	if not EventClass.objects.filter(date_time=raceScheduledStart).exists():
+		info_append( u"Cannot find an Event starting at {}".format( raceScheduledStart.strftime('%Y-%m-%d %H:%M %z') ) )
 	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
 		raceNameTextCur = u'-'.join( [event.competition.name, event.name] )
-		safe_print( u'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
+		info_append( u'Checking by Event: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
 		if raceNameText == raceNameTextCur:
-			return event
+			info_append( u'Success.' )
+			return event, info
 	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
 		for wave in event.get_wave_set().all():
 			raceNameTextCur = u'-'.join( [event.competition.name, wave.name] )
-			safe_print( u'Checking for match: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
+			info_append( u'Checking by Wave: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
 			if raceNameText == raceNameTextCur:
-				return event	
+				info_append( u'Success.' )
+				return event, info
 	
-	return None
+	info_append( u'Failure.' )
+	return None, info
 	
 def read_results_crossmgr( payload ):
 	warnings = []
 	errors = []
 
-	event = get_event_from_payload( payload )
+	event, info = get_event_from_payload( payload )
 	if not event:
 		errors.append( u'Cannot find Event "{}", "{}"'.format(payload['raceNameText'], payload['raceScheduledStart']) )
-		return { 'errors': errors, 'warnings': warnings }
+		return { 'errors': errors, 'warnings': warnings, 'info':info }
 		
 	competition = event.competition
 	
@@ -75,7 +82,7 @@ def read_results_crossmgr( payload ):
 		gender_name = gender_in_brackets[1:-1].strip().upper()
 		
 		gender_code = None
-		if   gender_name in (u'MEN', u'HOMMES', u'HOMBRES'):
+		if   gender_name in (u'MEN', u'HOMMES', u'HOMBRES', u'UOMINI', u'HOMENS'):
 			gender_code = 0
 		elif gender_name in (u'WOMEN', u'FEMMES', u'MUJER'):
 			gender_code = 1
@@ -84,7 +91,7 @@ def read_results_crossmgr( payload ):
 		
 		if gender_code is None:
 			gender_char = gender_name.strip()[0]
-			if   gender_char in 'MH':
+			if   gender_char in 'MHU':
 				gender_code = 0
 			elif gender_char in 'WF':
 				gender_code = 1

@@ -1,5 +1,6 @@
 import datetime
 import operator
+import statistics
 from collections import defaultdict
 
 from . import utils
@@ -22,7 +23,20 @@ def get_competitions( start_date=None, end_date=None, disciplines=None, race_cla
 	if exclude_labels:
 		competitions = competitions.exclude( report_labels__in = exclude_labels )
 	return competitions.order_by( 'start_date', 'pk' ).distinct()
-	
+
+def event_get_participants( event ):
+	# If there are results for this event, only return participants that have results and are not DNS.
+	DNS = Result.cDNS
+	participated_results = set( p_id for p_id, status in event.get_result_class().objects.filter(event=event).values_list('participant__id', 'status') if status != DNS )
+	if not participated_results:
+		for p in event.get_participants():
+			yield p
+		return
+	else:
+		for p in event.get_participants():
+			if p.id in participated_results:
+				yield p
+
 def participation_data( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None ):
 	competitions = get_competitions( start_date, end_date, disciplines, race_classes, organizers, include_labels, exclude_labels )
 	license_holders_event_errors = set()
@@ -49,6 +63,8 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 	age_range_women_license_holders = [set() for i in range(0, 120, age_increment)]
 	age_range_women_attendee_count = [0 for i in range(0, 120, age_increment)]
 	license_holders_set = set()
+	
+	license_holder_gender_age = {}
 	
 	profile_year = 0
 	participants_total = 0
@@ -110,7 +126,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 			participant_data = []
 			prereg_participant_data = []
 			event_license_holders = set()
-			for participant in event.get_participants():
+			for participant in event_get_participants(event):
 				
 				# Participation.
 				license_holder = participant.license_holder
@@ -118,6 +134,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 				if not (7 < age < 100):
 					license_holders_event_errors.add( (license_holder, event) )
 				age = fix_age( age )
+				license_holder_gender_age[(participant.license_holder_id, participant.license_holder.gender)] = age
 				
 				event_competition_participants_total[competition][event] += 1
 				category_name = participant.category.code_gender if participant.category else u'{}'.format(_('Unknown'))
@@ -392,6 +409,12 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		return category_average_max
 	category_average_max = getCategoryAverageMax()
 	
+	def get_average( s ):
+		try:
+			return statistics.mean( s )
+		except:
+			return None
+		
 	payload = {
 		'competitions_total': competitions_total,
 		'events_total': events_total,
@@ -415,6 +438,10 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		'age_range_men_average':age_range_men_average,
 		'age_range_women_average':age_range_women_average,
 		'age_increment': age_increment,
+		
+		'age_average_total': get_average( license_holder_gender_age.values() ),
+		'age_average_men': get_average( age for (lh_id, gender), age in license_holder_gender_age.items() if gender == 0 ),
+		'age_average_women': get_average( age for (lh_id, gender), age in license_holder_gender_age.items() if gender == 1 ),
 		
 		'profile_year':profile_year,
 		'license_holder_profile':license_holder_profile,

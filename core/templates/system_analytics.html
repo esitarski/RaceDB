@@ -1141,7 +1141,23 @@ $(document).ready(function() {
 		{% comment %} -------------------------------------------------------------------------- {% endcomment %}
 		<div class="tab-pane fade" id="ByAge">
 			<p>
-			<h3 class="page-break-before">Participation by Age</h3>
+			<h3 class="page-break-before">Average Age</h3>
+			<div class="container">
+				<div class="row">
+					<div class="col-xs-4">
+						<h4>{% trans "Average Age All" %}: {{payload.age_average_total|floatformat:1}}</h4>
+					</div>
+					<div class="col-xs-4">
+						<h4>{% trans "Average Age Men" %}: {{payload.age_average_men|floatformat:1}}</h4>
+					</div>
+					<div class="col-xs-4">
+						<h4>{% trans "Average Age Women" %}: {{payload.age_average_women|floatformat:1}}</h4>
+					</div>
+				</div>
+			</div>
+			</p>
+			
+			<h3>Participation by Age</h3>
 			<div class="container">
 				<div class="row">
 					<div class="col-xs-4">
