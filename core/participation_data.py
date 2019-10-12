@@ -6,6 +6,18 @@ from collections import defaultdict
 from . import utils
 from .models import *
 
+def get_average( s ):
+	try:
+		return statistics.mean( s )
+	except:
+		return None
+		
+def get_median( s ):
+	try:
+		return statistics.median( s )
+	except:
+		return None
+
 def get_competitions( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None ):
 	competitions = Competition.objects.all()
 	if start_date is not None:
@@ -409,12 +421,6 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		return category_average_max
 	category_average_max = getCategoryAverageMax()
 	
-	def get_average( s ):
-		try:
-			return statistics.mean( s )
-		except:
-			return None
-		
 	payload = {
 		'competitions_total': competitions_total,
 		'events_total': events_total,
@@ -442,6 +448,10 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 		'age_average_total': get_average( license_holder_gender_age.values() ),
 		'age_average_men': get_average( age for (lh_id, gender), age in license_holder_gender_age.items() if gender == 0 ),
 		'age_average_women': get_average( age for (lh_id, gender), age in license_holder_gender_age.items() if gender == 1 ),
+		
+		'age_median_total': get_median( license_holder_gender_age.values() ),
+		'age_median_men': get_median( age for (lh_id, gender), age in license_holder_gender_age.items() if gender == 0 ),
+		'age_median_women': get_median( age for (lh_id, gender), age in license_holder_gender_age.items() if gender == 1 ),
 		
 		'profile_year':profile_year,
 		'license_holder_profile':license_holder_profile,
