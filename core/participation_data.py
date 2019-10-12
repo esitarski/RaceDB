@@ -37,17 +37,13 @@ def get_competitions( start_date=None, end_date=None, disciplines=None, race_cla
 	return competitions.order_by( 'start_date', 'pk' ).distinct()
 
 def event_get_participants( event ):
-	# If there are results for this event, only return participants that have results and are not DNS.
-	DNS = Result.cDNS
-	participated_results = set( p_id for p_id, status in event.get_result_class().objects.filter(event=event).values_list('participant__id', 'status') if status != DNS )
-	if not participated_results:
-		for p in event.get_participants():
-			yield p
-		return
-	else:
-		for p in event.get_participants():
-			if p.id in participated_results:
-				yield p
+	participants = event.get_participants()
+	
+	# If there are results for this event, only return participants that are starters (i.e. not DNS).
+	if event.get_result_class().objects.filter(event=event).exists():
+		# Results are available.  Return starters only.
+		participants = participants.filter( id__in=get_ids(event.get_result_class().objects.filter(event=event).exclude(status=Result.cDNS),'participant') )
+	return participants
 
 def participation_data( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None ):
 	competitions = get_competitions( start_date, end_date, disciplines, race_classes, organizers, include_labels, exclude_labels )

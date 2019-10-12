@@ -49,6 +49,14 @@ from .CountryIOC import uci_country_codes_set, ioc_from_country, iso_uci_country
 from .large_delete_all import large_delete_all
 from .WriteLog import writeLog
 
+def get_ids( q, fname=None ):
+	if fname:
+		if not fname.endswith( '__id' ):
+			fname += '__id'
+	else:
+		fname = 'id'
+	return q.values_list( fname, flat=True )
+
 def duration_field_0():  return 0
 def duration_field_1m(): return 60
 def duration_field_2m(): return 2*60
