@@ -8,4 +8,4 @@ xlsxwriter
 xlrd
 pytz
 tzlocal
-fpdf
+fpdf2
