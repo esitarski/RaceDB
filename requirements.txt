@@ -9,4 +9,4 @@ xlrd
 pytz
 tzlocal
 fpdf2
--e git+git@github.com:mbuckaway/pyllrp.git#egg=pyllrp
+-e git+https://github.com/mbuckaway/pyllrp.git#egg=pyllrp
