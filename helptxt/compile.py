@@ -13,7 +13,11 @@ import glob
 import shutil
 import zipfile
 from contextlib import contextmanager
-from .version import version
+# Fix problem using from command line
+try:
+	from version import version
+except ImportError:
+	from .version import version
 
 HtmlDocFolder = 'core/static/docs'
 
