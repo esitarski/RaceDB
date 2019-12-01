@@ -1,4 +1,4 @@
-name: Publish Beta Zip
+name: PublishBetaZip
 
 on:
   push:
