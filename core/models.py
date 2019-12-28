@@ -2,7 +2,6 @@ from . import patch_sqlite_text_factory	# Must be first.
 
 import re
 import os
-import six
 import math
 from heapq import heappush
 import datetime
@@ -1964,7 +1963,7 @@ class WaveBase( models.Model ):
 		for p in participants:
 			category_starters[p.category_id] += 1
 		
-		wave_starters = sum( category_starters.itervalues() )
+		wave_starters = sum( category_starters.values() )
 		category_rank = defaultdict( int )
 		for pos, p in enumerate(participants, 1):
 			category_rank[p.category_id] += 1
@@ -3369,7 +3368,7 @@ def update_category_hints():
 	# Update the CategoryHints with the latest category information by discipline.
 	CategoryHint.objects.all().delete()
 	with BulkSave() as b:
-		for (license_holder, category_format, discipline), (effective_date, category) in six.iteritems(most_recent):
+		for (license_holder, category_format, discipline), (effective_date, category) in most_recent.items():
 			ch = CategoryHint()
 			ch.license_holder_id = license_holder
 			ch.discipline_id = discipline
@@ -4934,7 +4933,7 @@ class ParticipantOption( models.Model ):
 # Series
 #
 def categories_from_pks( pks ):
-	return sorted( (c for c in Category.objects.in_bulk(pks).itervalues()), key=operator.attrgetter('sequence') )
+	return sorted( (c for c in Category.objects.in_bulk(pks).values()), key=operator.attrgetter('sequence') )
 
 class Series( Sequence ):
 	name = models.CharField( max_length=32, default = 'MySeries', verbose_name=_('Name') )
