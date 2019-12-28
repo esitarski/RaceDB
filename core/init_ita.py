@@ -92,7 +92,7 @@ def init_ccn( fname ):
 			team_name = ur.get('Team','')
 			if team_name:
 				team = Team.objects.get_or_create( name=team_name )[0]
-				for id, d in six.iteritems(discipline_id):
+				for id, d in discipline_id.items():
 					TeamHint( discipline=d, license_holder=lh, effective_date=effective_date, team=team )
 					break
 				

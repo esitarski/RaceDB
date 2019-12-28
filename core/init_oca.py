@@ -128,7 +128,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 				for count, team_name in enumerate(team_names):
 					team = Team.objects.get_or_create( name=team_name )[0]
 					if count == len(team_names)-1:
-						for discipline_name, discipline in six.iteritems(discipline_id):
+						for discipline_name, discipline in discipline_id.items():
 							for col_name in discipline_cols[discipline_name]:
 								if getattr(ur, col_name, None):
 									TeamHint( license_holder=lh, team=team, discipline=discipline, effective_date=effective_date ).save()
