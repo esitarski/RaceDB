@@ -1,0 +1,12 @@
+django==2.2.1
+django-crispy-forms
+django-extensions
+requests
+dj_static
+waitress
+xlsxwriter
+xlrd
+pytz
+tzlocal
+fpdf2
+-e git+https://github.com/mbuckaway/pyllrp.git#egg=pyllrp

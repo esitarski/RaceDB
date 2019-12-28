@@ -9,11 +9,17 @@ import threading
 import random
 import time
 from os.path import expanduser
+from os import environ
 import threading
 from six.moves.queue import Queue, Empty
 from .utils import removeDiacritic, safe_print
 
+global logFileName
 logFileName = '{}/RaceDBLog.txt'.format(expanduser("~"))
+try:
+    logFileName = environ['RACEDBLOGFILE']
+except Exception:
+    None
 sys.stderr.write( 'logFileName="{}"\n'.format(logFileName) )
 
 # Use a singleton thread to write the log to avoid clobbering log writes.
