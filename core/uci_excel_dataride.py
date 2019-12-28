@@ -127,7 +127,7 @@ def uci_excel( event, category, fname, startList=True ):
 			ww( row, col, v, fmt )
 		fmt = general_format
 
-	for col, width in six.iteritems(colWidths):
+	for col, width in colWidths.items():
 		ws.set_column( col, col, width+2 )
 
 	#-------------------------------------------------------------------------------------------------------	
@@ -160,7 +160,7 @@ def uci_excel( event, category, fname, startList=True ):
 		for col, name in enumerate(colNames):
 			ww( row, col, getValue.get(name, lambda rr:u'')(rr), getFmt(name, row) )
 	
-	for col, width in six.iteritems(colWidths):
+	for col, width in colWidths.items():
 		ws.set_column( col, col, width+2 )
 	
 	ws.autofilter( 0, 0, len(results)+1, len(colNames) )	

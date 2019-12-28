@@ -135,7 +135,7 @@ def init_ccn( fname = fnameDefault ):
 					team = Team.objects.get_or_create( name=t )[0]
 					last_team = team
 				pcd = ur.get('Primary Cycling Discipline','').strip().lower()
-				for id, d in six.iteritems(discipline_id):
+				for id, d in discipline_id.items():
 					if d.name.lower() in pcd:
 						TeamHint( discipline=d, license_holder=lh, effective_date=effective_date, team=last_team )
 						break
