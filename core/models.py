@@ -54,7 +54,7 @@ def get_ids( q, fname=None ):
 			fname += '__id'
 	else:
 		fname = 'id'
-	return q.values_list( fname, flat=True )
+	return q.order_by().values_list( fname, flat=True )
 
 def duration_field_0():  return 0
 def duration_field_1m(): return 60
