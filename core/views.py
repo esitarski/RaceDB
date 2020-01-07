@@ -1373,34 +1373,27 @@ def UCIExcelDownload( request, eventId, eventType, startList=1 ):
 	event = get_object_or_404( [EventMassStart, EventTT][eventType], pk=eventId )
 	startList = 1 if int(startList) else 0
 	
+	zip_stream = io.BytesIO()	
+	with zipfile.ZipFile(zip_stream, 'w') as zip_writer:
+		for category in event.get_categories():
+			fname = 'RaceDB-UCI-{}-{}-{}-{}.xlsx'.format(
+				['Results','StartList'][startList],
+				utils.cleanFileName(event.competition.name),
+				utils.cleanFileName(event.name),
+				utils.cleanFileName(category.code_gender),
+			)
+			safe_print( u'adding', fname, '...' )
+			zip_writer.writestr( fname, uci_excel(event, category, startList) )
+
+	value = zip_stream.getvalue()
+	response = HttpResponse(value, content_type="application/zip")
+	response['Content-Length'] = '{}'.format(len(value))
 	zip_fname = 'RaceDB-UCI-{}-{}-{}_{}.zip'.format(
 		['Results','StartList'][startList],
 		utils.cleanFileName(event.competition.name),
 		utils.cleanFileName(event.name),
 		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
-	)
-	
-	# Create a temp file.
-	zip_stream = tempfile.TemporaryFile()
-	
-	zip_handler = zipfile.ZipFile( zip_stream, 'w' )
-	for category in event.get_categories():
-		fname = 'RaceDB-UCI-{}-{}-{}-{}.xlsx'.format(
-			['Results','StartList'][startList],
-			utils.cleanFileName(event.competition.name),
-			utils.cleanFileName(event.name),
-			utils.cleanFileName(category.code_gender),
-		)
-		safe_print( u'adding', fname, '...' )
-		zip_handler.writestr( fname, uci_excel(event, category, startList) )
-
-	zip_handler.close()
-
-	zip_stream.seek( 0 )	
-	response = HttpResponse(zip_stream, content_type=" application/zip")
-	zip_stream.seek( 0, 2 )
-	response['Content-Length'] = '{}'.format(zip_stream.tell())
-	zip_stream.seek( 0 )	
+	)	
 	response['Content-Disposition'] = 'attachment; filename={}'.format(zip_fname)
 	return response
 
