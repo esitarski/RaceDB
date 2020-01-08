@@ -199,6 +199,7 @@ urlpatterns = [
 	re_path(r'^.*LicenseHolderRfidScan/$', views.LicenseHolderRfidScan),
 	re_path(r'^.*LicenseHolderTagChange/(?P<licenseHolderId>\d+)/$', views.LicenseHolderTagChange),
 	re_path(r'^.*LicenseHolderEdit/(?P<licenseHolderId>\d+)/$', views.LicenseHolderEdit),
+	re_path(r'^.*LicenseHolderUCIDatabase/(?P<licenseHolderId>\d+)/$', views.LicenseHolderUCIDatabase),
 	re_path(r'^.*LicenseHolderDelete/(?P<licenseHolderId>\d+)/$', views.LicenseHolderDelete),
 	re_path(r'^.*LicenseHolderTeamChange/(?P<licenseHolderId>\d+)/(?P<disciplineId>\d+)/$', views.LicenseHolderTeamChange),
 	re_path(r'^.*LicenseHolderTeamSelect/(?P<licenseHolderId>\d+)/(?P<disciplineId>\d+)/(?P<teamId>\d+)/$', views.LicenseHolderTeamSelect),

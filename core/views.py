@@ -242,6 +242,9 @@ class LicenseHolderForm( ModelForm ):
 	def manageTag( self, request, license_holder ):
 		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderTagChange', license_holder.id) )
 	
+	def uciDatabase( self, request, license_holder ):
+		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderUCIDatabase', license_holder.id) )
+	
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
@@ -338,6 +341,7 @@ class LicenseHolderForm( ModelForm ):
 		
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
+			self.additional_buttons.append( ('uci-database-submit', _('UCI Database'), 'btn btn-primary', self.uciDatabase), )
 			self.additional_buttons.append( ('manage-tag-submit', _('Manage Chip Tag'), 'btn btn-success', self.manageTag), )
 		
 		addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
@@ -443,6 +447,60 @@ def LicenseHoldersDisplay( request ):
 	isEdit = True
 	return render( request, 'license_holder_list.html', locals() )
 
+#--------------------------------------------------------------------------
+@autostrip
+class UCIDatabaseForm( Form ):
+	fields = (
+		(_("First Name"),	'first_name'),
+		(_("Last Name"),	'last_name'),
+		(_("Nat. Code"),	'nation_code'),
+		(_("UCI ID"), 		'uci_id'),
+	)
+	
+	def __init__( self, *args, **kwargs ):
+		context = {}
+		for name, attr in fields:
+			context[attr] = kwargs.pop( attr, None )
+		super(UCIDatabaseForm, self).__init__(*args, **kwargs)
+		for name, attr in fields:
+			self.fields[attr] = forms.BooleanField( required=False, label=format_lazy( '{}: "{}"', name, context[attr]), initial=bool(context[attr]), disabled=bool(context[attr]) )
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		
+		button_args = [
+			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
+			CancelButton(),
+		]
+
+		rows = [Row(Field(attr)) for name, attr in fields]
+		rows.append( Row( *button_args ) )
+
+		self.helper.layout = Layout( *rows )
+
+from .QueryUI import query_rider
+
+@access_validation()		
+def LicenseHolderUCIDatabase( request, licenseHolderId ):
+	lh = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	
+	lh_attrs = {attr:getattr(lh.attr) for name, attr in UCIDatabaseForm.fields}
+	uci_records = []
+	errors = []
+	
+	if request.method == 'POST':
+		form = UCIDatabaseForm( request.POST, **lh_attrs )
+		if form.is_valid():
+			query_args = { attr:getattr(lh.attr) for name, attr in UCIDatabaseForm.fields if form.cleaned_data[attr] }
+			try:
+				uci_records = query_rider( **query_args )
+			except Exception as e:
+				errors.append( e )
+	else:
+		form = UCIDatabaseForm( **lh_attrs )
+		
+	return render( request, 'license_holder_uci_database.html', locals() )	
+	
 #--------------------------------------------------------------------------
 @autostrip
 class BarcodeScanForm( Form ):

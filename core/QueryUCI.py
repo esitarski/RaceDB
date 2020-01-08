@@ -49,7 +49,7 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 	if gender is not None:
 		if isinstance(gender, int):
 			gender = 'MF'[gender]
-		if gender not in ('M', 'F'):
+		elif gender not in 'MF':
 			raise ValueError( 'gender must be M or F' )
 		add_criteria( 'gender', gender )
 	if nation_code:
@@ -73,9 +73,12 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 		values = [{uci_db.get(k.lower(),k.lower()):v for k, v in r.items()} for r in values]
 		for r in values:
 			if 'birthdate' in r:
-				r['birthdate'] = datetime.date( *[int(dv) for dv in r['birthdate'].split('T')[0].split('-')] )
+				r['date_of_birth'] = datetime.date( *[int(dv) for dv in r['birthdate'].split('T')[0].split('-')] )
+				del r['birthdate']
 			if 'gender' in r:
 				r['gender'] = 0 if r['gender'].startswith('M') else 1
+			if 'uci_id' in r:
+				r['uci_id'] = '{}'.format(r['uci_id'])
 	return values
 		
 if __name__ == '__main__':
