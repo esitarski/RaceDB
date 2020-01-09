@@ -448,23 +448,33 @@ def LicenseHoldersDisplay( request ):
 	return render( request, 'license_holder_list.html', locals() )
 
 #--------------------------------------------------------------------------
+from . import QueryUCI
+lh_uci_records = 'lh_uci_records'
+
 @autostrip
 class UCIDatabaseForm( Form ):
-	fields = (
+	query_fields = (
 		(_("First Name"),	'first_name'),
 		(_("Last Name"),	'last_name'),
 		(_("Nat. Code"),	'nation_code'),
-		(_("UCI ID"), 		'uci_id'),
+		(_("UCIID"), 		'uci_id'),
 	)
 	
 	def __init__( self, *args, **kwargs ):
-		context = {}
-		for name, attr in fields:
-			context[attr] = kwargs.pop( attr, None )
+		lh_attrs = kwargs.pop('lh_attrs', {})
 		super(UCIDatabaseForm, self).__init__(*args, **kwargs)
-		for name, attr in fields:
-			self.fields[attr] = forms.BooleanField( required=False, label=format_lazy( '{}: "{}"', name, context[attr]), initial=bool(context[attr]), disabled=bool(context[attr]) )
-		
+		for name, attr in self.query_fields:
+			lh_attr = lh_attrs.get(attr, None)
+			if attr == 'uci_id' and lh_attr:
+				lh_attr = re.sub( '[^0-9]', '', '{}'.format(lh_attr) )
+				lh_attr = ' '.join( lh_attr[i:i+3] for i in range(0, len(lh_attr), 3) )
+			self.fields[attr] = forms.BooleanField(
+				required=False,
+				label=format_lazy( '{}: {}', name, lh_attr or ''),
+				initial=bool(lh_attr),
+				disabled=not bool(lh_attr)
+			)
+			
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		
@@ -473,33 +483,61 @@ class UCIDatabaseForm( Form ):
 			CancelButton(),
 		]
 
-		rows = [Row(Field(attr)) for name, attr in fields]
-		rows.append( Row( *button_args ) )
+		rows = [Row(Field(attr)) for name, attr in self.query_fields]
+		rows.append( Row(*button_args) )
 
 		self.helper.layout = Layout( *rows )
 
-from .QueryUI import query_rider
-
 @access_validation()		
 def LicenseHolderUCIDatabase( request, licenseHolderId ):
-	lh = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	lh = license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	
-	lh_attrs = {attr:getattr(lh.attr) for name, attr in UCIDatabaseForm.fields}
-	uci_records = []
+	lh_attrs = {attr:getattr(lh,attr) for name, attr in UCIDatabaseForm.query_fields}
+	uci_records = None
 	errors = []
 	
+	def fix_dates( d ):
+		return {k:v if not isinstance(v, datetime.date) else v.strftime('%Y-%m-%d') for k, v in d.items()}
+	
 	if request.method == 'POST':
-		form = UCIDatabaseForm( request.POST, **lh_attrs )
+		form = UCIDatabaseForm( request.POST, lh_attrs=lh_attrs )
 		if form.is_valid():
-			query_args = { attr:getattr(lh.attr) for name, attr in UCIDatabaseForm.fields if form.cleaned_data[attr] }
-			try:
-				uci_records = query_rider( **query_args )
-			except Exception as e:
-				errors.append( e )
+			query_args = { attr:getattr(lh,attr) for name, attr in UCIDatabaseForm.query_fields if form.cleaned_data[attr] }
+			request.session[lh_uci_records] = []
+			if query_args:
+				try:
+					uci_records = QueryUCI.query_rider( **query_args )
+					request.session[lh_uci_records] = [fix_dates(d) for d in uci_records]
+				except Exception as e:
+					errors.append( e )
+			else:
+				errors.append( _('Please select at least one search criteria.') )
 	else:
-		form = UCIDatabaseForm( **lh_attrs )
+		form = UCIDatabaseForm( lh_attrs=lh_attrs )
 		
 	return render( request, 'license_holder_uci_database.html', locals() )	
+
+def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confirmed=0 ):
+	lh = license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	
+	if int(confirmed):
+		uci_records = request.session.get(lh_uci_records, [])
+		try:
+			uci_record = uci_records[int(iUciRecord)]
+		except:
+			uci_record = None
+		if uci_record:
+			for attr in ('first_name', 'last_name', 'gender', 'nation_code', 'date_of_birth', 'uci_id'):
+				if uci_record[attr] is not None:
+					v = uci_record[attr] if attr != 'date_of_birth' else datetime.date(*[int(k) for k in uci_record[attr].split('-')])
+					setattr( lh, attr, v )
+			lh.save()
+		return HttpResponseRedirect(getContext(request,'pop2Url'))
+					
+	message = format_lazy( u'{}: {} {}', _('Update from UCI Database'), lh.first_name, lh.last_name )
+	cancel_target = getContext(request,'cancelUrl')
+	target = getContext(request,'path') + '1/'
+	return render( request, 'are_you_sure.html', locals() )	
 	
 #--------------------------------------------------------------------------
 @autostrip

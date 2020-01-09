@@ -1,13 +1,19 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load blank_if_none %}
+{% load format_uci_id %}
 {% load crispy_forms_tags %}
 {% block content %}
 <h1>{{title}}</h1>
 <hr/>
+<h3>
+	{{lh.first_name}} {{lh.last_name}}
+</h3>
+<hr/>
 {% crispy form %}
 {% if uci_records %}
 <hr/>
+{% spaceless %}
 <table class="table table-striped table-hover" id="sort_table_id">
 <thead>
 	<tr>
@@ -18,12 +24,22 @@
 		<th>{% trans "Date of Birth" %}</th>
 		<th>{% trans "Nat. Code" %}</th>
 		<th>{% trans "UCIID" %}</th>
-		<th>{% trans "Team Name" %}</th>
-		<th>{% trans "Team Code" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
 <tbody>
+	<tr><th colspan=8>{% trans "Current" %}:</th></tr>
+	<tr>
+		<td></td>
+		<td>{{lh.first_name}}</td>
+		<td>{{lh.last_name}}</td>
+		<td>{{lh.get_gender_display}}</td>
+		<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
+		<td>{{lh.nation_code}}</td>
+		<td>{{lh.uci_id|format_uci_id}}</td>
+		<td></td>
+	</tr>
+	<tr><th colspan=8>{% trans "Returned" %}:</th></tr>
 	{% for r in uci_records %}
 		<tr>
 			<td class="text-right">{{forloop.counter}}.</td>
@@ -32,15 +48,18 @@
 			<td>{% if r.gender == 0 %}{% trans "Men" %}{% elif r.gender == 1 %}{% trans "Women" %}{% else %}X{% endif %}</td>
 			<td>{{r.date_of_birth|date:"Y-m-d"}}</td>
 			<td>{{r.nation_code}}</td>
-			<td>{{r.uci_id}}</td>
-			<td>{{r.teamname|blank_if_none}}</td>
-			<td>{{r.teamcode|blank_if_none}}</td>
+			<td>{{r.uci_id|format_uci_id}}</td>
 			<td class="hidden-print">
+				<a class="btn btn-primary btn-sm" href="./LicenseHolderUCIDatabaseUpdate/{{license_holder.id}}/{{forloop.counter0}}">{% trans "Update" %}</a>
 			</td>
 		</tr>
 	{% endfor %}
 </tbody>
 </table>
+{% endspaceless %}
+{% elif uci_records is not None %}
+	<hr/>
+	<h3>{% trans "No match" %}</h3>
 {% endif %}
 {% if errors %}
 <hr/>
