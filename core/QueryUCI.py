@@ -19,10 +19,8 @@ uci_db['ridercategory'] = 'category'
 uci_db['nationality'] = 'nation_code'
 
 uci_to_utf8 = { '\\X{:02x}'.format(i).encode():chr(i).encode() for i in range(256) }
-def encoding_repl( match ):
-	return uci_to_utf8[match.group(0)]
 def fix_uci_encoding( s ):
-	return re.sub( rb'\\X([0-9a-f][0-9a-f])', encoding_repl, s )
+	return re.sub( rb'\\X([0-9a-f][0-9a-f])', lambda match: uci_to_utf8[match.group(0)], s )
 
 def query_rider( category=None, team_code=None, uci_id=None, first_name=None, last_name=None, gender=None, nation_code=None, continent=None ):
 	'''
