@@ -1,3 +1,4 @@
+import re
 import json
 import urllib.parse
 import urllib.request
@@ -16,6 +17,12 @@ uci_db = {v:k for k,v in db_uci.items()}
 uci_db['UCIID'] = 'uci_id'
 uci_db['ridercategory'] = 'category'
 uci_db['nationality'] = 'nation_code'
+
+uci_to_utf8 = { '\\X{:02x}'.format(i).encode():chr(i).encode() for i in range(256) }
+def encoding_repl( match ):
+	return uci_to_utf8[match.group(0)]
+def fix_uci_encoding( s ):
+	return re.sub( rb'\\X([0-9a-f][0-9a-f])', encoding_repl, s )
 
 def query_rider( category=None, team_code=None, uci_id=None, first_name=None, last_name=None, gender=None, nation_code=None, continent=None ):
 	'''
@@ -68,7 +75,7 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 	with urllib.request.urlopen(url_full) as response:
 	   ret = response.read()			
 	
-	values = json.loads( ret.decode() )
+	values = json.loads( fix_uci_encoding(ret).decode() )
 	if values:
 		values = [{uci_db.get(k.lower(),k.lower()):v for k, v in r.items()} for r in values]
 		for r in values:
