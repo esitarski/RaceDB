@@ -7,7 +7,7 @@ import datetime
 
 def filter_encode( s ):
 	''' Remove all accents and encode as ascii. '''
-	return urllib.parse.quote(unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ASCII', 'ignore').decode())
+	return unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ASCII', 'ignore').decode()
 
 url = 'http://ucibws.uci.ch/api/contacts/riders'
 
@@ -68,8 +68,9 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 	if not filter_criteria:
 		raise ValueError( 'missing filter criteria' )
 		
-	data = urllib.parse.urlencode( filter_criteria )
+	data = urllib.parse.urlencode( filter_criteria, quote_via=urllib.parse.quote )
 	url_full = url + '?' + data
+	print( 'url_full="{}"'.format(url_full) )
 	with urllib.request.urlopen(url_full) as response:
 	   ret = response.read()			
 	
@@ -78,15 +79,23 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 		values = [{uci_db.get(k.lower(),k.lower()):v for k, v in r.items()} for r in values]
 		for r in values:
 			if 'birthdate' in r:
-				r['date_of_birth'] = datetime.date( *[int(dv) for dv in r['birthdate'].split('T')[0].split('-')] )
+				try:
+					r['date_of_birth'] = datetime.date( *[int(dv) for dv in r['birthdate'].split('T')[0].split('-')] )
+				except:
+					r['date_of_birth'] = None
 				del r['birthdate']
 			if 'gender' in r:
-				r['gender'] = 0 if r['gender'].startswith('M') else 1
+				try:
+					r['gender'] = 1 if r['gender'].startswith('F') else 0
+				except:
+					r['gender'] = None
 			if 'uci_id' in r:
 				r['uci_id'] = '{}'.format(r['uci_id'])
 	return values
 		
 if __name__ == '__main__':
-	print( query_rider( first_name='edward', last_name='sitarski', gender='M' ) )
-	print( query_rider( first_name='anne', last_name='cobban', gender='F' ) )
+	print( query_rider(first_name='Edvald Boasson') )	# Check space encoding.
+	print( query_rider(uci_id='10061435134') )			# Check None for birthdate.
+	#print( query_rider(first_name='edward', last_name='sitarski', gender='M') )
+	#print( query_rider(first_name='anne', last_name='cobban', gender='F') )
 		
