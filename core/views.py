@@ -366,6 +366,10 @@ def license_holders_from_search_text( search_text ):
 	if not license_holders and is_uci_id( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_id = search_text.replace(' ','')))
 	
+	if not license_holders and search_text.startswith( 'uciid=' ):
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
+		license_holders = list(LicenseHolder.objects.filter(uci_id = arg or ''))
+	
 	if not license_holders and reUCICode.match( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_code = search_text.upper()))
 			
