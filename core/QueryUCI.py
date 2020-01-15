@@ -18,6 +18,7 @@ uci_db['UCIID'] = 'uci_id'
 uci_db['ridercategory'] = 'category'
 uci_db['nationality'] = 'nation_code'
 
+# Convert from UCI encoding.
 uci_to_utf8 = { '\\X{:02x}'.format(i).encode():chr(i).encode() for i in range(256) }
 def fix_uci_encoding( s ):
 	return re.sub( rb'\\X([0-9a-f][0-9a-f])', lambda match: uci_to_utf8[match.group(0)], s )
@@ -74,26 +75,34 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 	with urllib.request.urlopen(url_full) as response:
 	   ret = response.read()			
 	
-	values = json.loads( fix_uci_encoding(ret).decode() )
+	try:
+		values = json.loads( ret.decode() )							# Try standard utf-8.
+	except:
+		values = json.loads( fix_uci_encoding(ret).decode() )		# Try non-standard encoding.
+	
 	if values:
 		values = [{uci_db.get(k.lower(),k.lower()):v for k, v in r.items()} for r in values]
 		for r in values:
+			r['date_of_birth'] = None
 			if 'birthdate' in r:
 				try:
 					r['date_of_birth'] = datetime.date( *[int(dv) for dv in r['birthdate'].split('T')[0].split('-')] )
 				except:
-					r['date_of_birth'] = None
+					pass
 				del r['birthdate']
+			r['gender'] = None
 			if 'gender' in r:
 				try:
 					r['gender'] = 1 if r['gender'].startswith('F') else 0
 				except:
-					r['gender'] = None
+					pass
 			if 'uci_id' in r:
 				r['uci_id'] = '{}'.format(r['uci_id'])
 	return values
 		
 if __name__ == '__main__':
+	print( query_rider(first_name="Etienne", last_name="HOSSACK", nation_code="CAN" ) )
+	print( query_rider(first_name='martin', last_name='vondrak') )	# Check unicode encoding.
 	print( query_rider(first_name='Edvald Boasson') )	# Check space encoding.
 	print( query_rider(uci_id='10061435134') )			# Check None for birthdate.
 	#print( query_rider(first_name='edward', last_name='sitarski', gender='M') )
