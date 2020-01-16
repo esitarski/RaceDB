@@ -54,7 +54,7 @@ def get_ids( q, fname=None ):
 			fname += '__id'
 	else:
 		fname = 'id'
-	return q.values_list( fname, flat=True )
+	return q.order_by().values_list( fname, flat=True )
 
 def duration_field_0():  return 0
 def duration_field_1m(): return 60
@@ -3083,7 +3083,7 @@ def validate_str_list( r ):
 		r = r[:-1]
 	return r
 
-class CustomCategory(Sequence):
+class CustomCategory( Sequence ):
 	name = models.CharField( max_length=80, verbose_name=_('Name') )
 	range_str = models.CharField( default='', blank=True, max_length=128, verbose_name=_('Bib Ranges'),
 		help_text = _('e.g. 1-199, -35-45') )
@@ -3238,18 +3238,18 @@ class CustomCategory(Sequence):
 				wave_rank=pos, wave_starters=wave_starters,
 			) for pos, p in enumerate(participants.order_by('license_holder__search_text'), 1) ]
 	
-	class Meta:
+	class Meta( Sequence.Meta ):
 		verbose_name = _('CustomCstegory')
 		verbose_name_plural = _('CustomCategories')
 		abstract = True
 
-class CustomCategoryMassStart(CustomCategory):
+class CustomCategoryMassStart( CustomCategory ):
 	event = models.ForeignKey( 'EventMassStart', verbose_name=_('EventMassSart'), on_delete=models.CASCADE )
 	
 	def get_container( self ):
 		return self.event.customcategorymassstart_set.all()
 	
-	class Meta:
+	class Meta( CustomCategory.Meta ):
 		verbose_name = _('CustomCategoryMassStart')
 		verbose_name_plural = _('CustomCategoriesMassStart')
 
@@ -3259,7 +3259,7 @@ class CustomCategoryTT(CustomCategory):
 	def get_container( self ):
 		return self.event.customcategorytt_set.all()
 	
-	class Meta:
+	class Meta( CustomCategory.Meta ):
 		verbose_name = _('CustomCategoryTT')
 		verbose_name_plural = _('CustomCategoriesTT')
 		
@@ -5108,10 +5108,9 @@ class Series( Sequence ):
 	def __str__( self ):
 		return self.name
 	
-	class Meta:
+	class Meta( Sequence.Meta ):
 		verbose_name = _("Series")
 		verbose_name_plural = _("Series")
-		ordering = ['sequence']
 		
 #-----------------------------------------------------------------------
 class SeriesPointsStructure( Sequence ):
@@ -5173,7 +5172,7 @@ class SeriesPointsStructure( Sequence ):
 			f.append(  u' dns={}'.format(self.dns_points) )
 		return u', '.join( f )
 		
-	class Meta:
+	class Meta( Sequence.Meta ):
 		verbose_name = _("PointsStructure")
 		verbose_name_plural = _("PointsStructures")
 
@@ -5351,7 +5350,7 @@ class CategoryGroup( Sequence ):
 			text = text[:-1]
 		return u''.join( text )
 	
-	class Meta:
+	class Meta( Sequence.Meta ):
 		verbose_name = _("CategoryGroup")
 		verbose_name_plural = _("CategoryGroups")
 
@@ -5409,7 +5408,7 @@ class SeriesUpgradeProgression( Sequence ):
 			self.factor = 0.5
 		super( SeriesUpgradeProgression, self ).save( *args, **kwargs )
 	
-	class Meta:
+	class Meta( Sequence.Meta ):
 		verbose_name = _("SeriesUpgradeProgression")
 		verbose_name_plural = _("SeriesUpgradeProgressions")
 	
@@ -5420,7 +5419,7 @@ class SeriesUpgradeCategory( Sequence ):
 	def get_container( self ):
 		return self.upgrade_progression.seriesupgradecategory_set.all()
 	
-	class Meta:
+	class Meta( Sequence.Meta ):
 		verbose_name = _("SeriesUpgradeCategory")
 		verbose_name_plural = _("SeriesUpgradeCategories")
 	

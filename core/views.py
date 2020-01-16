@@ -242,6 +242,9 @@ class LicenseHolderForm( ModelForm ):
 	def manageTag( self, request, license_holder ):
 		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderTagChange', license_holder.id) )
 	
+	def uciDatabase( self, request, license_holder ):
+		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderUCIDatabase', license_holder.id) )
+	
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
@@ -338,6 +341,7 @@ class LicenseHolderForm( ModelForm ):
 		
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
+			self.additional_buttons.append( ('uci-database-submit', _('UCI Database'), 'btn btn-primary', self.uciDatabase), )
 			self.additional_buttons.append( ('manage-tag-submit', _('Manage Chip Tag'), 'btn btn-success', self.manageTag), )
 		
 		addFormButtons( self, button_mask, additional_buttons=self.additional_buttons )
@@ -361,6 +365,10 @@ def license_holders_from_search_text( search_text ):
 
 	if not license_holders and is_uci_id( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_id = search_text.replace(' ','')))
+	
+	if not license_holders and search_text.startswith( 'uciid=' ):
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
+		license_holders = list(LicenseHolder.objects.filter(uci_id = arg or ''))
 	
 	if not license_holders and reUCICode.match( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_code = search_text.upper()))
@@ -443,6 +451,98 @@ def LicenseHoldersDisplay( request ):
 	isEdit = True
 	return render( request, 'license_holder_list.html', locals() )
 
+#--------------------------------------------------------------------------
+from . import QueryUCI
+lh_uci_records = 'lh_uci_records'
+
+@autostrip
+class UCIDatabaseForm( Form ):
+	query_fields = (
+		(_("First Name"),	'first_name'),
+		(_("Last Name"),	'last_name'),
+		(_("Nat. Code"),	'nation_code'),
+		(_("UCIID"), 		'uci_id'),
+	)
+	
+	def __init__( self, *args, **kwargs ):
+		lh_attrs = kwargs.pop('lh_attrs', {})
+		super(UCIDatabaseForm, self).__init__(*args, **kwargs)
+		for name, attr in self.query_fields:
+			lh_attr = lh_attrs.get(attr, None)
+			if attr == 'uci_id' and lh_attr:
+				lh_attr = re.sub( '[^0-9]', '', '{}'.format(lh_attr) )
+				lh_attr = ' '.join( lh_attr[i:i+3] for i in range(0, len(lh_attr), 3) )
+			self.fields[attr] = forms.BooleanField(
+				required=False,
+				label=format_lazy( '{}: {}', name, lh_attr or ''),
+				initial=bool(lh_attr),
+				disabled=not bool(lh_attr)
+			)
+			
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		
+		button_args = [
+			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
+			CancelButton(),
+		]
+
+		rows = [Row(Field(attr)) for name, attr in self.query_fields]
+		rows.append( Row(*button_args) )
+
+		self.helper.layout = Layout( *rows )
+
+@access_validation()		
+def LicenseHolderUCIDatabase( request, licenseHolderId ):
+	lh = license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	
+	lh_attrs = {attr:getattr(lh,attr) for name, attr in UCIDatabaseForm.query_fields}
+	uci_records = None
+	errors = []
+	
+	def fix_dates( d ):
+		return {k:v if not isinstance(v, datetime.date) else v.strftime('%Y-%m-%d') for k, v in d.items()}
+	
+	if request.method == 'POST':
+		form = UCIDatabaseForm( request.POST, lh_attrs=lh_attrs )
+		if form.is_valid():
+			query_args = { attr:getattr(lh,attr) for name, attr in UCIDatabaseForm.query_fields if form.cleaned_data[attr] }
+			request.session[lh_uci_records] = []
+			if query_args:
+				try:
+					uci_records = QueryUCI.query_rider( **query_args )
+					request.session[lh_uci_records] = [fix_dates(d) for d in uci_records]
+				except Exception as e:
+					errors.append( e )
+			else:
+				errors.append( _('Please select at least one search criteria.') )
+	else:
+		form = UCIDatabaseForm( lh_attrs=lh_attrs )
+		
+	return render( request, 'license_holder_uci_database.html', locals() )	
+
+def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confirmed=0 ):
+	lh = license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
+	
+	if int(confirmed):
+		uci_records = request.session.get(lh_uci_records, [])
+		try:
+			uci_record = uci_records[int(iUciRecord)]
+		except:
+			uci_record = None
+		if uci_record:
+			for attr in ('first_name', 'last_name', 'gender', 'nation_code', 'date_of_birth', 'uci_id'):
+				if uci_record[attr] is not None:
+					v = uci_record[attr] if attr != 'date_of_birth' else datetime.date(*[int(k) for k in uci_record[attr].split('-')])
+					setattr( lh, attr, v )
+			lh.save()
+		return HttpResponseRedirect(getContext(request,'pop2Url'))
+					
+	message = format_lazy( u'{}: {} {}', _('Update from UCI Database'), lh.first_name, lh.last_name )
+	cancel_target = getContext(request,'cancelUrl')
+	target = getContext(request,'path') + '1/'
+	return render( request, 'are_you_sure.html', locals() )	
+	
 #--------------------------------------------------------------------------
 @autostrip
 class BarcodeScanForm( Form ):
@@ -1373,34 +1473,27 @@ def UCIExcelDownload( request, eventId, eventType, startList=1 ):
 	event = get_object_or_404( [EventMassStart, EventTT][eventType], pk=eventId )
 	startList = 1 if int(startList) else 0
 	
+	zip_stream = io.BytesIO()	
+	with zipfile.ZipFile(zip_stream, 'w') as zip_writer:
+		for category in event.get_categories():
+			fname = 'RaceDB-UCI-{}-{}-{}-{}.xlsx'.format(
+				['Results','StartList'][startList],
+				utils.cleanFileName(event.competition.name),
+				utils.cleanFileName(event.name),
+				utils.cleanFileName(category.code_gender),
+			)
+			safe_print( u'adding', fname, '...' )
+			zip_writer.writestr( fname, uci_excel(event, category, startList) )
+
+	value = zip_stream.getvalue()
+	response = HttpResponse(value, content_type="application/zip")
+	response['Content-Length'] = '{}'.format(len(value))
 	zip_fname = 'RaceDB-UCI-{}-{}-{}_{}.zip'.format(
 		['Results','StartList'][startList],
 		utils.cleanFileName(event.competition.name),
 		utils.cleanFileName(event.name),
 		datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
-	)
-	
-	# Create a temp file.
-	zip_stream = tempfile.TemporaryFile()
-	
-	zip_handler = zipfile.ZipFile( zip_stream, 'w' )
-	for category in event.get_categories():
-		fname = 'RaceDB-UCI-{}-{}-{}-{}.xlsx'.format(
-			['Results','StartList'][startList],
-			utils.cleanFileName(event.competition.name),
-			utils.cleanFileName(event.name),
-			utils.cleanFileName(category.code_gender),
-		)
-		safe_print( u'adding', fname, '...' )
-		zip_handler.writestr( fname, uci_excel(event, category, startList) )
-
-	zip_handler.close()
-
-	zip_stream.seek( 0 )	
-	response = HttpResponse(zip_stream, content_type=" application/zip")
-	zip_stream.seek( 0, 2 )
-	response['Content-Length'] = '{}'.format(zip_stream.tell())
-	zip_stream.seek( 0 )	
+	)	
 	response['Content-Disposition'] = 'attachment; filename={}'.format(zip_fname)
 	return response
 

@@ -170,7 +170,7 @@ TEMPLATES = [
 ]
 
 # Disable template caching if development.
-if os.path.exists(r'c:\Projects\RaceDBDeploy') or 'home/nloaner' in __file__:
+if os.path.exists(r'c:\Projects\RaceDBDeploy') or 'home/nloaner' in __file__  or 'home/esitarski/Projects' in __file__:
 	TEMPLATES = [{
 		'BACKEND': 'django.template.backends.django.DjangoTemplates',
 		'APP_DIRS': True,
