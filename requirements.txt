@@ -9,4 +9,6 @@ xlrd
 pytz
 tzlocal
 fpdf2
--e git+https://github.com/mbuckaway/pyllrp.git#egg=pyllrp
+-e git+https://github.com/esitarski/pyllrp.git#egg=pyllrp
+markdown
+psycopg2

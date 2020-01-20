@@ -1,0 +1,3 @@
+export IMAGE=mbuckaway/racedb
+export TAG=v0.9.0
+

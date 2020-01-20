@@ -1,0 +1,45 @@
+version: "3.4"
+services:
+    db:
+        image: postgres:11-alpine
+        restart: always
+        container_name: postgresql_racedb_app
+        environment:
+            POSTGRES_PASSWORD: 5wHYUQ9qmttpq58EV4EG
+        networks:
+            racedb:
+        hostname: postgresql_db_app
+        volumes:
+            - postgresql-racedb-data:/var/lib/postgresql/data
+            - postgresql-racedb-varrun:/var/run/postgresql
+
+    racedb:
+        image: mbuckaway/racedb:v0.9.0
+        restart: always
+        container_name: racedb_app
+        ports:
+            - "80:8000"
+        environment:
+            - sqlite3_database_fname:/racedb-data/RaceDB.sqlite3
+            - PYTHONPATH:/RaceDB
+            - RACEDBLOGFILE:/racedb-data/RaceDB-log.txt
+        env_file:
+            - ./racedb.env
+        hostname: racedb.local
+        networks:
+            racedb:
+        depends_on:
+            - db
+        volumes:
+            - ./docker-entrypoint-init.d:/docker-entrypoint-init.d
+            - postgresql-racedb-data:/var/lib/postgresql/data
+            - postgresql-racedb-varrun:/var/run/postgresql
+            - ./racedb-data:/racedb-data
+volumes:
+    postgresql-racedb-data:
+    postgresql-racedb-varrun:
+#    racedb-data:
+
+networks:
+    racedb:
+
