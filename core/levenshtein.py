@@ -62,7 +62,7 @@ for word in open(DICTIONARY, "rt").read().split():
 	WordCount += 1
 	trie.insert( word )
 
-print "Read %d words into %d nodes" % (WordCount, NodeCount)
+print("Read %d words into %d nodes" % (WordCount, NodeCount))
 
 # The search function returns a list of all words that are less than the given
 # maximum distance from the target word
@@ -119,7 +119,7 @@ end = time.time()
 
 for result in results: print ( result )
 
-print "Search took %g s" % (end - start)
+print("Search took %g s" % (end - start))
 	
 if __name__ == '__main__':
 	print ( levenshtein( 'abc', 'abc' ) )

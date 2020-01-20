@@ -5,7 +5,7 @@ from .models import *
 from . import utils
 from .large_delete_all import large_delete_all
 
-tdf = b'''
+tdf = b"""
 1	Alberto Contador	 Spain	Saxo Bank-SunGard	28	5
 2	Jesús Hernández	 Spain	Saxo Bank-SunGard	29	92
 3	Daniel Navarro	 Spain	Saxo Bank-SunGard	27	62
@@ -203,7 +203,7 @@ tdf = b'''
 216	Jonathan Hivert	 France	Saur-Sojasun	26	97
 217	Fabrice Jeandesboz	 France	Saur-Sojasun	26	124
 218	Laurent Mangel	 France	Saur-Sojasun	30	122
-219	Yannick Talabardon	 France	Saur-Sojasun	29	47'''
+219	Yannick Talabardon	 France	Saur-Sojasun	29	47"""
 
 def init_riders():
 	large_delete_all( Rider )

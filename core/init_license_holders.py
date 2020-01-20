@@ -6,8 +6,9 @@ from models import *
 from large_delete_all import large_delete_all
 from utils import removeDiacritic
 from CountryIOC import uci_country_codes
+from __future__ import unicode_literals
 
-tdf = '''
+tdf = u"""
 1	Chris Froome	 United Kingdom	Team Sky	28	1
 2	Edvald Boasson Hagen	 Norway	Team Sky	26	DNS-13
 3	Peter Kennaugh	 United Kingdom	Team Sky	24	77
@@ -205,8 +206,7 @@ tdf = '''
 216	Jean-Marc Marino	 France	Sojasun	29	116
 217	Maxime Méderel	 France	Sojasun	32	52
 218	Julien Simon	 France	Sojasun	27	87
-219	Alexis Vuillermoz	 France	Sojasun	25	46
-'''
+219	Alexis Vuillermoz	 France	Sojasun	25	46"""
 
 def init_license_holders():
 	global tdf
