@@ -8,3 +8,4 @@ core/static/
 RaceDB/*.zip
 racedb-data/
 docker/racedb-data/
+release/
