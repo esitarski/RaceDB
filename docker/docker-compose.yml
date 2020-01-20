@@ -14,7 +14,7 @@ services:
             - postgresql-racedb-varrun:/var/run/postgresql
 
     racedb:
-        image: mbuckaway/racedb:v0.9.0
+        image: mbuckaway/racedb:latest
         restart: always
         container_name: racedb_app
         ports:
@@ -31,14 +31,12 @@ services:
         depends_on:
             - db
         volumes:
-            - ./docker-entrypoint-init.d:/docker-entrypoint-init.d
             - postgresql-racedb-data:/var/lib/postgresql/data
             - postgresql-racedb-varrun:/var/run/postgresql
             - ./racedb-data:/racedb-data
 volumes:
     postgresql-racedb-data:
     postgresql-racedb-varrun:
-#    racedb-data:
 
 networks:
     racedb:
