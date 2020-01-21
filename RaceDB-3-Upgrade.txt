@@ -7,9 +7,8 @@ However, leave yourself some time before an event to do the upgrade and to check
 Testing has been extensive, but there is always the case there is something in your data that doesn't work.
 All related fixes are generally easy and I should be able to turn the around quickly.
 
-These instructions are designed to be safe - you can return to the old RaceDB if something goes wrong.
-THe reality is that Python2.7 going out of support in 2020.  Python3 is a necessary
-requirement for continued support.
+These instructions are designed to be safe - you can return to the old RaceDB if something goes wrong. The reality is that Python2.7
+was stopped being supported by Python.org in Jan 2020.  Python3 is a necessary requirement for continued support. We will not assist with issues using version 2.7 of Python.
 
 ***********************************************************************
 High Level Overview
