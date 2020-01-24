@@ -23,15 +23,14 @@ checkEnvActive() {
 }
 
 getVersion() {
-	PROGRAM=$1
 	if [ ! -f "helptxt/version.py" ]; then
 		echo "No version file in helptxt/version.py. Aborting..."
 		exit 1
 	fi
 	. helptxt/version.py
-	VERSION=$(echo $AppVerName | awk '{print $2}')
+	VERSION=$version
 	export VERSION
-	echo "$PROGRAM Version is $VERSION"
+	echo "RaceDB Version is $VERSION"
 }
 
 cleanup() {
@@ -49,6 +48,16 @@ compileCode() {
 		echo "Compile failed. Aborting..."
 		exit 1
 	fi
+}
+
+packagecode()
+{
+    checkEnvActive
+    python3 build.py
+    if [ $? -ne 0 ]; then
+        echo "Packaging failed"
+        exit 1
+    fi
 }
 
 envSetup() {
@@ -85,65 +94,52 @@ envSetup() {
 }
 
 updateversion() {
-	if [ -z "$PROGRAMS" ]; then
-		echo "Updateversion: no programs defined!!"
-		exit 1
-	fi
 	if [ -n "$GITHUB_REF" ]; then
 		echo "GITHUB_REF=$GITHUB_REF"
-		for program in $PROGRAMS
-		do
-			getBuildDir $program
-			getVersion $program
-			# development build
-			GIT_TYPE=$(echo $GITHUB_REF | awk -F '/' '{print $2'})
-			GIT_TAG=$(echo $GITHUB_REF | awk -F '/' '{print $3'})
-			SHORTSHA=$(echo $GITHUB_SHA | cut -c 1-7)
-			VERSION=$(echo $VERSION | awk -F - '{print $1}')
-			if [ "$GIT_TYPE" == "heads" -a "$GIT_TAG" == "master" ]; then
-                echo "Refusing to build an untagged master build. Release builds on a tag only!"
+        getVersion
+        # development build
+        GIT_TYPE=$(echo $GITHUB_REF | awk -F '/' '{print $2'})
+        GIT_TAG=$(echo $GITHUB_REF | awk -F '/' '{print $3'})
+        SHORTSHA=$(echo $GITHUB_SHA | cut -c 1-7)
+        VERSION=$(echo $VERSION | awk -F - '{print $1}')
+        if [ "$GIT_TYPE" == "heads" -a "$GIT_TAG" == "master" ]; then
+            echo "Refusing to build an untagged master build. Release builds on a tag only!"
+            exit 1
+        fi
+        if [ "$GIT_TYPE" == "heads" -a "$GIT_TAG" == "dev" ]; then
+            APPVERNAME="version=\"$program $VERSION-beta-$SHORTSHA\""
+            VERSION="$VERSION-beta-$SHORTSHA"
+        fi
+        if [ "$GIT_TYPE" == "tags" ]; then
+            VERNO=$(echo $GIT_TAG | awk -F '-' '{print $1}')
+            REFDATE=$(echo $GIT_TAG | awk -F '-' '{print $2}')
+            MAJOR=$(echo $VERNO | awk -F '.' '{print $1}')
+            MINOR=$(echo $VERNO | awk -F '.' '{print $2}')
+            RELEASE=$(echo $VERNO | awk -F '.' '{print $3}')
+            if [ "$MAJOR" != "v3" -o -z "$MINOR" -o -z "$RELEASE" -o -z "$REFDATE" ]; then
+                echo "Invalid tag format. Must be v3.0.3-20200101010101. Refusing to build!"
                 exit 1
             fi
-			if [ "$GIT_TYPE" == "heads" -a "$GIT_TAG" == "dev" ]; then
-				APPVERNAME="AppVerName=\"$program $VERSION-beta-$SHORTSHA\""
-				VERSION="$VERSION-beta-$SHORTSHA"
-			fi
-			if [ "$GIT_TYPE" == "tags" ]; then
-				VERNO=$(echo $GIT_TAG | awk -F '-' '{print $1}')
-				REFDATE=$(echo $GIT_TAG | awk -F '-' '{print $2}')
-				MAJOR=$(echo $VERNO | awk -F '.' '{print $1}')
-				MINOR=$(echo $VERNO | awk -F '.' '{print $2}')
-				RELEASE=$(echo $VERNO | awk -F '.' '{print $3}')
-				if [ "$MAJOR" != "v3" -o -z "$MINOR" -o -z "$RELEASE" -o -z "$REFDATE" ]; then
-					echo "Invalid tag format. Must be v3.0.3-20200101010101. Refusing to build!"
-					exit 1
-				fi
-				APPVERNAME="AppVerName=\"$program $VERSION-$REFDATE\""
-				VERSION="$GIT_TAG"
-			fi
-            if [ -z "$APPVERNAME" ]; then
-                echo "APPVERNAME is empty! [$APPVERNAME] Aborting..."
-                exit 1
-            fi
-			echo "$program version is now $VERSION"
-            echo "New Version.py: [$APPVERNAME] - [$BUILDDIR/Version.py]"
-			echo "$APPVERNAME" > $BUILDDIR/Version.py
-		done
+            APPVERNAME="version=\"$program $VERSION-$REFDATE\""
+            VERSION="$GIT_TAG"
+        fi
+        if [ -z "$APPVERNAME" ]; then
+            echo "APPVERNAME is empty! [$APPVERNAME] Aborting..."
+            exit 1
+        fi
+        echo "RaceDB version is now $VERSION"
+        echo "New version.py: [$APPVERNAME] - [helptxt/version.py]"
+        echo "$APPVERNAME" > helptxt/version.py
 	else
 		echo "Running a local build"
 	fi
 }
 
 buildall() {
-		if [ -n "$PROGRAMS" ]; then
-            		checkEnvActive
-			cleanup
-			updateversion
-			compileCode
-		else
-			echo "No programs enabled. Use -t, -c, -i, or -a."
-			exit
-		fi
+        checkEnvActive
+        cleanup
+        updateversion
+        compileCode
 }
 
 tagrepo() {
@@ -153,7 +149,7 @@ tagrepo() {
         exit 1
 	fi
     echo "Crossmgr version will be updated by the auto-build system to match the tag"
-	getVersion "CrossMgr"
+	getVersion
 	# Remove the -private from the version
 	VERSIONNO=$(echo $VERSION | awk -F - '{print $1}')
 	DATETIME=$(date +%Y%m%d%H%M%S)
@@ -177,7 +173,7 @@ dorelease() {
         echo "$CURRENT_BRANCH is not in sync with origin. Please push your changes."
         exit 1
     fi
-	getVersion "CrossMgr"
+	getVersion
 	# Remove the -private from the version
 	VERSIONNO=$(echo $VERSION | awk -F - '{print $1}')
 	DATETIME=$(date +%Y%m%d%H%M%S)
@@ -225,7 +221,7 @@ EOF
 }
 
 gotarg=0
-while getopts "hvCpSBkUAzTr" option
+while getopts "hvCpSBpkUAzTr" option
 do
 	gotarg=1
 	case ${option} in
@@ -242,9 +238,9 @@ do
 		;;
 		B) compileCode
 		;;
-		k) package $program
+		k) packagecode
 		;;
-		m) moveRelease $program
+		m) moveRelease
 		;;
 		U) updateversion
 		;;
