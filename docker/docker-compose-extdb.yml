@@ -20,7 +20,7 @@ services:
         depends_on:
             - db
         volumes:
-            - racedb-data:/racedb-data
+            - ./racedb-data:/racedb-data
 volumes:
     mysql-data:
     racedb-data:

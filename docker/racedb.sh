@@ -3,21 +3,6 @@
 
 COMPOSEFILE=docker-compose.yml
 DOCKERCMD="docker-compose -f $COMPOSEFILE"
-DBCONFIGENV=dbconfig.env
-
-randompassword() {
-    if [ -x /sbin/md5 ]; then
-        # Works on MacOSX
-        DBPASSWD=$(date | md5 -p | tail -1)
-    elif [ -x /usr/bin/md5sum ]; then
-        # Works on most Linux systems
-        DBPASSWD=$(date | md5sum | awk '{print $1}')
-    else
-        # This is not secure, but we need a password
-        DBPASSWD=40cae7ed19fec00a5e993543bc16a391
-    fi
-    echo $DBPASSWD
-}
 
 checkconfig() {
     if [ ! -f $COMPOSEFILE ]; then
@@ -33,11 +18,6 @@ restart() {
 }
 
 run() {
-    if [ -f RaceDB.sqlite3 -a -z "$RACEDBDEV" ]; then
-        echo "Migrating from old RaceDB sqlite3"
-        COMPOSEFILE=docker-compose-migrate.yml
-        DOCKERCMD="docker-compose -f $COMPOSEFILE"
-    fi
     checkconfig
     echo "Starting RaceDB Container set..."
     $DOCKERCMD up -d
@@ -67,10 +47,6 @@ manage() {
 
 stop() {
     echo "Stopping RaceDB Container set..."
-    # dbconfig.env must exist for the stop command, and this makes sure it will run
-    if [ ! -f $DBCONFIGENV ]; then
-        touch $DBCONFIGENV
-    fi
     $DOCKERCMD stop
 }
 
@@ -90,11 +66,7 @@ build() {
         exit 1
     fi
     . .dockerdef
-    if [ "$TAG" == "beta" ]; then
-      docker build -t $IMAGE:$TAG -f Dockerfile.beta .
-    else
-      docker build -t $IMAGE:$TAG .
-    fi
+    docker build -t $IMAGE:$TAG .
 }
 
 rebuild() {
@@ -103,12 +75,7 @@ rebuild() {
         exit 1
     fi
     . .dockerdef
-
-    if [ "$TAG" == "beta" ]; then
-      docker build -t $IMAGE:$TAG -f Dockerfile.beta --no-cache .
-    else
-      docker build -t $IMAGE:$TAG --no-cache .
-    fi
+    docker build -t $IMAGE:$TAG --no-cache .
 }
 
 cleanall() {
@@ -203,22 +170,10 @@ usage() {
     echo "export {filename} - export database to racedb-data/{filename}"
     echo "import {filename} - database database from racedb-data/{filename}"
     echo
-    echo "Use a webbrowser to login to RaceDB: http://localhost:80"
+    echo "Use a webbrowser to login to RaceDB: http://localhost"
     echo 
-    echo "To run the development version, pass -d as the first parameter and thenany command."
-    echo "This will start phpmyadmin on http://localhost:80"
 }
 CMD=$1
-if [ "$1" == "-d" -o -n "$RACEDBDEV" ]; then
-    echo "WARNING: Using development container..."
-    COMPOSEFILE=docker-compose-dev.yml
-    DOCKERCMD="docker-compose -f $COMPOSEFILE"
-    RACEDBDEV=1
-    if [ "$1" = '-d' ]; then
-        CMD=$2
-    fi
-    shift    
-fi
 shift
 case $CMD in
     "dbconfig") checkconfig
