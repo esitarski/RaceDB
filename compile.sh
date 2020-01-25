@@ -53,7 +53,7 @@ compileCode() {
 packagecode()
 {
     checkEnvActive
-    python3 build.py
+    python3 package.py -a -d release
     if [ $? -ne 0 ]; then
         echo "Packaging failed"
         exit 1
@@ -120,7 +120,7 @@ updateversion() {
                 echo "Invalid tag format. Must be v3.0.3-20200101010101. Refusing to build!"
                 exit 1
             fi
-            APPVERNAME="version=\"$program $VERSION-$REFDATE\""
+            APPVERNAME="version=\"$VERSION-$REFDATE\""
             VERSION="$GIT_TAG"
         fi
         if [ -z "$APPVERNAME" ]; then
@@ -135,11 +135,39 @@ updateversion() {
 	fi
 }
 
+buildcontainer() {
+    getVersion
+    if [ 1 -eq 1 ]
+    then
+        echo "Updating docker tags with version and beta tag"
+        sed "s/racedb\:latest/racedb\:beta/g" docker/docker-compose.yml > docker/docker-compose.yml.new
+        mv docker/docker-compose.yml.new docker/docker-compose.yml
+        . .dockerdef
+        cat > .dockerdef <<EOF
+export IMAGE=$IMAGE
+export TAG=$VERSION
+export LATESTTAG=beta
+EOF
+
+    else
+        echo "Updating docker tags with version"
+        . .dockerdef
+        cat > .dockerdef <<EOF2
+export IMAGE=$IMAGE
+export TAG=beta-$VERSION
+export LATESTTAG=latest
+EOF2
+    fi
+    echo "Docker Version updated"
+}
+
 buildall() {
         checkEnvActive
         cleanup
         updateversion
         compileCode
+        packagecode
+        buildcontainer
 }
 
 tagrepo() {
@@ -202,6 +230,7 @@ $0 [ -hcCtaep: ]
  -C        - Clean up everything
  -B        - Compile code
  -k        - Package application
+ -c        - Build container
  -m        - Move package to release directory
  -A        - Build everything and package
 
@@ -221,7 +250,7 @@ EOF
 }
 
 gotarg=0
-while getopts "hvCpSBpkUAzTr" option
+while getopts "hvCcpSBpkUAzTr" option
 do
 	gotarg=1
 	case ${option} in
@@ -243,6 +272,8 @@ do
 		m) moveRelease
 		;;
 		U) updateversion
+        ;;
+        c) buildcontainer
 		;;
 		A) buildall
 		;;

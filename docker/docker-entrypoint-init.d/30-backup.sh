@@ -17,6 +17,7 @@ then
     export PYTHONPATH=/RaceDB
     cd /RaceDB
     python3 ./manage.py dumpdata core --indent 2 --output $JSONEXPORTDATA
+    gzip $JSONEXPORTDATA
 else
     echo "============================="
     echo "Backups currently turned off!"
