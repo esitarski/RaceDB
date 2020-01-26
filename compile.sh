@@ -205,10 +205,18 @@ buildcontainer() {
     echo "Building version container: $IMAGE:$TAG"
     echo "##################################################"
     docker build --no-cache -t "$IMAGE:$TAG" .
+    if [ $? -ne 0 ]; then
+        echo "Image Build failed"
+        exit 1
+    fi
     echo "##################################################"
     echo "Building latest container: $IMAGE:$LATESTTAG"
     echo "##################################################"
     docker build -t "$IMAGE:$LATESTTAG" .
+    if [ $? -ne 0 ]; then
+        echo "Image Build failed"
+        exit 1
+    fi
 }
 
 pushcontainer() {
@@ -217,8 +225,16 @@ pushcontainer() {
         getdockertags
         echo "Pushing version container: $IMAGE:$TAG"
         docker push "$IMAGE:$TAG"
+        if [ $? -ne 0 ]; then
+            echo "Publishing image failed"
+            exit 1
+        fi
         echo "Pushing latest container: $IMAGE:$TAG"
         docker push "$IMAGE:$LATESTTAG"
+        if [ $? -ne 0 ]; then
+            echo "Publishing image failed"
+            exit 1
+        fi
     else
         echo "Refusing to push/publsh a private build!"
     fi
