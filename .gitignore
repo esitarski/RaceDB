@@ -9,3 +9,5 @@ RaceDB/*.zip
 racedb-data/
 docker/racedb-data/
 release/
+racedb-container/
+compile.TempPoint.ps1
