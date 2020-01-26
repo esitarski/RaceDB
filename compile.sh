@@ -172,7 +172,6 @@ getdockertags()
         export LATESTTAG=latest
     fi
     export TAG=$VERSION
-    export IMAGE
     echo "Docker will use the following for a build:"
     echo "TAG=$TAG"
     echo "IMAGE=$IMAGE"
@@ -202,10 +201,14 @@ buildcontainer() {
         echo "##################################################"
         LATESTTAG="private"
     fi
+    echo "##################################################"
     echo "Building version container: $IMAGE:$TAG"
-    docker build --no-cache -t $IMAGE:$TAG .
+    echo "##################################################"
+    docker build --no-cache -t "$IMAGE:$TAG" .
+    echo "##################################################"
     echo "Building latest container: $IMAGE:$LATESTTAG"
-    docker build -t $IMAGE:$LATESTTAG .
+    echo "##################################################"
+    docker build -t "$IMAGE:$LATESTTAG" .
 }
 
 pushcontainer() {
@@ -213,9 +216,9 @@ pushcontainer() {
     if [ $ISPRIVATE -eq 0 ]; then
         getdockertags
         echo "Pushing version container: $IMAGE:$TAG"
-        docker push $IMAGE:$TAG
+        docker push "$IMAGE:$TAG"
         echo "Pushing latest container: $IMAGE:$TAG"
-        docker push $IMAGE:$LATESTTAG
+        docker push "$IMAGE:$LATESTTAG"
     else
         echo "Refusing to push/publsh a private build!"
     fi
