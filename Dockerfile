@@ -31,7 +31,6 @@ RUN rm -rf Dockerfile release test_data migrations_old env docker .git .vscode c
     python3 -m pip install --upgrade pip && \
     python3 -m pip install -r requirements.txt && \
     python3 -m pip install PyMySQL mysqlclient psycopg2 && \
-    mkdir -p /RaceDB/core/static/docs && \
     cd helptxt && \
     python3 compile.py && \
     cd /RaceDB && \
