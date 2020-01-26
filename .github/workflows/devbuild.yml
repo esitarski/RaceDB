@@ -15,6 +15,9 @@ jobs:
         steps:
             - name: Show Environment
               run: set | grep GIT
+            - name: Docker Login
+              run: |
+                docker login -u ${{ secrets.HUB_USER }} -p ${{ secrets.HUB_PASSWD }}
             - name: Setup Python environment
               uses: actions/setup-python@v1.1.1
               with:
@@ -40,5 +43,4 @@ jobs:
             - name: Push Docker Image
               run: |
                 cd $GITHUB_WORKSPACE
-                docker login -u $HUB_USER -p $HUB_PASSWD
                 bash compile.sh -P

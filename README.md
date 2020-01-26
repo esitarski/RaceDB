@@ -1,3 +1,6 @@
+![DevelopmentBuild](https://github.com/mbuckaway/RaceDB/workflows/DevelopmentBuild/badge.svg)
+![ReleaseBuild](https://github.com/mbuckaway/RaceDB/workflows/ReleaseBuild/badge.svg)
+
 # Welcome to RaceDB
 
 RaceDB is a database system for for Cross Manager. It allows registration of riders via web browser, and allows the timing person to refer to the race data in RaceDB from Cross Manager.
