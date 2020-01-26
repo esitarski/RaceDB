@@ -30,7 +30,6 @@ getVersion() {
 	. helptxt/version.py
 	VERSION=$version
 	export VERSION
-	echo "RaceDB Version is $VERSION"
 }
 
 cleanup() {
@@ -40,8 +39,7 @@ cleanup() {
 }
 
 compileCode() {
-	PROGRAM=$1
-    	checkEnvActive
+    checkEnvActive
 	echo "Compiling code"
 	python3 -mcompileall -l . core RaceDB
 	if [ $? -ne 0 ];then
@@ -107,7 +105,7 @@ updateversion() {
             exit 1
         fi
         if [ "$GIT_TYPE" == "heads" -a "$GIT_TAG" == "dev" ]; then
-            APPVERNAME="version=\"$program $VERSION-beta-$SHORTSHA\""
+            APPVERNAME="version=\"$VERSION-beta-$SHORTSHA\""
             VERSION="$VERSION-beta-$SHORTSHA"
         fi
         if [ "$GIT_TYPE" == "tags" ]; then
@@ -133,38 +131,102 @@ updateversion() {
 	else
 		echo "Running a local build"
 	fi
+
+}
+
+checkbeta() {
+    getVersion
+    grep beta > /dev/null <<VER
+$VERSION
+VER
+    if [ $? -eq 0 ]; then
+        ISBETA=1
+    else
+        ISBETA=0
+    fi
+}
+
+checkprivate() {
+    getVersion
+    grep private > /dev/null <<VER
+$VERSION
+VER
+    if [ $? -eq 0 ]; then
+        ISPRIVATE=1
+    else
+        ISPRIVATE=0
+    fi
+}
+
+getdockertags()
+{
+    checkbeta
+    checkprivate
+    . .dockerdef
+    if [ $ISBETA -eq 1 ]
+    then
+        export LATESTTAG=beta
+    elif [ $ISPRIVATE -eq 1 ]; then
+        export LATESTTAG=private
+    else
+        export LATESTTAG=latest
+    fi
+    export TAG=$VERSION
+    export IMAGE
+    echo "Docker will use the following for a build:"
+    echo "TAG=$TAG"
+    echo "IMAGE=$IMAGE"
+    echo "LATESTTAG=$LATESTTAG"
+}
+
+updatecompose() {
+    getdockertags
+    if [ $ISBETA -eq 1 ]; then
+        sed -E "s/racedb:(private|beta|latest)/racedb\:beta/g" docker/docker-compose.yml > docker/docker-compose.yml.new
+        echo "Updated docker-compose.yml for beta version"
+    elif [ $ISPRIVATE -eq 1 ]; then
+        sed -E "s/racedb:(private|beta|latest)/racedb\:private/g" docker/docker-compose.yml > docker/docker-compose.yml.new
+        echo "docker-compose.yml set for private version"
+    else
+        sed -E "s/racedb:(private|beta|latest)/racedb\:latest/g" docker/docker-compose.yml > docker/docker-compose.yml.new
+        echo "docker-compose.yml set for latest version (default)"
+    fi
+    mv docker/docker-compose.yml.new docker/docker-compose.yml
 }
 
 buildcontainer() {
-    getVersion
-    if [ 1 -eq 1 ]
-    then
-        echo "Updating docker tags with version and beta tag"
-        sed "s/racedb\:latest/racedb\:beta/g" docker/docker-compose.yml > docker/docker-compose.yml.new
-        mv docker/docker-compose.yml.new docker/docker-compose.yml
-        . .dockerdef
-        cat > .dockerdef <<EOF
-export IMAGE=$IMAGE
-export TAG=$VERSION
-export LATESTTAG=beta
-EOF
-
-    else
-        echo "Updating docker tags with version"
-        . .dockerdef
-        cat > .dockerdef <<EOF2
-export IMAGE=$IMAGE
-export TAG=beta-$VERSION
-export LATESTTAG=latest
-EOF2
+    getdockertags
+    if [ $ISPRIVATE -eq 1 ]; then
+        echo "##################################################"
+        echo "WARNING: BUILDING A PRIVATE BUILD OF THE CONTAINER"
+        echo "##################################################"
+        LATESTTAG="private"
     fi
-    echo "Docker Version updated"
+    echo "Building version container: $IMAGE:$TAG"
+    docker build --no-cache -t $IMAGE:$TAG .
+    echo "Building latest container: $IMAGE:$LATESTTAG"
+    docker build -t $IMAGE:$LATESTTAG .
+}
+
+pushcontainer() {
+    getdockertags
+    if [ $ISPRIVATE -eq 0 ]; then
+        getdockertags
+        echo "Pushing version container: $IMAGE:$TAG"
+        docker push $IMAGE:$TAG
+        echo "Pushing latest container: $IMAGE:$TAG"
+        docker push $IMAGE:$LATESTTAG
+    else
+        echo "Refusing to push/publsh a private build!"
+    fi
 }
 
 buildall() {
         checkEnvActive
         cleanup
         updateversion
+    	echo "RaceDB Version is $VERSION"
+        updatecompose
         compileCode
         packagecode
         buildcontainer
@@ -231,8 +293,10 @@ $0 [ -hcCtaep: ]
  -B        - Compile code
  -k        - Package application
  -c        - Build container
- -m        - Move package to release directory
- -A        - Build everything and package
+ -u        - Update docker-compose
+ -b        - Build docker containers
+ -P        - Push docker containers
+ -A        - Build everything and package (except push containers)
 
  -T        - Tag for release
  -r        - do release
@@ -250,7 +314,7 @@ EOF
 }
 
 gotarg=0
-while getopts "hvCcpSBpkUAzTr" option
+while getopts "hvCpSBPkUAzTrub" option
 do
 	gotarg=1
 	case ${option} in
@@ -269,11 +333,13 @@ do
 		;;
 		k) packagecode
 		;;
-		m) moveRelease
-		;;
 		U) updateversion
         ;;
-        c) buildcontainer
+        u) updatecompose
+		;;
+        b) buildcontainer
+		;;
+        P) pushcontainer
 		;;
 		A) buildall
 		;;

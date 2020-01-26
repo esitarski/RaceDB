@@ -27,7 +27,8 @@ COPY . /RaceDB/
 WORKDIR /RaceDB
 
 # We are left in the /RaceDB at this point by WORKDIR. Setup RaceDB
-RUN rm -rf env docker .git .vscode core/__pycache__  RaceDB/__pycache__ __pycache__ helptxt/__pycache__ .git* .dockerdef && \
+RUN rm -rf Dockerfile release test_data migrations_old env docker .git .vscode core/__pycache__  RaceDB/__pycache__ __pycache__ helptxt/__pycache__ .git* .dockerdef && \
+    python3 -m pip install --upgrade pip && \
     python3 -m pip install -r requirements.txt && \
     python3 -m pip install PyMySQL mysqlclient psycopg2 && \
     mkdir -p /RaceDB/core/static/docs && \

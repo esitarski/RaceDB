@@ -144,6 +144,10 @@ importdata()
 exportdata()
 {
     filename=$1
+    if [ -z "$filename" ]; then
+        DATE=$(date +%Y%m%d-%H%M%S)
+        filename="racedb-export-${DATE}.json"
+    fi
     if [ ! -f "$COMPOSEFILE" ]; then
         echo "ERROR: Command must be run from same directory as the $COMPOSEFILE file."
         exit 1
@@ -167,7 +171,7 @@ usage() {
     echo "manage - run manage.py in running container (passes additional args to manage)"
     echo "logs - show the racedb container log"
     echo "flogs - show the racedb container log and display continuously"
-    echo "export {filename} - export database to racedb-data/{filename}"
+    echo "export {filename} - export database to racedb-data/{filename} (filename is optional)"
     echo "import {filename} - database database from racedb-data/{filename}"
     echo
     echo "Use a webbrowser to login to RaceDB: http://localhost"

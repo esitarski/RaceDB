@@ -13,7 +13,7 @@ then
     if [ ! -d $BACKUPDIR ]; then
         mkdir -p $BACKUPDIR
     fi
-    echo "Backing up database to "
+    echo "Backing up database to $JSONEXPORTDATA"
     export PYTHONPATH=/RaceDB
     cd /RaceDB
     python3 ./manage.py dumpdata core --indent 2 --output $JSONEXPORTDATA
