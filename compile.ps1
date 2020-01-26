@@ -5,6 +5,7 @@ param (
 	[switch]$updver = $false,
 	[switch]$install = $false,
 	[switch]$build = $false,
+	[switch]$updcom = $false,
 	[switch]$all = $false
 )
 
@@ -61,7 +62,25 @@ function GetVersion
 
 function installPSEXE
 {
+	Write-Host "Install P2EXE..."
 	Install-Module -Scope CurrentUser -AllowClobber -Force PS2EXE
+}
+
+function updatecompose
+{
+	$version = GetVersion
+	($ver, $type) = $version.Split('-')
+	$latest = "latest"
+	if ($type -eq "private")
+	{
+		$latest = 'private'
+	}
+	elseif ($type -eq 'beta')
+	{
+		$latest="beta"
+	}
+	Write-Host "Setting docker-compose to $latest"
+	(Get-Content -path .\docker\docker-compose.yml -Raw) -replace 'racedb:(private|beta|latest)', "racedb:$latest" | Set-Content -Path .\docker\docker-compose.yml
 }
 
 function build
@@ -98,6 +117,7 @@ function buildall
 {
 	installPSEXE
 	updateVersion
+	updatecompose
 	build
 }
 
@@ -108,6 +128,7 @@ function doHelp
 	-help        - Help
 	-getver      - Get Version
 	-updver      - Update version
+	-updcom      - Update compose
 	-install     - Install PS2EXE
 	-build       - Build Release Zip
 	
@@ -140,7 +161,11 @@ else
 	{
 		updateVersion
 	}
-	
+	if ($updcom -eq $true)
+	{
+		updatecompose
+	}
+
 	if ($install -eq $true)
 	{
 		installPSEXE
