@@ -11,3 +11,4 @@ docker/racedb-data/
 release/
 racedb-container/
 compile.TempPoint.ps1
+racedb.env.bak

@@ -56,7 +56,7 @@ ps() {
 
 update() {
     stop
-    echo "Updating RaceDB and MySQL containers (if available)"
+    echo "Updating RaceDB and PostgreSQL containers (if available)"
     $DOCKERCMD pull
 }
 
@@ -161,6 +161,39 @@ exportdata()
     echo "Export saved to racedb-data/${filename}..."
 }
 
+reader() {
+    READER=$1
+    if [ -z "$READER" ]; then
+        echo "You must specify the reader name or ip"
+        exit 1
+    fi
+    if (echo "$READER" | grep -Eq "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"); then
+        READER_IP=$READER
+    elif (echo "$READER" | grep -Eq ".*\.local$"); then
+        if [ "$(uname -s)" == "Darwin" ]; then
+            READER_IP=$(ping -c 1 "$READER" | grep from | awk '{print $4}' | awk -F':' '{print $1}')
+        else
+            READER_IP=$(avahi-resolve -n "$READER" | awk '{print $2}')
+        fi
+    else
+        READER_IP=$(host $READER | awk '{print $4}')
+        if [ "$READER_IP" == "found:" ]; then
+            echo "READER ip not found"
+            exit 1
+        fi
+    fi
+    if [ -z "$READER_IP" ];then
+        echo "Error finding reader IP"
+        exit 1
+    fi
+    echo "Reader IP is $READER_IP"
+    grep -v RFID_READER_HOST racedb.env > racedb.env.tmp.$$
+    echo "RFID_READER_HOST=$READER_IP" >> racedb.env.tmp.$$
+    cp racedb.env racedb.env.bak
+    mv racedb.env.tmp.$$ racedb.env
+    echo "racedb.env updated"
+}
+
 usage() {
     echo "Commands:"
     echo "run - start the racedb container"
@@ -173,6 +206,7 @@ usage() {
     echo "flogs - show the racedb container log and display continuously"
     echo "export {filename} - export database to racedb-data/{filename} (filename is optional)"
     echo "import {filename} - database database from racedb-data/{filename}"
+    echo "reader {ip or name} - updates racedb.env with the reader ip" 
     echo
     echo "Use a webbrowser to login to RaceDB: http://localhost"
     echo 
@@ -209,6 +243,8 @@ case $CMD in
     "build") build
         ;;
     "rebuild") build
+        ;;
+    "reader") reader $@
         ;;
     *) echo "Unknown command."
        usage
