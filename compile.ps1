@@ -66,8 +66,14 @@ function installPSEXE
 function build
 {
 	$version = GetVersion
-	rmdir -Recurse -Force release
-	rmdir -Recurse -Force racedb-container
+	if (Test-Path release -PathType leaf)
+	{
+		rmdir -Recurse -Force release
+	}
+	if (Test-Path racedb-container -PathType leaf)
+	{
+		rmdir -Recurse -Force racedb-container
+	}
 	mkdir racedb-container
 	mkdir release
 	$fileversion = $version.Split('=')[1]
