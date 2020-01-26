@@ -53,7 +53,8 @@ function GetVersion
 		Write-Host "No version file in helptxt/version.py. Aborting..."
 		exit 1
 	}
-	$version = Get-Content "helptxt\version.py"
+	$versionItem = Get-Content "helptxt\version.py"
+	$version = $versionItem.Split('=')[1].Replace("`"", "")
 	Write-Host "RaceDB Version is", $version
 	return $version
 }
@@ -74,18 +75,17 @@ function build
 	{
 		rmdir -Recurse -Force racedb-container
 	}
-	mkdir racedb-container
-	mkdir release
-	$fileversion = $version.Split('=')[1]
-	$setupversion = $fileversion.Split('-')[0].SubString(2)
-	$fileversion2 = $fileversion.Replace("`"", "")
+	mkdir -Force racedb-container
+	mkdir -Force release
+	$fileversion = $version.Split('-')[0]
+	$setupversion = $fileversion.SubString(1)
 	Write-Host "Setup Version: $setupversion"
-	Write-Host "File Version: $fileversion2"
+	Write-Host "File Version: $version"
 	ps2exe -inputFile .\docker\windows\RaceDBController.Export.ps1 -outputFile .\racedb-container\RaceDBController.exe -x64 -noConsole -title "RaceDB Controller" -version "$setupversion" -noOutput -noError -iconFile .\docker\windows\RaceDB.ico
 	copy docker\racedb.env racedb-container\
 	copy docker\docker-compose.yml racedb-container\
 	copy docker\README.md racedb-container\
-	$zipfilename = "release\RaceDB-Container-Windows-$fileversion2.zip"
+	$zipfilename = "release\RaceDB-Container-Windows-$version.zip"
 	if (Test-Path $zipfilename -PathType leaf)
 	{
 		del $zipfilename
