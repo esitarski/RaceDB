@@ -36,8 +36,6 @@ jobs:
               run: |
                 cd $GITHUB_WORKSPACE
                 bash compile.sh -A
-                docker images
-                bash compile.sh -P
             - name: Upload Dev Release
               uses: "marvinpinto/action-automatic-releases@latest"
               with:
@@ -46,3 +44,7 @@ jobs:
                  prerelease: true
                  title: "Development Build"
                  files: release/*
+            - name: Publish Docker Image
+              run: |
+                cd $GITHUB_WORKSPACE
+                bash compile.sh -P
