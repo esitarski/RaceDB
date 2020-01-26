@@ -36,9 +36,11 @@ jobs:
             - name: Upload Production Release
               uses: "marvinpinto/action-automatic-releases@latest"
               with:
-                 repo_token: "${{ secrets.GITHUB_TOKEN }}"
-                 prerelease: false
-                 files: release/*
+                repo_token: ${{ secrets.GITHUB_TOKEN }}
+                file: release/*
+                tag: ${{ github.ref }}
+                overwrite: true
+                file_glob: true
             - name: Publish Docker Image
               run: |
                 cd $GITHUB_WORKSPACE
