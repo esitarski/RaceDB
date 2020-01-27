@@ -28,19 +28,23 @@ if [ -n "$ARGS" ]; then
     echo "Starting RaceDB with args:"
     echo "Args: $ARGS"
 fi
-
-# Try to start it forever in case there is a database issue
-while true
-do
-    /RaceDB/manage.py launch --no_browser $ARGS
-    if [ $? -eq 0 ]; then
-        if [ -f /.dontstart ]; then
-            echo "Skipping restart..."
-            exit
+if [ $TESTING -eq 1 ]; then
+    # Try to start it forever in case there is a database issue
+    while true
+    do
+        /RaceDB/manage.py launch --no_browser $ARGS
+        if [ $? -eq 0 ]; then
+            if [ -f /.dontstart ]; then
+                echo "Skipping restart..."
+                exit
+            fi
+            break
         fi
-        break
-    fi
-    echo "Unable to Start RaceDB. Pausing..."
-    sleep 10
-done
-
+        echo "Unable to Start RaceDB. Pausing..."
+        sleep 10
+    done
+else
+        echo "Starting RaceDB..."
+        /RaceDB/manage.py launch --no_browser $ARGS
+        echo "RaceDB exited with code $?."
+fi

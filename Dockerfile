@@ -14,6 +14,7 @@ ENV DATABASE_TYPE=psql-local
 ENV POSTGRES_USER=postgres
 ENV DATABASE_NAME=racedb
 ENV DATABASE_USER=racedb
+ENV TESTING=0
 
 # Set out hostname for avahi
 RUN echo "racedb.local" > /etc/hostname && \
