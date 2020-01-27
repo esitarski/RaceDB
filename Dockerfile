@@ -14,6 +14,7 @@ ENV DATABASE_TYPE=psql-local
 ENV POSTGRES_USER=postgres
 ENV DATABASE_NAME=racedb
 ENV DATABASE_USER=racedb
+ENV TESTING=0
 
 # Set out hostname for avahi
 RUN echo "racedb.local" > /etc/hostname && \
@@ -35,7 +36,7 @@ RUN rm -rf Dockerfile release test_data migrations_old env docker .git .vscode c
     python3 compile.py && \
     cd /RaceDB && \
     chmod 755 manage.py && \
-    ./manage.py collectstatic --no-input && \
+    ./manage.py collectstatic -v 2 -c --no-input && \
     chown -R racedb.racedb /RaceDB/
 
 ENV PYTHONPATH=/RaceDB
@@ -44,6 +45,7 @@ WORKDIR /
 COPY docker/docker-entrypoint-init.d/* /docker-entrypoint-init.d/
 COPY docker/build-files/entrypoint.sh /usr/sbin/entrypoint.sh
 
+VOLUME [ "/racedb_data" ]
 EXPOSE 8000
 
 CMD ["/usr/sbin/entrypoint.sh"]
