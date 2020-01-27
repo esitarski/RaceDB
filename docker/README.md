@@ -108,9 +108,9 @@ IMPORTANT: The import happens _after_ the database is backed up (as above).
 
 ## Manually importing/exporting data
 
-The racedb.sh and the Windows controller UI both support manually exporting data. For Windows, use the menus to select Export or Import. For the import, the selected file will be copied to the racedb-data directory and imported. For export, the racedb-export.json will be created.
+The racedb.sh and the Windows controller UI both support manually exporting data. For Windows, use the Backup menu to select Export or Import. For the import, the selected file will be copied to the racedb-data directory and imported. For export, the racedb-export-{datecode}.json will be created.
 
-Similarly, for Linux/MacOSX, running 'bash raced.sh import filename' will copy the file to the racedb-data directory, and run manage.py in the running container to import the data. The "bash racedb.sh export" will export the data to the racedb-data directory as racedb-export.json.
+Similarly, for Linux/MacOSX, running 'bash raced.sh import filename' will copy the file to the racedb-data directory, and run manage.py in the running container to import the data. The "bash racedb.sh export" will export the data to the racedb-data directory as racedb-export-{datecode}.json.
 
 ## Updating RaceDB
 
