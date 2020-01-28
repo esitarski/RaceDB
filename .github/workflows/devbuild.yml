@@ -4,6 +4,7 @@ on:
             - dev
         paths-ignore:
         - README.md
+        - GITLAB.md
         - CHANGELOG.md
         - .grenrc.yml
 

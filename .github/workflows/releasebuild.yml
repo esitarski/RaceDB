@@ -4,6 +4,7 @@ on:
             - "v3*"
         paths-ignore:
         - README.md
+        - GITHUB.md
         - CHANGELOG.md
         - .grenrc.yml
 
