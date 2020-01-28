@@ -20,6 +20,16 @@ Upgrades are a matter of pulling the latest container image. This is a one comma
 
 About the only con is the Docker on Linux is a pain to setup the first time. However, on MacOSX and Windows Docker Desktop is a simple application to use. Docker also starts the containers by default when the system is start, so you no longer have to start it manually.
 
+## Default Port
+
+While racedb installed from source uses port 8000 [http://localhost:8000], the container has been setup to use the standard http port, port 80, for convenience. If you have a non-standard setup (run a local web server on the same machine as racedb), you will need to change this port number. To do so, do the following:
+
+- edit the docker-compose.yml file
+- find the line "80:8000"
+- change it to "8000:8000" to map it to port 8000.
+
+Additionally, but changing the mapping, you can set the port to anything you want.
+
 ## Running the Container (Windows)
 
 The RaceDB container comes preconfigured for the most used options. However, if you use a RFID reader at registration to "burn" tags, you will want to add the IP number of your reader to the racedb.env file using the setup tool. The setup tool is a Windows UI application that allows the user to edit settings, install, run, and update the container. There is no need to use the commnad line.
