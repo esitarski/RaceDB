@@ -262,7 +262,7 @@ tagrepo() {
 	# Remove the -private from the version
 	VERSIONNO=$(echo $VERSION | awk -F - '{print $1}')
 	DATETIME=$(date +%Y%m%d%H%M%S)
-	TAGNAME="v$VERSIONNO-$DATETIME"
+	TAGNAME="$VERSIONNO-$DATETIME"
 	echo "Tagging with $TAGNAME"
 	git tag $TAGNAME
 	git push origin $TAGNAME
