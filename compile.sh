@@ -299,6 +299,23 @@ dorelease() {
     echo "Current branch set back to dev..."
 }
 
+bumpver() {
+	getVersion
+	# Remove the -private from the version
+	VERSIONNO=$(echo $VERSION | awk -F - '{print $1}')
+	VERSIONTYPE=$(echo $VERSION | awk -F - '{print $2}')
+    MAJOR=$(echo $VERSIONNO | awk -F '.' '{print $1}')
+    MINOR=$(echo $VERSIONNO | awk -F '.' '{print $2}')
+    VER=$(echo $VERSIONNO | awk -F '.' '{print $3}')
+    let NEWVER=${VER}+1
+    NEWVERSION="${MAJOR}.${MINOR}.${NEWVER}-${VERSIONTYPE}"
+    echo "Old Version is $VERSION and new version is $NEWVERSION"
+    echo "version=\"$NEWVERSION\"" > helptxt/version.py
+    . .dockerdef
+    echo "export IMAGE=\"$IMAGE\"" > .dockerdef
+    echo "export TAG=\"$NEWVERSION\"" >> .dockerdef
+
+}
 
 doHelp() {
 	cat <<EOF
@@ -333,13 +350,14 @@ EOF
 }
 
 gotarg=0
-while getopts "hvCpSBPkUAzTrub" option
+while getopts "hvcCpSBPkUAzTrub" option
 do
 	gotarg=1
 	case ${option} in
 		h) doHelp
 		;;
 		v) 	getVersion
+            echo "Version is $VERSION"
 		;;
 		C) 	cleanup
 		;;
@@ -348,7 +366,7 @@ do
 		;;
 		S) envSetup
 		;;
-		B) compileCode
+		c) compileCode
 		;;
 		k) packagecode
 		;;
@@ -367,6 +385,8 @@ do
 		T) tagrepo
 		;;
 		r) dorelease
+		;;
+		B) bumpver
 		;;
 		*) doHelp
 		;;
