@@ -2,4 +2,6 @@ src/
 __pycache__
 core/__pycache__
 RaceDB/__pycache__
+env/
+
 
