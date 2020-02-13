@@ -1,2 +1,2 @@
 export IMAGE="mbuckaway/racedb"
-export TAG="v3.0.31-private"
+export TAG="v3.0.32-private"
