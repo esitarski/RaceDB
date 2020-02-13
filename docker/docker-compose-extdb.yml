@@ -1,0 +1,30 @@
+version: "3.4"
+services:
+    racedb:
+        image: mbuckaway/racedb:latest
+        restart: always
+        container_name: racedb_app
+        ports:
+            - "8000:8000"
+        environment:
+            - sqlite3_database_fname:/racedb-data/RaceDB.sqlite3
+            - PYTHONPATH:/RaceDB
+            - RACEDBLOGFILE:/racedb-data/RaceDB-log.txt
+        env_file:
+            - ./racedb.env
+        hostname: racedb_app
+        networks:
+            racedb:
+                aliases:
+                    - racedb
+        depends_on:
+            - db
+        volumes:
+            - ./racedb-data:/racedb-data
+volumes:
+    mysql-data:
+    racedb-data:
+
+networks:
+    racedb:
+

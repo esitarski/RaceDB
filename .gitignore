@@ -1,7 +1,10 @@
-src/
-__pycache__
-core/__pycache__
-RaceDB/__pycache__
-env/
-
-
+env
+RaceDB/static_root/
+core/static/
+RaceDB/*.zip
+racedb-data/
+docker/racedb-data/
+release/
+racedb-container/
+compile.TempPoint.ps1
+racedb.env.bak

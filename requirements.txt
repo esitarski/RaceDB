@@ -10,3 +10,4 @@ pytz
 tzlocal
 fpdf2
 -e git+https://github.com/esitarski/pyllrp.git#egg=pyllrp
+markdown

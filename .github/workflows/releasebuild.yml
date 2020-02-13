@@ -1,0 +1,69 @@
+on:
+    push:
+        tags:
+            - "v3*"
+        paths-ignore:
+        - README.md
+        - GITHUB.md
+        - CHANGELOG.md
+        - .grenrc.yml
+
+name: ReleaseBuild
+jobs:
+    build:
+        name: RaceDB Unix
+        runs-on: ubuntu-18.04
+        steps:
+            - name: Show Environment
+              run: set | grep GIT
+            - name: Docker Login
+              run: |
+                docker login -u ${{ secrets.HUB_USER }} -p ${{ secrets.HUB_PASSWD }}
+            - name: Setup Python environment
+              uses: actions/setup-python@v1.1.1
+              with:
+                python-version: 3.8.*
+            - name: Checkout code
+              uses: actions/checkout@master
+            - name: Setup Environment
+              run: |
+                cd $GITHUB_WORKSPACE
+                bash compile.sh -S
+            - name: Show DockerDef
+              run: |
+                cd $GITHUB_WORKSPACE
+                cat .dockerdef
+            - name: Build project
+              run: |
+                cd $GITHUB_WORKSPACE
+                bash compile.sh -A
+            - name: Upload Production Release
+              uses: "marvinpinto/action-automatic-releases@latest"
+              with:
+                 repo_token: "${{ secrets.GITHUB_TOKEN }}"
+                 prerelease: false
+                 files: release/*
+            - name: Publish Docker Image
+              run: |
+                cd $GITHUB_WORKSPACE
+                bash compile.sh -P
+    buildwindows:
+        name: RaceDB Windows
+        needs: build
+        runs-on: windows-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@master
+            - name: Build project
+              shell: powershell
+              run: |
+                cd $env:GITHUB_WORKSPACE
+                .\compile.ps1 -all
+            - name: Upload Production Release
+              uses: svenstaro/upload-release-action@v1-release
+              with:
+                repo_token: ${{ secrets.GITHUB_TOKEN }}
+                file: release/*
+                tag: ${{ github.ref }}
+                overwrite: true
+                file_glob: true

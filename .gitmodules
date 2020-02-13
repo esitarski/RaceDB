@@ -1,0 +1,3 @@
+[submodule "docker/PS2EXE"]
+	path = docker/PS2EXE
+	url = git@github.com:MScholtes/PS2EXE.git
