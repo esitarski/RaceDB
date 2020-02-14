@@ -1,0 +1,638 @@
+﻿<File version="3.1">
+  <FileID>5873faab-1aef-4014-961f-0f67e2741433</FileID>
+  <Preview>iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAAAXNSR0IArs4c6QAAAARnQU1BAACx
+jwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAACRUSURBVHhe7d1ZkF3VnSfqiqqHeuiI+9BTdN9+
+qYcbUR392tEd96X6oSJu3OjqqOrbVS5XdbXtchtjwBgMBgwIYWwwk0BgxDwPQgKhWUrNQ87zoJRy
+UqYyU8p50DwZDC7/71onlSDjBCQxWKn9fRG/UGaeddbZJ/Pss357n5OpPwAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALgIL//RH/1Rw3/4D/++4dZbb2tYsGBhw5133iUi
+IiLzJAsW3NXwk4X3NPzt1/664Y//+I8b0tqe8+n+8A//sOOv/vIvY+nba6OlZzh6ho9F96EjIiIi
+Mm9yNHqGjkZ1S2ekA/n4l//iX8S5Zf6T/fs//dOG15evjj2DR6Niz2Dsaj0Qu0VERGReJa/fdd1j
+0dJ1KP7n//yHzy4A+bR/a89IVO49GJV7BkRERGSepqKtP9oHj8SKles+uwAsXHhPw8D4qShPR/9V
+7SIiIldA0kHt586XPedcl19szp8vJZeAfYeOxao1Gz+7ANx118KG/rETUdl+MKrTZCIiIvM1NfsO
+Rm3HUFoIZxbDS01F20BU7zuU5juU5jtUmjt/ba6xF5KKlLxA522bnXOucReTPGeeK2f2/ufb6EgF
+4J3V6y+wAIyfTE1iZpIPkzaytmP4w9R0jkdN12QptaWkz9Md+K3riIiI/B6TF9j1u/bE0tWV8eba
+qkvOG+n6b22ojcq06O9u7otl66pj6Zq5x15I8nWXrqmMTZX7Stu4eltzvJE+/1xzpm18Z3N9KgO5
+WKR1Ot3/XAI6ho5faAG4q2Fg4lRazIejrnM2I1G7N7WVhtaoamwvpbquJiorNkRF+cYo370pqmqq
+05jB0tiPriciIvL7SX3XSGkxfH1VRdSlNaym/dLT0DUU67Y3xfrd7bFqa3NsKt8T9fmg97wxdenz
+5v3j0dz7UVpSmnrGSuvj+WNr0udVrX2pWFTF9ob98WZa+Bs683znjUtjmnpG0xwT0dg9Urq95v1j
+pTnrO4c+Gpevk8Y2pm1csbE2NlbsjcZ0m/l7kItA18jJz1EAusaipm1/VDftjfru0ahuH43Wdd+N
+sfK/jZGqq+PAxv8ndr/5jdQ20g2msbPf+LyBtfuGStfJn38432fko+seStcdi4Z8x/P1053PTak0
+3/ljL2JuEREpRvLakAvAsnU1pfVjZzpy39Vy4JKSX1/fVNFeKgCrt7XE9trO0in32cvL2wZjY2V7
+PP78injk6WXx6DPLS1n01Jvx7BsbYkdTb+xu7f9w/M6UvHAvX18b2+p7YkVZfdrmodjZNLONu/OY
+dJ1X39kWi5YsjZfe2hobUulY/Nzb8cQLK2JNKiPlbeduP92vnc1pvnQf12xrTgVgXzT1XkoBWHBX
+w+Dk6bSQj6aF91x6xqNuT29a+HuibuBwVPdMR+v6qyNGn4uYfiXe7/hWbH7pa+nGJkpjm/ZPRE1z
+a7yzckOsXLcx1u1KTSl9rTE1o6aUxtRo8ryNpbHp89LtjJUub+6bjJqW1li5cn2s3LgpVm2pi9o0
+rrKmJlbk+dZvjk01PdGYGlFTakG7q2pjU2Vnum667Q/nmbmtjz5Pt1G63Vwmzl1e+nhmO0RE5MpL
+fp6v3nuotMg2nisDVe35dfGZ1KQD1Npzi+SHSZ/n68y8ie6jsblMbK7cWzq6XrOjNXbWdZcOSGcv
+z+vKEy+8E2Vl26L/wGAM9KcMHIz9+/vixZeWxZvrK0sHyLPj8/vs6tNB7lsb6mJHY2+s3NSQtnkk
+ylvz+w0G0zYMlRb8e+9/Itr37Iuly9fGrQsejqamtijbuDUe/MWrpXU6vw9hNvVdw7Fue0uUVXVE
+S9/MmlifxvSMnU4FYMNnF4D814MOTZ39cHHOae6djIY0WfXDC6P6O1+PrXfcHlUrr4ro/NuI/f81
+flXxr2L1U3+VbuxwaWzLgamoqquJNVvborWvP1at3hzlHWnB3dsXVakxNfZMpI2bisaOgahs2Z82
+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
+nTr14aIh8zXpqD/9HD/+s/31L0/Gb949lZL//Zx571S8d+ZkHE9r88dvJ0cBEBERuUyS19AvMnPd
+xmy+sgKQ/+/jd999V0RERL7k5PeI5HX3+PHjc67JOV9JAcinOWpqamL58uWxbNkyERER+RLz+uuv
+x86dO+Ps2bO/sybP5ispAL/85S/j5ZdfjkWLFsW6detERETkS8zKlSujvb299NsGn3QW4CsrAC+8
+8EJUVFSc++1HAODLlNfeT3sZ4CsrAC+++GJs37793GYBAF+m/JsG+SUABQAACkQBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+AAAoIAUAAApIAQCAAlIAAKCAFAAAKCAFAAAKSAEAgAJSAACggBQAACggBQAACkgBAIACUgAAoIAU
+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
+YII=</Preview>
+  <Form>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</Form>
+  <Code><![CDATA[
+ 
+#region FindFunction
+function FindText
+{	
+	if($textboxFind.Text.Length -eq 0)
+	{
+		return
+	}
+	
+	$index = $richtextboxOutput.Find($textboxFind.Text,$richtextboxOutput.SelectionStart+ $richtextboxOutput.SelectedText.Length,[System.Windows.Forms.RichTextBoxFinds]::None)
+	if($index -ge 0)
+	{	
+		$richtextboxOutput.Select($index,$textboxFind.Text.Length)
+		$richtextboxOutput.ScrollToCaret()
+		#$richtextbox1.Focus()
+	}
+	else
+	{
+		$index = $richtextboxOutput.Find($textboxFind.Text,0,$richtextboxOutput.SelectionStart,[System.Windows.Forms.RichTextBoxFinds]::None)
+		#
+		if($index -ge 0)
+		{	
+			$richtextboxOutput.Select($index,$textboxFind.Text.Length)
+			$richtextboxOutput.ScrollToCaret()
+			#$richtextbox1.Focus()
+		}
+		else
+		{
+			$richtextboxOutput.SelectionStart = 0
+		}
+	}
+	
+}
+#endregion
+
+
+$formLogOutput_Load={
+	runProcess
+}
+
+$buttonClose_Click={
+	#TODO: Place custom script here
+	$formLogOutput.Close()
+}
+
+$buttonCopy_Click={
+	#The following requires STA mode
+#	if($textbox1.Text.Length -gt 0)
+#	{
+#		[System.Windows.Forms.Clipboard]::SetText($textbox1.Text)
+#	}
+	#Alternative - Does not require STA
+	$richtextboxOutput.SelectAll() #Select all the text
+	$richtextboxOutput.Copy()	#Copy selected text to clipboard
+	$richtextboxOutput.Select(0,0); #Unselect all the text
+}
+
+$textboxFind_TextChanged={
+	$buttonFind.Enabled = $textboxFind.Text.Length -gt 0
+}
+
+$buttonFind_Click={
+	#TODO: Place custom script here
+	FindText
+}
+
+
+$processTracker_FormClosed=[System.Windows.Forms.FormClosedEventHandler]{
+#Event Argument: $_ = [System.Windows.Forms.FormClosedEventArgs]
+	#Stop any pending processes
+	#Stop-ProcessTracker
+}
+
+$buttonRunProcess_Click= {
+	runProcess
+
+}
+
+
+function runProcess
+{
+	$buttonRunProcess.Enabled = $false
+	
+	#Clear the output
+	$richtextboxOutput.Clear()
+	
+	#TODO: Set the process path here
+	$paramAddProcessTracker = @{
+		FilePath							   = 'docker.exe'
+		Arguments							   = 'logs racedb_app'
+		SyncObject							   = $buttonRunProcess
+		RedirectOutputScript				   = {
+			# Use $_.Data to access the output text
+			$richtextboxOutput.AppendText($_.Data)
+			$richtextboxOutput.AppendText("`r`n")
+		}
+		RedirectErrorScript				       = {
+			if ($_.Data)
+			{
+				# Use $_.Data to access the output text
+				# Use red to display errors
+				$colorOld = $richtextboxOutput.SelectionColor;
+				$richtextboxOutput.SelectionColor = 'Red'
+				$richtextboxOutput.AppendText($_.Data)
+				$richtextboxOutput.AppendText("`r`n")
+				$richtextboxOutput.SelectionColor = $colorOld
+			}
+		}
+		CompletedScript					       = {
+			$buttonRunProcess.Enabled = $true
+			$buttonRunProcess.ImageIndex = -1
+		}
+		UpdateScript						   = {
+			#Animate the Button
+			if ($null -ne $buttonRunProcess.ImageList)
+			{
+				if ($buttonRunProcess.ImageIndex -lt $buttonRunProcess.ImageList.Images.Count - 1)
+				{
+					$buttonRunProcess.ImageIndex += 1
+				}
+				else
+				{
+					$buttonRunProcess.ImageIndex = 0
+				}
+			}
+		}
+	}
+	
+	Add-ProcessTracker @paramAddProcessTracker
+	
+}
+
+<#	
+	===========================================================================
+	 Created with: 	SAPIEN Technologies, Inc., PowerShell Studio 2019 v5.6.170
+	 Created on:   	12/7/2019 5:57 PM
+	 Created by:   	Mark Buckaway
+	 Organization: 	
+	 Filename:     	processTracker.psm1
+	-------------------------------------------------------------------------
+	 Module Name: 
+	===========================================================================
+#>
+
+
+#region Process Tracker
+function Stop-ProcessTracker
+{
+	<#
+		.SYNOPSIS
+			Stops and removes all processes from the list.
+	#>
+	#Stop the timer
+	$timerProcessTracker.Stop()
+	
+	#Remove all the processes
+	while ($ProcessTrackerList.Count -gt 0)
+	{
+		$process = $ProcessTrackerList[0].Process
+		$ProcessTrackerList.RemoveAt(0)
+		if (-not $process.HasExited)
+		{
+			Stop-Process -InputObject $process
+		}
+	}
+}
+
+$timerProcessTracker_Tick = {
+	Update-ProcessTracker
+}
+
+function Update-ProcessTracker
+{
+	<#
+		.SYNOPSIS
+			Checks the status of each job on the list.
+	#>
+	
+	#Poll the jobs for status updates
+	$timerProcessTracker.Stop() #Freeze the Timer
+	
+	for ($index = 0; $index -lt $ProcessTrackerList.Count; $index++)
+	{
+		$psObject = $ProcessTrackerList[$index]
+		
+		if ($null -ne $psObject)
+		{
+			if ($null -ne $psObject.Process)
+			{
+				if ($psObject.Process.HasExited)
+				{
+					#Call the Complete Script Block
+					if ($null -ne $psObject.CompleteScript)
+					{
+						#$results = Receive-Job -Job $psObject.Job
+						Invoke-Command -ScriptBlock $psObject.CompleteScript -ArgumentList $psObject.Process
+					}
+					
+					$ProcessTrackerList.RemoveAt($index)
+					$index-- #Step back so we don't skip a job
+				}
+				elseif ($null -ne $psObject.UpdateScript)
+				{
+					#Call the Update Script Block
+					Invoke-Command -ScriptBlock $psObject.UpdateScript -ArgumentList $psObject.Process
+				}
+			}
+		}
+		else
+		{
+			$ProcessTrackerList.RemoveAt($index)
+			$index-- #Step back so we don't skip a job
+		}
+	}
+	
+	if ($ProcessTrackerList.Count -gt 0)
+	{
+		$timerProcessTracker.Start() #Resume the timer
+	}
+}
+
+$ProcessTrackerList = New-Object System.Collections.ArrayList
+function Add-ProcessTracker
+{
+	<#
+		.SYNOPSIS
+			Add a new process to the ProcessTracker and starts the timer.
+	
+		.DESCRIPTION
+			Add a new process to the ProcessTracker and starts the timer.
+	
+		.PARAMETER  FilePath
+			The path to executable.
+	
+		.PARAMETER ArgumentList
+			The arguments to pass to the process.
+	
+		.PARAMETER CompletedScript
+			The script block that will be called when the process is complete.
+			The process is passed as an argument. The process argument is null when the job fails.
+	
+		.PARAMETER UpdateScript
+			The script block that will be called each time the timer ticks.
+			The process is passed as an argument.
+	
+		.PARAMETER RedirectOutputScript
+			The script block that handles output from the process.
+			Use $_.Data to access the output text.
+	
+		.PARAMETER RedirectErrorScript
+			The script block that handles error output from the process.
+			Use $_.Data to access the output text.
+	
+		.PARAMETER NoNewWindow
+			Start the new process in the current console window.
+	
+		.PARAMETER WindowStyle
+			Specifies the state of the window that is used for the new process. 
+			Valid values are Normal, Hidden, Minimized, and Maximized. 
+			The default value is Normal.
+	
+		.PARAMETER WorkingDirectory
+			Specifies the location of the executable file or document that runs in the process. 
+			The default is the current directory.
+	
+		.PARAMETER RedirectInput
+			Redirects the input of the process. If this switch is set, the function will return the process object.
+			Use the process object's StandardInput property to access the input stream.
+	
+		.PARAMETER PassThru
+			Returns the process that was started.
+	
+		.PARAMETER SyncObject
+			The object used to marshal the process event handler calls that are issued.
+			You must pass a control to sync otherwise it will produce an error when redirecting output.
+
+		.EXAMPLE
+			 Add-ProcessTracker -FilePath 'notepad.exe' `
+			-SyncObject $form1 `
+			-CompletedScript {
+				Param([System.Diagnostics.Process]$Process)
+				$button.Enable = $true
+			}`
+			-UpdateScript {
+				Param([System.Diagnostics.Process]$Process)
+				Function-Animate $button
+			}`
+			-RedirectOutputScript { 
+			# Use $_.Data to access the output text
+				$textBox1.AppendText($_.Data)
+				$textBox1.AppendText("`r`n")
+			}
+		.EXAMPLE
+			$process = Add-ProcessTracker -FilePath 'powershell.exe' `
+			-RedirectInput `
+			-SyncObject $buttonRunProcess `
+			-RedirectOutputScript {
+				# Use $_.Data to access the output text
+				$richtextbox1.AppendText($_.Data)
+				$richtextbox1.AppendText("`r`n")
+			}
+			
+			#Write to the console
+			$process.StandardInput.WriteLine("Get-Process")
+	
+		.OUTPUTS
+			 System.Diagnostics.Process
+	#>
+	
+	[OutputType([System.Diagnostics.Process])]
+	Param (
+		[ValidateNotNull()]
+		[Parameter(Mandatory = $true)]
+		[string]$FilePath,
+		[string]$Arguments,
+		[string]$WorkingDirectory,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNull()]
+		[System.ComponentModel.ISynchronizeInvoke]$SyncObject,
+		[ScriptBlock]$CompletedScript,
+		[ScriptBlock]$UpdateScript,
+		[ScriptBlock]$RedirectOutputScript,
+		[ScriptBlock]$RedirectErrorScript,
+		[System.Diagnostics.ProcessWindowStyle]$WindowStyle = 'Normal',
+		[switch]$RedirectInput,
+		[switch]$NoNewWindow,
+		[switch]$PassThru
+	)
+	
+	#Start the Process
+	try
+	{
+		$process = New-Object System.Diagnostics.Process
+		$process.StartInfo.FileName = $FilePath
+		$process.StartInfo.WindowStyle = $WindowStyle
+		
+		if ($NoNewWindow)
+		{
+			$process.StartInfo.CreateNoWindow = $true
+		}
+		
+		if ($WorkingDirectory)
+		{
+			$process.StartInfo.WorkingDirectory = $WorkingDirectory
+		}
+		
+		#Handle Redirection
+		if ($RedirectErrorScript)
+		{
+			$process.EnableRaisingEvents = $true
+			$process.StartInfo.UseShellExecute = $false
+			$process.StartInfo.RedirectStandardError = $true
+			$process.StartInfo.CreateNoWindow = $true
+			$process.add_ErrorDataReceived($RedirectErrorScript)
+		}
+		
+		if ($RedirectOutputScript)
+		{
+			$process.StartInfo.UseShellExecute = $false
+			$process.StartInfo.RedirectStandardOutput = $true
+			$process.add_OutputDataReceived($RedirectOutputScript)
+		}
+		
+		if ($RedirectInput)
+		{
+			$process.EnableRaisingEvents = $true
+			$process.StartInfo.UseShellExecute = $false
+			$process.StartInfo.CreateNoWindow = $true
+			$process.StartInfo.RedirectStandardInput = $true
+			$PassThru = $true #Force the object to return
+		}
+		
+		#Pass the arguments and sync with the form
+		$process.StartInfo.Arguments = $Arguments
+		$process.SynchronizingObject = $SyncObject
+		$process.Start() | Out-Null
+		
+		#Begin the redirect reads
+		if ($RedirectOutputScript)
+		{
+			$process.BeginOutputReadLine()
+		}
+		
+		if ($RedirectErrorScript)
+		{
+			$process.BeginErrorReadLine()
+		}
+	}
+	catch
+	{
+		Write-Error $_.Exception.Message
+		$process = $null
+	}
+	
+	if ($null -ne $process)
+	{
+		#Create a Custom Object to keep track of the Job & Script Blocks
+		$members = @{
+			"Process"	     = $process;
+			"CompleteScript" = $CompletedScript;
+			"UpdateScript"   = $UpdateScript
+		}
+		
+		$psObject = New-Object System.Management.Automation.PSObject -Property $members
+		
+		[void]$ProcessTrackerList.Add($psObject)
+		
+		#Start the Timer
+		if (-not $timerProcessTracker.Enabled)
+		{
+			$timerProcessTracker.Start()
+		}
+		
+		#Return the process if using PassThru
+		if ($PassThru)
+		{
+			return $process
+		}
+	}
+	elseif ($null -ne $CompletedScript)
+	{
+		#Failed
+		Invoke-Command -ScriptBlock $CompletedScript -ArgumentList $null
+	}
+	
+}
+
+#endregion
+]]></Code>
+  <Mode>1</Mode>
+  <Assemblies />
+</File>

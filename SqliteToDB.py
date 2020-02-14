@@ -101,6 +101,10 @@ def switch_configuration( to_database ):
 		os.remove( pyc )
 
 # Cache a copy of the configuration file.
+if not os.path.exists(DatabaseConfigFName):
+	print("{} does not exist. You must create the DatabaseConfig.py file first.".format(DatabaseConfigFName))
+	sys.exit(1)
+
 with open(DatabaseConfigFName, 'r') as fp:
 	database_config = fp.read()
 	

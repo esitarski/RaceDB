@@ -1,0 +1,104 @@
+dockerps() {
+   to="cat"
+   if [ ! -z "$1" ]; then
+      to="grep -i $1"
+   fi
+
+   RED='\033[0;31m'
+   GRN='\033[0;32m'
+   BLU='\033[1;34m'
+   NC='\033[0m'
+
+   docker ps -a --format="table {{.Status}}^{{.Names}}^{{.Ports}}^{{.Image}}" | grep -v NAMES | $to | perl -lpe 's/0.0.0.0/\*/g' | perl -lpe 's/docker-images-0.fibernetics.ca:5000/fen/g' | while IFS= read -r line ; do
+   
+      IFS='^' read -r -a array <<< "$line"
+
+      if [[ ${array[0]} == *"Up "* ]]; then
+         STATUS="${GRN}"
+      else
+         STATUS="${RED}"
+      fi
+      
+      printf "${BLU}%-35s${STATUS}%40s${NC}\t%35s\n" "${array[1]}" "${array[3]}" "${array[2]}"
+
+   done
+
+   echo
+}
+
+dockercmd() {
+   echo
+   if [ ! -z "$1" ]; then
+      cmd="$1"
+   else
+     echo "Command required!"
+     return
+   fi
+
+   cnt=1
+   for container in $(docker ps --format="table {{.Names}}" | grep -v NAMES);
+   do
+      echo -n "$cnt: "
+      echo $container;
+      containers[$cnt]=$container;
+      ((cnt++))
+   done
+   ((cnt--))
+    
+   if [ "$cnt" == "1" ]; then
+      line="1"
+   else
+      echo
+      echo -n "Select (1-$cnt):"
+      read line
+   fi
+    
+   echo
+   if [ -n "$line" ]
+   then
+   if [ "$line" -gt "0" -a "$line" -le "$cnt" ]; then
+      echo -n "${cmd}-ing "
+      echo ${containers[$line]}
+      echo
+      docker ${cmd} ${containers[$line]}
+   fi
+   fi
+}
+
+dockerbash() {
+   echo
+   to="cat"
+   if [ ! -z "$1" ]; then
+      to="grep -i $1"
+   fi
+
+   cnt=1
+   for container in `docker ps --format="table {{.Names}}" | grep -v NAMES | $to`;
+   do
+      echo -n "$cnt: "
+      echo $container;
+      containers[$cnt]=$container;
+      ((cnt++))
+   done
+   ((cnt--))
+    
+   if [ "$cnt" == "1" ]; then
+      line="1"
+   else
+      echo
+      echo -n "Select (1-$cnt):"
+      read line
+   fi
+    
+   echo
+   if [ -n "$line" ]
+   then
+   if [ "$line" -gt "0" -a "$line" -le "$cnt" ]; then
+      echo -n "Entering "
+      echo ${containers[$line]}
+      echo
+      docker exec -it ${containers[$line]} /bin/bash -c "export TERM=xterm; exec bash"
+   fi
+   fi
+}
+
