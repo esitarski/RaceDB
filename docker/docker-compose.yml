@@ -14,7 +14,7 @@ services:
             - postgresql-racedb-varrun:/var/run/postgresql
 
     racedb:
-        image: mbuckaway/racedb:latest
+        image: esitarski/racedb:latest
         restart: always
         container_name: racedb_app
         ports:

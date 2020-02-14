@@ -28,10 +28,10 @@ The tar/zip for the container automatically updates the docker-compose.yml file 
 The .dockerdef file gives the tag name and version to the container. By default, it is set to the maintainer of RaceDB. For your own personal build, you must edit the .dockerdef file and change the maintainer's tag to your own.
 
 For example:
-export IMAGE="mbuckaway/racedb"
+export IMAGE="esitarski/racedb"
 export TAG="v3.0.31-private"
 
-mbuckaway is the username on Docker Hub and racedb is the name of the container.
+esitarski is the username on Docker Hub and racedb is the name of the container.
 
 ## Secrets
 

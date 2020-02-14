@@ -1,5 +1,5 @@
-![DevelopmentBuild](https://github.com/mbuckaway/RaceDB/workflows/DevelopmentBuild/badge.svg)
-![ReleaseBuild](https://github.com/mbuckaway/RaceDB/workflows/ReleaseBuild/badge.svg)
+![DevelopmentBuild](https://github.com/esitarski/RaceDB/workflows/DevelopmentBuild/badge.svg)
+![ReleaseBuild](https://github.com/esitarski/RaceDB/workflows/ReleaseBuild/badge.svg)
 
 # Welcome to RaceDB
 
