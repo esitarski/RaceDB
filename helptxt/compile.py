@@ -60,11 +60,17 @@ def fileOlderThan( srcFile, transFile ):
 	except:
 		return False
 		
+def getHelpFiles( dir='.' ):
+	for fname in glob.glob( dir + '/*.md' ):
+		if 'Links.md' in fname:
+			continue
+		yield fname
+		
 def CompileHelp( dir = '.' ):
 	with working_directory( dir ):
 		# Check if any of the help files need rebuilding.
 		doNothing = True
-		for fname in glob.glob("./*.txt"):
+		for fname in getHelpFiles():
 			fbase = os.path.splitext(os.path.basename(fname))[0]
 			fhtml = os.path.join( '..', HtmlDocFolder, fbase + '.html' )
 			if not fileOlderThan(fhtml, fname):
@@ -94,7 +100,7 @@ def CompileHelp( dir = '.' ):
 		with open('Links.md') as f:
 			links = f.read()
 			
-		for fname in glob.glob("./*.txt"):
+		for fname in getHelpFiles():
 			print ( fname, '...' )
 			with open(fname) as f:
 				input = io.StringIO()
