@@ -286,7 +286,7 @@ dorelease() {
 	# Remove the -private from the version
 	VERSIONNO=$(echo $VERSION | awk -F - '{print $1}')
 	DATETIME=$(date +%Y%m%d%H%M%S)
-	TAGNAME="v$VERSIONNO-$DATETIME"
+	TAGNAME="$VERSIONNO-$DATETIME"
 	echo "Releasing with $TAGNAME"
     git checkout master
     git merge dev -m "Release $TAGNAME"
