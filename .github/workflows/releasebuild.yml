@@ -1,7 +1,7 @@
 on:
     push:
         tags:
-            - "v3*"
+            - v3*
         paths-ignore:
         - README.md
         - README-hub.md
