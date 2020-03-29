@@ -8,8 +8,8 @@ RaceDB is a database system for for Cross Manager. It allows registration of rid
 ## Installation
 
 There are two method to get RaceDB working
-    - The hard way using lots of command line "code" as per the original install instructions (See OLD INSTALL METHOD below) from the source code
-    - The easy way using Docker and the RaceDB-Container
+- The hard way using lots of command line "code" as per the original install instructions (See OLD INSTALL METHOD below) from the source code
+- The easy way using Docker and the RaceDB-Container
 
 If you are a seasoned RaceDB enthusist or a seasoned python programmer, feel free to run though the old install instructions. Otherwise, go download and install Docker ([http://www.docker.com]). Docker Desktop is available for Mac and Windows and Docker Community edition is available for Linux. Once Docker is installed, the installation procedure is straight forward.
 
