@@ -99,7 +99,7 @@ def buildRaceDBContainer(releasedir):
 	print("Created: {}".format(unixtarname))
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Package RaceDB components')
+	parser = argparse.ArgumentParser(description='Package RaceDB components - DO NOT RUN DIRECTLY. Use compile.sh.')
 	parser.add_argument('-r', '--racedb', action='store_true', default=True, help='Package RaceDB')
 	parser.add_argument('-c', '--container', action='store_true', default=False, help='Package RaceDB Container')
 	parser.add_argument('-a', '--all', action='store_true', default=False, help='Package everything')

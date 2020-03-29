@@ -1,2 +1,2 @@
 export IMAGE="esitarski/racedb"
-export TAG="v3.0.32-private"
+export TAG="v3.0.33-private"

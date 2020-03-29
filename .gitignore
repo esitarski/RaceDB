@@ -8,3 +8,7 @@ release/
 racedb-container/
 compile.TempPoint.ps1
 racedb.env.bak
+RaceDB/__pycache__/
+__pycache__/
+core/__pycache__/
+helptxt/__pycache__/

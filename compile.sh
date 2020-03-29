@@ -334,8 +334,9 @@ $0 [ -hcCtaep: ]
  -P        - Push docker containers
  -A        - Build everything and package (except push containers)
 
+ -B        - Bump version (do not edit helptxt/version.py!)
  -T        - Tag for release
- -r        - do release
+ -r        - Do release
 
 Running on: $OSNAME
 
@@ -343,7 +344,7 @@ To setup the build environment after a fresh checkout, use:
 $0 -S
 
 To build all the applications and package them, use:
-$0 -a
+$0 -A
 
 EOF
 	exit

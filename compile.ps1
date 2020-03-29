@@ -132,11 +132,8 @@ function doHelp
 	-install     - Install PS2EXE
 	-build       - Build Release Zip
 	
-	To setup the build environment after a fresh checkout, use:
-	compile.ps1 -setupenv
-	
 	To build all the applications and package them, use:
-	compile.ps1 -all -everything
+	compile.ps1 -all
 	'
 	exit 1
 }

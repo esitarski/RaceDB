@@ -1,4 +1,7 @@
-# RaceDB-Container
+![DevelopmentBuild](https://github.com/esitarski/RaceDB/workflows/DevelopmentBuild/badge.svg)
+![ReleaseBuild](https://github.com/esitarski/RaceDB/workflows/ReleaseBuild/badge.svg)
+
+# RaceDB
 
 ## Welcome to RaceDB
 
