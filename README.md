@@ -163,7 +163,8 @@ The following information describes the install RaceDB on the command line. It i
   Choose the latest installer of 64 bit python 3 for your platform. 32bit versions are not supported.
 
 - Step 1a: Install GIT
-  On Windows, download git from https://gitforwindows.org/. Make sure git is avaiable on your path. On Linux and MacOSX, git is usually installed by default.
+  
+  On Windows, download git from https://gitforwindows.org/. Make sure git is available on your path. On Linux and MacOSX, git is usually installed by default.
 
 - Step 2:  Unzip RaceDB.zip
 
@@ -181,11 +182,16 @@ The following information describes the install RaceDB on the command line. It i
 - Step 4:  If on Windows, check and fix your Path.
 
   In a md window, type:
-    python
+
+  ```
+  python
+  ```
 	
   If you get the message:
 
+  ```
     ‘python’ is not recognized as an internal or external command
+  ```
 
   You need to set your PATH.  This is not hard, and you only need to do it once:
 
@@ -200,6 +206,12 @@ The following information describes the install RaceDB on the command line. It i
     ```bash
     git
     ```
+
+  ```
+    ‘git’ is not recognized as an internal or external command
+  ```
+
+  You need to set your PATH.  You should have said yes to ADD TO PATH during installation of git. Logout or reboot your system to get the path updated.
 
 - Step 4:  If on Linux/Mac, make sure you are using Python3
 
