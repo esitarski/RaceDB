@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load date_fmt %}
 {% block content %}
 <h2>{% trans "Unique Participant Summary" %}</h2>
-<h2>{{competition.name}}: {{competition.start_date|date:"Y-m-d"}} <a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "OK" %}</a></h2>
+<h2>{{competition.name}}: {{competition.start_date|date_short}} <a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "OK" %}</a></h2>
 <hr/>
 	
 {% spaceless %}

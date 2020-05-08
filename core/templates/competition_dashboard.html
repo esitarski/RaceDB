@@ -7,6 +7,7 @@
 {% load get_field_name %}
 {% load yes_no %}
 {% load non_empty_list %}
+{% load date_fmt %}
 
 <style>
 #dashboard {
@@ -166,7 +167,7 @@
 			<td>
 				<div class="panel panel-info">
 					<div class="panel-heading">
-						<h3>{{e.name}}, <span style="font-size:75%">{{e.date_time|date:"Y-m-d H:i"}},
+						<h3>{{e.name}}, <span style="font-size:75%">{{e.date_time|date_hhmm}},
 							{% trans "Nations" %}:&nbsp;{{e.get_num_nationalities}},
 							<strong>{% trans "Starters" %}:&nbsp;{{e.get_participant_count}}</strong></span>
 						</h3>
@@ -237,7 +238,7 @@
 			<td>
 				<div class="panel panel-info">
 					<div class="panel-heading">
-						<h3>{{e.name}}, <span style="font-size: 80%">{% if e.has_unseeded %} <span class="label label-warning" style="font-size: 110%">{% trans "Warning: Unseeded Riders" %}</span>{% endif %} {{e.date_time|date:"Y-m-d H:i"}},
+						<h3>{{e.name}}, <span style="font-size: 80%">{% if e.has_unseeded %} <span class="label label-warning" style="font-size: 110%">{% trans "Warning: Unseeded Riders" %}</span>{% endif %} {{e.date_time|date_hhmm}},
 						{% trans "Nationalities" %}:&nbsp;{{e.get_num_nationalities}},
 						<strong>{% trans "Starters" %}:&nbsp;{{e.get_participant_count}}</strong></span></h3>
 					</div>

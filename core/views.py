@@ -39,6 +39,7 @@ from .ReadWriteTag import ReadTag, WriteTag
 from .FinishLynx import FinishLynxExport
 from .AnalyzeLog import AnalyzeLog
 from . import WriteLog
+from . import date_transform as dtrans
 
 #-----------------------------------------------------------------------
 from .context_processors import getContext
@@ -1423,7 +1424,7 @@ def get_annotated_waves( event ):
 	wave_bad_start_count = defaultdict( int )
 	wave_late_reg_count = defaultdict( int )
 	num_nationalities = defaultdict( set )
-	for p in event.get_participants().defer('signature').select_related('license_holder','category'):
+	for p in event.get_participants().select_related('license_holder','category'):
 		w = category_wave[p.category]
 		wave_starter_count[w] += 1
 		if not p.can_start():

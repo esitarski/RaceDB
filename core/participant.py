@@ -290,7 +290,7 @@ def ParticipantsInEvents( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
 	competition_events = sorted( competition.get_events(), key=operator.attrgetter('date_time') )
-	event_participants = { event:set(event.get_participants().defer('signature')) for event in competition_events }
+	event_participants = { event:set(event.get_participants()) for event in competition_events }
 	participants = sorted( set.union(*[p for p in event_participants.values()]), key=lambda p: p.license_holder.search_text )
 	
 	check_codes = {
@@ -696,7 +696,7 @@ def ParticipantCategorySelect( request, participantId, categoryId ):
 		categories = set( p.category
 			for p in Participant.objects.filter(
 				competition=competition, license_holder=participant.license_holder).exclude(
-				category__isnull=True).select_related('category').defer('signature')
+				category__isnull=True).select_related('category')
 		)
 		if category in categories:
 			has_error, conflict_explanation, conflict_participant = True, _('LicenseHolder is already participating in this Category.'), None

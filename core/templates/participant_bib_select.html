@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% load date_fmt %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
@@ -53,7 +54,7 @@
 		<td>
 		{% if b.date_lost %}
 			<a class="btn btn-warning lost-bib" href="./ParticipantBibSelect/{{participant.id}}/{{b.bib}}/"
-				title='{% trans "Lost" %} {{b.date_lost|date:"Y-m-d"}}{% if b.license_holder %} {% trans "by" %} {{b.license_holder.full_name}}{% endif %}'>{{b.bib}}</a>
+				title='{% trans "Lost" %} {{b.date_lost|date_short}}{% if b.license_holder %} {% trans "by" %} {{b.license_holder.full_name}}{% endif %}'>{{b.bib}}</a>
 		{% elif b.license_holder %}
 			<span class="label label-default label-bib" title="{{b.full_name}}">{{b.bib}}</span>
 		{% else %}

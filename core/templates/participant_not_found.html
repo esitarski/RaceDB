@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load date_fmt %}
 {% load static %}
 {% load i18n %}
 {% load crispy_forms_tags %}
@@ -29,7 +30,7 @@
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{lh.full_name}}</td>
 			<td>{{lh.get_gender_display}}</td>
-			<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
+			<td>{{lh.date_of_birth|date_short}}</td>
 			<td>{{lh.get_location}}</td>
 			<td>{{lh.license_code_trunc}}</td>
 			<td>{{lh.get_flag_uci_id_html}}</td>
@@ -44,7 +45,7 @@
 			<td class="text-right">{{forloop.counter}}.&nbsp;<img src="{% static "images/warning.png" %}"</img></td>
 			<td>{{lh.full_name}}</td>
 			<td>{{lh.get_gender_display}}</td>
-			<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
+			<td>{{lh.date_of_birth|date_short}}</td>
 			<td>{{lh.get_location}}</td>
 			<td>{{lh.license_code_trunc}}</td>
 			<td>{{lh.get_flag_uci_id_html}}</td>

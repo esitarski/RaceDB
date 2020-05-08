@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% load date_fmt %}
 {% load static %}
 {% load i18n %}
 
@@ -110,7 +111,7 @@ div.title {
 					{% elif h.get_uci_html %}
 						<span class="text-nowrap">{{h.get_uci_html}}</span>
 					{% else %}
-						<span class="text-nowrap">{% trans "DOB" %}: {{h.date_of_birth|date:"Y-m-d"}}</span>
+						<span class="text-nowrap">{% trans "DOB" %}: {{h.date_of_birth|date_short}}</span>
 					{% endif %}
 				</h4>
 				<br/>

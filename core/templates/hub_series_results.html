@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load date_fmt %}
 {% load i18n %}
 {% load to_js %}
 
@@ -66,7 +67,7 @@ table.results-table tr th {
 		{% for c in group_categories %}{{c.code_gender}}{% if not forloop.last %}, {% endif %}{% endfor %}
 	</span>
 </h1>
-{% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
+{% trans "Generated" %}: {{time_stamp|date_hhmmss}}
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed results-table" style="width: auto;">
 <thead>
@@ -85,7 +86,7 @@ table.results-table tr th {
 		{% for e in events %}
 			<th colspan="2" class="text-center col-border-right hidden-print">
 				{{e.competition.title}}<br/>
-				{{e.date_time|date:"Y-m-d H:i"}}<br/>
+				{{e.date_time|date_hhmm}}<br/>
 				{% if is_custom_category %}
 				<a href='/RaceDB/Hub/CustomCategoryResults/{{e.id}}/{{e.event_type}}/{{e.custom_category_cur.id}}/'>
 				{% else %}

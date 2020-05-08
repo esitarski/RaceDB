@@ -61,7 +61,7 @@ def get_participant_excel( q = None ):
 	optional_events = None
 	row = None
 	
-	for p in Participant.objects.filter(q).defer('signature').select_related('license_holder'):
+	for p in Participant.objects.filter(q).select_related('license_holder'):
 		if competition is None:
 			headers = list(data_headers)
 			

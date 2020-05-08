@@ -136,6 +136,7 @@ function drawCharts() {
 }
  </script>
 {% endblock srcjavascript %}
+{% load date_fmt %}
 {% load static %}
 {% block onload %}
 	$( "form" ).submit(function( event ) {
@@ -157,12 +158,12 @@ function drawCharts() {
 &nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
 </p>
 </div>
-<h2>{{competition.title}}: {{start|date:"Y-m-d"}}</h2>
+<h2>{{competition.title}}: {{start|date_short}}</h2>
 <h3>{% trans "Total Participants" %}: {{payload.participant_total}} ({% trans "includes  multiple categories" %})&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Total License Holders" %}: {{payload.license_holder_total}}&nbsp;&nbsp;{% trans "Total Prereg" %}: {{payload.participant_prereg_total}}</h3>
 <br/>
 <table class="table" style="width: auto;">
 <head>
-<tr><th></th>{% for d in dates %}<th>{{d|date:"Y-m-d"}}</th>{% endfor %}</tr>
+<tr><th></th>{% for d in dates %}<th>{{d|date_short}}</th>{% endfor %}</tr>
 </head>
 <body>
 <tr><th style="text-align:right">{% trans 'Participants' %}</th>{% for di in date_info %}<td style="text-align:right">{{di.participant_count}}</td>{% endfor %}</tr>
