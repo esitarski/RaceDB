@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load date_fmt %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load non_empty_list %}
@@ -33,7 +34,7 @@
 		<tr {% if h == license_holder_merge %}class="highlight"{% endif %}">
 			<td>{{h.last_name}},&nbsp;{{h.first_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td>{{h.date_of_birth|date:"Y-m-d"}}</td>
+			<td>{{h.date_of_birth|date_short}}</td>
 			<td>{% non_empty_list h.city h.state_prov %}</td>
 			<td>{{h.nation_code}}</td>
 			<td>{{h.license_code_trunc}}</td>

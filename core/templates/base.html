@@ -1,3 +1,5 @@
+{% load date_fmt %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,8 +14,6 @@
 
 <link rel="icon" href="{% static "images/RaceDB_32x32.png" %}">
 <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
-<link rel="stylesheet" href="{% static "bootstrap/css/datepicker.css" %}">
-<link rel="stylesheet" href="{% static "bootstrap/css/bootstrap-datetimepicker.min.css" %}">
 
 {% block linkstyles %}
 {% endblock linkstyles %}
@@ -114,16 +114,22 @@ function skip_back() { skip_back_n(1); }
 
 function onLoad()
 {
-	// Set consistent date format.
-	$('.dateinput').datepicker({
-		format: "yyyy-mm-dd",
-		autoclose: true,
-		todayHighlight: true
+	{% comment %}
+	// Use the browser's default date and datetime editor.
+	// On load, replace the space with a T so the browser recognizes the datetime.
+	// Change the type to datetime-local after - otherwise the browser will report an error.
+	// The reverse is done on submit.
+	{% endcomment %}
+	$('.dateinput').attr( 'type', 'date' );
+	$('.datetimeinput').each( function(index, element) {
+		element.value = element.value.replace(' ', 'T');
+		element.type = 'datetime-local';
 	});
-	
-	// Set consistent datetime format.
-	$('.datetimeinput').datetimepicker({
-		format: 'yyyy-mm-dd hh:ii:ss',
+	$('form').submit(function(){
+		$('.datetimeinput').each( function(index, element) {
+			element.type = 'text';
+			element.value = element.value.replace('T', ' ');
+		});
 	});
 	
 	// Set button background to black when pressed to give feedback.
@@ -131,7 +137,7 @@ function onLoad()
 		var button = $(this);
 		var backgroundColorCur = button.css( "background-color" );
 		button.css( {"background-color": '#666666'} );
-		setTimeout( function(){ button.css( {"background-color": backgroundColorCur} ); }, 15000 );
+		setTimeout( function(){ button.css( {"background-color": backgroundColorCur} ); }, 5000 );
 	});
 	
 	// Make click targets larger for touch devices.

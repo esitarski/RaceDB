@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load date_fmt %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
@@ -42,10 +43,10 @@
 {% if participant.category %}
 	{% trans "racing category" %} <strong>{{participant.category.code}}:</strong>,
 	{% trans "and my date of birth is " %}
-	<strong>{{participant.license_holder.date_of_birth|date:"Y-m-d"}}</strong>.
+	<strong>{{participant.license_holder.date_of_birth|date_short}}</strong>.
 {% else %}
 	{% trans "and my date of birth is " %}
-	<strong>{{participant.license_holder.date_of_birth|date:"Y-m-d"}}</strong>.
+	<strong>{{participant.license_holder.date_of_birth|date_short}}</strong>.
 {% endif %}
 </h2>
 <hr/>

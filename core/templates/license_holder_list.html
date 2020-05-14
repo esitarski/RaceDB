@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load date_fmt %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
@@ -38,7 +39,7 @@
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{h.full_name}}</td>
 			<td>{{h.get_gender_display}}</td>
-			<td class="text-nowrap">{% if h.date_of_birth_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.date_of_birth|date:"Y-m-d"}}</td>
+			<td class="text-nowrap">{% if h.date_of_birth_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.date_of_birth|date_short}}</td>
 			<td>{{h.get_location}}</td>
 			<td class="text-nowrap">
 				{% if h.license_code_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.license_code_trunc}}

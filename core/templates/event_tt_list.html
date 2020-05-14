@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 {% load i18n %}
+{% load date_fmt %}
 {% load crispy_forms_tags %}
 <h2>{{title}}</h2>
 <h2>{% trans "Competition" %}: <strong>{{competition.name}}</strong></h2>
@@ -23,7 +24,7 @@
 			<td>{{e.name}}</td>
 			<td>{{e.get_event_type_display}}</td>
 			<td>{{e.wave_text_html|safe}}</td>
-			<td>{{e.date_time|date:"Y-m-d H:i"}}</td>
+			<td>{{e.date_time|date_hhmm}}</td>
 			<td>
 				<a class="btn btn-warning" href="./EventTTDelete/{{e.id}}/">{% trans "Delete" %}</a>
 				<a class="btn btn-primary" href="./EventTTEdit/{{e.id}}/">{% trans "Edit" %}</a>

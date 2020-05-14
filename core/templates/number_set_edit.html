@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% load date_fmt %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load static %}
@@ -36,7 +37,7 @@
 				<td>
 					<strong>{{lh.full_name}}</strong>&nbsp;&nbsp;&nbsp;
 					{{lh.get_gender_display}},
-					{{lh.date_of_birth|date:"Y-m-d"}},
+					{{lh.date_of_birth|date_short}},
 					{{lh.get_location}}
 				</td>
 				<td>
@@ -46,7 +47,7 @@
 					{% endif %}
 					{{lh.license_code_trunc}}
 				</td>
-				<td>{{nse.date_lost|date:"Y-m-d"}}</td>
+				<td>{{nse.date_lost|date_short}}</td>
 				<td class="hidden-print">
 					<a class="btn btn-success" href="./BibReturn/{{nse.id}}/">{% trans "Found" %}</a>
 				</td>
@@ -69,7 +70,7 @@
 			<td>
 				<strong>{{lh.full_name}}</strong>&nbsp;&nbsp;&nbsp;
 				{{lh.get_gender_display}},
-				{{lh.date_of_birth|date:"Y-m-d"}},
+				{{lh.date_of_birth|date_short}},
 				{{lh.get_location}}
 				<br/>
 				<table class="bib-table">

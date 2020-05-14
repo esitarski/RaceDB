@@ -1,17 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% load date_fmt %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% load good_bad_icon %}
 {% load good_err_icon %}
 
+
 {% with late_reg_exists=instance.get_late_reg_exists %}
 <h2 class="hidden-print">{{title}}</h2>
-{% trans "Generated" %}: {{time_stamp|date:"Y-m-d H:i:s"}}
+{% trans "Generated" %}: {{time_stamp|date_hhmmss}}
 <h2><strong>{{instance.competition.title}}</strong></h2>
-<h2><strong>{{instance.name}}</strong>: {{instance.date_time|date:"Y-m-d H:i"}}</h2>
+<h2><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
 <br/><h4>{% trans "Total Starters" %}: {{instance.get_participant_count}}</h4>
 <div class="hidden-print">
 <hr/>
@@ -75,7 +77,7 @@
 {% endspaceless %}
 {% for w in instance.wave_set.all %}
 <hr class="page-break-before"/>
-<span class="visible-print">{{instance.competition.title}}, {{instance.name}}, {{instance.date_time|date:"Y-m-d H:i"}}</span>
+<span class="visible-print">{{instance.competition.title}}, {{instance.name}}, {{instance.date_time|date_hhmm}}</span>
 <h4>
 	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Nations" %}: {{w.get_num_nationalities}}, {% trans "Starters" %}: {{w.get_participants.count}}
 	{% if request.user.is_superuser %}<a class="btn btn-success btn-xs hidden-print" href="./WaveEdit/{{w.id}}/">{% trans "Edit" %}</a>{% endif %}

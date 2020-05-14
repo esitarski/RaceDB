@@ -132,6 +132,11 @@ except ImportError:
 	import tzlocal
 	TIME_ZONE =  tzlocal.get_localzone().zone
 
+try:
+	from .DateTimeConfig import *
+except ImportError:
+	pass
+
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True

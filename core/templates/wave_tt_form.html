@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% load date_fmt %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
 {% with c=instance.event.competition e=instance.event %}
 <h1 class="visible-print">{% trans "Start List" %}</h1>
 <h2><span class="hidden-print">{% trans "Competition" %}: </span><strong>{{c.name}}</strong></h2>
-<h2><span class="hidden-print">{% trans "Time Trial" %}: </span><strong>{{e.name}}</strong>: {{e.date_time|date:"Y-m-d H:i"}}</h2>
+<h2><span class="hidden-print">{% trans "Time Trial" %}: </span><strong>{{e.name}}</strong>: {{e.date_time|date_hhmm}}</h2>
 <h2><span class="hidden-print">{{title}}{% if instance.name %}: </span><strong>{{instance.name}}</strong>{% endif %}</h2>
 {% endwith %}
 <hr/>

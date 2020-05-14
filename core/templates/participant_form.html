@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load date_fmt %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load static %}
@@ -366,9 +367,9 @@
 					<span style="font-size:60%">{% trans "Time Trial" %} {{forloop.counter}}.</span> {{w.event.name}}:
 					<strong>{{w.name}}</strong>,			
 					{% if w.clock_time %}
-						{% trans "Start Time" %}: <strong>{{w.clock_time|date:"H:i:s"}}</strong>,
+						{% trans "Start Time" %}: <strong>{{w.clock_time|time_hhmmss}}</strong>,
 					{% else %}
-						{% trans "Unseeded" %}: <strong>{{w.event.date_time|date:"H:i"}}</strong>,
+						{% trans "Unseeded" %}: <strong>{{w.event.date_time|time_hhmm}}</strong>,
 					{% endif %}
 					{% trans "Starters" %}: {{w.get_starters_str}}
 					{% if w.is_late %}

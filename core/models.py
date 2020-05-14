@@ -1901,7 +1901,7 @@ class WaveBase( models.Model ):
 			count = self.get_participant_count()
 			if count <= self.max_participants:
 				return self.get_participants()
-			participants = list(self.get_participants_unsorted().defer('signature').order_by('registration_timestamp','bib')[:self.max_participants])
+			participants = list(self.get_participants_unsorted().order_by('registration_timestamp','bib')[:self.max_participants])
 			participants.sort( key=lambda p: (p.bib or 999999) )
 			return participants		
 		
@@ -1912,7 +1912,7 @@ class WaveBase( models.Model ):
 			count = self.get_participant_count()
 			if count <= self.max_participants:
 				return []
-			standby = list(self.get_participants_unsorted().defer('signature').order_by('-registration_timestamp','-bib')[:self.max_participants-count])
+			standby = list(self.get_participants_unsorted().order_by('-registration_timestamp','-bib')[:self.max_participants-count])
 			standby.reverse()
 			return standby
 		
@@ -2272,6 +2272,10 @@ def flag_html( nation_code ):
 		flag = nation_code
 	return mark_safe(flag)
 
+class LicenseHolderManager(models.Manager):
+	def get_queryset( self ):
+		return super().get_queryset().defer('note')
+
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
 	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), db_index=True )
@@ -2320,6 +2324,8 @@ class LicenseHolder(models.Model):
 	emergency_contact_phone = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Emergency Contact Phone') )
 	emergency_medical = models.CharField( max_length=128, blank=True, default='',
 		verbose_name=_('Medical Alert'), help_text = _('eg. diabetic, drug alergy, etc.') )
+
+	objects = LicenseHolderManager()
 
 	@property
 	def is_eligible( self ):
@@ -2793,7 +2799,7 @@ def add_name_to_tag( competition, tag ):
 	lh = None
 	bibs = []
 	
-	for p in Participant.objects.filter( competition=competition, tag=tag ).defer('signature'):
+	for p in Participant.objects.filter( competition=competition, tag=tag ):
 		if not lh:
 			lh = p.license_holder
 		if p.bib and p.license_holder == lh:
@@ -3472,6 +3478,10 @@ class ParticipantDefaultValues( object ):
 				m = lak // 2
 				self.est_kmh = (ave_kmh[m-1] + ave_kmh[m]) / 2.0
 		
+class ParticipantManager(models.Manager):
+	def get_queryset( self ):
+		return super().get_queryset().defer('signature', 'note')
+
 class Participant(models.Model):
 	competition = models.ForeignKey( 'Competition', db_index=True, on_delete=models.CASCADE )
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
@@ -3544,6 +3554,8 @@ class Participant(models.Model):
 	seed_early=models.BooleanField( default=False, verbose_name=_('Seed Early') )
 	SEED_OPTION_CHOICES = ((1,_('-')),(0,_('Seed Early')),(2,_('Seed Late')),(3,_('Seed Last')),)
 	seed_option=models.SmallIntegerField( choices=SEED_OPTION_CHOICES, default=1, verbose_name=_('Seed Option') )
+	
+	objects = ParticipantManager()
 	
 	def is_license_check_required( self ):
 		return CompetitionCategoryOption.is_license_check_required(self.competition, self.category)
@@ -3824,7 +3836,7 @@ class Participant(models.Model):
 			role=Participant.Competitor,
 			bib__isnull=False,
 			competition__start_date__lt=self.competition.start_date,
-		).exclude(category__isnull=True, competition=self.competition).defer('signature').select_related('competition').order_by(
+		).exclude(category__isnull=True, competition=self.competition).select_related('competition').order_by(
 			'-competition__start_date',
 		).first()
 		
@@ -3836,7 +3848,7 @@ class Participant(models.Model):
 					competition=previous.competition,
 					role=Participant.Competitor,
 					bib__isnull=False,
-				).exclude(category__isnull=True, category=self.category).defer('signature').values_list('category__id',flat=True)
+				).exclude(category__isnull=True, category=self.category).values_list('category__id',flat=True)
 			)
 		else:
 			# Add corresponding participants from the hints.
@@ -3903,7 +3915,7 @@ class Participant(models.Model):
 			for pp in Participant.objects.filter(
 						license_holder=self.license_holder,
 						competition__discipline=self.competition.discipline,
-					).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+					).exclude(category__isnull=True).select_related('competition').order_by(
 						'-competition__start_date','category__sequence')[:8]:
 				if pdv.update_participant( pp ):
 					break			
@@ -4293,7 +4305,7 @@ class Participant(models.Model):
 		
 		# First, add all numbers allocated to this event (includes pre-reg).
 		if available_numbers:
-			participants = Participant.objects.filter( competition=competition ).defer( 'signature' )
+			participants = Participant.objects.filter( competition=competition )
 			participants = participants.filter( category__in=category_numbers.categories.all() ).filter( bib_query ).order_by()
 			participants = participants.select_related('license_holder')
 			allocated_numbers = { p.bib: p.license_holder for p in participants }
@@ -4327,7 +4339,7 @@ class Participant(models.Model):
 						
 			# Otherwise, scan past participants to check if a license holder in this category owns the bib.
 			pprevious = Participant.objects.filter( competition__number_set=number_set, category__in=category_numbers.categories.all() )
-			pprevious = pprevious.filter( bib_query ).defer( 'signature' )
+			pprevious = pprevious.filter( bib_query )
 			pprevious = pprevious.exclude( bib__in=list(allocated_numbers.keys())[:200] )
 			pprevious = pprevious.order_by('-competition__start_date')
 			
@@ -5693,7 +5705,6 @@ class LicenseCheckState(models.Model):
 				competition__report_label_license_check__isnull=False,
 				competition__start_date__gte=datetime.date(year_cur,1,1),
 				competition__start_date__lte=datetime.date.today(),
-			).defer('signature',
 			).select_related('competition','category','competition__discipline','competition__report_label_license_check',
 			).order_by('-competition__start_date'):
 			key = participant_key( p )

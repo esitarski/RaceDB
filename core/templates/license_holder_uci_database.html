@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load date_fmt %}
 {% load i18n %}
 {% load blank_if_none %}
 {% load format_uci_id %}
@@ -34,7 +35,7 @@
 		<td>{{lh.first_name}}</td>
 		<td>{{lh.last_name}}</td>
 		<td>{{lh.get_gender_display}}</td>
-		<td>{{lh.date_of_birth|date:"Y-m-d"}}</td>
+		<td>{{lh.date_of_birth|date_short}}</td>
 		<td>{{lh.nation_code}}</td>
 		<td>{{lh.uci_id|format_uci_id}}</td>
 		<td></td>
@@ -46,7 +47,7 @@
 			<td>{{r.first_name}}</td>
 			<td>{{r.last_name}}</td>
 			<td>{% if r.gender == 0 %}{% trans "Men" %}{% elif r.gender == 1 %}{% trans "Women" %}{% else %}X{% endif %}</td>
-			<td>{{r.date_of_birth|date:"Y-m-d"}}</td>
+			<td>{{r.date_of_birth|date_short}}</td>
 			<td>{{r.nation_code}}</td>
 			<td>{{r.uci_id|format_uci_id}}</td>
 			<td class="hidden-print">
