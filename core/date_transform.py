@@ -72,4 +72,4 @@ del php_to_jquery
 del php_to_python
 del values
 
-print( sorted((k,v) for k, v in globals().items() if any( v in k for v in ('date_', 'time_'))) )
+# print( sorted((k,v) for k, v in globals().items() if any( v in k for v in ('date_', 'time_'))) )
