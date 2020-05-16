@@ -28,6 +28,14 @@ def date_Md_hhmm( value ):
 	return dateformat.DateFormat( value ).format(dtrans.date_Md_hhmm)
 
 @register.filter(expects_localtime=True)
+def date_year_Md_hhmm( value ):
+	return dateformat.DateFormat( value ).format(dtrans.date_year_Md_hhmm)
+
+@register.filter(expects_localtime=True)
+def date_year_Md( value ):
+	return dateformat.DateFormat( value ).format(dtrans.date_year_Md)
+
+@register.filter(expects_localtime=True)
 def time_hhmmss( value ):
 	return dateformat.DateFormat( value ).format(dtrans.time_hhmmss)
 

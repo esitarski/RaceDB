@@ -2,6 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% block content %}
+{% load date_fmt %}
 
 <script>
 function hideShowTeam( i ) {
@@ -31,7 +32,7 @@ function hideShowTeam( i ) {
 	font-weight: bold;
 }
 </style>
-<h2>{% trans "Teams"%}: {{competition.name}}: {{competition.start_date}}</h2>
+<h2>{% trans "Teams"%}: {{competition.name}}: {{competition.start_date|date_year_Md}}</h2>
 <div class="hidden-print">
 	<hr/>
 	<ul class="nav nav-pills">

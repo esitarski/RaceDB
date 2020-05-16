@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load static %}
+{% load date_fmt %}
 <ul class="nav nav-tabs">
 	<li role="presentation" {% if add_by_manual %}class="active"{% endif %}>
 		<a href="{{cancelUrl}}ParticipantManualAdd/{{competition.id}}/">
@@ -35,5 +36,5 @@
 	{% elif add_by_rfid %}	
 		<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;
 	{% endif %}
-	<strong>{{competition.name}}</strong>, {{competition.start_date}}
+	<strong>{{competition.name}}</strong>, {{competition.start_date|date_year_Md}}
 </h2>

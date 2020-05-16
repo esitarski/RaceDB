@@ -2701,18 +2701,18 @@ def get_participant_report_form():
 					Div(
 						Row( Field('start_date', size=10) ),
 						Row( Field('end_date', size=10) ),
-						css_class = 'col-md-1'
+						css_class = 'col-md-2'
 					),
 					Div(
 						Row(
-							Field('race_classes', id='focus', size=10, style="width: 13em;"),
-							Field('disciplines', size=10, style="width: 13em;"),
-							Field('organizers', size=10, style="width: 13em;"),
-							Field('include_labels', size=10, style="width: 13em;"),
-							Field('exclude_labels', size=10, style="width: 13em;"),
+							Field('race_classes', id='focus', size=10, style="width: 12em;"),
+							Field('disciplines', size=10, style="width: 12em;"),
+							Field('organizers', size=10, style="width: 12em;"),
+							Field('include_labels', size=10, style="width: 12em;"),
+							Field('exclude_labels', size=10, style="width: 12em;"),
 						),
 						Row( HTML( _('Use Ctrl-Click to Multi-Select and Ctrl-Click to Deselect') ) ),
-						css_class = 'col-md-11',
+						css_class = 'col-md-10',
 					)
 				),
 				HTML( '<hr/>' ),
@@ -2814,9 +2814,9 @@ def AttendanceAnalytics( request ):
 	
 	page_title = [u'Analytics']
 	if initial.get('start_date',None) is not None:
-		page_title.append( u'from {}'.format( initial['start_date'] .strftime('%Y-%m-%d') ) )
+		page_title.append( u'from {}'.format( initial['start_date'] .strftime(dtrans.date_year_Md_python) ) )
 	if initial.get('end_date', None) is not None:
-		page_title.append( u'to {}'.format( initial['end_date'].strftime('%Y-%m-%d') ) )
+		page_title.append( u'to {}'.format( initial['end_date'].strftime(dtrans.date_year_Md_python) ) )
 	if initial.get('organizers',None):
 		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
 	page_title = u' '.join( page_title )
