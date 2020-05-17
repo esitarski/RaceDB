@@ -11,6 +11,10 @@ def date_short_jquery():
 def date_hhmmss_jquery():
 	return dtrans.date_hhmmss_jquery
 
+@register.simple_tag
+def date_hhmm_jquery():
+	return dtrans.date_hhmm_jquery
+
 @register.filter(expects_localtime=True)
 def date_short( value ):
 	return dateformat.DateFormat( value ).format(dtrans.date_short)

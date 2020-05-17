@@ -14,6 +14,8 @@
 
 <link rel="icon" href="{% static "images/RaceDB_32x32.png" %}">
 <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
+<link rel="stylesheet" href="{% static "bootstrap/css/datepicker.css" %}">
+<link rel="stylesheet" href="{% static "bootstrap/css/bootstrap-datetimepicker.min.css" %}">
 
 {% block linkstyles %}
 {% endblock linkstyles %}
@@ -109,27 +111,110 @@ function skip_back_n( n ) {
 
 function skip_back() { skip_back_n(1); }
 
+function reformat( value, from_fmt, to_fmt ) {
+	if( !value )			// Handle blank field case.
+		return value;
+	
+	// Ugly, ugly hack to get data/time pickers to work in native format.
+	// One day all browsers will understand how to edit a date/time (sigh...).
+	
+	// Collect the date/time values as specified in the from_fmt.
+	var fields = ['mm', 'dd', 'ii', 'ss', 'A', 'a'];
+	fields.push( from_fmt.indexOf('yyyy') >= 0 ? 'yyyy': 'yy' );
+	fields.push( from_fmt.indexOf('HH') >= 0 ? 'HH' : 'hh' );
+		
+	var vals = {};
+	for( var i = 0; i < fields.length; ++i ) {
+		var f = fields[i], f_len = f.length;
+		vals[f] = '0000'.slice(0, f.length);
+		if( f.toLowerCase() == 'a' ) {
+			f_len = 2; vals[f] = '';	// Correct for length of 2-char am/pm.
+		}		
+		var pos = from_fmt.indexOf(f);
+		if( pos >= 0 ) {
+			v = value.slice(pos, pos+f_len);
+			if( v )
+				vals[f] = v;
+		}
+	}
+	
+	// Normalize 2 and 4 digit year.
+	if( fields.includes('yyyy') )
+		vals['yy'] = vals['yyyy'].slice(2);
+	else
+		vals['yyyy'] = '20' + vals['yy'];
+	
+	// Normalize am/pm.
+	if( vals['A'] )
+		vals['a'] = vals['A'].toLowerCase();
+	else if( vals['a'] )
+		vals['A'] = vals['a'].toUpperCase();
+		
+	// Get 12 and 24 hour hours.
+	if( fields.includes('hh') ) {		// 12 hour case.  Get 24 hour.
+		var hours = parseInt( vals['hh'], 10 );
+		if( vals['A'].slice(0,1) == 'P' && hours < 12 )
+			hours += 12;
+		vals['HH'] = (hours < 10 ? '0' : '') + hours;
+	}
+	else {								// 24 hour case.  Get 12 hour and AM/PM.
+		var hours = parseInt( vals['HH'], 10 );
+		vals['A'] = hours < 12 ? 'AM' : 'PM';
+		vals['a'] = vals['A'].toLowerCase();
+		if( hours > 12 )
+			hours -= 12;
+		vals['hh'] = (hours < 10 ? '0' : '') + hours;
+	}
+	
+	// Ignore two digit date if we have a 4 digit one.
+	if( to_fmt.indexOf('yyyy') >= 0 )
+		vals['yy'] = '';
+	
+	// Replace the values in the to_fmt with what we collected/computed earlier.
+	var ret = to_fmt;
+	for( var f in vals ) {
+		var v = vals[f];
+		if( v ) {
+			var pos = to_fmt.indexOf(f);
+			ret = ret.slice(0, pos) + v + ret.slice(pos+v.length);
+		}
+	}
+	
+	//alert( [from_fmt, value, to_fmt, ret] );
+	return ret;
+}
+
 {% block javascript %}
 {% endblock javascript %}
 
 function onLoad()
 {
-	{% comment %}
-	// Use the browser's default date and datetime editor.
-	// On load, replace the space with a T so the browser recognizes the datetime.
-	// Change the type to datetime-local after - otherwise the browser will report an error.
-	// The reverse is done on submit.
-	{% endcomment %}
-	$('.dateinput').attr( 'type', 'date' );
-	$('.datetimeinput').each( function(index, element) {
-		element.value = element.value.replace(' ', 'T');
-		element.type = 'datetime-local';
+	// Transform the ISO time formats into local formats.
+	$('.dateinput').each( function(index, element) {
+		element.value = reformat( element.value, 'yyyy-mm-dd', "{% date_short_jquery %}" );
 	});
+	$('.datetimeinput').each( function(index, element) {
+		element.value = reformat( element.value, 'yyyy-mm-dd HH:ii:ss', "{% date_hhmm_jquery %}" );
+	});	
+
+	// Initialize the date/time pickers using the local formats.
+	$('.dateinput').datepicker({
+		format: "{% date_short_jquery %}",
+		autoclose: true,
+		todayHighlight: true
+	});
+	$('.datetimeinput').datetimepicker({
+		format: "{% date_hhmm_jquery %}",
+	});
+	
+	// When the form is submitted, transform the local formats back into ISO.
 	$('form').submit(function(){
-		$('.datetimeinput').each( function(index, element) {
-			element.type = 'text';
-			element.value = element.value.replace('T', ' ');
+		$('.dateinput').each( function(index, element) {
+			element.value = reformat( element.value, "{% date_short_jquery %}", 'yyyy-mm-dd' );
 		});
+		$('.datetimeinput').each( function(index, element) {
+			element.value = reformat( element.value, "{% date_hhmm_jquery %}", 'yyyy-mm-dd HH:ii:ss' );
+		});	
 	});
 	
 	// Set button background to black when pressed to give feedback.

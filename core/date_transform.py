@@ -15,27 +15,20 @@ date_hhmmss = date_short + ' ' + time_hhmmss
 date_hhmm = date_short + ' ' + time_hhmm
 date_year_Md_hhmm = date_year_Md + ' ' + time_hhmm
 
+# https://docs.google.com/spreadsheets/d/1lPzBlmJVAkN6HUw28wBJmY1SdbSInRIBY0JCmBUDUmk/edit?amp;hl=en_US#gid=0
+
 php_to_jquery = {
 	'y': 'yy',
 	'Y': 'yyyy',
 	'd': 'dd',
-	'j': 'd',
 	'm': 'mm',
-	'l': 'DD',
-	'M': 'M',
-	'F': 'MM',
 	
-	'-': '-',
-	'/': '/',
-	':': ':',
-	' ': ' ',
-	
-	'a': 'p',
-	'A': 'P',
+	'a': 'a',
+	'A': 'A',
 	's': 'ss',
 	'i': 'ii',
-	'h': 'HH',
-	'H': 'hh',
+	'h': 'hh',
+	'H': 'HH',
 }
 
 php_to_python = {
@@ -48,11 +41,6 @@ php_to_python = {
 	'M': '%b',
 	'F': '%B',
 	
-	'-': '-',
-	'/': '/',
-	':': ':',
-	' ': ' ',
-	
 	'a': '%p',
 	'A': '%p',
 	's': '%S',
@@ -62,7 +50,7 @@ php_to_python = {
 }
 
 def translate( fmt, d ):
-	return ''.join( d.get(c, '') for c in fmt )
+	return ''.join( d.get(c, c) for c in fmt )
 
 values = {}
 for v in ('date_short', 'date_hhmmss', 'date_hhmm', 'date_year_Md', 'date_year_Md_hhmm', 'time_hhmmss', 'time_hhmm'):
