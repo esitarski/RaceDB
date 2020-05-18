@@ -23,12 +23,12 @@ php_to_jquery = {
 	'd': 'dd',
 	'm': 'mm',
 	
-	'a': 'a',
-	'A': 'A',
+	'a': 'p',
+	'A': 'P',
 	's': 'ss',
 	'i': 'ii',
-	'h': 'hh',
-	'H': 'HH',
+	'h': 'HH',	# 12 hour representation
+	'H': 'hh',	# 24 hour representation
 }
 
 php_to_python = {
@@ -62,5 +62,4 @@ del php_to_jquery
 del php_to_python
 del values
 
-for k,v in( sorted((k,v) for k, v in globals().items() if any( v in k for v in ('date_', 'time_'))) ):
-	print( k, ' = "{}"'.format(v) )
+# for k,v in( sorted((k,v) for k, v in globals().items() if any( v in k for v in ('date_', 'time_'))) ): print( k, ' = "{}"'.format(v) )
