@@ -160,27 +160,24 @@ function reformat( value, from_fmt, to_fmt ) {
 	else {								// 24 hour case.  Get 12 hour and AM/PM.
 		var hours = parseInt( vals['HH'], 10 );
 		vals['A'] = hours < 12 ? 'AM' : 'PM';
-		vals['a'] = vals['A'].toLowerCase();
 		if( hours > 12 )
 			hours -= 12;
 		vals['hh'] = (hours < 10 ? '0' : '') + hours;
 	}
+	vals['a'] = vals['A'].toLowerCase();
 	
 	// Ignore two digit date if we have a 4 digit one.
 	if( to_fmt.indexOf('yyyy') >= 0 )
 		vals['yy'] = '';
-	
+		
 	// Replace the values in the to_fmt with what we collected/computed earlier.
 	var ret = to_fmt;
 	for( var f in vals ) {
-		var v = vals[f];
-		if( v ) {
-			var pos = to_fmt.indexOf(f);
+		var v = vals[f], pos = to_fmt.indexOf(f);
+		if( v && pos >= 0 )
 			ret = ret.slice(0, pos) + v + ret.slice(pos+v.length);
-		}
 	}
 	
-	//alert( [from_fmt, value, to_fmt, ret] );
 	return ret;
 }
 
