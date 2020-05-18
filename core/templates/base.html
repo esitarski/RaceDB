@@ -207,8 +207,6 @@ function onLoad()
 	});
 	$('.datetimeinput').each( function(index, element) {
 		element.value = reformat( element.value, 'yyyy-mm-dd hh:ii:ss', "{% date_hhmm_jquery %}" );
-		element.value = reformat( element.value, "{% date_hhmm_jquery %}", 'yyyy-mm-dd hh:ii:ss' );
-		element.value = reformat( element.value, 'yyyy-mm-dd hh:ii:ss', "{% date_hhmm_jquery %}" );
 		$(element).attr( 'autocomplete', 'off' );
 	});	
 
