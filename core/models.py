@@ -4657,6 +4657,7 @@ class WaveTT( WaveBase ):
 	age_decreasing = 3
 	bib_decreasing = 4
 	series_decreasing = 5
+	est_speed_decreasing = 6	# Added to support para and covid.
 	SEQUENCE_CHOICES = (
 		(_("Increasing"), (
 				(est_speed_increasing, _("Est. Speed - Increasing")),
@@ -4665,6 +4666,7 @@ class WaveTT( WaveBase ):
 			),
 		),
 		(_("Decreasing"), (
+				(est_speed_decreasing, _("Est. Speed - Decreasing")),
 				(age_decreasing, _("Oldest to Youngest")),
 				(bib_decreasing, _("Bib - Decreasing")),
 			),
@@ -4751,7 +4753,15 @@ class WaveTT( WaveBase ):
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
-		else:	# self.sequence_option == self.est_speed_increasing.
+		elif self.sequence_option == self.est_speed_decreasing:
+			return lambda p: (
+				p.seed_option,
+				-p.est_kmh,
+				-(p.bib or 0),
+				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
+				p.id,
+			)
+		elif True or self.sequence_option == self.est_speed_increasing:
 			return lambda p: (
 				p.seed_option,
 				p.est_kmh,
