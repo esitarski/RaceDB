@@ -69,7 +69,7 @@ Steps:
 
 - Untar the release file into a directory (ie. $HOME/RaceDB)
 
-- If you have RFID tag reader for registration or wish to change the TimeZone used by RaceDB, open the racedb.env file with a text editor, and set RFID_READER_HOST and TIMEZONE respectively. This configuration file is each time the container is started. You can stop the container, change these settings, and restart it to get the new settings if so required.
+- If you have RFID tag reader for registration, wish to change the TimeZone used by RaceDB, or the Date/Time format, open the racedb.env file with a text editor, and set RFID_READER_HOST, TIMEZONE, and DATETIME_FORMAT respectively. This configuration file is each time the container is started. You can stop the container, change these settings, and restart it to get the new settings if so required.
 
 - For this step, you require internet access. From the terminal prompt run: "bash racedb.sh run" from the racedb container directory to start the container. The first time this command run, docker will download the container images from the internet and then spin up the containers, configure the database and racedb, and start racedb. The container download can take 1-10 mins depending on the speed of your internet connection. The download only happens the first time. Any other time you start the container, it will start from disk.
 
@@ -881,4 +881,3 @@ In the folder with your existing RaceDB, run the following command:
   The default login names and passwords ("super", etc.) will be set up for you. Going forward, you can apply upgrades as usual as described in Install-Readme.txt.
 
   If after a few weeks everything is working properly, you can delete the RaceDB_old folder.  Keep the backup for a while just in case.
-
