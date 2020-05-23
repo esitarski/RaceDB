@@ -39,7 +39,6 @@ from .ReadWriteTag import ReadTag, WriteTag
 from .FinishLynx import FinishLynxExport
 from .AnalyzeLog import AnalyzeLog
 from . import WriteLog
-from . import date_transform as dtrans
 
 #-----------------------------------------------------------------------
 from .context_processors import getContext
@@ -2622,6 +2621,12 @@ class SystemInfoForm( ModelForm ):
 				Col(Field('cloud_server_url', size=80), 6),
 			),
 			HTML( '<hr/>' ),
+			Row(
+				Col(Field('time_hhmmss'), 4),
+				Col(Field('date_short'), 4),
+				Col(Field('date_Md'), 4),
+			),
+			HTML( '<hr/>' ),
 			Field( 'rfid_server_host', type='hidden' ),
 			Field( 'rfid_server_port', type='hidden' ),
 			Field( 'tag_from_license', type='hidden' ),
@@ -2814,9 +2819,9 @@ def AttendanceAnalytics( request ):
 	
 	page_title = [u'Analytics']
 	if initial.get('start_date',None) is not None:
-		page_title.append( u'from {}'.format( initial['start_date'] .strftime(dtrans.date_year_Md_python) ) )
+		page_title.append( u'from {}'.format( initial['start_date'] .strftime(SystemInfo.get_formats().date_year_Md_python) ) )
 	if initial.get('end_date', None) is not None:
-		page_title.append( u'to {}'.format( initial['end_date'].strftime(dtrans.date_year_Md_python) ) )
+		page_title.append( u'to {}'.format( initial['end_date'].strftime(SystemInfo.get_formats().date_year_Md_python) ) )
 	if initial.get('organizers',None):
 		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
 	page_title = u' '.join( page_title )

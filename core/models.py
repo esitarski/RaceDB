@@ -263,6 +263,25 @@ class SystemInfo(models.Model):
 	license_holder_unique_by_license_code = models.BooleanField( default = True, verbose_name = _("License Codes Permanent and Unique"),
 		help_text=_('If True, License Holders will be Merged assuming that License Codes are permanent and unique.  Otherwise, ignore and attempt to match by Last, First, Gender and DOB'))
 	
+	DATE_SHORT_CHOICES = (
+		('Y-m-d', 'yyyy-mm-dd (ISO)'),
+		('d-m-Y', 'dd-mm-yyyy (UK)'),
+		('m-d-Y', 'mm-dd-yyyy USA)'),
+	)
+	date_short = models.CharField( max_length=24, default='Y-m-d', choices=DATE_SHORT_CHOICES, verbose_name=_('Date Short Format') )
+	
+	TIME_HHMMSS_CHOICES = (
+		('H:i:s',	'HH:mm:ss (ISO: 24 hour)'),
+		('h:i:s P', 'hh:mm:ss AM/PM (NA: 12 hour AM/PM)'),
+	)
+	time_hhmmss = models.CharField( max_length=24, default='H:i:s', choices=TIME_HHMMSS_CHOICES, verbose_name=_('Time Short Format') )
+
+	DATE_MD_CHOICES = (
+		('M d',	_('MonthAbbr, day')),
+		('d M', _('day, MonthAbbr')),
+	)
+	date_Md = models.CharField( max_length=24, default='M d', choices=DATE_MD_CHOICES, verbose_name=_('Month Day Format') )
+	
 	def get_cloud_server_url( self, url_ref ):
 		url = self.cloud_server_url
 		i = url.find( 'RaceDB' )
@@ -299,9 +318,18 @@ class SystemInfo(models.Model):
 		self.tag_template = getValidTagFormatStr( self.tag_template )
 		self.rfid_server_host = (self.rfid_server_host or self.RFID_SERVER_HOST_DEFAULT)
 		self.rfid_server_port = (self.rfid_server_port or self.RFID_SERVER_PORT_DEFAULT)
-		
-		return super(SystemInfo, self).save( *args, **kwargs )
-		
+		SystemInfo.formats = date_transform.FormatCache( self )
+		return super().save( *args, **kwargs )
+	
+	@classmethod
+	def get_formats( cls ):
+		try:
+			return cls.formats
+		except AttributeError:
+			pass
+		cls.formats = date_transform.FormatCache( cls.get_singleton() )
+		return cls.formats
+	
 	class Meta:
 		verbose_name = _('SystemInfo')
 
@@ -937,7 +965,7 @@ class Competition(models.Model):
 		sd = self.start_date
 		ed = self.finish_date
 		if sd == ed:
-			return self.fix_date_leading_zeros(sd.strftime(date_transform.date_year_Md_python))
+			return self.fix_date_leading_zeros(sd.strftime(SystemInfo.get_formats().date_year_Md_python))
 		if sd.month == ed.month and sd.year == ed.year:
 			return self.fix_date_leading_zeros('{}-{}'.format( sd.strftime('%b %d'), ed.strftime('%d, %Y') ))
 		if sd.year == ed.year:
@@ -949,7 +977,7 @@ class Competition(models.Model):
 		sd = self.start_date
 		ed = self.finish_date
 		if sd == ed:
-			return self.fix_date_leading_zeros(sd.strftime(date_transform.date_year_Md_python))
+			return self.fix_date_leading_zeros(sd.strftime(SystemInfo.get_formats().date_year_Md_python))
 		if sd.month == ed.month and sd.year == ed.year:
 			return self.fix_date_leading_zeros('{}-{}'.format( sd.strftime('%Y %b %d'), ed.strftime('%d') ))
 		if sd.year == ed.year:

@@ -1,21 +1,8 @@
-from django.conf import settings
-
-date_short_default = 'Y-m-d'
-date_Md_default = 'M d'
-time_hhmmss_default = 'H:i:s'
-
-date_short = getattr( settings, 'RACEDB_DATE_SHORT', date_short_default )
-date_Md = getattr( settings, 'RACEDB_DATE_MONTH_DAY', date_Md_default )
-time_hhmmss = getattr( settings, 'RACEDB_TIME_HHMMSS', time_hhmmss_default )
-time_hhmm = time_hhmmss.replace( ':s', '' )
-
-date_year_Md = ('Y ' + date_Md) if date_Md[0] != 'd' else (date_Md + ' Y')
-date_Md_hhmm = date_Md + ' ' + time_hhmm
-date_hhmmss = date_short + ' ' + time_hhmmss
-date_hhmm = date_short + ' ' + time_hhmm
-date_year_Md_hhmm = date_year_Md + ' ' + time_hhmm
-
-# https://docs.google.com/spreadsheets/d/1lPzBlmJVAkN6HUw28wBJmY1SdbSInRIBY0JCmBUDUmk/edit?amp;hl=en_US#gid=0
+class dotdict(dict):
+	"""dot.notation access to dictionary attributes"""
+	__getattr__ = dict.get
+	__setattr__ = dict.__setitem__
+	__delattr__ = dict.__delitem__
 
 php_to_jquery = {
 	'y': 'yy',
@@ -52,14 +39,28 @@ php_to_python = {
 def translate( fmt, d ):
 	return ''.join( d.get(c, c) for c in fmt )
 
-values = {}
-for v in ('date_short', 'date_hhmmss', 'date_hhmm', 'date_year_Md', 'date_year_Md_hhmm', 'time_hhmmss', 'time_hhmm'):
-	values[v + '_jquery'] = translate(globals()[v], php_to_jquery)
-	values[v + '_python'] = translate(globals()[v], php_to_python)
-globals().update( values )
+class FormatCache( dotdict ):
+	def __init__( self, system_info ):
+		super().__init__()
+		
+		# Basic formats.
+		self.date_short = system_info.date_short
+		self.date_Md = system_info.date_Md
+		self.time_hhmmss = system_info.time_hhmmss
+		
+		# Derived formats.
+		self.time_hhmm = self.time_hhmmss.replace( ':s', '' )
+		self.date_year_Md = ('Y ' + self.date_Md) if self.date_Md.startswith('M') else (self.date_Md + ' Y')
+		self.date_Md_hhmm = self.date_Md + ' ' + self.time_hhmm
+		self.date_hhmmss = self.date_short + ' ' + self.time_hhmmss
+		self.date_hhmm = self.date_short + ' ' + self.time_hhmm
+		self.date_year_Md_hhmm = self.date_year_Md + ' ' + self.time_hhmm
+		
+		# Translated formats.
+		for v in ('date_short', 'date_hhmmss', 'date_hhmm', 'date_year_Md', 'date_year_Md_hhmm', 'time_hhmmss', 'time_hhmm'):
+			self[v + '_jquery'] = translate(self[v], php_to_jquery)
+			self[v + '_python'] = translate(self[v], php_to_python)
 
-del php_to_jquery
-del php_to_python
-del values
+		# for k,v in self.items(): print( k, '=', v )
 
-# for k,v in( sorted((k,v) for k, v in globals().items() if any( v in k for v in ('date_', 'time_'))) ): print( k, ' = "{}"'.format(v) )
+

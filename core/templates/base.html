@@ -146,7 +146,7 @@ function reformat( value, from_fmt, to_fmt ) {
 	else
 		val['yyyy'] = '20' + val['yy'];
 	
-	// Normalize am/pm.  Accept a/p.  Default to am.
+	// Normalize am/pm.  Accept single character a/p.  Default to am.
 	if( val['P'] ) {
 		val['P'] = val['P'].toUpperCase().slice(0,1) == 'P' ? 'PM': 'AM'; 
 		val['p'] = val['P'].toLowerCase();
@@ -157,6 +157,8 @@ function reformat( value, from_fmt, to_fmt ) {
 		val['P'] = 'AM';
 		val['p'] = 'am'; 
 	}
+	val['P'] = val['P'].toUpperCase();
+	val['p'] = val['p'].toLowerCase();
 		
 	if( field.includes('HH') ) {		// We have 12 hour representation.  Get 24 hour representation.
 		var hours = parseInt( val['HH'], 10 );
