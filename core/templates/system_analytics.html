@@ -2,10 +2,17 @@
 {% load date_fmt %}
 {% load static %}
 {% load percent %}
+{% load date_fmt %}
 
 {% block style %}
-	chart-big { min-height: 500px; width: 100%; height: 500px; }
-	chart-small { min-width: 400px; min-height: 300px; width: 400px; height: 300px; }
+chart-big { min-height: 500px; width: 100%; height: 500px; }
+chart-small { min-width: 400px; min-height: 300px; width: 400px; height: 300px; }
+	
+.main-container {
+	margin-left:-10px;
+	margin-right:10px;
+}
+
 {% endblock style %}
 
 {% block printstyle %}
@@ -1390,7 +1397,7 @@ $(document).ready(function() {
 			<th><a class="btn btn-success btn-sm" href="./LicenseHolderEdit/{{lh.id}}/">{{lh.full_name}}</a></td>
 			<td>{{lh.date_of_birth|date_short}}</td>
 			<td><a class="btn btn-success btn-sm" href="./CompetitionEdit/{{e.competition.id}}/">{{e.competition.name}}</a></td>
-			<td>{{e.competition.start_date}}</td>
+			<td>{{e.competition.start_date|date_year_Md}}</td>
 			<td><a class="btn btn-success btn-sm" href="./{{e.edit_link}}/">{{e.name}}</a></td>
 			<td>{{e.date_time}}</td>
 		</tr>

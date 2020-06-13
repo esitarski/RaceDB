@@ -3,6 +3,7 @@
 # Configure RaceDB
 
 DBCONFIG=/RaceDB/RaceDB/DatabaseConfig.py
+DTCONFIG=/RaceDB/RaceDB/DateTimeConfig.py
 TZCONFIG=/RaceDB/RaceDB/time_zone.py
 DBCONFIGURED=/.db-configured
 
@@ -81,8 +82,45 @@ configure_database()
     esac
 
     echo "TIME_ZONE=\"$TIME_ZONE\"" > $TZCONFIG
-    echo "Configured!"
     touch $DBCONFIGURED
+}
+
+datetimeconf()
+{
+    case "$DATETIME_FORMAT" in
+        ISO|iso)
+            cat > $DTCONFIG <<EOF    
+RACEDB_DATE_SHORT='Y-m-d'
+RACEDB_TIME_HHMMSS='H:i:s'
+RACEDB_DATE_MONTH_DAY='M d'
+EOF
+            echo "Configured Date/Time for ISO format"
+            ;;
+        US|us)
+            cat > $DTCONFIG <<EOF    
+RACEDB_DATE_SHORT='m-d-Y'
+RACEDB_TIME_HHMMSS='h:i:s P'
+RACEDB_DATE_MONTH_DAY='d M'
+EOF
+            echo "Configured Date/Time for US format"
+            ;;
+        UK|uk)
+            cat > $DTCONFIG <<EOF    
+RACEDB_DATE_SHORT='d-m-Y'
+RACEDB_TIME_HHMMSS='h:i:s P'
+RACEDB_DATE_MONTH_DAY='d M'
+EOF
+            echo "Configured Date/Time for UK format"
+            ;;
+        *)
+            cat > $DTCONFIG <<EOF    
+            RACEDB_DATE_SHORT='Y-m-d'
+            RACEDB_TIME_HHMMSS='H:i:s'
+            RACEDB_DATE_MONTH_DAY='M d'
+EOF
+            echo "Configured Date/Time for ISO (default) format ($DATETIME_FORMAT is not known)"
+            ;;
+    esac
 }
 
 if [ -f $DBCONFIGURED ]; then
@@ -90,3 +128,4 @@ if [ -f $DBCONFIGURED ]; then
 else
     configure_database
 fi
+datetimeconf    

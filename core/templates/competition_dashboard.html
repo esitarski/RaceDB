@@ -46,7 +46,7 @@
 		</div>
 		<div class="row hidden-print">
 			<div class="col-md-4 hidden-print">
-				<strong>{{competition.start_date}}</strong>
+				<strong>{{competition.start_date|date_year_Md}}</strong>
 			</div>
 			<div class="col-md-4 hidden-print">
 				{{competition|get_field_name:"number_of_days"}}:&nbsp;<strong>{{competition.number_of_days}}</strong>
@@ -167,7 +167,7 @@
 			<td>
 				<div class="panel panel-info">
 					<div class="panel-heading">
-						<h3>{{e.name}}, <span style="font-size:75%">{{e.date_time|date_hhmm}},
+						<h3>{{e.name}}, <span style="font-size:75%">{{e.date_time|date_year_Md_hhmm}},
 							{% trans "Nations" %}:&nbsp;{{e.get_num_nationalities}},
 							<strong>{% trans "Starters" %}:&nbsp;{{e.get_participant_count}}</strong></span>
 						</h3>
@@ -238,7 +238,7 @@
 			<td>
 				<div class="panel panel-info">
 					<div class="panel-heading">
-						<h3>{{e.name}}, <span style="font-size: 80%">{% if e.has_unseeded %} <span class="label label-warning" style="font-size: 110%">{% trans "Warning: Unseeded Riders" %}</span>{% endif %} {{e.date_time|date_hhmm}},
+						<h3>{{e.name}}, <span style="font-size: 80%">{% if e.has_unseeded %} <span class="label label-warning" style="font-size: 110%">{% trans "Warning: Unseeded Riders" %}</span>{% endif %} {{e.date_time|date_year_Md_hhmm}},
 						{% trans "Nationalities" %}:&nbsp;{{e.get_num_nationalities}},
 						<strong>{% trans "Starters" %}:&nbsp;{{e.get_participant_count}}</strong></span></h3>
 					</div>

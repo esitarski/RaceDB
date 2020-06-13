@@ -326,7 +326,6 @@ $0 [ -hcCtaep: ]
 
  -S        - Setup environment
  -C        - Clean up everything
- -B        - Compile code
  -k        - Package application
  -c        - Build container
  -u        - Update docker-compose
@@ -399,4 +398,3 @@ if [ $gotarg -eq 0 ]; then
 	doHelp
 	exit 1
 fi
-

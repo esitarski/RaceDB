@@ -14,6 +14,8 @@
 
 <link rel="icon" href="{% static "images/RaceDB_32x32.png" %}">
 <link rel="stylesheet" href="{% static "bootstrap/css/bootstrap.min.css" %}">
+<link rel="stylesheet" href="{% static "bootstrap/css/datepicker.css" %}">
+<link rel="stylesheet" href="{% static "bootstrap/css/bootstrap-datetimepicker.min.css" %}">
 
 {% block linkstyles %}
 {% endblock linkstyles %}
@@ -109,26 +111,125 @@ function skip_back_n( n ) {
 
 function skip_back() { skip_back_n(1); }
 
+function reformat( value, from_fmt, to_fmt ) {
+	if( !value )			// Handle blank field case.
+		return value;
+	
+	// Ugly, ugly hack to get data/time pickers to work in native format.
+	// One day all browsers will understand how to edit a date/time (sigh...).
+	
+	// Collect the date/time values as specified in the from_fmt.
+	var field = ['mm', 'dd', 'ii', 'ss', 'P', 'p'];
+	field.push( from_fmt.indexOf('yyyy') >= 0 ? 'yyyy': 'yy' );
+	field.push( from_fmt.indexOf('hh') >= 0 ? 'hh' : 'HH' );
+		
+	var val = {};
+	for( var i = 0; i < field.length; ++i ) {
+		var f = field[i], f_len = f.length;
+		val[f] = '0000'.slice(0, f.length);
+		if( f.toLowerCase() == 'p' ) {
+			f_len = 2; val[f] = '';	// Correct for length of 2-char am/pm.
+		}		
+		var pos = from_fmt.indexOf(f);
+		if( pos >= 0 ) {
+			var v = value.slice(pos, pos+f_len);
+			if( v ) {
+				val[f] = v;
+				// console.log( ['input', f, v] );
+			}
+		}
+	}
+	
+	// Normalize 2 and 4 digit year.
+	if( from_fmt.indexOf('yyyy') >= 0 )
+		val['yy'] = val['yyyy'].slice(2);
+	else
+		val['yyyy'] = '20' + val['yy'];
+	
+	// Normalize am/pm.  Accept single character a/p.  Default to am.
+	if( val['P'] ) {
+		val['P'] = val['P'].toUpperCase().slice(0,1) == 'P' ? 'PM': 'AM'; 
+		val['p'] = val['P'].toLowerCase();
+	} else if( val['p'] ) {
+		val['p'] = val['p'].toUpperCase().slice(0,1) == 'p' ? 'pm': 'am'; 
+		val['P'] = val['p'].toUpperCase();
+	} else {
+		val['P'] = 'AM';
+		val['p'] = 'am'; 
+	}
+	val['P'] = val['P'].toUpperCase();
+	val['p'] = val['p'].toLowerCase();
+		
+	if( field.includes('HH') ) {		// We have 12 hour representation.  Get 24 hour representation.
+		var hours = parseInt( val['HH'], 10 );
+		if( Number.isNaN(hours) )
+			hours = 0;
+		// console.log( ['HH', hours, val['HH']] );
+		if( val['P'].slice(0,1) == 'P' && hours < 12 )
+			hours += 12;
+		val['hh'] = (hours < 10 ? '0' : '') + hours;
+	}
+	else {								// We have 24 hour representation.  Get 12 hour representation.
+		var hours = parseInt( val['hh'], 10 );
+		if( Number.isNaN(hours) )
+			hours = 0;
+		val['P'] = hours < 12 ? 'AM' : 'PM';
+		if( hours > 12 )
+			hours -= 12;
+		val['HH'] = (hours < 10 ? '0' : '') + hours;
+	}
+	val['p'] = val['P'].toLowerCase();
+	
+	// Skip two digit date if we know we have a 4 digit one.
+	if( to_fmt.indexOf('yyyy') >= 0 )
+		val['yy'] = '';
+		
+	// Replace the values in the to_fmt with what we collected/computed earlier.
+	var ret = to_fmt;
+	for( var f in val ) {
+		var v = val[f], pos = to_fmt.indexOf(f);
+		if( v && pos >= 0 ) {
+			ret = ret.slice(0, pos) + v + ret.slice(pos+v.length);
+			// console.log( ['output', f, v, ret] );
+		}
+	}
+	
+	return ret;
+}
+
 {% block javascript %}
 {% endblock javascript %}
 
 function onLoad()
 {
-	{% comment %}
-	// Use the browser's default date and datetime editor.
-	// On load, replace the space with a T so the browser recognizes the datetime.
-	// Change the type to datetime-local after - otherwise the browser will report an error.
-	// The reverse is done on submit.
-	{% endcomment %}
-	$('.dateinput').attr( 'type', 'date' );
-	$('.datetimeinput').each( function(index, element) {
-		element.value = element.value.replace(' ', 'T');
-		element.type = 'datetime-local';
+	// Transform the ISO time formats into local formats.
+	$('.dateinput').each( function(index, element) {
+		element.value = reformat( element.value, 'yyyy-mm-dd', "{% date_short_jquery %}" );
+		$(element).attr( 'autocomplete', 'off' );
 	});
+	$('.datetimeinput').each( function(index, element) {
+		element.value = reformat( element.value, 'yyyy-mm-dd hh:ii:ss', "{% date_hhmm_jquery %}" );
+		$(element).attr( 'autocomplete', 'off' );
+	});	
+
+	// Initialize the date/time pickers using the local formats.
+	$('.dateinput').datepicker({
+		format: "{% date_short_jquery %}",
+		autoclose: true,
+		todayHighlight: true
+	});
+	$('.datetimeinput').datetimepicker({
+		format: "{% date_hhmm_jquery %}",
+		autoclose: true
+	});
+	
+	// When the form is submitted, transform the local formats back into ISO.
 	$('form').submit(function(){
+		$('.dateinput').each( function(index, element) {
+			element.value = reformat( element.value, "{% date_short_jquery %}", 'yyyy-mm-dd' );
+		});
 		$('.datetimeinput').each( function(index, element) {
-			element.type = 'text';
-			element.value = element.value.replace('T', ' ');
+			element.value = reformat( element.value, "{% date_hhmm_jquery %}", 'yyyy-mm-dd hh:ii:ss' );
 		});
 	});
 	

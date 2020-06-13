@@ -3,8 +3,9 @@
 {% block content %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load date_fmt %}
 
-<h2>{{title}}: <strong>{{competition.name}}, {{competition.start_date}}</strong></h2>
+<h2>{{title}}: <strong>{{competition.name}}, {{competition.start_date|date_year_Md}}</strong></h2>
 <hr/>
 {% crispy form %}
 <hr/>
