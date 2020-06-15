@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 import json
-import six
 import datetime
 from collections import defaultdict, deque
 
@@ -42,7 +39,7 @@ class processing_status( object ):
 			ave_rate = self.instance_count / ((t_cur - self.t_start).total_seconds() + 0.000001 )
 			
 			s_remaining = (self.instance_total - self.instance_count) / ave_rate
-			safe_print( u'{:4.1f}%   {:7.1f} objs/sec   {:4.0f} secs  {:4.0f} est secs remaining ({})...'.format(
+			safe_print( '{:4.1f}%   {:7.1f} objs/sec   {:4.0f} secs  {:4.0f} est secs remaining ({})...'.format(
 					(100.0*self.instance_count)/self.instance_total,
 					rate,
 					(t_cur - self.t_start).total_seconds(),
