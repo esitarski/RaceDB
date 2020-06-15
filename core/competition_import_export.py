@@ -10,7 +10,6 @@ from django.conf import settings
 from django.core import serializers
 from django.core.serializers import base
 from django.db import DEFAULT_DB_ALIAS, models
-from django.utils import six
 from django.utils.encoding import force_text
 from django.db import transaction
 
