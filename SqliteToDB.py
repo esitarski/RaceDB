@@ -34,7 +34,7 @@ def json_cleanse( fname ):
 		
 	for r in rows:
 		fields = r.get('fields',{})
-		for f in list(fields.iterkeys()):
+		for f in list(fields.keys()):
 			v = fields[f]
 			if isinstance(v, six.string_types):
 				fields[f] = fix_spaces( v )

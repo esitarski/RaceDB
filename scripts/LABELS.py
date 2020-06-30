@@ -62,7 +62,7 @@ fname = sys.argv[1]
 params = { k:(int(v) if v.isdigit() else v) for k, v in (p.split('-') for p in os.path.splitext(fname)[0].split('_')[1:] ) }
 
 # debug
-# print '\n'.join( '{}={}'.format(k,v if isinstance(v,int) else "'{}'".format(v)) for k, v in params.iteritems() )
+# print '\n'.join( '{}={}'.format(k,v if isinstance(v,int) else "'{}'".format(v)) for k, v in params.items() )
 
 # determine printer destination by label type.  Can also use 'type', 'port' and 'antenna'.
 if params['type'] in ('Frame', 'Shoulder', 'Emergency'):
