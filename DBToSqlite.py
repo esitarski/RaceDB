@@ -69,7 +69,7 @@ class TimeTracker( object ):
 	def __repr__( self ):
 		s = []
 		tTotal = 0.0
-		for lab, t in sorted( self.totals.itms(), key=operator.itemgetter(1), reverse=True ):
+		for lab, t in sorted( self.totals.items(), key=operator.itemgetter(1), reverse=True ):
 			s.append( '{:<50}: {:>12}'.format(lab, format_time(t)) )
 			tTotal += t
 		s.append( '-' * 64 )
