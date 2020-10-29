@@ -4,6 +4,18 @@
 {% load good_bad_icon %}
 {% load good_err_icon %}
 {% load paginate_html %}
+
+{% block style %}
+thead th { position: sticky; top: 0; }
+.table tbody>tr>td {
+    vertical-align: middle;
+}
+.isfalse {
+    background-color: #FF7878;
+}
+
+{% endblock style %}
+
 {% block content %}
 <h2>{{title}}: <strong>{{competition.name}}</strong></h2>
 {% crispy form %}
@@ -17,15 +29,6 @@
 {% if bad_tag_count %}
 	<h4>{{bad_tag_count}} {% trans "Missing/Unchecked RFIDTag (Search RFIDTag: -1)" %}</h4>
 {% endif %}
-<style>
-.table tbody>tr>td {
-    vertical-align: middle;
-}
-.isfalse {
-    background-color: #FF7878;
-}
-
-</style>
 {% if event %}
 	<br/><h3>{% trans "Event" %}: <strong>{{event.short_name}}<strong></h3>
 {% endif %}

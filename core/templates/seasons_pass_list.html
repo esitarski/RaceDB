@@ -11,6 +11,10 @@
 setRowSorter('SeasonsPass','sort_table_id');
 {% endblock onload %}
 
+{% block style %}
+	thead th { position: sticky; top: 0; }
+{% endblock style %}
+
 {% block content %}
 
 <h2>{{title}}</h2>

@@ -13,4 +13,4 @@ class Command(BaseCommand):
 			help='import filename.csv')
 
 	def handle(self, *args, **options):
-		core.init_oca.init_oca( optione['fname'] )
+		core.init_oca.init_oca( options['fname'] )

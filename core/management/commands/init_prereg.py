@@ -8,7 +8,7 @@ class Command(BaseCommand):
 	def add_arguments(self, parser):
 		parser.add_argument('--competition',
 			dest='competition_name',
-			type=string,
+			type=str,
 			default='--MissingCompetition--',
 			help='Competition to initialize PreReg data into',
 		)

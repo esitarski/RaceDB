@@ -1,3 +1,4 @@
+wheel
 django==2.2.13
 django-crispy-forms
 django-extensions
