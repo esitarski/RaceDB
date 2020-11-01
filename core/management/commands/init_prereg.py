@@ -14,7 +14,7 @@ class Command(BaseCommand):
 		)
 		parser.add_argument('--spreadsheet',
 			dest='worksheet_name',
-			type=string,
+			type=str,
 			default='--MissingSpreadsheet--',
 			help='\n'.join([
 				'Name of the Excel spreadsheet in the form: ExcelFile$SheetName.',
