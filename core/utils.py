@@ -91,7 +91,7 @@ def removeDiacritic( s ):
 	Accept a unicode string, and return a normal string
 	without any diacritical marks.
 	'''
-	return unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ASCII', 'ignore').decode()
+	return unicodedata.normalize('NFKD', '{}'.format(s)).encode('ASCII', 'ignore').decode()
 	
 def safe_print( *args ):
 	print ( removeDiacritic( u' '.join(u'{}'.format(a) for a in args) ) )
@@ -118,26 +118,22 @@ def toUnicode( s ):
 				pass
 		return s.decode('utf-8', 'ignore')
 	
-	return u'{}'.format(s)
+	return '{}'.format(s)
 
 def getHeaderFields( fields ):
-	fields = [removeDiacritic(v) for v in fields]
-	fields_new = []
-	for i, f in enumerate(fields):
-		try:
-			f_new = f.encode('ascii')
-		except:
-			f_new = 'field_name_created_in_col_{}'.format(i)
-		fields_new.append( f_new )
-	fields = fields_new
-	fields = [v.replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_') for v in fields]
-	fields = [v.strip().lower() for v in fields]
-	fields = ['valid_field_name_created_in_col_{}'.format(i) if not f else f for i, f in enumerate(fields)]
-	return fields
+	def sanitize( v, i ):
+		v = removeDiacritic(v).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').strip().lower()
+		if not v:
+			v = 'valid_field_name_created_in_col_{}'.format(i)
+		elif v[0] != '_' and not v[0].isalpha():
+			v = '_' + v
+		return v
+		
+	return [sanitize(v, i) for i, v in enumerate(fields)]
 
-reSep = re.compile( u'[:;,-/. \t]+' )
+reSep = re.compile( '[:;,-/. \t]+' )
 def normalizeSeparators( s ):
-	return reSep.sub( u' ', s )
+	return reSep.sub( ' ', s )
 
 def normalizeSearch( s ):
 	return normalizeSeparators(removeDiacritic(s.strip())).lower()
@@ -153,9 +149,9 @@ def matchSearchToRegEx( search ):
 	if isinstance(search, six.string_types):
 		search = normalizeSearch( search ).split()
 	return re.compile( u''.join([
-		u'^',
-		u''.join( u'(?=.*{})'.format(u''.join(u'\\{}'.format(c) if c in escChars else c for c in s) for s in search)),
-		u'.*$'])
+		'^',
+		''.join( u'(?=.*{})'.format(u''.join(u'\\{}'.format(c) if c in escChars else c for c in s) for s in search)),
+		'.*$'])
 	)
 
 def get_search_text( fields ):
@@ -164,8 +160,8 @@ def get_search_text( fields ):
 	
 	return removeDiacritic(
 		reSep.sub(
-			u' ',
-			u' '.join(u'"{}"'.format(f) for f in fields if f)
+			' ',
+			' '.join('"{}"'.format(f) for f in fields if f)
 		).lower()
 	)
 
