@@ -76,7 +76,7 @@ def init_usac( fname=None, states='' ):
 			try:
 				date_of_birth	= date_from_str( ur.birthdate )
 			except Exception as e:
-				safe_print( u'Line {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.birthdate, ur, e ) )
+				safe_print( 'Line {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.birthdate, ur, e ) )
 				continue
 			
 			attributes = {
@@ -105,7 +105,7 @@ def init_usac( fname=None, states='' ):
 					safe_print( 'IntegrityError:', attributes )
 					continue
 			
-			safe_print( u'{:>6}: {:>8} {:>10} {}, {} {}'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'),
+			safe_print( '{:>6}: {:>8} {:>10} {}, {} {}'.format( i, lh.license_code, lh.date_of_birth.strftime('%Y/%m/%d'),
 				lh.last_name, lh.first_name, lh.state_prov ) )
 			
 			teams = dict( ((th.discipline, th.team.team_type), th) for th in TeamHint.objects.select_related('team').filter(license_holder=lh, team__isnull=False) )
@@ -137,7 +137,7 @@ def init_usac( fname=None, states='' ):
 				except KeyError:
 					th = TeamHint( **attributes )
 					th.save()
-				safe_print( u'{} {}: {} ({})'.format( ' '*16,
+				safe_print( '{} {}: {} ({})'.format( ' '*16,
 						discipline_name,
 						attributes['team'].name,
 						['Club', 'Team'][ttype]
@@ -156,7 +156,7 @@ def init_usac( fname=None, states='' ):
 			if i == 0:
 				# Get the header fields from the first row.
 				fields = [unescape(v.strip()).replace(' ','_').replace('#','').lower() for v in row]
-				safe_print( u'\n'.join(fields) )
+				safe_print( '\n'.join(fields) )
 				usac_record = namedtuple('usac_record', fields)
 				continue
 			

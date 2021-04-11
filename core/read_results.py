@@ -28,24 +28,24 @@ def get_event_from_payload( payload ):
 	EventClass = EventTT if payload.get('isTimeTrial', False) else EventMassStart
 	
 	if not EventClass.objects.filter(date_time=raceScheduledStart).exists():
-		info_append( u"Cannot find an Event starting at {}".format( raceScheduledStart.strftime('%Y-%m-%d %H:%M %z') ) )
+		info_append( "Cannot find an Event starting at {}".format( raceScheduledStart.strftime('%Y-%m-%d %H:%M %z') ) )
 	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
-		raceNameTextCur = u'-'.join( [event.competition.name, event.name] )
-		info_append( u'Checking by Event: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
+		raceNameTextCur = '-'.join( [event.competition.name, event.name] )
+		info_append( 'Checking by Event: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
 		if raceNameText == raceNameTextCur:
-			info_append( u'Success.' )
+			info_append( 'Success.' )
 			return event, info
 	
 	for event in EventClass.objects.filter(date_time=raceScheduledStart).select_related('competition'):
 		for wave in event.get_wave_set().all():
-			raceNameTextCur = u'-'.join( [event.competition.name, wave.name] )
-			info_append( u'Checking by Wave: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
+			raceNameTextCur = '-'.join( [event.competition.name, wave.name] )
+			info_append( 'Checking by Wave: "{}" = "{}"'.format(raceNameText, raceNameTextCur) )
 			if raceNameText == raceNameTextCur:
-				info_append( u'Success.' )
+				info_append( 'Success.' )
 				return event, info
 	
-	info_append( u'Failure.' )
+	info_append( 'Failure.' )
 	return None, info
 	
 def read_results_crossmgr( payload ):
@@ -54,7 +54,7 @@ def read_results_crossmgr( payload ):
 
 	event, info = get_event_from_payload( payload )
 	if not event:
-		errors.append( u'Cannot find Event "{}", "{}"'.format(payload['raceNameText'], payload['raceScheduledStart']) )
+		errors.append( 'Cannot find Event "{}", "{}"'.format(payload['raceNameText'], payload['raceScheduledStart']) )
 		return { 'errors': errors, 'warnings': warnings, 'info':info }
 		
 	competition = event.competition
@@ -81,11 +81,11 @@ def read_results_crossmgr( payload ):
 		gender_name = gender_in_brackets[1:-1].strip().upper()
 		
 		gender_code = None
-		if   gender_name in (u'MEN', u'HOMMES', u'HOMBRES', u'UOMINI', u'HOMENS'):
+		if   gender_name in ('MEN', 'HOMMES', 'HOMBRES', 'UOMINI', 'HOMENS'):
 			gender_code = 0
-		elif gender_name in (u'WOMEN', u'FEMMES', u'MUJER'):
+		elif gender_name in ('WOMEN', 'FEMMES', 'MUJER'):
 			gender_code = 1
-		elif gender_name in (u'OPEN', u'OUVRIR', u'ABIERTO'):
+		elif gender_name in ('OPEN', 'OUVRIR', 'ABIERTO'):
 			gender_code = 2
 		
 		if gender_code is None:
@@ -108,7 +108,7 @@ def read_results_crossmgr( payload ):
 			return utils.format_time_gap( g )
 		elif g < 0:
 			return '{} {}'.format(g, 'lap'  if g == -1 else 'laps')
-		return u''
+		return ''
 		
 	bib_category = {}
 	bib_category_rank = {}
@@ -162,7 +162,7 @@ def read_results_crossmgr( payload ):
 			try:
 				category = bib_category[bib]
 			except KeyError:
-				warnings.append( u'Cannot find category for bib={}'.format(bib) )
+				warnings.append( 'Cannot find category for bib={}'.format(bib) )
 				continue
 				
 			participant = None
@@ -177,7 +177,7 @@ def read_results_crossmgr( payload ):
 				).first()
 			
 			if not participant:
-				warnings.append( u'Cannot find Participant bib={} name="{}, {}", category="{}"'.format(
+				warnings.append( 'Cannot find Participant bib={} name="{}, {}", category="{}"'.format(
 					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name()) )
 				continue
 			
@@ -230,9 +230,9 @@ def read_results_crossmgr( payload ):
 					if any( len(objs) >= 999 for objs in rtcs_cache.values() ):
 						flush_cache()
 			except Exception as e:
-				warnings.append( u'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(
+				warnings.append( 'Cannot Create Result bib={} name="{}, {}", category="{}" ({})'.format(
 					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name(), e) )
 				continue
 
 	flush_cache()		
-	return {'errors': errors, 'warnings': warnings, 'name':u'{}-{}'.format(competition.name, event.name)}
+	return {'errors': errors, 'warnings': warnings, 'name':'{}-{}'.format(competition.name, event.name)}
