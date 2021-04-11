@@ -10,11 +10,7 @@ import operator
 import random
 import itertools
 from collections import defaultdict
-try:
-	from StringIO import StringIO
-	BytesIO = StringIO
-except:
-	from io import StringIO, BytesIO
+from io import StringIO, BytesIO
 import locale
 
 from django.db import models, connection
@@ -25,7 +21,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from django.utils import timezone
 from django.utils.timezone import get_default_timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils.text import format_lazy
 

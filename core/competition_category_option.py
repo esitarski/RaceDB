@@ -1,5 +1,5 @@
 from django.forms import modelformset_factory
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import xlsxwriter
 from openpyxl import load_workbook

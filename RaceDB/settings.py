@@ -189,3 +189,5 @@ if os.path.exists(r'c:\Projects\RaceDBDeploy') or 'home/nloaner' in __file__  or
 			],
 		},
 	}]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
