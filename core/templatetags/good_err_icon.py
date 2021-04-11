@@ -1,5 +1,4 @@
 from django import template
-from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 
 register = template.Library()
