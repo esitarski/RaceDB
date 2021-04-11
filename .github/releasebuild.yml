@@ -16,9 +16,9 @@ jobs:
               run: |
                 docker login -u ${{ secrets.HUB_USER }} -p ${{ secrets.HUB_PASSWD }}
             - name: Setup Python environment
-              uses: actions/setup-python@v1.1.1
+              uses: actions/setup-python@v2
               with:
-                python-version: 3.8.*
+                python-version: 3.9.*
             - name: Checkout code
               uses: actions/checkout@master
             - name: Setup Environment
