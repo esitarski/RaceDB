@@ -156,7 +156,7 @@ def init_ccn( fname = fnameDefault ):
 	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = {col:toUnicode(f.value).strip() for col, f in enumerate(row)]
+			fields = {col:toUnicode(f.value).strip() for col, f in enumerate(row)}
 			safe_print( '\n'.join( fields.values() )
 			continue
 		
