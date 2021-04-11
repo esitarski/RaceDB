@@ -1,8 +1,7 @@
 import io
 import csv
-import six
 import datetime
-from six.moves.html_parser import HTMLParser
+from html.parser import HTMLParser
 from html import unescape
 from collections import namedtuple
 from django.db import transaction

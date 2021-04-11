@@ -2,7 +2,7 @@ from django.forms import modelformset_factory
 from django.utils.translation import ugettext_lazy as _
 
 import xlsxwriter
-from xlrd import open_workbook
+from openpyxl import load_workbook
 
 from .views_common import *
 from .FieldMap import standard_field_map
@@ -107,27 +107,22 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	CompetitionCategoryOption.normalize( competition )
 	ccos_query = competition.competitioncategoryoption_set.all().order_by('category__sequence').select_related('category')
 
-	wb = open_workbook( file_contents = worksheet_contents )
+	wb = load_workbook( filename=worksheet_contents, read_only=True, data_only=True )
 	
-	ws = None
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name or sheet_name is None:
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+	except Exception:
 		return
 	
 	ccos = {cco.category.code_gender.lower():cco for cco in ccos_query}
 	
 	ifm = standard_field_map()
 
-	num_rows = ws.nrows
-	for r in range(num_rows):
-		row = ws.row( r )
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(v.value).strip() for v in row]
+			fields = ['{}'.format(v.value).strip() for v in row]
 			ifm.set_headers( fields )
 			continue
 		
@@ -151,24 +146,18 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 		
 		cco.save()
 	
-	ws = None
 	sheet_name = 'RaceDB-Common'
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name:
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
+	try:
+		ws = wb[sheet_name]
+	except Exception:
 		return
 	
 	ifm = standard_field_map()
 
-	num_rows = ws.nrows
-	for r in range(num_rows):
-		row = ws.row( r )
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(v.value).strip() for v in row]
+			fields = ['{}'.format(v.value).strip() for v in row]
 			ifm.set_headers( fields )
 			continue
 		
@@ -184,7 +173,7 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 #-----------------------------------------------------------------------
 @autostrip
 class UploadCCOForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	
 	def __init__( self, *args, **kwargs ):
 		super( UploadCCOForm, self ).__init__( *args, **kwargs )

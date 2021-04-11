@@ -1,6 +1,5 @@
 import re
 import os
-import six
 import sys
 import locale
 import datetime
@@ -96,15 +95,15 @@ def get_subset_number_range_str( bib_all, bib_subset ):
 			pairs.append( [n, n] )
 	
 	i_bib = {i:bib for i, bib in enumerate(bib_all)}
-	return u','.join( u'{}'.format(i_bib[p[0]]) if p[0] == p[1] else u'{}-{}'.format(i_bib[p[0]],i_bib[p[1]]) for p in pairs )	
+	return ','.join( '{}'.format(i_bib[p[0]]) if p[0] == p[1] else '{}-{}'.format(i_bib[p[0]],i_bib[p[1]]) for p in pairs )	
 	
 def get_gender_str( g ):
-	return (u'Men', u'Women', u'Open')[g]
+	return ('Men', 'Women', 'Open')[g]
 
 def safe_xl( v ):
-	if v is None or isinstance(v, six.string_types) or isinstance(v, six.integer_types) or isinstance(v, (float, bool, datetime.datetime, datetime.date) ):
+	if v is None or isinstance(v, (str, int, float, bool, datetime.datetime, datetime.date) ):
 		return v
-	return u'{}'.format(v)
+	return '{}'.format(v)
 	
 def write_row_data( ws, row, row_data, format = None ):
 	if format is None:
@@ -174,12 +173,12 @@ def add_categories_page( wb, title_format, event ):
 		if len(categories) == 1:	# If only one category, do not output Component waves.
 			for category in categories:
 				row_data = [
-					u'Wave',
+					'Wave',
 					category.code,
 					get_gender_str(category.gender),
 					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
 					category_intervals.get(category,''),
-					u'{}'.format(getattr(wave,'start_offset',u'')),
+					'{}'.format(getattr(wave,'start_offset',u'')),
 					wave.laps if wave.laps else u'',
 					competition.to_local_distance(wave.distance) if wave.distance else u'',
 					getattr(wave, 'minutes', None) or u'',
@@ -189,11 +188,11 @@ def add_categories_page( wb, title_format, event ):
 		else:
 			genders = list( set(c.gender for c in categories) )
 			row_data = [
-				u'Wave',
+				'Wave',
 				wave.name,
 				get_gender_str( 2 if len(genders) != 1 else genders[0] ),
-				u'',	# No ranges here - these come from the categories.
-				u'{}'.format(getattr(wave,'start_offset',u'')),
+				'',	# No ranges here - these come from the categories.
+				'{}'.format(getattr(wave,'start_offset',u'')),
 				wave.laps if wave.laps else u'',
 				competition.to_local_distance(wave.distance) if wave.distance else u'',
 				getattr(wave, 'minutes', None) or u'',
@@ -203,14 +202,14 @@ def add_categories_page( wb, title_format, event ):
 			
 			for category in categories:
 				row_data = [
-					u'Component',
+					'Component',
 					category.code,
 					get_gender_str(category.gender),
 					category_intervals.get(category,''),
-					u'{}'.format(getattr(wave,'start_offset',u'')),
-					u'',
-					u'',
-					u'',
+					'{}'.format(getattr(wave,'start_offset',u'')),
+					'',
+					'',
+					'',
 					component_flag, component_flag, component_flag,
 				]
 				row = write_row_data( ws, row, row_data )
@@ -220,14 +219,14 @@ def add_categories_page( wb, title_format, event ):
 		if bibs_all is None:
 			bibs_all = event.get_participants().exclude(bib__isnull=True).values_list('bib',flat=True)
 		row_data = [
-			u'Custom',
+			'Custom',
 			category.code,
 			get_gender_str(category.gender),
 			get_subset_number_range_str( bibs_all, category.get_bibs() ),
-			u'',
-			u'',
-			u'',
-			u'',
+			'',
+			'',
+			'',
+			'',
 			True, True, True,
 		]
 		row = write_row_data( ws, row, row_data )

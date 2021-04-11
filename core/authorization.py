@@ -1,5 +1,4 @@
 import os
-import six
 from random import seed, randint
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 

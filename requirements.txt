@@ -7,6 +7,7 @@ dj_static
 waitress
 xlsxwriter
 xlrd
+openpyxl
 pytz
 tzlocal
 fpdf2

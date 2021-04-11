@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import six
 import math
 import string
 import urllib
@@ -139,14 +138,14 @@ def normalizeSearch( s ):
 	return normalizeSeparators(removeDiacritic(s.strip())).lower()
 	
 def matchSearchFields( search, field ):
-	if isinstance(search, six.string_types):
+	if isinstance(search, str):
 		search = normalizeSearch( search ).split()
 	field = removeDiacritic( field.strip() ).lower()
 	return all( s in field for s in search )
 	
 escChars = set( r".^$*+?()[{\|" )
 def matchSearchToRegEx( search ):
-	if isinstance(search, six.string_types):
+	if isinstance(search, str):
 		search = normalizeSearch( search ).split()
 	return re.compile( u''.join([
 		'^',

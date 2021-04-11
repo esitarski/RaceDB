@@ -1,6 +1,5 @@
-import pytz
 import re
-import six
+import pytz
 import datetime
 from collections import defaultdict
 

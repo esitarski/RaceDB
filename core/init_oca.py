@@ -2,9 +2,9 @@ import io
 import csv
 import sys
 import datetime
-from six.moves.html_parser import HTMLParser
-from html import unescape
 from collections import namedtuple
+from html import unescape
+from html.parser import HTMLParser
 from django.db import transaction
 from django.db.models import Q
 from .models import *

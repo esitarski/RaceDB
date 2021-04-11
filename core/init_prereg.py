@@ -4,7 +4,7 @@ import datetime
 import operator
 from collections import defaultdict
 from fnmatch import fnmatch
-from xlrd import open_workbook, xldate_as_tuple
+from openpyxl import load_workbook
 from collections import namedtuple, defaultdict
 from django.db import transaction, IntegrityError
 from django.db.models import Q
@@ -15,7 +15,7 @@ from . import import_utils
 from .import_utils import *
 from .models import *
 
-class TimeTracker( object ):
+class TimeTracker:
 	def __init__( self ):
 		self.startTime = None
 		self.curLabel = None
@@ -169,7 +169,7 @@ def init_prereg(
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))
 			bib				= (to_int(v('bib', None)) or None)
-			bib_auto		= (bib is None and u'{}'.format(v('bib',u'')).lower() == u'auto')
+			bib_auto		= (bib is None and '{}'.format(v('bib',u'')).lower() == u'auto')
 			tag				= to_int_str(v('tag', None))
 			note		 	= to_str(v('note', None))
 			team_name		= to_str(v('team', None))
@@ -224,11 +224,11 @@ def init_prereg(
 				if uci_id:
 					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
 					
-				if not license_holder and license_code and license_code.upper() != u'TEMP':
+				if not license_holder and license_code and license_code.upper() != 'TEMP':
 					try:
 						license_holder = LicenseHolder.objects.get( license_code=license_code )
 					except LicenseHolder.DoesNotExist:
-						ms_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
+						ms_write( '**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
 							i, license_code, name) )
 						continue
 				elif not license_holder:
@@ -273,13 +273,13 @@ def init_prereg(
 							)
 							truncate_char_fields(license_holder).save()
 						except Exception as e:
-							ms_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+							ms_write( '**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
 									i, e, name,
 								)
 							)
 							continue
 					except LicenseHolder.MultipleObjectsReturned:
-						ms_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
+						ms_write( '**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
 								i, name,
 							)
 						)
@@ -308,7 +308,7 @@ def init_prereg(
 						truncate_char_fields(license_holder).save()
 						truncate_char_fields( license_holder )
 					except Exception as e:
-						ms_write( u'**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
+						ms_write( '**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
 								i, e, name,
 							)
 						)
@@ -322,7 +322,7 @@ def init_prereg(
 					tt.start( 'get_category_from_code' )
 					category = get_category( category_code, license_holder.gender )
 					if category is None:
-						ms_write( u'**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
+						ms_write( '**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
 							i, category_code, name,
 						) )
 				
@@ -335,7 +335,7 @@ def init_prereg(
 					team = None
 				else:
 					if team_name not in team_lookup:
-						msg = u'Row {:>6}: Added team: {}\n'.format(
+						msg = 'Row {:>6}: Added team: {}\n'.format(
 							i, team_name,
 						)
 						ms_write( msg )
@@ -352,7 +352,7 @@ def init_prereg(
 				except Participant.DoesNotExist:
 					participant = Participant( **participant_keys )
 				except Participant.MultipleObjectsReturned:
-					ms_write( u'**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
+					ms_write( '**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
 						i, name,
 					) )
 					continue
@@ -403,14 +403,14 @@ def init_prereg(
 				try:
 					truncate_char_fields(participant).save()
 				except IntegrityError as e:
-					ms_write( u'**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+					ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
 						i, e,
 						bib, category_code, license_code, name,
 					) )
 					success, integrity_error_message, conflict_participant = participant.explain_integrity_error()
 					if success:
-						ms_write( u'{}\n'.format(integrity_error_message) )
-						ms_write( u'{}\n'.format(conflict_participant) )
+						ms_write( '{}\n'.format(integrity_error_message) )
+						ms_write( '{}\n'.format(conflict_participant) )
 					continue
 				
 				tt.start( 'add_to_default_optional_events' )
@@ -423,8 +423,8 @@ def init_prereg(
 					}
 					option_included = { event.option_id:included for event, included in participant_optional_events.items() }
 					ParticipantOption.sync_option_ids( participant, option_included )
-					override_events_str = u' ' + u', '.join(
-						u'"{}"={}'.format(event.name, included) for event, included in sorted(participant_optional_events.items())
+					override_events_str = ' ' + ', '.join(
+						'"{}"={}'.format(event.name, included) for event, included in sorted(participant_optional_events.items())
 					)
 				else:
 					override_events_str = ''
@@ -442,7 +442,7 @@ def init_prereg(
 				
 				tt.end()
 				
-				ms_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
+				ms_write( 'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
 							row=i,
 							license=license_holder.license_code,
 							dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
@@ -457,35 +457,28 @@ def init_prereg(
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = open_workbook( file_contents = worksheet_contents )
+		wb = load_workbook( filename = worksheet_contents, read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
 		except:
 			fname = worksheet_name
-		wb = open_workbook( fname )
+		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	
-	ur_records = []
-	import_utils.datemode = wb.datemode
-	
-	ws = None
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name or sheet_name is None:
-			ms_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
-		ms_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+		ms_write( 'Reading sheet "{}"\n'.format(sheet_name) )
+	except Exception:
+		ms_write( 'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 		
-	num_rows = ws.nrows
-	num_cols = ws.ncols
-	for r in range(num_rows):
-		row = ws.row( r )
+	ur_records = []
+	
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(v.value).strip() for v in row]
+			fields = ['{}'.format(v.value).strip() for v in row]
 			
 			# Add all Optional Event patterns.
 			for field in fields:
@@ -500,46 +493,46 @@ def init_prereg(
 				ifm.set_aliases( pattern, (pattern,) )
 			
 			ifm.set_headers( fields )
-			ms_write( u'Header Row:\n' )
+			ms_write( 'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
 				if f.lower().strip() in optional_events:
-					ms_write( u'        {}. {} (Optional Event)\n'.format(col,f) )
+					ms_write( '        {}. {} (Optional Event)\n'.format(col,f) )
 				else:
 					name = ifm.get_name_from_alias( f )
 					if name is not None:
-						ms_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+						ms_write( '        {}. {} --> {}\n'.format(col, f, name) )
 					else:
-						ms_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
+						ms_write( '        {}. ****{} (Ignored)\n'.format(col, f) )
 			
 			fields_lower = [f.lower() for f in fields]
 			if clear_existing or 'bib' in ifm:
-				ms_write( u'Recording previous license checkes...\n' )
+				ms_write( 'Recording previous license checks...\n' )
 				if competition.report_label_license_check:
 					tt.start( 'license_check_state_refresh' )
 					LicenseCheckState.refresh()
 	
-				ms_write( u'Clearing existing Participants...\n' )
+				ms_write( 'Clearing existing Participants...\n' )
 				tt.start( 'clearing_existing_participants' )
 				large_delete_all( Participant, Q(competition=competition) )
 			
 			if 'license_code' not in ifm and 'uci_id' not in ifm:
-				ms_write( u'Header Row must contain one of (or both) License or UCI ID.  Aborting.\n' )
+				ms_write( 'Header Row must contain one of (or both) License or UCI ID.  Aborting.\n' )
 				return
 			
-			ms_write( u'\n' )
+			ms_write( '\n' )
 			continue
 			
 		ur_records.append( (r+1, [v.value for v in row]) )
-		if len(ur_records) == 1000:
+		if len(ur_records) == 300:
 			process_ur_records( ur_records )
-			ur_records = []
+			ur_records[:] = []
 			
 	process_ur_records( ur_records )
 	
-	ms_write( u'\n' )
+	ms_write( '\n' )
 	for section, total in sorted( times.items(), key = operator.itemgetter(1), reverse=True ):
-		ms_write( u'{}={:.6f}\n'.format(section, total) )
-	ms_write( u'\n' )
-	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
-	ms_write( u'\n' )
+		ms_write( '{}={:.6f}\n'.format(section, total) )
+	ms_write( '\n' )
+	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( '\n' )
 	ms_write( tt.__repr__() )

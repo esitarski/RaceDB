@@ -144,7 +144,7 @@ def NumberSetEdit( request, numberSetId ):
 
 @autostrip
 class UploadNumberSetForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	
 	def __init__( self, *args, **kwargs ):
 		super( UploadNumberSetForm, self ).__init__( *args, **kwargs )

@@ -1,9 +1,8 @@
-import six
 import datetime
 import operator
 import itertools
 from collections import defaultdict
-StringIO = six.StringIO()
+from io import StringIO
 
 from . import utils
 from .models import *
