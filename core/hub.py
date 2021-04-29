@@ -45,7 +45,7 @@ class CompetitionSearchForm( Form ):
 		year_min = competition.start_date.year if competition else year_cur
 		competition = competitions.order_by('-start_date').first()
 		year_max = competition.start_date.year if competition else year_cur
-		self.fields['year'].choices =  [(-1, '----')] + [(y, u'{:04d}'.format(y)) for y in range(year_max, year_min-1, -1)]
+		self.fields['year'].choices =  [(-1, '----')] + [(y, '{:04d}'.format(y)) for y in range(year_max, year_min-1, -1)]
 		
 		disciplines = Discipline.objects.filter( pk__in=competitions.values_list('discipline', flat=True).distinct() )
 		self.fields['discipline'].choices =  [(-1, '----')] + [(d.pk, d.name) for d in disciplines]
@@ -409,18 +409,18 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	max_team_len = 15
 	for rank, (lh, team, totalValue, gap, event_results) in enumerate(results[:sankeyMax], 1):
 		rider_name = lh.full_name()
-		node_name = u'{:2d}. {} ({})'.format( rank, rider_name, total_values[rank-1] )
+		node_name = '{:2d}. {} ({})'.format( rank, rider_name, total_values[rank-1] )
 		for er in event_results:
 			if not er or er.ignored:
 				continue
-			event_name = u'{}-{}: {}'.format( er.event.competition.title, er.event.name, timezone.localtime(er.event.date_time).strftime('%Y-%m-%d') )
+			event_name = '{}-{}: {}'.format( er.event.competition.title, er.event.name, timezone.localtime(er.event.date_time).strftime('%Y-%m-%d') )
 			json_data.append( [
 				event_name,
 				node_name,
 				{'v':er.value_for_rank, 'f':json_format(er.value_for_rank)},
-				None if True else u'{} \u2192 {}, {}{} \u2192 {}'.format(
+				None if True else '{} \u2192 {}, {}{} \u2192 {}'.format(
 					event_name,
-					re.sub(r'.00$|0$', '', json_format(er.value_for_rank)), er.rank_text, u'\u00A0\u2191' if er.upgraded else u'',
+					re.sub(r'.00$|0$', '', json_format(er.value_for_rank)), er.rank_text, '\u00A0\u2191' if er.upgraded else '',
 					rider_name,
 				),
 			] )
@@ -430,11 +430,11 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 				except KeyError:
 					if not team or Team.is_independent_name(team):
 						team_count += 1
-						team_name = u'Ind {}'.format(team_count)
+						team_name = 'Ind {}'.format(team_count)
 					else:
 						team_name = team
 					if len(team_name) > max_team_len:
-						team_name = team_name[:max_team_len].strip() + u'...'
+						team_name = team_name[:max_team_len].strip() + '...'
 					team_map[node_name] = team_name
 				
 				team_arc[(node_name, team_name)] += er.value_for_rank
@@ -446,7 +446,7 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	for node_name, team_name, value in sorted( ((n, t, v) for (n,t), v in team_arc.items()), key=operator.itemgetter(2), reverse=True ):
 		json_data.append( [
 			node_name,
-			u'{} ({})'.format(team_name, team_total[team_name]),
+			'{} ({})'.format(team_name, team_total[team_name]),
 			{'v':value, 'f':json_format(value)},
 			None,
 		] )
@@ -470,7 +470,7 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	
 	if series.ranking_criteria == 1:
 		total_values = format_column_time( total_values )
-		gaps = [(v or u'') for v in format_column_gap(gaps)]
+		gaps = [(v or '') for v in format_column_gap(gaps)]
 		for erv in event_results_values.values():
 			erv[:] = format_column_time( erv )
 	else:
