@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .views import license_holders_from_search_text
@@ -195,7 +195,7 @@ def SeasonsPassHolderRemove( request, seasonsPassHolderId ):
 #-----------------------------------------------------------------------
 @autostrip
 class UploadSeasonsPassForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	clear_existing = forms.BooleanField( required=False, label=_('Clear Existing Seasons Pass Holders First'), help_text=_("Removes all current Season's Pass Holders.  Use with Caution.") )
 	
 	def __init__( self, *args, **kwargs ):

@@ -1,5 +1,4 @@
 import re
-import six
 import time
 import datetime
 from xlrd import xldate_as_tuple
@@ -74,7 +73,7 @@ def set_attributes_changed( obj, attributes, accept_empty_values=False ):
 reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
 reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
-	if v and isinstance(v, six.string_types):
+	if v and isinstance(v, str):
 		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
 		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
 		v = v.strip()

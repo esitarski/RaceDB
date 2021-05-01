@@ -4,6 +4,11 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load callargs %}
+
+{% block style %}
+	thead th { position: sticky; top: 0; }
+{% endblock style %}
+
 {% block content %}
 <h2>{{title}}</h2>
 <hr/>

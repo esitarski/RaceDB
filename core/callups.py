@@ -1,7 +1,7 @@
 import operator
 from collections import defaultdict
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .series_results import extract_event_results, get_callups_for_wave

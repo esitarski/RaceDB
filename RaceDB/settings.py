@@ -156,6 +156,7 @@ TEMPLATES = [
 			'django.template.context_processors.media',
 			'django.template.context_processors.static',
 			'django.template.context_processors.tz',
+			'django.template.context_processors.request',
 			'django.contrib.messages.context_processors.messages',
 		],
 		'loaders': [
@@ -183,7 +184,10 @@ if os.path.exists(r'c:\Projects\RaceDBDeploy') or 'home/nloaner' in __file__  or
 				'django.template.context_processors.media',
 				'django.template.context_processors.static',
 				'django.template.context_processors.tz',
+				'django.template.context_processors.request',
 				'django.contrib.messages.context_processors.messages',
 			],
 		},
 	}]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

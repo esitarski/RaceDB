@@ -195,7 +195,7 @@ zL13clOn81zV5pNRx+3ZvdpA7OyjKbO9gfG0LnY+zmdy/+MlzK9fP+E/FvPHbJh5zru0rfL5B/yt
 	
 	$aboutToolStripMenuItem_Click = {
 		#TODO: Place custom script here
-		[System.Windows.Forms.MessageBox]::Show("RaceDB Contoller V1.0", "RaceDB Controller");
+		[System.Windows.Forms.MessageBox]::Show("RaceDB Controller V1.0", "RaceDB Controller");
 	}
 	
 	$buttonStart_Click = {
@@ -408,7 +408,7 @@ zL13clOn81zV5pNRx+3ZvdpA7OyjKbO9gfG0LnY+zmdy/+MlzK9fP+E/FvPHbJh5zru0rfL5B/yt
 	$raceDBController.MaximizeBox = $False
 	$raceDBController.Name = 'raceDBController'
 	$raceDBController.StartPosition = 'CenterScreen'
-	$raceDBController.Text = 'RaceDB Contoller'
+	$raceDBController.Text = 'RaceDB Controller'
 	$raceDBController.add_Load($raceDBController_Load)
 	#
 	# buttonUpdateStatus

@@ -1,6 +1,6 @@
 import re
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .get_number_set_excel import get_number_set_excel
@@ -144,7 +144,7 @@ def NumberSetEdit( request, numberSetId ):
 
 @autostrip
 class UploadNumberSetForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	
 	def __init__( self, *args, **kwargs ):
 		super( UploadNumberSetForm, self ).__init__( *args, **kwargs )

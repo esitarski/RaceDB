@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import six
 import json
 import fnmatch
 import shutil
@@ -22,7 +21,7 @@ Sqlite3FName = 'RaceDB.sqlite3'
 reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
 reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
-	if v and isinstance(v, six.string_types):
+	if v and isinstance(v, str):
 		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
 		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
 		v = v.strip()
@@ -34,9 +33,9 @@ def json_cleanse( fname ):
 		
 	for r in rows:
 		fields = r.get('fields',{})
-		for f in list(fields.iterkeys()):
+		for f in list(fields.keys()):
 			v = fields[f]
-			if isinstance(v, six.string_types):
+			if isinstance(v, str):
 				fields[f] = fix_spaces( v )
 				
 	with open(fname, 'w') as pf:

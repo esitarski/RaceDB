@@ -1,6 +1,6 @@
 import operator
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .participant_key_filter import participant_key_filter, add_participant_from_license_holder

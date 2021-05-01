@@ -13,11 +13,11 @@
 {% endblock style %}
 
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
-       'version':'1','packages':['corechart']}]}"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>       
 {% endblock srcjavascript %}
 
 {% block javascript %}
+google.charts.load('current', {'packages':['corechart']});
 google.setOnLoadCallback(onLoad);
 
 var payload = {{payload|to_js}};

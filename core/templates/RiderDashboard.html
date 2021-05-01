@@ -5,8 +5,7 @@
 {% load to_js %}
 
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
-       'version':'1','packages':['table', 'corechart', 'timeline',]}]}"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 {% endblock srcjavascript %}
 
 {% block style %}
@@ -25,6 +24,7 @@ select {
 {% endblock style %}
        
 {% block javascript %}
+google.charts.load('current', {'packages':['table','corechart','timeline']});
 google.setOnLoadCallback(onLoad);
 
 var payload = {{payload|to_js}};

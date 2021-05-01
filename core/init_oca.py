@@ -2,9 +2,9 @@ import io
 import csv
 import sys
 import datetime
-from six.moves.html_parser import HTMLParser
-from html import unescape
 from collections import namedtuple
+from html import unescape
+from html.parser import HTMLParser
 from django.db import transaction
 from django.db.models import Q
 from .models import *
@@ -135,16 +135,16 @@ def init_oca( fname, message_stream=sys.stdout ):
 									break
 
 	ur_records = []
-	with io.open(fname, 'r', encoding='utf-8', errors='replace') as fp:
+	with io.open(fname, encoding='utf-8', errors='replace') as fp:
 		oca_reader = csv.reader( fp )
 		for i, row in enumerate(oca_reader):
 			if i == 0:
 				# Get the header fields from the first row.
 				fields = utils.getHeaderFields( [unescape(v.strip()) for v in row] )
-				messsage_stream_write( u'Recognized Header Fields:\n' )
-				messsage_stream_write( u'----------------------------\n' )
-				messsage_stream_write( u'\n'.join(fields) + u'\n' )
-				messsage_stream_write( u'----------------------------\n' )
+				messsage_stream_write( 'Recognized Header Fields:\n' )
+				messsage_stream_write( '----------------------------\n' )
+				messsage_stream_write( '\n'.join(fields) + '\n' )
+				messsage_stream_write( '----------------------------\n' )
 				
 				oca_record = namedtuple('oca_record', fields)
 				continue

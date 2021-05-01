@@ -4,6 +4,10 @@
 {% load paginate_html %}
 {% load good_err_icon %}
 
+{% block style %}
+	thead th { position: sticky; top: 0; }
+{% endblock style %}
+
 {% block content %}
 
 {% include "hub_nav.html" %}

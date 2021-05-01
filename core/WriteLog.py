@@ -1,7 +1,6 @@
 from django.db import models
 from django.http import HttpRequest
 import sys
-import six
 import datetime
 import platform
 import traceback
@@ -11,7 +10,7 @@ import time
 from os.path import expanduser
 from os import environ
 import threading
-from six.moves.queue import Queue, Empty
+from queue import Queue, Empty
 from .utils import removeDiacritic, safe_print
 
 global logFileName

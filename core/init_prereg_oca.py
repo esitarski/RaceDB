@@ -1,7 +1,7 @@
 import sys
 import datetime
-from xlrd import open_workbook, xldate_as_tuple
-from six.moves.html_parser import HTMLParser
+from openpyxl import load_workbook
+from html.parser import HTMLParser
 from html import unescape
 from collections import namedtuple
 from django.db import transaction, IntegrityError
@@ -57,20 +57,20 @@ def set_attributes( obj, attributes ):
 	
 def to_int_str( v ):
 	try:
-		return u'{}'.format(int(v))
+		return '{}'.format(int(v))
 	except:
 		pass
-	return u'{}'.format(v)
+	return '{}'.format(v)
 		
 def to_str( v ):
 	if v is None:
 		return v
-	return u'{}'.format(v)
+	return '{}'.format(v)
 	
 def to_bool( v ):
 	if v is None:
 		return None
-	s = u'{}'.format(v)
+	s = '{}'.format(v)
 	return s[:1] in 'YyTt1'
 
 def to_int( v ):
@@ -84,7 +84,7 @@ def to_int( v ):
 def to_tag( v ):
 	if v is None:
 		return None
-	return u'{}'.format(v).split('.')[0]
+	return '{}'.format(v).split('.')[0]
 
 def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 	global datemode
@@ -96,10 +96,10 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 	try:
 		competition = Competition.objects.get( name=competition_name )
 	except Competition.DoesNotExist:
-		safe_print( u'Cannot find Competition: "{}"'.format(competition_name) )
+		safe_print( 'Cannot find Competition: "{}"'.format(competition_name) )
 		return
 	except Competition.MultipleObjectsReturned:
-		safe_print( u'Found multiple Competitions matching: "{}"'.format(competition_name) )
+		safe_print( 'Found multiple Competitions matching: "{}"'.format(competition_name) )
 		return
 	
 	if clear_existing:
@@ -124,7 +124,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			try:
 				license_holder = LicenseHolder.objects.get( license_code=license_code )
 			except LicenseHolder.DoesNotExist:
-				safe_print( u'Row {}: cannot find LicenceHolder from LicenseCode: {}'.format(i, license_code) )
+				safe_print( 'Row {}: cannot find LicenceHolder from LicenseCode: {}'.format(i, license_code) )
 				continue
 			
 			do_save = False
@@ -141,7 +141,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			except Participant.DoesNotExist:
 				participant = Participant( competition=competition, license_holder=license_holder )
 			except Participant.MultipleObjectsReturned:
-				safe_print( u'Row {}: found multiple Participants for this competition and license_holder.'.format(
+				safe_print( 'Row {}: found multiple Participants for this competition and license_holder.'.format(
 						i,
 				) )
 				continue
@@ -155,11 +155,11 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 				try:
 					team = Team.objects.get(name=team_name)
 				except Team.DoesNotExist:
-					safe_print( u'Row {}: unrecognized Team name (ignoring): "{}"'.format(
+					safe_print( 'Row {}: unrecognized Team name (ignoring): "{}"'.format(
 						i, team_name,
 					) )
 				except Team.MultipleObjectsReturned:
-					safe_print( u'Row {}: multiple Teams match name (ignoring): "{}"'.format(
+					safe_print( 'Row {}: multiple Teams match name (ignoring): "{}"'.format(
 						i, team_name,
 					) )
 			participant.team = team
@@ -169,11 +169,11 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 				try:
 					category = Category.objects.get( format=competition.category_format, code=category_code )
 				except Category.DoesNotExist:
-					safe_print( u'Row {}: unrecognized Category code (ignoring): "{}"'.format(
+					safe_print( 'Row {}: unrecognized Category code (ignoring): "{}"'.format(
 						i, category_code,
 					) )
 				except Category.MultipleObjectsReturned:
-					safe_print( u'Row {}: multiple Categories match code (ignoring): "{}"'.format(
+					safe_print( 'Row {}: multiple Categories match code (ignoring): "{}"'.format(
 						i, category_code,
 					) )
 			participant.category = category
@@ -181,7 +181,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			try:
 				participant.save()
 			except IntegrityError as e:
-				safe_print( u'Row {}: Error={}\nBib={} Category={} License={} Name={}'.format(
+				safe_print( 'Row {}: Error={}\nBib={} Category={} License={} Name={}'.format(
 					i, e,
 					bib, category_code, license_code, name,
 				) )
@@ -189,7 +189,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			
 			participant.add_to_default_optional_events()
 			
-			safe_print( u'{:>6}: {:>8} {:>10} {}, {}, {}, {}, {}'.format(
+			safe_print( '{:>6}: {:>8} {:>10} {}, {}, {}, {}, {}'.format(
 					i,
 					license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'),
 					license_holder.uci_code,
@@ -204,33 +204,27 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 		fname = worksheet_name
 		sheet_name = None
 		
-	ur_records = []
-	wb = open_workbook( fname )
-	datemode = wb.datemode
+	wb = load_workbook( filename=fname, read_only=True, data_only=True )
 	
-	ws = None
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name or sheet_name is None:
-			safe_print( u'Reading sheet: {}'.format(cur_sheet_name) )
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
-		safe_print( u'Cannot find sheet "{}"'.format(sheet_name) )
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+		ms_write( 'Reading sheet "{}"\n'.format(sheet_name) )
+	except Exception:
+		ms_write( 'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 		
-	num_rows = ws.nrows
-	num_cols = ws.ncols
-	for r in six.moves.range(num_rows):
-		row = ws.row( r )
+	ur_records = []
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [unescape(u'{}'.format(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
+			fields = [unescape('{}'.format(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
 			fields = ['f{}'.format(i) if not f else f.strip() for i, f in enumerate(fields)]
-			safe_print( u'\n'.join( fields ) )
+			safe_print( '\n'.join( fields ) )
+			fields = {col:f for col, f in enumerate(fields)}
 			continue
 			
-		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
+		ur = { fields.get(col,''):cell.value for col, cell in enumerate(row) }
 		ur_records.append( (r+1, ur) )
 		if len(ur_records) == 1000:
 			process_ur_records( ur_records )
@@ -238,4 +232,4 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			
 	process_ur_records( ur_records )
 	
-	safe_print( u'Initialization in: ', datetime.datetime.now() - tstart )
+	safe_print( 'Initialization in: ', datetime.datetime.now() - tstart )

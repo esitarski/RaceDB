@@ -2,13 +2,12 @@ import re
 import socket
 import select
 import json
-import six
 import time
 import datetime
 import threading
 import argparse
 import random
-from six.moves.queue import Queue, Empty
+from queue import Queue, Empty
 
 import traceback
 

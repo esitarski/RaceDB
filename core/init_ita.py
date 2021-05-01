@@ -1,6 +1,6 @@
 import sys
 import datetime
-from xlrd import open_workbook, xldate_as_tuple
+from openpyxl import load_workbook
 import HTMLParser
 from collections import namedtuple
 from models import *
@@ -96,28 +96,25 @@ def init_ccn( fname ):
 					TeamHint( discipline=d, license_holder=lh, effective_date=effective_date, team=team )
 					break
 				
-	ur_records = []
-	wb = open_workbook( fname )
-	import_utils.datemode = wb.datemode
+	wb = load_workbook( filename=fname, read_only=True, data_only=True )
 	
 	ws = None
 	for sheet_name in wb.sheet_names():
-		safe_print( u'Reading sheet: {}'.format(sheet_name) )
+		safe_print( 'Reading sheet: {}'.format(sheet_name) )
 		ws = wb.sheet_by_name(sheet_name)
 		break
 	
 	if not ws:
-		safe_print( u'Cannot find sheet.' )
+		safe_print( 'Cannot find sheet.' )
 		return
 		
-	num_rows = ws.nrows
-	num_cols = ws.ncols
+	ur_records = []
 	for r in range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(f.value).strip() for f in row]
-			safe_print( u'\n'.join(fields) )
+			fields = ['{}'.format(f.value).strip() for f in row]
+			safe_print( '\n'.join(fields) )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )

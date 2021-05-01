@@ -1,5 +1,4 @@
 import re
-import six
 import datetime
 from collections import defaultdict
 from . import WriteLog

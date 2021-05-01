@@ -8,17 +8,17 @@ class Command(BaseCommand):
 	def add_arguments(self, parser):
 		parser.add_argument('--competition',
 			dest='competition_name',
-			type=string,
+			type=str,
 			default='--MissingCompetition--',
 			help='Competition to initialize PreReg data into',
 		)
 		parser.add_argument('--spreadsheet',
 			dest='worksheet_name',
-			type=string,
+			type=str,
 			default='--MissingSpreadsheet--',
 			help='\n'.join([
 				'Name of the Excel spreadsheet in the form: ExcelFile$SheetName.',
-				'That is, the FileName (either .xls or xlms) followed by a "$", followed by the Worksheet name.',
+				'That is, the FileName (either .xls or xlsx) followed by a "$", followed by the Worksheet name.',
 				'The Worksheet name is optional - the default is to read the first sheet.',
 			]),
 		)

@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
 import os
 import io
-import six
 import json
 
 from .utils import removeDiacritic
