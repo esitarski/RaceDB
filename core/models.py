@@ -2872,7 +2872,7 @@ class Result(models.Model):
 	
 	category_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Category Rank') )
 	category_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Category Starters') )
-	category_gap = models.CharField( max_length=8, blank=True, default='' )
+	category_gap = models.CharField( max_length=24, blank=True, default='' )
 	
 	wave_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Wave Rank') )
 	wave_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Wave Starters') )
