@@ -39,10 +39,10 @@ class formatted_timedelta(datetime.timedelta):
 		return format_seconds( self.total_seconds(), high_precision=True )
 
 	def format_no_decimals( self ):
-		return format_seconds( self.total_seconds(), False )
+		return format_seconds( self.total_seconds(), high_precision=False )
 
 	def __unicode__( self ):
-		return u'{}'.format(self.__repr__())
+		return '{}'.format(self.__repr__())
 		
 	def __str__( self ):
 		return self.__repr__()
