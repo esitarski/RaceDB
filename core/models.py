@@ -3246,7 +3246,7 @@ class CustomCategory( Sequence ):
 				continue
 			
 			if winner_laps:
-				laps_down = winner_laps - rr.get_num_laps()
+				laps_down = int(winner_laps - rr.get_num_laps())
 				if laps_down > 0:
 					rr.wave_gap = rr.category_gap = '-{} {}'.format(laps_down, ('lap','laps')[int(laps_down>1)])
 					continue
