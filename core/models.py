@@ -2876,7 +2876,7 @@ class Result(models.Model):
 	
 	wave_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Wave Rank') )
 	wave_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Wave Starters') )
-	wave_gap = models.CharField( max_length=8, blank=True, default='' )
+	wave_gap = models.CharField( max_length=16, blank=True, default='' )
 	
 	finish_time = DurationField( default=None, null=True, blank=True, verbose_name=_('Finish Time') )
 	adjustment_time = DurationField( default=None, null=True, blank=True, verbose_name=_('Adjustment Time') )
