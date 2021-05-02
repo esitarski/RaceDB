@@ -3565,7 +3565,7 @@ class Participant(models.Model):
 	registration_timestamp=models.DateTimeField( auto_now_add=True )
 	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True, on_delete=models.SET_NULL )
 	
-	bib=models.PositiveSmallIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
+	bib=models.PositiveIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
 	
 	tag=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag') )
 	tag2=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag2') )
