@@ -10,6 +10,9 @@ import operator
 from subprocess import call, check_call
 from collections import defaultdict
 
+import warnings
+warnings.filterwarnings("ignore")
+
 # Import a RaceDB.sqlite3 database into a configured database.
 
 Sqlite3FName = 'RaceDB.sqlite3'
@@ -83,6 +86,11 @@ def json_cleanse( fname ):
 		
 	for r in rows:
 		fields = r.get('fields',{})
+		for attr in ('tag', 'tag2'):
+			tag = fields.get(attr,None)
+			if tag:
+				fields[attr] = tag[:36]
+		
 		for f in list(fields.keys()):
 			v = fields[f]
 			if isinstance(v, str):
