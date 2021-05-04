@@ -3,6 +3,7 @@ import re
 import sys
 import json
 import shutil
+import argparse
 import datetime
 import sqlite3
 import operator
@@ -12,10 +13,15 @@ from collections import defaultdict
 # Import a RaceDB.sqlite3 database into a configured database.
 
 Sqlite3FName = 'RaceDB.sqlite3'
-
 # Check alternative RaceDB.sqlite3 locations.
 if os.path.isfile(os.path.join( 'racedb-data',  Sqlite3FName )):
 	Sqlite3FName = os.path.join( 'racedb-data',  Sqlite3FName )
+
+parser = argparse.ArgumentParser(description='Import an sqlite3 database file into the current database.')
+parser.add_argument('Sqlite3FName', nargs='?', default=Sqlite3FName)
+args = parser.parse_args()
+
+Sqlite3FName = args.Sqlite3FName
 
 if not os.path.isfile(Sqlite3FName):
 	print( '**** Missing RaceDB.sqlite3 file.  Aborting.' )
