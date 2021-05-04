@@ -11,7 +11,7 @@ then
     export PYTHONPATH=/RaceDB
     export sqlite3_database_fname=$SQLITEDATA
     cd /RaceDB
-    python3 ./SqliteToDB.py
+    python3 ./SqliteToDB.py $SQLITEDATA
     mv $SQLITEDATA ${SQLITEDATA}.bak
     echo "Imported database from $SQLITEDATA file"
 else
