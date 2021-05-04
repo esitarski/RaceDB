@@ -270,7 +270,7 @@ $buttonRunUpdate_Click= {
 	#TODO: Set the process path here
 	$paramAddProcessTracker = @{
 		FilePath						  = 'docker-compose'
-		Arguments						  = '--no-ansi pull'
+		Arguments						  = '--ansi never pull'
 		SyncObject						  = $buttonRunUpdate
 		RedirectOutputScript			  = {
 			# Use $_.Data to access the output text
