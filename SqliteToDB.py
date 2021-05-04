@@ -12,6 +12,15 @@ from collections import defaultdict
 # Import a RaceDB.sqlite3 database into a configured database.
 
 Sqlite3FName = 'RaceDB.sqlite3'
+
+# Check alternative RaceDB.sqlite3 locations.
+if os.path.isfile(os.path.join( 'racedb-data',  Sqlite3FName )):
+	Sqlite3FName = os.path.join( 'racedb-data',  Sqlite3FName )
+
+if not os.path.isfile(Sqlite3FName):
+	print( '**** Missing RaceDB.sqlite3 file.  Aborting.' )
+	sys.exit( -1 )
+
 JSONFName = os.path.splitext(Sqlite3FName)[0] + '.json'
 
 class Sqlite3ToJson:
@@ -19,9 +28,9 @@ class Sqlite3ToJson:
 		Convert a Django sqlite3 file to a Django-compatable json without Django models.py or setting.py.
 		Objects are streamed one at a time to minimize memory use.
 	'''
-	def __init__( self, sqlite_fname, app_name ):
+	def __init__( self, sqlite_fname, json_fname, app_name ):
 		self.sqlite_fname = sqlite_fname
-		self.json_fname = os.path.splitext(self.sqlite_fname)[0] + '.json'
+		self.json_fname = json_fname
 		self.app_name = app_name
 		
 	def table_to_json( self, table, table_name ):
@@ -124,23 +133,23 @@ def handle_call( args ):
 tt = TimeTracker()
 		
 tt.start('migrating existing database')
-handle_call( ['python', 'manage.py', 'migrate'] )
+handle_call( [sys.executable or 'python', 'manage.py', 'migrate'] )
 
 tt.start('extracting json data from sqlite3 database' )
-Sqlite3ToJson( 'RaceDB.sqlite3', 'core_' ).to_json()
+Sqlite3ToJson( Sqlite3FName, JSONFName, 'core_' ).to_json()
 
 tt.start( 'cleansing json data' )
 json_cleanse( JSONFName )
 
 tt.start('dropping existing data')
-handle_call( ['python', 'manage.py', 'flush', '--noinput'] )
+handle_call( [sys.executable or 'python', 'manage.py', 'flush', '--noinput'] )
 
 tt.start( 'creating standard users' )
-handle_call( ['python', 'manage.py', 'create_users'] )
+handle_call( [sys.executable or 'python', 'manage.py', 'create_users'] )
 	
 try:
 	tt.start('loading data from sqlite3 database')
-	handle_call( ['python', 'manage.py', 'loaddata', JSONFName] )
+	handle_call( [sys.executable or 'python', 'manage.py', 'loaddata', JSONFName] )
 finally:
 	os.remove( JSONFName )
 
