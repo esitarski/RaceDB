@@ -2,28 +2,63 @@ import os
 import re
 import sys
 import json
-import fnmatch
 import shutil
 import datetime
-from collections import defaultdict
+import sqlite3
 import operator
 from subprocess import call, check_call
+from collections import defaultdict
 
 # Import a RaceDB.sqlite3 database into a configured database.
-# You must configure the database connection in DatabaseConfig.py.
 
-RaceDBDir = 'RaceDB'
-DatabaseConfigFName = os.path.join(RaceDBDir, 'DatabaseConfig.py')
-DatabaseConfigFNameSave = os.path.splitext(DatabaseConfigFName)[0] + '.py.Save'
-JsonFName = 'RaceDB.json'
 Sqlite3FName = 'RaceDB.sqlite3'
+JSONFName = os.path.splitext(Sqlite3FName)[0] + '.json'
 
-reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
+class Sqlite3ToJson:
+	'''
+		Convert a Django sqlite3 file to a Django-compatable json without Django models.py or setting.py.
+		Objects are streamed one at a time to minimize memory use.
+	'''
+	def __init__( self, sqlite_fname, app_name ):
+		self.sqlite_fname = sqlite_fname
+		self.json_fname = os.path.splitext(self.sqlite_fname)[0] + '.json'
+		self.app_name = app_name
+		
+	def table_to_json( self, table, table_name ):
+		cursor = self.conn.cursor()
+		for row in cursor.execute('SELECT * from {};'.format(table) ):
+			# Transform record to Django's object format.
+			r = {cursor.description[i][0]:value for i, value in enumerate(row)}
+			d = {'model':table_name, 'pk':r['id']}
+			del r['id']
+			d['fields'] = r
+			if self.count != 0:
+				self.json_f.write( ',\n' )
+			json.dump( d, self.json_f, indent=1 )
+			self.count += 1
+			
+	def to_json( self ):
+		self.conn = sqlite3.connect( self.sqlite_fname )	
+		cursor = self.conn.cursor()
+
+		self.count = 0
+		with open(self.json_fname, 'w') as self.json_f:
+			self.json_f.write( '[\n' )
+			for t in cursor.execute('SELECT name from sqlite_master where type="table";'):
+				table = t[0]
+				if table.startswith(self.app_name):
+					# Get table name in Django convention.
+					self.table_to_json( table, table[:len(self.app_name)-1] + '.' + table[len(self.app_name):] )
+			self.json_f.write( ']\n' )
+			
+		return self.count
+
+reNoSpace = re.compile('\u200B', flags=re.UNICODE)
 reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
 	if v and isinstance(v, str):
-		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
-		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
+		v = reNoSpace.sub( '', v )		# Replace zero space with nothing.
+		v = reAllSpace.sub( ' ', v )	# Replace alternate spaces with a regular space.
 		v = v.strip()
 	return v
 
@@ -55,13 +90,18 @@ class TimeTracker( object ):
 		self.startTime = None
 		self.curLabel = None
 		self.totals = defaultdict( float )
+		self.sequence = {}
 		
 	def start( self, label ):
+		if label:
+			print( '****', label, '...' )
 		t = datetime.datetime.now()
 		if self.curLabel and self.startTime:
 			self.totals[self.curLabel] += (t - self.startTime).total_seconds()
 		self.curLabel = label
 		self.startTime = t
+		if label not in self.sequence:
+			self.sequence[label] = len(self.sequence)
 		
 	def end( self ):
 		self.start( None )
@@ -69,7 +109,7 @@ class TimeTracker( object ):
 	def __repr__( self ):
 		s = []
 		tTotal = 0.0
-		for lab, t in sorted( self.totals.items(), key=operator.itemgetter(1), reverse=True ):
+		for lab, t in sorted( self.totals.items(), key=lambda x: self.sequence.get(x[0], 999) ):
 			s.append( '{:<50}: {:>12}'.format(lab, format_time(t)) )
 			tTotal += t
 		s.append( '-' * 64 )
@@ -77,85 +117,33 @@ class TimeTracker( object ):
 		s.append( '' )
 		return '\n'.join( s )
 
-def find_files(directory, pattern):
-	for root, dirs, files in os.walk(directory):
-		for basename in files:
-			if fnmatch.fnmatch(basename, pattern):
-				yield os.path.join(root, basename)
-
-def switch_configuration( to_database ):
-	if to_database:
-		sys.stderr.write( '**** Switching to Database configuration...\n' )
-		f_from, f_to = DatabaseConfigFNameSave, DatabaseConfigFName
-	else:
-		sys.stderr.write( '**** Switching to Sqlite3 configuration...\n' )
-		f_to, f_from = DatabaseConfigFNameSave, DatabaseConfigFName
-	try:
-		shutil.move( f_from, f_to )
-	except:
-		sys.stderr.write( '**** Failure: Cannot rename {} to {}.\n'.format(f_from, f_to) )
-		sys.exit()
-	# Make sure to remove the .pyc files so python won't use them instead.
-	for pyc in find_files(RaceDBDir, '*.pyc'):
-		os.remove( pyc )
-
-# Cache a copy of the configuration file.
-if not os.path.exists(DatabaseConfigFName):
-	print("{} does not exist. You must create the DatabaseConfig.py file first.".format(DatabaseConfigFName))
-	sys.exit(1)
-
-with open(DatabaseConfigFName, 'r') as fp:
-	database_config = fp.read()
-	
 def handle_call( args ):
-	try:
-		check_call( args )
-	except:
-		# Restore the configuration file if anything goes wrong.
-		with open(DatabaseConfigFName, 'w') as fp:
-			fp.write( database_config )
-		raise
+	# Wrapper in case something goes wrong.
+	check_call( args )
 
 tt = TimeTracker()
 		
-tt.start('migrating database')
-sys.stderr.write( '**** Migrating DB...\n' )
+tt.start('migrating existing database')
 handle_call( ['python', 'manage.py', 'migrate'] )
 
-switch_configuration( to_database=False )
-
-tt.start('migrating sqlite3 database')
-sys.stderr.write( '**** Migrating RaceDB.sqlite3...\n' )
-handle_call( ['python', 'manage.py', 'migrate'] )
-
-tt.start('fixing sqlite3 database')
-sys.stderr.write( '**** Fixing RaceDB.sqlite3 data...\n' )
-handle_call( ['python', 'manage.py', 'fix_data'] )
-
-tt.start('extracting json data from sqlite3')
-sys.stderr.write( '**** Extracting RaceDB.sqlite3 data to {}...\n'.format(JsonFName) )
-handle_call( ['python', 'manage.py', 'dumpdata', 'core', '--output', JsonFName] )
+tt.start('extracting json data from sqlite3 database' )
+Sqlite3ToJson( 'RaceDB.sqlite3', 'core_' ).to_json()
 
 tt.start( 'cleansing json data' )
-sys.stderr.write( '**** Cleansing Json File...\n' )
-json_cleanse( JsonFName )
+json_cleanse( JSONFName )
 
-switch_configuration( to_database=True )
 tt.start('dropping existing data')
-sys.stderr.write( '**** Dropping existing database data...\n' )
 handle_call( ['python', 'manage.py', 'flush', '--noinput'] )
-
-try:
-	sys.stderr.write( '**** Loading data into database...\n' )
-	tt.start('loading data')
-	handle_call( ['python', 'manage.py', 'loaddata', JsonFName] )
-finally:
-	sys.stderr.write( 'Cleanup...\n' )
-	os.remove( JsonFName )
 
 tt.start( 'creating standard users' )
 handle_call( ['python', 'manage.py', 'create_users'] )
 	
+try:
+	tt.start('loading data from sqlite3 database')
+	handle_call( ['python', 'manage.py', 'loaddata', JSONFName] )
+finally:
+	os.remove( JSONFName )
+
 tt.end()
 sys.stderr.write( '\n' )
 sys.stderr.write( repr(tt) )

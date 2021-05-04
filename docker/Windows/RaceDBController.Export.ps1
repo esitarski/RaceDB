@@ -288,7 +288,7 @@ zL13clOn81zV5pNRx+3ZvdpA7OyjKbO9gfG0LnY+zmdy/+MlzK9fP+E/FvPHbJh5zru0rfL5B/yt
 			}
 			else
 			{
-				[System.Windows.Forms.MessageBox]::Show("You must run RaceDBControler from the same direct docker-compose.yml", "Data Import");
+				[System.Windows.Forms.MessageBox]::Show("You must run RaceDBController from the same direct docker-compose.yml", "Data Import");
 			}
 		}			
 	}
