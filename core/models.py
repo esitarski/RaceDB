@@ -1824,7 +1824,7 @@ class EventMassStart( Event ):
 	
 	win_and_out = models.BooleanField( default = False, verbose_name = _("Win and Out") )
 
-	class Meta:
+	class Meta( Event.Meta ):
 		verbose_name = _('Mass Start Event')
 		verbose_name_plural = _('Mass Starts Event')
 
@@ -2124,7 +2124,7 @@ class Wave( WaveBase ):
 		except TypeError:
 			return self.event.date_time + datetime.timedelta(self.start_offset)
 	
-	class Meta:
+	class Meta( WaveBase.Meta ):
 		verbose_name = _('Wave')
 		verbose_name_plural = _('Waves')
 		ordering = ['start_offset', 'name']
@@ -2987,7 +2987,7 @@ class Result(models.Model):
 		self.get_race_time_query().delete()
 		
 	def get_race_times( self ):
-		return [ rt.total_seconds() for rt in self.get_race_time_query().values_list('race_time',flat=True) ]
+		return [ rt.total_seconds() for rt in self.get_race_time_query().order_by('race_time').values_list('race_time',flat=True) ]
 		
 	def compute_finish_time( self ):
 		rts = self.get_race_times()
@@ -3066,7 +3066,7 @@ class ResultMassStart(Result):
 	def get_race_time_class( self ):
 		return RaceTimeMassStart
 		
-	class Meta:
+	class Meta( Result.Meta ):
 		unique_together = (
 			('participant', 'event'),
 		)
@@ -3078,7 +3078,7 @@ class ResultTT(Result):
 	def get_race_time_class( self ):
 		return RaceTimeTT
 	
-	class Meta:
+	class Meta( Result.Meta ):
 		unique_together = (
 			('participant', 'event'),
 		)
@@ -3100,14 +3100,14 @@ class RaceTime(models.Model):
 class RaceTimeMassStart(RaceTime):
 	result = models.ForeignKey( 'ResultMassStart', verbose_name=_('ResultMassStart'), on_delete=models.CASCADE )
 	
-	class Meta:
+	class Meta( RaceTime.Meta ):
 		verbose_name = _('RaceTimeMassStart')
 		verbose_name_plural = _('RaceTimesMassStart')
 
 class RaceTimeTT(RaceTime):
 	result = models.ForeignKey( 'ResultTT', verbose_name=_('ResultTT'), on_delete=models.CASCADE )
 	
-	class Meta:
+	class Meta( RaceTime.Meta ):
 		verbose_name = _('RaceTimeTT')
 		verbose_name_plural = _('RaceTimesTT')
 
