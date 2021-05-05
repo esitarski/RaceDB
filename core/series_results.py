@@ -56,7 +56,7 @@ class EventResult( object ):
 		
 	def __repr__( self ):
 		return utils.removeDiacritic(
-			u'("{}",{}: event="{}",{}, rank={}, strs={}, vfr={}, oc={})'.format(
+			'("{}",{}: event="{}",{}, rank={}, strs={}, vfr={}, oc={})'.format(
 				self.license_holder.full_name(), self.license_holder.pk,
 				self.event.name, self.event.pk,
 				self.rank, self.starters, self.value_for_rank, self.original_category.code_gender

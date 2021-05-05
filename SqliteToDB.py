@@ -7,7 +7,7 @@ import argparse
 import datetime
 import sqlite3
 import operator
-from subprocess import call, check_call
+from subprocess import call, check_call, PIPE
 from collections import defaultdict
 
 import warnings
@@ -141,7 +141,6 @@ class TimeTracker( object ):
 		return '\n'.join( s )
 
 def handle_call( args ):
-	# Wrapper in case something goes wrong.
 	check_call( args )
 
 tt = TimeTracker()
@@ -166,7 +165,11 @@ try:
 	handle_call( [sys.executable or 'python', 'manage.py', 'loaddata', JSONFName] )
 finally:
 	os.remove( JSONFName )
+	print( '***** loaddata failed! *****' )
 
+tt.start( 'fixing up imported data' )
+handle_call( [sys.executable or 'python', 'manage.py', 'fix_data'] )
+	
 tt.end()
 sys.stderr.write( '\n' )
 sys.stderr.write( repr(tt) )
