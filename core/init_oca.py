@@ -104,7 +104,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 				attributes['nationality'] = ''
 			try:
 				attributes['city'] = ur.city
-			except:
+			except Exception:
 				pass
 			
 			try:

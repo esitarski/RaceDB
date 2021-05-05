@@ -93,7 +93,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
 		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	

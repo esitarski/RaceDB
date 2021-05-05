@@ -13,7 +13,7 @@ class CustomLabelForm( Form ):
 		system_info = kwargs.pop( 'system_info' )
 		c = kwargs.pop( 'competition' )
 
-		super(CustomLabelForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'

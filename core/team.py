@@ -20,7 +20,7 @@ def GetTeamForm( request ):
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
-			super(TeamForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
@@ -104,7 +104,7 @@ class TeamManageDuplicatesSelectForm( Form ):
 			if k not in ('id', 'selected'):
 				self.team_fields[k] = initial.pop(k)
 		self.team_id = initial.get('id', None)
-		super(TeamManageDuplicatesSelectForm, self).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 
 	output_hdrs   = (_('Name'), _('Code'),      _('Type'),  _('Active'), _('# Members'))
 	output_fields = (  'name', 'team_code',    'team_type',  'active', 'license_holder_count')
@@ -124,7 +124,7 @@ class TeamManageDuplicatesSelectForm( Form ):
 				s.write( u'<td>{}<br/>{}</td>'.format(team.name, team.get_team_aliases_html()) )
 			else:
 				s.write( u'<td>{}</td>'.format(escape(u'{}'.format(self.team_fields.get(f,u'')))) )
-		p = super(TeamManageDuplicatesSelectForm, self).as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
+		p = super().as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
 		ln = len('</tr>')
 		return mark_safe( (p[:-ln] + s.getvalue() + p[-ln:]).replace('<tr>','').replace('</tr>','') )
 		
@@ -186,7 +186,7 @@ def get_team_cannonical_select_form( ids ):
 		)
 		
 		def __init__( self, *args, **kwargs ):
-			super( TeamCannonicalSelectForm, self ).__init__( *args, **kwargs )
+			super().__init__( *args, **kwargs )
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = ''
@@ -288,7 +288,7 @@ class TeamAliasForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
-		super(TeamAliasForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'

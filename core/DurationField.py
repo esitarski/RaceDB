@@ -50,10 +50,10 @@ class formatted_timedelta(datetime.timedelta):
 class DurationFormField( CharField ):
 	def __init__(self, *args, **kwargs):
 		self.max_length = 13
-		super(DurationFormField, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 
 	def clean(self, value):
-		value = super(DurationFormField, self).clean(value)
+		value = super().clean(value)
 		value = value.strip()
 		if value and not reDuration.match(value):
 			raise FormValidationError('Must be in format [-]HH:MM:SS.ddd')
@@ -69,7 +69,7 @@ class DurationField( FloatField ):
 		d = kwargs.get('default',None)
 		if isinstance(d, (int, float)):
 			kwargs['default'] = formatted_timedelta( seconds=d )
-		super( DurationField, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 	
 	def to_python( self, value ):
 		if value is None:

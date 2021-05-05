@@ -243,7 +243,7 @@ def license_holder_import_excel(
 		if not date_of_birth and uci_code:
 			try:
 				date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
-			except:
+			except Exception:
 				pass
 		
 		# If no date of birth, make one up based on the age.
@@ -528,7 +528,7 @@ def license_holder_import_excel(
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
 		wb = open_workbook( filename = fname, read_only=True, data_only=True )
 	

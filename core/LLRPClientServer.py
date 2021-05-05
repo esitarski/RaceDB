@@ -93,7 +93,7 @@ class LLRPServer( threading.Thread ):
 		self.messageQ = messageQ
 		self.exception_termination = False
 		self.llrp_host = None
-		super(LLRPServer, self).__init__( name='LLRPServer' )
+		super().__init__( name='LLRPServer' )
 		self.daemon = True
 
 	def logMessage( self, *args ):
@@ -185,7 +185,7 @@ class LLRPServer( threading.Thread ):
 			
 		try:
 			antenna = int(antenna)
-		except:
+		except Exception:
 			errors.append( 'Tag Write Failure: Invalid antenna.  Must be 1, 2, 3 or 4.' )
 			return False, errors
 		

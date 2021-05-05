@@ -22,10 +22,10 @@ def set_attributes( obj, attributes ):
 	
 def to_int_str( v ):
 	try:
-		return u'{}'.format(int(v))
-	except:
+		return '{}'.format(int(v))
+	except Exception:
 		pass
-	return u'{}'.format(v)
+	return '{}'.format(v)
 		
 def to_str( v ):
 	return toUnicode(v)
@@ -51,11 +51,11 @@ def init_ccn( fname ):
 			try:
 				date_of_birth	= date_from_value( ur.get('DateBirth', '') )
 			except Exception as e:
-				safe_print( u'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e ) )
+				safe_print( 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e ) )
 				continue
 				
 			if not ur.get('License',''):
-				safe_print( u'Row {}: Missing License '.format(i) )
+				safe_print( 'Row {}: Missing License '.format(i) )
 				continue
 			
 			attributes = {

@@ -62,7 +62,7 @@ class SeriesForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(SeriesForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -165,7 +165,7 @@ class EventSelectForm( Form ):
 		competition = kwargs.pop( 'competition' )
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(EventSelectForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		categories = set( series.get_categories() )
 		events = [e for e in competition.get_events() if not set(e.get_categories()).isdisjoint(categories)]
@@ -242,7 +242,7 @@ def GetEventForm( series ):
 		pk = forms.IntegerField( widget = forms.HiddenInput(), required=False )
 		
 		def __init__( self, *args, **kwargs ):
-			super( EventForm, self ).__init__( *args, **kwargs )
+			super().__init__( *args, **kwargs )
 			initial = kwargs.get( 'initial', {} )
 			if initial:
 				self.fields['label'] = initial['name']
@@ -314,7 +314,7 @@ class SeriesPointsStructureForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(SeriesPointsStructureForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -370,7 +370,7 @@ class CategorySelectForm( Form ):
 		
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(CategorySelectForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.fields['categories'].choices = [
 			(c.id, format_lazy( '{}: {} ({})', c.get_gender_display(), c.code, c.description))
@@ -406,7 +406,7 @@ def SeriesCategoriesChange( request, seriesId ):
 			for v in form.cleaned_data['custom_categories']:
 				try:
 					cc_names.append( custom_category_names[int(v)] )
-				except:
+				except Exception:
 					pass
 			series.custom_category_names = ',\n'.join( cc_names )
 			series.save()
@@ -458,7 +458,7 @@ def GetCategoryProgressionForm( series ):
 		category = forms.ChoiceField( label=_('') )
 		
 		def __init__( self, *args, **kwargs ):
-			super(CategoryProgressionForm, self).__init__(*args, **kwargs)		
+			super().__init__(*args, **kwargs)		
 			self.fields['category'].choices = [(-1, '---')] + [
 				(c.pk, format_lazy('{}: {} - {}', c.get_gender_display(), c.code, c.description)) for c in series.category_format.category_set.all()
 			]
@@ -552,7 +552,7 @@ class CategoryGroupForm( Form ):
 		series = category_group.series
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(CategoryGroupForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 
 		self.fields['categories'].choices = [(c.id, format_lazy('{}: {} {}', c.get_gender_display(), c.code, c.description)) for c in series.get_categories_not_in_groups()]

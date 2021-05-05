@@ -134,7 +134,7 @@ def init_prereg(
 			if not date_of_birth and uci_code and not uci_code.isdigit():
 				try:
 					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
-				except:
+				except Exception:
 					pass
 			
 			# If no date of birth, make one up based on the age.
@@ -461,7 +461,7 @@ def init_prereg(
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
 		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	
@@ -484,7 +484,7 @@ def init_prereg(
 			for field in fields:
 				try:
 					pattern = normalize( field )
-				except:
+				except Exception:
 					continue
 				for event_name, event in optional_events.items():
 					if fnmatch(event_name, pattern):

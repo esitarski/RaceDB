@@ -26,7 +26,7 @@ def uci_excel( event, category, fname, startList=True ):
 	def toInt( n ):
 		try:
 			return int(n.split()[0])
-		except:
+		except Exception:
 			return n
 
 	def getFinishTime( rr ):
@@ -34,7 +34,7 @@ def uci_excel( event, category, fname, startList=True ):
 			return u''
 		try:
 			return utils.format_time(rr.finish_time, forceHours=True)
-		except:
+		except Exception:
 			return u''
 			
 	def getIRM( rr ):
@@ -83,7 +83,7 @@ def uci_excel( event, category, fname, startList=True ):
 			rr = RR(pos, r.status, r.participant)
 			try:
 				rr.finish_time = r.adjusted_finish_time.total_seconds()
-			except:
+			except Exception:
 				rr.finish_time = None
 			results.append( rr )
 	

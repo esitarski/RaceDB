@@ -87,7 +87,7 @@ def launch_server( command, **options ):
 	models_fix_data()
 	try:
 		reset_font_cache()
-	except:
+	except Exception:
 		pass
 	
 	# Initialize the database with pre-seeded data if it was not done.

@@ -58,7 +58,7 @@ def set_attributes( obj, attributes ):
 def to_int_str( v ):
 	try:
 		return '{}'.format(int(v))
-	except:
+	except Exception:
 		pass
 	return '{}'.format(v)
 		
@@ -78,7 +78,7 @@ def to_int( v ):
 		return None
 	try:
 		return int(v)
-	except:
+	except Exception:
 		return None
 		
 def to_tag( v ):
@@ -200,7 +200,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 	
 	try:
 		fname, sheet_name = worksheet_name.split('$')
-	except:
+	except Exception:
 		fname = worksheet_name
 		sheet_name = None
 		

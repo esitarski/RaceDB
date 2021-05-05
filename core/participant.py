@@ -48,7 +48,7 @@ class ParticipantSearchForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
-		super(ParticipantSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		if competition:
 			self.fields['category'].choices = \
@@ -131,7 +131,7 @@ def Participants( request, competitionId ):
 	event = None
 	try:
 		event_type, event_pk = [int(v) for v in participant_filter.get('event', '-1.0').split('.')]
-	except:
+	except Exception:
 		event_type, event_pk = None, None
 	if event_type == 0:
 		event = competition.eventmassstart_set.filter(pk=event_pk).first()
@@ -318,7 +318,7 @@ class BibScanForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
-		super(BibScanForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -448,7 +448,7 @@ def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId,
 def ParticipantEdit( request, participantId ):
 	try:
 		participant = Participant.objects.get( pk=participantId )
-	except:
+	except Exception:
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))		
 	competition = participant.competition
 	participant.enforce_tag_constraints()
@@ -535,7 +535,7 @@ def print_pdf( request, participant, pdf_str, print_type ):
 		
 		try:
 			os.remove( tmp_file )
-		except:
+		except Exception:
 			pass
 		
 		title = _("Print Status")
@@ -636,7 +636,7 @@ class ParticipantCategorySelectForm( Form ):
 								initial = -1 )
 	
 	def __init__(self, *args, **kwargs):
-		super(ParticipantCategorySelectForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -861,7 +861,7 @@ class TeamDisciplineForm( Form ):
 	disciplines = forms.MultipleChoiceField(required=False, widget=forms.CheckboxSelectMultiple,)
 	
 	def __init__(self, *args, **kwargs):
-		super(TeamDisciplineForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.fields['disciplines'].choices = [(d.id, d.name) for d in Discipline.objects.all()]
 		
@@ -954,7 +954,7 @@ def ParticipantBibChange( request, participantId ):
 		for b in bibs:
 			try:
 				b.full_name = bib_participants[b.bib].full_name_team
-			except:
+			except Exception:
 				pass
 	
 	has_existing_number_set_bib = (
@@ -1020,7 +1020,7 @@ class ParticipantNoteForm( Form ):
 	note = forms.CharField( widget = forms.Textarea, required = False, label = _('Note') )
 	
 	def __init__(self, *args, **kwargs):
-		super(ParticipantNoteForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1088,7 +1088,7 @@ def GetParticipantOptionForm( participation_optional_events ):
 		options = forms.MultipleChoiceField( required = False, label = _('Optional Events'), choices=choices )
 		
 		def __init__(self, *args, **kwargs):
-			super(ParticipantOptionForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -1155,7 +1155,7 @@ def GetParticipantEstSpeedForm( participant ):
 		)
 		
 		def __init__(self, *args, **kwargs):
-			super(ParticipantEstSpeedForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -1222,7 +1222,7 @@ def ParticipantEstSpeedChange( request, participantId ):
 @autostrip
 class ParticipantWaiverForm( Form ):
 	def __init__(self, *args, **kwargs):
-		super(ParticipantWaiverForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1266,7 +1266,7 @@ class ParticipantTagForm( Form ):
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna') )
 	
 	def __init__(self, *args, **kwargs):
-		super(ParticipantTagForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1525,7 +1525,7 @@ class ParticipantSignatureForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		is_jsignature = kwargs.pop( 'is_jsignature', True )
-		super(ParticipantSignatureForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1782,7 +1782,7 @@ class ParticipantConfirmForm( Form ):
 		participant = kwargs.pop( 'participant', None )
 		competition = participant.competition
 		license_holder = participant.license_holder
-		super(ParticipantConfirmForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.fields['category_name'].widget.attrs['readonly'] = True
 		self.fields['team_name'].widget.attrs['readonly'] = True
@@ -1869,7 +1869,7 @@ class ParticipantNotFoundForm( Form ):
 	def __init__(self, *args, **kwargs):
 		from_post = kwargs.pop('from_post', False)
 		has_matches = kwargs.pop('has_matches', False)
-		super(ParticipantNotFoundForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 			
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'

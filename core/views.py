@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.html import escape
 try:
 	from django.contrib.auth.views import logout
-except:
+except Exception:
 	from django.contrib.auth import logout
 
 from django.views.decorators.csrf import csrf_exempt
@@ -63,7 +63,7 @@ class LicenseHolderTagForm( Form ):
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna to Write Tag') )
 	
 	def __init__(self, *args, **kwargs):
-		super(LicenseHolderTagForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -250,7 +250,7 @@ class LicenseHolderForm( ModelForm ):
 		
 		lh = kwargs.get( 'instance', None )
 	
-		super(LicenseHolderForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -466,7 +466,7 @@ class UCIDatabaseForm( Form ):
 	
 	def __init__( self, *args, **kwargs ):
 		lh_attrs = kwargs.pop('lh_attrs', {})
-		super(UCIDatabaseForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		for name, attr in self.query_fields:
 			lh_attr = lh_attrs.get(attr, None)
 			if attr == 'uci_id' and lh_attr:
@@ -528,7 +528,7 @@ def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confir
 		uci_records = request.session.get(lh_uci_records, [])
 		try:
 			uci_record = uci_records[int(iUciRecord)]
-		except:
+		except Exception:
 			uci_record = None
 		if uci_record:
 			for attr in ('first_name', 'last_name', 'gender', 'nation_code', 'date_of_birth', 'uci_id'):
@@ -550,7 +550,7 @@ class BarcodeScanForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
-		super(BarcodeScanForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -594,7 +594,7 @@ class RfidScanForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop( 'hide_cancel_button', None )
-		super(RfidScanForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -731,7 +731,7 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 		)
 		
 		def __init__(self, *args, **kwargs):
-			super(LicenseHolderSelectDuplicatesForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -900,7 +900,7 @@ class CompetitionSearchForm( Form ):
 		request = kwargs.pop('request', None)
 		is_superuser = (request and request.user.is_superuser)
 		
-		super(CompetitionSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		if is_superuser:
 			year_cur = datetime.datetime.now().year
@@ -993,7 +993,7 @@ def GetCompetitionForm( competition_cur = None ):
 		
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
-			super(CompetitionForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
@@ -1272,7 +1272,7 @@ def GetRegAnalyticsForm( competition ):
 		day = forms.ChoiceField( required = True, choices=((d, d) for d in dates) )
 		
 		def __init__(self, *args, **kwargs):
-			super(RegAnalyticsForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -1318,7 +1318,7 @@ def CompetitionRegAnalytics( request, competitionId ):
 	payload['license_holder_total'] = LicenseHolder.objects.filter( pk__in = Participant.objects.filter(competition=competition).distinct().values_list('license_holder__pk', flat=True) ).count()
 	try:
 		payload['transactionPeak'][0] = payload['transactionPeak'][0].strftime('%H:%M').lstrip('0')
-	except:
+	except Exception:
 		pass
 		
 	dates = [competition.start_date]
@@ -1409,7 +1409,7 @@ def StartList( request, eventId ):
 def get_annotated_waves( event ):
 	try:
 		waves = list(event.wave_set.all())
-	except:
+	except Exception:
 		waves = list(event.wavett_set.all())
 		
 	category_wave = {}
@@ -1531,7 +1531,7 @@ class UploadPreregForm( Form ):
 	clear_existing = forms.BooleanField( required=False, label=_('Clear All Participants First'), help_text=_("Removes all existing Participants from the Competition before the Upload.  Use with Caution.") )
 	
 	def __init__( self, *args, **kwargs ):
-		super( UploadPreregForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -1581,7 +1581,7 @@ class ImportExcelForm( Form ):
 			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( ImportExcelForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -1753,7 +1753,7 @@ class CompetitionCloudForm( Form ):
 		for k in list(initial.keys()):
 			if k not in ('id', 'selected'):
 				self.competition_fields[k] = initial.pop(k)
-		super(CompetitionCloudForm, self).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 
 	output_hdrs   = (_('Local'), _('Dates'),      _('Discipline'), _('Name'), _('Class'), _('Organizer'), _('City'), _('Results') )
 	output_fields = (  'local', 'date_range_year_str', 'discipline',    'name', 'race_class',   'organizer',    'city',  'has_results')
@@ -1767,7 +1767,7 @@ class CompetitionCloudForm( Form ):
 				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['blank', 'is-good'][v]) )
 			else:
 				s.write( u'<td>{}</td>'.format(escape(u'{}'.format(self.competition_fields.get(f,u'')))) )
-		p = super(CompetitionCloudForm, self).as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
+		p = super().as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
 		ln = len('</tr>')
 		return mark_safe( p[:-ln] + s.getvalue() + p[-ln:] )
 		
@@ -1828,7 +1828,7 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 		if 'entry_tts' in kwargs:
 			entry_tts = list( kwargs['entry_tts'] )
 			del kwargs['entry_tts']
-			super( AdjustmentFormSet, self ).__init__(
+			super().__init__(
 				initial=[{
 					'est_speed':u'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
 					'seed_option': e.participant.seed_option,
@@ -1859,7 +1859,7 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 							form.gap_change = 1 if tDeltaCur > tDelta else -1
 						tDelta = tDeltaCur
 		else:
-			super( AdjustmentFormSet, self ).__init__( *args, **kwargs )
+			super().__init__( *args, **kwargs )
 
 def SeedingEdit( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
@@ -2019,7 +2019,7 @@ class EventMassStartForm( ModelForm ):
 		return HttpResponseRedirect( pushUrl(request,'EventApplyToExistingParticipants',eventMassStart.id) )
 	
 	def clean( self ):
-		cleaned_data = super(EventMassStartForm, self).clean()
+		cleaned_data = super().clean()
 		competition = cleaned_data.get("competition")
 		if competition:			
 			date_time = cleaned_data.get("date_time")
@@ -2036,7 +2036,7 @@ class EventMassStartForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
-		super(EventMassStartForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -2154,7 +2154,7 @@ def GetWaveForm( event_mass_start, wave = None ):
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
-			super(WaveForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			category_list = event_mass_start.get_categories_without_wave()
 			
@@ -2266,7 +2266,7 @@ class EventTTForm( ModelForm ):
 		return HttpResponseRedirect( pushUrl(request,'StartListTT',eventTT.id) )		
 	
 	def clean( self ):
-		cleaned_data = super(EventTTForm, self).clean()
+		cleaned_data = super().clean()
 		competition = cleaned_data.get("competition")
 		if competition:			
 			date_time = cleaned_data.get("date_time")
@@ -2283,7 +2283,7 @@ class EventTTForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
-		super(EventTTForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline hidden-print'
@@ -2392,7 +2392,7 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
-			super(WaveTTForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			category_list = event_tt.get_categories_without_wave()
 			
@@ -2533,7 +2533,7 @@ def LicenseHolderAddConfirm( request, competitionId, licenseHolderId, tag_checke
 	competition_age = competition.competition_age( license_holder )
 	try:
 		tag_checked = int(tag_checked)
-	except:
+	except Exception:
 		tag_checked = 0
 	return render( request, 'license_holder_add_confirm.html', locals() )
 
@@ -2543,7 +2543,7 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	try:
 		tag_checked = int(tag_checked)
-	except:
+	except Exception:
 		tag_checked = 0
 	
 	# Try to create a new participant from the license_holder.
@@ -2578,7 +2578,7 @@ class SystemInfoForm( ModelForm ):
 		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
-		super(SystemInfoForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -2690,7 +2690,7 @@ def get_participant_report_form():
 		
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
-			super(ParticipantReportForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -2725,7 +2725,7 @@ def get_participant_report_form():
 			addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, additional_buttons=self.additional_buttons )
 	
 		def clean(self):
-			cleaned_data = super(ParticipantReportForm, self).clean()
+			cleaned_data = super().clean()
 			start_date = cleaned_data.get("start_date")
 			end_date = cleaned_data.get("end_date")
 
@@ -2863,7 +2863,7 @@ def get_year_on_year_form():
 		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
 		
 		def __init__( self, *args, **kwargs ):
-			super(YearOnYearReportForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -2977,7 +2977,7 @@ class ExportCompetitionForm( Form ):
 	remove_ftp_info = forms.BooleanField( required=False, label=_('Remove FTP Upload Info') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( ExportCompetitionForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -3076,7 +3076,7 @@ class ImportCompetitionForm( Form ):
 	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore Participants and Teams)') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( ImportCompetitionForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'

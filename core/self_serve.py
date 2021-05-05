@@ -25,7 +25,7 @@ class SelfServeCompetitionForm( Form ):
 				label = _('Choose a Competition') )
 	
 	def __init__(self, *args, **kwargs):
-		super(SelfServeCompetitionForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -45,7 +45,7 @@ class SelfServeAntennaForm( Form ):
 	rfid_antenna = forms.ChoiceField( choices = [(i, mark_safe('&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;'.format(i))) for i in range(1,5)], label = _('Antenna to Read Tags') )
 	
 	def __init__(self, *args, **kwargs):
-		super(SelfServeAntennaForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'

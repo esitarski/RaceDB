@@ -9,13 +9,13 @@ from .models import *
 def get_average( s ):
 	try:
 		return statistics.mean( s )
-	except:
+	except Exception:
 		return None
 		
 def get_median( s ):
 	try:
 		return statistics.median( s )
-	except:
+	except Exception:
 		return None
 
 def get_competitions( start_date=None, end_date=None, disciplines=None, race_classes=None, organizers=None, include_labels=None, exclude_labels=None ):

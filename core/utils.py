@@ -113,7 +113,7 @@ def toUnicode( s ):
 		for encoding in encodings:
 			try:
 				return s.decode(encoding)
-			except:
+			except Exception:
 				pass
 		return s.decode('utf-8', 'ignore')
 	

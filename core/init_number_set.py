@@ -81,7 +81,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
 		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	

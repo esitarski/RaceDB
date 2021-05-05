@@ -9,7 +9,7 @@ def get_secret_key():
 	try:
 		with open(racedb_secret_fname, 'r') as f:
 			password = f.read().strip().split('\n')[0]
-	except:
+	except Exception:
 		password = 'secret'
 	return username, password
 
