@@ -7,7 +7,7 @@ import argparse
 import datetime
 import sqlite3
 import operator
-from subprocess import call, check_call, PIPE
+from subprocess import call, run, check_call, PIPE
 from collections import defaultdict
 
 import warnings
@@ -140,35 +140,56 @@ class TimeTracker( object ):
 		s.append( '' )
 		return '\n'.join( s )
 
+def filter_errors( output, stream ):
+	for line in output.split('\n'):
+		if 'received a naive datetime' not in line:
+			print( line, file=stream )
+
 def handle_call( args ):
-	check_call( args )
-
+	#check_call( args )
+	ret = run( args, capture_output=True, universal_newlines=True )
+	filter_errors( ret.stdout, sys.stdout )
+	filter_errors( ret.stderr, sys.stderr )
+	ret.check_returncode()					# Throws exception on non-zero return.
+	
+python = (sys.executable or python)
+	
 tt = TimeTracker()
-		
-tt.start('migrating existing database')
-handle_call( [sys.executable or 'python', 'manage.py', 'migrate'] )
 
+tt.start('migrating existing database')
+handle_call( [python, 'manage.py', 'migrate'] )
+
+from contextlib import redirect_stdout, redirect_stderr
+class message_filter:
+	def __init__( self, output ):
+		self.output = output
+		
+	def write( self, data ):
+		if not 'received a naive datetime' in data:
+			print( e, file=self.output)
+		
 tt.start('extracting json data from sqlite3 database' )
-Sqlite3ToJson( Sqlite3FName, JSONFName, 'core_' ).to_json()
+with redirect_stdout( message_filter(sys.stdout) ):
+	with redirect_stderr( message_filter(sys.stderr) ):
+		Sqlite3ToJson( Sqlite3FName, JSONFName, 'core_' ).to_json()
 
 tt.start( 'cleansing json data' )
 json_cleanse( JSONFName )
 
 tt.start('dropping existing data')
-handle_call( [sys.executable or 'python', 'manage.py', 'flush', '--noinput'] )
+handle_call( [python, 'manage.py', 'flush', '--noinput'] )
 
 tt.start( 'creating standard users' )
-handle_call( [sys.executable or 'python', 'manage.py', 'create_users'] )
+handle_call( [python, 'manage.py', 'create_users'] )
 	
 try:
-	tt.start('loading data from sqlite3 database')
-	handle_call( [sys.executable or 'python', 'manage.py', 'loaddata', JSONFName] )
+	tt.start('loading json data from sqlite3 database')
+	handle_call( [python, 'manage.py', 'loaddata', JSONFName] )
 finally:
 	os.remove( JSONFName )
-	print( '***** loaddata failed! *****' )
 
-tt.start( 'fixing up imported data' )
-handle_call( [sys.executable or 'python', 'manage.py', 'fix_data'] )
+tt.start( 'fixing imported data' )
+handle_call( [python, 'manage.py', 'fix_data'] )
 	
 tt.end()
 sys.stderr.write( '\n' )
