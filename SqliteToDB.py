@@ -167,6 +167,9 @@ finally:
 	os.remove( JSONFName )
 	print( '***** loaddata failed! *****' )
 
+tt.start( 'fixing up imported data' )
+handle_call( [sys.executable or 'python', 'manage.py', 'fix_data'] )
+	
 tt.end()
 sys.stderr.write( '\n' )
 sys.stderr.write( repr(tt) )
