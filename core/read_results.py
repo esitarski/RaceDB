@@ -74,7 +74,7 @@ def read_results_crossmgr( payload ):
 	def get_name_gender( cat_str ):
 		try:
 			gender_in_brackets = reGender.search( cat_str ).group(1)
-		except:
+		except Exception:
 			return cat_str, None
 		
 		cat_name = cat_str[:-len(gender_in_brackets)].strip()
@@ -102,7 +102,7 @@ def read_results_crossmgr( payload ):
 	def format_gap( cd, rank ):
 		try:
 			g = cd['gapValue'][rank-1]
-		except:
+		except Exception:
 			return ''
 		if g > 0:
 			return utils.format_time_gap( g )
@@ -193,7 +193,7 @@ def read_results_crossmgr( payload ):
 				try:
 					s, u = speed.split()
 					ave_kmh = float(s) * unit_conversion
-				except:
+				except Exception:
 					pass
 			
 			fields = dict(

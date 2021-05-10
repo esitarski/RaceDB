@@ -51,7 +51,7 @@ def CreateGeneric( ModelClass, ModelFormClass ):
 		def __init__( self, *args, **kwargs ):
 			self.button_mask = kwargs.pop( 'button_mask', [] )
 			
-			super(ModelFormGeneric, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'

@@ -2,6 +2,7 @@ import re
 import sys
 import datetime
 import operator
+from io import BytesIO
 from collections import defaultdict
 from fnmatch import fnmatch
 from openpyxl import load_workbook
@@ -134,7 +135,7 @@ def init_prereg(
 			if not date_of_birth and uci_code and not uci_code.isdigit():
 				try:
 					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
-				except:
+				except Exception:
 					pass
 			
 			# If no date of birth, make one up based on the age.
@@ -457,11 +458,11 @@ def init_prereg(
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = load_workbook( filename = worksheet_contents, read_only=True, data_only=True )
+		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
 		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	
@@ -484,7 +485,7 @@ def init_prereg(
 			for field in fields:
 				try:
 					pattern = normalize( field )
-				except:
+				except Exception:
 					continue
 				for event_name, event in optional_events.items():
 					if fnmatch(event_name, pattern):

@@ -7,7 +7,7 @@ class ReportLabelDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(ReportLabelDisplayForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -24,7 +24,7 @@ class ReportLabelForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(ReportLabelForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'

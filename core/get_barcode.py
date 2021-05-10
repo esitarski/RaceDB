@@ -38,7 +38,7 @@ def barcode_decode( s ):
 	s = s[:12]
 	try:
 		n = int( s )
-	except:
+	except Exception:
 		return -1
 		
 	x = RAND_DIGIT

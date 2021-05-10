@@ -5,7 +5,7 @@ from .views_common import *
 def GetCategoryNumbersForm( competition, category_numbers = None ):
 	class CategoryNumbersForm( GenericModelForm(CategoryNumbers) ):
 		def __init__( self, *args, **kwargs ):
-			super(CategoryNumbersForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			categories_field = self.fields['categories']
 			
 			category_list = competition.get_categories_without_numbers()

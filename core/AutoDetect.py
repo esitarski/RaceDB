@@ -19,9 +19,9 @@ def GetDefaultHost():
 						if addr != '127.0.0.1':
 							DEFAULT_HOST = addr
 							break
-				except:
+				except Exception:
 					pass
-		except:
+		except Exception:
 			pass
 	return DEFAULT_HOST
 	

@@ -73,7 +73,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 			
 			try:
 				timestamp = datetime.datetime( *[int(v) for v in reNonDigits.sub(' ', fields[0]).split()] )
-			except:
+			except Exception:
 				continue
 			
 			if (start and timestamp < start) or (end and end < timestamp):

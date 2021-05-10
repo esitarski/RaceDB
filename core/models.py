@@ -111,20 +111,20 @@ def getCopyName( ModelClass, cur_name ):
 	suffix = ' - ['
 	try:
 		base_name = cur_name[:cur_name.rindex(suffix)]
-	except:
+	except Exception:
 		base_name = cur_name
 	
 	while 1:
 		try:
 			names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
-		except:
+		except Exception:
 			return cur_name
 		
 		iMax = 2
 		for n in names:
 			try:
 				iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
-			except:
+			except Exception:
 				continue
 		
 		new_name = '{}{}{}]'.format( base_name, suffix, iMax )
@@ -351,7 +351,7 @@ class CategoryFormat(models.Model):
 	def next_category_seq( self ):
 		try:
 			return self.category_set.all().aggregate( Max('sequence') )['sequence__max'] + 1
-		except:
+		except Exception:
 			return 1
 		
 	def full_name( self ):
@@ -391,7 +391,7 @@ class Category(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_last( Category, self )
-		return super( Category, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def make_copy( self, category_format ):
 		category_new = self
@@ -426,7 +426,7 @@ class Discipline(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_first( Discipline, self )
-		return super( Discipline, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -446,7 +446,7 @@ class RaceClass(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_first( RaceClass, self )
-		return super( RaceClass, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -544,7 +544,7 @@ class NumberSet(models.Model):
 	def save( self, *args, **kwargs ):
 		init_sequence_first( NumberSet, self )
 		self.range_str = self.reRangeExcept.sub( '', self.range_str )
-		return super( NumberSet, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 		
 	def get_bib( self, competition, license_holder, category, category_numbers_set=None ):
 		numbers = None
@@ -656,7 +656,7 @@ class SeasonsPass(models.Model):
 
 	def save( self, *args, **kwargs ):
 		init_sequence_first( SeasonsPass, self )
-		return super( SeasonsPass, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -904,7 +904,7 @@ class Competition(models.Model):
 				self.adjust_event_times( time_delta )
 		
 		
-		return super(Competition, self).save(*args, **kwargs)
+		return super().save(*args, **kwargs)
 	
 	@transaction.atomic
 	def make_copy( self ):
@@ -1335,17 +1335,17 @@ def validate_range_str( range_str ):
 		if len(pair) == 1:
 			try:
 				n = int(pair[0])
-			except:
+			except Exception:
 				continue
 			pairs.append( exclude + '{}'.format(n) )
 		elif len(pair) >= 2:
 			try:
 				nBegin = int(pair[0])
-			except:
+			except Exception:
 				continue
 			try:
 				nEnd = int(pair[1])
-			except:
+			except Exception:
 				continue
 			nBegin = min( nBegin, num_max )
 			nEnd = min( max(nBegin,nEnd), num_max )
@@ -1451,7 +1451,7 @@ class CategoryNumbers( models.Model ):
 		
 	def save(self, *args, **kwargs):
 		self.validate()
-		return super(CategoryNumbers, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	class Meta:
 		verbose_name = _('CategoryNumbers')
@@ -1508,7 +1508,7 @@ class Event( models.Model ):
 		if not self.optional and self.option_id:
 			ParticipantOption.delete_option_id( self.competition, self.option_id )
 			self.option_id = 0
-		super( Event, self ).save( *args, **kwargs )
+		super().save( *args, **kwargs )
 		if self.optional and not self.option_id:
 			ParticipantOption.set_event_option_id( self.competition, self )
 	
@@ -1805,7 +1805,7 @@ class Event( models.Model ):
 class EventMassStart( Event ):
 	def __init__( self, *args, **kwargs ):
 		kwargs['event_type'] = 0
-		super( EventMassStart, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		
 	def get_result_class( self ):
 		return ResultMassStart
@@ -2105,14 +2105,14 @@ class Wave( WaveBase ):
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
 	
 	def get_results( self, category = None ):
-		return super( Wave, self ).get_results( category ).select_related('participant', 'participant__license_holder')
+		return super().get_results( category ).select_related('participant', 'participant__license_holder')
 	
 	def get_json( self ):
 		self.start_offset = self.start_offset or datetime.timedelta( seconds=0.0 )
-		js = super(Wave, self).get_json()
+		js = super().get_json()
 		try:
 			seconds = self.start_offset.total_seconds()
-		except:
+		except Exception:
 			seconds = self.start_offset
 		js['start_offset'] = format_seconds( seconds )
 		return js
@@ -2198,7 +2198,7 @@ class Team(models.Model):
 
 	def save( self, *args, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
-		return super(Team, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def full_name( self ):
 		fields = [self.name, self.team_code, self.get_team_type_display(), self.nation_code]
@@ -2459,7 +2459,7 @@ class LicenseHolder(models.Model):
 
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		
-		super(LicenseHolder, self).save( *args, **kwargs )
+		super().save( *args, **kwargs )
 		
 	@property
 	def is_temp_license( self ):
@@ -3002,7 +3002,7 @@ class Result(models.Model):
 	def get_num_laps_fast( self ):
 		try:
 			return self._num_laps
-		except:
+		except AttributError:
 			self._num_laps = self.get_num_laps()
 			return self._num_laps
 	
@@ -3202,7 +3202,7 @@ class CustomCategory( Sequence ):
 	
 	def save(self, *args, **kwargs):
 		self.validate()
-		return super(CustomCategory, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 		
 	def has_results( self ):
 		custom_participants = self.event.get_participants().filter(self.get_participant_query())
@@ -3429,7 +3429,7 @@ class NumberSetEntry(models.Model):
 			raise IntegrityError()
 		if self.date_issued is None:
 			self.date_issued = datetime.date.today()
-		return super( NumberSetEntry, self ).save()
+		return super().save()
 	
 	class Meta:
 		verbose_name = _('NumberSetEntry')
@@ -3728,7 +3728,7 @@ class Participant(models.Model):
 			self.tag2 = ''
 				
 		self.propagate_bib_tag()
-		return super(Participant, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	@property
 	def roleCode( self ):
@@ -4479,7 +4479,7 @@ class EntryTT( models.Model ):
 class EventTT( Event ):
 	def __init__( self, *args, **kwargs ):
 		kwargs['event_type'] = 1
-		super( EventTT, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		
 	def get_result_class( self ):
 		return ResultTT
@@ -4719,10 +4719,10 @@ class WaveTT( WaveBase ):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_last( WaveTT, self )
-		return super( WaveTT, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def get_results( self, category = None ):
-		return super( WaveTT, self ).get_results( category ).select_related('participant', 'participant__license_holder')
+		return super().get_results( category ).select_related('participant', 'participant__license_holder')
 	
 	def get_speed( self, participant ):
 		try:
@@ -5199,7 +5199,7 @@ class SeriesPointsStructure( Sequence ):
 				setattr( self, a, min( getattr(self, a), lowest_pfp ) )
 		self.dnf_points = min( self.dnf_points, self.finish_points )
 		self.dns_points = min( self.dns_points, self.dnf_points )
-		super( SeriesPointsStructure, self ).save( args, kwargs )
+		super().save( args, kwargs )
 
 	@property
 	def points_deep( self ):
@@ -5290,7 +5290,7 @@ class SeriesCompetitionEvent( models.Model ):
 						return None
 					try:
 						t = rr.finish_time.total_seconds()
-					except:
+					except Exception:
 						return None
 					if rr.adjustment_time:
 						t += rr.adjustment_time.total_seconds()
@@ -5303,7 +5303,7 @@ class SeriesCompetitionEvent( models.Model ):
 						return None
 					try:
 						t = rr.finish_time.total_seconds()
-					except:
+					except Exception:
 						return None
 					if rr.adjustment_time:
 						t += rr.adjustment_time.total_seconds()
@@ -5314,7 +5314,7 @@ class SeriesCompetitionEvent( models.Model ):
 					return None
 				try:
 					v = min( 100.0, 100.0 * (rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds()) )
-				except:
+				except Exception:
 					v = 0
 				return v
 		else:
@@ -5461,7 +5461,7 @@ class SeriesUpgradeProgression( Sequence ):
 	def save( self, *args, **kwargs ):
 		if self.factor > 1.0 or self.factor < 0.0:
 			self.factor = 0.5
-		super( SeriesUpgradeProgression, self ).save( *args, **kwargs )
+		super().save( *args, **kwargs )
 	
 	class Meta( Sequence.Meta ):
 		verbose_name = _("SeriesUpgradeProgression")
@@ -5653,7 +5653,7 @@ class CompetitionCategoryOption(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		self.note = self.note.strip()
-		return super(CompetitionCategoryOption, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 		
 	def make_copy( self, competition_new ):
 		cco_new = self

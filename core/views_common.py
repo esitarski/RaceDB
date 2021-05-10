@@ -20,7 +20,7 @@ from django.utils.text import format_lazy
 
 try:
 	from django.contrib.auth.views import logout
-except:
+except Exception:
 	from django.contrib.auth import logout
 
 from django.http import HttpResponse, HttpResponseRedirect
@@ -91,7 +91,7 @@ def access_validation( selfserve_ok=False, no_cache=True ):
 				elif 'eventId' in kwargs and 'eventType' in kwargs:
 					try:
 						eventType = int(kwargs['eventType'])
-					except:
+					except Exception:
 						eventType = -1
 					if eventType == 0:
 						event = EventMassStart.objects.filter(id=kwargs['eventId']).select_related('competition').first()
@@ -154,7 +154,7 @@ class SearchForm( Form ):
 		additional_buttons_on_new_row = kwargs.pop('additional_buttons_on_new_row', False)
 		hide_cancel_button = kwargs.pop( 'hide_cancel_button', False )
 		
-		super(SearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline search'
@@ -239,7 +239,7 @@ def GenericModelForm( ModelClass ):
 		def __init__( self, *args, **kwargs ):
 			self.button_mask = kwargs.pop( 'button_mask', [] )
 			
-			super(GMForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'

@@ -35,7 +35,7 @@ class CompetitionSearchForm( Form ):
 	name_text = forms.CharField( required=False, label = _('Name Text') )
 	
 	def __init__(self, *args, **kwargs):
-		super(CompetitionSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		competitions = competitions_with_results_or_prereg()
 		
@@ -282,7 +282,7 @@ class LicenseHolderSearchForm( Form ):
 		label=_('Search by') ) 
 	
 	def __init__(self, *args, **kwargs):
-		super(LicenseHolderSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'

@@ -1,6 +1,7 @@
 import sys
 import datetime
 from openpyxl import load_workbook
+from io import BytesIO
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from . import import_utils
@@ -77,11 +78,11 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = load_workbook( filename = worksheet_contents, read_only=True, data_only=True )
+		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
 		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	

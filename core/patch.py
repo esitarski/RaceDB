@@ -261,7 +261,7 @@ class PatchSet(object):
           return False
 
         try:
-          self._lineno, self._line = super(wrapumerate, self).next()
+          self._lineno, self._line = super().next()
         except StopIteration:
           self._exhausted = True
           self._line = False

@@ -72,7 +72,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 				try:
 					firstLapDistance = units_conversion * lap_km[0]
 					lapDistance = units_conversion * lap_km[1]
-				except:
+				except Exception:
 					pass
 				
 		data[p.bib] = d
