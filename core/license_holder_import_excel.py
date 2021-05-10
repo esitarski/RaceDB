@@ -1,4 +1,5 @@
 import re
+from io import BytesIO
 import sys
 import html
 import datetime
@@ -16,7 +17,7 @@ from .FieldMap import standard_field_map, normalize
 from .get_id import get_id
 from .models import *
 
-class tag(object):
+class tag:
 	def __init__( self, stream, name, attr=None ):
 		self.stream = stream
 		self.name = name
@@ -524,7 +525,7 @@ def license_holder_import_excel(
 
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = load_workbook( filename = worksheet_contents, read_only=True, data_only=True )
+		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')

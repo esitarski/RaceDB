@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 import xlsxwriter
 from openpyxl import load_workbook
+from io import BytesIO
 
 from .views_common import *
 from .FieldMap import standard_field_map
@@ -107,7 +108,7 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	CompetitionCategoryOption.normalize( competition )
 	ccos_query = competition.competitioncategoryoption_set.all().order_by('category__sequence').select_related('category')
 
-	wb = load_workbook( filename=worksheet_contents, read_only=True, data_only=True )
+	wb = load_workbook( filename=BytesIO(worksheet_contents), read_only=True, data_only=True )
 	
 	try:
 		sheet_name = sheet_name or wb.sheetnames[0]

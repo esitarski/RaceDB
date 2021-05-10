@@ -154,7 +154,7 @@ class UploadNumberSetForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+				Col( Field('excel_file', accept=".xlsx"), 8),
 			),
 		)
 		

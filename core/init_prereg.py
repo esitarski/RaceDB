@@ -2,6 +2,7 @@ import re
 import sys
 import datetime
 import operator
+from io import BytesIO
 from collections import defaultdict
 from fnmatch import fnmatch
 from openpyxl import load_workbook
@@ -457,7 +458,7 @@ def init_prereg(
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = load_workbook( filename = worksheet_contents, read_only=True, data_only=True )
+		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')

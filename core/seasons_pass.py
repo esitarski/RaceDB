@@ -206,7 +206,7 @@ class UploadSeasonsPassForm( Form ):
 		
 		self.helper.layout = Layout(
 			Row(
-				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+				Col( Field('excel_file', accept=".xlsx"), 8),
 				Col( Field('clear_existing'), 4 ),
 			),
 		)
