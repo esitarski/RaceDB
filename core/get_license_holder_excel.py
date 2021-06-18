@@ -53,7 +53,7 @@ def get_license_holder_excel( q = None ):
 	
 	#disciplines = list( Discipline.objects.filter(id__in=Competition.objects.all().values_list('discipline',flat=True).distinct() ) )
 	disciplines = []
-	local_headers = list(data_headers) + [u'{} Team'.format(d.name) for d in disciplines]
+	local_headers = list(data_headers) + ['{} Team'.format(d.name) for d in disciplines]
 	
 	row = write_row_data( ws, 0, local_headers, title_format )
 	for lh in LicenseHolder.objects.filter(q):
@@ -75,7 +75,7 @@ def get_license_holder_excel( q = None ):
 			lh.emergency_medical,
 			lh.zip_postal,
 		]
-		data.extend( (team.name if team else u'Independent') for team in lh.get_teams_for_disciplines(disciplines) )
+		data.extend( (team.name if team else 'Independent') for team in lh.get_teams_for_disciplines(disciplines) )
 		row = write_row_data( ws, row, data )
 			
 	wb.close()
