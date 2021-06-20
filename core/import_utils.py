@@ -70,12 +70,12 @@ def set_attributes_changed( obj, attributes, accept_empty_values=False ):
 			changed.append( (key, value) )
 	return changed
 
-reNoSpace = re.compile(u'\u200B', flags=re.UNICODE)
+reNoSpace = re.compile('\u200B', flags=re.UNICODE)
 reAllSpace = re.compile(r'\s', flags=re.UNICODE)
 def fix_spaces( v ):
 	if v and isinstance(v, str):
-		v = reNoSpace.sub( u'', v )		# Replace zero space with nothing.
-		v = reAllSpace.sub( u' ', v )	# Replace alternate spaces with a regular space.
+		v = reNoSpace.sub( '', v )		# Replace zero space with nothing.
+		v = reAllSpace.sub( ' ', v )	# Replace alternate spaces with a regular space.
 		v = v.strip()
 	return v
 	
@@ -84,7 +84,7 @@ def to_int_str( v ):
 		return None
 	fix_spaces( v )
 	try:
-		return u'{}'.format(int(v))
+		return '{}'.format(int(v))
 	except:
 		pass
 	return toUnicode(v)
@@ -94,10 +94,10 @@ def to_uci_id( v ):
 	if v is None:
 		return None
 	try:
-		v = u'{}'.format(int(v))
+		v = '{}'.format(int(v))
 	except:
 		v = toUnicode(v)
-	return reUCIID.sub( u'', v )
+	return reUCIID.sub( '', v )
 		
 def to_str( v ):
 	if v is None:
@@ -108,13 +108,13 @@ def to_phone( v ):
 	if v is None:
 		return v
 	v = to_int_str( v )
-	return v[:-2] if v.endswith(u'.0') else v
+	return v[:-2] if v.endswith('.0') else v
 	
 def to_bool( v ):
 	if v is None:
 		return None
-	s = fix_spaces(u'{}'.format(v)).strip()
-	return s[:1] in u'YyTt1' if s else None
+	s = fix_spaces('{}'.format(v)).strip()
+	return s[:1] in 'YyTt1' if s else None
 
 def to_int( v ):
 	if v is None:

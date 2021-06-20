@@ -308,11 +308,10 @@ def license_holder_import_excel(
 			'gender':gender,
 			'date_of_birth':date_of_birth,
 			'year_only_dob':year_only_dob,
+			
 			'uci_code':uci_code,
-			'emergency_contact_name':emergency_contact_name,
-			'emergency_contact_phone':emergency_contact_phone,
-			'emergency_medical':emergency_medical,
 			'email':email,
+			'phone':phone,
 			'city':city,
 			'state_prov':state_prov,
 			'nationality':nationality,
@@ -325,6 +324,10 @@ def license_holder_import_excel(
 			'existing_bib':bib,
 			'note':note,
 			
+			'emergency_contact_name':emergency_contact_name,
+			'emergency_contact_phone':emergency_contact_phone,
+			'emergency_medical':emergency_medical,
+
 			'team_name':team_name,
 			'team_code':team_code,
 		}
