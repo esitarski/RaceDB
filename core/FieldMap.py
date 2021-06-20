@@ -1,4 +1,5 @@
 import unicodedata
+import itertools
 
 def remove_diacritic(input):
 	'''
@@ -9,7 +10,10 @@ def remove_diacritic(input):
 
 def normalize( s ):
 	return remove_diacritic( s.replace('.','').replace('_',' ').strip().lower() )
- 
+
+def product( *argv ):
+	return tuple( [' '.join(v).strip() for v in itertools.product(*argv)] )
+
 class FieldMap( object ):
 	def __init__( self ):
 		self.reset()
@@ -155,7 +159,7 @@ standard_field_aliases = (
 		"Email",
 	),
 	('phone',
-		('Phone','Phone Number','Phone Num','Phone #','Phone No','Telephone','Telephone Number','Telephone Num','Telephone #','Telephone No','Tel #','Tel No','Tel',),
+		product(('Phone','Telephone','Tel'), ('', 'Number','No','#')),
 		"Phone",
 	),
 	('city',
@@ -167,7 +171,7 @@ standard_field_aliases = (
 		"State or Province",
 	),
 	('nation_code',
-		('Nation Code','NationCode','NatCode','Racing Nationality',),
+		('Nation Code','NationCode','Nat Code','NatCode','Racing Nationality',),
 		"Nation Code (3 letters)",
 	),
 	('nationality',
@@ -187,7 +191,7 @@ standard_field_aliases = (
 		"Postal or Zip code",
 	),
 	('category_code',
-		('Category','Category Code','Category_Code',),
+		('Category','Category Code',),
 		"Category",
 	),
 	('est_kmh',
