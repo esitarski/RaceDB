@@ -15,6 +15,6 @@ admin.autodiscover()
 
 urlpatterns = [
 	re_path(r'^[Rr][Aa][Cc][Ee][Dd][Bb]/', include(core_urls)),
-	re_path(r'^admin/', admin.site.urls),
+	#re_path(r'^admin/', admin.site.urls),
     path('', redirect_view),
 ]
