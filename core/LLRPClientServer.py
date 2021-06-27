@@ -14,7 +14,6 @@ import traceback
 from pyllrp import *
 from pyllrp.TagInventory import TagInventory
 from pyllrp.TagWriter import TagWriter
-from .AutoDetect import AutoDetect
 
 #-----------------------------------------------------------------------
 # Find a unique port for the LLRPServer.
@@ -364,7 +363,7 @@ def writeLog( message ):
 	print ( u'[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message ) )
 
 def doAutoDetect():
-	LLRPHost = AutoDetect( callback=lambda m: writeLog('AutoDetect Checking: ' + m) )
+	LLRPHost = AutoDetect()
 	if LLRPHost:
 		writeLog( 'AutoDetect: LLRP Reader found on ({}:{})'.format(LLRPHost, 5084) )
 	return LLRPHost
