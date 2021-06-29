@@ -12,9 +12,9 @@ def update_dependencies( upgrade ):
 	print( 'Updating Dependencies...' )
 	
 	py = sys.executable
-	args = ["pip", "install", "-r", "requirements.txt"]
+	args = ["pip3", "install", "-r", "requirements.txt"]
 	if upgrade:
-		args = ["pip", "install", "--upgrade", "-r", "requirements.txt"]
+		args = ["pip3", "install", "--upgrade", "-r", "requirements.txt"]
 	print( ' '.join(args) )
 	subprocess.call( args )
 
