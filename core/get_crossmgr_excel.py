@@ -70,19 +70,19 @@ def get_number_range_str( numbers ):
 	# Combine consecutive numbers into range pairs.
 	numbers = sorted( set(numbers) )
 	if len(numbers) <= 1:
-		return u','.join( u'{}'.format(n) for n in numbers )
+		return ','.join( '{}'.format(n) for n in numbers )
 	pairs = [[numbers[0], numbers[0]]]
 	for n in numbers[1:]:
 		if n == pairs[-1][1] + 1:
 			pairs[-1][1] += 1
 		else:
 			pairs.append( [n, n] )
-	return u','.join( u'{}'.format(p[0]) if p[0] == p[1] else u'{}-{}'.format(*p) for p in pairs )
+	return ','.join( '{}'.format(p[0]) if p[0] == p[1] else '{}-{}'.format(*p) for p in pairs )
 
 def get_subset_number_range_str( bib_all, bib_subset ):
 	bib_subset = sorted( bib_subset )
 	if len(bib_subset) <= 1:
-		return u','.join( u'{}'.format(n) for n in bib_subset )
+		return ','.join( '{}'.format(n) for n in bib_subset )
 	bib_all = sorted( bib_all )
 	
 	bib_i = {bib:i for i, bib in enumerate(bib_all)}
@@ -178,10 +178,10 @@ def add_categories_page( wb, title_format, event ):
 					get_gender_str(category.gender),
 					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
 					category_intervals.get(category,''),
-					'{}'.format(getattr(wave,'start_offset',u'')),
-					wave.laps if wave.laps else u'',
-					competition.to_local_distance(wave.distance) if wave.distance else u'',
-					getattr(wave, 'minutes', None) or u'',
+					'{}'.format(getattr(wave,'start_offset','')),
+					wave.laps if wave.laps else '',
+					competition.to_local_distance(wave.distance) if wave.distance else '',
+					getattr(wave, 'minutes', None) or '',
 					True, True, True,
 				]
 				row = write_row_data( ws, row, row_data )
@@ -192,10 +192,10 @@ def add_categories_page( wb, title_format, event ):
 				wave.name,
 				get_gender_str( 2 if len(genders) != 1 else genders[0] ),
 				'',	# No ranges here - these come from the categories.
-				'{}'.format(getattr(wave,'start_offset',u'')),
-				wave.laps if wave.laps else u'',
-				competition.to_local_distance(wave.distance) if wave.distance else u'',
-				getattr(wave, 'minutes', None) or u'',
+				'{}'.format(getattr(wave,'start_offset','')),
+				wave.laps if wave.laps else '',
+				competition.to_local_distance(wave.distance) if wave.distance else '',
+				getattr(wave, 'minutes', None) or '',
 				wave_flag, wave_flag, wave_flag,
 			]
 			row = write_row_data( ws, row, row_data )
@@ -206,7 +206,7 @@ def add_categories_page( wb, title_format, event ):
 					category.code,
 					get_gender_str(category.gender),
 					category_intervals.get(category,''),
-					'{}'.format(getattr(wave,'start_offset',u'')),
+					'{}'.format(getattr(wave,'start_offset','')),
 					'',
 					'',
 					'',
@@ -264,7 +264,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		event.road_race_finish_times,
 		event.dnsNoData,
 		getattr(event, 'win_and_out', False),
-		u'-'.join( [competition.long_name, event.name] ) if competition.long_name else u'',
+		u'-'.join( [competition.long_name, event.name] ) if competition.long_name else '',
 		competition.organizer_email,
 	]
 	row = write_row_data( ws, row, row_data )
@@ -288,7 +288,7 @@ def get_crossmgr_excel( event_mass_start ):
 		row_data = [
 			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			u'{}'.format(p.team_name), p.team.team_code if p.team else u'',
+			'{}'.format(p.team_name), p.team.team_code if p.team else '',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code_export,
@@ -354,10 +354,10 @@ def get_crossmgr_excel_tt( event_tt ):
 		start_time = start_times.get(p, None)
 		h = p.license_holder
 		row_data = [
-			start_time.total_seconds() / (24.0*60.0*60.0) if start_time is not None else u'',
-			p.bib if p.bib else u'',
+			start_time.total_seconds() / (24.0*60.0*60.0) if start_time is not None else '',
+			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			p.team.name if p.team else u'', p.team.team_code if p.team else u'',
+			p.team.name if p.team else '', p.team.team_code if p.team else '',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code,
