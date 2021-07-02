@@ -75,7 +75,7 @@ Steps:
 
 - Now, wait about two mins point your webbrowser to [http://localhost]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
 
-- The default admin login is super and the password is super. Be sure to use the [http://localhost/admin] page to change the password!
+- The default admin login is super and the password is super. Be sure to use __python3 manage.py set_password super ???__ to change the password.
 
 We recommend configuring Docker to start with your system. If you do so, RaceDB will automatically start with Docker starts. Additionally, you can use the Docker control panel to control RaceDB.
 
