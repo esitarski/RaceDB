@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core import serializers
 from django.core.serializers import base
 from django.db import DEFAULT_DB_ALIAS, models
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.db import transaction
 
 from .utils import get_search_text, removeDiacritic
@@ -263,7 +263,7 @@ def competition_deserializer( object_list, **options ):
 				continue
 
 			if isinstance(field_value, str):
-				field_value = force_text(
+				field_value = force_str(
 					field_value, options.get("encoding", settings.DEFAULT_CHARSET), strings_only=True
 				)
 
@@ -273,7 +273,7 @@ def competition_deserializer( object_list, **options ):
 			if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
 				model = field.remote_field.model
 				def m2m_convert(v):
-					return force_text(model._meta.pk.to_python(v), strings_only=True)
+					return force_str(model._meta.pk.to_python(v), strings_only=True)
 
 				try:
 					m2m_data[field.name] = []
