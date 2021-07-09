@@ -149,14 +149,14 @@ def init_prereg(
 			# As a last resort, pick the default DOB
 			date_of_birth 	= date_of_birth or invalid_date_of_birth
 			
-			license_code	= to_int_str(v('license_code', u'')).upper().strip()
-			last_name		= to_str(v('last_name',u''))
-			first_name		= to_str(v('first_name',u''))
-			name			= to_str(v('name',u''))
+			license_code	= (to_int_str(v('license_code', '')) or '').upper().strip() or None
+			last_name		= to_str(v('last_name',''))
+			first_name		= to_str(v('first_name',''))
+			name			= to_str(v('name',''))
 			if not name:
 				name = ' '.join( n for n in [first_name, last_name] if n )
 			
-			gender			= to_str(v('gender',u''))
+			gender			= to_str(v('gender',''))
 			gender			= gender_from_str(gender) if gender else None
 			
 			email			= to_str(v('email', None))
@@ -170,7 +170,7 @@ def init_prereg(
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))
 			bib				= (to_int(v('bib', None)) or None)
-			bib_auto		= (bib is None and '{}'.format(v('bib',u'')).lower() == u'auto')
+			bib_auto		= (bib is None and '{}'.format(v('bib','')).lower() == u'auto')
 			tag				= to_int_str(v('tag', None))
 			note		 	= to_str(v('note', None))
 			team_name		= to_str(v('team', None))
