@@ -129,8 +129,8 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 				# Report the error - probably a non-unique field.
 				status = False
 				status_entries.append(
-					(_('LicenseHolder') + u': ' + _('Existing Tag Save Exception:'), (
-						u'{}'.format(e),
+					(_('LicenseHolder') + ': ' + _('Existing Tag Save Exception:'), (
+						'{}'.format(e),
 					)),
 				)
 				return render( request, 'rfid_write_status.html', locals() )
@@ -198,16 +198,16 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 							if tagRead != tag:
 								try:
 									license_holder_other = LicenseHolder.objects.get(existing_tag=tagRead)
-									additional_message = u'{} != {} ({})'.format(tag, tagRead, license_holder_other.full_name())
+									additional_message = '{} != {} ({})'.format(tag, tagRead, license_holder_other.full_name())
 								except  (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-									additional_message = u'{} != {}'.format(tag, tagRead)
+									additional_message = '{} != {}'.format(tag, tagRead)
 								status = False
 								status_entries.append(
 									(_('Tag read does NOT match rider tag'), [additional_message] ),
 								)
 							else:
 								status_entries.append(
-									(_('Tag read matches rider tag'), [u'{} = {}'.format(tag, tagRead)] ),
+									(_('Tag read matches rider tag'), ['{} = {}'.format(tag, tagRead)] ),
 								)
 						return render( request, 'rfid_validate.html', locals() )
 					else:
@@ -256,19 +256,19 @@ class LicenseHolderForm( ModelForm ):
 		self.helper.form_class = 'form-inline'
 		
 		def error_html( error ):
-			return u'<span class="help-block"><strong>{}{}</strong>'.format(u'&nbsp;'*8,error) if error else u''
+			return '<span class="help-block"><strong>{}{}</strong>'.format('&nbsp;'*8,error) if error else ''
 		
 		def warning_html( warning ):
 			return '<img src="{}" style="width:20px;height:20px;"/>'.format(static('images/warning.png')) if warning else ''
 		
 		def uci_code_html():
 			if lh and lh.uci_country:
-				return u'<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.uci_country)), lh.uci_code)
+				return '<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.uci_country)), lh.uci_code)
 			return ''
 		
 		def nation_code_html():
 			if lh and lh.nation_code:
-				return u'<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.nation_code)), lh.nation_code)
+				return '<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.nation_code)), lh.nation_code)
 			return ''
 		
 		self.helper.layout = Layout(
@@ -360,14 +360,14 @@ def license_holders_from_search_text( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(Q(existing_tag=arg) | Q(existing_tag2=arg)))
 		
 	if not license_holders and search_text.startswith( 'scan=' ):
-		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(' ', '')
 		license_holders = list(LicenseHolder.objects.filter( Q(license_code=arg) | Q(uci_id=arg) ))
 
 	if not license_holders and is_uci_id( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_id = search_text.replace(' ','')))
 	
 	if not license_holders and search_text.startswith( 'uciid=' ):
-		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(' ', '')
 		license_holders = list(LicenseHolder.objects.filter(uci_id = arg or ''))
 	
 	if not license_holders and reUCICode.match( search_text ):
@@ -538,7 +538,7 @@ def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confir
 			lh.save()
 		return HttpResponseRedirect(getContext(request,'pop2Url'))
 					
-	message = format_lazy( u'{}: {} {}', _('Update from UCI Database'), lh.first_name, lh.last_name )
+	message = format_lazy( '{}: {} {}', _('Update from UCI Database'), lh.first_name, lh.last_name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )	
@@ -579,7 +579,7 @@ def LicenseHolderBarcodeScan( request ):
 			if not scan:
 				return HttpResponseRedirect(getContext(request,'path'))
 				
-			request.session['license_holder_filter'] = u'scan={}'.format(scan.lstrip('0'))
+			request.session['license_holder_filter'] = 'scan={}'.format(scan.lstrip('0'))
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = BarcodeScanForm()
@@ -662,7 +662,7 @@ def LicenseHolderRfidScan( request ):
 			if not status:
 				return render( request, 'license_holder_scan_rfid.html', locals() )
 			
-			request.session['license_holder_filter'] = u'rfid={}'.format(tag.lstrip('0'))
+			request.session['license_holder_filter'] = 'rfid={}'.format(tag.lstrip('0'))
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
@@ -693,7 +693,7 @@ def LicenseHoldersAutoCreateTags( request, confirmed=False ):
 		message.append(_('Existing tags *may* not work anymore.'))
 	else:
 		message.append(_('Existing tags will work if the License Codes have not changed.'))
-	message = format_lazy( u'{}'*len(message), *message )
+	message = format_lazy( '{}'*len(message), *message )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'LicenseHoldersAutoCreateTags/1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -705,12 +705,12 @@ def LicenseHoldersManageDuplicates( request ):
 	return render( request, 'license_holder_duplicate_list.html', locals() )
 
 def format_uci_id( uci_id ):
-	uci_id = uci_id or u''
-	return u' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )
+	uci_id = uci_id or ''
+	return ' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )
 
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 	
-	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city}, {state_prov} - {nation_code} - {license} - {uci_id} - ({num_comps})'.format(
+	choices = [(lh.pk, '{last_name}, {first_name} - {gender} - {date_of_birth} - {city}, {state_prov} - {nation_code} - {license} - {uci_id} - ({num_comps})'.format(
 		last_name=lh.last_name,
 		first_name=lh.first_name,
 		gender=lh.get_gender_display(),
@@ -1046,7 +1046,7 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col('ftp_upload_during_race', 4),
 				),
-				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(u''), ),
+				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(''), ),
 				Row(
 					Col(Field('bib_label_print'),2),
 					Col(Field('bibs_label_print'),2),
@@ -1360,7 +1360,7 @@ def TeamsShow( request, competitionId ):
 		} for team in competition.get_teams() ]
 	team_info.append(
 		{
-			'team_name':u'{}'.format(_('<<No Team>>')),
+			'team_name':'{}'.format(_('<<No Team>>')),
 			'staff':[],
 			'competitor_count':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).count(),
 			'competitors':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).order_by('bib'),
@@ -1403,7 +1403,7 @@ def StartLists( request, competitionId ):
 def StartList( request, eventId ):
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
-	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
+	page_title = '{} - {}'.format( instance.competition.title, instance.name )
 	return render( request, 'mass_start_start_list.html', locals() )
 	
 def get_annotated_waves( event ):
@@ -1445,7 +1445,7 @@ def get_annotated_waves( event ):
 def StartListTT( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	time_stamp = datetime.datetime.now()
-	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
+	page_title = '{} - {}'.format( instance.competition.title, instance.name )
 	wave_tts = get_annotated_waves( instance )
 	return render( request, 'tt_start_list.html', locals() )
 
@@ -1482,7 +1482,7 @@ def UCIExcelDownload( request, eventId, eventType, startList=1 ):
 				utils.cleanFileName(event.name),
 				utils.cleanFileName(category.code_gender),
 			)
-			safe_print( u'adding', fname, '...' )
+			safe_print( 'adding', fname, '...' )
 			zip_writer.writestr( fname, uci_excel(event, category, startList) )
 
 	value = zip_stream.getvalue()
@@ -1666,9 +1666,9 @@ def LicenseHolderCloudDownload( request ):
 	if not authorization.validate_secret_request(request):
 		return HttpResponseForbidden()
 	
-	safe_print( u'LicenseHolderCloudDownload: processing...' )
+	safe_print( 'LicenseHolderCloudDownload: processing...' )
 	response = handle_export_license_holders()
-	safe_print( u'LicenseHolderCloudDownload: response returned.' )
+	safe_print( 'LicenseHolderCloudDownload: response returned.' )
 	response['Authorization'] = authorization.get_secret_authorization()
 	return response
 
@@ -1677,7 +1677,7 @@ def LicenseHolderCloudDownload( request ):
 def LicenseHoldersCloudImport( request, confirmed=False ):
 	if confirmed:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'LicenseHolderCloudDownload' )
-		safe_print( u'LicenseHoldersCloudImport: sending request to:', url )
+		safe_print( 'LicenseHoldersCloudImport: sending request to:', url )
 		
 		response = requests.get( url, stream=True, headers={'Authorization':authorization.get_secret_authorization()} )
 		
@@ -1685,11 +1685,11 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 		try:
 			response.raise_for_status()
 		except Exception as e:
-			safe_print( u'LicenseHoldersCloudImport: ', e )
+			safe_print( 'LicenseHoldersCloudImport: ', e )
 			errors.append( e )
 		
 		if not errors:
-			safe_print( u'LicenseHoldersCloudImport: received response from:', url )
+			safe_print( 'LicenseHoldersCloudImport: received response from:', url )
 			try:
 				# Download the content and save it into a temporary file.
 				gzip_stream = tempfile.TemporaryFile()
@@ -1700,7 +1700,7 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 				gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode='rb' )
 				license_holder_import( gzip_handler )
 			except Exception as e:
-				safe_print( u'LicenseHoldersCloudImport: ', e )
+				safe_print( 'LicenseHoldersCloudImport: ', e )
 				errors.append( e )
 		
 		return render( request, 'license_holder_cloud_import.html', locals() )
@@ -1738,9 +1738,9 @@ def CompetitionCloudExport( request, competitionId ):
 		return HttpResponseForbidden()
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
-	safe_print( u'CompetitionCloudExport: processing Competition id:', competitionId )
+	safe_print( 'CompetitionCloudExport: processing Competition id:', competitionId )
 	response = handle_export_competition( competition )
-	safe_print( u'CompetitionCloudExport: processing completed.' )
+	safe_print( 'CompetitionCloudExport: processing completed.' )
 	return response
 
 class CompetitionCloudForm( Form ):
@@ -1764,9 +1764,9 @@ class CompetitionCloudForm( Form ):
 		for f in self.output_fields:
 			if f in self.output_bool_fields:
 				v = int(self.competition_fields.get(f,False))
-				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['blank', 'is-good'][v]) )
+				s.write( '<td class="text-center"><span class="{}"></span></td>'.format(['blank', 'is-good'][v]) )
 			else:
-				s.write( u'<td>{}</td>'.format(escape(u'{}'.format(self.competition_fields.get(f,u'')))) )
+				s.write( '<td>{}</td>'.format(escape('{}'.format(self.competition_fields.get(f,'')))) )
 		p = super().as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
 		ln = len('</tr>')
 		return mark_safe( p[:-ln] + s.getvalue() + p[-ln:] )
@@ -1804,7 +1804,7 @@ def CompetitionCloudImportList( request ):
 			return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	else:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudQuery' )
-		safe_print( u'CompetitionCloudImportList: sending request:', url )
+		safe_print( 'CompetitionCloudImportList: sending request:', url )
 		response = requests.get( url, headers={'Authorization':authorization.get_secret_authorization()} )
 		
 		cloud_competitions = response.json()
@@ -1816,24 +1816,60 @@ def CompetitionCloudImportList( request ):
 
 #-----------------------------------------------------------------------
 
+def augment_entry_tts( entry_tts ):
+	if not entry_tts:
+		return entry_tts
+	
+	# Get the waves for all participants.
+	participant_wave = {}
+	for event in set( ett.event for ett in entry_tts ):
+		for wave in event.get_wave_set().all():
+			for p in wave.get_participants_unsorted():
+				participant_wave[p.pk] = wave
+
+	event_tt = entry_tts[0].event
+	tDelta = datetime.timedelta( seconds = 0 )
+	for i, e in enumerate(entry_tts):
+		e.wave = participant_wave.get( e.participant.pk, None )
+		e.clock_time = event_tt.date_time + e.start_time
+		e.entry_tt_i = i
+		e.gap_change = 0
+		if i > 0:
+			tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
+			if tDeltaCur != tDelta:
+				if i > 1:
+					e.gap_change = 1 if tDeltaCur > tDelta else -1
+				tDelta = tDeltaCur
+
+	return entry_tts
+
 @autostrip
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
 	seed_option = forms.ChoiceField( choices=Participant.SEED_OPTION_CHOICES )
 	adjustment = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'adjustment'}) )
 	entry_tt_pk = forms.CharField( widget=forms.HiddenInput() )
+	entry_tt_i = forms.CharField( widget=forms.HiddenInput() )
 
 class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000) ):
 	def __init__( self, *args, **kwargs ):
-		if 'entry_tts' in kwargs:
-			entry_tts = list( kwargs['entry_tts'] )
-			del kwargs['entry_tts']
+		if 'entry_tts' in kwargs:			
+			entry_tts = kwargs.pop('entry_tts')
+			entry_tt_i = kwargs.pop('entry_tt_i', 0)
+			entry_tts[entry_tt_i].edit_entry = True
+
+			entry_tt_is = {e.pk:i for i, e in enumerate(entry_tts)}
+			
+			before_entries = 5
+			after_entries = 15
+			entry_tts = entry_tts[max(0,entry_tt_i-before_entries):entry_tt_i+after_entries]
 			super().__init__(
 				initial=[{
-					'est_speed':u'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
+					'est_speed':'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
 					'seed_option': e.participant.seed_option,
 					'adjustment': '',
-					'entry_tt_pk': u'{}'.format(e.pk),
+					'entry_tt_pk': '{}'.format(e.pk),
+					'entry_tt_i': '{}'.format(entry_tt_is[e.pk]),
 				} for e in entry_tts]
 			)
 			
@@ -1852,6 +1888,8 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 				form.entry_tt = entry_tts[i]
 				form.wave = participant_wave.get(entry_tts[i].participant.pk, None)
 				form.gap_change = 0
+				if getattr(entry_tts[i], 'edit_entry', False):
+					form.edit_entry = True
 				if i > 0:
 					tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
 					if tDeltaCur != tDelta:
@@ -1861,9 +1899,11 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 		else:
 			super().__init__( *args, **kwargs )
 
-def SeedingEdit( request, eventTTId ):
+def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	competition = instance.competition
+	entry_tt_i = int( entry_tt_i )
+	
 	if request.method == 'POST':
 		adjustment_formset = AdjustmentFormSet( request.POST )
 		reNum = re.compile( '[^0-9]' )
@@ -1885,6 +1925,8 @@ def SeedingEdit( request, eventTTId ):
 						entry_tt = entries[pk]
 					except KeyError:
 						continue
+						
+					entry_tt_i = int( d['entry_tt_i'] )
 					
 					participant_changed = False
 					
@@ -1913,7 +1955,7 @@ def SeedingEdit( request, eventTTId ):
 					else:
 						direction = None
 					try:
-						adjustment = int( reNum.sub(u'', adjustment) )
+						adjustment = int( reNum.sub('', adjustment) )
 					except ValueError:
 						adjustment = None
 					
@@ -1924,7 +1966,7 @@ def SeedingEdit( request, eventTTId ):
 
 				return eda
 			
-			if "apply_adjustments" in request.POST:
+			if "apply_adjustments" in request.POST or "ok_adjustments" in request.POST:
 				eda = get_eda()
 			
 				def safe_i( i ):
@@ -1984,15 +2026,21 @@ def SeedingEdit( request, eventTTId ):
 				with BulkSave() as bs:
 					for e in eda:
 						bs.append( e[0] )
-					
-			if "regenerate_start_times" in request.POST:
-				instance.create_initial_seeding()
+						
+			if "ok_adjustments" in request.POST:
+				return HttpResponseRedirect(getContext(request,'cancelUrl'))
+
+	entry_tts = augment_entry_tts( list(instance.entrytt_set.all()) )
+	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts, entry_tt_i=entry_tt_i )
 	
+	return render( request, 'seeding_edit_entries.html', locals() )
+
+def SeedingEdit( request, eventTTId ):
+	instance = get_object_or_404( EventTT, pk=eventTTId )
+	competition = instance.competition
 	instance.repair_seeding()
-	entry_tts=list(instance.entrytt_set.all())
-	for e in entry_tts:
-		e.clock_time = instance.date_time + e.start_time
-	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts )
+	
+	entry_tts = augment_entry_tts( list(instance.entrytt_set.all()) )
 	wave_tts = get_annotated_waves( instance )
 	return render( request, 'seeding_edit.html', locals() )
 
@@ -2132,14 +2180,14 @@ def UploadCrossMgr( request ):
 		try:
 			payload = json.loads( request.body.decode('utf-8') )
 		except Exception as e:
-			response['errors'].append( u'{}'.format(e) )
+			response['errors'].append( '{}'.format(e) )
 	else:
-		response['errors'].append( u'Request must be of type POST with json payload.' )
+		response['errors'].append( 'Request must be of type POST with json payload.' )
 	
-	safe_print( u'UploadCrossMgr: processing...' )
+	safe_print( 'UploadCrossMgr: processing...' )
 	if payload:
 		response = read_results.read_results_crossmgr( payload )
-	safe_print( u'UploadCrossMgr: Done.' )
+	safe_print( 'UploadCrossMgr: Done.' )
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------
@@ -2161,7 +2209,7 @@ def GetWaveForm( event_mass_start, wave = None ):
 			if wave is not None and wave.pk is not None:
 				category_list.extend( wave.categories.all() )
 				category_list.sort( key = lambda c: c.sequence )
-				self.fields['distance'].label = u'{} ({})'.format( _('Distance'), wave.distance_unit )
+				self.fields['distance'].label = '{} ({})'.format( _('Distance'), wave.distance_unit )
 			
 			categories_field = self.fields['categories']
 			categories_field.choices = [(category.id, category.full_name()) for category in category_list]
@@ -2216,7 +2264,7 @@ def WaveNew( request, eventMassStartId ):
 			break
 	waveLetter.reverse()
 	waveLetter = ''.join( waveLetter )
-	wave.name = u'Wave' + u' ' + waveLetter
+	wave.name = 'Wave' + ' ' + waveLetter
 	if waves_existing:
 		wave_last = waves_existing[-1]
 		wave.start_offset = wave_last.start_offset + datetime.timedelta(seconds = 60.0)
@@ -2399,14 +2447,14 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 			if wave_tt is not None and wave_tt.pk is not None:
 				category_list.extend( wave_tt.categories.all() )
 				category_list.sort( key = lambda c: c.sequence )
-				self.fields['distance'].label = u'{} ({})'.format( _('Distance'), wave_tt.distance_unit )
+				self.fields['distance'].label = '{} ({})'.format( _('Distance'), wave_tt.distance_unit )
 			
 			categories_field = self.fields['categories']
 			categories_field.choices = [(category.id, category.full_name()) for category in category_list]
 			categories_field.label = _('Available Categories')
 			
 			series_for_seeding_field = self.fields['series_for_seeding']
-			series_for_seeding_field.choices = [(u'', u'----')] + [
+			series_for_seeding_field.choices = [('', '----')] + [
 				(series.id, series.name) for series in Series.objects.filter(category_format=event_tt.competition.category_format)
 			]
 			
@@ -2459,7 +2507,7 @@ def WaveTTNew( request, eventTTId ):
 			break
 	wave_tt_letter.reverse()
 	wave_tt_letter = ''.join( wave_tt_letter )
-	wave_tt.name = u'WaveTT' + u' ' + wave_tt_letter
+	wave_tt.name = 'WaveTT' + ' ' + wave_tt_letter
 	if wave_tts_existing:
 		wave_tt_last = wave_tts_existing[-1]
 		wave_tt.distance = wave_tt_last.distance
@@ -2647,7 +2695,7 @@ def UpdateLogShow( request ):
 
 def get_year_choices():
 	year_choices = [
-		(y, u'{}'.format(y))
+		(y, '{}'.format(y))
 			for y in sorted(
 			set(d.year for d in Competition.objects.all()
 				.order_by('-start_date')
@@ -2817,27 +2865,27 @@ def AttendanceAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()( initial=initial )
 	
-	page_title = [u'Analytics']
+	page_title = ['Analytics']
 	if initial.get('start_date',None) is not None:
-		page_title.append( u'from {}'.format( initial['start_date'] .strftime(SystemInfo.get_formats().date_year_Md_python) ) )
+		page_title.append( 'from {}'.format( initial['start_date'] .strftime(SystemInfo.get_formats().date_year_Md_python) ) )
 	if initial.get('end_date', None) is not None:
-		page_title.append( u'to {}'.format( initial['end_date'].strftime(SystemInfo.get_formats().date_year_Md_python) ) )
+		page_title.append( 'to {}'.format( initial['end_date'].strftime(SystemInfo.get_formats().date_year_Md_python) ) )
 	if initial.get('organizers',None):
-		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
-	page_title = u' '.join( page_title )
+		page_title.append( 'for {}'.format( ', '.join(initial['organizers']) ) )
+	page_title = ' '.join( page_title )
 		
 	def get_name( cls, id ):
 		obj = cls.objects.filter(id=id).first()
 		return obj.name if obj else ''
 	
 	if initial.get('disciplines',None):
-		page_title += u' ({})'.format( u','.join( d.name for d in Discipline.objects.filter(pk__in=initial['disciplines'])) )
+		page_title += ' ({})'.format( ','.join( d.name for d in Discipline.objects.filter(pk__in=initial['disciplines'])) )
 	if initial.get('race_classes',None):
-		page_title += u' ({})'.format(u','.join( d.name for d in RaceClass.objects.filter(pk__in=initial['race_classes'])) )
+		page_title += ' ({})'.format(','.join( d.name for d in RaceClass.objects.filter(pk__in=initial['race_classes'])) )
 	if initial.get('include_labels', None):
-		page_title += u', +({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
+		page_title += ', +({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
 	if initial.get('exclude_labels',None):
-		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
+		page_title += ', -({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
 	return render( request, 'system_analytics.html', locals() )
 	
@@ -2910,23 +2958,23 @@ def YearOnYearAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_year_on_year_form()( initial=initial )
 	
-	page_title = [u'Year on Year Analytics']
+	page_title = ['Year on Year Analytics']
 	if initial.get('organizers',None):
-		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
-	page_title = u' '.join( page_title )
+		page_title.append( 'for {}'.format( ', '.join(initial['organizers']) ) )
+	page_title = ' '.join( page_title )
 		
 	def get_name( cls, id ):
 		obj = cls.objects.filter(id=id).first()
 		return obj.name if obj else ''
 	
 	if initial.get('discipline',0) > 0:
-		page_title += u' {}'.format(get_name(Discipline, initial['discipline']))
+		page_title += ' {}'.format(get_name(Discipline, initial['discipline']))
 	if initial.get('race_class',0) > 0:
-		page_title += u' {}'.format(get_name(RaceClass, initial['race_class']))
+		page_title += ' {}'.format(get_name(RaceClass, initial['race_class']))
 	if initial.get('include_labels', None):
-		page_title += u', +({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
+		page_title += ', +({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
 	if initial.get('exclude_labels',None):
-		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
+		page_title += ', -({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
 	return render( request, 'year_on_year_analytics.html', locals() )
 
@@ -3034,7 +3082,7 @@ def handle_export_competition( competition, export_as_template=False, remove_ftp
 def CompetitionExport( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	title = format_lazy( u'{}: {}', _('Export'), competition.name )
+	title = format_lazy( '{}: {}', _('Export'), competition.name )
 	
 	response = {}
 	if request.method == 'POST':
@@ -3149,7 +3197,7 @@ def CompetitionImport( request ):
 	
 @csrf_exempt
 def CompetitionCloudUpload( request ):
-	safe_print( u'CompetitionCloudUpload: processing...' )
+	safe_print( 'CompetitionCloudUpload: processing...' )
 	response = {'errors':[], 'warnings':[], 'message':''}
 	if request.method == "POST":
 		if not authorization.validate_secret_request( request ):
@@ -3161,13 +3209,13 @@ def CompetitionCloudUpload( request ):
 			except Exception as e:
 				response['errors'].append( 'Competition Upload Error: {}'.format(e) )
 	else:
-		response['errors'].append( u'Request must be of type POST with gzip json payload.' )
-	safe_print( u'CompetitionCloudUpload: done.' )
+		response['errors'].append( 'Request must be of type POST with gzip json payload.' )
+	safe_print( 'CompetitionCloudUpload: done.' )
 	safe_print( response['message'] )
 	for e in response['errors']:
-		safe_print( u'Error:', e )
+		safe_print( 'Error:', e )
 	for w in response['warnings']:
-		safe_print( u'Error:', w )
+		safe_print( 'Error:', w )
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------
