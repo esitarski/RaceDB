@@ -120,6 +120,7 @@ urlpatterns = [
 	re_path(r'^.*EventApplyToExistingParticipants/(?P<eventId>\d+)/(?P<confirmed>\d+)/$', views.EventApplyToExistingParticipants),
 	
 	re_path(r'^.*SeedingEdit/(?P<eventTTId>\d+)/$', views.SeedingEdit),
+	re_path(r'^.*SeedingEditEntry/(?P<eventTTId>\d+)/(?P<entry_tt_i>\d+)/$', views.SeedingEditEntry),
 	re_path(r'^.*GenerateStartTimes/(?P<eventTTId>\d+)/$', views.GenerateStartTimes),
 	
 	re_path(r'^.*WaveTTNew/(?P<eventTTId>\d+)/$', views.WaveTTNew),

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load date_fmt %}
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+<style>
+.adjustment {
+	width: 50px;
+}
+.est_speed {
+	width: 50px;
+	text-align: right;
+}
+</style>
+
+<h2 class="hidden-print">{{title}}</h2>
+<h2><strong>{{instance.competition.name}}</strong></h2>
+<h2><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
+<div class="hidden-print">
+<hr/>
+{% trans "Change the seeding by entering values in the <strong>Adjust</strong> field, then pressing the <strong>Apply Adjustments</strong> button  (or press Enter)." %}<br/>
+{% trans "Adjustments can be made relative to the current position by enter a number leading with +/-, or you can specify a position from the end by entering the number on its own." %}<br/>
+{% trans "Examples" %}:
+<p>
+<ul>
+<li>{% trans "Adjust 5 to move a Participant to position 5 from the end." %}</li>
+<li>{% trans "Adjust r to move a Participant to a random position.  Random starts are only exchanged with other random starts." %}</li>
+<li>{% trans "Adjust -2 to move a Participant two places earlier." %}</li>
+<li>{% trans "Adjust +3 to move a Participant three places later." %}</li>
+<li>{% trans "Adjust s11 to move a Participant to position 11 from the start." %}</li>
+</ul>
+</p>
+<p>
+{% trans "<strong>Seed Option</strong> is used to seed a rider Early or Late in the start wave.  Early or Late riders will be seeded amongst themselves with the Sequence criteria." %}
+</p>
+<hr/>
+<form method="post" action=".">
+{% csrf_token %}
+{{ adjustment_formset.management_form }}
+<button type="submit" name="ok_adjustments" class="btn btn-success">{% trans "OK" %}</button>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<button type="submit" name="apply_adjustments" class="btn btn-primary">{% trans "Apply" %}</button>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+<hr/>
+</div>
+{% with bsc=instance.get_bad_start_count %}
+	{% if bsc > 0 %}
+		<div class="alert alert-danger" role="alert">
+			<h4>
+				{% trans "Starters Missing Critical Information" %}: {{instance.get_bad_start_count}}<br/>
+				{% trans "Make sure to check all entries before starting." %}
+			</h4>
+		</div>
+	{% endif %}
+{% endwith %}
+<style>
+	.gap-change {
+		border-top: 3px solid #000;
+	}
+	.gap-change-inc {
+		border-top: 2px solid #006400;
+	}
+	.gap-change-dec {
+		border-top: 2px solid #640000;
+	}
+</style>
+
+<h2>{% trans "Edit Start List" %}</h2>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed participant_table">
+<thead>
+	<tr>
+		<th></th>
+		<th class="text-right">{% trans "Clock" %}</th>
+		<th class="text-right">{% trans "Stopwatch" %}</th>
+		<th>{% trans "Bib" %}</th>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Category" %}</th>
+		<th>{% trans "NatCode" %}</th>
+		<th>{% trans "Wave" %}</th>
+		<th>{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
+		<th>{% trans "Seed Option" %}</th>
+		<th>{% trans "Adjust" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for form in adjustment_formset %}
+		{% with e=form.entry_tt w=form.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
+		<tr {% if form.gap_change > 0 %}class="gap-change-inc"{% elif form.gap_change < 0 %}class="gap-change-dec"{% endif %}
+			{% if form.edit_entry %}style="font-weight:bold"{% endif %}>
+			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{form.entry_tt_i.value|add:"1"}}.</td>
+			<td class="text-right">{{e.clock_time | time:"H:i:s"}}</td>
+			<td class="text-right">{{e.start_time}}</td>
+			<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
+			<td>{{p.license_holder.full_name}}</td>
+			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
+			<td class="text-nowrap">{{h.get_nation_code_html}}</td>
+			<td>{{w.name}}</td>
+			<td>{{form.est_speed}}</td>
+			<td>{{form.seed_option}}</td>
+			<td>{{form.adjustment}}{{form.entry_tt_pk}}{{form.entry_tt_i}}</td>
+		</tr>
+		{% endwith %}
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+</form>
+{% endblock content %}
