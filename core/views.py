@@ -1879,7 +1879,6 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 			for i, form in enumerate(self):
 				e = entry_tts[i]
 				form.entry_tt = e
-				form.wave = e.wave
 				form.gap_change = e.gap_change
 				form.edit_entry = getattr(e, 'edit_entry', False)
 		else:

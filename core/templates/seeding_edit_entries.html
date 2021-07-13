@@ -43,7 +43,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;
 <button type="submit" name="apply_adjustments" class="btn btn-primary">{% trans "Apply" %}</button>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 <hr/>
 </div>
 {% with bsc=instance.get_bad_start_count %}
@@ -89,7 +89,7 @@
 </thead>
 <tbody>
 	{% for form in adjustment_formset %}
-		{% with e=form.entry_tt w=form.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
+		{% with e=form.entry_tt w=form.entry_tt.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
 		<tr {% if form.gap_change > 0 %}class="gap-change-inc"{% elif form.gap_change < 0 %}class="gap-change-dec"{% endif %}
 			{% if form.edit_entry %}style="background-color: #FFFF50;"{% endif %}>
 			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{form.entry_tt_i.value|add:"1"}}.</td>
