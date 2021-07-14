@@ -1,20 +1,42 @@
 {% extends "base.html" %}
 
-{% block content %}
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
-<style>
-.adjustment {
-	width: 50px;
-}
-.est_speed {
-	width: 50px;
-	text-align: right;
-}
-</style>
 
+{% block style %}
+	.adjustment {
+		width: 50px;
+	}
+	.est_speed {
+		width: 50px;
+		text-align: right;
+	}
+
+	.gap-change {
+		border-top: 3px solid #000;
+	}
+	.gap-change-inc {
+		border-top: 2px solid #006400;
+	}
+	.gap-change-dec {
+		border-top: 2px solid #640000;
+	}
+
+{% endblock style %}
+
+{% block onload %}
+{% if entry_tt_i is not None %}
+	let e = document.getElementById( "e_" + {{entry_tt_i}} );
+	if( e ) {
+		e.style.backgroundColor = "#FFFF50";
+		e.scrollIntoView({block: "center", inline: "start"});
+	}
+{% endif %}
+{% endblock onload %}
+
+{% block content %}
 <h2 class="hidden-print">{{title}}</h2>
 <h2><strong>{{instance.competition.name}}</strong></h2>
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
@@ -83,17 +105,6 @@
 {% endwith %}
 </div>
 {% endspaceless %}
-<style>
-	.gap-change {
-		border-top: 3px solid #000;
-	}
-	.gap-change-inc {
-		border-top: 2px solid #006400;
-	}
-	.gap-change-dec {
-		border-top: 2px solid #640000;
-	}
-</style>
 
 <h2>{% trans "Start List" %}</h2>
 {% spaceless %}
@@ -117,7 +128,7 @@
 <tbody>
 	{% for e in entry_tts %}
 		{% with w=e.wave p=e.participant h=.participant.license_holder %}
-		<tr {% if e.gap_change > 0 %}class="gap-change-inc"{% elif e.gap_change < 0 %}class="gap-change-dec"{% endif %}>
+		<tr id="e_{{forloop.counter0}}" {% if e.gap_change > 0 %}class="gap-change-inc"{% elif e.gap_change < 0 %}class="gap-change-dec"{% endif %}>
 			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
 			<td class="text-right">{{e.clock_time | time:"H:i:s"}}</td>
 			<td class="text-right">{{e.start_time}}</td>

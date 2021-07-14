@@ -1,20 +1,30 @@
 {% extends "base.html" %}
 
-{% block content %}
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
-<style>
-.adjustment {
-	width: 50px;
-}
-.est_speed {
-	width: 50px;
-	text-align: right;
-}
-</style>
 
+{% block style %}
+	.adjustment {
+		width: 50px;
+	}
+	.est_speed {
+		width: 50px;
+		text-align: right;
+	}
+	.gap-change {
+		border-top: 3px solid #000;
+	}
+	.gap-change-inc {
+		border-top: 2px solid #006400;
+	}
+	.gap-change-dec {
+		border-top: 2px solid #640000;
+	}
+{% endblock style %}
+
+{% block content %}
 <h2 class="hidden-print">{{title}}</h2>
 <h2><strong>{{instance.competition.name}}</strong></h2>
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
@@ -43,7 +53,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;
 <button type="submit" name="apply_adjustments" class="btn btn-primary">{% trans "Apply" %}</button>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a class="btn btn-primary" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+<a class="btn btn-warning" href="{{pop2Url}}SeedingEdit/{{instance.id}}/{{entry_tt_i}}/">{% trans "Cancel" %}</a>
 <hr/>
 </div>
 {% with bsc=instance.get_bad_start_count %}
@@ -56,17 +66,6 @@
 		</div>
 	{% endif %}
 {% endwith %}
-<style>
-	.gap-change {
-		border-top: 3px solid #000;
-	}
-	.gap-change-inc {
-		border-top: 2px solid #006400;
-	}
-	.gap-change-dec {
-		border-top: 2px solid #640000;
-	}
-</style>
 
 <h2>{% trans "Edit Start List" %}</h2>
 {% spaceless %}
@@ -89,7 +88,7 @@
 </thead>
 <tbody>
 	{% for form in adjustment_formset %}
-		{% with e=form.entry_tt w=form.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
+		{% with e=form.entry_tt w=form.entry_tt.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
 		<tr {% if form.gap_change > 0 %}class="gap-change-inc"{% elif form.gap_change < 0 %}class="gap-change-dec"{% endif %}
 			{% if form.edit_entry %}style="background-color: #FFFF50;"{% endif %}>
 			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{form.entry_tt_i.value|add:"1"}}.</td>

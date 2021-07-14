@@ -1817,29 +1817,29 @@ def CompetitionCloudImportList( request ):
 #-----------------------------------------------------------------------
 
 def augment_entry_tts( entry_tts ):
-	if not entry_tts:
-		return entry_tts
-	
-	# Get the waves for all participants.
-	participant_wave = {}
-	for event in set( ett.event for ett in entry_tts ):
-		for wave in event.get_wave_set().all():
-			for p in wave.get_participants_unsorted():
-				participant_wave[p.pk] = wave
+	if entry_tts:	
+		
+		# Get the waves for all participants.
+		participant_wave = {}
+		for event in set( ett.event for ett in entry_tts ):
+			for wave in event.get_wave_set().all():
+				for p in wave.get_participants_unsorted():
+					participant_wave[p.pk] = wave
 
-	event_tt = entry_tts[0].event
-	tDelta = datetime.timedelta( seconds = 0 )
-	for i, e in enumerate(entry_tts):
-		e.wave = participant_wave.get( e.participant.pk, None )
-		e.clock_time = event_tt.date_time + e.start_time
-		e.entry_tt_i = i
-		e.gap_change = 0
-		if i > 0:
-			tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
-			if tDeltaCur != tDelta:
-				if i > 1:
-					e.gap_change = 1 if tDeltaCur > tDelta else -1
-				tDelta = tDeltaCur
+		# Add the wave, clock_time, entry_tt_i and gap_change to every entry.
+		event_tt = entry_tts[0].event
+		tDelta = datetime.timedelta( seconds = 0 )
+		for i, e in enumerate(entry_tts):
+			e.wave = participant_wave.get( e.participant.pk, None )
+			e.clock_time = event_tt.date_time + e.start_time
+			e.entry_tt_i = i
+			e.gap_change = 0
+			if i > 0:
+				tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
+				if tDeltaCur != tDelta:
+					if i > 1:
+						e.gap_change = 1 if tDeltaCur > tDelta else -1
+					tDelta = tDeltaCur
 
 	return entry_tts
 
@@ -1873,29 +1873,14 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 				} for e in entry_tts]
 			)
 			
-			# Get the waves for each participant.
-			participant_wave = {}
-			for event in set( ett.event for ett in entry_tts ):
-				for wave in event.get_wave_set().all():
-					for p in wave.get_participants_unsorted():
-						participant_wave[p.pk] = wave
-			
 			# Add the entry_tt to each form to support the display.
 			# Also add the wave.
 			# Also add a flag when the time gap changes.
-			tDelta = datetime.timedelta( seconds = 0 )
 			for i, form in enumerate(self):
-				form.entry_tt = entry_tts[i]
-				form.wave = participant_wave.get(entry_tts[i].participant.pk, None)
-				form.gap_change = 0
-				if getattr(entry_tts[i], 'edit_entry', False):
-					form.edit_entry = True
-				if i > 0:
-					tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
-					if tDeltaCur != tDelta:
-						if i > 1:
-							form.gap_change = 1 if tDeltaCur > tDelta else -1
-						tDelta = tDeltaCur
+				e = entry_tts[i]
+				form.entry_tt = e
+				form.gap_change = e.gap_change
+				form.edit_entry = getattr(e, 'edit_entry', False)
 		else:
 			super().__init__( *args, **kwargs )
 
@@ -2028,14 +2013,15 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 						bs.append( e[0] )
 						
 			if "ok_adjustments" in request.POST:
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
+				link = getContext(request,'pop2Url') + 'SeedingEdit/{}/{}/'.format(instance.id, entry_tt_i)
+				return HttpResponseRedirect( link )
 
 	entry_tts = augment_entry_tts( list(instance.entrytt_set.all()) )
 	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts, entry_tt_i=entry_tt_i )
 	
 	return render( request, 'seeding_edit_entries.html', locals() )
 
-def SeedingEdit( request, eventTTId ):
+def SeedingEdit( request, eventTTId, entry_tt_i=None ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	competition = instance.competition
 	instance.repair_seeding()
