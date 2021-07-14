@@ -6,13 +6,24 @@
 {% load crispy_forms_tags %}
 
 {% block style %}
-.adjustment {
-	width: 50px;
-}
-.est_speed {
-	width: 50px;
-	text-align: right;
-}
+	.adjustment {
+		width: 50px;
+	}
+	.est_speed {
+		width: 50px;
+		text-align: right;
+	}
+
+	.gap-change {
+		border-top: 3px solid #000;
+	}
+	.gap-change-inc {
+		border-top: 2px solid #006400;
+	}
+	.gap-change-dec {
+		border-top: 2px solid #640000;
+	}
+
 {% endblock style %}
 
 {% block onload %}
@@ -94,17 +105,6 @@
 {% endwith %}
 </div>
 {% endspaceless %}
-<style>
-	.gap-change {
-		border-top: 3px solid #000;
-	}
-	.gap-change-inc {
-		border-top: 2px solid #006400;
-	}
-	.gap-change-dec {
-		border-top: 2px solid #640000;
-	}
-</style>
 
 <h2>{% trans "Start List" %}</h2>
 {% spaceless %}
