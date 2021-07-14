@@ -2013,14 +2013,15 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 						bs.append( e[0] )
 						
 			if "ok_adjustments" in request.POST:
-				return HttpResponseRedirect(getContext(request,'cancelUrl'))
+				link = getContext(request,'pop2Url') + 'SeedingEdit/{}/{}/'.format(instance.id, entry_tt_i)
+				return HttpResponseRedirect( link )
 
 	entry_tts = augment_entry_tts( list(instance.entrytt_set.all()) )
 	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts, entry_tt_i=entry_tt_i )
 	
 	return render( request, 'seeding_edit_entries.html', locals() )
 
-def SeedingEdit( request, eventTTId ):
+def SeedingEdit( request, eventTTId, entry_tt_i=None ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	competition = instance.competition
 	instance.repair_seeding()

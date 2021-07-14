@@ -1,20 +1,21 @@
 {% extends "base.html" %}
 
-{% block content %}
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
 {% load crispy_forms_tags %}
-<style>
-.adjustment {
-	width: 50px;
-}
-.est_speed {
-	width: 50px;
-	text-align: right;
-}
-</style>
 
+{% block style %}
+	.adjustment {
+		width: 50px;
+	}
+	.est_speed {
+		width: 50px;
+		text-align: right;
+	}
+{% endblock style %}
+
+{% block content %}
 <h2 class="hidden-print">{{title}}</h2>
 <h2><strong>{{instance.competition.name}}</strong></h2>
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
@@ -43,7 +44,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;
 <button type="submit" name="apply_adjustments" class="btn btn-primary">{% trans "Apply" %}</button>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+<a class="btn btn-warning" href="{{pop2Url}}SeedingEdit/{{instance.id}}/{{entry_tt_i}}/">{% trans "Cancel" %}</a>
 <hr/>
 </div>
 {% with bsc=instance.get_bad_start_count %}
