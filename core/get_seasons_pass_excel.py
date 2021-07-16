@@ -12,7 +12,7 @@ data_headers = (
 	'Gender',
 	'DOB',
 	'City', 'StateProv',
-	'License', 'UCICode',
+	'License', 'UCI ID',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -54,7 +54,7 @@ def get_seasons_pass_excel( seasons_pass ):
 			lh.city,
 			lh.state_prov,
 			lh.license_code,
-			lh.uci_code,
+			lh.uci_id,
 		]
 		row = write_row_data( ws, row, data )
 			

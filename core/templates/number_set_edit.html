@@ -41,10 +41,7 @@
 					{{lh.get_location}}
 				</td>
 				<td>
-					{% if lh.uci_code %}
-						{% if lh.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{lh.uci_country}}.png" ></img>{% endif %}
-						{{lh.uci_code}},
-					{% endif %}
+					{% if lh.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{lh.uci_country}}.png" ></img>{% endif %}
 					{{lh.license_code_trunc}}
 				</td>
 				<td>{{nse.date_lost|date_short}}</td>
@@ -85,10 +82,7 @@
 				</table>
 			</td>
 			<td>
-				{% if lh.uci_code %}
-					{% if lh.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{lh.uci_country}}.png" ></img>{% endif %}
-					{{lh.uci_code}},
-				{% endif %}
+				{% if lh.uci_country %} <img class="flag" src="{% get_static_prefix %}flags/{{lh.uci_country}}.png" ></img>{% endif %}
 				{{lh.license_code_trunc}}
 			</td>
 			<td class="hidden-print">

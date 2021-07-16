@@ -18,7 +18,7 @@ data_headers = (
 	'City', 'StateProv',
 	'Category', 'Age', 'Gender',
 	'License',
-	'NatCode', 'UCIID',
+	'NatCode', 'UCI ID',
 	'Tag', 'Tag2',				# These must be last.
 )
 

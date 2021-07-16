@@ -55,12 +55,12 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 						i, bib) )
 					
 				messsage_stream_write(
-					'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
+					'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_id}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
 						i=i,
 						bib=bib,
 						license_code=license_holder.license_code,
 						dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
-						uci_code=license_holder.uci_code,
+						uci_id=license_holder.uci_id,
 						last_name=license_holder.last_name,
 						first_name=license_holder.first_name,
 						city=license_holder.city, state_prov=license_holder.state_prov,

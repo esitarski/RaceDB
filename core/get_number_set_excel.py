@@ -14,7 +14,7 @@ data_headers = (
 	'DOB',
 	'City', 'StateProv',
 	'License',
-	'UCICode',
+	'UCIID',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -59,7 +59,7 @@ def get_number_set_excel( nses ):
 			lh.city,
 			lh.state_prov,
 			lh.license_code,
-			lh.uci_code,
+			lh.uci_id,
 		]
 		row = write_row_data( ws, row, data )
 		

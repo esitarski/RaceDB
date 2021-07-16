@@ -355,18 +355,18 @@ def license_holders_from_search_text( search_text ):
 	search_text = utils.normalizeSearch(search_text)
 	license_holders = []
 	
-	if not license_holders and search_text.startswith( 'rfid=' ):
+	if not license_holders and search_text.lower().startswith( 'rfid=' ):
 		arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
 		license_holders = list(LicenseHolder.objects.filter(Q(existing_tag=arg) | Q(existing_tag2=arg)))
 		
-	if not license_holders and search_text.startswith( 'scan=' ):
+	if not license_holders and search_text.lower().startswith( 'scan=' ):
 		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(' ', '')
 		license_holders = list(LicenseHolder.objects.filter( Q(license_code=arg) | Q(uci_id=arg) ))
 
 	if not license_holders and is_uci_id( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_id = search_text.replace(' ','')))
 	
-	if not license_holders and search_text.startswith( 'uciid=' ):
+	if not license_holders and search_text.lower().startswith( 'uciid=' ):
 		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(' ', '')
 		license_holders = list(LicenseHolder.objects.filter(uci_id = arg or ''))
 	
@@ -546,7 +546,7 @@ def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confir
 #--------------------------------------------------------------------------
 @autostrip
 class BarcodeScanForm( Form ):
-	scan = forms.CharField( required = False, label = _('Barcode (License Code, RFID Tag or UCIID)') )
+	scan = forms.CharField( required = False, label = _('Barcode (License Code, RFID Tag or UCI ID)') )
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop('hide_cancel_button', None)

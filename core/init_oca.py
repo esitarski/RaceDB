@@ -98,7 +98,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 				'date_of_birth':date_of_birth,
 				'state_prov':	'Ontario',
 				'nationality':	'Canada',
-				'uci_code':		ur.uci_code,
+				'uci_id':		ur.uci_id,
 			}
 			if attributes['uci_code'][:3] != 'CAN':
 				attributes['nationality'] = ''
@@ -117,7 +117,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 				lh.save()
 			
 			messsage_stream_write( u'{:>6}: {:>8} {:>9} {:>10} {}, {}, ({})\n'.format(
-					i, lh.license_code, lh.uci_code, lh.date_of_birth.strftime('%Y/%m/%d'), lh.last_name, lh.first_name, lh.city
+					i, lh.license_code, lh.uci_id, lh.date_of_birth.strftime('%Y/%m/%d'), lh.last_name, lh.first_name, lh.city
 				)
 			)
 			

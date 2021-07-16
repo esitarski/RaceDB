@@ -22,7 +22,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	payload['primes'] = None
 	payload['raceIsRunning'] = False
 	payload["raceIsUnstarted"] = False
-	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCIID', 'NatCode', 'City', 'StateProv']
+	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCI ID', 'NatCode', 'City', 'StateProv']
 	payload['has_results'] = has_results
 	
 	data = {}

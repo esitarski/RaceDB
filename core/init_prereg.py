@@ -517,7 +517,7 @@ def init_prereg(
 				large_delete_all( Participant, Q(competition=competition) )
 			
 			if 'license_code' not in ifm and 'uci_id' not in ifm:
-				ms_write( 'Header Row must contain one of (or both) License or UCI ID.  Aborting.\n' )
+				ms_write( 'Header Row must contain one of (or both) License or UCIID.  Aborting.\n' )
 				return
 			
 			ms_write( '\n' )

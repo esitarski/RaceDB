@@ -17,7 +17,7 @@ data_headers = (
 	'City', 'StateProv',
 	'License',
 	'NatCode',
-	'UCIID',
+	'UCI ID',
 	'Prereg',
 	'Paid',
 	'SeasonsPass',

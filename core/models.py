@@ -2325,7 +2325,7 @@ class LicenseHolder(models.Model):
 	phone = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Phone') )
 	
 	uci_code = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI Code') )
-	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCIID') )
+	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI ID') )
 	
 	license_code = models.CharField( max_length=32, null=True, unique=True, verbose_name=_('License Code') )
 	

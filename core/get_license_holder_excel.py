@@ -16,7 +16,7 @@ data_headers = (
 	'Email',
 	'Phone',
 	'License',
-	'NatCode', 'UCIID',
+	'NatCode', 'UCI ID',
 	'Emergency Contact', 'Emergency Phone', 'Medical Alert',
 	'ZipPostal',
 )

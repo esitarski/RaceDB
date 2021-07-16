@@ -278,7 +278,7 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 @autostrip
 class LicenseHolderSearchForm( Form ):
 	search_text = forms.CharField( required=False, label=_('Text') )
-	search_type = forms.ChoiceField( required=False, choices = ((0,_('Name (Last, First)')),(1,_('License')),(2,_('UCIID'))),
+	search_type = forms.ChoiceField( required=False, choices = ((0,_('Name (Last, First)')),(1,_('License')),(2,_('UCI ID'))),
 		label=_('Search by') ) 
 	
 	def __init__(self, *args, **kwargs):
