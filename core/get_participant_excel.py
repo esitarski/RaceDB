@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'LastName', 'FirstName',
@@ -109,6 +110,8 @@ def get_participant_excel( q = None ):
 		for e in optional_events:
 			data.append( e.is_participating(p) )
 		row = write_row_data( ws, row, data )
-			
+	
+	add_excel_info( wb )
+	
 	wb.close()
 	return output.getvalue()

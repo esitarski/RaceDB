@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'Bib', 'Status', 'Date',
@@ -62,6 +63,8 @@ def get_number_set_excel( nses ):
 			lh.uci_id,
 		]
 		row = write_row_data( ws, row, data )
-		
+	
+	add_excel_info( wb )
+	
 	wb.close()
 	return output.getvalue()

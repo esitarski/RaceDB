@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'Wave',
@@ -106,6 +107,7 @@ def get_start_list_excel( event ):
 			]
 			row = write_row_data( ws, row, data, format_list )
 		
-			
+	add_excel_info( wb )
+				
 	wb.close()
 	return output.getvalue()

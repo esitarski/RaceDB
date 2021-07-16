@@ -112,6 +112,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 		for i, ur in ur_records:
 			bib				= to_int(ur.get('bibnum', None))
 			license_code	= 'ON' + (to_int_str(ur.get('license','')) or to_int_str(ur.get('licence','<missing license code>')))
+			uci_id			= to_str(ur.get('uci_id', '<missing uci id>'))
 			name			= to_str(ur.get('name','')).strip()
 			team_name		= to_str(ur.get('Team', None))
 			preregistered	= to_bool(ur.get('preregistered', True))
@@ -121,18 +122,25 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
 			emergency_contact_phone = to_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
 			
-			try:
-				license_holder = LicenseHolder.objects.get( license_code=license_code )
-			except LicenseHolder.DoesNotExist:
-				safe_print( 'Row {}: cannot find LicenceHolder from LicenseCode: {}'.format(i, license_code) )
-				continue
+			license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
 			
+			if not license_holder:
+				try:
+					license_holder = LicenseHolder.objects.get( license_code=license_code )
+				except LicenseHolder.DoesNotExist:
+					pass
+			
+			if not license_holder:
+				safe_print( 'Row {}: cannot find LicenceHolder from UCI ID ({}) or LicenceCode ({})'.format(i, uci_id, license_code) )
+				continue
+					
 			do_save = False
 			for fname, fvalue in (  ('emergency_contact_name',emergency_contact_name),
 									('emergency_contact_phone',emergency_contact_name) ):
 				if fvalue and getattr(license_holder, fname) != fvalue:
 					setattr( license_holder, fname, fvalue )
 					do_save = True
+			
 			if do_save:
 				license_holder.save()
 					
@@ -192,7 +200,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			safe_print( '{:>6}: {:>8} {:>10} {}, {}, {}, {}, {}'.format(
 					i,
 					license_holder.license_code, license_holder.date_of_birth.strftime('%Y/%m/%d'),
-					license_holder.uci_code,
+					license_holder.uci_id,
 					license_holder.last_name, license_holder.first_name,
 					license_holder.city, license_holder.state_prov
 				)

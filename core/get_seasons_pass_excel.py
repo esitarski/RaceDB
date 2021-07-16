@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'LastName', 'FirstName',
@@ -57,6 +58,7 @@ def get_seasons_pass_excel( seasons_pass ):
 			lh.uci_id,
 		]
 		row = write_row_data( ws, row, data )
-			
+		
+	add_excel_info( wb )
 	wb.close()
 	return output.getvalue()
