@@ -42,7 +42,7 @@
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
 <div class="hidden-print">
 <hr/>
-<button class="btn btn-warning" href="./GenerateStartTimes/{{instance.pk}}">{% trans "Regenerate Start Times from Rules (disregards Adjustments)" %}</button>
+<a class="btn btn-warning" href="./GenerateStartTimes/{{instance.pk}}/">{% trans "Regenerate Start Times from Rules (disregards Adjustments)" %}</a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a class="btn btn-primary" href="{{cancelUrl}}">{% trans "OK" %}</a>
 <hr/>
