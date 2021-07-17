@@ -4515,6 +4515,7 @@ class EventTT( Event ):
 		groupCount = 0
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
+			tWave = tCur
 			
 			gap_before_wave = wave_tt.gap_before_wave or zero_gap
 			regular_start_gap = wave_tt.regular_start_gap or zero_gap
@@ -4539,7 +4540,7 @@ class EventTT( Event ):
 					# The start time is a multiple of the bib number.
 					if not p.bib:
 						continue
-					tCur = bib_gap * p.bib
+					tCur = tWave + bib_gap * p.bib
 				else:
 					# Compute the rider gap based on the formal criteria.
 					rider_gap = max(
