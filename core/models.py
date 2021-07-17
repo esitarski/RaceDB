@@ -4503,6 +4503,12 @@ class EventTT( Event ):
 		min_gap = datetime.timedelta( seconds=10 )
 		zero_gap = datetime.timedelta( seconds=0 )
 		
+		# Time multiples for each bib gap.
+		bib_gaps = {
+			WaveTT.bib_60:datetime.timedelta( seconds=60 ),
+			WaveTT.bib_30:datetime.timedelta( seconds=30 ),
+		}
+		
 		empty_gap_before_wave = zero_gap
 		
 		sequenceCur = 1
@@ -4513,6 +4519,7 @@ class EventTT( Event ):
 			gap_before_wave = wave_tt.gap_before_wave or zero_gap
 			regular_start_gap = wave_tt.regular_start_gap or zero_gap
 			fastest_participants_start_gap = wave_tt.fastest_participants_start_gap or zero_gap
+			bib_gap = bib_gaps.get( wave_tt.sequence_option, None )
 
 			participants = sorted(
 				[p for p in wave_tt.get_participants_unsorted()
@@ -4528,21 +4535,28 @@ class EventTT( Event ):
 			last_fastest = len(participants) - wave_tt.num_fastest_participants
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
-				rider_gap = max(
-					fastest_participants_start_gap if i >= last_fastest else zero_gap,
-					regular_start_gap,
-					min_gap,
-				)
-				gap = max( max(empty_gap_before_wave, gap_before_wave) if i == 0 else zero_gap, rider_gap )
-				if self.group_size:
-					if gap >= self.group_size_gap:
-						groupCount = 0		# If there was already a gap larger than the group size gap, reset the group count.
-					elif groupCount >= self.group_size:	# Else, if we are at a group boundary, insert the group gap.
-						gap = max( gap, self.group_size_gap )
-						groupCount = 0
-					groupCount += 1
+				if bib_gap:
+					# The start time is a multiple of the bib number.
+					if not p.bib:
+						continue
+					tCur = bib_gap * p.bib
+				else:
+					# Compute the rider gap based on the formal criteria.
+					rider_gap = max(
+						fastest_participants_start_gap if i >= last_fastest else zero_gap,
+						regular_start_gap,
+						min_gap,
+					)
+					gap = max( max(empty_gap_before_wave, gap_before_wave) if i == 0 else zero_gap, rider_gap )
+					if self.group_size:
+						if gap >= self.group_size_gap:
+							groupCount = 0		# If there was already a gap larger than the group size gap, reset the group count.
+						elif groupCount >= self.group_size:	# Else, if we are at a group boundary, insert the group gap.
+							gap = max( gap, self.group_size_gap )
+							groupCount = 0
+						groupCount += 1
 				
-				tCur += gap
+					tCur += gap
 				
 				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
 				sequenceCur += 1
@@ -4690,6 +4704,8 @@ class WaveTT( WaveBase ):
 	bib_decreasing = 4
 	series_decreasing = 5
 	est_speed_decreasing = 6	# Added to support para and covid.
+	bib_60 = 7					# Seeds by bib number * 60
+	bib_30 = 8					# Seeds by bib number * 30
 	SEQUENCE_CHOICES = (
 		(_("Increasing"), (
 				(est_speed_increasing, _("Est. Speed - Increasing")),
@@ -4701,6 +4717,11 @@ class WaveTT( WaveBase ):
 				(est_speed_decreasing, _("Est. Speed - Decreasing")),
 				(age_decreasing, _("Oldest to Youngest")),
 				(bib_decreasing, _("Bib - Decreasing")),
+			),
+		),
+		(_("Bib Time Multple"), (
+				(bib_60, _("Bib x 60s")),
+				(bib_30, _("Bib x 30s")),
 			),
 		),
 		(_("Series"), (
@@ -4770,6 +4791,12 @@ class WaveTT( WaveBase ):
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
+		elif self.sequence_option in (self.bib_60, self.bib_30):
+			return lambda p: (
+				p.bib or 0,
+				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
+				p.id,
+			)
 		elif self.sequence_option == self.age_decreasing:
 			return lambda p: (
 				p.seed_option,
@@ -4804,9 +4831,20 @@ class WaveTT( WaveBase ):
 	
 	@property
 	def gap_rules_html( self ):
+		def find_nested( v, tree ):
+			for t in tree:
+				if isinstance(t[1], (list, tuple)):
+					s = find_nested( v, t[1] )
+					if s:
+						return s
+				elif v == t[0]:
+					return t[1]
+			return ''
+		
 		summary = ['<table>']
 		try:
 			for label, value in (
+					('', find_nested(self.sequence_option, self.SEQUENCE_CHOICES)),
 					(_('GapBefore'), self.gap_before_wave if self.gap_before_wave else None),
 					(_('RegularGap'), self.regular_start_gap if self.regular_start_gap else None),
 					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
