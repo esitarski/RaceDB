@@ -4720,7 +4720,7 @@ class WaveTT( WaveBase ):
 				(bib_decreasing, _("Bib - Decreasing")),
 			),
 		),
-		(_("Bib Time Multple"), (
+		(_("Bib Time Multiple"), (
 				(bib_60, _("Bib x 60s")),
 				(bib_30, _("Bib x 30s")),
 			),
