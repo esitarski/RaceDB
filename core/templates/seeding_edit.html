@@ -139,7 +139,7 @@
 			<td class="text-nowrap">{{h.get_nation_code_html}}</td>
 			<td>{{w.name}}</td>
 			<td>{{e.est_speed}}</td>
-			<td>{{e.seed_option}}</td>
+			<td>{{e.get_seed_option_display}}</td>
 			<td><a class="btn btn-success btn-xs" href="./SeedingEditEntry/{{instance.id}}/{{e.entry_tt_i}}/">{% trans "Adjust" %}</a></td>
 		</tr>
 		{% endwith %}

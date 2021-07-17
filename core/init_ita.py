@@ -64,7 +64,7 @@ def init_ccn( fname ):
 				'first_name':	to_str(ur.get('Firstname','')).strip(),
 				'gender':		gender_from_str(to_str(ur.get('Sex','m'))),
 				'date_of_birth':date_of_birth if date_of_birth and date_of_birth != invalid_date_of_birth else None,
-				'uci_code':		to_str(ur.get('Ucicode','')).strip(),
+				'uci_id':		to_str(ur.get('UCIID','')).strip(),
 				'city':			to_str(ur.get('City','')).strip(),
 				'state_prov':	to_str(ur.get('Province','')).strip(),
 				'nationality':  to_str(ur.get('Nat','')).strip(),
@@ -82,10 +82,10 @@ def init_ccn( fname ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			fields = {u'i': i}
+			fields = {'i': i}
 			fields.update( attributes )
 			safe_print(
-				u'{i:>6}: {license_code:>8} {date_of_birth:%Y/%m/%d} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}, {nationality}'.format( **fields )
+				'{i:>6}: {license_code:>8} {date_of_birth:%Y/%m/%d} {uci_id}, {last_name}, {first_name}, {city}, {state_prov}, {nationality}'.format( **fields )
 			)
 			TeamHint.objects.filter( license_holder=lh ).delete()
 			

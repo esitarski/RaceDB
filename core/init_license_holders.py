@@ -244,7 +244,7 @@ def init_license_holders():
 				'nationality': nationality,
 				'date_of_birth': date_of_birth,
 				'uci_code': uci_code,
-				'license_code':  u'{}'.format(count+1),
+				'license_code':  '{}'.format(count+1),
 			}
 			if not LicenseHolder.objects.filter(**fields).exists():
 				LicenseHolder(**fields).save()

@@ -416,7 +416,7 @@ def license_holder_import_excel(
 					if len(lhs) == 1:
 						license_holder = lhs[0]
 					elif len(lhs) > 1:
-						ms_write( 'Row {}: Warning:  Name="{}" found duplicate UCIID="{}"\n'.format(
+						ms_write( 'Row {}: Warning:  Name="{}" found duplicate UCI ID="{}"\n'.format(
 								i, name, uci_id,
 							), type=Warning
 						)

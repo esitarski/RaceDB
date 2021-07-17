@@ -32,10 +32,10 @@
 			<td class="text-right">{% trans "Date of Birth" %}:</td>
 			<td><strong>{{license_holder.date_of_birth|date_short}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;{% trans "Competition Age" %}: <strong>{{competition_age}}</strong></td>
 		</tr>
-		<tr><td class="text-right">{% trans "From" %}:</td>				<td><strong>{{license_holder.city}}, {{license_holder.state_prov}}</strong></td></tr>
-		<tr><td class="text-right">{% trans "Nationality" %}:</td>		<td><strong>{{license_holder.nationality}}</strong></td></tr>
-		<tr><td class="text-right">{% trans "License" %}:</td>			<td><strong>{{license_holder.license_code_trunc}}</strong></td></tr>
-		<tr><td class="text-right">{% trans "UCI ID" %}:</td>			<td><strong>{{license_holder.get_flag_uci_id_html}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "From" %}:</td>					<td><strong>{{license_holder.city}}, {{license_holder.state_prov}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "Nationality" %}:</td>			<td><strong>{{license_holder.nationality}}</strong></td></tr>
+		<tr><td class="text-right">{% trans "License" %}:</td>				<td><strong>{{license_holder.license_code_trunc}}</strong></td></tr>
+		<tr><td class="text-right text-nowrap">{% trans "UCI ID" %}:</td>	<td><strong>{{license_holder.get_flag_uci_id_html}}</strong></td></tr>
 		{% if competition.use_tags and competition.use_existing_tags %}
 			<tr>
 				<td class="text-right">{% trans "Existing Tags" %}:</td>

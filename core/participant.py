@@ -1719,7 +1719,7 @@ class ParticipantConfirmForm( Form ):
 	nation_code = forms.CharField( max_length=3, required=False, label=_('Nation Code'), widget=forms.TextInput(attrs={'size': 3}) )
 	gender = forms.ChoiceField( required=False, choices = ((0, _('Men')), (1, _('Women'))), label=_('Gender') )
 	
-	uci_id = forms.CharField( required=False, label=_('UCIID') )
+	uci_id = forms.CharField( required=False, label=_('UCI ID') )
 	license_code = forms.CharField( required=False, label=_('License Code') )
 	
 	category_name = forms.CharField( required=False, label = _('Category') )

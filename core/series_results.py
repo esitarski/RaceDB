@@ -389,7 +389,7 @@ def get_callups_for_wave( series, wave, eventResultsAll=None ):
 		# Return the participant and the points value.
 		if randomize:
 			# Randomize athletes with no results.
-			random.seed( (competition.id, series.id, c.id, wave.id) )
+			random.seed( hash(competition.id, series.id, c.id, wave.id) )
 			for p_start, (p, value) in enumerate(p_values):
 				if value == 0.0:
 					r = p_values[p_start:]

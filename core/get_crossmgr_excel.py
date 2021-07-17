@@ -10,6 +10,7 @@ from . import utils
 from . import scramble
 from . import minimal_intervals
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'Bib#',
@@ -18,7 +19,7 @@ data_headers = (
 	'City', 'StateProv',
 	'Category', 'Age', 'Gender',
 	'License',
-	'NatCode', 'UCIID',
+	'NatCode', 'UCI ID',
 	'Tag', 'Tag2',				# These must be last.
 )
 
@@ -321,6 +322,8 @@ def get_crossmgr_excel( event_mass_start ):
 		raceNumber += 1
 	add_properties_page( wb, title_format, event_mass_start, raceNumber )
 	
+	add_excel_info( wb )
+	
 	wb.close()
 	return output.getvalue()
 
@@ -391,5 +394,7 @@ def get_crossmgr_excel_tt( event_tt ):
 		raceNumber += 1
 	add_properties_page( wb, title_format, event_tt, raceNumber )
 	
+	add_excel_info( wb )
+
 	wb.close()
 	return output.getvalue()

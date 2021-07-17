@@ -132,7 +132,7 @@ standard_field_aliases = (
 	),
 	('uci_id',
 		('UCIID','UCI ID',),
-		"UCI ID of the form XXX XXX XXX XX",
+		"UCIID of the form XXX XXX XXX XX",
 	),
 	('bib',
 		('Bib','BibNum','Bib Num','Bib Number','BibNumber','Bib #','Bib#','Rider Bib #','Rider Num'),

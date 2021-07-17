@@ -117,11 +117,11 @@ def init_ccn( fname = fnameDefault ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			safe_print( u'{i:>6}: {license:>8} {dob:>10} {uci_code} {last}, {first}, {city}, {state_prov}'.format(
+			safe_print( '{i:>6}: {license:>8} {dob:>10} {uci_id} {last}, {first}, {city}, {state_prov}'.format(
 				i=i,
 				license=removeDiacritic(lh.license_code),
 				dob=lh.date_of_birth.strftime('%Y/%m/%d'),
-				uci_code=lh.uci_code,
+				uci_id=lh.uci_id,
 				last=removeDiacritic(lh.last_name), first=removeDiacritic(lh.first_name),
 				city=removeDiacritic(lh.city), state_prov=removeDiacritic(lh.state_prov) )
 			)
