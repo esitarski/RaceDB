@@ -91,6 +91,13 @@ urlpatterns = [
 	re_path(r'^.*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', participant.ParticipantRfidAdd),
 	re_path(r'^.*ParticipantBibAdd/(?P<competitionId>\d+)/$', participant.ParticipantBibAdd),
 	
+	re_path(r'^.*ParticipantsResetBibs/(?P<competitionId>\d+)/$', participant.ParticipantsResetBibs),
+	re_path(r'^.*ParticipantsResetBibs/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', participant.ParticipantsResetBibs),
+
+	re_path(r'^.*ParticipantsResetTags/(?P<competitionId>\d+)/$', participant.ParticipantsResetTags),
+	re_path(r'^.*ParticipantsResetTags/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', participant.ParticipantsResetTags),
+
+	
 	re_path(r'^.*CategoryNumbers/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersDisplay),
 	re_path(r'^.*CategoryNumbersNew/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersNew),
 	re_path(r'^.*CategoryNumbersEdit/(?P<categoryNumbersId>\d+)/$', category_numbers.CategoryNumbersEdit),
@@ -218,6 +225,8 @@ urlpatterns = [
 	re_path(r'^.*LicenseHoldersMergeDuplicatesOK/(?P<mergeId>\d+)/(?P<duplicateIds>[0-9,]+)/$', views.LicenseHoldersMergeDuplicatesOK),
 	re_path(r'^.*LicenseHoldersResetExistingBibs/$', views.LicenseHoldersResetExistingBibs),
 	re_path(r'^.*LicenseHoldersResetExistingBibs/(?P<confirmed>\d+)/$', views.LicenseHoldersResetExistingBibs),
+	re_path(r'^.*LicenseHoldersResetExistingTags/$', views.LicenseHoldersResetExistingTags),
+	re_path(r'^.*LicenseHoldersResetExistingTags/(?P<confirmed>\d+)/$', views.LicenseHoldersResetExistingTags),
 	re_path(r'^.*LicenseHoldersCloudImport/$', views.LicenseHoldersCloudImport),
 	re_path(r'^.*LicenseHoldersCloudImport/(?P<confirmed>\d+)/$', views.LicenseHoldersCloudImport),
 	

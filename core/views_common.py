@@ -184,11 +184,19 @@ class SearchForm( Form ):
 				button_args.append( HTML('&nbsp;' * 8) )
 			for ab in additional_buttons:
 				name, value, cls = ab[:3]
+				if not name:	# If the name is blank, start a new row.
+					if button_args and isinstance(button_args[-1], HTML):
+						button_args = button_args[:-1]
+					self.helper.layout.append( Row( *button_args ) )
+					button_args = []
+					continue
+					
 				if len(ab) == 3:
 					button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
 		
 		self.helper.layout.append(  HTML( '{{ form.errors }} {{ form.non_field_errors }}' ) )
-		self.helper.layout.append( Row( *button_args ) )
+		if button_args:
+			self.helper.layout.append( Row( *button_args ) )
 
 #--------------------------------------------------------------------------------------------
 

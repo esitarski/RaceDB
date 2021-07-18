@@ -398,8 +398,10 @@ def LicenseHoldersDisplay( request ):
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('correct-errors-submit', _('Correct Errors'), 'btn btn-primary'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
-		('auto-create-tags-submit', _('Auto Create All Tags'), 'btn btn-primary'),
-		('reset-existing-bibs-submit', _('Reset Existing Bib Numbers'), 'btn btn-primary'),
+		#('auto-create-tags-submit', _('Auto Create All Tags'), 'btn btn-warning'),
+		('reset-existing-bibs-submit', _('Reset Existing Bibs'), 'btn btn-warning'),
+		('reset-existing-tags-submit', _('Reset Existing RFID Tags'), 'btn btn-warning'),
+		('', '', ''),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
 	]
@@ -423,6 +425,7 @@ def LicenseHoldersDisplay( request ):
 				('manage-duplicates-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )),
 				('auto-create-tags-submit',		lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersAutoCreateTags') )),
 				('reset-existing-bibs-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersResetExistingBibs') )),
+				('reset-existing-tags-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersResetExistingTags') )),
 				('import-excel-submit',			lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersImportExcel') )),
 				('cloud-import-submit',			lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersCloudImport') )),
 			):
@@ -804,10 +807,22 @@ def LicenseHoldersResetExistingBibs( request, confirmed=False ):
 		LicenseHolder.objects.exclude(existing_bib__isnull=True).update( existing_bib=None )
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
-	page_title = _('Reset Exsting Bibs')
-	message = _('This will reset all existing bibs to null (no value).')
+	page_title = _('Reset Existing Bibs')
+	message = _('Reset all existing bibs to null (no value).')
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'LicenseHoldersResetExistingBibs/1/'
+	return render( request, 'are_you_sure.html', locals() )
+
+@access_validation()
+def LicenseHoldersResetExistingTags( request, confirmed=False ):
+	if confirmed:
+		LicenseHolder.objects.exclude(Q(existing_tag__isnull=True) & Q(existing_tag2__isnull=True)).update( existing_tag=None, existing_tag2=None )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Reset Existing Tags')
+	message = _('Reset all existing RFID tags to null (no value).')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'LicenseHoldersResetExistingTags/1/'
 	return render( request, 'are_you_sure.html', locals() )
 
 #-----------------------------------------------------------------------
