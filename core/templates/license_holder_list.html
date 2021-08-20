@@ -25,6 +25,7 @@
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
 		<th class="text-nowrap">{% trans "UCI ID" %}</th>
+		<th class="text-nowrap">{% trans "Existing Bib" %}</th>
 		<th class="text-nowrap">{% trans "Existing Tag" %}</th>
 		<th class="text-nowrap">{% trans "Emergency Contact" %}</th>
 		{% if isEdit %}
@@ -52,6 +53,7 @@
 			<td class="text-nowrap">
 				{% if h.uci_id_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.get_flag_uci_id_html}}
 			</td>
+			<td>{{h.existing_bib|default_if_none:""}}</td>
 			<td>{{h.get_short_tag_str}}</td>
 			<td class="text-nowrap">
 				{% if h.emergency_contact_incomplete %}<span class="is-warn"/>&nbsp;{% endif %}

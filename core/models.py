@@ -2638,9 +2638,13 @@ class LicenseHolder(models.Model):
 			tag = getTagFormatStr( system_info.tag_template ).format( n=self.id )
 			
 		elif system_info.tag_creation ==	SystemInfo.tcLicenseCode:
+			tag = None
 			if self.license_code:
-				tag = getTagFromLicense( self.license_code, system_info.tag_from_license_id )
-			else:
+				try:
+					tag = getTagFromLicense( self.license_code, system_info.tag_from_license_id )
+				except Exception:
+					pass
+			if tag is None:
 				tag = get_id(system_info.tag_bits)
 		else:
 			assert False, 'Unknown tag creation option'

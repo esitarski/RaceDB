@@ -14,6 +14,7 @@ import traceback
 from pyllrp import *
 from pyllrp.TagInventory import TagInventory
 from pyllrp.TagWriter import TagWriter
+from pyllrp.AutoDetect import AutoDetect
 
 #-----------------------------------------------------------------------
 # Find a unique port for the LLRPServer.
@@ -348,7 +349,7 @@ class LLRPClient( object ):
 			s.close()
 			return response.get('success', False), response
 		except Exception as e:
-			return False, dict(errors=[u'{}'.format(e)])
+			return False, dict(errors=['{}'.format(e)])
 	
 	def write( self, tag, antenna ):
 		return self.sendCmd( cmd='write', tag=tag, antenna=antenna )
@@ -360,10 +361,10 @@ class LLRPClient( object ):
 		return self.sendCmd( cmd='status' )
 	
 def writeLog( message ):
-	print ( u'[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message ) )
+	print ( '[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message ) )
 
 def doAutoDetect():
-	LLRPHost = AutoDetect()
+	LLRPHost, hostname = AutoDetect()
 	if LLRPHost:
 		writeLog( 'AutoDetect: LLRP Reader found on ({}:{})'.format(LLRPHost, 5084) )
 	return LLRPHost

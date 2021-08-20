@@ -71,6 +71,9 @@ class ParticipantSearchForm( Form ):
 			CancelButton( _('OK'), css_class='btn btn-primary' ),
 			Submit( 'emails-submit', _('Emails'), css_class = 'btn btn-primary' ),
 			Submit( 'export-excel-submit', _('Export to Excel'), css_class = 'btn btn-primary' ),
+
+			Submit( 'reset-bibs-submit', _('Reset Bibs'), css_class = 'btn btn-warning' ),
+			Submit( 'reset-tags-submit', _('Reset Tags'), css_class = 'btn btn-warning' ),
 		]
 		
 		self.helper.layout = Layout(
@@ -83,7 +86,7 @@ class ParticipantSearchForm( Form ):
 					[Field('complete'), Field('has_events'), ]
 				)
 			),
-			Row( *(button_args[:-2] + [HTML('&nbsp;'*8)] + button_args[-2:]) ),
+			Row( *(button_args[:-4] + [HTML('&nbsp;'*8)] + button_args[-4:]) ),
 		)
 
 @access_validation()
@@ -277,11 +280,47 @@ def Participants( request, competitionId ):
 				datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 			)
 			return response
+		
 		if 'emails-submit' in request.POST:
 			return show_emails( request, participants=participants )
 			
+		if 'reset-bibs-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'ParticipantsResetBibs', competition.id) )
+		
+		if 'reset-tags-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'ParticipantsResetTags', competition.id) )
+			
 	participants, paginator = getPaginator( participants )
 	return render( request, 'participant_list.html', locals() )
+
+#-----------------------------------------------------------------------
+@access_validation()
+def ParticipantsResetBibs( request, competitionId, confirmed=False ):
+	competition = get_object_or_404( Competition, pk=competitionId )	
+	
+	if confirmed:
+		competition.participant_set.exclude(bib__isnull=True).update( bib=None )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Reset All Participant Bibs')
+	message = _('Reset the bibs of all participants in this Competition to null (no value).  This applies to this competition only and will not change the permanent bib number.')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'ParticipantsResetBibs/{}/1/'.format(competition.id)
+	return render( request, 'are_you_sure.html', locals() )
+
+@access_validation()
+def ParticipantsResetTags( request, competitionId, confirmed=False ):
+	competition = get_object_or_404( Competition, pk=competitionId )	
+
+	if confirmed:
+		competition.participant_set.exclude(Q(tag__isnull=True) & Q(tag2__isnull=True)).update( tag=None, tag2=None, tag_checked=False )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Reset All Participant Tags')
+	message = _('Reset the RFID tags of all participants to null (no value).  This applies to this competition only and will not change the permanent RFID tag value.')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'ParticipantsResetTags/{}/1/'.format(competition.id)
+	return render( request, 'are_you_sure.html', locals() )
 
 #-----------------------------------------------------------------------
 
