@@ -42,7 +42,7 @@ class EventResult( object ):
 	@property
 	def team_name( self ):
 		team = self.participant.team
-		return team.name if team else u''
+		return team.name if team else ''
 		
 	@property
 	def status_rank( self ):
@@ -238,20 +238,20 @@ def series_results( series, categories, eventResults ):
 	
 	lhEventsCompleted = defaultdict( int )
 	lhPlaceCount = defaultdict( lambda : defaultdict(int) )
-	lhTeam = defaultdict( lambda: u'' )
+	lhTeam = defaultdict( lambda: '' )
 		
 	lhResults = defaultdict( lambda : [None] * len(events) )
 	lhFinishes = defaultdict( lambda : [None] * len(events) )
 	
 	lhValue = defaultdict( float )
 	
-	percentFormat = u'{:.2f}'
-	floatFormat = u'{:0.2f}'
+	percentFormat = '{:.2f}'
+	floatFormat = '{:0.2f}'
 	
 	# Get the individual results for each lh, and the total value.
 	for rr in eventResults:
 		lh = rr.license_holder
-		lhTeam[lh] = rr.participant.team.name if rr.participant.team else u''
+		lhTeam[lh] = rr.participant.team.name if rr.participant.team else ''
 		lhResults[lh][eventSequence[rr.event]] = rr
 		lhValue[lh] += rr.value_for_rank
 		lhPlaceCount[lh][rr.rank] += 1

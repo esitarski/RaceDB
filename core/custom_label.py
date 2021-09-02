@@ -43,7 +43,7 @@ class CustomLicenseHolder( object ):
 		self.last_name = self.first_last = self.first_last_short = last_name
 	
 	def __getattr__( self, name ):
-		return u''
+		return ''
 	
 class CustomParticipant( object ):
 	def __init__( self, bib, competition ):
@@ -54,13 +54,13 @@ class CustomParticipant( object ):
 		self.team = None
 	
 	def __getattr__( self, name ):
-		return u''
+		return ''
 
 @access_validation()
 def CustomLabel( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	custom_label_text = u'{}'.format(request.session.get('custom_label_text', u''))
+	custom_label_text = '{}'.format(request.session.get('custom_label_text', ''))
 
 	if request.method == 'POST':
 		form = CustomLabelForm( request.POST, system_info=SystemInfo.get_singleton(), competition=competition )

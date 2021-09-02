@@ -79,14 +79,14 @@ def logCall( f ):
 					'REMOTE_USER',
 					] if x.META.get(n, '')
 			] + ['username="{}"'.format(x.user.username)] + ['path="{}"'.format(x.path)]
-			return u', '.join( fields )
+			return ', '.join( fields )
 		elif isinstance(x, models.Model):
-			return u'<<{}>>'.format(x.__class__.__name__)
-		return u'{}'.format(x)
+			return '<<{}>>'.format(x.__class__.__name__)
+		return '{}'.format(x)
 	
 	def new_f( *args, **kwargs ):
-		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
-		writeLog( '{}({})'.format(f.__name__, removeDiacritic(u', '.join(parameters))) )
+		parameters = [_getstr(a) for a in args] + [ '{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
+		writeLog( '{}({})'.format(f.__name__, removeDiacritic(', '.join(parameters))) )
 		return f( *args, **kwargs)
 	return new_f
 	

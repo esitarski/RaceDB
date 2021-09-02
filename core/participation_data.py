@@ -145,7 +145,7 @@ def participation_data( start_date=None, end_date=None, disciplines=None, race_c
 				license_holder_gender_age[(participant.license_holder_id, participant.license_holder.gender)] = age
 				
 				event_competition_participants_total[competition][event] += 1
-				category_name = participant.category.code_gender if participant.category else u'{}'.format(_('Unknown'))
+				category_name = participant.category.code_gender if participant.category else '{}'.format(_('Unknown'))
 				category_total_overall[category_name] += 1
 				category_competition_total[competition][category_name] += 1
 				competition_category_event[competition][category_name] = event.name

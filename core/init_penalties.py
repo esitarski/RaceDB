@@ -1,5 +1,5 @@
 
-# track_penalties = u'''
+# track_penalties = '''
 # For not holding his/her line during the sprint
 # Pour avoir quitté sa ligne pendant le sprint final
 # Por desviarse de su linea durante el sprint final

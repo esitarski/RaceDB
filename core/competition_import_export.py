@@ -367,9 +367,9 @@ def competition_deserializer( object_list, **options ):
 				elif Model == Participant:
 					lh_cat = (instance.license_holder_id, instance.category_id if instance.category else None)
 					if lh_cat in existing_license_holder_category:
-						safe_print( u'****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.' )
+						safe_print( '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.' )
 						lh = instance.license_holder
-						safe_print( u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
+						safe_print( '    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
 					else:
 						existing_license_holder_category.add( lh_cat )
 						ts.save( Model, db_object, instance, pk_old )

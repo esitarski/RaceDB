@@ -6,7 +6,7 @@ def remove_diacritic(input):
 	Accept a unicode string, and return a normal string
 	without any diacritical marks.
 	'''
-	return unicodedata.normalize('NFKD', u'{}'.format(input)).encode('ASCII', 'ignore').decode()
+	return unicodedata.normalize('NFKD', '{}'.format(input)).encode('ASCII', 'ignore').decode()
 
 def normalize( s ):
 	return remove_diacritic( s.replace('.','').replace('_',' ').strip().lower() )

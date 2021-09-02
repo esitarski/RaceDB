@@ -3694,11 +3694,11 @@ class Participant(models.Model):
 		
 		competition = self.competition
 		license_holder = self.license_holder
-		
-		for f in ['signature', 'note']:
+
+		for f in ('signature', 'note'):
 			setattr( self, f, (getattr(self, f) or '').strip() )
 		
-		for f in ['tag', 'tag2']:
+		for f in ('tag', 'tag2'):
 			setattr( self, f, fixNullUpper(getattr(self, f)) )
 		
 		if self.role == self.Competitor:

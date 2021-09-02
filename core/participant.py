@@ -55,7 +55,7 @@ class ParticipantSearchForm( Form ):
 				[(-1, '----')] + [(-2, _('*** Missing ***'))] + [(category.id, category.code_gender) for category in competition.get_categories()]
 			events = sorted( competition.get_events(), key = operator.attrgetter('date_time') )
 			self.fields['event'].choices = \
-				[(u'-1.0', _('All'))] + [(u'{}.{}'.format(event.event_type, event.id), u'{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
+				[('-1.0', _('All'))] + [('{}.{}'.format(event.event_type, event.id), '{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
 			
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
@@ -154,9 +154,9 @@ def Participants( request, competitionId ):
 		else:
 			# Show empty tags.
 			if competition.use_existing_tags:
-				bad_tag_query = Q(license_holder__existing_tag__isnull=True) | Q(license_holder__existing_tag=u'')
+				bad_tag_query = Q(license_holder__existing_tag__isnull=True) | Q(license_holder__existing_tag='')
 			else:
-				bad_tag_query = Q(tag__isnull=True) | Q(tag=u'')
+				bad_tag_query = Q(tag__isnull=True) | Q(tag='')
 	else:
 		bad_tag_query = Q()
 	
@@ -252,7 +252,7 @@ def Participants( request, competitionId ):
 		
 	if competition.using_tags and participant_filter.get('rfid_text',''):
 		rfid = participant_filter.get('rfid_text','').upper()
-		if rfid == u'-1':
+		if rfid == '-1':
 			participants = participants.filter( bad_tag_query )
 		else:
 			if competition.use_existing_tags:
@@ -462,10 +462,12 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 	
 	participant = Participant.objects.filter( competition=competition, license_holder=license_holder ).first()
 	if participant:
-		participant.id = None
+		# Get all deferred fields before participant copy.
+		participant.refresh_from_db( fields=participant.get_deferred_fields() )
 		participant.category = None
 		participant.role = Participant.Competitor
 		participant.bib = None
+		participant.id = None
 		participant.save()
 		return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
 	
@@ -687,9 +689,9 @@ class ParticipantCategorySelectForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			HTML( u'{}:&nbsp;&nbsp;&nbsp;&nbsp;'.format( _("Search") ) ),
+			HTML( '{}:&nbsp;&nbsp;&nbsp;&nbsp;'.format( _("Search") ) ),
 			Div( Field('gender', css_class = 'form-control'), css_class = 'form-group' ),
-			HTML( u'&nbsp;&nbsp;&nbsp;&nbsp;' ),
+			HTML( '&nbsp;&nbsp;&nbsp;&nbsp;' ),
 			button_args[0],
 			button_args[1],
 		)
@@ -795,7 +797,7 @@ def ParticipantRoleSelect( request, participantId, role ):
 def ParticipantLicenseCheckChange( request, participantId ):
 	participant = get_participant( participantId )
 	cco = CompetitionCategoryOption.objects.filter( competition=participant.competition, category=participant.category ).first()
-	note = cco.note if cco else u''
+	note = cco.note if cco else ''
 	return render( request, 'participant_license_check_select.html', locals() )
 
 @access_validation()
@@ -870,7 +872,7 @@ def LicenseHolderNationCodeSelect( request, licenseHolderId, iocI ):
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	iocI = int(iocI)
 	if iocI < 0:
-		license_holder.nation_code = u''
+		license_holder.nation_code = ''
 	else:
 		license_holder.nation_code = get_ioc_countries()[iocI][-1]
 	license_holder.save()
@@ -880,9 +882,9 @@ def LicenseHolderNationCodeSelect( request, licenseHolderId, iocI ):
 def LicenseHolderNationCodeChange( request, licenseHolderId ):
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	countries = [[i, flag_html(c[-1])] + list(c) for i, c in enumerate(get_ioc_countries())]
-	flag_instance = u''
-	code_instance = u''
-	name_instance = u''
+	flag_instance = ''
+	code_instance = ''
+	name_instance = ''
 	for c in countries:
 		if c[-1] == license_holder.nation_code:
 			flag_instance = c[1]
@@ -968,7 +970,7 @@ class Bib( object ):
 	def __init__( self, bib, license_holder = None, date_lost=None ):
 		self.bib = bib
 		self.license_holder = license_holder
-		self.full_name = license_holder.full_name() if license_holder else u''
+		self.full_name = license_holder.full_name() if license_holder else ''
 		self.date_lost = date_lost
 
 @access_validation()
@@ -1119,7 +1121,7 @@ def ParticipantGeneralNoteChange( request, participantId ):
 #-----------------------------------------------------------------------
 
 def GetParticipantOptionForm( participation_optional_events ):
-	choices = [(event.option_id, u'{} ({})'.format(event.name, event.get_event_type_display()))
+	choices = [(event.option_id, '{} ({})'.format(event.name, event.get_event_type_display()))
 					for event, is_participating in participation_optional_events]
 	
 	@autostrip
@@ -1181,12 +1183,12 @@ def GetParticipantEstSpeedForm( participant ):
 	@autostrip
 	class ParticipantEstSpeedForm( Form ):
 		est_speed = forms.FloatField( required = False,
-			label=format_lazy(u'{} ({})', _('Estimated Speed for Time Trial'), competition.speed_unit_display),
+			label=format_lazy('{} ({})', _('Estimated Speed for Time Trial'), competition.speed_unit_display),
 			help_text=_('Enter a value or choose from the grid below.')
 		)
 		if km:
 			est_duration = DurationField.DurationFormField( required = False,
-			label=format_lazy(u'{} ({})', _('or Estimated Time for Time Trial'), participant.get_tt_distance_text() ),
+			label=format_lazy('{} ({})', _('or Estimated Time for Time Trial'), participant.get_tt_distance_text() ),
 			help_text=_('In [HH:]MM:SS format.')
 		)
 		seed_option = forms.ChoiceField( required = False, choices=Participant.SEED_OPTION_CHOICES, label=_('Seed Option'),
@@ -1242,11 +1244,11 @@ def ParticipantEstSpeedChange( request, participantId ):
 	if competition.distance_unit == 0:
 		for col, kmh in enumerate(range(20, 51)):
 			for row, decimal in enumerate(range(0, 10)):
-				speed_rc[(col, row)] = u'{}.{:01d}'.format(kmh, decimal)
+				speed_rc[(col, row)] = '{}.{:01d}'.format(kmh, decimal)
 	else:
 		for col, mph in enumerate(range(12, 32)):
 			for row, decimal in enumerate(range(0, 10)):
-				speed_rc[(col, row)] = u'{}.{:01d}'.format(mph, decimal)
+				speed_rc[(col, row)] = '{}.{:01d}'.format(mph, decimal)
 	
 	row_max = max( row for row, col in speed_rc.keys() ) + 1
 	col_max = max( col for row, col in speed_rc.keys() ) + 1
@@ -1428,7 +1430,7 @@ def ParticipantTagChange( request, participantId ):
 			has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
 			status_entries.append(
 				(_('Participant Save Failure'), (
-					u'{}'.format(e),
+					'{}'.format(e),
 				)),
 			)
 			return False
@@ -1522,8 +1524,8 @@ def ParticipantTagChange( request, participantId ):
 					status = False
 					status_entries.append(
 						(
-							format_lazy(u'{}: {}', _('LicenseHolder'), _('Existing Tag Save Exception:')),
-							(u'{}'.format(e),)
+							format_lazy('{}: {}', _('LicenseHolder'), _('Existing Tag Save Exception:')),
+							('{}'.format(e),)
 						),
 					)
 					return render( request, 'rfid_write_status.html', locals() )
@@ -1573,9 +1575,9 @@ class ParticipantSignatureForm( Form ):
 		
 		if is_jsignature:
 			button_args = [
-				Submit( 'ok-submit', format_lazy( u'{}{}{}', '&nbsp;'*10, _('OK'), '&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
+				Submit( 'ok-submit', format_lazy( '{}{}{}', '&nbsp;'*10, _('OK'), '&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
 				CancelButton( style='font-size:200%' ),
-				HTML(u'<button class="btn btn-warning hidden-print" onClick="reset_signature()">{}</button>'.format(_('Reset'))),
+				HTML('<button class="btn btn-warning hidden-print" onClick="reset_signature()">{}</button>'.format(_('Reset'))),
 			]
 		else:
 			button_args = [
@@ -1843,12 +1845,12 @@ class ParticipantConfirmForm( Form ):
 		
 		nation_code_error = license_holder.nation_code_error
 		if not license_holder.uci_id:
-			uci_id_error = u'missing'
+			uci_id_error = 'missing'
 		else:
 			uci_id_error = license_holder.uci_id_error
 		
 		def warning_html( warning ):
-			return u'<img src="{}" style="width:20px;height:20px;"/>{}'.format(static('images/warning.png'), warning) if warning else u''
+			return '<img src="{}" style="width:20px;height:20px;"/>{}'.format(static('images/warning.png'), warning) if warning else ''
 
 		self.helper.layout = Layout(
 			Row( button_args[0], HTML('&nbsp;'*8), button_args[1], HTML('&nbsp;'*8), button_args[2] ),
@@ -1861,7 +1863,7 @@ class ParticipantConfirmForm( Form ):
 			),
 			Row(
 				HTML(warning_html(nation_code_error)),
-				HTML(flag_html(license_holder.nation_code) + ' ' + ioc_country.get(license_holder.nation_code, u'')),
+				HTML(flag_html(license_holder.nation_code) + ' ' + ioc_country.get(license_holder.nation_code, '')),
 				FieldWithButtons(Field('nation_code', css_class='no-highlight'), self.submit_button(change_nation_code) ),
 				HTML('&nbsp;'*2), Field('gender', css_class='no-highlight'),
 				HTML('&nbsp;'*2), FieldWithButtons(Field('team_name', size=40, css_class='no-highlight'), self.submit_button(change_team) ),

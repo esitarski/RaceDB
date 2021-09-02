@@ -20,7 +20,7 @@ def get_valid_competitions():
 @autostrip
 class SelfServeCompetitionForm( Form ):
 	competition_choice = forms.ChoiceField(
-				choices = lambda: [(c.pk, format_lazy(u'{} - {}', c.name, c.date_range_str))
+				choices = lambda: [(c.pk, format_lazy('{} - {}', c.name, c.date_range_str))
 					for c in get_valid_competitions()],
 				label = _('Choose a Competition') )
 	
@@ -238,7 +238,7 @@ def SelfServe( request, do_scan=0 ):
 		status = False
 		tags = [add_name_to_tag(competition, t) for t in tags]
 		if len(tags) > 4:
-			tags = tags[:4] + [u'...']
+			tags = tags[:4] + ['...']
 		status_entries.append(
 			(_('Multiple Tags Read (ensure only ONE tag is near the antenna).'), tags )
 		)
@@ -251,7 +251,7 @@ def SelfServe( request, do_scan=0 ):
 	
 	if not license_holder:
 		request.session['tag'] = None
-		errors.append( format_lazy(u'{} ({}).', _('Tag not found'), tag) )
+		errors.append( format_lazy('{} ({}).', _('Tag not found'), tag) )
 		return render( request, 'self_serve.html', locals() )
 	
 	# If the license holder has a season's pass for the competition, try to add him/her as a participant.

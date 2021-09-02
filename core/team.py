@@ -116,14 +116,14 @@ class TeamManageDuplicatesSelectForm( Form ):
 		for f in self.output_fields:
 			if f in self.output_bool_fields:
 				v = int(self.team_fields.get(f,False))
-				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['is-err', 'is-good'][v]) )
+				s.write( '<td class="text-center"><span class="{}"></span></td>'.format(['is-err', 'is-good'][v]) )
 			elif f in self.output_center_fields:
-				s.write( u'<td class="text-center">{}</td>'.format(escape(u'{}'.format(self.team_fields.get(f,u'')))) )
+				s.write( '<td class="text-center">{}</td>'.format(escape('{}'.format(self.team_fields.get(f,'')))) )
 			elif f == 'name':
 				team = Team.objects.get(id=self.team_id)
-				s.write( u'<td>{}<br/>{}</td>'.format(team.name, team.get_team_aliases_html()) )
+				s.write( '<td>{}<br/>{}</td>'.format(team.name, team.get_team_aliases_html()) )
 			else:
-				s.write( u'<td>{}</td>'.format(escape(u'{}'.format(self.team_fields.get(f,u'')))) )
+				s.write( '<td>{}</td>'.format(escape('{}'.format(self.team_fields.get(f,'')))) )
 		p = super().as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
 		ln = len('</tr>')
 		return mark_safe( (p[:-ln] + s.getvalue() + p[-ln:]).replace('<tr>','').replace('</tr>','') )
@@ -159,7 +159,7 @@ def TeamManageDuplicates( request ):
 	
 	title = _('Select Duplicates, press Enter to proceed')
 	if search_text:
-		title = format_lazy( u'{} ({}={})', title,  _('search'), search_text )
+		title = format_lazy( '{} ({}={})', title,  _('search'), search_text )
 	headers = [_('Select')] + list(TeamManageDuplicatesSelectForm.output_hdrs)
 	return render( request, 'team_manage_duplicates.html', locals() )
 
@@ -171,12 +171,12 @@ def get_team_cannonical_select_form( ids ):
 			continue
 		fields = [team.name]
 		if team.team_code:
-			fields.extend( [u', (', team.team_code, u')'] )
-		fields.extend( [u', ', team.get_team_type_display()] )
+			fields.extend( [', (', team.team_code, ')'] )
+		fields.extend( [', ', team.get_team_type_display()] )
 		if team.nation_code:
-			fields.extend( [u', ', team.nation_code] )
-		fields.extend( [u', ', [_('Inactive'), _('Active')][int(team.active)]] )
-		choices.append( (i, format_lazy(u'{}'*len(fields), *fields) ) )
+			fields.extend( [', ', team.nation_code] )
+		fields.extend( [', ', [_('Inactive'), _('Active')][int(team.active)]] )
+		choices.append( (i, format_lazy('{}'*len(fields), *fields) ) )
 	
 	class TeamCannonicalSelectForm( Form ):
 		cannonical = forms.ChoiceField(
@@ -216,7 +216,7 @@ def team_merge_duplicates( ids, cannonical ):
 	
 	# Record the merge in the log.
 	def get_team_info( t ):
-		return u'"{}" code="{}" type="{}" nation="{}" active={}\n'.format(
+		return '"{}" code="{}" type="{}" nation="{}" active={}\n'.format(
 			t.name,
 			t.team_code,
 			t.get_team_type_display(),
@@ -239,7 +239,7 @@ def team_merge_duplicates( ids, cannonical ):
 			ta.team = team_cannonical
 			ta.save()
 	
-	description.write( u'--->\n' )
+	description.write( '--->\n' )
 	t = team_cannonical
 	description.write( get_team_info(t) )
 	UpdateLog( update_type=1, description=description.getvalue() ).save()
@@ -276,7 +276,7 @@ def TeamManageDuplicatesSelect( request ):
 @access_validation()
 def TeamAliasNew( request, teamId ):
 	team = get_object_or_404( Team, pk=teamId )
-	TeamAlias( team=team, alias = u'{} - Alias'.format(team.name) ).save()
+	TeamAlias( team=team, alias = '{} - Alias'.format(team.name) ).save()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
 @autostrip

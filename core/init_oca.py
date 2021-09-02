@@ -61,7 +61,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def messsage_stream_write( s ):
-			message_stream.write( u'{}'.format(s) )
+			message_stream.write( '{}'.format(s) )
 			
 	tstart = datetime.datetime.now()
 	
@@ -87,7 +87,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 			try:
 				date_of_birth	= date_from_str( ur.dob )
 			except Exception as e:
-				messsage_stream_write( u'Line {}: Invalid birthdate "{}" ({}) {}\n'.format( i, ur.dob, ur, e ) )
+				messsage_stream_write( 'Line {}: Invalid birthdate "{}" ({}) {}\n'.format( i, ur.dob, ur, e ) )
 				continue
 				
 			attributes = {
@@ -116,7 +116,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			messsage_stream_write( u'{:>6}: {:>8} {:>9} {:>10} {}, {}, ({})\n'.format(
+			messsage_stream_write( '{:>6}: {:>8} {:>9} {:>10} {}, {}, ({})\n'.format(
 					i, lh.license_code, lh.uci_id, lh.date_of_birth.strftime('%Y/%m/%d'), lh.last_name, lh.first_name, lh.city
 				)
 			)

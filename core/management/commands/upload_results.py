@@ -19,10 +19,10 @@ class Command(BaseCommand):
 			payload = json.load( fp )
 		result = read_results_crossmgr( payload )
 		if result['errors']:
-			safe_print( u'Upload FAILED.  Errors.' )
+			safe_print( 'Upload FAILED.  Errors.' )
 			for e in result['errors']:
-				safe_print( u'    Error:', e )
+				safe_print( '    Error:', e )
 		if result['errors']:
-			safe_print( u'Upload Succeeded.' )
+			safe_print( 'Upload Succeeded.' )
 			for w in result['warnings']:
-				safe_print( u'    Warning: ', w )
+				safe_print( '    Warning: ', w )
