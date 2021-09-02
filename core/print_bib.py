@@ -117,7 +117,7 @@ class Rect( object ):
 	
 	def draw_text_to_fit( self, pdf, text, options=AlignCenter|AlignMiddle, consider_descenders=False ):
 		if not isinstance(text, str):
-			text = u'{}'.format(text)
+			text = '{}'.format(text)
 		
 		descenders = has_descenders(text) if consider_descenders else False
 		
@@ -356,7 +356,7 @@ def print_uci_bib( participant, copies=2 ):
 #---------------------------------------------------------------------------------------------------------
 def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
 	if first_name:
-		name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+		name = '{}  {}.'.format( last_name, first_name[:1] ).upper()
 	else:
 		name = last_name.upper()
 
@@ -420,7 +420,7 @@ def print_aso_bib( participant, copies=2 ):
 
 def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_name='' ):
 	if first_name:
-		name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+		name = '{}  {}.'.format( last_name, first_name[:1] ).upper()
 	else:
 		name = last_name.upper()
 	
@@ -530,38 +530,38 @@ def print_id_label( participant ):
 	pdf.set_font( font_name )
 	info = []
 	info.append(
-		['', u',  '.join([
-			u'Age: {}'.format(license_holder.get_age()),
-			u'Gender: {}'.format(license_holder.get_gender_display()),
-			u'Nation: {}'.format(license_holder.nation_code),
+		['', ',  '.join([
+			'Age: {}'.format(license_holder.get_age()),
+			'Gender: {}'.format(license_holder.get_gender_display()),
+			'Nation: {}'.format(license_holder.nation_code),
 			]),
 		]
 	)
 	info.append( ['', ''] )
 	if participant.team:
-		info.append( ['', u'{}'.format(participant.team.name) ] )
+		info.append( ['', '{}'.format(participant.team.name) ] )
 	info.append(
-		['', u',  '.join([
-			u'Bib: {}'.format(participant.bib),
-			u'Category: {}'.format(participant.category.code_gender if participant.category else ''),
+		['', ',  '.join([
+			'Bib: {}'.format(participant.bib),
+			'Category: {}'.format(participant.category.code_gender if participant.category else ''),
 			]),
 		]
 	)
 	if license_holder.phone:
 		info.append(
-			['', u'  '.join([
-				u'Phone: {}'.format(format_phone(license_holder.phone)),
+			['', '  '.join([
+				'Phone: {}'.format(format_phone(license_holder.phone)),
 				]),
 			]
 		)
 	
 	info.append( ['',''] )
 	if license_holder.emergency_medical:
-		info.append( ['', u'Medical Alert: {}'.format(license_holder.emergency_medical)] )
-	info.append( ['', u'Emergency Contact:'] )
+		info.append( ['', 'Medical Alert: {}'.format(license_holder.emergency_medical)] )
+	info.append( ['', 'Emergency Contact:'] )
 	if license_holder.emergency_contact_name:
-		info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
-	info.append( ['', u'  {}'.format(format_phone(license_holder.emergency_contact_phone) or 'No phone number provided')] )
+		info.append( ['', '  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
+	info.append( ['', '  {}'.format(format_phone(license_holder.emergency_contact_phone) or 'No phone number provided')] )
 	
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,
 		leftJustifyCols = [0,1], hasHeader=False, horizontalLines=False )

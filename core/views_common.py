@@ -12,7 +12,7 @@ from .WriteLog import logCall
 try:
 	locale.setlocale(locale.LC_ALL, "")
 except Exception as e:
-	safe_print( u'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e) )
+	safe_print( 'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e) )
 
 from django.db.models import Q
 from django.db import transaction, IntegrityError
@@ -218,15 +218,15 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 		btns.append( CancelButton(cancel_alias) )
 	
 	if print_button:
-		btns.append( HTML(u'&nbsp;' * 4) )
-		btns.append( HTML(format_lazy( u'<button class="btn btn-primary hidden-print" onClick="window.print()">{}</button>', print_button) ) )
+		btns.append( HTML('&nbsp;' * 4) )
+		btns.append( HTML(format_lazy( '<button class="btn btn-primary hidden-print" onClick="window.print()">{}</button>', print_button) ) )
 	
 	if additional_buttons:
 		if additional_buttons_on_new_row:
 			form.helper.layout.append( Div(*btns, css_class='row') )
 			btns = []
 		else:
-			btns.append( HTML(u'&nbsp;' * 4) )
+			btns.append( HTML('&nbsp;' * 4) )
 		
 		for i, ab in enumerate(additional_buttons):
 			name, value, cls = ab[:3]
@@ -258,7 +258,7 @@ def GenericModelForm( ModelClass ):
 	return GMForm
 
 def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
-	title = format_lazy(u'{} {}', _('New'), ModelClass._meta.verbose_name)
+	title = format_lazy('{} {}', _('New'), ModelClass._meta.verbose_name)
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
@@ -291,7 +291,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass=None, template=
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = True
 	
-	title = format_lazy(u'{} {}', _('Edit'), ModelClass._meta.verbose_name)
+	title = format_lazy('{} {}', _('Edit'), ModelClass._meta.verbose_name)
 	if request.method == 'POST':
 		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
 		if form.is_valid():
@@ -328,7 +328,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
 	
-	title = format_lazy( u'{} {} ({})', _('Delete'), ModelClass._meta.verbose_name, _('are you sure? - there is no undo.') )
+	title = format_lazy( '{} {} ({})', _('Delete'), ModelClass._meta.verbose_name, _('are you sure? - there is no undo.') )
 	if request.method == 'POST':
 		instance.delete()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -384,9 +384,9 @@ def pushUrl( request, name, *args, **kwargs ):
 		name = name[:-1]
 	target = getContext(request, 'cancelUrl' if cancelUrl else 'path')
 	if args:
-		url = u'{}{}/{}/'.format( target, name, u'/'.join( u'{}'.format(a) for a in args ) )
+		url = '{}{}/{}/'.format( target, name, '/'.join( '{}'.format(a) for a in args ) )
 	else:
-		url = u'{}{}/'.format( target, name )
+		url = '{}{}/'.format( target, name )
 	return url
 
 def popPushUrl( request, name, *args, **kwargs ):
@@ -410,7 +410,7 @@ def getQuery( filter_name, request, queryName = 'q' ):
 	request.session[filter_name] = query
 	return query
 
-def applyFilter( query, objects, keyFunc = lambda x: u'{}'.format(x), doSort = True, reverse = False ):
+def applyFilter( query, objects, keyFunc = lambda x: '{}'.format(x), doSort = True, reverse = False ):
 	query = utils.normalizeSearch( query )
 	if query:
 		qFields = query.split()

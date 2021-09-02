@@ -125,4 +125,4 @@ def init_ccn( fname ):
 			
 	process_ur_records( ur_records )
 	
-	safe_print( u'Initialization in: ', datetime.datetime.now() - tstart )
+	safe_print( 'Initialization in: ', datetime.datetime.now() - tstart )

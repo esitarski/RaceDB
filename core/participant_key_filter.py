@@ -8,7 +8,7 @@ from .models import *
 def is_uci_id( uci_id ):
 	if not uci_id:
 		return None
-	uci_id = u'{}'.format(uci_id).upper().replace(u' ', u'')
+	uci_id = '{}'.format(uci_id).upper().replace(' ', '')
 	if not uci_id.isdigit():
 		return None
 	if uci_id.startswith('0'):

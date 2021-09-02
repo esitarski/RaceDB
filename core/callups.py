@@ -33,7 +33,7 @@ def Callups( request, eventId, eventType, seriesId ):
 		
 		# Format the points colunms nicely.
 		for cg, p_points in callups:
-			p_points[:] = [(lh, fp if not fp.startswith('0') else u'')
+			p_points[:] = [(lh, fp if not fp.startswith('0') else '')
 				for lh, fp in zip(
 					[lh for lh, p in p_points],
 					format_column_float(p for lh, p in p_points)

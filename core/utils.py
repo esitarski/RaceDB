@@ -93,7 +93,7 @@ def removeDiacritic( s ):
 	return unicodedata.normalize('NFKD', '{}'.format(s)).encode('ASCII', 'ignore').decode()
 	
 def safe_print( *args ):
-	print ( removeDiacritic( u' '.join(u'{}'.format(a) for a in args) ) )
+	print ( removeDiacritic( ' '.join('{}'.format(a) for a in args) ) )
 
 def cleanExcelSheetName( s ):
 	return re.sub( '[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]
@@ -147,9 +147,9 @@ escChars = set( r".^$*+?()[{\|" )
 def matchSearchToRegEx( search ):
 	if isinstance(search, str):
 		search = normalizeSearch( search ).split()
-	return re.compile( u''.join([
+	return re.compile( ''.join([
 		'^',
-		''.join( u'(?=.*{})'.format(u''.join(u'\\{}'.format(c) if c in escChars else c for c in s) for s in search)),
+		''.join( '(?=.*{})'.format(''.join('\\{}'.format(c) if c in escChars else c for c in s) for s in search)),
 		'.*$'])
 	)
 

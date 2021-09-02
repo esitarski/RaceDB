@@ -20,7 +20,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def ms_write( s ):
-			message_stream.write( u'{}'.format(s) )
+			message_stream.write( '{}'.format(s) )
 			sys.stdout.write( removeDiacritic(s) )
 	
 	try:

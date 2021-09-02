@@ -15,7 +15,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	
 	payload = {}
 	payload['bib'] = result.participant.bib
-	payload['raceName'] = u'{} - {} ({})'.format( competition.title, event.name, competition.discipline.name )
+	payload['raceName'] = '{} - {} ({})'.format( competition.title, event.name, competition.discipline.name )
 	payload['raceScheduledStart'] = timezone.localtime(event.date_time).strftime( '%Y-%m-%d %H:%M' )
 	payload['winAndOut'] = getattr(event, 'win_and_out', False)
 	payload['isTimeTrial'] = (event.event_type == 1)
@@ -46,7 +46,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		d = {
 			'LastName': h.last_name,
 			'FirstName': h.first_name,
-			'Team':		p.team.name if p.team else u'',
+			'Team':		p.team.name if p.team else '',
 			'License':	h.license_code_trunc,
 			'UCIID':	h.uci_id,
 			'NatCode':	h.nation_code,
@@ -61,7 +61,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 			'status':	rr.status_text,
 		}
 		if rr.ave_kmh:
-			d['speed'] = u'{:.2f} {}'.format(rr.ave_kmh*units_conversion, speed_unit)
+			d['speed'] = '{:.2f} {}'.format(rr.ave_kmh*units_conversion, speed_unit)
 			# Get raceDistance from leader.
 			if raceDistance is None and race_times:
 				raceDistance = units_conversion * rr.ave_kmh * (race_times[-1] - race_times[0])/(60.0*60.0)

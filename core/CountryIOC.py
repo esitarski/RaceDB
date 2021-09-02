@@ -62,9 +62,9 @@ uci_country_codes['Deutschland'.upper()] = 'GER'
 uci_country_codes['Trinidad'.upper()] = 'TTO'
 uci_country_codes['Tobago'.upper()] = 'TTO'
 
-ioc_country.pop( u'', None )
-uci_country_codes.pop( u'', None )
-ison3_uci_country_codes.pop( u'', None )
+ioc_country.pop( '', None )
+uci_country_codes.pop( '', None )
+ison3_uci_country_codes.pop( '', None )
 
 #-----------------------------------------------------------------------
 

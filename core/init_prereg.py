@@ -55,7 +55,7 @@ def init_prereg(
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def ms_write( s, flush=False ):
-			message_stream.write( u'{}'.format(s) )
+			message_stream.write( '{}'.format(s) )
 			sys.stdout.write( removeDiacritic(s) )
 			if flush:
 				sys.stdout.flush()
@@ -68,10 +68,10 @@ def init_prereg(
 		try:
 			competition = Competition.objects.get( name=competition_name )
 		except Competition.DoesNotExist:
-			ms_write( u'**** Cannot find Competition: "{}"\n'.format(competition_name) )
+			ms_write( '**** Cannot find Competition: "{}"\n'.format(competition_name) )
 			return
 		except Competition.MultipleObjectsReturned:
-			ms_write( u'**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
+			ms_write( '**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
 			return
 	
 	optional_events = { normalize(event.name):event for event in competition.get_events() if event.optional }
@@ -84,11 +84,11 @@ def init_prereg(
 			event_name_count[event.name] += 1
 	for event_name, count in event_name_count.items():
 		if count > 1:
-			ms_write( u'**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
+			ms_write( '**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
 	
 	role_code = {}
 	for role_type, roles in Participant.COMPETITION_ROLE_CHOICES:
-		role_code.update( { u'{}'.format(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
+		role_code.update( { '{}'.format(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
 		
 	# Construct a cache to find categories quicker.
 	category_code_gender_suffix = re.compile( r'\(Open\)$|\(Men\)$|\(Women\)$' )
@@ -170,7 +170,7 @@ def init_prereg(
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))
 			bib				= (to_int(v('bib', None)) or None)
-			bib_auto		= (bib is None and '{}'.format(v('bib','')).lower() == u'auto')
+			bib_auto		= (bib is None and '{}'.format(v('bib','')).lower() == 'auto')
 			tag				= to_int_str(v('tag', None))
 			note		 	= to_str(v('note', None))
 			team_name		= to_str(v('team', None))

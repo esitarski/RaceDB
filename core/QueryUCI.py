@@ -7,7 +7,7 @@ import datetime
 
 def filter_encode( s ):
 	''' Remove all accents and encode as ascii. '''
-	return unicodedata.normalize('NFKD', u'{}'.format(s)).encode('ASCII', 'ignore').decode()
+	return unicodedata.normalize('NFKD', '{}'.format(s)).encode('ASCII', 'ignore').decode()
 
 url = 'http://ucibws.uci.ch/api/contacts/riders'
 

@@ -118,7 +118,7 @@ class CategoryForm( ModelForm ):
 def CategoryNew( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
 
-	title = u'{} {}'.format(_('New'), Category._meta.verbose_name.title())
+	title = '{} {}'.format(_('New'), Category._meta.verbose_name.title())
 	
 	if request.method == 'POST':
 		form = CategoryForm( request.POST )

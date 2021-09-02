@@ -2,7 +2,7 @@ from django.db import transaction
 from .models import *
 from .large_delete_all import large_delete_all
 
-uci_road = u'''
+uci_road = '''
 RWU13	Women	Road Girls Under 13 <age 10-12>
 RWU15	Women	Road Girls Under 15 <age 13-14>
 RWU17	Women	Road Girls Under 17 <age 15-16>
@@ -250,7 +250,7 @@ def init_categories():
 					code, gender, description = cat.split( '\t' )
 				except ValueError:
 					continue
-				safe_print( u'    ', code, gender, description )
+				safe_print( '    ', code, gender, description )
 				c = Category(	format = rf,
 								code = code,
 								gender = ['Men','Women','Open'].index(gender),

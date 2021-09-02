@@ -31,16 +31,16 @@ def uci_excel( event, category, fname, startList=True ):
 
 	def getFinishTime( rr ):
 		if rr.status != Finisher:
-			return u''
+			return ''
 		try:
 			return utils.format_time(rr.finish_time, forceHours=True)
 		except Exception:
-			return u''
+			return ''
 			
 	def getIRM( rr ):
-		if 'REL' in u'{}'.format(rr.pos):
+		if 'REL' in '{}'.format(rr.pos):
 			return 'REL'
-		return u'' if rr.status == Finisher else statusNames[rr.status].replace('DQ', 'DSQ')
+		return '' if rr.status == Finisher else statusNames[rr.status].replace('DQ', 'DSQ')
 	
 	getValue = {
 		'Start Order':	lambda rr: toInt(rr.pos),
@@ -67,7 +67,7 @@ def uci_excel( event, category, fname, startList=True ):
 			self.LastName = lh.last_name
 			self.FirstName = lh.first_name
 			self.NatCode = lh.nation_code
-			self.TeamCode = p.team.team_code if p.team else u''
+			self.TeamCode = p.team.team_code if p.team else ''
 			self.Gender = ['M','F'][lh.gender]
 
 	results = []
@@ -119,7 +119,7 @@ def uci_excel( event, category, fname, startList=True ):
 			ws.write( row, col, v, fmt )
 		else:
 			ws.write( row, col, v )
-		colWidths[col] = max( colWidths.get(col, 0), len(u'{}'.format(v)) )
+		colWidths[col] = max( colWidths.get(col, 0), len('{}'.format(v)) )
 	
 	fmt = general_header_format
 	for row, r in enumerate(general, 3):

@@ -78,14 +78,14 @@ def ccos_to_excel( competition ):
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	title_format = wb.add_format( dict(bold=True) )
 	
-	sheet_name = u'RaceDB-CCO'
+	sheet_name = 'RaceDB-CCO'
 	ws = wb.add_worksheet(sheet_name)
 	
 	row = 0
 	
-	ws.write( row, 0, u'{}'.format(_('Category')), title_format )
-	ws.write( row, 1, u'{}'.format(_('License Check Required')), title_format )
-	ws.write( row, 2, u'{}'.format(_('Note')), title_format )
+	ws.write( row, 0, '{}'.format(_('Category')), title_format )
+	ws.write( row, 1, '{}'.format(_('License Check Required')), title_format )
+	ws.write( row, 2, '{}'.format(_('Note')), title_format )
 	
 	for cco in ccos_query:
 		row += 1
@@ -93,11 +93,11 @@ def ccos_to_excel( competition ):
 		ws.write( row, 1, cco.license_check_required )
 		ws.write( row, 2, cco.note )
 			
-	sheet_name = u'RaceDB-Common'
+	sheet_name = 'RaceDB-Common'
 	ws = wb.add_worksheet(sheet_name)
 	row = 0
 	
-	ws.write( row, 0, u'{}'.format(_('License Check Note')), title_format )
+	ws.write( row, 0, '{}'.format(_('License Check Note')), title_format )
 	row += 1
 	ws.write( row, 0, competition.license_check_note )
 	
@@ -143,7 +143,7 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 		
 		note = v('note', None)
 		if note is not None:
-			cco.note = u'{}'.format(note)
+			cco.note = '{}'.format(note)
 		
 		cco.save()
 	

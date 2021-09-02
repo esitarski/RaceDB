@@ -23,7 +23,7 @@ from core.views_common import set_hub_mode
 from core.init_data import init_data_if_necessary
 
 def check_connection( host, port ):
-	safe_print( u'Checking web server connection {}:{}'.format(host,port) )
+	safe_print( 'Checking web server connection {}:{}'.format(host,port) )
 	
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -37,7 +37,7 @@ def check_connection( host, port ):
 	s.close()
 	
 	if success:
-		safe_print( u'Web Server connection check succeeded.' )
+		safe_print( 'Web Server connection check succeeded.' )
 	
 	return success
 
@@ -98,10 +98,10 @@ def launch_server( command, **options ):
 	try:
 		with open(options['config'], 'r') as fp:
 			config_parser.readfp( fp, options['config'] )
-		safe_print( u'Read config file "{}".'.format(options['config']) )
+		safe_print( 'Read config file "{}".'.format(options['config']) )
 	except Exception as e:
 		if options['config'] != 'RaceDB.cfg':
-			safe_print( u'Could not parse config file "{}" - {}'.format(options['config'], e) )
+			safe_print( 'Could not parse config file "{}" - {}'.format(options['config'], e) )
 		config_parser = None
 		
 	if config_parser:
@@ -115,15 +115,15 @@ def launch_server( command, **options ):
 			
 			config_value, error = kwargs.validate( arg, config_value )
 			if error:
-				safe_print( u'Error: {}={}: {}'.format(arg, config_value, error) )
+				safe_print( 'Error: {}={}: {}'.format(arg, config_value, error) )
 				continue
 			
 			options[arg] = config_value
-			safe_print( u'    {}={}'.format( arg, config_value ) )
+			safe_print( '    {}={}'.format( arg, config_value ) )
 
 	if options['hub']:
 		set_hub_mode( True )
-		safe_print( u'Hub mode.' )
+		safe_print( 'Hub mode.' )
 		
 	# Start the rfid server.
 	if not options['hub'] and any([options['rfid_reader'], options['rfid_reader_host'], options['rfid_transmit_power'] > 0, options['rfid_receiver_sensitivity'] > 0]):
@@ -134,9 +134,9 @@ def launch_server( command, **options ):
 			kwargs['transmitPower'] = options['rfid_transmit_power']
 		if options['rfid_receiver_sensitivity'] > 0:
 			kwargs['receiverSensitivity'] = options['rfid_receiver_sensitivity']
-		safe_print( u'Launching RFID server thread...' )
+		safe_print( 'Launching RFID server thread...' )
 		for k, v in kwargs.items():
-			safe_print( u'    {}={}'.format( k, v if isinstance(v, (int,float)) else '"{}"'.format(v) ) )
+			safe_print( '    {}={}'.format( k, v if isinstance(v, (int,float)) else '"{}"'.format(v) ) )
 		thread = threading.Thread( target=runServer, kwargs=kwargs )
 		thread.name = 'LLRPServer'
 		thread.daemon = True
@@ -147,7 +147,7 @@ def launch_server( command, **options ):
 
 	if not options['no_browser']:
 		if not connection_good:
-			safe_print( u'Attempting to launch broswer connecting to an existing RaceDB server...' )
+			safe_print( 'Attempting to launch broswer connecting to an existing RaceDB server...' )
 		
 		# Schedule a web browser to launch a few seconds after starting the server.
 		url = 'http://{}:{}/RaceDB/'.format(socket.gethostbyname(socket.gethostname()), options['port'])
@@ -158,10 +158,10 @@ def launch_server( command, **options ):
 				autoraise = True
 			)
 		).start()
-		safe_print( u'A browser will be launched in a few moments at: {}'.format(url) )
+		safe_print( 'A browser will be launched in a few moments at: {}'.format(url) )
 	
 	if connection_good:
-		safe_print( u'To stop the server, click in this window and press Ctrl-c.' )
+		safe_print( 'To stop the server, click in this window and press Ctrl-c.' )
 		
 		# Add Cling to serve up static files efficiently.
 		waitress.serve( Cling(RaceDB.wsgi.application), host=options['host'], port=options['port'], threads=8, clear_untrusted_proxy_headers=False )

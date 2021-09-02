@@ -153,14 +153,14 @@ class LLRPServer( threading.Thread ):
 				return marshal( dict(success=success, tag=message['tag'], antenna=message['antenna'], errors=errors) ), True
 			except Exception as e:
 				return marshal( dict(success=False, tag=message['tag'], antenna=message['antenna'],
-								errors=[u'{}'.format(e), traceback.format_exc()]) ), True
+								errors=['{}'.format(e), traceback.format_exc()]) ), True
 		
 		elif cmd == 'read':
 			try:
 				tags, errors = self.readTags( antenna=message['antenna'] )
 				return marshal( dict(success=not errors, tags=tags, antenna=message['antenna'], errors=errors) ), True
 			except Exception as e:
-				return marshal( dict(success=False, antenna=message['antenna'], errors=[u'{}'.format(e), traceback.format_exc()]) ), True
+				return marshal( dict(success=False, antenna=message['antenna'], errors=['{}'.format(e), traceback.format_exc()]) ), True
 		
 		elif cmd == 'status':
 			return marshal( dict(success=True) ), True
