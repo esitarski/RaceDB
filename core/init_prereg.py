@@ -425,7 +425,10 @@ def init_prereg(
 					option_included = { event.option_id:included for event, included in participant_optional_events.items() }
 					ParticipantOption.sync_option_ids( participant, option_included )
 					override_events_str = ' ' + ', '.join(
-						'"{}"={}'.format(event.name, included) for event, included in sorted(participant_optional_events.items())
+						'"{}"={}'.format(event.name, included)
+							for event, included in sorted(
+								participant_optional_events.items(), key=lambda event, included: (event.date_time, event.name)
+							)
 					)
 				else:
 					override_events_str = ''
