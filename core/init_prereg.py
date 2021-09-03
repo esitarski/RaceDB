@@ -427,7 +427,7 @@ def init_prereg(
 					override_events_str = ' ' + ', '.join(
 						'"{}"={}'.format(event.name, included)
 							for event, included in sorted(
-								participant_optional_events.items(), key=lambda event, included: (event.date_time, event.name)
+								participant_optional_events.items(), key=lambda event_included: (event_included[0].date_time, event_included[0].name)
 							)
 					)
 				else:
