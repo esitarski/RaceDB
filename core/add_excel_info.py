@@ -10,15 +10,21 @@ def get_db():
 		return settings.DATABASES['default']['ENGINE'].split('.')[-1]
 	except Exception:
 		return 'unknown'
+		
+def get_info():
+	app = 'RaceDB'
+	uname = platform.uname()
+	info = {
+		'{}_AppVersion'.format(app):	RaceDBVersion,
+		'{}_Timestamp'.format(app):		datetime.datetime.now(),
+		'{}_User'.format(app):			os.getlogin(),
+		'{}_Database'.format(app):		get_db(),
+		'{}_Python'.format(app):		sys.version.replace('\n', ' '),
+	}
+	info.update( {'{}_{}'.format(app, a.capitalize()): getattr(uname, a)
+		for a in ('system', 'release', 'version', 'machine', 'processor') if getattr(uname, a, '') } )
+	return info
 
 def add_excel_info( wb ):
-	uname = platform.uname()
-	set_custom_property = wb.set_custom_property
-	set_custom_property('RaceDB_AppVersion',	'RaceDB {}'.format( RaceDBVersion ))
-	set_custom_property('RaceDB_Timestamp',		datetime.datetime.now() )
-	set_custom_property('RaceDB_User',			os.getlogin())
-	set_custom_property('RaceDB_Python',		sys.version.replace('\n', ' '))
-	set_custom_property('RaceDB_Django',		version.get_version())
-	set_custom_property('RaceDB_Database',		get_db())
-	for a in ('system', 'release', 'version', 'machine', 'processor'):
-		set_custom_property( 'RaceDB_' + a.capitalize(), getattr(uname, a, ''))
+	for k,v in get_info().items():
+		wb.set_custom_property( k, v )
