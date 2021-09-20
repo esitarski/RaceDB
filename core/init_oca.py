@@ -1,4 +1,3 @@
-import io
 import csv
 import sys
 import datetime
@@ -55,6 +54,9 @@ def init_oca( fname, message_stream=sys.stdout ):
 	
 	if fname == '_':
 		fname = fnameDefault
+		
+	if not os.path.exists(fname):
+		raise ValueError( 'file "{}" not found.'.format(fname) )
 	
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def messsage_stream_write( s ):
@@ -67,7 +69,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 	
 	fix_bad_license_codes()
 	
-	discipline_id = dict( (discipline, Discipline.objects.get(name=discipline)) for discipline in ['Road', 'Track', 'Cyclocross', 'MTB', 'Para'] )
+	discipline_id = { discipline.name:discipline for discipline in Discipline.objects.all() }
 	discipline_cols = {
 		'Road':				['national_road', 'provincial_road'],
 		'Cyclocross':		['national_cyclocross', 'provincial_cyclocross'],
@@ -129,13 +131,13 @@ def init_oca( fname, message_stream=sys.stdout ):
 					team = Team.objects.get_or_create( name=team_name )[0]
 					if count == len(team_names)-1:
 						for discipline_name, discipline in discipline_id.items():
-							for col_name in discipline_cols[discipline_name]:
+							for col_name in discipline_cols.get(discipline_name,[]):
 								if getattr(ur, col_name, None):
 									TeamHint( license_holder=lh, team=team, discipline=discipline, effective_date=effective_date ).save()
 									break
 
 	ur_records = []
-	with io.open(fname, encoding='utf-8', errors='replace') as fp:
+	with open(fname, errors='replace') as fp:
 		oca_reader = csv.reader( fp )
 		for i, row in enumerate(oca_reader):
 			if i == 0:

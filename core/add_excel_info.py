@@ -17,7 +17,7 @@ def get_info():
 	info = {
 		'{}_AppVersion'.format(app):	RaceDBVersion,
 		'{}_Timestamp'.format(app):		datetime.datetime.now(),
-		'{}_User'.format(app):			os.getlogin(),
+		'{}_User'.format(app):			os.path.basename(os.path.expanduser("~")),
 		'{}_Database'.format(app):		get_db(),
 		'{}_Python'.format(app):		sys.version.replace('\n', ' '),
 	}
