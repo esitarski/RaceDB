@@ -1061,6 +1061,11 @@ def GetCompetitionForm( competition_cur = None ):
 				Row(
 					Col('ftp_upload_during_race', 4),
 				),
+				Row( HTML('<hr/>') ),
+				Row(
+					Col(Field('ga_tracking_id',size=12), 4),
+					Col(Field('google_maps_api_key',size=40), 6),
+				),
 				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(''), ),
 				Row(
 					Col(Field('bib_label_print'),2),
@@ -1072,8 +1077,7 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col(Field('report_labels',size=8), 4),
-					Col('ga_tracking_id', 4),
+					Col(Field('report_labels'), 4),
 					Col(Field('show_signature'),4),
 				),
 				Row( HTML('<hr/>') ),
