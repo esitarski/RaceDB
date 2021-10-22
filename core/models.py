@@ -816,7 +816,7 @@ class Competition(models.Model):
 		help_text=_('Previous Competitions considered for License Check must have this label'),
 	)
 	
-	google_maps_api_key = models.CharField( max_length=64, default='AIzaSyD2sl2JTvnyMcsgWc3tTceWCYo3ZoyWdAI', blank=True, verbose_name=_('Google Maps API Key') )
+	google_maps_api_key = models.CharField( max_length=64, default='', blank=True, verbose_name=_('Google Maps API Key') )
 	
 	@property
 	def title( self ):
