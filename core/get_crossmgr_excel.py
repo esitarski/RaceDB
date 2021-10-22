@@ -65,6 +65,7 @@ property_headers = (
 	'Win and Out',
 	'Event Long Name',
 	'Email',
+	'Google Maps API Key',
 )
 	
 def get_number_range_str( numbers ):
@@ -267,6 +268,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		getattr(event, 'win_and_out', False),
 		'-'.join( [competition.long_name, event.name] ) if competition.long_name else '',
 		competition.organizer_email,
+		competition.google_maps_api_key,
 	]
 	row = write_row_data( ws, row, row_data )
 
