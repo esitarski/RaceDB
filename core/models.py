@@ -2078,22 +2078,38 @@ class WaveBase( models.Model ):
 		return '<ol><li>' + '</li><li>'.join( category.code_gender for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) ) + '</li></ol>'
 		
 	def get_details_html( self, include_starters=False ):
-		distance = None
 		if self.distance:
 			if self.laps:
 				distance = self.distance * self.laps
 			else:
 				distance = self.distance
-		s = ', '.join( v for v in (
-			'{}:&nbsp;<strong>{}</strong>'.format('Offset', self.start_offset) if include_starters and hasattr(self,'start_offset') else None,
-			'{}:&nbsp;<strong>{}</strong>'.format('Start Time', timezone.localtime(self.event.date_time + self.start_offset).strftime('%H:%M:%S')) if include_starters and hasattr(self,'start_offset') else None,
-			'{:.2f}&nbsp;<strong>{}</strong>'.format(distance, self.distance_unit) if distance else None,
-			'{}&nbsp;<strong>{}</strong>'.format(self.laps, 'laps' if self.laps != 1 else 'lap') if self.laps else None,
-			'<strong>{}&nbsp;{}</strong>'.format(self.minutes, 'min') if getattr(self, 'minutes', None) else None,
-			'Rank&nbsp;Together' if getattr(self, 'rank_categories_together', False) else None,
-			'{}:&nbsp;<strong>{}</strong>'.format('Starters', self.get_starters_str().replace(' ', '&nbsp;')) if include_starters else None,
-		) if v )
-		return s
+		else:
+			distance = None
+		
+		if hasattr(self,'start_offset'):
+			start_offset = self.start_offset or datetime.timedelta(seconds=0.0)
+		else:
+			start_offset = None
+			
+		fields = []
+		if include_starters and start_offset is not None:
+			fields.append( '{}: <strong>{}</strong>'.format('Offset', start_offset) )
+			fields.append( '{}: <strong>{}</strong>'.format(
+				'Start Time',
+				timezone.localtime(self.event.date_time + start_offset).strftime('%H:%M:%S'))
+			)
+		if distance:
+			fields.append( '{:.2f} <strong>{}</strong>'.format(distance, self.distance_unit) )
+		if self.laps:
+			fields.append( '{} <strong>{}</strong>'.format(self.laps, 'laps' if self.laps != 1 else 'lap') )
+		if getattr(self, 'minutes', None):
+			fields.append( '<strong>{} {}</strong>'.format(self.minutes, 'min') )
+		if getattr(self, 'rank_categories_together', False):
+			fields.append( 'Rank Together' )
+		if include_starters:
+			fields.append( '{}: <strong>{}</strong>'.format('Starters', self.get_starters_str()) )
+			
+		return ', '.join( f.replace(' ', '&nbsp;') for f in fields )
 	
 	class Meta:
 		verbose_name = _('Wave Base')

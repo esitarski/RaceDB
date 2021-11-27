@@ -557,18 +557,18 @@ def get_cmd( cmd ):
 		return cmd.replace('$gswin', gs_cmd() or 'gs_not_found', 1)
 	return cmd
 	
-def print_pdf( request, participant, pdf_str, print_type ):
+def print_pdf( request, participant, pdf_bytes, print_type ):
 	system_info = SystemInfo.get_singleton()
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
 			tmp_file = get_temp_print_filename( request, participant.bib, print_type )
 			with open(tmp_file, 'wb') as f:
-				f.write( pdf_str )
+				f.write( pdf_bytes )
 			p = Popen(
 				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
 				stdin=PIPE, stdout=PIPE, stderr=PIPE,
 			)
-			stdout_info, stderr_info = p.communicate( pdf_str )
+			stdout_info, stderr_info = p.communicate( pdf_bytes )
 			returncode = p.returncode
 		except Exception as e:
 			stdout_info, stderr_info = '', e
@@ -582,7 +582,7 @@ def print_pdf( request, participant, pdf_str, print_type ):
 		title = _("Print Status")
 		return render( request, 'cmd_response.html', locals() )
 	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
-		response = HttpResponse(pdf_str, content_type="application/pdf")
+		response = HttpResponse(pdf_bytes, content_type="application/pdf")
 		response['Content-Disposition'] = 'inline'
 		return response
 	else:

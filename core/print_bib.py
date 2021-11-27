@@ -225,8 +225,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 			if license_code:
 				draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
 		
-	pdf_str = pdf.to_bytes()
-	return pdf_str
+	return pdf.to_bytes()
 
 def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches=5.9, heightInches=3.9, copies=1, onePage=False ):
 	page_width = widthInches * inches_to_points
@@ -276,8 +275,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 			name_rect = Rect( x, page_height-margin+page_y, page_width-text_margin - x, text_height )
 			name_rect.draw_text_to_fit( pdf, name, Rect.AlignRight|Rect.AlignMiddle )
 	
-	pdf_str = pdf.to_bytes()
-	return pdf_str
+	return pdf.to_bytes()
 	
 def print_body_bib( participant, copies=2, onePage=False ):
 	copies = int(copies)
@@ -568,5 +566,4 @@ def print_id_label( participant ):
 	
 	footer.draw_text_to_fit( pdf, system_name, Rect.AlignRight, consider_descenders=True )
 	
-	pdf_str = pdf.to_bytes()
-	return pdf_str
+	return pdf.to_bytes()
