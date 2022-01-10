@@ -47,7 +47,7 @@
 			<td>{{c.organizer}}</td>
 			<td class="text-center">{% if c.has_results %}<span class="is-finished" />{% endif %}</td>
 			<td>{{c.report_labels_text}}</td>
-			<td class="hidden-print">
+			<td class="hidden-print text-nowrap">
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning btn-sm" href="./CompetitionDelete/{{c.id}}/">{% trans "Delete" %}</a>
 					&nbsp;
