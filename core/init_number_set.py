@@ -90,8 +90,8 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 		sheet_name = sheet_name or wb.sheetnames[0]
 		ws = wb[sheet_name]
 		message_stream_write( 'Reading sheet "{}"\n'.format(sheet_name) )
-	except Exception:
-		message_stream_write( 'Cannot find sheet "{}"\n'.format(sheet_name) )
+	except Exception as e:
+		message_stream_write( 'Cannot find sheet "{} ({})"\n'.format(sheet_name, e) )
 		return
 		
 	ur_records = []
