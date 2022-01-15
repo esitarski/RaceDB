@@ -1,5 +1,5 @@
 wheel
-django>=3.2.4
+django==3.2.11
 django-crispy-forms
 django-extensions
 requests
