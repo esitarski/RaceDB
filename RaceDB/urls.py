@@ -1,5 +1,4 @@
-from django.conf.urls import include, re_path
-from django.urls import path
+from django.urls import include, path, re_path
 from django.shortcuts import redirect
 
 from django.contrib import admin

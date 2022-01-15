@@ -1806,7 +1806,8 @@ class Event( models.Model ):
 
 class EventMassStart( Event ):
 	def __init__( self, *args, **kwargs ):
-		kwargs['event_type'] = 0
+		if not args:
+			kwargs['event_type'] = 0
 		super().__init__( *args, **kwargs )
 		
 	def get_result_class( self ):
@@ -4500,7 +4501,8 @@ class EntryTT( models.Model ):
 
 class EventTT( Event ):
 	def __init__( self, *args, **kwargs ):
-		kwargs['event_type'] = 1
+		if not args:
+			kwargs['event_type'] = 1
 		super().__init__( *args, **kwargs )
 		
 	def get_result_class( self ):

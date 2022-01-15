@@ -1,4 +1,4 @@
-from django.conf.urls import re_path
+from django.urls import include, path, re_path
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
 
