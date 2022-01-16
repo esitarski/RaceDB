@@ -5937,7 +5937,7 @@ def models_fix_data():
 	fix_non_unique_number_set_entries()
 	fix_bad_category_hints()
 	fix_phone_numbers()
-	fix_finish_times()
+	#fix_finish_times()
 	safe_print( '--- All data fixed ---' )
 
 
