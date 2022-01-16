@@ -13,16 +13,16 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 	tstart = datetime.datetime.now()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def messsage_stream_write( s ):
+		def message_stream_write( s ):
 			message_stream.write( removeDiacritic(s) )
 	else:
-		def messsage_stream_write( s ):
+		def message_stream_write( s ):
 			message_stream.write( '{}'.format(s) )
 	
 	try:
 		number_set = NumberSet.objects.get( pk=numberSetId )
 	except NumberSet.DoesNotExist:
-		messsage_stream_write( '**** Cannot find NumberSet\n' )
+		message_stream_write( '**** Cannot find NumberSet\n' )
 		return
 	
 	license_col_names = ('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode')
@@ -37,7 +37,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 			try:
 				bib = int(bib)
 			except ValueError:
-				messsage_stream_write( '**** Row {}: invalid Bib: {}"\n'.format(
+				message_stream_write( '**** Row {}: invalid Bib: {}"\n'.format(
 					i, bib) )
 				continue
 			
@@ -46,15 +46,15 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 				try:
 					license_holder = LicenseHolder.objects.get( license_code=license_code )
 				except LicenseHolder.DoesNotExist:
-					messsage_stream_write( '**** Row {}: cannot find LicenceHolder from LicenseCode: "{}"\n'.format(
+					message_stream_write( '**** Row {}: cannot find LicenceHolder from LicenseCode: "{}"\n'.format(
 						i, license_code) )
 					continue
 				
 				if not number_set.assign_bib( license_holder, bib ):
-					messsage_stream_write( '**** Row {}: bib={} cannot be assigned.  The bib must be valid and allowed by the NumberSet ranges?\n'.format(
+					message_stream_write( '**** Row {}: bib={} cannot be assigned.  The bib must be valid and allowed by the NumberSet ranges?\n'.format(
 						i, bib) )
 					
-				messsage_stream_write(
+				message_stream_write(
 					'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_id}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
 						i=i,
 						bib=bib,
@@ -68,7 +68,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 				)
 			else:
 				number_set.set_lost( bib )
-				messsage_stream_write(
+				message_stream_write(
 					'Row {i:>6}: {bib:>4} Lost\n'.format(
 						i=i,
 						bib=bib,
@@ -99,16 +99,16 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = {col:'{}'.format(f.value).strip() for col, f in enumerate(row)}
-			messsage_stream_write( 'Header Row:\n' )
+			message_stream_write( 'Header Row:\n' )
 			for f in fields.values():
-				messsage_stream_write( '   {}\n'.format(f) )
+				message_stream_write( '   {}\n'.format(f) )
 			
 			fields_lower = set( f.lower() for f in fields.keys() )
 			if not any( n.lower() in fields_lower for n in license_col_names ):
-				messsage_stream_write( 'License column not found in Header Row.  Aborting.\n' )
+				message_stream_write( 'License column not found in Header Row.  Aborting.\n' )
 				return
 			if not any( n.lower() in fields_lower for n in bib_col_names ):
-				messsage_stream_write( 'Bib column not found in Header Row.  Aborting.\n' )
+				message_stream_write( 'Bib column not found in Header Row.  Aborting.\n' )
 				return
 			continue
 			
@@ -120,5 +120,5 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 			
 	process_ur_records( ur_records )
 	
-	messsage_stream_write( '\n' )
-	messsage_stream_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	message_stream_write( '\n' )
+	message_stream_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
