@@ -103,7 +103,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 			for f in fields.values():
 				message_stream_write( '   {}\n'.format(f) )
 			
-			fields_lower = set( f.lower() for f in fields.keys() )
+			fields_lower = set( str(f).lower() for f in fields.keys() )
 			if not any( n.lower() in fields_lower for n in license_col_names ):
 				message_stream_write( 'License column not found in Header Row.  Aborting.\n' )
 				return
