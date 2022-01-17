@@ -59,10 +59,10 @@ def init_oca( fname, message_stream=sys.stdout ):
 		raise ValueError( 'file "{}" not found.'.format(fname) )
 	
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def messsage_stream_write( s ):
+		def message_stream_write( s ):
 			message_stream.write( removeDiacritic(s) )
 	else:
-		def messsage_stream_write( s ):
+		def message_stream_write( s ):
 			message_stream.write( '{}'.format(s) )
 			
 	tstart = datetime.datetime.now()
@@ -89,7 +89,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 			try:
 				date_of_birth	= date_from_str( ur.dob )
 			except Exception as e:
-				messsage_stream_write( 'Line {}: Invalid birthdate "{}" ({}) {}\n'.format( i, ur.dob, ur, e ) )
+				message_stream_write( 'Line {}: Invalid birthdate "{}" ({}) {}\n'.format( i, ur.dob, ur, e ) )
 				continue
 				
 			attributes = {
@@ -118,7 +118,7 @@ def init_oca( fname, message_stream=sys.stdout ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			messsage_stream_write( '{:>6}: {:>8} {:>9} {:>10} {}, {}, ({})\n'.format(
+			message_stream_write( '{:>6}: {:>8} {:>9} {:>10} {}, {}, ({})\n'.format(
 					i, lh.license_code, lh.uci_id, lh.date_of_birth.strftime('%Y/%m/%d'), lh.last_name, lh.first_name, lh.city
 				)
 			)
@@ -143,10 +143,10 @@ def init_oca( fname, message_stream=sys.stdout ):
 			if i == 0:
 				# Get the header fields from the first row.
 				fields = utils.getHeaderFields( [unescape(v.strip()) for v in row] )
-				messsage_stream_write( 'Recognized Header Fields:\n' )
-				messsage_stream_write( '----------------------------\n' )
-				messsage_stream_write( '\n'.join(fields) + '\n' )
-				messsage_stream_write( '----------------------------\n' )
+				message_stream_write( 'Recognized Header Fields:\n' )
+				message_stream_write( '----------------------------\n' )
+				message_stream_write( '\n'.join(fields) + '\n' )
+				message_stream_write( '----------------------------\n' )
 				
 				oca_record = namedtuple('oca_record', fields)
 				continue
@@ -160,4 +160,4 @@ def init_oca( fname, message_stream=sys.stdout ):
 			
 	process_ur_records( ur_records )
 	
-	messsage_stream_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	message_stream_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
