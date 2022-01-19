@@ -5,6 +5,7 @@ from io import BytesIO
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from . import import_utils
+from .FieldMap import standard_field_map
 from .import_utils import *
 from .models import *
 
@@ -13,62 +14,81 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 	tstart = datetime.datetime.now()
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
-		def message_stream_write( s ):
+		def ms_write( s ):
 			message_stream.write( removeDiacritic(s) )
 	else:
-		def message_stream_write( s ):
+		def ms_write( s ):
 			message_stream.write( '{}'.format(s) )
 	
 	try:
 		number_set = NumberSet.objects.get( pk=numberSetId )
 	except NumberSet.DoesNotExist:
-		message_stream_write( '**** Cannot find NumberSet\n' )
+		ms_write( '**** Cannot find NumberSet\n' )
 		return
 	
-	license_col_names = ('License','License #','License Numbers','LicenseNumbers','License Code','LicenseCode')
-	bib_col_names = ('bib', 'bib#', 'bib #')
+	ifm = standard_field_map()
 	
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-			bib = get_key(ur, bib_col_names, '')
-			if not bib:
-				continue
+			v = ifm.finder( ur )
+			
+			bib				= v('bib','')
 			try:
 				bib = int(bib)
 			except ValueError:
-				message_stream_write( '**** Row {}: invalid Bib: {}"\n'.format(
-					i, bib) )
+				ms_write( '**** Row {:>6}: invalid Bib: {}"\n'.format(i, bib) )
 				continue
 			
-			license_code = to_int_str(get_key(ur, license_col_names, '')).upper().strip()
-			if license_code:
-				try:
-					license_holder = LicenseHolder.objects.get( license_code=license_code )
-				except LicenseHolder.DoesNotExist:
-					message_stream_write( '**** Row {}: cannot find LicenceHolder from LicenseCode: "{}"\n'.format(
-						i, license_code) )
+			success = True
+			license_holder = None
+			for f, k, v in ( ('UCIID', 'uci_id', to_uci_id(v('uci_id', None))), ('License', 'license_code', to_int_str(v('license_code', '')).upper().strip()) ):
+				if not v:
 					continue
-				
-				if not number_set.assign_bib( license_holder, bib ):
-					message_stream_write( '**** Row {}: bib={} cannot be assigned.  The bib must be valid and allowed by the NumberSet ranges?\n'.format(
-						i, bib) )
 					
-				message_stream_write(
-					'Row {i:>6}: {bib:>4} {license_code:>8} {dob:>10} {uci_id}, {last_name}, {first_name}, {city}, {state_prov}\n'.format(
-						i=i,
-						bib=bib,
-						license_code=license_holder.license_code,
-						dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
-						uci_id=license_holder.uci_id,
-						last_name=license_holder.last_name,
-						first_name=license_holder.first_name,
-						city=license_holder.city, state_prov=license_holder.state_prov,
+				license_holders = list( LicenseHolder.objects.filter( **{k:v} ) )
+				if not license_holders:
+					ms_write( '**** Row {:>6}: cannot find LicenseHolder from {}: "{}"\n'.format(i, f, v) )
+				elif len(license_holders) != 1:
+					ms_write( '**** Row {:>6}: Ignoring.  Multiple LicenseHolders found {}: "{}"\n'.format(i, f, v) )
+					for c, license_holder in enumerate(license_holders, 1):
+						ms_write(
+							'     {c:>3}. {license_code:>16} {uci_id} {last_name}, {first_name}, {city}, {state_prov}\n'.format(
+								c=c,
+								license_code=license_holder.license_code,
+								uci_id=license_holder.uci_id,
+								last_name=license_holder.last_name,
+								first_name=license_holder.first_name,
+								city=license_holder.city, state_prov=license_holder.state_prov,
+							)
+						)
+				else:
+					license_holder = license_holders[0]
+					success = True
+				break
+
+			if not success:
+				continue
+
+			if license_holder:
+				if not number_set.assign_bib( license_holder, bib ):
+					ms_write( '**** Row {:>6}: bib={} cannot be assigned.  The bib must be allowed by the NumberSet ranges.\n'.format(
+						i, bib) )
+				else:	
+					ms_write(
+						'Row {i:>6}: {bib:>4} {license_code:>16} {uci_id} {last_name}, {first_name}, {city}, {state_prov}\n'.format(
+							i=i,
+							bib=bib,
+							license_code=license_holder.license_code,
+							uci_id=license_holder.uci_id,
+							last_name=license_holder.last_name,
+							first_name=license_holder.first_name,
+							city=license_holder.city, state_prov=license_holder.state_prov,
+						)
 					)
-				)
 			else:
 				number_set.set_lost( bib )
-				message_stream_write(
+				ms_write(
 					'Row {i:>6}: {bib:>4} Lost\n'.format(
 						i=i,
 						bib=bib,
@@ -89,36 +109,61 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 	try:
 		sheet_name = sheet_name or wb.sheetnames[0]
 		ws = wb[sheet_name]
-		message_stream_write( 'Reading sheet "{}"\n'.format(sheet_name) )
+		ms_write( 'Reading sheet "{}"\n'.format(sheet_name) )
 	except Exception as e:
-		message_stream_write( 'Cannot find sheet "{} ({})"\n'.format(sheet_name, e) )
+		ms_write( 'Cannot find sheet "{} ({})"\n'.format(sheet_name, e) )
 		return
 		
 	ur_records = []
 	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = {col:'{}'.format(f.value).strip() for col, f in enumerate(row)}
-			message_stream_write( 'Header Row:\n' )
-			for f in fields.values():
-				message_stream_write( '   {}\n'.format(f) )
+			fields = ['{}'.format(f.value).strip() for f in row]
+			ifm.set_headers( fields )
 			
-			fields_lower = set( str(f).lower() for f in fields.keys() )
+			expected_fields = {'bib', 'license_code', 'uci_id'};
+			
+			ms_write( 'Header Row:\n' )
+			for col, f in enumerate(fields, 1):
+				name = ifm.get_name_from_alias( f )
+				if name in expected_fields:
+					ms_write( '        {}. {} --> {}\n'.format(col, f, name) )
+				else:
+					ms_write( '        {}. ****{} (Ignored)\n'.format(col, f) )
+					if name in ifm:
+						del ifm[name]
+			
+			if 'bib' not in ifm:
+				ms_write( 'Header Row must contain "Bib"\n' )
+				return
+						
+			if sum( int(f in ifm) for f in ('uci_id', 'license_code') ) == 0:
+				ms_write( 'Header Row must contain either "UCIID" or "License"\n' )
+				return
+				
+			ms_write( '\n' )
+			continue	
+			
+			fields = {col:'{}'.format(f.value).strip() for col, f in enumerate(row)}
+			ms_write( 'Header Row:\n' )
+			for f in fields.values():
+				ms_write( '   {}\n'.format(f) )
+			
+			fields_lower = set( str(f).lower() for f in fields.values() )
 			if not any( n.lower() in fields_lower for n in license_col_names ):
-				message_stream_write( 'License column not found in Header Row.  Aborting.\n' )
+				ms_write( 'License column not found in Header Row.  Aborting.\n' )
 				return
 			if not any( n.lower() in fields_lower for n in bib_col_names ):
-				message_stream_write( 'Bib column not found in Header Row.  Aborting.\n' )
+				ms_write( 'Bib column not found in Header Row.  Aborting.\n' )
 				return
 			continue
 			
-		ur = { fields.get(col,'').lower():cell.value for col, cell in enumerate(row) }
-		ur_records.append( (r+1, ur) )
+		ur_records.append( (r+1, [v.value for v in row]) )
 		if len(ur_records) == 1000:
 			process_ur_records( ur_records )
 			ur_records = []
 			
 	process_ur_records( ur_records )
 	
-	message_stream_write( '\n' )
-	message_stream_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( '\n' )
+	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
