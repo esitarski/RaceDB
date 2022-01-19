@@ -28,14 +28,18 @@
 Adds or Updates Bib Numbers in the number set.
 </p>
 <p>
-The Excel spreadsheet must consist of a Bib column, and a License column.  All other colums are ignored.
+The Excel spreadsheet must consist of a Bib column, and either a UCIID column, a License column, or both.<br/>
+The UCIID (if present), or the License (if present), is used to find the rider for the Bib.<br/>
+If both are present, the UCIID will take priority.<br/>
+If no rider is specified, the Bib will be marked as Lost.
 <table class="table">
 <thead>
 <tr><th>Column</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>Bib</strong> or <strong>Bib Number</strong></td><td>Optional.  Bib number for the rider.</td></tr>
-<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Required.  License code (<strong>not UCI code</strong>).  If the License Code is empty, the Bib will be marked as Lost.</td></tr>
+<tr><td><strong>Bib</strong> or <strong>Bib Number</strong></td><td>Required.  Bib number.  If there is no rider UCIID or License, the Bib is marked as Lost.</td></tr>
+<tr><td><strong>UCIID</strong> or <strong>UCI ID</strong> <td>Rider's UCIID.</td></tr>
+<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Rider's License code.</td></tr>
 </tbody>
 </table>
 </p>
