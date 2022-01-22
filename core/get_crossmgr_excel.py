@@ -248,7 +248,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		competition.country,
 		server_date_time.strftime( '%Y-%m-%d' ),
 		server_date_time.strftime( '%H:%M' ),
-		timezone.get_current_timezone().zone,
+		str(timezone.get_current_timezone()),
 		raceNumber,
 		competition.discipline.name,
 		competition.using_tags,
