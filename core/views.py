@@ -1053,13 +1053,14 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col('ftp_host', 2),
-					Col('ftp_user', 2),
-					Col(Field('ftp_password', autocomplete='off'), 2),
-					Col(Field('ftp_path', size=80), 6),
+					Col('use_sftp', 3),
+					Col('ftp_host', 3),
+					Col('ftp_user', 3),
+					Col(Field('ftp_password', autocomplete='off'), 3),
 				),
 				Row(
 					Col('ftp_upload_during_race', 4),
+					Col(Field('ftp_path', size=80), 4),
 				),
 				Row( HTML('<hr/>') ),
 				Row(
