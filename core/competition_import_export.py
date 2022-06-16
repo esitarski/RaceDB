@@ -429,7 +429,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	competition.sync_tags()
 
 	if remove_ftp_info:
-		attrs = ("ftp_host", "ftp_user", "ftp_password", "ftp_path", "ftp_upload_during_race", "ga_tracking_id")
+		attrs = ("use_sftp", "ftp_host", "ftp_user", "ftp_password", "ftp_path", "ftp_upload_during_race", "ga_tracking_id")
 		ftp_info_save = { a:getattr(competition, a) for a in attrs }
 		for a in attrs:
 			setattr( competition, a, Competition._meta.get_field(a).default )

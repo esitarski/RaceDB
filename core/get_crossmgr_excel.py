@@ -53,6 +53,7 @@ property_headers = (
 	'Time Trial',
 	'RFID Option',
 	
+	'Use SFTP',
 	'FTP Host',
 	'FTP User',
 	'FTP Password',
@@ -256,6 +257,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		True if event.event_type == 1 else False,		# Time Trial
 		event.rfid_option,
 		
+		competition.use_sftp,
 		competition.ftp_host,
 		competition.ftp_user,
 		scramble.encode(utils.removeDiacritic(competition.ftp_password)),
