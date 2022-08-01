@@ -52,7 +52,7 @@ def teams_from_search_text( search_text ):
 	search_text = utils.normalizeSearch(search_text)
 	q = Q()
 	for n in search_text.split():
-		q &= Q( search_text__contains = n )
+		q &= Q( search_text__icontains = n )
 	return Team.objects.filter(q)[:MaxReturn]
 
 @access_validation()

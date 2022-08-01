@@ -380,7 +380,7 @@ def license_holders_from_search_text( search_text ):
 		if search_text:
 			q = Q()
 			for n in search_text.split():
-				q &= Q( search_text__contains = n )
+				q &= Q( search_text__icontains = n )
 			license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
 		else:
 			license_holders = LicenseHolder.objects.all()[:MaxReturn]
@@ -440,7 +440,7 @@ def LicenseHoldersDisplay( request ):
 			if 'export-excel-submit' in request.POST:
 				q = Q()
 				for n in search_text.split():
-					q &= Q( search_text__contains = n )
+					q &= Q( search_text__icontains = n )
 				xl = get_license_holder_excel( q )
 				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 				response['Content-Disposition'] = 'attachment; filename=RaceDB-LicenseHolders-{}.xlsx'.format(
@@ -871,7 +871,7 @@ def LicenseHolderTeamChange( request, licenseHolderId, disciplineId ):
 	search_text = utils.normalizeSearch(search_text)
 	q = Q( active=True )
 	for n in search_text.split():
-		q &= Q( search_text__contains = n )
+		q &= Q( search_text__icontains = n )
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render( request, 'license_holder_team_select.html', locals() )
 
