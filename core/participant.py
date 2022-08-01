@@ -168,7 +168,7 @@ def Participants( request, competitionId ):
 		if names:
 			q = Q()
 			for n in names:
-				q |= Q(license_holder__search_text__contains = n)
+				q |= Q(license_holder__search_text__icontains = n)
 			participants = participants.filter( q ).select_related('team', 'license_holder')
 			participants, paginator = getPaginator( participants )
 			return render( request, 'participant_list.html', locals() )
@@ -211,7 +211,7 @@ def Participants( request, competitionId ):
 		names = name_text.split()
 		if names:
 			for n in names:
-				participants = participants.filter( license_holder__search_text__contains=n )
+				participants = participants.filter( license_holder__search_text__icontains=n )
 			def name_filter( p ):
 				lh_name = utils.removeDiacritic(p.license_holder.full_name()).lower()
 				return all(n in lh_name for n in names)
@@ -239,7 +239,7 @@ def Participants( request, competitionId ):
 			participants = participants.filter( team__isnull = False )
 			q = Q()
 			for t in team_search.split():
-				q &= Q( team__search_text__contains=t )
+				q &= Q( team__search_text__icontains=t )
 			participants = participants.filter( q )
 		
 	if 0 <= int(participant_filter.get('complete',-1) or 0) <= 1:
@@ -424,7 +424,7 @@ def ParticipantManualAdd( request, competitionId ):
 	search_text = utils.normalizeSearch( search_text )
 	q = Q( active = True )
 	for term in search_text.split():
-		q &= Q(search_text__contains = term)
+		q &= Q(search_text__icontains = term)
 	license_holders = LicenseHolder.objects.filter(q).order_by('search_text')[:MaxReturn]
 	
 	# Flag which license_holders are already entered in this competition.
@@ -843,7 +843,7 @@ def ParticipantTeamChange( request, participantId ):
 	search_text = utils.normalizeSearch(search_text)
 	q = Q( active=True )
 	for n in search_text.split():
-		q &= Q( search_text__contains = n )
+		q &= Q( search_text__icontains = n )
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render( request, 'participant_team_select.html', locals() )
 	
@@ -1960,7 +1960,7 @@ def ParticipantNotFound( request, competitionId ):
 			
 			if 'search-submit' in request.POST:
 				matches = LicenseHolder.objects.filter( gender=gender, date_of_birth=date_of_birth, search_text__startswith=utils.get_search_text(last_name) )
-				secondary_matches = LicenseHolder.objects.filter( search_text__contains=utils.get_search_text(last_name) ).exclude( pk__in=matches.values_list('pk',flat=True) )
+				secondary_matches = LicenseHolder.objects.filter( search_text__icontains=utils.get_search_text(last_name) ).exclude( pk__in=matches.values_list('pk',flat=True) )
 				has_matches = matches.exists() or secondary_matches.exists()
 				if has_matches:
 					form = ParticipantNotFoundForm( initial={'last_name':last_name, 'gender':gender, 'date_of_birth':date_of_birth}, has_matches=has_matches, from_post=True )

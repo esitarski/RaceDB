@@ -5930,7 +5930,34 @@ def fix_finish_times():
 					r.finish_time = ft
 					bs.append( r )
 					fix_count += 1
-	safe_print( '{} results fixed.'.format(fix_count) )
+	if fix_count:
+		safe_print( '{} results fixed.'.format(fix_count) )
+
+def fix_team_search_text():
+	safe_print( 'fix team search_text...' )
+	fix_count = 0
+	with BulkSave() as bs:
+		for team in Team.objects.all():
+			search_text = team.get_search_text()[:Team.SearchTextLength]
+			if team.search_text != search_text:
+				team.search_text = search_text
+				bs.append( team )
+				fix_count += 1
+	if fix_count:
+		safe_print( '{} team search_texts fixed.'.format(fix_count) )
+
+def fix_license_holder_search_text():
+	safe_print( 'fix license holder search_text...' )
+	fix_count = 0
+	with BulkSave() as bs:
+		for lh in LicenseHolder.objects.all():
+			search_text = lh.get_search_text()[:LicenseHolder.SearchTextLength]
+			if lh.search_text != search_text:
+				lh.search_text = search_text
+				bs.append( lh )
+				fix_count += 1
+	if fix_count:
+		safe_print( '{} license holder search_texts fixed.'.format(fix_count) )
 
 def models_fix_data():
 	fix_bad_license_codes()
@@ -5938,6 +5965,8 @@ def models_fix_data():
 	fix_non_unique_number_set_entries()
 	fix_bad_category_hints()
 	fix_phone_numbers()
+	fix_license_holder_search_text()
+	fix_team_search_text()
 	#fix_finish_times()
 	safe_print( '--- All data fixed ---' )
 
