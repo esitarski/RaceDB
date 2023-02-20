@@ -6,6 +6,7 @@
 [License Holders]:	LicenseHolders.html
 [Teams]: 			Teams.html
 [Legal Entities]:	LegalEntities.html
+[RFID]:				RFID.html
 
 [Category Formats]:	CategoryFormats.html
 [Number Sets]:		NumberSets.html

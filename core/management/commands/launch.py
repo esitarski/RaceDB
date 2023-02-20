@@ -7,6 +7,7 @@ from django.core import management
 
 from dj_static import Cling
 
+import os
 import threading
 import time
 import socket
@@ -137,11 +138,10 @@ def launch_server( command, **options ):
 		safe_print( 'Launching RFID server thread...' )
 		for k, v in kwargs.items():
 			safe_print( '    {}={}'.format( k, v if isinstance(v, (int,float)) else '"{}"'.format(v) ) )
-		thread = threading.Thread( target=runServer, kwargs=kwargs )
-		thread.name = 'LLRPServer'
-		thread.daemon = True
+		thread = threading.Thread( target=runServer, kwargs=kwargs, name='LLRPServer'. daemon=True )
 		thread.start()
 		time.sleep( 0.5 )
+		os.environ['has_rfid_reader'] = 'y'
 	
 	connection_good = check_connection( options['host'], options['port'] )
 

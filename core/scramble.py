@@ -1,4 +1,4 @@
-import random
+import secrets
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 SpiceLen = 13
@@ -23,7 +23,7 @@ def encode( s ):
 		return s
 	
 	s = s.encode()
-	enc = [ random.randint(0,255) for i in range(SpiceLen) ]
+	enc = [ secrets.randbelow(256) for i in range(SpiceLen) ]
 	totCur = sum( enc )
 	for i, c in enumerate(s):
 		j = c

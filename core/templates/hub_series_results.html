@@ -125,10 +125,10 @@ table.results-table tr th {
 </table>
 {% endspaceless %}
 {% if has_ignored %}
-	<p class="hidden-print">&#x2717; - {% trans "Result ignored: better result used." %}</p>
+	<p class="hidden-print">&#x2717; - {% trans "Better result used for total." %}</p>
 {% endif %}
 {% if has_upgrades %}
-	<p class="hidden-print">&#x2191; - {% trans "Result from upgrade." %}</p>
+	<p class="hidden-print">&#x2191; - {% trans "From upgrade." %}</p>
 {% endif %}
 {% if series.must_have_completed > 0 %}
 	<p>
@@ -206,7 +206,7 @@ table.results-table tr th {
 {% if series.tie_breaking_rule %}
 	<li>{{series.get_tie_breaking_rule_display}}.  {% trans "If still a tie:" %}</li>
 {% endif %}
-	<li>{% trans "Most recent result." %}</li>
+	<li>{% trans "Most recent event's results." %}</li>
 </ol>
 
 {% if series.ranking_criteria != 1 %}

@@ -92,7 +92,7 @@ class SeriesForm( ModelForm ):
 				Field('tie_breaking_rule'),
 			),
 			Row(
-				HTML( _('Finally, break remaining ties with the most recent result.') ),
+				HTML( _("Finally, break remaining ties by the most recent event's results.") ),
 			),
 			Row( HTML('<hr/>') ),
 			Row(

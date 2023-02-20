@@ -6,7 +6,7 @@
 
 {% block onload %}
 	{% if license_holder or status_entries or errors %}
-		setTimeout(function(){ window.location.href="{{path_noargs}}"; }, 60*1000);
+		setTimeout(function(){ window.location.href="{{path_noargs}}1/"; }, 60*1000);
 	{% endif %}
 	$('img').click(function() {
 		var srcCur = $(this).attr('src');
@@ -25,7 +25,7 @@
 	{% endcomment %}
 	var today = new Date();
 	var tomorrow = new Date(today.getFullYear(),today.getMonth(),today.getDate()+1, 3,14,15,926);
-	setTimeout(function(){ window.location.href="{{path_noargs}}2"; }, tomorrow-today);
+	setTimeout(function(){ window.location.href="{{path_noargs}}2/"; }, tomorrow-today);
 {% endblock onload %}
 
 {% block content %}
@@ -41,6 +41,14 @@ div.title {
     align-items:center;
 }
 
+#submit-id-ok-submit {
+	border: none;
+	background-color: transparent;
+	background-image: url("{% static "images/ok-btn-big.png" %}");
+	width: 150px;
+	height: 150px;
+}
+
 </style>
 <p/>
 <div style="display:none">
@@ -49,8 +57,13 @@ div.title {
 	<img id="cancel-deselect" src="{% static "images/cancel-btn-deselect-big.png" %}" />
 </div>
 <div class="title">
-<h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"/></a> {% trans "Self-Serve" %}
-	{% if rfid_antenna %}{% trans "Antenna" %} {{rfid_antenna}} {% endif %}
+<h3><a href="{{path_noargs}}2"><img src="{% static "images/RaceDB.png" %}" alt="RaceDB"/></a>
+	{% trans "Self-Serve" %}
+	{% if rfid_antenna >= 0 %}
+		{% trans "Antenna" %} {{rfid_antenna}}
+	{% else %}
+		{% trans "USB RFID Reader" %}
+	{% endif %}
 	<a href="{{cancelUrl}}SelfServe/SelfServeQR/"><img src="{% static "images/glyphicons_258_qrcode.png" %}" alt="QRCode"/></a>
 </h3>
 </div>
@@ -59,48 +72,21 @@ div.title {
 	<h2><strong>{{competition.title}}</strong> <span style="font-size: 80%">{{competition.date_range_str}}</span></h2>
 	<hr/>
 {% endif %}
-{% if form %}
-	{% comment %}-------------------------------------------------------------------------------{% endcomment %}
-	{% load crispy_forms_tags %}
-	{% crispy form %}
-{% elif confirm_logout %}
-	{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+{% if confirm_logout %}
+	{# ------------------------------------------------------------------------------- #}
 	<h2>{% trans "Leave Self-Serve" %}</h2>
 	<h3>{% trans "Are you sure?" %}</h3>
 	<br/>
-	<a href="{{path_noargs}}3"><img src="{% static "images/ok-btn-big.png" %}"/></a>
+	<a href="{{path_noargs}}3/" autofocus><img src="{% static "images/ok-btn-big.png" %}"/></a>
 	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-	<a href="{{path_noargs}}"><img src="{% static "images/cancel-btn-big.png" %}"/></a>
+	<a href="{{path_noargs}}" autofocus><img src="{% static "images/cancel-btn-big.png" %}"/></a>
+{% elif form and not errors %}
+	{# -------------------------------------------------------------------------------#}
+	{% load crispy_forms_tags %}
+	{% crispy form %}
 {% else %}
-	{% comment %}-------------------------------------------------------------------------------{% endcomment %}
-	{% if not do_scan and not errors %}
-		<h2>{% trans "Read RFID Tag" %}</h2>
-		<br/>
-		<h4>{% trans "Hold RFID tag to Antenna and press SCAN" %}</h4>
-		<br/>
-		<a href="{{path_noargs}}1"><img src="{% static "images/scan-btn-big.png" %}"/></a>	
-	{% elif status_entries %}
-		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
-		<div class="alert alert-danger">
-			<h3>{% trans "Tag Read Failure" %}</h3>
-			<br/>
-			<h4>{% trans "Please try again." %}</h4>
-			<br/>
-			<h4>{% trans "If it still doesn't work, you MUST see the registration desk." %}</h4>
-		</div>
-		<br/>
-		<dl>
-		{% for se in status_entries %}
-			<dt>{{se.0}}</dt>
-			{% for line in se.1 %}
-				<dd>{{line|linebreaks}}</dd>
-			{% endfor %}
-		{% endfor %}
-		</dl>
-		<br/>
-		<a href="{{path_noargs}}"><img src="{% static "images/ok-btn-big.png" %}"/></a>
-	{% elif errors %}
-		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+	{% if errors %}
+		{# -------------------------------------------------------------------------------#}
 		{% if license_holder %}
 			{% with h=license_holder %}
 				<h2>{{h.first_name}} {{h.last_name}}</h2>
@@ -137,9 +123,29 @@ div.title {
 			</ul>
 		{% endif %}
 		<br/>
-		<a href="{{path_noargs}}"><img src="{% static "images/ok-btn-big.png" %}"/></a>
+		<a href="{{path_noargs}}1/" autofocus><img src="{% static "images/ok-btn-big.png" %}"/></a>
+	{% elif status_entries %}
+		{# -------------------------------------------------------------------------------#}
+		<div class="alert alert-danger">
+			<h3>{% trans "Tag Read Failure" %}</h3>
+			<br/>
+			<h4>{% trans "Please try again." %}</h4>
+			<br/>
+			<h4>{% trans "If it still doesn't work, you MUST see the Registration Desk." %}</h4>
+		</div>
+		<br/>
+		<dl>
+		{% for se in status_entries %}
+			<dt>{{se.0}}</dt>
+			{% for line in se.1 %}
+				<dd>{{line|linebreaks}}</dd>
+			{% endfor %}
+		{% endfor %}
+		</dl>
+		<br/>
+		<a href="{{path_noargs}}1/"><img src="{% static "images/ok-btn-big.png" %}"/></a>
 	{% elif license_holder %}
-		{% comment %}-------------------------------------------------------------------------------{% endcomment %}
+		{# -------------------------------------------------------------------------------#}
 		{% with h=license_holder %}
 			<h2>{{h.first_name}} {{h.last_name}}</h2>
 			<h4 style="margin-left: 30px;">
@@ -202,7 +208,13 @@ div.title {
 		{% endif %}
 		<h4>{% trans "If any information is incorrect, see the registration desk." %}</h4>
 		<br/>
-		<a href="{{path_noargs}}"><img src="{% static "images/ok-btn-big.png" %}"/></a>
+		<a href="{{path_noargs}}1/" autofocus><img src="{% static "images/ok-btn-big.png" %}"/></a>
+	{% elif not do_scan and rfid_antenna != -1 %}
+		<h2>{% trans "Read RFID Tag" %}</h2>
+		<br/>
+		<h4>{% trans "Hold RFID tag to Antenna and press SCAN" %}</h4>
+		<br/>
+		<a href="{{path_noargs}}1/" autofocus><img src="{% static "images/scan-btn-big.png" %}"/></a>
 	{% endif %}
 {% endif %}
 

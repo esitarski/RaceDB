@@ -9,6 +9,7 @@ Get started with RaceDB
 * [Teams][]
 * [Legal Entities][]
 * [Series][]
+* [RFID][]
 
 ## Structure Data
 

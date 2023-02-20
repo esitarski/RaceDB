@@ -249,8 +249,10 @@ function onLoad()
 		});
 	}
 	
-	// Check for keyboard focus exception.
-	if( document.getElementById("focus") )
+	// Check for tag and keyboard focus exception.
+	if( document.getElementById("id_rfid_tag") )
+		document.getElementById("id_rfid_tag").focus();	// Make sure tag fields always get focus so auto-enter works.
+	else if( document.getElementById("focus") )
 		document.getElementById("focus").focus();
 	else {
 		// Give the first visible form field the keyboard focus.

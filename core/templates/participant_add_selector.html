@@ -9,7 +9,7 @@
 	</li>
 	<li role="presentation" {% if add_by_barcode %}class="active"{% endif %}>
 		<a href="{{cancelUrl}}ParticipantBarcodeAdd/{{competition.id}}/">
-			<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "Barcode/License Add" %}
+			<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID/License/UCIID/Barcode Add" %}
 		</a>
 	</li>
 	<li role="presentation" {% if add_by_bib %}class="active"{% endif %}>
@@ -17,7 +17,7 @@
 			<img src="{% static "images/bib_icon_blue.png" %}"/>&nbsp;&nbsp;{% trans "Bib Add" %}
 		</a>
 	</li>
-{% if competition.using_tags %}
+{% if competition.using_tags and competition.has_rfid_reader %}
 	<li role="presentation" {% if add_by_rfid %}class="active"{% endif %}>
 		<a href="{{cancelUrl}}ParticipantRfidAdd/{{competition.id}}/">
 			<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;&nbsp;{% trans "RFID Add" %}
@@ -30,7 +30,7 @@
 	{% if add_by_manual %}
 		<img src="{% static "images/glyphicons_006_user_add_blue.png" %}"/>&nbsp;
 	{% elif add_by_barcode %}
-		<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;
+		<img src="{% static "images/glyphicons_065_tag_blue.png" %}"/>&nbsp;<img src="{% static "images/glyphicons_259_barcode_blue.png" %}"/>&nbsp;
 	{% elif add_by_bib %}
 		<img src="{% static "images/bib_icon_blue.png" %}"/>&nbsp;
 	{% elif add_by_rfid %}	
