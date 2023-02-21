@@ -7,6 +7,7 @@ from heapq import heappush
 import datetime
 import base64
 import operator
+import secrets
 import random
 import itertools
 from collections import defaultdict
@@ -15,7 +16,7 @@ import locale
 
 from django.db import models, connection
 from django.db import transaction, IntegrityError
-from django.db.models import Q, F, Max, Count
+from django.db.models import Q, F, Max, Count, Index
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -105,6 +106,24 @@ def getSrcStr( fname ):
 
 KmToMiles = 0.621371192
 MilesToKm = 1.0 / KmToMiles
+
+def has_rfid_reader():
+	return 'has_rfid_reader' in os.environ
+	
+def bulk_update_if_different( cls, objs, field, value ):
+	to_update = []
+	for o in objs:
+		if getattr(o, field) != value:
+			setattr( o, field, value )
+			to_update.append( o )
+	if to_update:
+		cls.objects.bulk_update( to_update, [field] )
+
+def attrsetter( attr, value ):
+	def f( o ):
+		setattr( o, attr, value )
+		return o
+	return f
 
 #----------------------------------------------------------------------------------------
 def getCopyName( ModelClass, cur_name ):
@@ -290,7 +309,7 @@ class SystemInfo(models.Model):
 	
 	@classmethod
 	def get_tag_template_default( cls ):
-		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in range(4))
+		rs = ''.join( secrets.choice('123456789ABCDEF') for i in range(4) )
 		tt = '{}######{:02}'.format( rs, datetime.datetime.now().year % 100 )
 		return tt
 	
@@ -882,6 +901,9 @@ class Competition(models.Model):
 			types = ['('] + types + [')']
 			return format_lazy( '{}'*len(types), *types )
 		return ''
+		
+	def has_rfid_reader( self ):
+		return has_rfid_reader()
 	
 	def to_local_speed( self, kmh ):
 		return kmh if self.distance_unit == 0 else kmh * 0.621371
@@ -1100,16 +1122,23 @@ class Competition(models.Model):
 	def sync_tags( self ):
 		if self.using_tags and self.use_existing_tags:
 			qtag = self.get_participants().exclude( Q(tag=F('license_holder__existing_tag')) & Q(tag2=F('license_holder__existing_tag2')) )
-			if qtag.exists():
-				qtag.update( tag=None, tag2=None )
-				with transaction.atomic():
-					for p in qtag.select_related('license_holder'):
-						p.tag  = p.license_holder.existing_tag
-						p.tag2 = p.license_holder.existing_tag2
-						p.save()
+			participants_to_update = list( qtag.select_related('license_holder') )
+			if participants_to_update:
+				for p in participants_to_update:
+					p.tag  = p.license_holder.existing_tag
+					p.tag2 = p.license_holder.existing_tag2
+				Participants.objects.bulk_update( participants_to_update, ['tag', 'tag2'] )
 				return True
 		return False
-			
+	
+	def filter_by_tag( self, tag ):
+		''' Return all Participants with the given tag. '''
+		if not self.using_tags:
+			return Participant.objects.none()
+		if self.use_existing_tags:
+			return self.get_participants().filter( license_holder__id__in=get_ids(LicenseHolder.filter_by_tag(tag), 'license_holder') )
+		return self.get_participants().filter( Q(tag=tag) | Q(tag2=tag) )
+	
 	def get_available_categories( self, license_holder, gender=None, participant_exclude=None ):
 		categories_remaining = Category.objects.filter( format=self.category_format )
 		if gender is None:
@@ -2303,7 +2332,7 @@ def validate_postal_code( postal ):
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
 
 def random_temp_license( prefix = 'TEMP_'):
-	return '{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in range(15)) )
+	return '{}{}'.format( prefix, ''.join(secrets.choice('0123456789') for i in range(15)) )
 
 def format_phone( phone ):
 	if len(phone) == len('AAA333NNNN') and phone.isdigit():
@@ -2838,6 +2867,10 @@ class LicenseHolder(models.Model):
 		tags = [t[:8] + '...' if t and len(t) > 8 else t for t in tags]
 		return '{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or '')
 	
+	@staticmethod
+	def filter_by_tag( tag ):
+		return Licenseholder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) )
+	
 	class Meta:
 		verbose_name = _('LicenseHolder')
 		verbose_name_plural = _('LicenseHolders')
@@ -2862,7 +2895,20 @@ def add_name_to_tag( competition, tag ):
 	if bibs:
 		s.extend( ['; ', _('Bib'), ' ', ', '.join( '{}'.format(b) for b in bibs )] )
 	return format_lazy( '{}'*len(s), *s )
-		
+
+'''
+#---------------------------------------------------------------------------------------------------------
+class PermanentRFIDTag( models.Model ):
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name=_('LicenseHolder'), on_delete=models.CASCADE )
+	tag=models.CharField( max_length=36, verbose_name=_('Tag') )
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['license_holder__search_text', 'created_at']
+		verbose_name = _('PermanentRFIDTag')
+		verbose_name_plural = _('PermanentRFIDTags')
+'''
+
 #---------------------------------------------------------------
 class Waiver(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
@@ -3591,8 +3637,8 @@ class Participant(models.Model):
 	
 	bib=models.PositiveIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
 	
-	tag=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag') )
-	tag2=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag2') )
+	tag=models.CharField( max_length=36, null=True, blank=True, db_index=True, verbose_name=_('Tag') )
+	tag2=models.CharField( max_length=36, null=True, blank=True, db_index=True, verbose_name=_('Tag2') )
 	tag_checked=models.BooleanField( default=False, verbose_name=_('Tag Checked') )
 
 	license_checked=models.BooleanField( default=False, verbose_name=_('License Checked') )
@@ -4449,6 +4495,7 @@ class Participant(models.Model):
 		ordering = ['license_holder__search_text']
 		verbose_name = _('Participant')
 		verbose_name_plural = _('Participants')
+
 
 #---------------------------------------------------------------------------------------------------------
 
@@ -5861,10 +5908,10 @@ def bad_data_test():
 		first_name = '00-TEST-FIRST-NAME',
 		date_of_birth = timezone.localtime(timezone.now()).date(),
 	
-		license_code = '0000{}'.format( random.randint(0,10000) ),
+		license_code = '0000{}'.format( secrets.randbelow(10000) ),
 	
-		existing_tag = '0000{}'.format( random.randint(0,10000) ),
-		existing_tag2 = '0000{}'.format( random.randint(0,10000) ),
+		existing_tag = '0000{}'.format( secrets.randbelow(10000) ),
+		existing_tag2 = '0000{}'.format( secrets.randbelow(10000) ),
 	)
 	
 	# Use bulk create to avoid calling the save method (otherwise data validation would take place)

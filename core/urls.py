@@ -21,6 +21,7 @@ from core import custom_category
 from core import callups
 from core import custom_label
 from core import competition_category_option
+from core import competition_found_tag
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -47,7 +48,7 @@ urlpatterns = [
 	re_path(r'^.*Hub/SeriesCategoryResults/(?P<seriesId>\d+)/(?P<categoryId>\d+)/(?P<customCategoryIndex>\d+)/$', hub.SeriesCategoryResults),
 	
 	re_path(r'^.*SelfServe/$', self_serve.SelfServe),
-	re_path(r'^.*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
+	re_path(r'^.*SelfServe/(?P<action>\d+)/$', self_serve.SelfServe),
 	re_path(r'^.*SelfServe/4/SelfServeSignature/$', self_serve.SelfServeSignature),
 	re_path(r'^.*SelfServe/SelfServeQR/$', self_serve.SelfServeQRCode),
 	
@@ -97,6 +98,11 @@ urlpatterns = [
 	re_path(r'^.*ParticipantsResetTags/(?P<competitionId>\d+)/$', participant.ParticipantsResetTags),
 	re_path(r'^.*ParticipantsResetTags/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', participant.ParticipantsResetTags),
 
+	re_path(r'^.*ParticipantTagChangeUSBReader/(?P<participantId>\d+)/$', participant.ParticipantTagChangeUSBReader),
+	re_path(r'^.*ParticipantTagChangeUSBReader/(?P<participantId>\d+)/(?P<action>\d+)/$', participant.ParticipantTagChangeUSBReader),
+	
+	re_path(r'^.*CompetitionFoundTag/(?P<competitionId>\d+)/$', competition_found_tag.CompetitionFoundTag),
+	re_path(r'^.*CompetitionFoundTag/(?P<competitionId>\d+)/(?P<rfid_tag>[^/]+)/(?P<action>\d+)/$', competition_found_tag.CompetitionFoundTag),
 	
 	re_path(r'^.*CategoryNumbers/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersDisplay),
 	re_path(r'^.*CategoryNumbersNew/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersNew),

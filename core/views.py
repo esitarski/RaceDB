@@ -549,7 +549,7 @@ def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confir
 #--------------------------------------------------------------------------
 @autostrip
 class BarcodeScanForm( Form ):
-	scan = forms.CharField( required = False, label = _('Barcode (License Code, RFID Tag or UCI ID)') )
+	scan = forms.CharField( required = False, label = _('RFID Tag, License Code, UCI ID or Barcode') )
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
@@ -559,12 +559,11 @@ class BarcodeScanForm( Form ):
 		self.helper.form_action = '.'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
-		button_args = [
-			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
-			CancelButton(),
-		]
-		if hide_cancel_button:
-			button_args = button_args[:-1]
+		button_args = [Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' )]
+		if not hide_cancel_button:
+			button_args.append( CancelButton() )
+			
+		print( 'hide_cancel_button=', hide_cancel_button )
 		
 		self.helper.layout = Layout(
 			Row(
@@ -603,12 +602,9 @@ class RfidScanForm( Form ):
 		self.helper.form_action = '.'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
-		button_args = [
-			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary  btn-lg', id='focus' ),
-			CancelButton(),
-		]
-		if hide_cancel_button:
-			button_args = button_args[:-1]
+		button_args = [Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary  btn-lg', id='focus' )]
+		if not hide_cancel_button:
+			button_args.append( CancelButton() )
 			
 		self.helper.layout = Layout(
 			Row( *(button_args + [HTML('&nbsp;'*12), Field('rfid_antenna')]) ),

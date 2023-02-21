@@ -1,5 +1,5 @@
 import os
-from random import seed, randint
+from secrets import randbelow
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 racedb_secret_fname = os.path.join( os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'RaceDBSecret.txt' )
@@ -17,20 +17,19 @@ def get_secret_authorization():
 	username, password = get_secret_key()
 	
 	a = '{}:{}'.format(username, password)
-	k = randint(0,127)
+	k = randbelow(128)
 	def add_k( c ):
 		return chr((ord(c)+k)%127)
 	
 	ac = [chr(k)]
-	seed()
 	for i in range(4):
-		ac.append( chr(randint(0,127)) )
+		ac.append( chr(randbelow(128)) )
 	for c in a:
-		for i in range(randint(0,2)):
-			ac.append( add_k(chr(randint(0,7))) )
+		for i in range(randbelow(3)):
+			ac.append( add_k(chr(randbelow(7))) )
 		ac.append( add_k(c) )
-	for i in range(randint(0,4)):
-		ac.append( add_k(chr(randint(0,7))) )
+	for i in range(randbelow(5)):
+		ac.append( add_k(chr(randbelow(8))) )
 	return 'Basic ' + urlsafe_b64encode(''.join(ac).encode()).decode()
 	
 def validate_secret_authorization( a ):

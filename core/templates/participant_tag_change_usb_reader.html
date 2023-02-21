@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+<h2>{{title}}</h2>
+<br/>
+<h2><strong>{{participant.license_holder.full_name}}</strong></h2>
+{% if participant.team %}
+	<h2>{% trans "Team"%}: <strong>{{participant.team.name}}</strong>
+	</h2>
+{% endif %}
+{% if participant.category %}
+	<h2>{% trans "Category" %}: <strong>{{participant.category.code}}:</strong>
+	{{participant.category.description}}, {{participant.category.get_gender_display}}
+	</h2>
+{% endif %}
+<br/>
+<h3>{% trans "Tag 1" %}: {{rfid_tag1}}</h3>
+<h3>{% trans "Tag 2" %}: {{rfid_tag2}}</h3>
+<hr/>
+
+{# Handle actions, tag read and status in one template. #}
+{% if not status_entries %}
+
+	{% if action < 0 %}		{# Show the actions #}
+		<a href="{{path_noargs}}{{participant.id}}/0/" class="btn btn-success">{% trans "Validate Tag" %}</a>
+		<a href="{{path_noargs}}{{participant.id}}/1/" class="btn btn-primary" style="margin-left: 20px">{% trans "Issue Tag 1" %}</a>
+		<a href="{{path_noargs}}{{participant.id}}/2/" class="btn btn-warning" style="margin-left: 20px">{% trans "Issue Tag 2" %}</a>
+		<hr/>
+		<a href="{{cancelUrl}}" class="btn btn-primary">{% trans "OK" %}</a>
+	{% else %}
+		{% crispy form %}	{# Read tag for the required action #}
+	{% endif %}
+	
+{% else %}				{# Show status messages #}
+
+	<div class="alert {% if status %} alert-success {% else %} alert-danger {% endif %}" >
+		<h2>{% if status %}{% trans "Success" %} {% else %} {% trans "Failure" %} {% endif %}</h2>
+		<br/>
+		<dl style="font-size:110%;">
+		{% for se in status_entries %}
+			<dt>{{se.0}}</dt>
+			<dd>&nbsp</dd>
+			{% for line in se.1 %}
+				<dd>{{line|linebreaks}}</dd>
+			{% endfor %}
+			<br/>
+		{% endfor %}
+		</dl>
+	</div>
+	
+	<hr/>
+	<a class="btn btn-primary" href="{{path_actions}}" autofocus>{% trans "OK" %}</a>
+	
+{% endif %}
+{% endblock content %}

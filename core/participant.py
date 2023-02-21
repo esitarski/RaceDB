@@ -383,7 +383,7 @@ def ParticipantBibAdd( request, competitionId ):
 	
 	add_by_bib = True
 	if request.method == 'POST':
-		form = BibScanForm( request.POST, hide_cancel_button=True )
+		form = BibScanForm( request.POST )
 		if form.is_valid():
 			bib = form.cleaned_data['bib']
 			if not bib:
@@ -397,7 +397,7 @@ def ParticipantBibAdd( request, competitionId ):
 				
 			return render( request, 'participant_scan_error.html', locals() )			
 	else:
-		form = BibScanForm( hide_cancel_button=True )
+		form = BibScanForm()
 	
 	return render( request, 'participant_add_bib.html', locals() )
 
@@ -1303,7 +1303,6 @@ def ParticipantWaiverChange( request, participantId ):
 @autostrip
 class ParticipantTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
-	make_this_existing_tag = forms.BooleanField( required = False, label = _('Rider keeps tag for other races') )
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna') )
 	
 	def __init__(self, *args, **kwargs):
@@ -1328,7 +1327,6 @@ class ParticipantTagForm( Form ):
 			Row( HTML('<hr style="margin:32px"/>') ),
 			Row(
 				Col( Field('tag', rows='2', cols='60'), 5 ),
-				Col( Field('make_this_existing_tag'), 4 ),
 				Col( Field('rfid_antenna'), 3 ),
 			),
 			HTML( '<br/>' ),
@@ -1351,11 +1349,16 @@ class ParticipantTagForm( Form ):
 
 def get_bits_from_hex( s ):
 	return len(s or '') * 4
-		
+
 @access_validation()
 def ParticipantTagChange( request, participantId ):
 	participant = get_participant( participantId )
 	competition = participant.competition
+	
+	if not competition.has_rfid_reader():
+		return ParticipantTagChangeUSBReader( request, participantId, participant=participant )
+	
+	make_this_existing_tag = competition.use_existing_tags
 	license_holder = participant.license_holder
 	system_info = SystemInfo.get_singleton()
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
@@ -1385,9 +1388,9 @@ def ParticipantTagChange( request, participantId ):
 			return False
 		return True
 
-	def check_unique_tag( tag, make_this_existing_tag ):
+	def check_unique_tag( tag ):
 		if make_this_existing_tag:
-			lh = LicenseHolder.objects.filter( existing_tag=tag ).exclude( pk=license_holder.pk ).first()
+			lh = LicenseHolder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) ).exclude( pk=license_holder.pk ).first()
 			if lh:
 				status_entries.append(
 					(_('Duplicate Tag'), (
@@ -1396,7 +1399,7 @@ def ParticipantTagChange( request, participantId ):
 					)),
 				)
 				return False
-		p = Participant.objects.filter( competition=competition, tag=tag ).exclude( license_holder=license_holder ).first()
+		p = Participant.objects.filter( competition=competition ).filter( Q(tag=tag) | Q(tag2=tag) ).exclude( license_holder=license_holder ).first()
 		if p:
 			status_entries.append(
 				(_('Duplicate Tag'), (
@@ -1441,7 +1444,6 @@ def ParticipantTagChange( request, participantId ):
 		if form.is_valid():
 
 			tag = form.cleaned_data['tag'].strip().upper()
-			make_this_existing_tag = form.cleaned_data['make_this_existing_tag']
 			rfid_antenna = request.session['rfid_antenna'] = int(form.cleaned_data['rfid_antenna'])
 			
 			if 'check-tag-submit' in request.POST:
@@ -1501,7 +1503,6 @@ def ParticipantTagChange( request, participantId ):
 					status_entries.append(
 						(_('Non-Hex Characters in Tag'), (
 							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
-							_('Please change the Tag to all hexadecimal.'),
 						)),
 					)
 			
@@ -1511,12 +1512,14 @@ def ParticipantTagChange( request, participantId ):
 				return render( request, 'rfid_write_status.html', locals() )
 			
 			participant.tag = tag
+			participant.tag2 = None
 			status &= participant_save( participant )
 			if not status:
 				return render( request, 'rfid_write_status.html', locals() )
 			
-			if make_this_existing_tag and license_holder.existing_tag != tag:
+			if make_this_existing_tag and license_holder.existing_tag != tag and license_holder.existing_tag2 != None:
 				license_holder.existing_tag = tag
+				license_holder.existing_tag2 = None
 				try:
 					license_holder.save()
 				except Exception as e:
@@ -1560,6 +1563,169 @@ def ParticipantTagChange( request, participantId ):
 	
 #-----------------------------------------------------------------------
 
+@autostrip
+class ParticipantTagUSBReaderForm( Form ):
+	rfid_tag = forms.CharField( max_length=24, label=_('Tag') )
+	
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-success' ),
+			CancelButton(),
+		]
+		
+		self.helper.layout = Layout(
+			Row(
+				Col( Field('rfid_tag', size='40'), 6 ),
+			),
+			HTML( '<br/>' ),
+			Row( 
+				button_args[0],
+				HTML( '&nbsp;' * 5 ),
+				button_args[1],
+			),
+		)
+
+@access_validation()
+def ParticipantTagChangeUSBReader( request, participantId, action=-1, participant=None ):
+	participant = participant or get_participant( participantId )
+	competition = participant.competition
+	make_this_existing_tag = competition.use_existing_tags
+	license_holder = participant.license_holder
+	system_info = SystemInfo.get_singleton()
+	validate_success = False
+	status = True
+	status_entries = []
+	
+	action = int(action)
+	
+	path_noargs = getContext(request, 'cancelUrl') + 'ParticipantTagChangeUSBReader/'
+	path_actions = '{}{}/'.format(path_noargs, participantId)
+	
+	rfid_tag1 = license_holder.existing_tag  if competition.use_existing_tags else participant.tag
+	rfid_tag2 = license_holder.existing_tag2 if competition.use_existing_tags else participant.tag2
+	
+	if action < 0:
+		title = _("RFID USB Reader")
+		return render( request, 'participant_tag_change_usb_reader.html', locals() )
+	else:
+		title = [_("Validate Tag"), _("Issue Tag 1"),_("Issue Tag 2")][action]
+
+	def check_unique_tag( tag ):
+		if make_this_existing_tag:
+			lh = LicenseHolder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) ).exclude( pk=license_holder.pk ).first()
+			if lh:
+				status_entries.append(
+					(_('Duplicate Tag'), (
+						_('Tag in use by LicenseHolder.'),
+						lh.__repr__(),
+					)),
+				)
+				return False
+		p = Participant.objects.filter( competition=competition ).filter( Q(tag=tag) | Q(tag2=tag) ).exclude( license_holder=license_holder ).first()
+		if p:
+			status_entries.append(
+				(_('Duplicate Tag'), (
+					_('Tag in use by Participant.'),
+					p.license_holder.__repr__(),
+				)),
+			)
+			return False
+		return True
+
+	def participant_save( particiant ):
+		try:
+			participant.auto_confirm().save()
+		except IntegrityError as e:
+			# Report the error - probably a non-unique field.
+			has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
+			status_entries.append(
+				(_('Participant Save Failure'), (
+					'{}'.format(e),
+				)),
+			)
+			return False
+		return True
+		
+	def license_holder_save( license_holder ):
+		try:
+			license_holder.save()
+			return True
+		except Exception as e:
+			# Report the error - probably a non-unique field.
+			status_entries.append(
+				(
+					format_lazy('{}: {}', _('LicenseHolder'), _('Save Exception:')),
+					('{}'.format(e),)
+				),
+			)
+			return False
+			
+	if request.method == 'POST':
+		form = ParticipantTagUSBReaderForm( request.POST )
+		if form.is_valid():
+
+			rfid_tag = form.cleaned_data['rfid_tag'].upper().lstrip('0')
+			
+			if system_info.tag_all_hex and not utils.allHex(rfid_tag):
+				status = False
+				status_entries.append(
+					(_('Non-Hex Characters in Tag'), (
+						_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
+					)),
+				)
+			
+			status &= check_unique_tag( rfid_tag )
+			
+			if status:
+				if action == 0:			# Validate tag.
+					if make_this_existing_tag:
+						validate_success = (license_holder.existing_tag == rfid_tag or license_holder.existing_tag2 == rfid_tag)
+					else:
+						validate_success = (participant.tag == rfid_tag or participant.tag2 == rfid_tag)
+					if not validate_success:
+						status = False
+						status_entries.append(
+							(_('Tag Validation Failure'), [_("***DOES NOT MATCH PARTICIPANT***"),] ),
+						)
+					else:
+						status_entries.append(
+							(_('Tag Validation Success'), [_("***MATCHES PARTICIPANT***"),] ),
+						)
+					if participant.tag_checked != validate_success:
+						participant.tag_checked = validate_success
+						status &= participant_save( participant )
+					
+				elif action == 1 or action == 2:		# Issue tag
+					status &= check_unique_tag( rfid_tag )
+					if status:
+						participant.tag_checked = True
+						if action == 1:
+							participant.tag = rfid_tag
+						else:
+							participant.tag2 = rfid_tag
+						status &= participant_save( participant )
+						
+						if status and make_this_existing_tag:
+							if action == 1:
+								license_holder.existing_tag = rfid_tag
+							else:
+								license_holder.existing_tag2 = rfid_tag
+							status &= license_holder_save( license_holder )
+							
+			if not status_entries:
+				return HttpResponseRedirect(path_actions)
+	
+	form = ParticipantTagUSBReaderForm( initial={'rfid_tag':''} )
+		
+	return render( request, 'participant_tag_change_usb_reader.html', locals() )
+	
+#-----------------------------------------------------------------------
 @autostrip
 class ParticipantSignatureForm( Form ):
 	signature = forms.CharField( required = False, label = _('Signature') )
@@ -1643,7 +1809,7 @@ def ParticipantBarcodeAdd( request, competitionId ):
 	
 	add_by_barcode = True
 	if request.method == 'POST':
-		form = BarcodeScanForm( request.POST, hide_cancel_button=True )
+		form = BarcodeScanForm( request.POST )
 		if form.is_valid():
 			scan = form.cleaned_data['scan'].strip()
 			if not scan:
@@ -1661,7 +1827,7 @@ def ParticipantBarcodeAdd( request, competitionId ):
 			
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
-		form = BarcodeScanForm( hide_cancel_button=True )
+		form = BarcodeScanForm()
 		
 	return render( request, 'participant_scan_form.html', locals() )
 

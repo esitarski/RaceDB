@@ -294,18 +294,22 @@ python dependencies.py
 
   RaceDB does not require the internet while it is running.
 
+  It is not necessary for RaceDB to be connected to an rfid reader (eg. Impinj).  Rather, you can use relatively inexpensive (UHF USB Readers)[https://www.amazon.ca/s?k=usb+rfid+reader+uhf+epc&sprefix=uhf+usb+%2Caps%2C99&ref=nb_sb_ss_ts-doa-p_1_8] that work in the 902-928MHz range (don't get the 13.56MHz ones - these won't work).
+  With these readers, you can issue pre-programmed tags, revoke lost tags for reuse, and enable self-checking for races using RFID tags from any computer, tablet or smart phone connnected to the RaceDB network.
+
+  You can still run RaceDB with a traditional RFID reader with RaceDB, you must first open port 5084 on your operating system.
+  
   To start RaceDB and connect to an Impinj RFID reader, use the following command:
 
 ```
   python manage.py launch --rfid_reader
 ```
 
-  You must open port 5084 on your operating system.
-  
   When RaceDB comes up, login with username="super", password="super". This will log you into the system with superuser capabilities, which you will need to configure races.
  
   To see all possible "launch" command options, do:
-
+  
+  
 ``` 
   python manage.py launch --help
 ```

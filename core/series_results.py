@@ -46,7 +46,7 @@ class EventResult( object ):
 		
 	@property
 	def status_rank( self ):
-		return self.rank if self.status == 0 else 999999
+		return self.rank if self.status == 0 else 99999		# 0 == Result.cFinisher
 	
 	@property
 	def rank_text( self ):
@@ -232,7 +232,7 @@ def series_results( series, categories, eventResults ):
 		return [], []
 	eventResults.sort( key=operator.attrgetter('event.date_time', 'event.name', 'rank') )
 	
-	# Assign a sequence number to the events.
+	# Assign a sequence number to the events in increasing date_time order.
 	events = sorted( set(rr.event for rr in eventResults), key=operator.attrgetter('date_time') )
 	eventSequence = {e:i for i, e in enumerate(events)}
 	
@@ -267,7 +267,7 @@ def series_results( series, categories, eventResults ):
 			if len(iResults) > bestResultsToConsider:
 				if scoreByTime:
 					iResults.sort( key=(lambda x: (x[1].value_for_rank, x[0])) )
-				else:
+				else:	# scoreByPoints
 					iResults.sort( key=(lambda x: (-x[1].value_for_rank, x[0])) )
 				for i, rr in iResults[bestResultsToConsider:]:
 					lhValue[lh] -= rr.value_for_rank
@@ -276,13 +276,14 @@ def series_results( series, categories, eventResults ):
 
 	lhGap = {}
 	if scoreByTime:
-		# Sort by decreasing events completed, then increasing time.
-		lhOrder.sort( key = lambda r: tuple(itertools.chain(
-				[-lhEventsCompleted[r], lhValue[r]],
-				[-lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1)],
-				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
-			))
-		)
+		def sort_key( r ):
+			key = [-lhEventsCompleted[r], lhValue[r]]											# Decreasing events completed, then increasing time.
+			key.extend( -lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1) )			# Decreasing count for each finish place.
+			key.extend( (rr.status_rank if rr else 9999999) for rr in reversed(lhResults[r]) )	# Reverse last rank.  If didn't participate, rank at 9999999.
+			return key
+		
+		lhOrder.sort( key=sort_key )
+		
 		# Compute the time gap.
 		if lhOrder:
 			leader = lhOrder[0]
@@ -290,15 +291,16 @@ def series_results( series, categories, eventResults ):
 			leaderEventsCompleted = lhEventsCompleted[leader]
 			lhGap = { r : lhValue[r] - leaderValue if lhEventsCompleted[r] == leaderEventsCompleted else None for r in lhOrder }
 	
-	else:
-		# Sort by decreasing value.
-		lhOrder.sort( key = lambda r: tuple(itertools.chain(
-				[-lhValue[r]],
-				([-lhEventsCompleted[r]] if considerMostEventsCompleted else []),
-				[-lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1)],
-				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
-			))
-		)
+	else:	# Score by points.
+		def sort_key( r ):
+			key = [-lhValue[r]]																	# Decreasing points (adjusted for best events).
+			if considerMostEventsCompleted:
+				key.append( -lhEventsCompleted[r] )												# Events completed.
+			key.extend( -lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1) ) 			# Decreasing count for each finish place.
+			key.extend( (rr.status_rank if rr else 9999999) for rr in reversed(lhResults[r]) )	# Reverse last rank.  If didn't participate, rank at 9999999.
+			return key
+		
+		lhOrder.sort( key=sort_key )
 		
 		# Compute the gap.
 		lhGap = {}
