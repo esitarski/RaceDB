@@ -17,10 +17,10 @@ ENV DATABASE_USER=racedb
 ENV TESTING=0
 
 # Set out hostname for avahi
+# alpine creates a postgres user and group automatically
 RUN echo "racedb.local" > /etc/hostname && \
     mkdir -p /RaceDB && \
     mkdir -p /docker-entrypoint-init.d/ && \
-    adduser -G postgres -s /bin/bash postgres && \
     adduser -s /bin/bash racedb
 
 # Copy in our source code
