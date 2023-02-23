@@ -1,7 +1,7 @@
 FROM python:3.10-alpine
 
-RUN apt-get update \
-  && apt-get install -y \
+RUN apk update \
+  && apk add \
     vim.tiny \
     postgresql-client
 # Add this back in when we figure out how to use host networking
