@@ -1,8 +1,8 @@
 FROM python:3.10-alpine
 
-RUN apt-get update \
-  && apt-get install -y \
-    vim.tiny \
+RUN apk update \
+  && apk add \
+    vim \
     postgresql-client
 # Add this back in when we figure out how to use host networking
 #    avahi-daemon \
