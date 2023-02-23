@@ -1,7 +1,9 @@
 FROM python:3.10-alpine
 
+# Add modules not included in the default alpine container.
 RUN apk update \
   && apk add \
+    git \
     vim \
     postgresql-client
 # Add this back in when we figure out how to use host networking
@@ -17,7 +19,7 @@ ENV DATABASE_USER=racedb
 ENV TESTING=0
 
 # Set out hostname for avahi
-# alpine creates a postgres user and group automatically
+# alpine creates a postgres user and group automatically so we don't have to do it here.
 RUN echo "racedb.local" > /etc/hostname && \
     mkdir -p /RaceDB && \
     mkdir -p /docker-entrypoint-init.d/ && \
