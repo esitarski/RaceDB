@@ -2,7 +2,7 @@ FROM python:3.10-alpine
 
 RUN apk update \
   && apk add \
-    vim.tiny \
+    vim \
     postgresql-client
 # Add this back in when we figure out how to use host networking
 #    avahi-daemon \
