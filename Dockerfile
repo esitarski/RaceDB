@@ -20,7 +20,7 @@ ENV TESTING=0
 RUN echo "racedb.local" > /etc/hostname && \
     mkdir -p /RaceDB && \
     mkdir -p /docker-entrypoint-init.d/ && \
-    adduser -N -g postgres -s /bin/bash postgres && \
+    adduser -G postgres -s /bin/bash postgres && \
     adduser -s /bin/bash racedb
 
 # Copy in our source code
