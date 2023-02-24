@@ -5,7 +5,8 @@ RUN apk update \
   && apk add \
     git \
     vim \
-    postgresql-client
+    postgresql-client \
+    bash
 # Add this back in when we figure out how to use host networking
 #    avahi-daemon \
 

@@ -138,7 +138,7 @@ def launch_server( command, **options ):
 		safe_print( 'Launching RFID server thread...' )
 		for k, v in kwargs.items():
 			safe_print( '    {}={}'.format( k, v if isinstance(v, (int,float)) else '"{}"'.format(v) ) )
-		thread = threading.Thread( target=runServer, kwargs=kwargs, name='LLRPServer'. daemon=True )
+		thread = threading.Thread( target=runServer, kwargs=kwargs, name='LLRPServer', daemon=True )
 		thread.start()
 		time.sleep( 0.5 )
 		os.environ['has_rfid_reader'] = 'y'
@@ -227,4 +227,3 @@ class Command(BaseCommand):
 					
 	def handle(self, *args, **options):
 		launch_server( self, **options )
-
