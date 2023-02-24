@@ -1,3 +1,5 @@
+# Script to transform html template files for updates.
+
 import glob
 
 from_to = (
