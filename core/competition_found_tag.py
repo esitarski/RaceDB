@@ -38,8 +38,8 @@ def CompetitionFoundTag( request, competitionId, rfid_tag=None, action=-1 ):
 			LicenseHolder.objects.filter( existing_tag= rfid_tag ).update( existing_tag= None )
 			LicenseHolder.objects.filter( existing_tag2=rfid_tag ).update( existing_tag2=None )
 		else:
-			competition.participant_set.all().filter( tag= rfid_tag ).update( tag= None )
-			competition.participant_set.all().filter( tag2=rfid_tag ).update( tag2=None )
+			competition.participant_set.filter( tag= rfid_tag ).update( tag= None )
+			competition.participant_set.filter( tag2=rfid_tag ).update( tag2=None )
 		return HttpResponseRedirect(getContext(request,'pop3Url'))
 	
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))

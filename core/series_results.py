@@ -81,7 +81,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	category_pk = [c.pk for c in filter_categories]
 	category_wave = {}
 	for w in sce.event.get_wave_set().all():
-		for c in w.categories.all().filter( pk__in=category_pk ):
+		for c in w.categories.filter( pk__in=category_pk ):
 			category_wave[c] = w
 
 	if not category_wave:
