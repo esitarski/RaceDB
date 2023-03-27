@@ -1595,7 +1595,6 @@ class ParticipantTagUSBReaderForm( Form ):
 def ParticipantTagChangeUSBReader( request, participantId, action=-1, participant=None ):
 	participant = participant or get_participant( participantId )
 	competition = participant.competition
-	make_this_existing_tag = competition.use_existing_tags
 	license_holder = participant.license_holder
 	system_info = SystemInfo.get_singleton()
 	validate_success = False
@@ -1616,27 +1615,29 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 	else:
 		title = [_("Validate Tag"), _("Issue Tag 1"),_("Issue Tag 2")][action]
 
-	def check_unique_tag( tag ):
-		if make_this_existing_tag:
+	if competition.use_existing_tags:
+		def check_unique_tag( tag ):
 			lh = LicenseHolder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) ).exclude( pk=license_holder.pk ).first()
 			if lh:
 				status_entries.append(
 					(_('Duplicate Tag'), (
 						_('Tag in use by LicenseHolder.'),
 						lh.__repr__(),
-					)),
+					))
 				)
 				return False
-		p = Participant.objects.filter( competition=competition ).filter( Q(tag=tag) | Q(tag2=tag) ).exclude( license_holder=license_holder ).first()
-		if p:
-			status_entries.append(
-				(_('Duplicate Tag'), (
-					_('Tag in use by Participant.'),
-					p.license_holder.__repr__(),
-				)),
-			)
-			return False
-		return True
+			return True
+	else:
+		def check_unique_tag( tag ):
+			p = Participant.objects.filter( competition=competition ).filter( Q(tag=tag) | Q(tag2=tag) ).exclude( license_holder=license_holder ).first()
+			if p:
+				status_entries.append(
+					(_('Duplicate Tag'), (
+						_('Tag in use by Participant.'), p.license_holder.__repr__())
+					)
+				)
+				return False
+			return True
 
 	def participant_save( particiant ):
 		try:
@@ -1645,9 +1646,7 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 			# Report the error - probably a non-unique field.
 			has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
 			status_entries.append(
-				(_('Participant Save Failure'), (
-					'{}'.format(e),
-				)),
+				(_('Participant Save Failure'), ('{}'.format(e),))
 			)
 			return False
 		return True
@@ -1669,57 +1668,70 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 	if request.method == 'POST':
 		form = ParticipantTagUSBReaderForm( request.POST )
 		if form.is_valid():
-
 			rfid_tag = form.cleaned_data['rfid_tag'].upper().lstrip('0')
 			
-			if system_info.tag_all_hex and not utils.allHex(rfid_tag):
-				status = False
-				status_entries.append(
-					(_('Non-Hex Characters in Tag'), (
-						_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
-					)),
-				)
-			
-			status &= check_unique_tag( rfid_tag )
-			
-			if status:
+			try:
+				if system_info.tag_all_hex and not utils.allHex(rfid_tag):
+					status_entries.append(
+						(_('Non-Hex Characters in Tag'), (
+							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
+						)),
+					)
+					raise ValueError('tag contains non-hex characters')
+				
+				if not check_unique_tag( rfid_tag ):
+					raise ValueError('tag is non unique')
+				
 				if action == 0:			# Validate tag.
-					if make_this_existing_tag:
+					if competition.use_existing_tags:
 						validate_success = (license_holder.existing_tag == rfid_tag or license_holder.existing_tag2 == rfid_tag)
 					else:
 						validate_success = (participant.tag == rfid_tag or participant.tag2 == rfid_tag)
 					if not validate_success:
-						status = False
 						status_entries.append(
-							(_('Tag Validation Failure'), [_("***DOES NOT MATCH PARTICIPANT***"),] ),
+							(_('Tag Validation Failure'), (_("***DOES NOT MATCH PARTICIPANT***"),) ),
 						)
-					else:
-						status_entries.append(
-							(_('Tag Validation Success'), [_("***MATCHES PARTICIPANT***"),] ),
-						)
-					if participant.tag_checked != validate_success:
-						participant.tag_checked = validate_success
-						status &= participant_save( participant )
+						if participant.tag_checked :
+							participant.tag_checked = False
+							participant_save( participant )
+						raise RuntimeError('tag does not match participant')
+					
+					status_entries.append(
+						(_('Tag Validation Success'), (_("***MATCHES PARTICIPANT***"),) ),
+					)
+					if not participant.tag_checked :
+						participant.tag_checked = True
+						if not participant_save( participant ):
+							raise RuntimeError('participant save fails')
 					
 				elif action == 1 or action == 2:		# Issue tag
-					status &= check_unique_tag( rfid_tag )
-					if status:
-						participant.tag_checked = True
-						if action == 1:
-							participant.tag = rfid_tag
-						else:
-							participant.tag2 = rfid_tag
-						status &= participant_save( participant )
+					if not check_unique_tag( rfid_tag ):
+						raise RuntimeError('tag is already in use')
 						
-						if status and make_this_existing_tag:
-							if action == 1:
-								license_holder.existing_tag = rfid_tag
-							else:
-								license_holder.existing_tag2 = rfid_tag
-							status &= license_holder_save( license_holder )
-							
+					if competition.use_existing_tags:
+						# Set the existing tag for the license holder.
+						setattr( license_holder, ('existing_tag', 'existing_tag2')[action-1], rfid_tag )
+						if not license_holder_save( license_holder ):
+							raise RuntimeError('license_holder save fails')
+						
+						# Set the tag checked flag as well as removing any participant specific tags to prevent errors.
+						if not participant.tag_checked or participant.tag or participant.tag2 :
+							participant.tag = participant.tag2 = None
+							participant.tag_checked = True
+							if not participant_save( participant ):
+								raise RuntimeError('participant save fails')
+					else:
+						# Set the tag for this participant only.
+						setattr( participant, ('tag', 'tag2')[action-1], rfid_tag )						
+						participant.tag_checked = True
+						if not participant_save( participant ):
+							raise RuntimeError('participant save fails')
+						
+			except Exception as e:
+				status = False
+								
 			if not status_entries:
-				return HttpResponseRedirect(path_actions)
+				return HttpResponseRedirect( path_actions )
 	
 	form = ParticipantTagUSBReaderForm( initial={'rfid_tag':''} )
 		

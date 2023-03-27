@@ -138,7 +138,7 @@ def launch_server( command, **options ):
 		safe_print( 'Launching RFID server thread...' )
 		for k, v in kwargs.items():
 			safe_print( '    {}={}'.format( k, v if isinstance(v, (int,float)) else '"{}"'.format(v) ) )
-		thread = threading.Thread( target=runServer, kwargs=kwargs, name='LLRPServer'. daemon=True )
+		thread = threading.Thread( target=runServer, kwargs=kwargs, name='LLRPServer', daemon=True )
 		thread.start()
 		time.sleep( 0.5 )
 		os.environ['has_rfid_reader'] = 'y'
@@ -151,12 +151,10 @@ def launch_server( command, **options ):
 		
 		# Schedule a web browser to launch a few seconds after starting the server.
 		url = 'http://{}:{}/RaceDB/'.format(socket.gethostbyname(socket.gethostname()), options['port'])
-		threading.Timer( 3.0 if connection_good else 0.01,
+		threading.Timer(
+			3.0 if connection_good else 0.01,
 			webbrowser.open,
-			kwargs = dict(
-				url = url,
-				autoraise = True
-			)
+			kwargs={'url': url, 'autoraise': True},
 		).start()
 		safe_print( 'A browser will be launched in a few moments at: {}'.format(url) )
 	
@@ -227,4 +225,3 @@ class Command(BaseCommand):
 					
 	def handle(self, *args, **options):
 		launch_server( self, **options )
-
