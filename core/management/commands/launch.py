@@ -151,12 +151,10 @@ def launch_server( command, **options ):
 		
 		# Schedule a web browser to launch a few seconds after starting the server.
 		url = 'http://{}:{}/RaceDB/'.format(socket.gethostbyname(socket.gethostname()), options['port'])
-		threading.Timer( 3.0 if connection_good else 0.01,
+		threading.Timer(
+			3.0 if connection_good else 0.01,
 			webbrowser.open,
-			kwargs = dict(
-				url = url,
-				autoraise = True
-			)
+			kwargs={'url': url, 'autoraise': True},
 		).start()
 		safe_print( 'A browser will be launched in a few moments at: {}'.format(url) )
 	
