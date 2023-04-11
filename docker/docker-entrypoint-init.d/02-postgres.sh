@@ -10,7 +10,7 @@ if [ "$DATABASE_TYPE" == "psql-local" ]; then
     if [ "$racedb" != "1" ]; then
         echo "Creating $DATABASE_NAME database..."
         # POSTGRES_USER is the same as the postgres database name
-        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_USER" <<-EOSQL
+        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<-EOSQL
         CREATE USER $DATABASE_USER;
         CREATE DATABASE $DATABASE_NAME;
 EOSQL
@@ -19,7 +19,7 @@ EOSQL
     fi
     
 	echo "Granting all user permissions (pqsl-local).."
-	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_USER" <<-EOSQL
+	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<-EOSQL
 	GRANT ALL PRIVILEGES ON DATABASE $DATABASE_NAME TO $DATABASE_USER;
 	GRANT ALL ON SCHEMA public TO $DATABASE_USER;
 EOSQL
@@ -35,7 +35,7 @@ elif [ "$DATABASE_TYPE" == "psql" ]; then
     racedb=$(psql -U "$POSTGRES_USER" -h "$DATABASE_HOST"  -tAc "SELECT 1 FROM pg_database WHERE datname='$DATABASE_NAME'")
     if [ "$racedb" != "1" ]; then
         echo "Creating $DATABASE_NAME database..."
-        psql -v ON_ERROR_STOP=1 -h "$DATABASE_HOST" --username "$POSTGRES_USER" --dbname "$POSTGRES_USER" <<-EOSQL
+        psql -v ON_ERROR_STOP=1 -h "$DATABASE_HOST" --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<-EOSQL
         CREATE USER $DATABASE_USER;
         CREATE DATABASE $DATABASE_NAME;
 EOSQL
@@ -44,7 +44,7 @@ EOSQL
     fi
     
 	echo "Granting all user permissions (pqsl)..."
-	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_USER" <<-EOSQL
+	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DATABASE_NAME" <<-EOSQL
 	GRANT ALL PRIVILEGES ON DATABASE $DATABASE_NAME TO $DATABASE_USER;
 	GRANT ALL ON SCHEMA public TO $DATABASE_USER;
 EOSQL
