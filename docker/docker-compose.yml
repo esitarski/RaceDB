@@ -1,7 +1,7 @@
 version: "3.4"
 services:
     db:
-        image: postgres:14=alpine
+        image: postgres:14-alpine
         restart: always
         container_name: postgresql_racedb_app
         environment:
@@ -40,4 +40,3 @@ volumes:
 
 networks:
     racedb:
-
