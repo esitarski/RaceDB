@@ -1,6 +1,7 @@
 wheel
 django
 django-crispy-forms
+crispy-bootstrap3
 django-extensions
 requests
 dj_static
