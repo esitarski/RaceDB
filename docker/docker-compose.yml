@@ -18,7 +18,7 @@ services:
         restart: always
         container_name: racedb_app
         ports:
-            - "80:8000"
+            - "80:8000" 
         environment:
             - sqlite3_database_fname:/racedb-data/RaceDB.sqlite3
             - PYTHONPATH:/RaceDB
