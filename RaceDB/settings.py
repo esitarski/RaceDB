@@ -63,6 +63,7 @@ ROOT_URLCONF = 'RaceDB.urls'
 WSGI_APPLICATION = 'RaceDB.wsgi.application'
 
 # Crispy forms configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3"
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
