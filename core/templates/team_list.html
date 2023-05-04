@@ -40,7 +40,7 @@ thead th { position: sticky; top: 0; }
 			<td>{{t.get_team_type_display}}</td>
 			<td>{{t.nation_code}}</td>
 			<td>{{t.active|good_err_icon}}</td>
-			<td class="text-center">{{t.license_holder_count}}</td>
+			<td class="text-center">{{t.num_license_holders}}</td>
 			<td>{{t.contact}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-warning btn-sm" href="./TeamDelete/{{t.id}}/">{% trans "Delete" %}</a>

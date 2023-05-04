@@ -325,6 +325,7 @@ urlpatterns = [
 	
 	re_path(r'^.*SystemInfoEdit/$', views.SystemInfoEdit),
 	re_path(r'^.*UpdateLogShow/$', views.UpdateLogShow),
+	re_path(r'^.*DownloadDatabase/$', views.DownloadDatabase),
 	re_path(r'^.*AttendanceAnalytics/$', views.AttendanceAnalytics),
 	re_path(r'^.*ParticipantReport/$', views.ParticipantReport),
 	re_path(r'^.*YearOnYearAnalytics/$', views.YearOnYearAnalytics),

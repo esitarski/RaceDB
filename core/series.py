@@ -29,7 +29,7 @@ def getPaginator( request, page_key, items ):
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesList( request ):
 	validate_sequence( Series.objects.all() )		
-	series = Series.objects.all()
+	series = Series.objects.all().annotate(num_events=Count('seriescompetitionevent'))
 	return render( request, 'series_list.html', locals() )
 
 @access_validation()

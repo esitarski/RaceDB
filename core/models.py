@@ -2220,9 +2220,18 @@ class Team(models.Model):
 	@property
 	def license_holder_pks( self ):
 		return (
-			set(TeamHint.objects.filter(team=self).values_list('license_holder',flat=True).distinct()) |
-			set(Participant.objects.filter(team=self).values_list('license_holder',flat=True).distinct())
+			set(TeamHint.objects.filter(team=self).values_list('license_holder',flat=True)) |
+			set(Participant.objects.filter(team=self).values_list('license_holder',flat=True))
 		)
+	
+	@staticmethod
+	def all_license_holder_count():
+		lhc = defaultdict( set )
+		for t_pk, lh_pk in TeamHint.objects.filter(team__isnull=False).values_list('team','license_holder'):
+			lhc[t_pk].add( lh_pk )
+		for t_pk, lh_pk in Participant.objects.filter(team__isnull=False).values_list('team','license_holder'):
+			lhc[t_pk].add( lh_pk )
+		return {k:len(v) for k, v in lhc.items()}
 	
 	@property
 	def license_holder_count( self ):

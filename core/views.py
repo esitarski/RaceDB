@@ -3,6 +3,9 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.utils.html import escape
+from django.db.models import Count
+from django.core import management
+
 try:
 	from django.contrib.auth.views import logout
 except Exception:
@@ -52,7 +55,17 @@ def home( request, rfid_antenna=None ):
 			request.session['rfid_antenna'] = int(rfid_antenna)
 		except Exception as e:
 			pass
-	version = RaceDBVersion
+	try:
+		version = RaceDBVersion
+	except Exception as e:
+		import os
+		import re
+		import builtins
+		fname = os.path.join( os.path.dirname(os.path.dirname(__file__)), 'helptxt', 'version.py' )
+		with open(fname) as f:
+			text = f.read()
+		version = re.search( '"([^"]+)"', text ).group(1)
+		builtins.__dict__['RaceDBVersion'] = version
 	return render( request, 'home.html', locals() )
 	
 #-----------------------------------------------------------------------
@@ -1137,7 +1150,14 @@ def CompetitionsDisplay( request ):
 		if request.user.is_superuser:
 			form = CompetitionSearchForm( initial=search_fields, request=request )
 	
-	competitions = Competition.objects.all().prefetch_related('report_labels')
+	competitions = (Competition.objects
+		.all()
+		.prefetch_related('report_labels')
+		.select_related('discipline', 'race_class')
+	)
+	
+	def add_num_participants( competitions ):
+		return competitions.annotate(num_participants=Count('participant'))
 	
 	if request.user.is_superuser:
 		year = int( search_fields.get( 'year', -1 ) )
@@ -1149,13 +1169,16 @@ def CompetitionsDisplay( request ):
 		dpk = int( search_fields.get( 'discipline', -1 ) )
 		if dpk >= 0:
 			competitions = competitions.filter( discipline__pk=dpk )
+
+		competitions = add_num_participants( competitions )
 		
 		if search_fields.get( 'search_text', None ):
-			competitions = applyFilter( search_fields['search_text'], competitions, Competition.get_search_text )
+			competitions = applyFilter( search_fields['search_text'], competitions, Competition.get_search_text )			
 	else:	
 		# If not super user, only show the competitions for today and after.
 		dNow = datetime.date.today()
 		competitions = competitions.filter( start_date__gte = dNow - datetime.timedelta(days=120) )
+		competitions = add_num_participants( competitions )
 		competitions = [c for c in competitions if not c.is_finished(dNow)]
 	
 	competitions = sorted( competitions, key = operator.attrgetter('start_date'), reverse=True )
@@ -2692,6 +2715,16 @@ def SystemInfoEdit( request ):
 def UpdateLogShow( request ):
 	update_log = UpdateLog.objects.all()
 	return render( request, 'update_log_show.html', locals() )
+	
+@access_validation()
+def DownloadDatabase( request ):
+	filename = 'RaceDB-Backup-{}.json.gz'.format( datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') )	
+	response = HttpResponse(content_type="application/gzip")
+	response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+	with gzip.GzipFile( filename=os.path.splitext(filename)[0], mode='w', fileobj=response ) as gz:
+		with io.TextIOWrapper(gz, encoding='utf-8', write_through=True) as io_text:
+			management.call_command('dumpdata', '-e', 'contenttypes', '-e', 'auth.Permission', '--indent', '2', stdout=io_text)
+	return response
 	
 #-----------------------------------------------------------------------
 

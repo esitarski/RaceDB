@@ -78,6 +78,14 @@ def TeamsDisplay( request ):
 		form = SearchForm( btns, initial = {'search_text': search_text} )
 		
 	teams = teams_from_search_text( search_text )
+	
+	# Add the license holder counts with a bulk query.
+	if not isinstance(teams, list):
+		teams = list( teams )
+	all_license_holder_count = Team.all_license_holder_count()
+	for t in teams:
+		t.num_license_holders = all_license_holder_count.get(t.id, 0)
+	
 	#alias_conflicts = TeamAlias.alias_conflicts()
 	return render( request, 'team_list.html', locals() )
 
