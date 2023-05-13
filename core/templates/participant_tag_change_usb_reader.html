@@ -19,8 +19,8 @@
 	</h2>
 {% endif %}
 <br/>
-<h3>{% trans "Tag 1" %}: {{rfid_tag1}}</h3>
-<h3>{% trans "Tag 2" %}: {{rfid_tag2}}</h3>
+<h3>{% trans "Tag 1" %}: {% if rfid_tag1 %}{{rfid_tag1}}{% endif %}</h3>
+<h3>{% trans "Tag 2" %}: {% if rfid_tag2 %}{{rfid_tag2}}{% endif %}</h3>
 <hr/>
 
 {# Handle actions, tag read and status in one template. #}

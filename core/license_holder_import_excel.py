@@ -261,7 +261,7 @@ def license_holder_import_excel(
 		for lc in license_code_aliases:
 			license_code = to_int_str(v(lc, None))
 			if license_code is not None:
-				license_code = license_code.upper().strip()
+				license_code = license_code.upper().strip().split(',')[0]
 				if license_code:
 					break
 		if not license_code or license_code == 'TEMP':
@@ -477,7 +477,7 @@ def license_holder_import_excel(
 						status = 'Added'
 					
 					elif len(lhs) > 1:
-						ms_write( 'Row {}: Error:  found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+						ms_write( 'Row {}: Error:  found multiple LicenceHolders matching "Last, First, DOB, Gender" Name="{}"\n'.format(
 								i, name,
 							), type=Error,
 						)

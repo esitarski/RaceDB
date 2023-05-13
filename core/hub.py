@@ -91,6 +91,12 @@ def SearchCompetitions( request ):
 
 	competition_filter = request.session.get(key, {})
 	
+	# Set a defauilt to the last year with a competition if unspecified.
+	if 'year' not in competition_filter:
+		last_competition = Competition.objects.all().order_by('-start_date').first()
+		if last_competition:
+			competition_filter['year'] = last_competition.start_date.year
+	
 	if request.method == 'POST':
 		form = CompetitionSearchForm( request.POST )
 		if form.is_valid():

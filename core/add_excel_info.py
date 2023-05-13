@@ -4,6 +4,7 @@ import datetime
 import platform
 from django.utils import version
 from django.conf import settings
+from .get_version import get_version
 
 def get_db():
 	try:
@@ -15,7 +16,7 @@ def get_info():
 	app = 'RaceDB'
 	uname = platform.uname()
 	info = {
-		'{}_AppVersion'.format(app):	RaceDBVersion,
+		'{}_AppVersion'.format(app):	get_version(),
 		'{}_Timestamp'.format(app):		datetime.datetime.now(),
 		'{}_User'.format(app):			os.path.basename(os.path.expanduser("~")),
 		'{}_Database'.format(app):		get_db(),

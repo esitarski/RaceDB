@@ -2,13 +2,16 @@
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
-]{% load format_time_no_decimals %}
+{% load format_time_no_decimals %}
 {% load to_js %}
 
 {% block style %}
 .main-container {
 	margin-left:-10px;
 	margin-right:-10px;
+}
+.lpad {
+	margin-left: 8px;
 }
 {% endblock style %}
 
@@ -1891,15 +1894,15 @@ function SituationAnimate() {
 		//situationObj.animate = true;
 		
 		function resizeCanvas() {
-			lapChartCanvas.width = window.innerWidth * 0.85;
+			lapChartCanvas.width = Math.max(10, window.innerWidth * 0.8);
 			lapChartCanvas.height = window.innerHeight * 0.6;
 			lapChartObj.draw();
 			
-			raceChartCanvas.width = window.innerWidth * 0.85;
+			raceChartCanvas.width = Math.max(10, window.innerWidth * 0.8);
 			raceChartCanvas.height = window.innerHeight * 0.75;
 			updateRaceChart();
 			
-			situationCanvas.width = window.innerWidth * 0.70;
+			situationCanvas.width = Math.max(10, window.innerWidth * 0.7);
 			situationCanvas.height = window.innerHeight * 0.75;
 			SituationRefresh();
 		}

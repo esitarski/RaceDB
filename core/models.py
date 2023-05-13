@@ -1509,7 +1509,7 @@ class Event( models.Model ):
 		return '{}/{}'.format( ['EventMassStart', 'EventTT', 'EventSprint'][self.event_type], self.pk )
 	
 	optional = models.BooleanField( default=False, verbose_name=_('Optional'),
-		help_text=_('Allows Participants to choose to enter the Event.  Otherwise the Event is included for all participants.') )
+		help_text=_('Allows Participants to choose to enter the Event.  Otherwise the Event is included automatically for all participants in the Event categories.') )
 	option_id = models.PositiveIntegerField( default=0, verbose_name = _('Option Id') )
 	select_by_default = models.BooleanField( default=False, verbose_name=_('Select by Default'),
 		help_text=_('If the Event is "Optional", and "Select by Default", Participants will be automatically added to the Event (but can opt-out later).') )
@@ -2111,9 +2111,9 @@ class WaveBase( models.Model ):
 	def get_details_html( self, include_starters=False ):
 		if self.distance:
 			if self.laps:
-				distance = self.distance * self.laps
+				distance = '{:.2f} <strong>{}</strong>'.format(self.distance * self.laps, self.distance_unit)
 			else:
-				distance = self.distance
+				distance = '{:.2f} <strong>{}</strong> loop'.format(self.distance, self.distance_unit)
 		else:
 			distance = None
 		
@@ -2130,7 +2130,7 @@ class WaveBase( models.Model ):
 				timezone.localtime(self.event.date_time + start_offset).strftime('%H:%M:%S'))
 			)
 		if distance:
-			fields.append( '{:.2f} <strong>{}</strong>'.format(distance, self.distance_unit) )
+			fields.append( distance )
 		if self.laps:
 			fields.append( '{} <strong>{}</strong>'.format(self.laps, 'laps' if self.laps != 1 else 'lap') )
 		if getattr(self, 'minutes', None):
@@ -4001,14 +4001,19 @@ class Participant(models.Model):
 			)
 		
 		# Initialize from past participants of the same discipline and category_format.
+		other_category_participants = []
 		for pp in Participant.objects.filter(
 					license_holder=self.license_holder,
 					competition__discipline=self.competition.discipline,
 					competition__category_format=self.competition.category_format,
 					role=Participant.Competitor,
-				).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+				).exclude(category__isnull=True).defer('signature').select_related('competition','category').order_by(
 					'-competition__start_date','category__sequence')[:8]:
 			if pdv.update_participant( pp ):
+				other_category_participants = list( Participant.objects
+					.filter( competition=pp.competition, license_holder=self.license_holder, role=Participant.Competitor )
+					.exclude( category=pp.category )
+				)	
 				break
 
 		# Initialize from past participants of the same discipline (relax category format).
@@ -4017,7 +4022,7 @@ class Participant(models.Model):
 						license_holder=self.license_holder,
 						competition__discipline=self.competition.discipline,
 						role=Participant.Competitor,
-					).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+					).exclude(category__isnull=True).defer('signature').select_related('competition','category').order_by(
 						'-competition__start_date','category__sequence')[:8]:
 				if pdv.update_participant( pp ):
 					break			
@@ -4027,7 +4032,7 @@ class Participant(models.Model):
 			for pp in Participant.objects.filter(
 						license_holder=self.license_holder,
 						competition__discipline=self.competition.discipline,
-					).exclude(category__isnull=True).select_related('competition').order_by(
+					).exclude(category__isnull=True).select_related('competition','category').order_by(
 						'-competition__start_date','category__sequence')[:8]:
 				if pdv.update_participant( pp ):
 					break			
@@ -4071,12 +4076,22 @@ class Participant(models.Model):
 		if self.is_seasons_pass_holder:
 			self.paid = True
 		
-		# Remove anomylous fields if not competitor.
+		# Remove unused fields if not competitor.
 		if self.role != self.Competitor:
 			self.bib = None
 			self.category = None
 			if self.role >= 200:			# Remove team for non-team roles.
 				self.team = None
+	
+		# Add the license holder to the other categories.
+		if other_category_participants:
+			for p in other_category_participants:
+				p_new = Participant.objects.get_or_create(
+					competition=self.competition,
+					license_holder=self.license_holder,
+					category=p.category,
+					defaults={'bib':p.bib, 'team':p.team, 'paid':self.paid, 'tag':self.tag, 'tag2':self.tag2, 'est_kmh':p.est_kmh, 'role':Participant.Competitor}
+				)
 		
 		return self
 	
@@ -5233,6 +5248,10 @@ class Series( Sequence ):
 		
 	def get_competitions( self ):
 		return sorted( set(ce.competition for ce in self.seriescompetitionevent_set.all()), key=operator.attrgetter('start_date'), reverse=True )
+	
+	def get_current_competitions( self ):
+		today = (timezone.now() - datetime.timedelta(days=-1)).date()
+		return [c for c in self.get_competitions() if c.start_date <= today]
 	
 	def remove_competition( self, competition ):
 		for ce in [ce for ce in self.seriescompetitionevent_set.all() if ce.competition == competition]:

@@ -68,7 +68,7 @@
 	</tr>
 </thead>
 <tbody>
-	{% for c in series.get_competitions %}
+	{% for c in series.get_current_competitions %}
 		<tr>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{c.date_range_year_str}}</td>

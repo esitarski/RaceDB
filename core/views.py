@@ -48,6 +48,8 @@ from .context_processors import getContext
 
 from django.views.decorators.cache import patch_cache_control
 
+from .get_version import get_version
+
 @access_validation()
 def home( request, rfid_antenna=None ):
 	if rfid_antenna is not None:
@@ -55,17 +57,7 @@ def home( request, rfid_antenna=None ):
 			request.session['rfid_antenna'] = int(rfid_antenna)
 		except Exception as e:
 			pass
-	try:
-		version = RaceDBVersion
-	except Exception as e:
-		import os
-		import re
-		import builtins
-		fname = os.path.join( os.path.dirname(os.path.dirname(__file__)), 'helptxt', 'version.py' )
-		with open(fname) as f:
-			text = f.read()
-		version = re.search( '"([^"]+)"', text ).group(1)
-		builtins.__dict__['RaceDBVersion'] = version
+	version = get_version()
 	return render( request, 'home.html', locals() )
 	
 #-----------------------------------------------------------------------
@@ -2203,11 +2195,12 @@ def UploadCrossMgr( request ):
 	payload, response = None, {'errors':[], 'warnings':[]}
 	if request.method == "POST":
 		try:
-			payload = json.loads( request.body.decode('utf-8') )
+			payload = json.loads( request.body )
 		except Exception as e:
-			response['errors'].append( '{}'.format(e) )
+			response['errors'].append( 'RaceDB: {}'.format(e) )
 	else:
-		response['errors'].append( 'Request must be of type POST with json payload.' )
+		response['errors'].append( 'RaceDB: method="{}" expecting method="POST" .'.format(request.method) )
+		response['errors'].append( request.body.encode() )
 	
 	safe_print( 'UploadCrossMgr: processing...' )
 	if payload:
@@ -2723,7 +2716,7 @@ def DownloadDatabase( request ):
 	response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
 	with gzip.GzipFile( filename=os.path.splitext(filename)[0], mode='w', fileobj=response ) as gz:
 		with io.TextIOWrapper(gz, encoding='utf-8', write_through=True) as io_text:
-			management.call_command('dumpdata', '-e', 'contenttypes', '-e', 'auth.Permission', '--indent', '2', stdout=io_text)
+			management.call_command('dumpdata', '-e', 'contenttypes', '-e', 'auth.Permission', stdout=io_text)
 	return response
 	
 #-----------------------------------------------------------------------
