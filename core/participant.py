@@ -1712,15 +1712,14 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 					
 					if competition.use_existing_tags:
 						# Reset the tags for the participant in case of a license holder save failure.
-						participant.tag = None
-						participant.tag2 = None
+						setattr( participant, ('tag', 'tag2')[action-1], None )
 						participant.tag_checked = False
 						participant_save( participant )
 						
 						# Set the existing tag for the license holder.
 						setattr( license_holder, ('existing_tag', 'existing_tag2')[action-1], rfid_tag )
 						if not license_holder_save( license_holder ):
-							raise RuntimeError('license_holder save fails')
+							raise RuntimeError('license_holder save failure')
 							
 						# Update the participant tags.
 						participant.tag = license_holder.existing_tag
@@ -1732,7 +1731,7 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 					# Mark as checked as we had to have read the tag to get this far.
 					participant.tag_checked = True
 					if not participant_save( participant ):
-						raise RuntimeError('participant save fails')
+						raise RuntimeError('participant save failure')
 						
 			except Exception as e:
 				status = False
