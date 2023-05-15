@@ -1121,9 +1121,15 @@ def GetCompetitionForm( competition_cur = None ):
 @access_validation()
 def CompetitionsDisplay( request ):
 	form = None
-	search_fields = request.session.get('competition_filter', {})
-	if not isinstance(search_fields, dict):
-		search_fields = {}
+	competition_filter = request.session.get('competition_filter', {})
+	if not isinstance(competition_filter, dict):
+		competition_filter = {}
+		
+	if 'year' not in competition_filter:
+		last_competition = Competition.objects.all().order_by('-start_date').first()
+		if last_competition:
+			competition_filter['year'] = last_competition.start_date.year
+		
 	if request.method == 'POST':
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionNew') )
@@ -1137,10 +1143,10 @@ def CompetitionsDisplay( request ):
 		if request.user.is_superuser:
 			form = CompetitionSearchForm( request.POST, request=request )
 			if form.is_valid():
-				request.session['competition_filter'] = search_fields = form.cleaned_data
+				request.session['competition_filter'] = competition_filter = form.cleaned_data
 	else:
 		if request.user.is_superuser:
-			form = CompetitionSearchForm( initial=search_fields, request=request )
+			form = CompetitionSearchForm( initial=competition_filter, request=request )
 	
 	competitions = (Competition.objects
 		.all()
@@ -1152,20 +1158,20 @@ def CompetitionsDisplay( request ):
 		return competitions.annotate(num_participants=Count('participant'))
 	
 	if request.user.is_superuser:
-		year = int( search_fields.get( 'year', -1 ) )
+		year = int( competition_filter.get( 'year', -1 ) )
 		if year >= 0:
-			date_min = datetime.date( int(search_fields['year']), 1, 1 )
-			date_max = datetime.date( int(search_fields['year'])+1, 1, 1 ) - datetime.timedelta(days=1)
+			date_min = datetime.date( int(competition_filter['year']), 1, 1 )
+			date_max = datetime.date( int(competition_filter['year'])+1, 1, 1 ) - datetime.timedelta(days=1)
 			competitions = competitions.filter( start_date__range=(date_min, date_max) )
 		
-		dpk = int( search_fields.get( 'discipline', -1 ) )
+		dpk = int( competition_filter.get( 'discipline', -1 ) )
 		if dpk >= 0:
 			competitions = competitions.filter( discipline__pk=dpk )
 
 		competitions = add_num_participants( competitions )
 		
-		if search_fields.get( 'search_text', None ):
-			competitions = applyFilter( search_fields['search_text'], competitions, Competition.get_search_text )			
+		if competition_filter.get( 'search_text', None ):
+			competitions = applyFilter( competition_filter['search_text'], competitions, Competition.get_search_text )			
 	else:	
 		# If not super user, only show the competitions for today and after.
 		dNow = datetime.date.today()
