@@ -199,7 +199,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 					if in_category:
 						categories_entered.append( c )
 
-`			if not categories_entered:
+			if not categories_entered:
 				categories_entered = [None]
 
 			for category in categories_entered:
@@ -219,7 +219,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 				for attr, value in [ ('preregistered',preregistered), ('paid',paid), ('bib',bib), ]:
 					if value is not None:
 						setattr( participant, attr, value )
-	v			
+				
 				try:
 					participant.save()
 				except IntegrityError as e:
