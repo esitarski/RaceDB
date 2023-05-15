@@ -1706,7 +1706,7 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 						if not participant_save( participant ):
 							raise RuntimeError('participant save fails')
 					
-				elif action == 1 or action == 2:		# Issue tag
+				elif action in (1, 2):		# Issue tag
 					if not check_unique_tag( rfid_tag ):
 						raise RuntimeError('tag is already in use')
 					
