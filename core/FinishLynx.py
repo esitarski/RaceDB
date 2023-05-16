@@ -8,6 +8,7 @@ import datetime
 from io import BytesIO, StringIO
 
 from .models import *
+from .get_version import get_version
 
 def getWriterIO():
 	io = StringIO()
@@ -32,7 +33,7 @@ def FinishLynxExport( competition ):
 			'',
 			'See FinishLynx documentation for full details (http://www.finishlynx.com/).',
 			'',
-			'Created by: RaceDB v{} (www.sites.google.com/site/crossmgrsoftware/)'.format(RaceDBVersion),
+			'Created by: RaceDB v{} (www.sites.google.com/site/crossmgrsoftware/)'.format(get_version()),
 			'Timestamp: {}'.format( timestamp ),
 			'Server: {}'.format( socket.gethostname() ),
 			'UserName: {}'.format( getpass.getuser() ),
