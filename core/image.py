@@ -58,9 +58,9 @@ def ImageNew( request ):
 				return HttpResponseRedirect( pushUrl(request, '{}Edit'.format(ModelClass.__name__), instance.id, cancelUrl=True) )
 	else:
 		instance = Image()
-		form = ImageFormClass( instance=instance, button_mask=NEW_BUTTONS )
+		form = ImageForm( instance=instance, button_mask=NEW_BUTTONS )
 	
-	return render( request, template or 'generic_form.html', locals() )
+	return render( request, 'image_form.html', locals() )
 
 @access_validation()
 def ImageEdit( request, imageId ):
