@@ -838,6 +838,8 @@ class Competition(models.Model):
 	
 	google_maps_api_key = models.CharField( max_length=64, default='', blank=True, verbose_name=_('Google Maps API Key') )
 	
+	image = models.ForeignKey( "Image", blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Image") )
+	
 	@property
 	def title( self ):
 		return self.long_name or self.name
@@ -1569,7 +1571,10 @@ class Event( models.Model ):
 		raise NotImplementedError("Please Implement this method")
 			
 	def get_results( self ):
-		return self.get_result_class().objects.filter( event=self )
+		return self.get_result_class().objects.filter( event=self ).select_related('participant', 'participant__license_holder')
+		
+	def get_prime_class( self ):
+		raise NotImplementedError("Please Implement this method")
 		
 	def add_laps_to_results_query( self, results ):
 		return results.annotate( laps=Count(self.get_race_time_class().__name__.lower()) )
@@ -1848,6 +1853,9 @@ class EventMassStart( Event ):
 	
 	def get_custom_category_class( self ):
 		return CustomCategoryMassStart
+		
+	def get_prime_class( self ):
+		return PrimeMassStart
 		
 	def get_series( self ):
 		for ce in SeriesCompetitionEvent.objects.filter( event_mass_start=self ).exclude( series__callup_max=0 ).order_by('series__sequence'):
@@ -3135,9 +3143,9 @@ class Result(models.Model):
 		return race_times[1] - race_times[0]
 	
 	class Meta:
+		abstract = True
 		verbose_name = _('Result')
 		verbose_name_plural = _('Results')
-		abstract = True
 		ordering = ['status', 'wave_rank']
 
 class ResultMassStart(Result):
@@ -3163,6 +3171,77 @@ class ResultTT(Result):
 		)
 		verbose_name = _('ResultTT')
 		verbose_name_plural = _('ResultsTT')
+
+#---------------------------------------------------------------
+
+class Prime(models.Model):
+	participant = models.ForeignKey( 'Participant', db_index=True, on_delete=models.CASCADE )
+
+	EffortChoices = (
+		(0, _('Pack')),
+		(1, _('Break')),
+		(2, _('Chase')),
+		(-1, _('Custom')),	# This one must be last.
+	)
+	effort = models.SmallIntegerField( default=0, choices=EffortChoices, verbose_name=_('Effort') )
+	
+	'''
+	(_('or Custom'),			'effortCustom',	's'),
+	(_('Position'),				'position',		'i'),
+	(_('Laps\nTo Go'),			'lapsToGo',		'i'),
+	(_('Sponsor'),				'sponsor', 		's'),
+	(_('Cash'),					'cash', 		'f'),
+	(_('Merchandise'),			'merchandise', 	's'),
+	(_('Points'),				'points', 		'i'),
+	(_('Time\nBonus'),			'timeBonus', 	't'),
+	'''
+	
+	effort_custom = models.CharField( max_length=36, default='', blank=True, verbose_name=_('Effort Custom') )
+	position = models.PositiveSmallIntegerField( null=True, default=None, verbose_name=_('Position') )
+	laps_to_go = models.PositiveSmallIntegerField( null=True, default=None, verbose_name=_('Laps to Go') )
+	sponsor = models.CharField( max_length=80, default='', blank=True, verbose_name=_('Sponser') )
+	cash = models.FloatField( null=True, default=None, verbose_name=_('Cash') )
+	merchandise = models.CharField( max_length=64, default='', blank=True, verbose_name=_('Merchandise') )
+	points = models.PositiveSmallIntegerField( null=True, default=None, verbose_name=_('Points') )
+	time_bonus = DurationField( null=True, default=None, verbose_name=_('Time Bonus') )
+	
+	@property
+	def effort_name( self ):
+		if self.effort >= 0:
+			try:
+				return self.EffortChoices[self.effort][1]
+			except Exceptions as e:
+				return _('Unknown')
+		return self.effort_custom or ''
+
+	@staticmethod
+	def to_camel( field ):
+		parts = field.split('_')
+		return parts[0] + ''.join( p.capitalize() for p in parts[1:] )
+		
+	class Meta:
+		abstract = True
+		verbose_name = _('Prime')
+		verbose_name_plural = _('Primes')
+		ordering = ['-laps_to_go', 'position', 'participant__bib']
+
+class PrimeMassStart(Prime):
+	event = models.ForeignKey( 'EventMassStart', db_index=True, on_delete=models.CASCADE )
+	def get_prime_class( self ):
+		return PrimeMassStart
+		
+	class Meta( Prime.Meta ):
+		verbose_name = _('PrimeMassStart')
+		verbose_name_plural = _('PrimesMassStart')
+
+class PrimeTT(Prime):
+	event = models.ForeignKey( 'EventTT', db_index=True, on_delete=models.CASCADE )
+	def get_prime_class( self ):
+		return PrimeTT
+	
+	class Meta( Prime.Meta ):
+		verbose_name = _('PrimeTT')
+		verbose_name_plural = _('PrimesTT')
 
 #---------------------------------------------------------------
 
@@ -4582,6 +4661,9 @@ class EventTT( Event ):
 		
 	def get_race_time_class( self ):
 		return RaceTimeTT
+		
+	def get_prime_class( self ):
+		return PrimeTT
 	
 	def get_custom_category_class( self ):
 		return CustomCategoryTT
@@ -5171,6 +5253,8 @@ class Series( Sequence ):
 	randomize_if_no_results = models.BooleanField( default=False, verbose_name=_("Randomize callups if no results") )
 	
 	custom_category_names = models.TextField( default='', blank=True, verbose_name=_('Custom Categories') )
+	
+	image = models.ForeignKey( "Image", blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Image") )
 	
 	def make_copy( self ):
 		self_pk = self.pk
@@ -5919,6 +6003,68 @@ class LicenseCheckState(models.Model):
 		LicenseCheckState.objects.bulk_create( to_add )
 		
 #-----------------------------------------------------------------------------------------------
+class CrossMgrLog(models.Model):
+	timestamp = models.DateTimeField( auto_now_add=True, db_index=True, verbose_name = _('Timestamp') )
+
+	OpenAction, UploadAction = tuple(range(2))
+	ACTION_CHOICES = (
+		(OpenAction,	_('Open')),
+		(UploadAction,	_('Upload')),
+	)
+	action = models.PositiveSmallIntegerField( default=0, choices=ACTION_CHOICES, verbose_name=_('Action'), )
+	user = models.CharField( max_length = 32, verbose_name = _('User') )
+	password = models.CharField( max_length = 32, default='', verbose_name = _('Password') )
+	
+	event_mass_start = models.ForeignKey( EventMassStart, null=True, default=None, on_delete=models.CASCADE, verbose_name = _('Event Mass Start') )
+	event_tt = models.ForeignKey( EventTT, null=True, default=None, on_delete=models.CASCADE, verbose_name = _('Event TT') )
+	
+	success = models.BooleanField( default=True, verbose_name=_('Success') )
+
+	@property
+	def event( self ):
+		return self.event_mass_start or self.event_tt
+		
+	@event.setter
+	def event( self, e ):
+		self.event_mass_start = None
+		self.event_tt = None
+		if e is not None:
+			if e.event_type == 0:
+				self.event_mass_start = e
+			else:
+				self.event_tt = e
+
+	class Meta:
+		verbose_name = _("CrossMgrLog")
+		verbose_name_plural = _("CrossMgrLogs")
+		ordering = ['timestamp']
+
+class CrossMgrPassword(models.Model):
+	password = models.CharField( max_length = 32, db_index=True, verbose_name = _('Password') )
+	description = models.CharField( max_length = 80, blank = True, default = '', verbose_name = _('Description') )
+
+	class Meta:
+		verbose_name = _("CrossMgrPassword")
+		verbose_name_plural = _("CrossMgrPasswords")
+		ordering = ['password']
+
+#-----------------------------------------------------------------------------------------------
+
+class Image(models.Model):
+	title = models.CharField( max_length = 32, db_index=True, verbose_name = _('Title') )
+	description = models.CharField( max_length = 80, blank = True, default = '', verbose_name = _('Description') )
+	image = models.ImageField( upload_to="uploads/" )
+	
+	def __str__( self ):
+		return self.title
+		
+	class Meta:
+		verbose_name = _("Image")
+		verbose_name_plural = _("Images")
+		ordering = ['title']
+
+#-----------------------------------------------------------------------------------------------
+
 def truncate_char_fields( obj ):
 	for f in type(obj)._meta.get_fields():
 		if isinstance(f, models.CharField) and len(getattr(obj, f.name) or '') > f.max_length:

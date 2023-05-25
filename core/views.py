@@ -19,6 +19,7 @@ import zipfile
 import operator
 import itertools
 import traceback
+import datetime
 
 from .get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from .get_seasons_pass_excel import get_seasons_pass_excel
@@ -1065,8 +1066,9 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col(Field('ga_tracking_id',size=12), 4),
-					Col(Field('google_maps_api_key',size=40), 6),
+					Col(Field('image'), 3),
+					Col(Field('ga_tracking_id',size=12), 3),
+					Col(Field('google_maps_api_key',size=40), 4),
 				),
 				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(''), ),
 				Row(
@@ -2194,24 +2196,76 @@ def EventMassStartCrossMgr( request, eventId ):
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventMassStart.name),
 	)
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	cml = CrossMgrLog( action=CrossMgrLog.OpenAction, user=user, password=password, success=password_ok )
+	cml.event = eventMassStart
+	cml.save()	
+
 	return response
+
+def checkCrossMgrPassword( request ):
+	try:
+		user, password = request['user'], request['password']
+	except Exception as e:
+		user, password = '', ''
+		
+	if not user:
+		try:
+			user, password = request.GET.get('user',''), request.GET.get('password','')
+		except Exception as e:
+			user, password = '', ''
+		
+	# If no passwords are configured, accept any password.
+	password_ok = (CrossMgrPassword.objects.filter(password=password).exists() or not CrossMgrPassword.objects.all().exists())
+	return password_ok, user, password
 
 @csrf_exempt
 def UploadCrossMgr( request ):
-	payload, response = None, {'errors':[], 'warnings':[]}
+	payload, response = None, {'errors':[], 'warnings':[], 'info':[]}
+	event = None
+	
 	if request.method == "POST":
 		try:
 			payload = json.loads( request.body )
 		except Exception as e:
+			payload = None
 			response['errors'].append( 'RaceDB: {}'.format(e) )
 	else:
 		response['errors'].append( 'RaceDB: method="{}" expecting method="POST" .'.format(request.method) )
 		response['errors'].append( request.body.encode() )
-	
-	safe_print( 'UploadCrossMgr: processing...' )
+
+	if not response['errors']:
+		password_ok, user, password = checkCrossMgrPassword( payload.get('credentials', {}) )
+		if not password_ok:
+			payload = None
+			response['errors'].append( 'RaceDB: invalid password ({}, {})'.format(user, password) )
+
 	if payload:
-		response = read_results.read_results_crossmgr( payload )
-	safe_print( 'UploadCrossMgr: Done.' )
+		# safe_print( 'UploadCrossMgr: processing...' )
+		t_start = timezone.now()
+		response, event = read_results.read_results_crossmgr( payload )
+		# safe_print( 'UploadCrossMgr: Done.' )
+		if not response.get('errors', None):
+			response['info'].append( 'RaceDB: SUCCESS!  Uploaded in {} seconds.'.format( (timezone.now() - t_start).total_seconds() ) )
+	else:
+		response['errors'].append( 'RaceDB: payload NOT processed.' )
+
+	# Log the Update interation.
+	cml = CrossMgrLog( action=CrossMgrLog.UploadAction, user=user, password=password, success=bool(response.get('errors', None)) )
+	cml.event = event
+	cml.save()
+	
+	return JsonResponse( response )
+
+@csrf_exempt
+def VerifyCrossMgr( request ):
+	response = {'errors':[], 'warnings':[]}
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	if not password_ok:
+		response['errors'].append( 'RaceDB: invalid password' )
+	
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------
@@ -2450,6 +2504,12 @@ def EventTTCrossMgr( request, eventTTId ):
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventTT.name),
 	)
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	cml = CrossMgrLog( action=CrossMgrLog.OpenAction, user=user, password=password, success=password_ok )
+	cml.event = eventTT
+	cml.save()
+	
 	return response
 
 #-----------------------------------------------------------------------

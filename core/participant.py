@@ -91,7 +91,7 @@ class ParticipantSearchForm( Form ):
 
 @access_validation()
 def Participants( request, competitionId ):
-	ParticipantsPerPage = 25
+	ParticipantsPerPage = 50
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
 	

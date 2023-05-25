@@ -145,8 +145,15 @@ STATIC_ROOT=os.path.join(BASE_DIR, 'static')
 try:
 	from . import StaticUrl
 	STATIC_URL = StaticUrl.STATIC_URL
-except:
+except ImportError:
 	STATIC_URL = '/static/'
+
+# Path where media is stored
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+try:
+	from . import MediaUrl
+except ImportError:
+	MEDIA_URL = '/media/'
 
 TEMPLATES = [
 {

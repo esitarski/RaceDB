@@ -1,4 +1,6 @@
 from django.urls import include, path, re_path
+from django.conf.urls.static import static
+from django.conf import settings
 from django.shortcuts import redirect
 from django.views.generic import RedirectView
 from django.http.response import HttpResponsePermanentRedirect
@@ -21,3 +23,6 @@ urlpatterns = [
 	#re_path(r'^admin/', admin.site.urls),
     path('', redirect_view),
 ]
+
+# Set this as a backstop.  In production, configure an alias for the web server (eg. nginx) to get this file directly.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

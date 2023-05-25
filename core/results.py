@@ -94,7 +94,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		'pos':		pos,
 		'gapValue':	gapValue,
 		'laps':		winner_laps,
-		'startOffset':	0,
+		'startOffset': 0,
 	}
 	if raceDistance:
 		catDetails['raceDistance'] = raceDistance
@@ -104,6 +104,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		catDetails['lapDistance'] = lapDistance
 	payload['catDetails'] = [catDetails]
 	payload['data'] = data
+	
 	return payload
 
 '''

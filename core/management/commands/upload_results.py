@@ -9,15 +9,17 @@ class Command(BaseCommand):
 	help = 'Upload a CrossMgr json results file'
 	
 	def add_arguments(self, parser):
-		parser.add_argument('--json_file',
+		parser.add_argument(
+			'--json_file',
 			dest='json_file',
 			type=str,
-			help='CrossMgr generated json file to upload')
+			help='CrossMgr generated json file to upload'
+		)
 					
 	def handle(self, *args, **options):
 		with open( options['json_file'], 'rb' ) as fp:
 			payload = json.load( fp )
-		result = read_results_crossmgr( payload )
+		result, event = read_results_crossmgr( payload )
 		if result['errors']:
 			safe_print( 'Upload FAILED.  Errors.' )
 			for e in result['errors']:

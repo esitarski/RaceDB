@@ -27,3 +27,5 @@
 [Hub]:				Hub.html
 
 [Series]:			Series.html
+
+[CrossMgrIntegration]:	CrossMgrIntegration.html

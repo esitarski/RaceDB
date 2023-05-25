@@ -13,7 +13,7 @@ from .models import *
 from .views import license_holders_from_search_text
 from .results import get_payload_for_result
 
-ItemsPerPage = 25
+ItemsPerPage = 50
 
 def competitions_with_results( competitions=None ):
 	if competitions is None:
@@ -183,6 +183,23 @@ def CompetitionResults( request, competitionId ):
 	exclude_breadcrumbs = True
 	return render( request, 'hub_events_list.html', locals() )
 
+def get_primes( event, bibs ):
+	Prime = event.get_prime_class()
+	primes = []
+	used_fields = set()
+	
+	for p in Prime.objects.filter( event=event ).select_related('participant', 'participant__license_holder'):
+		if p.participant.bib not in bibs:
+			continue
+			
+		for f in Prime._meta.get_fields():
+			if not f.is_relation and 'effort' not in f.name and f.name != 'id' and bool( getattr(p, f.name) ):
+				used_fields.add( f )
+		primes.append( p )
+	
+	prime_fields = [f for f in Prime._meta.get_fields() if f in used_fields]
+	return primes, prime_fields
+
 def CategoryResults( request, eventId, eventType, categoryId ):
 	eventType = int(eventType)
 	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
@@ -216,6 +233,9 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	hub_mode = True
 	is_timetrial = (eventType == 1)
 	show_category = wave.rank_categories_together
+	
+	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
+	
 	return render( request, 'hub_results_list.html', locals() )
 
 def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
@@ -236,6 +256,9 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	hub_mode = True
 	is_timetrial = (eventType == 1)
 	show_category = True
+
+	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in reesults} )
+
 	return render( request, 'hub_results_list.html', locals() )
 
 def LicenseHolderResults( request, licenseHolderId ):

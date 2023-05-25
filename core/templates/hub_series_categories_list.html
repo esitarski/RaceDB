@@ -6,6 +6,9 @@
 {% block content %}
 {% include "hub_nav.html" %}
 <h1>
+	{% if series.image %}
+		<img src="{{series.image.image.url}}" class="logo-image" /><br/>
+	{% endif %}
 	<strong>{{series.name}}</strong><br/>
 	<span style="font-size: 75%">
 		{{series.description}}

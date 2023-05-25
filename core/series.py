@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from .views_common import *
 
-ItemsPerPage = 25
+ItemsPerPage = 50
 def getPaginator( request, page_key, items ):
 	paginator = Paginator( items, ItemsPerPage )
 	page = request.GET.get('page',None) or request.session.get(page_key,None)
@@ -74,6 +74,7 @@ class SeriesForm( ModelForm ):
 			),
 			Row(
 				Field('description', size=40),
+				Field('image'),
 			),
 			Row(
 				Field('ranking_criteria'),
