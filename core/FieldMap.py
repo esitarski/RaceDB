@@ -79,7 +79,10 @@ class FieldMap( object ):
 		except Exception as e:
 			return None
 		return None if alias in self.unmapped else self.alias_to_name.get(alias, None)
-
+		
+	def get_names( self ):
+		return list( self.name_to_col.keys() )
+		
 standard_field_aliases = (
 	('last_name',
 		('LastName','Last Name','LName','Rider Last Name',),
@@ -98,7 +101,7 @@ standard_field_aliases = (
 		"Gender",
 	),
 	('team',
-		('Team','Team Name','TeamName','Rider Team','RiderTeam','Trade Team','Rider Club/Team',),
+		('Team','Team Name','TeamName','Rider Team','RiderTeam','Trade Team','Rider Club/Team','Primary Race Team/Club:',),
 		"Team",
 	),
 	('team_code',
@@ -122,7 +125,7 @@ standard_field_aliases = (
 			'License Nums','LicenseNums',
 			'License Code','LicenseCode','LicenseCodes',
 			
-			'Rider License #',
+			'Rider License #','Membership Numbers',
 		),
 		"License code (not UCI code)",
 	),
@@ -159,15 +162,15 @@ standard_field_aliases = (
 		"Email",
 	),
 	('phone',
-		product(('Phone','Telephone','Tel'), ('', 'Number','No','#')),
+		tuple(product(('Phone','Telephone','Tel'), ('', 'Number','No','#'))) + ('Registrant Telephone',),
 		"Phone",
 	),
 	('city',
-		('City',),
+		('City','Registrant City',),
 		"City",
 	),
 	('state_prov',
-		('State','Prov','Province','Stateprov','State Prov',),
+		('State','Prov','Province','Stateprov','State Prov','Registrant Province',),
 		"State or Province",
 	),
 	('nation_code',
@@ -175,11 +178,11 @@ standard_field_aliases = (
 		"Nation Code (3 letters)",
 	),
 	('nationality',
-		('Nationality'),
+		('Nationality',),
 		"Competitive nationality",
 	),
 	('tag',
-		('Tag','Chip','Chip ID','Chip Tag','RFID',),
+		('Tag','Chip','Chip ID','Chip Tag','RFID','Chip Number',),
 		"Chip tag",
 	),
 	('note',
@@ -187,7 +190,7 @@ standard_field_aliases = (
 		"Note",
 	),
 	('zip_postal',
-		('ZipPostal','Zip','Postal','Zip Code','Postal Code','ZipCode','PostalCode',),
+		('ZipPostal','Zip','Postal','Zip Code','Postal Code','ZipCode','PostalCode','Registrant Postal Code',),
 		"Postal or Zip code",
 	),
 	('category_code',
@@ -211,11 +214,11 @@ standard_field_aliases = (
 		"Emergency Contact Name",
 	),
 	('emergency_contact_phone',
-		('Emergency Phone','Emergency Contact Phone',),
+		('Emergency Phone','Emergency Contact Phone','Emergency Contact Number (xxx-xxx-xxxx)',),
 		"Emergency Contact Phone",
 	),
 	('emergency_medical',
-		('Emergency Medical','Medic Alert','MedicAlert','Medical Alert'),
+		('Emergency Medical','Medic Alert','MedicAlert','Medical Alert','Medical conditions or allergies we need to be aware of in case of emergency'),
 		"Emergency Medical Alert",
 	),
 	('race_entered',

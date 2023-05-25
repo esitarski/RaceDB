@@ -6,6 +6,7 @@ from .views_common import *
 from .participant_key_filter import participant_key_filter, add_participant_from_license_holder
 from .ReadWriteTag import ReadTag, WriteTag
 from .participant import ParticipantSignatureForm
+from .get_version import get_version
 
 def get_valid_competitions():
 	dNow = timezone.localtime(timezone.now()).date()
@@ -155,7 +156,7 @@ def SelfServe( request, action=0 ):
 	action = int(action)
 	
 	exclude_breadcrumbs = True
-	version = RaceDBVersion
+	version = get_version()
 	
 	form = None
 	status_entries = []

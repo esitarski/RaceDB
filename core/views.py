@@ -3,6 +3,9 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.utils.html import escape
+from django.db.models import Count
+from django.core import management
+
 try:
 	from django.contrib.auth.views import logout
 except Exception:
@@ -16,6 +19,7 @@ import zipfile
 import operator
 import itertools
 import traceback
+import datetime
 
 from .get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from .get_seasons_pass_excel import get_seasons_pass_excel
@@ -45,6 +49,8 @@ from .context_processors import getContext
 
 from django.views.decorators.cache import patch_cache_control
 
+from .get_version import get_version
+
 @access_validation()
 def home( request, rfid_antenna=None ):
 	if rfid_antenna is not None:
@@ -52,7 +58,7 @@ def home( request, rfid_antenna=None ):
 			request.session['rfid_antenna'] = int(rfid_antenna)
 		except Exception as e:
 			pass
-	version = RaceDBVersion
+	version = get_version()
 	return render( request, 'home.html', locals() )
 	
 #-----------------------------------------------------------------------
@@ -1060,8 +1066,9 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col(Field('ga_tracking_id',size=12), 4),
-					Col(Field('google_maps_api_key',size=40), 6),
+					Col(Field('image'), 3),
+					Col(Field('ga_tracking_id',size=12), 3),
+					Col(Field('google_maps_api_key',size=40), 4),
 				),
 				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(''), ),
 				Row(
@@ -1116,9 +1123,15 @@ def GetCompetitionForm( competition_cur = None ):
 @access_validation()
 def CompetitionsDisplay( request ):
 	form = None
-	search_fields = request.session.get('competition_filter', {})
-	if not isinstance(search_fields, dict):
-		search_fields = {}
+	competition_filter = request.session.get('competition_filter', {})
+	if not isinstance(competition_filter, dict):
+		competition_filter = {}
+		
+	if 'year' not in competition_filter:
+		last_competition = Competition.objects.all().order_by('-start_date').first()
+		if last_competition:
+			competition_filter['year'] = last_competition.start_date.year
+		
 	if request.method == 'POST':
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionNew') )
@@ -1132,30 +1145,40 @@ def CompetitionsDisplay( request ):
 		if request.user.is_superuser:
 			form = CompetitionSearchForm( request.POST, request=request )
 			if form.is_valid():
-				request.session['competition_filter'] = search_fields = form.cleaned_data
+				request.session['competition_filter'] = competition_filter = form.cleaned_data
 	else:
 		if request.user.is_superuser:
-			form = CompetitionSearchForm( initial=search_fields, request=request )
+			form = CompetitionSearchForm( initial=competition_filter, request=request )
 	
-	competitions = Competition.objects.all().prefetch_related('report_labels')
+	competitions = (Competition.objects
+		.all()
+		.prefetch_related('report_labels')
+		.select_related('discipline', 'race_class')
+	)
+	
+	def add_num_participants( competitions ):
+		return competitions.annotate(num_participants=Count('participant'))
 	
 	if request.user.is_superuser:
-		year = int( search_fields.get( 'year', -1 ) )
+		year = int( competition_filter.get( 'year', -1 ) )
 		if year >= 0:
-			date_min = datetime.date( int(search_fields['year']), 1, 1 )
-			date_max = datetime.date( int(search_fields['year'])+1, 1, 1 ) - datetime.timedelta(days=1)
+			date_min = datetime.date( int(competition_filter['year']), 1, 1 )
+			date_max = datetime.date( int(competition_filter['year'])+1, 1, 1 ) - datetime.timedelta(days=1)
 			competitions = competitions.filter( start_date__range=(date_min, date_max) )
 		
-		dpk = int( search_fields.get( 'discipline', -1 ) )
+		dpk = int( competition_filter.get( 'discipline', -1 ) )
 		if dpk >= 0:
 			competitions = competitions.filter( discipline__pk=dpk )
+
+		competitions = add_num_participants( competitions )
 		
-		if search_fields.get( 'search_text', None ):
-			competitions = applyFilter( search_fields['search_text'], competitions, Competition.get_search_text )
+		if competition_filter.get( 'search_text', None ):
+			competitions = applyFilter( competition_filter['search_text'], competitions, Competition.get_search_text )			
 	else:	
 		# If not super user, only show the competitions for today and after.
 		dNow = datetime.date.today()
 		competitions = competitions.filter( start_date__gte = dNow - datetime.timedelta(days=120) )
+		competitions = add_num_participants( competitions )
 		competitions = [c for c in competitions if not c.is_finished(dNow)]
 	
 	competitions = sorted( competitions, key = operator.attrgetter('start_date'), reverse=True )
@@ -2173,23 +2196,76 @@ def EventMassStartCrossMgr( request, eventId ):
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventMassStart.name),
 	)
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	cml = CrossMgrLog( action=CrossMgrLog.OpenAction, user=user, password=password, success=password_ok )
+	cml.event = eventMassStart
+	cml.save()	
+
 	return response
+
+def checkCrossMgrPassword( request ):
+	try:
+		user, password = request['user'], request['password']
+	except Exception as e:
+		user, password = '', ''
+		
+	if not user:
+		try:
+			user, password = request.GET.get('user',''), request.GET.get('password','')
+		except Exception as e:
+			user, password = '', ''
+		
+	# If no passwords are configured, accept any password.
+	password_ok = (CrossMgrPassword.objects.filter(password=password).exists() or not CrossMgrPassword.objects.all().exists())
+	return password_ok, user, password
 
 @csrf_exempt
 def UploadCrossMgr( request ):
-	payload, response = None, {'errors':[], 'warnings':[]}
+	payload, response = None, {'errors':[], 'warnings':[], 'info':[]}
+	event = None
+	
 	if request.method == "POST":
 		try:
-			payload = json.loads( request.body.decode('utf-8') )
+			payload = json.loads( request.body )
 		except Exception as e:
-			response['errors'].append( '{}'.format(e) )
+			payload = None
+			response['errors'].append( 'RaceDB: {}'.format(e) )
 	else:
-		response['errors'].append( 'Request must be of type POST with json payload.' )
-	
-	safe_print( 'UploadCrossMgr: processing...' )
+		response['errors'].append( 'RaceDB: method="{}" expecting method="POST" .'.format(request.method) )
+		response['errors'].append( request.body.encode() )
+
+	if not response['errors']:
+		password_ok, user, password = checkCrossMgrPassword( payload.get('credentials', {}) )
+		if not password_ok:
+			payload = None
+			response['errors'].append( 'RaceDB: invalid password ({}, {})'.format(user, password) )
+
 	if payload:
-		response = read_results.read_results_crossmgr( payload )
-	safe_print( 'UploadCrossMgr: Done.' )
+		# safe_print( 'UploadCrossMgr: processing...' )
+		t_start = timezone.now()
+		response, event = read_results.read_results_crossmgr( payload )
+		# safe_print( 'UploadCrossMgr: Done.' )
+		if not response.get('errors', None):
+			response['info'].append( 'RaceDB: SUCCESS!  Uploaded in {} seconds.'.format( (timezone.now() - t_start).total_seconds() ) )
+	else:
+		response['errors'].append( 'RaceDB: payload NOT processed.' )
+
+	# Log the Update interation.
+	cml = CrossMgrLog( action=CrossMgrLog.UploadAction, user=user, password=password, success=bool(response.get('errors', None)) )
+	cml.event = event
+	cml.save()
+	
+	return JsonResponse( response )
+
+@csrf_exempt
+def VerifyCrossMgr( request ):
+	response = {'errors':[], 'warnings':[]}
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	if not password_ok:
+		response['errors'].append( 'RaceDB: invalid password' )
+	
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------
@@ -2428,6 +2504,12 @@ def EventTTCrossMgr( request, eventTTId ):
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventTT.name),
 	)
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	cml = CrossMgrLog( action=CrossMgrLog.OpenAction, user=user, password=password, success=password_ok )
+	cml.event = eventTT
+	cml.save()
+	
 	return response
 
 #-----------------------------------------------------------------------
@@ -2692,6 +2774,16 @@ def SystemInfoEdit( request ):
 def UpdateLogShow( request ):
 	update_log = UpdateLog.objects.all()
 	return render( request, 'update_log_show.html', locals() )
+	
+@access_validation()
+def DownloadDatabase( request ):
+	filename = 'RaceDB-Backup-{}.json.gz'.format( datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') )	
+	response = HttpResponse(content_type="application/gzip")
+	response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+	with gzip.GzipFile( filename=os.path.splitext(filename)[0], mode='w', fileobj=response ) as gz:
+		with io.TextIOWrapper(gz, encoding='utf-8', write_through=True) as io_text:
+			management.call_command('dumpdata', '-e', 'contenttypes', '-e', 'auth.Permission', stdout=io_text)
+	return response
 	
 #-----------------------------------------------------------------------
 

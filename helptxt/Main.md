@@ -19,6 +19,10 @@ Get started with RaceDB
 * [Race Classes][]
 * [Disciplines][]
 
+## CrossMgr Integration
+
+* [CrossmgrIntegration][]
+
 ## Users and Roles
 
 * [Users and Roles][]

@@ -55,6 +55,14 @@
 					</div>
 					<div class="row">
 						<div class="col-md-3">
+							<a class="btn btn-primary btn-block active" role="button" href="./Images/">{% trans "Images" %}</a>
+						</div>
+						<div class="col-md-9">
+							{% trans "Header Images for Event and Series Results" %}
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">
 							<a class="btn btn-primary btn-block active" role="button" href="/RaceDB/Hub/" target="_blank">{% trans "Hub" %}</a>
 						</div>
 						<div class="col-md-9">
@@ -166,11 +174,46 @@
 							{% trans "License Holder and Team Merge Log." %}
 						</div>
 					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<a class="btn btn-primary btn-block active" role="button" href="./DownloadDatabase/">{% trans "Download DB" %}</a>
+						</div>
+						<div class="col-md-8">
+							{% trans "Download the database as compressed json." %}
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
 		{% endif %}
 		<div class="col-md-6">
+			
+			{% if request.user.is_superuser %}
+			
+			<div class="panel panel-default">
+				<div class="panel-heading">{% trans "CrossMgr Access" %}</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="col-md-4">
+							<a class="btn btn-primary btn-block active" role="button" href="./CrossMgrPasswords/" %}">{% trans "Passwords" %}</a>
+						</div>
+						<div class="col-md-8">
+							{% trans "Passwords for CrossMgr Access." %}
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<a class="btn btn-primary btn-block active" role="button" href="./CrossMgrLogs/">{% trans "Access Log" %}</a>
+						</div>
+						<div class="col-md-8">
+							{% trans "CrossMgr Access log." %}
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			{% endif %}
+			
 			<div class="panel panel-default">
 				<div class="panel-heading">{% trans "Help and Tutorial" %}</div>
 				<div class="panel-body">

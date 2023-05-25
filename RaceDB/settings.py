@@ -63,6 +63,7 @@ ROOT_URLCONF = 'RaceDB.urls'
 WSGI_APPLICATION = 'RaceDB.wsgi.application'
 
 # Crispy forms configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3"
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
@@ -140,8 +141,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join( BASE_DIR, 'RaceDB', 'static_root' )
+STATIC_ROOT=os.path.join(BASE_DIR, 'static')
+try:
+	from . import StaticUrl
+	STATIC_URL = StaticUrl.STATIC_URL
+except ImportError:
+	STATIC_URL = '/static/'
+
+# Path where media is stored
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+try:
+	from . import MediaUrl
+except ImportError:
+	MEDIA_URL = '/media/'
 
 TEMPLATES = [
 {

@@ -55,7 +55,7 @@ def read_results_crossmgr( payload ):
 	event, info = get_event_from_payload( payload )
 	if not event:
 		errors.append( 'Cannot find Event "{}", "{}"'.format(payload['raceNameText'], payload['raceScheduledStart']) )
-		return { 'errors': errors, 'warnings': warnings, 'info':info }
+		return { 'errors': errors, 'warnings': warnings, 'info':info }, None
 		
 	competition = event.competition
 	
@@ -146,11 +146,13 @@ def read_results_crossmgr( payload ):
 	prime_points = {p['winnerBib']:p['points'] for p in payload.get('primes',[]) if p.get('points',None) }
 	prime_time_bonus = {p['winnerBib']:formatted_timedelta(seconds=p['timeBonus']) for p in payload.get('primes',[]) if p.get('timeBonus',None) }
 	
+	bib_participant = {}
+	
 	for cd in payload['catDetails']:
 		if cd['catType'] != 'Start Wave' or cd['name'] == 'All':
 			continue
 		
-		distance_unit = cd.get('distanceUnit', 'km')
+		distance_unit = cd.get('distanceUnit', 'km').lower()
 		unit_conversion = 1.0 if distance_unit == 'km' else 1.609344
 		wave_starters = cd['starters']
 		for wave_rank, bib in enumerate(cd['pos'], 1):
@@ -180,6 +182,8 @@ def read_results_crossmgr( payload ):
 				warnings.append( 'Cannot find Participant bib={} name="{}, {}", category="{}"'.format(
 					bib, d.get('LastName',''), d.get('FirstName',''), category.full_name()) )
 				continue
+			
+			bib_participant[bib] = participant
 			
 			race_times = d.get('raceTimes',[] )
 			if len(race_times) < 2:
@@ -235,4 +239,41 @@ def read_results_crossmgr( payload ):
 				continue
 
 	flush_cache()		
-	return {'errors': errors, 'warnings': warnings, 'name':'{}-{}'.format(competition.name, event.name)}
+	
+	# Remove existing primes
+	Prime = event.get_prime_class()
+	Prime.objects.filter( event=event ).delete()
+	
+	# Create a mapping from the effort type to the index.
+	name_to_effort = { str(v):e for e, v in Prime.EffortChoices }
+
+	# Add primes based on the CrossMgr information.
+	primes_to_create = []
+	for p in payload.get('primes',[]):
+		bib = p.get('winnerBib', None )
+		if bib not in bib_participant:
+			continue
+			
+		effort = name_to_effort.get( p.get('effortType', 'Pack'), 0 )
+		p_args = { 'participant':bib_participant[bib], 'event':event, 'effort':effort }
+		for f in Prime._meta.get_fields():
+			value = p.get( Prime.to_camel(f.name), None )
+			if not value:
+				continue
+			
+			if f.name == 'time_bonus':
+				try:
+					value = formatted_timedelta(seconds=value)
+				except Exception as e:
+					continue
+			elif getattr(f, 'max_length', None) is not None:
+				value = str(value)[:f.max_length]
+			
+			p_args[f.name] = value
+
+		prime = Prime( **p_args )		
+		primes_to_create.append( prime )
+	
+	Prime.objects.bulk_create( primes_to_create )
+	
+	return {'errors': errors, 'warnings': warnings, 'info':[], 'name':'{}-{}'.format(competition.name, event.name)}, event

@@ -8,6 +8,7 @@ import glob
 from django.utils.translation import gettext_lazy as _
 
 from .models import *
+from .get_version import get_version
 from .pdf import PDF
 from .encode_code128 import encode_code128
 
@@ -157,7 +158,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	page_height = 2.4 * inches_to_points
 	
 	pdf = PDF( 'L', (page_height, page_width) )
-	pdf.set_author( RaceDBVersion )
+	pdf.set_author( get_version() )
 	pdf.set_title( 'Race Bib Number: {}'.format(bib) )
 	pdf.set_subject( 'Bib number and rider info to be printed as a label to apply on the chip tag.' )
 	pdf.set_creator( getpass.getuser() )
@@ -232,7 +233,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	page_height = heightInches * inches_to_points
 	
 	pdf = PDF( 'L', (page_height * (copies if onePage else 1), page_width) )
-	pdf.set_author( RaceDBVersion )
+	pdf.set_author( get_version() )
 	pdf.set_title( 'Race Bib Number: {}'.format(bib) )
 	pdf.set_subject( 'Bib number.' )
 	pdf.set_creator( getpass.getuser() )
@@ -500,7 +501,7 @@ def print_id_label( participant ):
 	page_height = 2.4 * inches_to_points
 	
 	pdf = PDF( 'L', (page_height, page_width) )
-	pdf.set_author( RaceDBVersion )
+	pdf.set_author( get_version() )
 	pdf.set_title( 'Bib Number: {}'.format(bib) )
 	pdf.set_subject( 'Rider ID and Emergency Information.' )
 	pdf.set_creator( getpass.getuser() )

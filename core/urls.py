@@ -1,6 +1,8 @@
 from django.urls import include, path, re_path
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
+from django.conf import settings
+from django.conf.urls.static import static
 
 from core import views
 from core import participant
@@ -22,6 +24,8 @@ from core import callups
 from core import custom_label
 from core import competition_category_option
 from core import competition_found_tag
+from core import crossmgr_password
+from core import image
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -116,6 +120,7 @@ urlpatterns = [
 	re_path(r'^.*EventMassStartDelete/(?P<eventId>\d+)/$', views.EventMassStartDelete),
 	
 	re_path(r'^.*UploadCrossMgr/$', views.UploadCrossMgr),
+	re_path(r'^.*VerifyCrossMgr/$', views.VerifyCrossMgr),
 	
 	re_path(r'^.*CustomLabel/(?P<competitionId>\d+)/$', custom_label.CustomLabel),
 	
@@ -325,6 +330,7 @@ urlpatterns = [
 	
 	re_path(r'^.*SystemInfoEdit/$', views.SystemInfoEdit),
 	re_path(r'^.*UpdateLogShow/$', views.UpdateLogShow),
+	re_path(r'^.*DownloadDatabase/$', views.DownloadDatabase),
 	re_path(r'^.*AttendanceAnalytics/$', views.AttendanceAnalytics),
 	re_path(r'^.*ParticipantReport/$', views.ParticipantReport),
 	re_path(r'^.*YearOnYearAnalytics/$', views.YearOnYearAnalytics),
@@ -383,6 +389,20 @@ urlpatterns = [
 	re_path(r'^.*Resequence_(?P<modelClassName>[^_]+)_Class/(?P<instanceId>\d+)/(?P<newSequence>\d+)/$', views.Resequence),
 	
 	re_path(r'^PastCompetition/$', views.PastCompetition),
+	
+	re_path(r'^.*CrossMgrPasswords/$', crossmgr_password.CrossMgrPasswordDisplay),
+	re_path(r'^.*CrossMgrPasswordNew/$', crossmgr_password.CrossMgrPasswordNew),
+	re_path(r'^.*CrossMgrPasswordEdit/(?P<crossMgrPasswordId>\d+)/$', crossmgr_password.CrossMgrPasswordEdit),
+	re_path(r'^.*CrossMgrPasswordDelete/(?P<crossMgrPasswordId>\d+)/$', crossmgr_password.CrossMgrPasswordDelete),
+	
+	re_path(r'^.*CrossMgrLogs/$', crossmgr_password.CrossMgrLogDisplay),
+	re_path(r'^.*CrossMgrLogClear/$', crossmgr_password.CrossMgrLogClear),
+
+	re_path(r'^.*Images/$', image.Images),
+	re_path(r'^.*ImageNew/$', image.ImageNew),
+	re_path(r'^.*ImageEdit/(?P<imageId>\d+)/$', image.ImageEdit),
+	re_path(r'^.*ImageDelete/(?P<imageId>\d+)/$', image.ImageDelete),
+	re_path(r'^.*ImageDelete/(?P<imageId>\d+)/(?P<confirmed>\d+)/$', image.ImageDelete),
 	
 	re_path(r'^[Ll]ogin/$',  auth_views.LoginView.as_view(template_name='login.html'), name='login'),
 	re_path(r'^.*[Ll]ogout/$', views.Logout),

@@ -91,7 +91,7 @@ class ParticipantSearchForm( Form ):
 
 @access_validation()
 def Participants( request, competitionId ):
-	ParticipantsPerPage = 25
+	ParticipantsPerPage = 50
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -167,8 +167,11 @@ def Participants( request, competitionId ):
 		names = name_text.split()
 		if names:
 			q = Q()
+			if names[0].startswith('^') and len(names[0]) >= 2:
+				q &= Q(license_holder__last_name__istartswith = names[0][1:])
+				names = names[1:]
 			for n in names:
-				q |= Q(license_holder__search_text__icontains = n)
+				q &= Q(license_holder__search_text__icontains = n)
 			participants = participants.filter( q ).select_related('team', 'license_holder')
 			participants, paginator = getPaginator( participants )
 			return render( request, 'participant_list.html', locals() )
@@ -943,21 +946,18 @@ def ParticipantTeamSelectDiscipline( request, participantId, teamId ):
 		participant.team = team
 		participant.auto_confirm().save()
 		
-		today = timezone.localtime(timezone.now()).date()
-		for id in disciplines:
-			if team:
-				try:
-					th = TeamHint.objects.get( discipline__id=id, license_holder=participant.license_holder )
-					if th.team_id == team.id:
-						continue
-					th.team = team
-				except TeamHint.DoesNotExist:
-					th = TeamHint( license_holder=participant.license_holder, team=team )
-					th.discipline_id = id
-				th.effective_date = today
-				th.save()
-			else:
-				TeamHint.objects.filter( discipline__id=id, license_holder=participant.license_holder ).delete()
+		# First, delete all existing teams for the given disciplines.
+		TeamHint.objects.filter( discipline__id__in=disciplines, license_holder=participant.license_holder ).delete()
+
+		if team:
+			today = timezone.localtime(timezone.now()).date()
+			to_create = []
+			for id in disciplines:
+				th = TeamHint( license_holder=participant.license_holder, team=team ,effective_date=today )
+				th.discipline_id = id
+				to_create.append( th )	
+			TeamHint.objects.bulk_create( to_create )
+			
 		return HttpResponseRedirect(getContext(request,'pop2Url'))
 	else:
 		form = TeamDisciplineForm( initial = {'disciplines': [competition.discipline_id]} )
@@ -1606,6 +1606,8 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 	path_noargs = getContext(request, 'cancelUrl') + 'ParticipantTagChangeUSBReader/'
 	path_actions = '{}{}/'.format(path_noargs, participantId)
 	
+	participant.enforce_tag_constraints()
+	
 	rfid_tag1 = license_holder.existing_tag  if competition.use_existing_tags else participant.tag
 	rfid_tag2 = license_holder.existing_tag2 if competition.use_existing_tags else participant.tag2
 	
@@ -1691,7 +1693,7 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 						status_entries.append(
 							(_('Tag Validation Failure'), (_("***DOES NOT MATCH PARTICIPANT***"),) ),
 						)
-						if participant.tag_checked :
+						if participant.tag_checked:
 							participant.tag_checked = False
 							participant_save( participant )
 						raise RuntimeError('tag does not match participant')
@@ -1704,28 +1706,32 @@ def ParticipantTagChangeUSBReader( request, participantId, action=-1, participan
 						if not participant_save( participant ):
 							raise RuntimeError('participant save fails')
 					
-				elif action == 1 or action == 2:		# Issue tag
+				elif action in (1, 2):		# Issue tag
 					if not check_unique_tag( rfid_tag ):
 						raise RuntimeError('tag is already in use')
-						
+					
 					if competition.use_existing_tags:
+						# Reset the tags for the participant in case of a license holder save failure.
+						setattr( participant, ('tag', 'tag2')[action-1], None )
+						participant.tag_checked = False
+						participant_save( participant )
+						
 						# Set the existing tag for the license holder.
 						setattr( license_holder, ('existing_tag', 'existing_tag2')[action-1], rfid_tag )
 						if not license_holder_save( license_holder ):
-							raise RuntimeError('license_holder save fails')
-						
-						# Set the tag checked flag as well as removing any participant specific tags to prevent errors.
-						if not participant.tag_checked or participant.tag or participant.tag2 :
-							participant.tag = participant.tag2 = None
-							participant.tag_checked = True
-							if not participant_save( participant ):
-								raise RuntimeError('participant save fails')
+							raise RuntimeError('license_holder save failure')
+							
+						# Update the participant tags.
+						participant.tag = license_holder.existing_tag
+						participant.tag2  = license_holder.existing_tag2
 					else:
 						# Set the tag for this participant only.
-						setattr( participant, ('tag', 'tag2')[action-1], rfid_tag )						
-						participant.tag_checked = True
-						if not participant_save( participant ):
-							raise RuntimeError('participant save fails')
+						setattr( participant, ('tag', 'tag2')[action-1], rfid_tag )
+					
+					# Mark as checked as we had to have read the tag to get this far.
+					participant.tag_checked = True
+					if not participant_save( participant ):
+						raise RuntimeError('participant save failure')
 						
 			except Exception as e:
 				status = False

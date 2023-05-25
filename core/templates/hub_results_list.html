@@ -2,13 +2,20 @@
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
-]{% load format_time_no_decimals %}
+{% load format_time_no_decimals %}
+{% load format_field %}
+{% load getattr %}
+{% load formatattr %}
+{% load isnumber %}
 {% load to_js %}
 
 {% block style %}
 .main-container {
 	margin-left:-10px;
 	margin-right:-10px;
+}
+.lpad {
+	margin-left: 8px;
 }
 {% endblock style %}
 
@@ -1891,15 +1898,15 @@ function SituationAnimate() {
 		//situationObj.animate = true;
 		
 		function resizeCanvas() {
-			lapChartCanvas.width = window.innerWidth * 0.85;
+			lapChartCanvas.width = Math.max(10, window.innerWidth * 0.8);
 			lapChartCanvas.height = window.innerHeight * 0.6;
 			lapChartObj.draw();
 			
-			raceChartCanvas.width = window.innerWidth * 0.85;
+			raceChartCanvas.width = Math.max(10, window.innerWidth * 0.8);
 			raceChartCanvas.height = window.innerHeight * 0.75;
 			updateRaceChart();
 			
-			situationCanvas.width = window.innerWidth * 0.70;
+			situationCanvas.width = Math.max(10, window.innerWidth * 0.7);
 			situationCanvas.height = window.innerHeight * 0.75;
 			SituationRefresh();
 		}
@@ -1921,6 +1928,9 @@ function SituationAnimate() {
 {% block content %}
 {% include "hub_nav.html" %}
 <h1>
+	{% if event.competition.image %}
+		<a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/" ><img src="{{event.competition.image.image.url}}" class="logo-image" /></a><br/>
+	{% endif %}
 	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.title}}</a>: {{event.name}}</strong>{% if not has_results %}: {% trans "Registered Only (no results)" %}{% endif %}<br/>
 	<span style="font-size: 75%">
 		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}<br/>
@@ -1994,6 +2004,46 @@ table.participant_table tr th {
 </tbody>
 </table>
 {% endspaceless %}
+{% if primes %}
+	<hr/>
+	<h3>{% trans "Primes" %}</h3>
+	{% spaceless %}
+	<table class="table table-striped table-hover table-condensed participant_table">
+	<thead>
+		<tr>
+			<th class="text-right"></th>
+			<th class="text-right">{% trans "Bib" %}</th>
+			<th>{% trans "Name" %}</th>
+			<th>{% trans "Team" %}</th>
+			<th>{% trans "License" %}</th>
+			<th class="text-nowrap">{% trans "UCI ID" %}</th>
+			<th>{% trans "Effort" %}</th>
+			{% for pf in prime_fields %}
+				<th class="text-nowrap">{{pf.name | format_field}}</th>
+			{% endfor %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for pp in primes %}
+			{% with p=pp.participant h=pp.participant.license_holder %}
+			<tr>
+				<td class="text-right">{{forloop.counter}}.</td>
+				<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
+				<td>{{h.full_name}}</td>
+				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+				<td>{{h.license_code_trunc}}</td>
+				<td>{{h.get_flag_uci_id_html}}</td>
+				<td>{{pp.effort_name}}</td>
+				{% for pf in prime_fields %}
+					<td {% if pp|getattr:pf.name|isnumber %}class="text-center"{% endif %}>{{pp|getattr:pf.name|formatattr}}</td>
+				{% endfor %}
+			</tr>
+			{% endwith %}
+		{% endfor %}
+	</tbody>
+	</table>
+	{% endspaceless %}
+{% endif %}
 	</div>
 {% if not is_timetrial %}
 	<div id="sectionLapChart" class="tab-pane fade">
@@ -2004,7 +2054,7 @@ table.participant_table tr th {
 			For Internet Explorer (IE), you need version 9.0 or higher.<br/><br/>
 			Current versions of Chrome, FireFox and Opera work fine.
 			</canvas>
-		</div><!-- idLapChartDiv -->
+		</div> <!-- idLapChartDiv -->
 	</div>
 	<div id="sectionSituation" class="tab-pane fade">
 		<div id="idSituationDiv" class="noprint">

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+<h2>{{title}}</h2>
+<hr/>
+<a class="btn btn-primary hidden-print" href="{{cancelUrl}}">{% trans "OK" %}</a>
+<a class="btn btn-warning hidden-print" href="./CrossMgrLogClear/">{% trans "Clear Log" %}</a>
+<hr/>
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th>{% trans "Timestamp" %}</th>
+		<th>{% trans "Action" %}</th>
+		<th>{% trans "Success" %}</th>
+		<th>{% trans "User" %}</th>
+		<th>{% trans "Password" %}</th>
+		<th>{% trans "Competition" %}</th>
+		<th>{% trans "Event" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for cml in crossmgr_logs %}
+		<tr>
+			<td>{{cml.timestamp}}</td>
+			<td>{{cml.get_action_display}}</td>
+			<td>{{cml.success}}</td>
+			<td>{{cml.user}}</td>
+			<td>{{cml.password}}</td>
+			<td><strong>{{cml.event.competition.name}}</strong><br/>{{cml.event.competition.start_date}}</td>
+			<td><strong>{{cml.event.name}}</strong><br/>{{cml.event.date_time}}</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock content %}

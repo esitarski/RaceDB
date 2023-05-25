@@ -10,6 +10,7 @@ from django.db.models import Q
 from .models import *
 from .import_utils import *
 from .large_delete_all import large_delete_all
+from .FieldMap import standard_field_map
 
 datemode = None
 
@@ -105,22 +106,35 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 	if clear_existing:
 		Participant.objects.filter(competition=competition).delete()
 	
+	ifm = standard_field_map()
+	competition_categories = list( competition.category_format.category_set.all() )
+	for c in competition_categories:
+		ifm.set_aliases( str(c.id), [c.code] )
+	
 	# Process the records in large transactions for efficiency.
 	@transaction.atomic
 	def process_ur_records( ur_records ):
 		
-		for i, ur in ur_records:
-			bib				= to_int(ur.get('bibnum', None))
-			license_code	= 'ON' + (to_int_str(ur.get('license','')) or to_int_str(ur.get('licence','<missing license code>')))
-			uci_id			= to_str(ur.get('uci_id', '<missing uci id>'))
-			name			= to_str(ur.get('name','')).strip()
-			team_name		= to_str(ur.get('Team', None))
-			preregistered	= to_bool(ur.get('preregistered', True))
-			paid			= to_bool(ur.get('paid', None))
-			category_code   = to_str(ur.get('category', None))
+		for i, fields in ur_records:
+			v = ifm.finder( fields )
+			
+			bib				= to_int(v.get_value('bibnum', fields, None))
+			license_code	= 'ON' + (to_int_str(v.get_value('license', fields, '')) or to_int_str(v.get_value('licence', fields, '<missing license code>')))
+			uci_id			= to_str(v.get_value('uci_id', fields, '<missing uci id>'))
+			name			= to_str(v.get_value('name', fields,'')).strip()
+			team_name		= to_str(v.get_value('Team', fields, None))
+			preregistered	= to_bool(v.get_value('preregistered', fields, True))
+			paid			= to_bool(v.get_value('paid', fields, None))
+			category_code   = to_str(v.get_value('category', fields, None))
+			
+			first_name		= v.get_value('first_name', fields, None)
+			last_name		= v.get_value('last_name', fields, None)
+			date_of_birth	= v.get_value('date_of_birth', fields, None)
+			
+			tag				= v.get_value('tag', fields, None)
 
-			emergency_contact_name = to_str(get_key(ur,('Emergency Contact','Emergency Contact Name'), None))
-			emergency_contact_phone = to_str(get_key(ur,('Emergency Phone','Emergency Contact Phone'), None))
+			emergency_contact_name = to_str(v.get_value('emergency_contact_name', fields, None))
+			emergency_contact_phone = to_str(v.get_value('emergency_contact_phone', fields, None))
 			
 			license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
 			
@@ -130,8 +144,14 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 				except LicenseHolder.DoesNotExist:
 					pass
 			
+			if not license_holder and first_name and last_name and date_of_birth:
+				try:
+					license_holder = LicenseHolder.objects.get( first_name=first_name, last_name=last_name, date_of_birth=date_of_birth )
+				except Exception as e:
+					pass				
+			
 			if not license_holder:
-				safe_print( 'Row {}: cannot find LicenceHolder from UCI ID ({}) or LicenceCode ({})'.format(i, uci_id, license_code) )
+				safe_print( 'Row {}: cannot find LicenceHolder from UCI ID ({}), LicenceCode ({}) or First/Last/DOB'.format(i, uci_id, license_code) )
 				continue
 					
 			do_save = False
@@ -143,21 +163,7 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 			
 			if do_save:
 				license_holder.save()
-					
-			try:
-				participant = Participant.objects.get( competition=competition, license_holder=license_holder )
-			except Participant.DoesNotExist:
-				participant = Participant( competition=competition, license_holder=license_holder )
-			except Participant.MultipleObjectsReturned:
-				safe_print( 'Row {}: found multiple Participants for this competition and license_holder.'.format(
-						i,
-				) )
-				continue
-			
-			for attr, value in [ ('preregistered',preregistered), ('paid',paid), ('bib',bib), ]:
-				if value is not None:
-					setattr( participant, attr, value )
-			
+				
 			team = None
 			if team_name is not None:
 				try:
@@ -171,7 +177,8 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 						i, team_name,
 					) )
 			participant.team = team
-			
+
+			# Check which speecific categories are entered.
 			category = None
 			if category_code is not None:
 				try:
@@ -184,18 +191,46 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 					safe_print( 'Row {}: multiple Categories match code (ignoring): "{}"'.format(
 						i, category_code,
 					) )
-			participant.category = category
+
+			categories_entered = [category] if category else []
+			if not categories_entered:
+				for c in competition_categories:
+					in_category = v.get_value( str(c.id), fields, None )
+					if in_category:
+						categories_entered.append( c )
+
+			if not categories_entered:
+				categories_entered = [None]
+
+			for category in categories_entered:
+				query_values = dict( competition=competition, license_holder=license_holder )
+				if category:
+					query_values['category'] = category
+				try:
+					participant = Participant.objects.get( **query_values )
+				except Participant.DoesNotExist:
+					participant = Participant( **query_values )
+				except Participant.MultipleObjectsReturned:
+					safe_print( 'Row {}: found multiple Participants for this competition and license_holder.'.format(
+							i,
+					) )
+					continue
+				
+				for attr, value in [ ('preregistered',preregistered), ('paid',paid), ('bib',bib), ]:
+					if value is not None:
+						setattr( participant, attr, value )
+				
+				try:
+					participant.save()
+				except IntegrityError as e:
+					safe_print( 'Row {}: Error={}\nBib={} Category={} License={} Name={}'.format(
+						i, e,
+						bib, category_code, license_code, name,
+					) )
+					continue
 			
-			try:
-				participant.save()
-			except IntegrityError as e:
-				safe_print( 'Row {}: Error={}\nBib={} Category={} License={} Name={}'.format(
-					i, e,
-					bib, category_code, license_code, name,
-				) )
-				continue
-			
-			participant.add_to_default_optional_events()
+				if not category:
+					participant.add_to_default_optional_events()
 			
 			safe_print( '{:>6}: {:>8} {:>10} {}, {}, {}, {}, {}'.format(
 					i,
@@ -227,13 +262,14 @@ def init_prereg_oca( competition_name, worksheet_name, clear_existing ):
 		if r == 0:
 			# Get the header fields from the first row.
 			fields = [unescape('{}'.format(v.value).strip()).replace('-','_').replace('#','').strip().replace('4', 'four').replace(' ','_').lower() for v in row]
-			fields = ['f{}'.format(i) if not f else f.strip() for i, f in enumerate(fields)]
-			safe_print( '\n'.join( fields ) )
-			fields = {col:f for col, f in enumerate(fields)}
+			
+			ifm.set_headers( fields )
+			
+			safe_print( '\n'.join( ifm.get_names() ) )
 			continue
 			
-		ur = { fields.get(col,''):cell.value for col, cell in enumerate(row) }
-		ur_records.append( (r+1, ur) )
+		record = tuple( cell.value for cell in row )
+		ur_records.append( (r+1, record) )
 		if len(ur_records) == 1000:
 			process_ur_records( ur_records )
 			ur_records = []

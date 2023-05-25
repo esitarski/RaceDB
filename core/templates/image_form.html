@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h1>{{title}}</h1>
+<hr/>
+{% crispy form %}
+{% if instance and instance.image %}
+<p>
+	<hr/>
+	{% trans "Existing Image" %}:<br/>
+	&nbsp;<br/>
+	<img src="{{instance.image.url}}" class="logo-image" />
+</p>
+{% endif %}
+{% endblock content %}
