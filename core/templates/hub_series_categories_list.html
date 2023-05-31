@@ -7,7 +7,14 @@
 {% include "hub_nav.html" %}
 <h1>
 	{% if series.image %}
-		<img src="{{series.image.image.url}}" class="logo-image" /><br/>
+		{% if series.image.url %}
+			<a href="{{series.image.url}}" target="_blank" />
+				<img src="{{series.image.image.url}}" class="logo-image" />
+			</a>
+		{% else %}
+			<img src="{{series.image.image.url}}" class="logo-image" />
+		{% endif %}
+		<br/>
 	{% endif %}
 	<strong>{{series.name}}</strong><br/>
 	<span style="font-size: 75%">

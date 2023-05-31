@@ -32,6 +32,9 @@ class ImageForm( ModelForm ):
 				Field('description', size=80),
 			),
 			Row(
+				Field('url', size=80),
+			),
+			Row(
 				Field('image'),
 			),
 		)

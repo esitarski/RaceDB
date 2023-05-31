@@ -6053,6 +6053,7 @@ class CrossMgrPassword(models.Model):
 class Image(models.Model):
 	title = models.CharField( max_length = 32, db_index=True, verbose_name = _('Title') )
 	description = models.CharField( max_length = 80, blank = True, default = '', verbose_name = _('Description') )
+	url = models.URLField( max_length=200, blank = True, default = '', verbose_name = _('URL'), help_text=_('URL link followed when the viewer clicks on the image') )
 	image = models.ImageField( upload_to="uploads/" )
 	
 	def __str__( self ):

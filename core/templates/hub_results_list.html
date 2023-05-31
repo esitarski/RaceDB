@@ -1929,7 +1929,16 @@ function SituationAnimate() {
 {% include "hub_nav.html" %}
 <h1>
 	{% if event.competition.image %}
-		<a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/" ><img src="{{event.competition.image.image.url}}" class="logo-image" /></a><br/>
+		<a
+			{% if event.competition.image.url %}
+				href="{{event.competition.image.url}}" target="_blank"
+			{% else %}
+				href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/"
+			{% endif %}
+		>
+			<img src="{{event.competition.image.image.url}}" class="logo-image" />
+		</a>
+		<br/>
 	{% endif %}
 	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.title}}</a>: {{event.name}}</strong>{% if not has_results %}: {% trans "Registered Only (no results)" %}{% endif %}<br/>
 	<span style="font-size: 75%">
