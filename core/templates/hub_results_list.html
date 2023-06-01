@@ -1941,9 +1941,17 @@ function SituationAnimate() {
 		<br/>
 	{% endif %}
 	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.title}}</a>: {{event.name}}</strong>{% if not has_results %}: {% trans "Registered Only (no results)" %}{% endif %}<br/>
-	<span style="font-size: 75%">
+	<span style="font-size: 70%">
 		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}<br/>
-		{{event.date_time|date_hhmm}}&nbsp;&nbsp; {% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp; {% trans "Starters" %}: {{num_starters}}
+		{{event.date_time|date_hhmm}}&nbsp;&nbsp;
+		{% trans "Starters" %}: {{num_starters}}&nbsp;&nbsp;
+		{% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp;
+		{% if race_time %}
+			{% trans "Winning Time" %}: {{race_time}}&nbsp;&nbsp;
+		{% endif %}
+		{% if ave_speed %}
+			{% trans "Ave. Speed" %}: {{ave_speed}}&nbsp;&nbsp;
+		{% endif %}
 	</span>
 </h1>
 {% trans "Generated" %}: {{time_stamp|date_hhmmss}}
