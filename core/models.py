@@ -215,8 +215,8 @@ class Sequence( models.Model ):
 		return self.get_container().count()
 	
 	class Meta:
-		ordering = ['sequence']
 		abstract = True
+		ordering = ['sequence']
 
 #----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
