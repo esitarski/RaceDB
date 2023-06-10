@@ -267,7 +267,7 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	is_timetrial = (eventType == 1)
 	show_category = True
 
-	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in reesults} )
+	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
 
 	return render( request, 'hub_results_list.html', locals() )
 
