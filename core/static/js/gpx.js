@@ -521,11 +521,20 @@ class Rider {
 	
 	get_initials() {
 		let initials = '';
-		if( this.info.hasOwnProperty('FirstName') )
-			initials += this.info.FirstName.slice(0,1);
 		if( this.info.hasOwnProperty('LastName') )
 			initials += this.info.LastName.slice(0,1);
+		if( this.info.hasOwnProperty('FirstName') )
+			initials += this.info.FirstName.slice(0,1);
 		return initials;
+	}
+	
+	get_last_first() {
+		let s = [];
+		if( this.info.hasOwnProperty('LastName') )
+			s.push( this.info.LastName.toUpperCase() );
+		if( this.info.hasOwnProperty('FirstName') )
+			s.push( this.info.FirstName );
+		return s.join(', ');
 	}
 }
 
@@ -534,14 +543,14 @@ class Rider {
 const altigraph_ratio = 0.1;
 
 class TopView {
-	constructor( canvas, course, riders, focus_rider=null ) {
+	constructor( canvas, course, riders, focus_bib=null ) {
 		this.canvas = canvas;
 		this.course = course;
-		this.riders = riders;
-		this.r_xyn = this.riders.map( (r) => [r, 0.0, 0.0, 0.0] );
+		this.set_riders( riders );
+		if( focus_bib )
+			this.set_focus_bib( focus_bib );
 		
 		this.is_running = false;
-		this.focus_rider = focus_rider;	// If null, follow the leader.
 		this.t = 0.0;
 		this.t_factor = 20.0;
 		this.frames_per_second = 30;
@@ -550,8 +559,9 @@ class TopView {
 		this.animate = true;
 		this.animate_state_cache = true;
 		this.focus_rider_cur = null;
-		this.button_rects = [];
 		
+		// Media and zoom control.
+		this.button_rects = [];
 		const skip_back = "⏮";
 		const play_pause = "⏯";
 		const skip_forward = "⏭";
@@ -559,6 +569,7 @@ class TopView {
 		const speed_down = "⏬︎";	
 		const zoom_in = "+🔍";
 		const zoom_out = "-🔍";
+		
 		this.button_handlers = [
 			[skip_back,		this.skip_back_animation.bind(this), 1.0],
 			[play_pause,	this.play_pause.bind(this), 1.0],
@@ -569,6 +580,17 @@ class TopView {
 			[zoom_out,		this.zoom_out.bind(this), 0.7]
 		].reverse();	// Draw from right to left.
 		
+		// Focus rider select.
+		const focus_up = "▲";
+		const focus_down = "▼";
+		
+		this.focus_button_rects = [];
+		this.focus_button_handlers = [
+			[focus_up,			this.focus_up.bind(this), 1.0],
+			[focus_down,		this.focus_down.bind(this), 1.0]
+		].reverse();
+		
+		// Event handlers.
 		canvas.addEventListener( "keydown", this.OnKeyDown.bind(this), true );
 		canvas.addEventListener( "wheel", this.OnMouseWheel.bind(this), false );
 		
@@ -636,12 +658,10 @@ class TopView {
 		const y = event.clientY - rect.top;
 		
 		// Check if this event is on a button.
-		if( y < this.button_rects[0][3] ) {		// Check for the button row.
-			for( let [x1, y1, x2, y2, text, handler, ...rest] of this.button_rects ) {
-				if( x1 <= x && x < x2 && y1 <= y && y < y2 ) {
-					handler();
-					return;
-				}
+		for( let [x1, y1, x2, y2, text, handler, ...rest] of this.button_rects ) {
+			if( x1 <= x && x < x2 && y1 <= y && y < y2 ) {
+				handler();
+				return;
 			}
 		}
 		// Add the event to the list.
@@ -729,8 +749,27 @@ class TopView {
 
 	set_riders( riders ) {
 		this.riders = riders;
+		this.r_xyn = this.riders.map( (r) => [r, 0.0, 0.0, 0.0] );
 		this.focus_rider = null;
-		this.draw();
+		
+		let collator = new Intl.Collator();
+		this.sorted_riders = this.riders.map( (r) => r );
+		this.sorted_riders.sort( function(a, b) {
+				return collator.compare( a.get_last_first(), b.get_last_first() );
+			}
+		);
+		this.sorted_riders.unshift( null );
+		this.i_focus_rider = 0;
+	}
+	
+	set_focus_bib( bib ) {
+		this.i_sorted = 0;
+		for( let i = 1; i < this.sorted_riders.length; ++i ) {
+			if( this.sorted_riders[i].bib == bib ) {
+				this.i_sorted = 0;
+				break;
+			}
+		}
 	}
 		
 	set_t( t=0.0 ) { this.t = t; }
@@ -776,6 +815,19 @@ class TopView {
 		const n_next = Math.min( this.focus_rider_cur.race_times.length-1, Math.trunc(this.focus_rider_cur.get_lap_normal(this.t)) + 1 );
 		this.set_t( this.focus_rider_cur.race_times[n_next] );
 		this.draw();
+	}
+	
+	focus_up() {
+		if( this.sorted_riders && this.sorted_riders.length ) {
+			this.i_focus_rider = (this.i_focus_rider + this.sorted_riders.length-1) % this.sorted_riders.length;
+			this.focus_rider = this.sorted_riders[this.i_focus_rider];
+		}
+	}
+	focus_down() {
+		if( this.sorted_riders && this.sorted_riders.length ) {
+			this.i_focus_rider = (this.i_focus_rider + 1) % this.sorted_riders.length;
+			this.focus_rider = this.sorted_riders[this.i_focus_rider];
+		}
 	}
 		
 	OnTimer() {
@@ -895,17 +947,20 @@ class TopView {
 	draw_buttons( gc ) {
 		const [p_width, p_height] = [this.canvas.width, this.canvas.height];
 		
+		// Array of buttons with bounding rectangles and handlers.
+		this.button_rects = [];
+
 		gc.save();
 		
-		let t_height = 32*1.33333;
+		let t_height = 30*1.33333;
 		gc.font = t_height + "px Arial";
 		gc.textBaseline = "top";
-
 		const space_width = gc.measureText(" ").width;
-		let y_button = 0;
-		let x_button = p_width;
 		const button_height = t_height * 1.15;
-		this.button_rects = [];
+		const lineWidth = 3;
+
+		// Media and zoom control.
+		let x_button = p_width, y_button = 0
 		for( let [text, handler, factor] of this.button_handlers ) {
 			gc.font = (t_height * factor) + "px Arial";
 			const t_width = gc.measureText(text).width + space_width;
@@ -919,13 +974,13 @@ class TopView {
 		}
 
 		this.button_rects.reverse();
-		const [x0, y0] = [this.button_rects[0][0], this.button_rects[0][1]];
-		const [x1, y1] = [x0, this.button_rects[0][3]];
+		let [x0, y0] = [this.button_rects[0][0], this.button_rects[0][1]];
+		let [x1, y1] = [x0, this.button_rects[0][3]];
 		let gradient = gc.createLinearGradient( x0, y0, x1, y1);
 		gradient.addColorStop( 0.0, 'rgb(96,96,96)' );
 		gradient.addColorStop( 0.5, 'rgb(200,200,200)' );
 		gradient.addColorStop( 1.0, 'rgb(96,96,96)' );
-		gc.lineWidth = 3;
+		gc.lineWidth = lineWidth;
 		let i = 0;
 		for( let [x1, y1, x2, y2, text, handler, factor] of this.button_rects ) {
 			const r = [x1, y1, x2-x1, y2-y1];
@@ -941,6 +996,51 @@ class TopView {
 			gc.fillStyle = "black";
 			gc.fillText( text, x_text, y_text );
 		}
+		
+		//--------------------------------------------------------------
+		// Focus selection.
+		//
+		x_button = p_width;
+		y_button = button_height + lineWidth/2;
+		this.focus_button_rects = [];
+		for( let [text, handler, factor] of this.focus_button_handlers ) {
+			gc.font = (t_height * factor) + "px Arial";
+			const t_width = gc.measureText(text).width + space_width;
+			const button_width = t_width + space_width;
+			x_button -= t_width + space_width;
+			this.focus_button_rects.push( [x_button, y_button, x_button + button_width, y_button + button_height, text, handler, factor] );
+		}
+
+		this.focus_button_rects.reverse();
+		[x0, y0] = [this.focus_button_rects[0][0], this.focus_button_rects[0][1]];
+		[x1, y1] = [x0, this.focus_button_rects[0][3]];
+		gradient = gc.createLinearGradient( x0, y0, x1, y1);
+		gradient.addColorStop( 0.0, 'rgb(96,96,96)' );
+		gradient.addColorStop( 0.5, 'rgb(200,200,200)' );
+		gradient.addColorStop( 1.0, 'rgb(96,96,96)' );
+		gc.lineWidth = lineWidth;
+		for( let [x1, y1, x2, y2, text, handler, factor] of this.focus_button_rects ) {
+			const r = [x1, y1, x2-x1, y2-y1];
+			gc.strokeStyle = "black";
+			gc.fillStyle = gradient;
+			gc.strokeRect( ...r );
+			gc.fillRect( ...r );
+
+			gc.font = (t_height * factor) + "px Arial";
+			const t_width = gc.measureText(text).width;
+			const x_text = x1 + ((x2-x1) - t_width) / 2;
+			const y_text = y1 + ((y2-y1) - (t_height * factor)) / 2;
+			gc.fillStyle = "black";
+			gc.fillText( text, x_text, y_text );
+		}
+		const text = " " + (this.i_focus_rider === 0 ? "Leader" : this.sorted_riders[this.i_focus_rider].get_last_first()) + " ";
+		const x_text = this.focus_button_rects[0][0];
+		const y_text = y0 + (button_height - t_height) / 2;
+		gc.textAlign = "right";
+		gc.fillText( text, x_text, y_text );
+		
+		this.button_rects = this.button_rects.concat( this.focus_button_rects );
+		
 		gc.restore();
 	}
 	
@@ -1109,6 +1209,29 @@ class TopView {
 		const radius = shoulder_width*0.8 / 2.0;
 		let i_focus_rider = null;
 		let i_last_rider = -1;
+		
+		function draw_rider_ball( r, x, y, scale ) {
+			const x_gradient = x-radius/2.0;
+			const y_gradient = y-radius/2.0;
+			
+			let gradient = gc.createRadialGradient(
+				x_gradient, y_gradient, 0.0,
+				x_gradient, y_gradient, shoulder_width
+			);
+			gradient.addColorStop( 0.0, r.color );
+			gradient.addColorStop( 1.0, "black" );
+			gc.fillStyle = gradient;
+			gc.beginPath();
+			gc.ellipse( x, y, radius, radius, 0.0, 0.0, Math.PI*2.0 );
+			gc.fill();
+			
+			if( r === focus_rider ) {
+				gc.lineWidth = 4/scale;
+				gc.strokeStyle = "rgb(0,196,196)";
+				gc.stroke();
+			}
+		}
+		
 		for( let i = 0; i < this.r_xyn.length; ++i ) {
 			let [r, x, y, n] = this.r_xyn[i];
 			if( r == focus_rider )
@@ -1126,26 +1249,13 @@ class TopView {
 				break;
 			}
 			
-			const x_gradient = x-radius/2.0;
-			const y_gradient = y-radius/2.0;
-			
-			let gradient = gc.createRadialGradient(
-				x_gradient, y_gradient, 0.0,
-				x_gradient, y_gradient, shoulder_width
-			);
-			gradient.addColorStop( 0.0, r.color );
-			gradient.addColorStop( 1.0, "black" );
-			gc.fillStyle = gradient;
-			gc.beginPath();
-			gc.ellipse( x, y, radius, radius, 0.0, 0.0, Math.PI*2.0 );
-			gc.fill();
-			
-			if( r === focus_rider ) {
-				gc.lineWidth = 4/this.scale;
-				gc.strokeStyle = "rgb(0,196,196)";
-				gc.stroke();
-			}
+			draw_rider_ball( r, x, y, this.scale );
 			i_last_rider = i;
+		}
+		
+		if( i_focus_rider !== null ) {
+			let [r, x, y, n] = this.r_xyn[i_focus_rider];
+			draw_rider_ball( r, x, y, this.scale );
 		}
 		
 		if( i_last_rider < 0 ) {

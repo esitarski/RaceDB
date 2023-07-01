@@ -4,6 +4,10 @@
 
 <html>
 <head>
+<title>{% if page_title %}{{page_title}}{% else %}RaceDB by Edward Sitarski{% endif %}</title>
+{% include "meta.html" %}
+<link rel="icon" href="{% static "images/RaceDB_32x32.png" %}">
+
 <script type="text/javascript" src="{% static "js/gpx.js" %}"></script>
 <script>
 
