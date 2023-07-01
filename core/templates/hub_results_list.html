@@ -1973,6 +1973,9 @@ table.participant_table tr th {
 		<li><a data-toggle="tab" href="#sectionRaceChart">{% trans "Race Chart" %}</a></li>
 		<li><a data-toggle="tab" href="#sectionSituation">{% trans "Situation" %}</a></li>
 	{% endif %}
+	{% if has_results and event.has_gpx_course %}
+		<li><a href="./EventAnimation/{{eventId}}/{{eventType}}/{{categoryId}}/"</a>{% trans "Animation" %}</a></li>
+	{% endif %}
 		<li><a data-toggle="tab" href="#histogram">{% trans "Histogram" %}</a></li>
 {% endif %}
 </ul>

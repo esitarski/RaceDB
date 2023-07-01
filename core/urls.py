@@ -26,6 +26,7 @@ from core import competition_category_option
 from core import competition_found_tag
 from core import crossmgr_password
 from core import image
+from core import gpx_course
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -40,6 +41,7 @@ urlpatterns = [
 	re_path(r'^.*Hub/CompetitionResults/(?P<competitionId>\d+)/$', hub.CompetitionResults),
 	re_path(r'^.*Hub/CategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.CategoryResults),
 	re_path(r'^.*Hub/CustomCategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$', hub.CustomCategoryResults),
+	re_path(r'^.*EventAnimation/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventAnimation),
 	
 	re_path(r'^.*Hub/LicenseHolderResults/(?P<licenseHolderId>\d+)/$', hub.LicenseHolderResults),
 	re_path(r'^.*Hub/ResultAnalysis/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<resultId>\d+)/$', hub.ResultAnalysis),
@@ -403,6 +405,12 @@ urlpatterns = [
 	re_path(r'^.*ImageEdit/(?P<imageId>\d+)/$', image.ImageEdit),
 	re_path(r'^.*ImageDelete/(?P<imageId>\d+)/$', image.ImageDelete),
 	re_path(r'^.*ImageDelete/(?P<imageId>\d+)/(?P<confirmed>\d+)/$', image.ImageDelete),
+	
+	re_path(r'^.*GPXCourses/$', gpx_course.GPXCourses),
+	re_path(r'^.*GPXCourseNew/$', gpx_course.GPXCourseNew),
+	re_path(r'^.*GPXCourseEdit/(?P<gpxCourseId>\d+)/$', gpx_course.GPXCourseEdit),
+	re_path(r'^.*GPXCourseDelete/(?P<gpxCourseId>\d+)/$', gpx_course.GPXCourseDelete),
+	re_path(r'^.*GPXCourseDelete/(?P<gpxCourseId>\d+)/(?P<confirmed>\d+)/$', gpx_course.GPXCourseDelete),
 	
 	re_path(r'^[Ll]ogin/$',  auth_views.LoginView.as_view(template_name='login.html'), name='login'),
 	re_path(r'^.*[Ll]ogout/$', views.Logout),

@@ -201,10 +201,40 @@ def get_primes( event, bibs ):
 	prime_fields = [f for f in Prime._meta.get_fields() if f in used_fields]
 	return primes, prime_fields
 
+def EventAnimation( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return list( wave.get_results(c) )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	gpx_course = event.get_gpx_course()
+	payload['lat_lon_elevation'] = gpx_course.lat_lon_elevation
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_animation.html', locals() )
+
 def CategoryResults( request, eventId, eventType, categoryId ):
 	eventType = int(eventType)
 	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
 	category = get_object_or_404( Category, pk=categoryId )
+	custom_category = None
 	wave = event.get_wave_for_category( category )
 	
 	has_results = wave.has_results()

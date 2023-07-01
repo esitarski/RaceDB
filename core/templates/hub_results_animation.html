@@ -1,0 +1,57 @@
+{% load i18n %}
+{% load static %}
+{% load to_js %}
+
+<html>
+<head>
+<script type="text/javascript" src="{% static "js/gpx.js" %}"></script>
+<script>
+
+function riders_from_data( data ) {
+	let riders = [];
+	let start_min = +Infinity;
+	for (const [bib, info] of Object.entries(data)) {
+		// Rider( bib, race_times, info, color )
+		if( info.raceTimes && info.raceTimes.length >= 2 && info.status !== 'DNS' ) {
+			let rider = new Rider( Number(bib), info.raceTimes, {'FirstName':info.FirstName, 'LastName':info.LastName} );
+			start_min = Math.min( start_min, info.raceTimes[0] );
+			riders.push( rider );
+		}
+	}
+	// Remove any common start offset.
+	if( start_min > 0.0 ) {
+		for( let r of riders ) {
+			for( let i = 0; i < r.race_times.length; ++i )
+				r.race_times[i] -= start_min;
+		}
+	}
+	return riders;
+}
+
+var top_view = null;
+function onBodyLoad() {
+	let payload = {{payload|to_js}};
+	let canvas = document.getElementById('id_canvas');
+	let course = new Course( payload.lat_lon_elevation, {% if gpx_course.is_loop %} true {% else %} false {% endif %} );
+	let riders = riders_from_data( payload.data );
+
+	top_view = new TopView( canvas, course, riders );
+	top_view.set_t_factor_zoom();
+	
+	window.addEventListener( "resize", top_view.OnResize.bind(top_view) );
+	top_view.OnResize();
+	top_view.start_animation();
+}
+
+</script>
+
+<style>
+body { margin: 0; } 
+canvas { display: block; } 
+</style>
+
+</head>
+<body onload="onBodyLoad();">
+	<canvas id="id_canvas"></canvas>
+</body>
+</html>
