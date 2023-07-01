@@ -751,6 +751,9 @@ class TopView {
 		this.riders = riders;
 		this.r_xyn = this.riders.map( (r) => [r, 0.0, 0.0, 0.0] );
 		this.focus_rider = null;
+		this.max_laps = 1;
+		for( let r of riders )
+			this.max_laps = Math.max( this.max_laps, r.race_times.length-1 );
 		
 		let collator = new Intl.Collator();
 		this.sorted_riders = this.riders.map( (r) => r );
@@ -1048,8 +1051,7 @@ class TopView {
 		if( !this.r_xyn || this.r_xyn.length === 0 )
 			return;
 			
-		const [leader, x, y, n] = this.r_xyn.last();
-		const max_laps = Math.max( 1, leader.race_times.length-1 );
+		const max_laps = this.max_laps;
 		
 		gc.save();
 
@@ -1058,9 +1060,10 @@ class TopView {
 		gc.fillStyle = "black";
 		gc.textBaseline = "top";
 		
+		const n = focus_rider.get_lap_normal( this.t );
 		const t_x = t_height, t_y = t_height;
 		[
-			`Lap: ${Math.min(n, max_laps).toFixed(2)}/${max_laps}`,
+			`Laps to go: ${Math.max(max_laps-n, 0.0).toFixed(2)}/${max_laps}`,
 			`Race Time: ${format_t(this.t)}`,
 			`Playback Speed: ${this.t_factor.toFixed(1)}x`,
 			`Zoom: ${this.zoom.toFixed(1)}x`
