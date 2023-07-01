@@ -187,11 +187,11 @@ function fw( n, w ) {
 }
 
 function format_t( t ) {
-	let [f, s] = modf( t );
+	let s = Math.round( t );
 	const h = Math.trunc( s / (60*60) );
 	const m = Math.trunc( s / 60) % 60;
-	s = (s % 60) + f;
-	return h + ':' + fw(m,2) + ':' + fw(s.toFixed(2), 5);
+	s %= 60;
+	return h + ':' + fw(m,2) + ':' + fw(s,2);
 }
 
 function binary_search( arr, v ) {
