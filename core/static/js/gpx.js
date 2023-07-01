@@ -536,6 +536,16 @@ class Rider {
 			s.push( this.info.FirstName );
 		return s.join(', ');
 	}
+
+	get_last_first_initial() {
+		let s = [];
+		if( this.info.hasOwnProperty('LastName') )
+			s.push( this.info.LastName.toUpperCase() );
+		if( this.info.hasOwnProperty('FirstName') )
+			s.push( this.info.FirstName );
+		const i = s.map( (n) => n.charAt(0).toUpperCase() )
+		return s.join(', ') + ' [' + i.join('') + ']';
+	}
 }
 
 //-----------------------------------------------------------------------
@@ -748,13 +758,21 @@ class TopView {
 	}
 
 	set_riders( riders ) {
+		this.i_leader_lap = 0;
 		this.riders = riders;
 		this.r_xyn = this.riders.map( (r) => [r, 0.0, 0.0, 0.0] );
 		this.focus_rider = null;
 		this.max_laps = 1;
 		for( let r of riders )
 			this.max_laps = Math.max( this.max_laps, r.race_times.length-1 );
-		
+
+		// Get the start of each lap.
+		this.race_times_min = Array.from( { length:this.max_laps+1 }, () => +Infinity );
+		for( let r of riders ) {
+			for( let i = 0; i < r.race_times.length; ++i )
+				this.race_times_min[i] = Math.min( this.race_times_min[i], r.race_times[i] );
+		}
+
 		let collator = new Intl.Collator();
 		this.sorted_riders = this.riders.map( (r) => r );
 		this.sorted_riders.sort( function(a, b) {
@@ -763,6 +781,8 @@ class TopView {
 		);
 		this.sorted_riders.unshift( null );
 		this.i_focus_rider = 0;
+		
+		this.closest_riders = [];
 	}
 	
 	set_focus_bib( bib ) {
@@ -805,19 +825,35 @@ class TopView {
 	zoom_out() { this.change_zoom(-1); }
 
 	skip_back_animation() {
-		if( this.focus_rider_cur === null || this.focus_rider_cur.race_times.length < 2 )
-			return;
-		const n_prev = Math.min( this.focus_rider_cur.race_times.length-2, Math.max( 0, Math.trunc(this.focus_rider_cur.get_lap_normal( this.t )) - 1 ));
-		this.set_t( this.focus_rider_cur.race_times[n_prev] );
+		const i = Math.max( 0, binary_search(this.race_times_min, this.t) - 2 );
+		this.set_t( this.race_times_min[i] );
 		this.draw();
 	}
 	
 	skip_forward_animation() {
-		if( this.focus_rider_cur === null || this.focus_rider_cur.race_times.length < 2 )
-			return;
-		const n_next = Math.min( this.focus_rider_cur.race_times.length-1, Math.trunc(this.focus_rider_cur.get_lap_normal(this.t)) + 1 );
-		this.set_t( this.focus_rider_cur.race_times[n_next] );
+		const i = Math.min( this.race_times_min.length-1, binary_search(this.race_times_min, this.t) );
+		this.set_t( this.race_times_min[i] );
 		this.draw();
+	}
+	
+	get_leader_lap_normal( t ) {
+		if( t < this.race_times_min[0] )
+			return 0.0;
+		if( t >= this.race_times_min.last() )
+			return this.race_times_min.length;
+		
+		let i = this.i_leader_lap;
+		if( this.race_times_min[i] <= t && t < this.race_times_min[i+1] )
+			return (this.i_leader_lap = i) + (t - this.race_times_min[i]) / (this.race_times_min[i+1] - this.race_times_min[i]);
+		
+		++i;
+		if( this.race_times_min[i] <= t && t < this.race_times_min[i+1] )
+			return (this.i_leader_lap = i) + (t - this.race_times_min[i]) / (this.race_times_min[i+1] - this.race_times_min[i]);
+		
+		i = binary_search( this.race_times_min, t );
+		if( t < this.race_times_min[i] )
+			--i;
+		return (this.i_leader_lap = i) + (t - this.race_times_min[i]) / (this.race_times_min[i+1] - this.race_times_min[i]);
 	}
 	
 	focus_up() {
@@ -1036,19 +1072,39 @@ class TopView {
 			gc.fillStyle = "black";
 			gc.fillText( text, x_text, y_text );
 		}
-		const text = " " + (this.i_focus_rider === 0 ? "Leader" : this.sorted_riders[this.i_focus_rider].get_last_first()) + " ";
+		
+		// Draw the focus rider name and closest riders.
+		let name;
+		if( this.i_focus_rider === 0 ) {
+			if( this.focus_rider_cur === null || this.focus_rider_cur.finished(this.t) )
+				name = "Leader";
+			else
+				name = '*' + this.focus_rider_cur.get_last_first_initial();
+		}
+		else {
+			name = this.sorted_riders[this.i_focus_rider].get_last_first_initial()
+		}
+		const text = " " + name + " ";
+		const factor = 0.75;
 		const x_text = this.focus_button_rects[0][0];
-		const y_text = y0 + (button_height - t_height) / 2;
+		const y_text = y0 + (button_height - t_height*factor) / 2;
+		gc.font = (t_height * factor) + "px Arial";
 		gc.textAlign = "right";
 		gc.fillText( text, x_text, y_text );
+		
+		let line = 0;
+		for( let r of this.closest_riders ) {
+			++line;
+			gc.fillText( " " + r.get_last_first_initial() + " ", x_text, y_text + t_height*1.15*factor*line );
+		}
 		
 		this.button_rects = this.button_rects.concat( this.focus_button_rects );
 		
 		gc.restore();
 	}
 	
-	draw_info( gc, focus_rider ) {
-		if( !this.r_xyn || this.r_xyn.length === 0 )
+	draw_info( gc ) {
+		if( !this.riders || this.riders.length === 0 )
 			return;
 			
 		const max_laps = this.max_laps;
@@ -1060,7 +1116,7 @@ class TopView {
 		gc.fillStyle = "black";
 		gc.textBaseline = "top";
 		
-		const n = focus_rider.get_lap_normal( this.t );
+		const n = this.get_leader_lap_normal( this.t );
 		const t_x = t_height, t_y = t_height;
 		[
 			`Laps to go: ${Math.max(max_laps-n, 0.0).toFixed(2)}/${max_laps}`,
@@ -1104,6 +1160,8 @@ class TopView {
 	
 	draw() {
 		const p_width = this.canvas.width, p_height = this.canvas.height;
+		const t_cur = this.t;
+		this.closest_riders = [];
 				
 		let gc = this.canvas.getContext("2d");
 		gc.save();
@@ -1116,23 +1174,31 @@ class TopView {
 		// Update the positions and lap normals for all riders.
 		for( let v of this.r_xyn ) {
 			let r = v[0];
-			[v[1], v[2]] = r.get_xy( this.course, this.t );
-			v[3] = r.get_lap_normal( this.t );
+			[v[1], v[2]] = r.get_xy( this.course, t_cur );
+			v[3] = r.get_lap_normal( t_cur );
 		}
-			
-		// Sort by lap normal, then by reverse laps completed, then by increasing finish time.
-		this.r_xyn.sort( function( a, b ) {
-				let ka = [a[3], -a[0].race_times.length, a[0].race_times.last()];
-				let kb = [b[3], -b[0].race_times.length, b[0].race_times.last()];
-				for( const [va,vb] of zip(ka, kb) ) {
-					if( va < vb ) return -1;
-					if( vb < va ) return  1;
-				}
-				return 0;
-			}
-		);
 		
-		// If no focus rider, choose the leader.
+		// Compare by finished status, then lap normal.
+		function r_xyn_cmp( a, b ) {
+			const ka = [Number(a[0].finished(t_cur)), a[3]];
+			const kb = [Number(b[0].finished(t_cur)), b[3]];
+			for( const [va,vb] of zip(ka, kb) ) {
+				if( va < vb ) return -1;
+				if( vb < va ) return  1;
+			}
+			return 0;
+		}
+
+		// Check if the unfinished riders are still in order.  If not, sort then.
+		for( let j = 1; j < this.r_xyn.length && !this.r_xyn[j][0].finished(t_cur); ++j ) {
+			const i = j - 1;
+			if( r_xyn_cmp(this.r_xyn[i], this.r_xyn[j]) > 0 ) {
+				this.r_xyn.sort( r_xyn_cmp );
+				break;
+			}
+		}
+		
+		// If no focus rider, choose the leader.  It doesn't matter if the leader has finished or not.
 		let focus_rider = null;
 		if( this.r_xyn.length )
 			focus_rider = (this.focus_rider !== null ? this.focus_rider : this.r_xyn.last()[0]);
@@ -1146,7 +1212,7 @@ class TopView {
 		// Get a reasonable font.
 		const font_size_px = (13*1.33333) / this.scale;
 
-		// Draw the trees and sheep.
+		// Draw the background features.
 		gc.font = (font_size_px * 1.5) + "px Arial";
 		this.course.tree_points.forEach( (p, i) => gc.fillText( ["🌲","🌳",][i&1], ...p ) );
 		this.course.sheep_points.forEach( (p, i) => gc.fillText( "🐑", ...p ) );
@@ -1210,7 +1276,7 @@ class TopView {
 		// Draw the riders.
 		// Draw the balls.
 		const radius = shoulder_width*0.8 / 2.0;
-		let i_focus_rider = null;
+		let i_focus_rider = -1;
 		let i_last_rider = -1;
 		
 		function draw_rider_ball( r, x, y, scale ) {
@@ -1236,12 +1302,12 @@ class TopView {
 		}
 		
 		for( let i = 0; i < this.r_xyn.length; ++i ) {
-			let [r, x, y, n] = this.r_xyn[i];
+			const [r, x, y, n] = this.r_xyn[i];
 			if( r == focus_rider )
 				i_focus_rider = i;
 				
-			if( r.finished(this.t) ) {
-				if( i_focus_rider === null ) {
+			if( r.finished(t_cur) ) {
+				if( i_focus_rider < 0 ) {
 					for( ; i < this.r_xyn.length; ++i ) {
 						if( this.r_xyn[i][0] == focus_rider ) {
 							i_focus_rider = i;
@@ -1256,8 +1322,8 @@ class TopView {
 			i_last_rider = i;
 		}
 		
-		if( i_focus_rider !== null ) {
-			let [r, x, y, n] = this.r_xyn[i_focus_rider];
+		if( i_focus_rider >= 0 ) {
+			const [r, x, y, n] = this.r_xyn[i_focus_rider];
 			draw_rider_ball( r, x, y, this.scale );
 		}
 		
@@ -1273,7 +1339,7 @@ class TopView {
 		if( i_focus_rider !== null ) {
 			const label_max = 10;	// Maximum number of rider labels to draw.
 			
-			const focus_n = focus_rider.get_lap_normal(this.t);
+			const focus_n = focus_rider.get_lap_normal(t_cur);
 			let diff_normal = null;
 			if( this.course.is_loop ) {
 				diff_normal = function( n ) {
@@ -1290,7 +1356,7 @@ class TopView {
 			// Create a new array to sort by riders closest to the focus_rider.
 			let r_xy_lap = this.r_xyn.slice(0, i_last_rider + 1);
 			
-			// Sort the riders by closest on the track.
+			// Sort the riders by closest on the course.
 			r_xy_lap.sort( function( a, b ) {
 					let ka = [diff_normal(a[3]), -a[0].race_times.length, a[0].race_times.last()];
 					let kb = [diff_normal(b[3]), -b[0].race_times.length, b[0].race_times.last()];
@@ -1302,7 +1368,7 @@ class TopView {
 				}
 			);
 			
-			const t_cur = this.t, scale_cur = this.scale;
+			const scale_cur = this.scale;
 			gc.strokeStyle = "rgb(200,200,200)";
 			gc.lineWidth = 2/scale_cur;
 			function draw_rider_text( r, x, y, go_high=true, do_fill=true ) {
@@ -1326,10 +1392,11 @@ class TopView {
 				return [x_text, y_text, x_text+text_width_max, y_cur];
 			}
 			let text_rect = [];
-			if( !this.r_xyn[i_focus_rider][0].finished(this.t) )
+			if( !this.r_xyn[i_focus_rider][0].finished(t_cur) )
 				text_rect.push( draw_rider_text(...this.r_xyn[i_focus_rider].slice(0,3), true, true) );
 			const i_max = Math.min( r_xy_lap.length, label_max );
 			for( let i = +(r_xy_lap[0][0] == this.r_xyn[i_focus_rider][0]); i < i_max; ++i ) {
+				this.closest_riders.push( r_xy_lap[i][0] );	// Track the closest rider to show in the labels.
 				// Try to draw the label low and high.
 				for( let j = 0; j < 2; ++j ) {
 					const tr = draw_rider_text( ...r_xy_lap[i].slice(0,3), j==0, false );
@@ -1342,8 +1409,8 @@ class TopView {
 		}
 		
 		gc.restore();
-		if( this.r_xyn.length ) {
-			this.draw_info( gc, focus_rider );
+		if( this.riders.length !== 0 ) {
+			this.draw_info( gc );
 			this.draw_buttons( gc );
 		}
 		this.draw_altigraph( gc, focus_rider );
