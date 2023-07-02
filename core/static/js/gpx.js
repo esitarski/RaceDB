@@ -182,11 +182,13 @@ function great_circle_distance( pointA, pointB ) {
 	return EARTH_RADIUS * c;
 }
 
+function defined() { throw new Error("Missing parameter"); }
+
 function fw( n, w ) {
 	return n.toString().padStart( w, "0" );
 }
 
-function format_t( t ) {
+function format_t( t = defined() ) {
 	let s = Math.round( t );
 	const h = Math.trunc( s / (60*60) );
 	const m = Math.trunc( s / 60) % 60;
@@ -404,7 +406,7 @@ class Course {
 			// If not, check if the next segment has it.
 			i_hint = (i_hint + 1) % (this.cum_distance.length-2);
 			if( !(this.cum_distance[i_hint] <= d && d < this.cum_distance[i_hint+1]) ) {
-				// If that doesn't work, find the segment using binary search.
+				// Otherwise, find the segment using binary search.
 				i_hint = binary_search( this.cum_distance, d );
 				if( this.cum_distance[i_hint] > d )
 					--i_hint;
@@ -466,7 +468,7 @@ class Rider {
 		this.race_times = race_times;		// Race times per lap (seconds).  Note: race_times[0] is the start offset.
 	}
 		
-	get_lap_normal( t ) {
+	get_lap_normal( t = defined() ) {
 		// Recall that the first race time is the start offset.
 		if( !this.race_times || t <= this.race_times[0] ) {
 			this.i_lap = 0;
@@ -499,11 +501,11 @@ class Rider {
 		return this.i_lap + (t - this.race_times[this.i_lap]) / (this.race_times[this.i_lap+1] - this.race_times[this.i_lap]);
 	}
 		
-	is_finished( t ) {
+	is_finished( t  = defined() ) {
 		return t >= this.race_times.last();
 	}
 		
-	get_xy( course, t ) {
+	get_xy( course = defined(), t  = defined()) {
 		const lap_normal = this.get_lap_normal( t );
 		// Get the current coordinates of this rider.
 		let x, y;
@@ -511,7 +513,7 @@ class Rider {
 		return [x, y];
 	}
 	
-	get_heading( course, t ) {
+	get_heading( course = defined(), t = defined() ) {
 		const lap_normal = this.get_lap_normal( t );
 		// Get the current coordinates of this rider.
 		let heading;
@@ -757,7 +759,7 @@ class TopView {
 		}
 	}
 
-	set_riders( riders ) {
+	set_riders( riders = defined() ) {
 		this.i_leader_lap = 0;
 		this.riders = riders;
 		this.r_xyn = this.riders.map( (r) => [r, 0.0, 0.0, 0.0] );
@@ -785,7 +787,7 @@ class TopView {
 		this.closest_riders = [];
 	}
 	
-	set_focus_bib( bib ) {
+	set_focus_bib( bib = defined() ) {
 		this.i_sorted = 0;
 		for( let i = 1; i < this.sorted_riders.length; ++i ) {
 			if( this.sorted_riders[i].bib == bib ) {
