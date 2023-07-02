@@ -791,7 +791,7 @@ class TopView {
 		this.i_sorted = 0;
 		for( let i = 1; i < this.sorted_riders.length; ++i ) {
 			if( this.sorted_riders[i].bib == bib ) {
-				this.i_sorted = 0;
+				this.i_sorted = i;
 				break;
 			}
 		}
