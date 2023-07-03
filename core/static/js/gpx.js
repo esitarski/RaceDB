@@ -940,10 +940,9 @@ class TopView {
 		gradient.addColorStop( 0.5, 'rgb(200,200,200)' );
 		gradient.addColorStop( 1.0, 'rgb(96,96,96)' );
 		gc.lineWidth = lineWidth;
-		let i = 0;
+		gc.strokeStyle = "black";
 		for( let [x1, y1, x2, y2, text, handler, factor] of this.button_rects ) {
 			const r = [x1, y1, x2-x1, y2-y1];
-			gc.strokeStyle = "black";
 			gc.fillStyle = gradient;
 			gc.strokeRect( ...r );
 			gc.fillRect( ...r );
@@ -1001,9 +1000,9 @@ class TopView {
 			else
 				name = '*' + this.focus_rider_cur.get_rider_text();
 		}
-		else {
+		else
 			name = this.sorted_riders[this.i_focus_rider].get_rider_text()
-		}
+		
 		const text = " " + name + "  ";
 		const factor = 12/30;
 		const x_text = p_width - space_width;
@@ -1013,11 +1012,8 @@ class TopView {
 		gc.fillStyle = 'white';
 		gc.fillText( text, x_text, y_text );
 		
-		let line = 0;
-		for( let r of this.closest_riders ) {
-			++line;
-			gc.fillText( " " + r.get_rider_text() + "  ", x_text, y_text + t_height*1.15*factor*line );
-		}
+		for( const [i, r] of this.closest_riders.entries() )
+			gc.fillText( " " + r.get_rider_text() + "  ", x_text, y_text + t_height*1.15*factor*(i+1) );
 		
 		this.button_rects = this.button_rects.concat( this.focus_button_rects );
 		
@@ -1045,6 +1041,7 @@ class TopView {
 			`Playback Speed: ${this.t_factor.toFixed(1)}x`,
 			`Zoom: ${this.zoom.toFixed(1)}x`
 		].forEach( (s,i) => gc.fillText( s, t_x, t_y+t_height*1.15*i ) );
+		
 		gc.restore();
 	}
 	
@@ -1154,8 +1151,8 @@ class TopView {
 		gc.stroke();
 		
 		// Center line.
-		gc.lineWidth = 3/this.scale;					// Centerline
-		gc.strokeStyle = "rgb(196,196,196)";
+		gc.lineWidth = 3/this.scale;
+		gc.strokeStyle = "rgb(196,196,196)";			// Centerline
 		gc.stroke();
 		
 		// Finish line.
