@@ -539,14 +539,14 @@ class Rider {
 		return s.join(', ');
 	}
 
-	get_last_first_initial() {
+	get_rider_text() {
 		let s = [];
 		if( this.info.hasOwnProperty('LastName') )
 			s.push( this.info.LastName.toUpperCase() );
 		if( this.info.hasOwnProperty('FirstName') )
 			s.push( this.info.FirstName );
 		const i = s.map( (n) => n.charAt(0).toUpperCase() )
-		return s.join(', ') + ' [' + i.join('') + ']';
+		return s.join(', ') + ' [' + this.bib + ','  + i.join('') + ']';
 	}
 }
 
@@ -572,13 +572,15 @@ class TopView {
 		this.animate_state_cache = true;
 		this.focus_rider_cur = null;
 		
+		this.label_text_color = 'rgb(200,200,200';
+		
 		// Media and zoom control.
 		this.button_rects = [];
 		const skip_back = "⏮";
 		const play_pause = "⏯";
 		const skip_forward = "⏭";
-		const speed_up = "⏫︎";
-		const speed_down = "⏬︎";	
+		const speed_up = "↗";
+		const speed_down = "↘";	
 		const zoom_in = "+🔍";
 		const zoom_out = "-🔍";
 		
@@ -602,15 +604,7 @@ class TopView {
 			[focus_down,		this.focus_down.bind(this), 1.0]
 		].reverse();
 		
-		// Event handlers.
-		canvas.addEventListener( "keydown", this.OnKeyDown.bind(this), true );
-		canvas.addEventListener( "wheel", this.OnMouseWheel.bind(this), false );
-		
-		this.ev_cache = [];
 		canvas.addEventListener( "pointerdown", this.OnPointerDown.bind(this), false );
-		canvas.addEventListener( "pointermove", this.OnPointerMove.bind(this), false );
-		canvas.addEventListener( "pointerleave", this.OnPointerLeave.bind(this), false );
-		canvas.addEventListener( "pointerup", this.OnPointerUp.bind(this), false );
 		
 		document.addEventListener( "visibilitychange", this.OnVisibilityChange.bind(this), false );
 	}
@@ -656,14 +650,6 @@ class TopView {
 		this.draw();
 	}
 
-	OnMouseWheel( event ) {
-		const r = event.deltaY;
-		if( event.shiftKey )
-			this.change_zoom( -r );
-		else
-			this.change_t_factor( -r );
-	}
-	
 	OnPointerDown( event ) {
 	    const rect = this.canvas.getBoundingClientRect();
 		const x = event.clientX - rect.left;
@@ -676,48 +662,6 @@ class TopView {
 				return;
 			}
 		}
-		// Add the event to the list.
-		this.ev_cache.push( event );
-	}
-	
-	OnPointerLeave( event ) {
-		// Reset the event cache when the pointer leaves.
-		this.ev_cache = [];
-	}
-	
-	OnPointerMove( event ) {
-		if( this.ev_cache.length === 0 )
-			return;
-		
-		function event_replace( ev_cache, event ) {
-			const index = ev_cache.findIndex( (e) => e.pointerId === event.pointerId );
-			if( index >= 0 )
-				ev_cache[index] = event;		
-		}
-		
-		if( this.ev_cache.length === 1 ) {
-			/*
-			// Change the speed based on the change of y.
-			const y_cur = this.ev_cache[0].clientY;
-			event_replace( this.ev_cache, event );
-			const y_new = this.ev_cache[0].clientY;
-			this.change_t_factor( y_new - y_cur );
-			*/
-		}
-		else if( this.ev_cache.length === 2 ) {
-			// Pinch zoom.
-			const delta_cur = Math.abs( this.ev_cache[1].clientX - this.ev_cache[0].clientX );
-			event_replace( this.ev_cache, event );
-			const delta_new = Math.abs( this.ev_cache[1].clientX - this.ev_cache[0].clientX );
-			this.change_zoom( delta_new - delta_cur );
-		}
-	}
-	
-	OnPointerUp( event ) {
-		// Remove the event from the cache.
-		const index = this.ev_cache.findIndex( (ev) => ev.pointerId === ev.pointerId );
-		if( index >= 0 )
-			this.ev_cache.splice(index, 1);
 	}
 	
 	OnVisibilityChange( event ) {
@@ -733,32 +677,6 @@ class TopView {
 		}
 	}
 			
-	OnKeyDown( event ) {
-		console.log( 'called' );
-		switch( event.key ) {
-			case "+":
-				if( event.ctrlKey || event.metaKey )
-					this.change_zoom( 1 );
-				break;
-			case "-":
-				if( event.ctrlKey || event.metaKey )
-					this.change_zoom( -1 );
-				break;
-			case "ArrowUp":
-				this.change_zoom( 1 );
-				break;
-			case "ArrowDown":
-				this.change_zoom( -1 );
-				break;
-			case "ArrowLeft":
-				this.change_t_factor( -1 );
-				break;
-			case "ArrowRight":
-				this.change_t_factor( 1 );
-				break;
-		}
-	}
-
 	set_riders( riders = defined() ) {
 		this.i_leader_lap = 0;
 		this.riders = riders;
@@ -1081,23 +999,24 @@ class TopView {
 			if( this.focus_rider_cur === null || this.focus_rider_cur.is_finished(this.t) )
 				name = "Leader";
 			else
-				name = '*' + this.focus_rider_cur.get_last_first_initial();
+				name = '*' + this.focus_rider_cur.get_rider_text();
 		}
 		else {
-			name = this.sorted_riders[this.i_focus_rider].get_last_first_initial()
+			name = this.sorted_riders[this.i_focus_rider].get_rider_text()
 		}
 		const text = " " + name + "  ";
-		const factor = 16/30;
-		const x_text = this.focus_button_rects[0][0];
-		const y_text = y0 + (button_height - t_height*factor) / 2;
+		const factor = 12/30;
+		const x_text = p_width - space_width;
+		const y_text = y1 + (button_height - t_height*factor) / 2;
 		gc.font = (t_height * factor) + "px Arial";
 		gc.textAlign = "right";
+		gc.fillStyle = 'white';
 		gc.fillText( text, x_text, y_text );
 		
 		let line = 0;
 		for( let r of this.closest_riders ) {
 			++line;
-			gc.fillText( " " + r.get_last_first_initial() + "  ", x_text, y_text + t_height*1.15*factor*line );
+			gc.fillText( " " + r.get_rider_text() + "  ", x_text, y_text + t_height*1.15*factor*line );
 		}
 		
 		this.button_rects = this.button_rects.concat( this.focus_button_rects );
@@ -1321,7 +1240,7 @@ class TopView {
 			r_xyn_active.sort( (a,b) => diff_normal(a[3]) - diff_normal(b[3]) );
 			
 			const scale_cur = this.scale;
-			gc.strokeStyle = "rgb(200,200,200)";
+			gc.strokeStyle = this.label_text_color;
 			gc.lineWidth = 2/scale_cur;
 			
 			function draw_rider_text( r, x, y, go_high=true, do_fill=true ) {
