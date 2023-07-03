@@ -1032,7 +1032,7 @@ class TopView {
 
 		const t_height = 16*1.33333;
 		gc.font = t_height + "px Arial";
-		gc.fillStyle = "black";
+		gc.fillStyle = "white";
 		gc.textBaseline = "top";
 		
 		const n = this.get_leader_lap_normal( this.t );
