@@ -3231,14 +3231,15 @@ class Prime(models.Model):
 	def as_dict( self ):
 		d = {}
 		for f in Prime._meta.get_fields():
-			if f == 'participant':
-				f = 'winner_bib'
+			a = f.name
+			if a == 'participant':
+				a = 'winner_bib'
 				v = self.participant.bib
-			elif f == 'effort':
+			elif a == 'effort':
 				v = str(self.get_effort_display())
 			else:
-				v = getattr( self, f )
-			d[to_camel(f)] = v
+				v = getattr( self, a )
+			d[self.to_camel(a)] = v
 		return d
 	
 	class Meta:

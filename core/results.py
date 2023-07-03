@@ -109,7 +109,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	
 	Prime = event.get_prime_class()
 	primes = [
-		prime.to_dict()
+		prime.as_dict()
 		for prime in Prime.objects.filter( event=event ).select_related('participant')
 			if prime.participant_id in participant_ids
 	]
