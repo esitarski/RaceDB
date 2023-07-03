@@ -3227,7 +3227,20 @@ class Prime(models.Model):
 	def to_camel( field ):
 		parts = field.split('_')
 		return parts[0] + ''.join( p.capitalize() for p in parts[1:] )
-		
+	
+	def as_dict( self ):
+		d = {}
+		for f in Prime._meta.get_fields():
+			if f == 'participant':
+				f = 'winner_bib'
+				v = self.participant.bib
+			elif f == 'effort':
+				v = str(self.get_effort_display())
+			else:
+				v = getattr( self, f )
+			d[to_camel(f)] = v
+		return d
+	
 	class Meta:
 		abstract = True
 		verbose_name = _('Prime')

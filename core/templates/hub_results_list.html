@@ -607,35 +607,37 @@ function updateHistogramChart() {
 
 // ---------------------------------------------------------------------
 
-function Rect( x, y, width, height ) {
-	this.x = x;
-	this.y = y;
-	this.width = width;
-	this.height = height;
-}
-Rect.prototype.GetLeft = function() { return this.x; }
-Rect.prototype.GetRight = function() { return this.x + this.width; }
-Rect.prototype.GetTop = function() { return this.y; }
-Rect.prototype.GetBottom = function() { return this.y + this.height; }
-Rect.prototype.GetWidth = function() { return this.width; }
-Rect.prototype.GetHeight = function() { return this.height; }
-Rect.prototype.SetTop = function( y ) { this.y = y; }
-Rect.prototype.SetBottom = function( y ) { this.y = y - this.height; }
-Rect.prototype.SetLeft = function( x ) { this.x = x; }
-Rect.prototype.SetRight = function( x ) { this.x = x - this.width; }
-Rect.prototype.ContainsXY = function(x, y) {
-	return this.x <= x && x <= this.x + this.width && this.y <= y && y <= this.y + this.height;
-}
-Rect.prototype.print = function( label ) {
-	console.log( label + ': Rect(' + this.x + ',' + this.y + ',' + this.width + ',' + this.height + ')' );
-}
-Rect.prototype.Intersects = function( r ) {
-	return !(
-		r.x + r.width < this.x ||
-		this.x + this.width < r.x ||
-		r.y + r.height < this.y ||
-		this.y + this.height < r.y
-	);
+class Rect {
+	constructor( x, y, width, height ) {
+		this.x = x;
+		this.y = y;
+		this.width = width;
+		this.height = height;
+	}
+	GetLeft()		{ return this.x; }
+	GetRight()		{ return this.x + this.width; }
+	GetTop()		{ return this.y; }
+	GetBottom()		{ return this.y + this.height; }
+	GetWidth()		{ return this.width; }
+	GetHeight()		{ return this.height; }
+	SetTop( y )		{ this.y = y; }
+	SetBottom( y )	{ this.y = y - this.height; }
+	SetLeft( x )	{ this.x = x; }
+	SetRight( x )	{ this.x = x - this.width; }
+	ContainsXY( x, y) {
+		return this.x <= x && x <= this.x + this.width && this.y <= y && y <= this.y + this.height;
+	}
+	Intersects( r ) {
+		return !(
+			r.x + r.width < this.x ||
+			this.x + this.width < r.x ||
+			r.y + r.height < this.y ||
+			this.y + this.height < r.y
+		);
+	}
+	print( label ) {
+		console.log( label + ': Rect(' + this.x + ',' + this.y + ',' + this.width + ',' + this.height + ')' );
+	}
 }
 
 // ---------------------------------------------------------------------
@@ -1969,7 +1971,7 @@ table.participant_table tr th {
 	<li class="active"><a data-toggle="tab" href="#sectionResults">{% if has_results %}{% trans "Results" %}{% else %}{% trans "Registered" %}{% endif %}</a></li>
 {% if has_results %}
 	{% if not is_timetrial %}
-		<li><a data-toggle="tab" href="#sectionLapChart">{% trans "Lap Chart" %}</a></li>
+		<li><a href="./EventLapChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Lap Chart" %}</a></li>
 		<li><a data-toggle="tab" href="#sectionRaceChart">{% trans "Race Chart" %}</a></li>
 		<li><a data-toggle="tab" href="#sectionSituation">{% trans "Situation" %}</a></li>
 	{% endif %}

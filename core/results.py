@@ -37,9 +37,11 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	speed_unit = 'km/h' if competition.distance_unit == 0 else 'mph'
 	distance_unit = 'km' if competition.distance_unit == 0 else 'miles'
 	
+	participant_ids = set()
 	for rr in result_list:
 		p = rr.participant
 		h = p.license_holder
+		participant_ids.add( p.id )
 		
 		info = rr.get_info_by_lap()
 		race_times, lap_kmh, lap_km = info['race_times'], info['lap_kmh'], info['lap_km']
@@ -104,6 +106,14 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		catDetails['lapDistance'] = lapDistance
 	payload['catDetails'] = [catDetails]
 	payload['data'] = data
+	
+	Prime = event.get_prime_class()
+	primes = [
+		prime.to_dict()
+		for prime in Prime.objects.filter( event=event ).select_related('participant')
+			if prime.participant_id in participant_ids
+	]
+	payload['primes'] = primes or None;
 	
 	return payload
 
