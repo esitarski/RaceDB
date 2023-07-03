@@ -777,15 +777,17 @@ class TopView {
 	}
 	
 	focus_up() {
-		if( this.sorted_riders && this.sorted_riders.length ) {
+		if( this.sorted_riders && this.sorted_riders.length > 0 ) {
 			this.i_focus_rider = (this.i_focus_rider + this.sorted_riders.length-1) % this.sorted_riders.length;
 			this.focus_rider = this.sorted_riders[this.i_focus_rider];
+			this.draw();
 		}
 	}
 	focus_down() {
-		if( this.sorted_riders && this.sorted_riders.length ) {
+		if( this.sorted_riders && this.sorted_riders.length > 0 ) {
 			this.i_focus_rider = (this.i_focus_rider + 1) % this.sorted_riders.length;
 			this.focus_rider = this.sorted_riders[this.i_focus_rider];
+			this.draw();
 		}
 	}
 		
