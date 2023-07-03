@@ -1885,11 +1885,6 @@ function SituationAnimate() {
 	updateHistogramChart();
 	
 	if( !isTimeTrial && isCanvasSupported() ) {
-		lapChartCanvas = document.getElementById('idLapChart');
-		lapChartObj = new LapChart();
-		lapChartObj.init( lapChartCanvas );
-		lapChartObj.draw();
-
 		raceChartCanvas = document.getElementById('idRaceChart');
 		
 		var situationCanvas = document.getElementById('idSituation');
@@ -1900,10 +1895,6 @@ function SituationAnimate() {
 		//situationObj.animate = true;
 		
 		function resizeCanvas() {
-			lapChartCanvas.width = Math.max(10, window.innerWidth * 0.8);
-			lapChartCanvas.height = window.innerHeight * 0.6;
-			lapChartObj.draw();
-			
 			raceChartCanvas.width = Math.max(10, window.innerWidth * 0.8);
 			raceChartCanvas.height = window.innerHeight * 0.75;
 			updateRaceChart();
