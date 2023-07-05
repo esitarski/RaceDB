@@ -1095,7 +1095,15 @@ class TopView {
 		}
 		
 		if( r_xyn_active.length === 0 ) {
-			this.set_t( 0.0 );
+			if( this.animate ) {
+				this.stop_animation();
+				let that = this;
+				function restart_animation() {
+					that.set_t( 0.0 );
+					that.start_animation();
+				}
+				setTimeout( restart_animation, 4000 );
+			}
 			return;
 		}
 
@@ -1103,7 +1111,7 @@ class TopView {
 		r_xyn_active.sort( (a,b) => (a[3] - b[3]) );
 		
 		// If no focus rider, choose the active leader.
-		let focus_rider = (this.focus_rider !== null ? this.focus_rider : r_xyn_active.last()[0]);
+		let focus_rider = (this.focus_rider !== null ? this.focus_rider : (r_xyn_active.length > 0 ? r_xyn_active.last()[0] : null));
 		this.focus_rider_cur = focus_rider;
 		
 		// Start drawing.
