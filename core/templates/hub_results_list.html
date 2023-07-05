@@ -1533,7 +1533,9 @@ function SituationAnimate() {
 	{% endif %}
 	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.title}}</a>: {{event.name}}</strong>{% if not has_results %}: {% trans "Registered Only (no results)" %}{% endif %}<br/>
 	<span style="font-size: 70%">
-		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}<br/>
+		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}
+		&nbsp;&nbsp;<span style="font-size:75%">{% trans "Generated" %}: {{time_stamp|date_hhmmss}}</span>
+		<br/>
 		{{event.date_time|date_hhmm}}&nbsp;&nbsp;
 		{% trans "Starters" %}: {{num_starters}}&nbsp;&nbsp;
 		{% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp;
@@ -1545,8 +1547,7 @@ function SituationAnimate() {
 		{% endif %}
 	</span>
 </h1>
-{% trans "Generated" %}: {{time_stamp|date_hhmmss}}
-<p/>
+
 <style>
 table.participant_table tr td {
 	font-size: 85%;

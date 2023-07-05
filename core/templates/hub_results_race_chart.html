@@ -258,7 +258,7 @@ function DrawLine( ctx, x1, y1, x2, y2 ) {
 var xFactorCur;
 var barHeightCur;
 var labelsWidthCur;
-var categoryCur = "{{cat_name}}";
+var categoryCur;
 
 function updateRaceChart() {
 	let canvasRaceChart = document.getElementById('idRaceChart');
@@ -479,6 +479,8 @@ function onBodyLoad() {
 	let payload = {{payload|to_js}};
 	for( let [k,v] of Object.entries(payload) )
 		window[k] = v;
+		
+	categoryCur = catDetails[0].name;
 	
 	let canvas = document.getElementById('idRaceChart');
 	function doResize() {
