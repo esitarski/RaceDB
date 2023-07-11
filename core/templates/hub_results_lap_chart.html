@@ -97,6 +97,7 @@ class LapChart {
 	doMouseMove( evt ) {
 		let numSelectOld = this.numSelect;
 		this.numSelect = null;
+		let do_refresh = true;
 		
 		let rect = this.canvas.getBoundingClientRect();
 		let x = evt.clientX - rect.left, y = evt.clientY - rect.top;
@@ -108,7 +109,7 @@ class LapChart {
 				
 			// Check that the mouse is on the name or number.
 			if( this.data[c].xRight <= x ) {
-				let i = parseInt(((y - this.data[c].yTop) / this.rowHeight) - 1);
+				let i = Math.trunc(((y - this.data[c].yTop) / this.rowHeight) - 1);
 				if( 0 <= i && i < this.data[c].nums.length )
 					this.numSelect = this.data[c].nums[i];
 				break;
@@ -155,10 +156,11 @@ class LapChart {
 						}
 					}
 				}
+				do_refresh = false;
 				break;
 			}
 		}
-		if( numSelectOld != this.numSelect )
+		if( numSelectOld != this.numSelect || do_refresh )
 			this.draw();
 	}
 	
@@ -167,12 +169,12 @@ class LapChart {
 		if( this.moveTimer ) {
 			if( this.numSelect ) {
 				this.numSelect = null;
-				this.draw();
+				//this.draw();
 			}
 			clearTimeout( this.moveTimer );
 		}
 		var that = this;
-		this.moveTimer = setTimeout( function() { that.doMouseMove(evt); that.moveTimer=null; }, 25 );
+		this.moveTimer = setTimeout( function() { that.doMouseMove(evt); that.moveTimer=null; }, 10 );
 	}
 	
 	setData() {
@@ -295,7 +297,7 @@ class LapChart {
 			dc.fillStyle = '#000000';
 			dc.textBaseline = 'middle';
 			dc.textAlign = 'left';
-			dc.fillText( this.data[c].catName, 0, rowHeight / 2 );
+			dc.fillText( ' ' + this.data[c].catName, 0, rowHeight / 2 );
 			
 			dc.translate( 0, rowHeight );
 			yTop += rowHeight;
@@ -423,12 +425,28 @@ class LapChart {
 			xText =  width - nameWidth - posWidth + paddingWidth/2;
 			for( let j = 0; j < nums.length; ++j )
 				dc.fillText( getName(nums[j]), xText, getY(j) + rowHeight/2 );
+
+			// Draw the paths.
 			
+			// If there is a selected number, find its index.
+			let jSelect = null;
+			if( this.numSelect ) {
+				for( let j = nums.length - 1; j >= 0; --j ) {
+					if( nums[j] === this.numSelect ) {
+						jSelect = j;
+						break;
+					}
+				}
+			}
+
 			function drawPath( j, colour ) {
 				let num = nums[j];
 				let path = numPos[num];
 				
-				dc.strokeStyle = colour ? colour : that.lineColours[j % that.lineColours.length];
+				if( j == jSelect || jSelect === null )
+					dc.strokeStyle = colour ? colour : that.lineColours[j % that.lineColours.length];
+				else
+					dc.strokeStyle = 'rgb(190,190,190)';
 				dc.setLineDash( [] );
 				
 				dc.beginPath();
@@ -457,12 +475,8 @@ class LapChart {
 			// Draw the position lines in reverse order so the winner ends on top.
 			dc.lineWidth = this.regularLineWidth;
 			dc.lineCap = 'round';
-			let jSelect = null;
-			for( let j = nums.length - 1; j >= 0; --j ) {
-				if( nums[j] === this.numSelect )
-					jSelect = j;
+			for( let j = nums.length - 1; j >= 0; --j )
 				drawPath( j );
-			}
 			if( jSelect !== null ) {
 				dc.lineWidth = this.selectedLineWidth + 4;
 				drawPath( jSelect, '#FFFF00' );
