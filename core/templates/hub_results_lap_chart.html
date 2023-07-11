@@ -433,10 +433,15 @@ class LapChart {
 				
 				dc.beginPath();
 				dc.moveTo( getX(0), getY(path[0])+rowHeight/2 );
-				dc.lineTo( getX(0) + lapWidth/2, getY(path[0])+rowHeight/2 );
+				let x_from = getX(0) + lapWidth/2, y_from = getY(path[0])+rowHeight/2;
+				let x_to, y_to;
+				dc.lineTo( x_from, y_from );
 				let lap;
-				for( lap = 1; lap < path.length; ++lap )
-					dc.lineTo( getX(lap) + lapWidth/2, getY(path[lap])+rowHeight/2 );
+				for( lap = 1; lap < path.length; ++lap, x_from=x_to, y_from=y_to ) {
+					x_to = getX(lap) + lapWidth/2, y_to = getY(path[lap])+rowHeight/2;
+					const x_between = (x_from + x_to) / 2;
+					dc.bezierCurveTo( x_between, y_from, x_between, y_to, x_to, y_to );
+				}
 				lap = path.length-1;
 				dc.stroke();
 				
@@ -444,7 +449,7 @@ class LapChart {
 				if( lap != lapsData.length-1 )
 					dc.setLineDash( [10, 5] );
 				dc.beginPath();
-				dc.moveTo( getX(lap) + lapWidth/2, getY(path[lap])+rowHeight/2 );
+				dc.moveTo( x_to, y_to );
 				dc.quadraticCurveTo( getX(lap) + lapWidth/2, getY(j) + rowHeight/2, xRight+ + rowHeight/2, getY(j) + rowHeight/2 );
 				dc.stroke();
 			}
@@ -547,7 +552,6 @@ class LapChart {
 		this.canvas.height = window.innerHeight;
 		this.draw();
 	}
-
 }
 
 var lap_chart = null;
@@ -559,7 +563,7 @@ function onBodyLoad() {
 	let payload = {{payload|to_js}};
 	data = payload.data;
 	catDetails = payload.catDetails;
-	primes = payload.primes;;
+	primes = payload.primes;
 	raceIsRunning = payload.raceIsRunning;
 	
 	let canvas = document.getElementById('id_canvas');
