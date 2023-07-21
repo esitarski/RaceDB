@@ -118,8 +118,15 @@ class Rider {
 		this.info = info;
 	}
 	
-	get_text() {
-		return this.bib + ' ' + this.info.LastName + ', ' + this.info.FirstName + ' ' ;
+	get_text( width=1000 ) {
+		let name = [];
+		if( this.info.LastName ) name.push( this.info.LastName );
+		if( this.info.FirstName ) name.push( width < 800 ? this.info.FirstName.slice(0,1).toUpperCase() + '.' : this.info.FirstName );
+		const name_text = name.join( ', ' );
+		let text = [this.bib];
+		if( name_text )
+			text.push( name_text );
+		return text.join( ' ' );
 	}
 }
 
@@ -427,7 +434,7 @@ class GapChart {
 		this.label_offset = ctx.measureText('      ').width;
 		this.x_right = width;
 		for( let r of this.riders )
-			this.x_right = Math.min( this.x_right, width - ctx.measureText(r.get_text()).width );
+			this.x_right = Math.min( this.x_right, width - ctx.measureText(r.get_text(width)).width );
 		
 		this.lap_scale = (this.x_right - this.x_left) / (this.lap_leader_time.length);
 		
@@ -551,7 +558,7 @@ class GapChart {
 				ctx.stroke();
 				
 				// Draw the text.
-				const text = r.get_text();
+				const text = r.get_text(width);
 				ctx.fillText( text, x1, y_spread[g] );
 			}
 		}
@@ -562,7 +569,7 @@ class GapChart {
 			const x_co = this.x_gap, y_co = this.y_gap + lap_num_height;
 			
 			ctx.strokeStyle = '#000000';
-			ctx.fillStyle = '#00FFFF';
+			ctx.fillStyle = '#FFFF99';
 			ctx.beginPath()
 			ctx.roundRect( x_co - lap_num_height/2, y_co - lap_num_height/2, ctx.measureText(text_co).width + lap_num_height, lap_num_height*1.5, lap_num_height/2 );
 			ctx.fill();
