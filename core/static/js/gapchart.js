@@ -353,7 +353,8 @@ class GapChart {
 				// Draw a dashed line
 				ctx.beginPath();
 				ctx.moveTo( x0, y0 );
-				ctx.bezierCurveTo( (x0+x1)/2, y1, (x0+x1)/2, y1, x1, y1 );				
+				//ctx.bezierCurveTo( (x0+x1)/2, y1, (x0+x1)/2, y1, x1, y1 );				
+				ctx.lineTo( x1, y1 );				
 				
 				ctx.setLineDash( [2,10] );
 				ctx.stroke();
