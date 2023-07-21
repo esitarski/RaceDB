@@ -29,6 +29,7 @@ function pDistanceSquared(x, y, x1, y1, x2, y2) {
 }
 
 function gap_format( t, show_minutes=true ) {
+	t = Math.abs( t );
 	const s = Math.trunc( t );
 	const f = t - s;
 	const m = Math.trunc(s / 60) % 60;
@@ -60,17 +61,18 @@ function spread_labels( p, h, y_min, y_max ) {
 	
 	const h2 = h / 2;
 	
-	// Define some floating point comparisons based on tolerance.
+	// Use floating point comparisons based on a tolerance rather than direct comparisons.
+	// This makes us tolerant of numerical instability.
 	const tolerance = 0.00001;
 	function gt( a, b ) { return a - b > tolerance; }
 	function lt( a, b ) { return b - a > tolerance; }
 	
-	// Start with putting all labels in their centered position.
-	let y = p.map( (v) => v - h2 );
+	// Start by putting all labels equal to the starting position.
+	let y = p.map( (v) => v );
 	
 	for( let k = 0; k < p.length; ++k ) {
 		
-		// Check for any overlapping positions.
+		// Check for overlapping positions.
 		let a, b, c;
 		for( b = 1; b < p.length; ++b ) {
 			if( gt( y[b-1] + h, y[b] ) )
@@ -78,27 +80,27 @@ function spread_labels( p, h, y_min, y_max ) {
 		}
 		
 		if( b == p.length )
-			break;	// No conflicts found.
+			break;	// No conflicts.  We are done.
 			
-		// Find the start the preceding adjacent block before the overlap.
+		// Find the start the preceding adjacent group before the conflict.
 		for( a = b-1; a > 0; --a ) {
 			if( lt(y[a-1] + h, y[a]) )
 				break;
 		}
 		
-		// Get the rest of the overlapping positions, including the succeeding adjacent block.
+		// Find the rest of the conflict positions, including the succeeding adjacent group if there is one.
 		for( c = b + 1; c < p.length; ++c ) {
 			if( lt(y[c-1] + h, y[c]) )
 				break;
 		}
 			
-		// Minimize least-squares sum to get the best label spread for the new block.
+		// Minimize the least-squares sum to get the best label spread.
 		const n = c - a;
 		let s = 0;
 		for( let i = a; i < c; ++i )
 			s += p[i] - h * (i - a);
 
-		// Compute the top of the conflict group and constrain to y_min, y_max.
+		// Compute the top of the spread-out group and constrain to y_min, y_max.
 		const y_best = Math.max( y_min + h2, Math.min( s/n - h2, y_max - n*h - h2) );
 			
 		// Update the label positions.
@@ -128,6 +130,9 @@ class GapChart {
 		this.y_gap = null;
 		this.gap = null;
 		this.moveTimer = null;
+		this.x_mouse = -1;
+		this.y_mouse = -1;
+
 		
 		// From http://tools.medialab.sciences-po.fr/iwanthue/
 		this.line_colors = [
@@ -180,6 +185,8 @@ class GapChart {
 	doMouseMove( evt ) {
 		const rect = this.canvas.getBoundingClientRect();
 		const x = evt.clientX - rect.left, y = evt.clientY - rect.top;
+		this.x_mouse = x;
+		this.y_mouse = y;
 		
 		const [rider_select_old, x_gap_old, y_gap_old, gap_old] = [this.rider_select, this.x_gap, this.y_gap, this.gap];
 		[this.x_gap, this.y_gap, this.gap, this.rider_select] = this.get_rider_gap( x, y );
@@ -189,7 +196,7 @@ class GapChart {
 	}
 	
 	onMouseMove( evt ) {
-		// Only process the move event if the mouse stops moving.
+		// Only process the move event if the mouse stops moving for a bit.
 		if( this.moveTimer ) {
 			this.rider_select = null;
 			clearTimeout( this.moveTimer );
@@ -307,7 +314,7 @@ class GapChart {
 				}
 			}
 		}
-		const gap = (r_best === undefined ? 0 : (y_gap - this.y_top) / this.gap_scale);
+		const gap = r_best === undefined ? 0 : this.get_gap(y_gap);
 		return [x_gap, y_gap, gap, r_best];
 	}
 	
@@ -367,6 +374,7 @@ class GapChart {
 		return Math.max( 0, Math.min(lap, this.lap_lines.length-1) );
 	}
 	get_y( gap, y_top_offset=true ) { return this.y_top + (y_top_offset ? this.y_top_offset : 0) + gap * this.gap_scale; }
+	get_gap( y, y_top_offset=true ) { return (y - this.y_top - (y_top_offset ? this.y_top_offset : 0)) / this.gap_scale; }
 	
 	draw() {
 		let width = this.canvas.width, height = this.canvas.height;
@@ -502,7 +510,7 @@ class GapChart {
 		// Draw the labels on the gaps.
 		ctx.fillStyle = '#000000';
 		ctx.font = info_font;
-		ctx.textBaseline = 'top';
+		ctx.textBaseline = 'middle';
 		ctx.textAlign = 'left';
 		ctx.lineWidth = 1;
 		//ctx.strokeStyle = this.lapLineColour;
@@ -512,7 +520,7 @@ class GapChart {
 				continue;
 			
 			fg.sort( (a, b) => a[0] - b[0] );	// Sort by increasing gap offset.
-			const y_spread = spread_labels( Array.from(fg, (v) => v[0]), this.row_height, this.get_y(0), this.y_bottom );
+			const y_spread = spread_labels( Array.from(fg, (v) => v[0]), this.row_height, this.get_y(0)-lap_num_height*.5, this.y_bottom );
 			const x0 = this.get_x(i);
 			const x1 = x0 + this.label_offset;
 			const xh = (x0 + x1) / 2;
@@ -537,7 +545,7 @@ class GapChart {
 				
 				ctx.beginPath()
 				ctx.moveTo( x0, y_last );
-				const y_to = y_spread[g] + this.row_height / 2;
+				const y_to = y_spread[g];
 				//ctx.bezierCurveTo( xh, y_last, xh, y_to, x1, y_to );
 				ctx.lineTo( x1, y_to );
 				ctx.stroke();
@@ -550,13 +558,31 @@ class GapChart {
 		
 		if( this.rider_select ) {
 			// Draw the callouts.
+			const text_co = gap_format( this.gap, this.show_minutes ) + ': ' + this.rider_select.get_text();
+			const x_co = this.x_gap, y_co = this.y_gap + lap_num_height;
 			
+			ctx.strokeStyle = '#000000';
+			ctx.fillStyle = '#00FFFF';
+			ctx.beginPath()
+			ctx.roundRect( x_co - lap_num_height/2, y_co - lap_num_height/2, ctx.measureText(text_co).width + lap_num_height, lap_num_height*1.5, lap_num_height/2 );
+			ctx.fill();
+			ctx.stroke();
+			
+			ctx.font = label_font;
+			ctx.textBaseline = 'top';
+			ctx.textAlign = 'left';
+			ctx.fillStyle = '#000000';
+			ctx.fillText( text_co, x_co, y_co );
+			
+			ctx.lineWidth = 1;
+			line( x_co, this.y_gap, x_co, y_co );
 		}
 		
 		// Draw the category name.
-		ctx.textBaseline = 'top';
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'bottom';
 		ctx.font = label_font;
 		ctx.fillStyle = '#000000';
-		ctx.fillText( 0, 0, this.category_name );
+		ctx.fillText( this.category_name, lap_num_height*.75, lap_num_height*1.25 );
 	}
 }
