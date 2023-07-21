@@ -1,0 +1,55 @@
+{% load i18n %}
+{% load static %}
+{% load to_js %}
+
+<html>
+<head>
+<title>{% if page_title %}{{page_title}}{% else %}RaceDB by Edward Sitarski{% endif %}</title>
+{% include "meta.html" %}
+<link rel="icon" href="{% static "images/RaceDB_32x32.png" %}">
+
+<script type="text/javascript" src="{% static "js/gapchart.js" %}"></script>
+<script>
+
+function riders_from_data( data ) {
+	let riders = [];
+	let start_min = +Infinity;
+	for (const [bib, info] of Object.entries(data)) {
+		// Rider( bib, race_times, info, color )
+		if( info.raceTimes && info.raceTimes.length >= 2 && info.status !== 'DNS' ) {
+			let rider = new Rider( Number(bib), info.raceTimes, {'FirstName':info.FirstName, 'LastName':info.LastName} );
+			start_min = Math.min( start_min, info.raceTimes[0] );
+			riders.push( rider );
+		}
+	}
+	// Remove any common start offset.
+	if( start_min > 0.0 ) {
+		for( let r of riders ) {
+			for( let i = 0; i < r.race_times.length; ++i )
+				r.race_times[i] -= start_min;
+		}
+	}
+	return riders;
+}
+
+var gap_chart = null;
+function onBodyLoad() {
+	let payload = {{payload|to_js}};
+	let canvas = document.getElementById('id_canvas');
+	gap_chart = new GapChart( canvas, payload );
+	window.addEventListener( "resize", gap_chart.onResize.bind(gap_chart) );
+	gap_chart.onResize();
+}
+
+</script>
+
+<style>
+body { margin: 0; } 
+canvas { display: block; } 
+</style>
+
+</head>
+<body onload="onBodyLoad();">
+	<canvas id="id_canvas"></canvas>
+</body>
+</html>

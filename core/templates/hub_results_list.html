@@ -1562,6 +1562,7 @@ table.participant_table tr th {
 {% if has_results %}
 	{% if not is_timetrial %}
 		<li><a href="./EventLapChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Lap Chart" %}</a></li>
+		<li><a href="./EventGapChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Gap Chart" %}</a></li>
 		<li><a href="./EventRaceChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Race Chart" %}</a></li>
 		<li><a data-toggle="tab" href="#sectionSituation">{% trans "Situation" %}</a></li>
 	{% endif %}
