@@ -101,7 +101,7 @@ function spread_labels( p, h, y_min, y_max ) {
 			s += p[i] - h * (i - a);
 
 		// Compute the top of the spread-out group and constrain to y_min, y_max.
-		const y_best = Math.max( y_min + h2, Math.min( s/n - h2, y_max - n*h - h2) );
+		const y_best = Math.max( y_min + h2, Math.min( s/n, y_max - n*h - h2) );
 			
 		// Update the label positions.
 		for( let i = a; i < c; ++i )
