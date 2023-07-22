@@ -97,11 +97,10 @@ function spread_labels( p, h, y_min, y_max ) {
 		}
 			
 		// Minimize the least-squares sum to get the best label spread.
-		let s = 0;
+		const n = c - a;
+		let s = -h * n * (n-1) / 2;	// Use Gauss summation to get the second least-squares term.
 		for( let i = a; i < c; ++i )
 			s += p[i];
-		const n = c - a;
-		s -= h * n * (n-1) / 2;	// Use Gauss summation to get the second least-squares term.
 		
 		// Compute the top of the spread-out group and constrain to y_min, y_max.
 		const y_best = Math.max( y_min, Math.min(s/n, y_max - n*h) );
@@ -142,7 +141,6 @@ class GapChart {
 		this.moveTimer = null;
 		this.x_mouse = -1;
 		this.y_mouse = -1;
-
 		
 		// From http://tools.medialab.sciences-po.fr/iwanthue/
 		this.line_colors = [
