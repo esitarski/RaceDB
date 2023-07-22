@@ -53,13 +53,15 @@ function gap_format( t, show_minutes=true ) {
 }
 
 function spread_labels( p, h, y_min, y_max ) {
-	// Spread labels out so they don't overlap.
-	// p is an array of points, h is the height of the label text.
+	// Spread labels out so they don't overlap, keeping them as close as possible to the given points.
+	// p is an array of y-points, h is the height of the label text.
 	// p must be sorted in increasing order.
 	// y_min and y_max are the limits.
-	// Returns an array of centered text y-values.
+	// Returns an array of centered label y-values.
 	
-	const h2 = h / 2;
+	// Allow for height at endpoints.
+	y_min += h/2;
+	y_max -= h/2;
 	
 	// Use floating point comparisons based on a tolerance rather than direct comparisons.
 	// This makes us tolerant of numerical instability.
@@ -67,7 +69,7 @@ function spread_labels( p, h, y_min, y_max ) {
 	function gt( a, b ) { return a - b > tolerance; }
 	function lt( a, b ) { return b - a > tolerance; }
 	
-	// Start by putting all labels equal to the starting position.
+	// Initialized by setting label positions equal to the starting position.
 	let y = p.map( (v) => v );
 	
 	for( let k = 0; k < p.length; ++k ) {
@@ -95,13 +97,14 @@ function spread_labels( p, h, y_min, y_max ) {
 		}
 			
 		// Minimize the least-squares sum to get the best label spread.
-		const n = c - a;
 		let s = 0;
 		for( let i = a; i < c; ++i )
-			s += p[i] - h * (i - a);
-
+			s += p[i];
+		const n = c - a;
+		s -= h * n * (n-1) / 2;	// Use Gauss summation to get the second least-squares term.
+		
 		// Compute the top of the spread-out group and constrain to y_min, y_max.
-		const y_best = Math.max( y_min + h2, Math.min( s/n, y_max - n*h - h2) );
+		const y_best = Math.max( y_min, Math.min(s/n, y_max - n*h) );
 			
 		// Update the label positions.
 		for( let i = a; i < c; ++i )
