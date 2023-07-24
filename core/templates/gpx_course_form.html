@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% load to_js %}
+{% load crispy_forms_tags %}
+
+{% block srcjavascript %}
+<script type="text/javascript" src="{% static "js/gpx.js" %}"></script>
+{% endblock srcjavascript %}
+
+{% block javascript %}
+var top_view = null;
+{% endblock javascript %}
+
+{% block onload %}
+	let canvas = document.getElementById('id_canvas');
+	let lat_lon_elevation = {{initial.lat_lon_elevation|to_js}};
+	if( lat_lon_elevation && lat_lon_elevation.length ) {
+		let course = new Course( lat_lon_elevation, {% if initial.is_loop %} true {% else %} false {% endif %} );
+		top_view = new TopView( canvas, course, create_riders(course, 1) );
+		top_view.set_t_factor_zoom();
+		top_view.start_animation();
+	}
+{% endblock onload %}
+
+{% block content %}
+
+<h2>{{title}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+<canvas id="id_canvas" width="800", height="800"></canvas>
+{% endblock content %}

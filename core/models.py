@@ -87,7 +87,7 @@ class BulkSave( object ):
 
 def ordinal( n ):
 	return "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
-
+	
 def fixNullUpper( s ):
 	if not s:
 		return None
@@ -215,8 +215,8 @@ class Sequence( models.Model ):
 		return self.get_container().count()
 	
 	class Meta:
-		ordering = ['sequence']
 		abstract = True
+		ordering = ['sequence']
 
 #----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
@@ -839,6 +839,7 @@ class Competition(models.Model):
 	google_maps_api_key = models.CharField( max_length=64, default='', blank=True, verbose_name=_('Google Maps API Key') )
 	
 	image = models.ForeignKey( "Image", blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Image") )
+	gpx_course_default = models.ForeignKey( "GPXCourse", blank=True, null=True, default=None, on_delete=models.SET_NULL, verbose_name=_("GPX Course Default") )
 	
 	@property
 	def title( self ):
@@ -1530,6 +1531,14 @@ class Event( models.Model ):
 	
 	dnsNoData = models.BooleanField( default=True, verbose_name = _("Show Participants with no race data as DNS"), )
 	
+	gpx_course = models.ForeignKey( "GPXCourse", null=True, blank=True, default=None, on_delete=models.SET_NULL, verbose_name=_("GPX Course") )
+
+	def get_gpx_course( self ):
+		return self.gpx_course or self.competition.gpx_course_default
+		
+	def has_gpx_course( self ):
+		return self.gpx_course_id or self.competition.gpx_course_default_id
+		
 	@property
 	def note_html( self ):
 		return mark_safe( '<br/>'.join( escape(v) for v in self.note.split('\n') ) ) if self.note else ''
@@ -3218,7 +3227,21 @@ class Prime(models.Model):
 	def to_camel( field ):
 		parts = field.split('_')
 		return parts[0] + ''.join( p.capitalize() for p in parts[1:] )
-		
+	
+	def as_dict( self ):
+		d = {}
+		for f in Prime._meta.get_fields():
+			a = f.name
+			if a == 'participant':
+				a = 'winner_bib'
+				v = self.participant.bib
+			elif a == 'effort':
+				v = str(self.get_effort_display())
+			else:
+				v = getattr( self, a )
+			d[self.to_camel(a)] = v
+		return d
+	
 	class Meta:
 		abstract = True
 		verbose_name = _('Prime')
@@ -6053,6 +6076,7 @@ class CrossMgrPassword(models.Model):
 class Image(models.Model):
 	title = models.CharField( max_length = 32, db_index=True, verbose_name = _('Title') )
 	description = models.CharField( max_length = 80, blank = True, default = '', verbose_name = _('Description') )
+	url = models.URLField( max_length=200, blank = True, default = '', verbose_name = _('URL'), help_text=_('URL link followed when the viewer clicks on the image') )
 	image = models.ImageField( upload_to="uploads/" )
 	
 	def __str__( self ):
@@ -6062,6 +6086,66 @@ class Image(models.Model):
 		verbose_name = _("Image")
 		verbose_name_plural = _("Images")
 		ordering = ['title']
+
+#-----------------------------------------------------------------------------------------------
+from .gpx_util import lat_lon_elevation_to_points_itr
+
+class GPXCourse(models.Model):
+	name = models.CharField( max_length = 64, db_index=True, verbose_name=_('Name') )
+	description = models.CharField( max_length = 160, blank = True, default = '', verbose_name=_('Description') )
+	
+	# array of triples [[lat,lon,elevation], ...[lat,lon,elevation]]
+	lat_lon_elevation = models.JSONField( verbose_name=_("LatLonElevation"), editable=False )
+	is_loop = models.BooleanField( default=True, verbose_name=_("Is Loop") )
+
+	# Length of the course in meters.
+	meters = models.FloatField( default=0.0, editable=False, verbose_name=_("Meters") )
+	
+	# start of the course.
+	lat_start = models.FloatField( default=0.0, editable=False, verbose_name=_('LatStart') )
+	lon_start = models.FloatField( default=0.0, editable=False, verbose_name=_('LonStart') )
+	
+	# boundaries of the course.
+	lat_min = models.FloatField( default=0.0, editable=False, verbose_name=_('LatMin') )
+	lat_max = models.FloatField( default=0.0, editable=False, verbose_name=_('LatMax') )
+	lon_min = models.FloatField( default=0.0, editable=False, verbose_name=_('LonMin') )
+	lon_max = models.FloatField( default=0.0, editable=False, verbose_name=_('LonMax') )
+
+	# min/max elevation.
+	ele_min = models.FloatField( default=0.0, editable=False, verbose_name=_('EleMin') )
+	ele_max = models.FloatField( default=0.0, editable=False, verbose_name=_('EleMax') )
+	
+	def save( self, *args, **kwargs ):
+		if not self.lat_lon_elevation:
+			self.lat_lon_elevaton = [(0.0,0.0,0.0)]
+		
+		self.lat_start, self.lon_start = self.lat_lon_elevation[0][:2]
+		
+		for i,a, in enumerate(('lat_min', 'lon_min', 'ele_min')):
+			setattr( self, a, min(v[i] for v in self.lat_lon_elevation) )
+		for i,a, in enumerate(('lat_max', 'lon_max', 'ele_max')):
+			setattr( self, a, max(v[i] for v in self.lat_lon_elevation) )
+			
+		x_y_elevation = tuple( lat_lon_elevation_to_points_itr(self.lat_lon_elevation) )
+		self.meters = sum( math.sqrt(sum( (v1-v0)**2 for v0,v1 in zip(p0,p1) )) for p0,p1 in itertools.pairwise(x_y_elevation) )
+		if self.is_loop:
+			self.meters += math.sqrt(sum( (v1-v0)**2 for v0,v1 in zip(x_y_elevation[-1], x_y_elevation[0]) ))
+				
+		super().save( *args, **kwargs )
+		
+	def __str__( self ):
+		return self.name
+		
+	def ggoogle_directions_url( self ):
+		return 'https://www.google.com/maps/dir/?api=1&destination={}%2C{}'.format( self.lat_start, self.lon_start )
+
+	def ggoogle_search_url( self ):
+		return 'https://www.google.com/maps/search/?api=1&query={}%2C{}'.format( self.lat_start, self.lon_start )
+		
+	class Meta:
+		verbose_name = _("GPX Course")
+		verbose_name_plural = _("GPX Corses")
+		ordering = ['name']
 
 #-----------------------------------------------------------------------------------------------
 

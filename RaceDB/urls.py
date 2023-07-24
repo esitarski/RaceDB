@@ -11,7 +11,7 @@ from core import urls as core_urls
 
 # Redirect uses to the main page
 def redirect_view(request):
-	response = redirect('/RaceDB/')
+	response = redirect('/RaceDB/Hub/')
 	return response
 
 admin.autodiscover()

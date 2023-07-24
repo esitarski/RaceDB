@@ -62,7 +62,16 @@ table.results-table tr th {
 {% include "hub_nav.html" %}
 <h1>
 	{% if series.image %}
-		<a href='/RaceDB/Hub/SeriesCategories/{{series.id}}/'><img src="{{series.image.image.url}}" class="logo-image" /></a><br/>
+		<a
+		{% if series.image.url %}
+			href="{{series.image.url}}" target="_blank"
+		{% else %}
+			href="/RaceDB/Hub/SeriesCategories/{{series.id}}/"
+		{% endif %}
+		>
+			<img src="{{series.image.image.url}}" class="logo-image" />
+		</a>
+		<br/>
 	{% endif %}
 	<strong><a href='/RaceDB/Hub/SeriesCategories/{{series.id}}/'>{{series.name}}</strong></a> <span style="font-size: 75%">{{series.description}}</span><br/>
 	<span style="font-size: 75%">

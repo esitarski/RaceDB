@@ -1067,8 +1067,9 @@ def GetCompetitionForm( competition_cur = None ):
 				Row( HTML('<hr/>') ),
 				Row(
 					Col(Field('image'), 3),
+					Col(Field('gpx_course_default'), 3),
 					Col(Field('ga_tracking_id',size=12), 3),
-					Col(Field('google_maps_api_key',size=40), 4),
+					Col(Field('google_maps_api_key',size=40), 3),
 				),
 				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(''), ),
 				Row(
@@ -2130,6 +2131,7 @@ class EventMassStartForm( ModelForm ):
 			Row( Field('rfid_option') ),
 			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4), Col(Field('win_and_out'),4) ),
 			Row( Field('note', rows='4', cols='60') ),
+			Row( Col(Field('gpx_course'),3) ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
@@ -2434,6 +2436,7 @@ class EventTTForm( ModelForm ):
 			),
 			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4) ),
 			Row( Field('note', rows='4', cols='60') ),
+			Row( Col(Field('gpx_course'),3) ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:

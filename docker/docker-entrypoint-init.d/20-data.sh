@@ -10,6 +10,9 @@ export PYTHONPATH=/RaceDB
 export sqlite3_database_fname=/racedb-data/racedb.db3
 chmod 755 /RaceDB/manage.py
 
+# Create the media/uploads directory if it does not already exist.
+mkdir -p /RaceDB/media/uploads
+
 racedb=$(psql -U "$DATABASE_NAME" -tAc "select 1 from information_schema.tables WHERE table_name='core_systeminfo'")
 
 if [ "$racedb" != "1" ]; then

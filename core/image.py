@@ -32,6 +32,9 @@ class ImageForm( ModelForm ):
 				Field('description', size=80),
 			),
 			Row(
+				Field('url', size=80),
+			),
+			Row(
 				Field('image'),
 			),
 		)
@@ -55,12 +58,12 @@ def ImageNew( request ):
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
 				
 			if 'save-submit' in request.POST:
-				return HttpResponseRedirect( pushUrl(request, '{}Edit'.format(ModelClass.__name__), instance.id, cancelUrl=True) )
+				return HttpResponseRedirect( pushUrl(request, 'ImageEdit', instance.id, cancelUrl=True) )
 	else:
 		instance = Image()
-		form = ImageFormClass( instance=instance, button_mask=NEW_BUTTONS )
+		form = ImageForm( instance=instance, button_mask=NEW_BUTTONS )
 	
-	return render( request, template or 'generic_form.html', locals() )
+	return render( request, 'image_form.html', locals() )
 
 @access_validation()
 def ImageEdit( request, imageId ):
@@ -83,7 +86,7 @@ def ImageDelete( request, imageId, confirmed=0 ):
 	if int(confirmed):
 		image.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( '{}: {}, {}', _('Delete'), image.name, image.description )
+	message = format_lazy( '{}: {}, {}', _('Delete'), image.title, image.description )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )

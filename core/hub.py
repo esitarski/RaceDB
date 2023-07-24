@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from .views_common import *
 from .models import *
+from .utils import format_time
 
 from .views import license_holders_from_search_text
 from .results import get_payload_for_result
@@ -200,10 +201,121 @@ def get_primes( event, bibs ):
 	prime_fields = [f for f in Prime._meta.get_fields() if f in used_fields]
 	return primes, prime_fields
 
+def EventAnimation( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return list( wave.get_results(c) )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	gpx_course = event.get_gpx_course()
+	payload['lat_lon_elevation'] = gpx_course.lat_lon_elevation
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_animation.html', locals() )
+
+def EventLapChart( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return list( wave.get_results(c) )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_lap_chart.html', locals() )
+
+def EventGapChart( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return list( wave.get_results(c) )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_gap_chart.html', locals() )
+
+def EventRaceChart( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return list( wave.get_results(c) )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_race_chart.html', locals() )
+
 def CategoryResults( request, eventId, eventType, categoryId ):
 	eventType = int(eventType)
 	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
 	category = get_object_or_404( Category, pk=categoryId )
+	custom_category = None
 	wave = event.get_wave_for_category( category )
 	
 	has_results = wave.has_results()
@@ -223,7 +335,7 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 		results = get_results( category )
 		cat_name = category.code_gender
 		cat_type = 'Component'
-	
+
 	num_nationalities = len( set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code) )
 	num_starters = sum( 1 for rr in results if rr.status!=Result.cDNS )
 	time_stamp = timezone.datetime.now()
@@ -235,6 +347,15 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	show_category = wave.rank_categories_together
 	
 	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
+	
+	try:
+		# Try to get place from the payload.
+		leader_info = payload['data'][payload['catDetails'][0]['pos'][0]]
+		ave_speed = leader_info['speed']
+		race_time = format_time( leader_info['raceTimes'][-1] - leader_info['raceTimes'][0] )
+	except Exception as e:
+		ave_speed = None
+		race_time = None
 	
 	return render( request, 'hub_results_list.html', locals() )
 
@@ -257,7 +378,7 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	is_timetrial = (eventType == 1)
 	show_category = True
 
-	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in reesults} )
+	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
 
 	return render( request, 'hub_results_list.html', locals() )
 
