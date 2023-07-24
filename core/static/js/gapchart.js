@@ -4,18 +4,15 @@ function pDistanceSquared(x, y, x1, y1, x2, y2) {
 	const A = x - x1, B = y - y1, C = x2 - x1, D = y2 - y1;
 
 	const dot = A * C + B * D;
-	const len_sq = C * C + D * D;
-	let param = -1;
-	if (len_sq != 0) // 0 length line
-	  param = dot / len_sq;
+	const len_sq = C * C + D * D;	
+	const param = len_sq ? dot / len_sq : -1;
 
 	let xx, yy;
-
-	if (param < 0) {
+	if( param < 0 ) {
 		xx = x1;
 		yy = y1;
 	}
-	else if (param > 1) {
+	else if( param >= 1 ) {
 		xx = x2;
 		yy = y2;
 	}
@@ -254,7 +251,7 @@ class GapChart {
 				lap_leader_time[i] = Math.min( lap_leader_time[i], r.race_times[i] );
 		}
 		
-		let lap_data = Array.from( lap_leader_time, () => new Map() );
+		let lap_data = lap_leader_time.map( () => new Map() );
 		
 		let gap_max = 0;
 		lap_leader_time.push( +Infinity );		// Add a backstop time so we don't need to check for array end.
@@ -404,7 +401,7 @@ class GapChart {
 		const gap_max = Math.max( 1.0, this.gap_max );
 		
 		// Get a reasonable tick mark.
-		const ticks = [0.1, 0.2, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 2*60.0, 5*60.0, 10*60.0, 15*60.0, 30*60, 60*60, 2*60.0, 5*60.0, 10*60.0, 24*60.0];
+		const ticks = [0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10, 30, 60, 2*60, 5*60, 10*60, 15*60, 30*60, 60*60, 2*60*60, 5*60*60, 10*60*60, 24*60*60, 2*24*60*60, 5*24*60*60, 10*24*60*60];
 		let tick = ticks[ticks.length-1];
 		for( let i = 1; i < ticks.length; ++i ) {
 			if( gap_max / ticks[i] < 4 ) {
@@ -433,7 +430,7 @@ class GapChart {
 			this.x_left = Math.max( this.x_left, ctx.measureText( gap_format(i*tick, this.show_minutes) ).width + label_margin * 2 );
 		
 		ctx.font = info_font;
-		this.label_offset = ctx.measureText('      ').width;
+		this.label_offset = ctx.measureText('      ').width;	// Offset of labels from the lines.
 		this.x_right = width;
 		for( let r of this.riders )
 			this.x_right = Math.min( this.x_right, width - ctx.measureText(r.get_text(width)).width );
@@ -503,7 +500,7 @@ class GapChart {
 			xLast = x_middle - t_width/2 - 2;
 		}	
 
-		this.lap_lines = Array.from( this.lap_leader_time, () => [] );	// Array of lines from or passing through this lap.
+		this.lap_lines = this.lap_leader_time.map( () => [] );	// Array of lines from or passing through this lap.
 		
 		// Draw the gap for each rider.  Keep track of the final lap gap.
 		ctx.lineCap = 'round';
@@ -525,11 +522,11 @@ class GapChart {
 		//ctx.strokeStyle = this.lapLineColour;
 		ctx.strokeStyle = '#000000';
 		for( const [i, fg] of finish_gap.entries() ) {
-			if( fg.length === 0 )
+			if( !fg.length )
 				continue;
 			
 			fg.sort( (a, b) => a[0] - b[0] );	// Sort by increasing gap offset.
-			const y_spread = spread_labels( Array.from(fg, (v) => v[0]), this.row_height, this.get_y(0)-lap_num_height*.5, this.y_bottom );
+			const y_spread = spread_labels( fg.map( (v) => v[0] ), this.row_height, this.get_y(0)-lap_num_height*.5, this.y_bottom );
 			const x0 = this.get_x(i);
 			const x1 = x0 + this.label_offset;
 			const xh = (x0 + x1) / 2;
