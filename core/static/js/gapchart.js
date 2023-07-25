@@ -195,12 +195,16 @@ class GapChart {
 		
 		const [rider_select_old, x_gap_old, y_gap_old, gap_old] = [this.rider_select, this.x_gap, this.y_gap, this.gap];
 		[this.x_gap, this.y_gap, this.gap, this.rider_select] = this.get_rider_gap( x, y );
+		
+		console.log( [x, y, this.x_gap, this.y_gap, this.gap, this.rider_select] );
 
 		if( this.rider_select !== rider_select_old || this.x_gap !== x_gap_old || this.y_gap !== y_gap_old || this.gap !== gap_old )
 			this.draw();
 	}
 	
 	onMouseMove( evt ) {
+		console.log( 'onMouseMove' );
+
 		// Only process the move event if the mouse stops moving for a bit.
 		if( this.moveTimer ) {
 			this.rider_select = null;
@@ -377,7 +381,7 @@ class GapChart {
 	get_x( lap ) { return this.x_left + (lap + 0.5) * this.lap_scale; }
 	get_lap( x ) {
 		const lap = Math.trunc((x - this.x_left - 0.5 * this.lap_scale) / this.lap_scale);
-		return Math.max( 0, Math.min(lap, this.lap_lines.length-1) );
+		return Math.max( 0, Math.min(lap, this.lap_lines.length-2) );
 	}
 	get_y( gap, y_top_offset=true ) { return this.y_top + (y_top_offset ? this.y_top_offset : 0) + gap * this.gap_scale; }
 	get_gap( y, y_top_offset=true ) { return (y - this.y_top - (y_top_offset ? this.y_top_offset : 0)) / this.gap_scale; }
