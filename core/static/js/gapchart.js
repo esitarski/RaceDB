@@ -196,15 +196,11 @@ class GapChart {
 		const [rider_select_old, x_gap_old, y_gap_old, gap_old] = [this.rider_select, this.x_gap, this.y_gap, this.gap];
 		[this.x_gap, this.y_gap, this.gap, this.rider_select] = this.get_rider_gap( x, y );
 		
-		console.log( [x, y, this.x_gap, this.y_gap, this.gap, this.rider_select] );
-
 		if( this.rider_select !== rider_select_old || this.x_gap !== x_gap_old || this.y_gap !== y_gap_old || this.gap !== gap_old )
 			this.draw();
 	}
 	
 	onMouseMove( evt ) {
-		console.log( 'onMouseMove' );
-
 		// Only process the move event if the mouse stops moving for a bit.
 		if( this.moveTimer ) {
 			this.rider_select = null;
