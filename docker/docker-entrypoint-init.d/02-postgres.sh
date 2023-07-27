@@ -20,8 +20,10 @@ EOSQL
     
 	echo "Granting all user permissions (pqsl-local).."
 	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_USER" <<-EOSQL
+    ALTER DATABASE $DATABASE_NAME OWNER TO $DATABASE_USER;
 	GRANT ALL PRIVILEGES ON DATABASE $DATABASE_NAME TO $DATABASE_USER;
 	GRANT ALL ON SCHEMA public TO $DATABASE_USER;
+    GRANT ALL ON SCHEMA public TO public;
 EOSQL
 
 elif [ "$DATABASE_TYPE" == "psql" ]; then
@@ -43,10 +45,12 @@ EOSQL
         echo "RaceDB DB already exists on remote server. Not creating."
     fi
     
-	echo "Granting all user permissions (pqsl)..."
+	echo "Granting all user permissions (pqsl*)..."
 	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_USER" <<-EOSQL
+    ALTER DATABASE $DATABASE_NAME OWNER TO $DATABASE_USER;
 	GRANT ALL PRIVILEGES ON DATABASE $DATABASE_NAME TO $DATABASE_USER;
 	GRANT ALL ON SCHEMA public TO $DATABASE_USER;
+    GRANT ALL ON SCHEMA public TO public;
 EOSQL
 
 else
