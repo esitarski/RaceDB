@@ -327,7 +327,7 @@ def competition_deserializer( object_list, **options ):
 					.values_list('license_holder__id',flat=True)
 				)
 				existing_license_holder_category = set( tuple(lh_cat)
-					for lh_cat in Participant.objects.filter(competition=competition).values_list('license_holder', 'category') )
+					for lh_cat in Participant.objects.filter(competition__id=competition.id).values_list('license_holder', 'category') )
 			
 			db_object = base.DeserializedObject(instance, m2m_data)
 			if existing_instance:	# This is an update as there is an existing instance.
