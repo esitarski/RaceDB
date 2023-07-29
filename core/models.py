@@ -1130,7 +1130,7 @@ class Competition(models.Model):
 				for p in participants_to_update:
 					p.tag  = p.license_holder.existing_tag
 					p.tag2 = p.license_holder.existing_tag2
-				Participants.objects.bulk_update( participants_to_update, ['tag', 'tag2'] )
+				Participant.objects.bulk_update( participants_to_update, ['tag', 'tag2'] )
 				return True
 		return False
 	
