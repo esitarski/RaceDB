@@ -5231,8 +5231,8 @@ def categories_from_pks( pks ):
 	return sorted( (c for c in Category.objects.in_bulk(pks).values()), key=operator.attrgetter('sequence') )
 
 class Series( Sequence ):
-	name = models.CharField( max_length=32, default = 'MySeries', verbose_name=_('Name') )
-	description = models.CharField( max_length=80, blank=True, default='', verbose_name=_('Description') )
+	name = models.CharField( max_length=128, default = 'MySeries', verbose_name=_('Name') )
+	description = models.CharField( max_length=255, blank=True, default='', verbose_name=_('Description') )
 
 	category_format = models.ForeignKey( CategoryFormat, db_index=True, on_delete=models.CASCADE )
 	
