@@ -134,25 +134,27 @@ def getCopyName( ModelClass, cur_name ):
 		base_name = cur_name
 	
 	try:
-		names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
-	except Exception:
-		return cur_name
-	
-	iMax = 2
-	for n in names:
-		try:
-			iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
-		except Exception:
-			continue
-	
-	try:
 		max_length = ModelClass._meta.get_field('name').max_length
 	except Exception:
 		max_length = 8192
-	
-	new_name = '{}{}{}{}'.format( base_name, pre, iMax, post )[:max_length]
-	if not ModelClass.objects.filter( name=new_name ).exists():
-		return new_name
+		
+	for i in range(16):
+		iMax = 2
+
+		try:
+			names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
+		except Exception:
+			return cur_name
+		
+		for n in names:
+			try:
+				iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
+			except Exception:
+				continue
+		
+		new_name = '{}{}{}{}'.format( base_name, pre, iMax, post )[:max_length]
+		if not ModelClass.objects.filter( name=new_name ).exists():
+			return new_name
 	
 	return cur_name
 
