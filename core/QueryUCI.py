@@ -76,7 +76,7 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 	
 	try:
 		values = json.loads( ret.decode() )							# Try standard utf-8.
-	except:
+	except Exception:
 		values = json.loads( fix_uci_encoding(ret).decode() )		# Try non-standard encoding.
 	
 	if values:
@@ -86,14 +86,14 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 			if 'birthdate' in r:
 				try:
 					r['date_of_birth'] = datetime.date( *[int(dv) for dv in r['birthdate'].split('T')[0].split('-')] )
-				except:
+				except Exception:
 					pass
 				del r['birthdate']
 			r['gender'] = None
 			if 'gender' in r:
 				try:
 					r['gender'] = 1 if r['gender'].startswith('F') else 0
-				except:
+				except Exception:
 					pass
 			if 'uci_id' in r:
 				r['uci_id'] = '{}'.format(r['uci_id'])

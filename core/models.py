@@ -127,26 +127,31 @@ def attrsetter( attr, value ):
 
 #----------------------------------------------------------------------------------------
 def getCopyName( ModelClass, cur_name ):
-	suffix = ' - ['
+	pre, post = ' - [', ']'
 	try:
-		base_name = cur_name[:cur_name.rindex(suffix)]
+		base_name = cur_name[:cur_name.rindex(pre)]
 	except Exception:
 		base_name = cur_name
 	
-	while 1:
+	try:
+		max_length = ModelClass._meta.get_field('name').max_length
+	except Exception:
+		max_length = 8192
+		
+	try:
+		names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
+	except Exception:
+		return cur_name
+	
+	iMax = 2
+	for n in names:
 		try:
-			names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
+			iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
 		except Exception:
-			return cur_name
+			continue
 		
-		iMax = 2
-		for n in names:
-			try:
-				iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
-			except Exception:
-				continue
-		
-		new_name = '{}{}{}]'.format( base_name, suffix, iMax )
+	for i in range(iMax, iMax+32):
+		new_name = '{}{}{}{}'.format( base_name, pre, iMax, post )[:max_length]
 		if not ModelClass.objects.filter( name=new_name ).exists():
 			return new_name
 	
@@ -154,11 +159,13 @@ def getCopyName( ModelClass, cur_name ):
 
 #----------------------------------------------------------------------------------------
 def validate_sequence( elements ):
-	with transaction.atomic():
-		for seq, e in enumerate(list(elements)):
-			if e.sequence != seq:
-				e.sequence = seq
-				e.save()
+	to_update = []
+	for seq, e in enumerate(list(elements)):
+		if e.sequence != seq:
+			e.sequence = seq
+			to_update.append( e )
+	if to_update:
+		type(to_update[0]).objects.bulk_update( to_update, ['sequence'] )
 	
 class Sequence( models.Model ):
 	sequence = models.PositiveSmallIntegerField( default=32767, blank=True, verbose_name=_('Sequence') )
@@ -5231,8 +5238,8 @@ def categories_from_pks( pks ):
 	return sorted( (c for c in Category.objects.in_bulk(pks).values()), key=operator.attrgetter('sequence') )
 
 class Series( Sequence ):
-	name = models.CharField( max_length=32, default = 'MySeries', verbose_name=_('Name') )
-	description = models.CharField( max_length=80, blank=True, default='', verbose_name=_('Description') )
+	name = models.CharField( max_length=128, default = 'MySeries', verbose_name=_('Name') )
+	description = models.CharField( max_length=255, blank=True, default='', verbose_name=_('Description') )
 
 	category_format = models.ForeignKey( CategoryFormat, db_index=True, on_delete=models.CASCADE )
 	
@@ -5292,7 +5299,7 @@ class Series( Sequence ):
 		series_new = self
 		series_new.pk = None
 		series_new.id = None
-		series_new.name += timezone.now().strftime(' %Y-%m-%d %H:%M:%S')
+		series_new.name = getCopyName( Series, series_new.name )
 		series_new.save()
 		
 		for collection in collections:

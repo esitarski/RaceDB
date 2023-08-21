@@ -1,6 +1,3 @@
-import operator
-from collections import defaultdict
-
 from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
