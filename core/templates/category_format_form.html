@@ -21,7 +21,7 @@ setRowSorter('Category','sort_table_id');
 <hr class="hidden-print"/>
 <p>{% trans "Drag and drop rows to change sequence." %}</p>
 <h4>{% trans "Ensure that Categories are sequenced by Women, Men then Open, and then by Slowest to Fastest within each Gender" %} </h4>
-{% if instance.category_set.exists %}
+{% if instance and instance.category_set.exists %}
 <table class="table table-striped table-hover" id="sort_table_id">
 <thead>
 	<tr>
