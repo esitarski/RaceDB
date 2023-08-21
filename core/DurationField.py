@@ -103,7 +103,7 @@ class DurationField( FloatField ):
 			for f in value.split(':'):
 				try:
 					secs = secs * 60.0 + float(f)
-				except:
+				except Exception:
 					secs *= 60.0
 			return formatted_timedelta( seconds = sgn * secs )
 		except Exception as e:

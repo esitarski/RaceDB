@@ -166,7 +166,7 @@ class message_filter:
 		
 	def write( self, data ):
 		if not 'received a naive datetime' in data:
-			print( e, file=self.output)
+			print( data, file=self.output)
 		
 tt.start('extracting json data from sqlite3 database' )
 with redirect_stdout( message_filter(sys.stdout) ):

@@ -138,20 +138,19 @@ def getCopyName( ModelClass, cur_name ):
 	except Exception:
 		max_length = 8192
 		
-	for i in range(16):
-		iMax = 2
-
+	try:
+		names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
+	except Exception:
+		return cur_name
+	
+	iMax = 2
+	for n in names:
 		try:
-			names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
+			iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
 		except Exception:
-			return cur_name
+			continue
 		
-		for n in names:
-			try:
-				iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
-			except Exception:
-				continue
-		
+	for i in range(iMax, iMax+32):
 		new_name = '{}{}{}{}'.format( base_name, pre, iMax, post )[:max_length]
 		if not ModelClass.objects.filter( name=new_name ).exists():
 			return new_name
@@ -160,11 +159,13 @@ def getCopyName( ModelClass, cur_name ):
 
 #----------------------------------------------------------------------------------------
 def validate_sequence( elements ):
-	with transaction.atomic():
-		for seq, e in enumerate(list(elements)):
-			if e.sequence != seq:
-				e.sequence = seq
-				e.save()
+	to_update = []
+	for seq, e in enumerate(list(elements)):
+		if e.sequence != seq:
+			e.sequence = seq
+			to_update.append( e )
+	if to_update:
+		type(to_update[0]).objects.bulk_update( to_update, ['sequence'] )
 	
 class Sequence( models.Model ):
 	sequence = models.PositiveSmallIntegerField( default=32767, blank=True, verbose_name=_('Sequence') )

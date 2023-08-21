@@ -49,7 +49,7 @@ class FieldMap( object ):
 		for i, h in enumerate(header):
 			try:
 				h = normalize( h )
-			except Exception as e:
+			except Exception:
 				continue
 			
 			try:
@@ -76,7 +76,7 @@ class FieldMap( object ):
 	def get_name_from_alias( self, alias ):
 		try:
 			alias = normalize( alias )
-		except Exception as e:
+		except Exception:
 			return None
 		return None if alias in self.unmapped else self.alias_to_name.get(alias, None)
 		

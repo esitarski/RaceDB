@@ -18,7 +18,7 @@ def reset(tarinfo):
 def buildRaceDB(releasedir):
 	try:
 		virtenv = os.environ['VIRTUAL_ENV']
-	except:
+	except Exception:
 		print("Refusing to build outside the virtual env")
 		sys.exit(1)
 	print("Building version: {}".format(version))

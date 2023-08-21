@@ -126,7 +126,7 @@ if __name__ == '__main__':
 		print ( '"{}" {} ({}) "{}"'.format(license, tag, len(tag), license_new) )
 		assert license.startswith('_') or license == license_new
 	
-	assert getLicenseFromTag( 'FE00' ) == None
-	assert getLicenseFromTag( 'FF10' ) == None
-	assert getLicenseFromTag( 'FF01' ) == None
+	assert getLicenseFromTag( 'FE00' ) is None
+	assert getLicenseFromTag( 'FF10' ) is None
+	assert getLicenseFromTag( 'FF01' ) is None
 	assert getLicenseFromTag( 'FF0601E2AF' ) == '123567'
