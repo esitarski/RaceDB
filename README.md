@@ -23,7 +23,7 @@ About the only con is the Docker on Linux is a pain to setup the first time. How
 
 ## Default Port
 
-While racedb installed from source uses port 8000 [http://localhost:8000], the container has been setup to use the standard http port, port 80, for convenience. If you have a non-standard setup (run a local web server on the same machine as racedb), you will need to change this port number. To do so, do the following:
+While racedb installed from source uses port 8000 [http://localhost:8000/RaceDB], the container has been setup to use the standard http port, port 80, for convenience. If you have a non-standard setup (run a local web server on the same machine as racedb), you will need to change this port number. To do so, do the following:
 
 - edit the docker-compose.yml file
 - find the line "80:8000"
@@ -49,7 +49,7 @@ Steps:
 
 - Now the container is installed, you can start it. Hit the Start button. After a few seconds, the "Start Command Send" box will appear, and the RaceDB Controller will indicate RaceDB is running.
 
-- Now, wait about two mins point your webbrowser to [http://localhost]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
+- Now, wait about two mins, and point your webbrowser to [http://localhost/RaceDB]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
 
 - The default login is super and the password is super. Be sure to use the __python3 manage.py set_password super ???__ command to change the password!
 
@@ -73,7 +73,7 @@ Steps:
 
 - For this step, you require internet access. From the terminal prompt run: "bash racedb.sh run" from the racedb container directory to start the container. The first time this command run, docker will download the container images from the internet and then spin up the containers, configure the database and racedb, and start racedb. The container download can take 1-10 mins depending on the speed of your internet connection. The download only happens the first time. Any other time you start the container, it will start from disk.
 
-- Now, wait about two mins point your webbrowser to [http://localhost]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
+- Now, wait about two mins point and your webbrowser to [http://localhost/RaceDB]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
 
 - The default admin login is super and the password is super. Be sure to use __python3 manage.py set_password super ???__ to change the password.
 
