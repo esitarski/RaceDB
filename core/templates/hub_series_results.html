@@ -180,7 +180,7 @@ table.results-table tr th {
 		{% endif %}
 	{% endif %}
 	
-	{% if has_upgrades and series.seriesupgradeprogression_set.exists %}
+	{% if has_upgrades and series.id and series.seriesupgradeprogression_set.exists %}
 		<p/>
 		<h4>{% trans "Upgrade Progressions" %}</h4>
 		<table class="table table-condensed" style="width: auto;" >

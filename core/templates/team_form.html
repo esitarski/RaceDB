@@ -13,7 +13,7 @@
 <p>
 {% trans "Team Aliases are used in Excel imports to translate unofficial or mis-spelled team names to the official team name." %}
 </p>
-{% if instance.teamalias_set.exists %}
+{% if instance.id and instance.teamalias_set.exists %}
 <table class="table table-striped table-hover table-condensed" style="width: auto;">
 {% spaceless %}
 <thead>

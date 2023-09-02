@@ -24,6 +24,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	payload["raceIsUnstarted"] = False
 	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCI ID', 'NatCode', 'City', 'StateProv']
 	payload['has_results'] = has_results
+	has_multiple_laps = False
 	
 	data = {}
 	race_times_all = []
@@ -45,6 +46,9 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		
 		info = rr.get_info_by_lap()
 		race_times, lap_kmh, lap_km = info['race_times'], info['lap_kmh'], info['lap_km']
+		if rr.is_finisher and len(race_times) > 2:
+			has_multiple_laps = True
+		
 		d = {
 			'LastName': h.last_name,
 			'FirstName': h.first_name,
@@ -114,7 +118,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 			if prime.participant_id in participant_ids
 	]
 	payload['primes'] = primes or None;
-	
+	payload['has_multiple_laps'] = has_multiple_laps
 	return payload
 
 '''

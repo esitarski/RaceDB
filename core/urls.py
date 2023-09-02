@@ -42,6 +42,7 @@ urlpatterns = [
 	re_path(r'^.*Hub/CategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.CategoryResults),
 	re_path(r'^.*Hub/CustomCategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$', hub.CustomCategoryResults),
 	re_path(r'^.*EventAnimation/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventAnimation),
+	re_path(r'^.*EventLapTimes/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventLapTimes),
 	re_path(r'^.*EventLapChart/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventLapChart),
 	re_path(r'^.*EventGapChart/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventGapChart),
 	re_path(r'^.*EventRaceChart/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventRaceChart),

@@ -209,7 +209,7 @@ def EventAnimation( request, eventId, eventType, categoryId ):
 	
 	has_results = wave.has_results()
 	def get_results( c = None ):
-		return list( wave.get_results(c) )
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	
 	if wave.rank_categories_together:
 		results = get_results()
@@ -230,6 +230,35 @@ def EventAnimation( request, eventId, eventType, categoryId ):
 	
 	return render( request, 'hub_results_animation.html', locals() )
 
+def EventLapTimes( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	time_stamp = timezone.datetime.now()
+	
+	return render( request, 'hub_results_lap_times.html', locals() )
+
 def EventLapChart( request, eventId, eventType, categoryId ):
 	eventType = int(eventType)
 	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
@@ -238,7 +267,7 @@ def EventLapChart( request, eventId, eventType, categoryId ):
 	
 	has_results = wave.has_results()
 	def get_results( c = None ):
-		return list( wave.get_results(c) )
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	
 	if wave.rank_categories_together:
 		results = get_results()
@@ -265,7 +294,7 @@ def EventGapChart( request, eventId, eventType, categoryId ):
 	
 	has_results = wave.has_results()
 	def get_results( c = None ):
-		return list( wave.get_results(c) )
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	
 	if wave.rank_categories_together:
 		results = get_results()
@@ -292,7 +321,7 @@ def EventRaceChart( request, eventId, eventType, categoryId ):
 	
 	has_results = wave.has_results()
 	def get_results( c = None ):
-		return list( wave.get_results(c) )
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	
 	if wave.rank_categories_together:
 		results = get_results()
@@ -322,7 +351,7 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	
 	if has_results:
 		def get_results( c = None ):
-			return list( wave.get_results(c) )
+			return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	else:
 		def get_results( c = None ):
 			return list( wave.get_prereg_results(c) )
@@ -353,9 +382,11 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 		leader_info = payload['data'][payload['catDetails'][0]['pos'][0]]
 		ave_speed = leader_info['speed']
 		race_time = format_time( leader_info['raceTimes'][-1] - leader_info['raceTimes'][0] )
+		has_multiple_laps = payload['has_multiple_laps']
 	except Exception as e:
 		ave_speed = None
 		race_time = None
+		has_multiple_laps = False
 	
 	return render( request, 'hub_results_list.html', locals() )
 
@@ -367,7 +398,13 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	
 	has_results = custom_category.has_results()
 	
-	results = custom_category.get_results() if has_results else custom_category.get_prereg_results()
+	if has_results:
+		def get_results( c = None ):
+			return sorted( custom_category.get_results(c), key=operator.methodcaller('sort_key') )
+	else:
+		def get_results( c = None ):
+			return list( custom_category.get_prereg_results(c) )
+	
 	num_nationalities = len(set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code))
 	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
 	time_stamp = timezone.datetime.now()
@@ -379,6 +416,7 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	show_category = True
 
 	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
+	has_multiple_laps = payload['has_multiple_laps']
 
 	return render( request, 'hub_results_list.html', locals() )
 
@@ -401,7 +439,7 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 	
 	if has_results:
 		def get_results( c = None ):
-			return list( wave.get_results(c) )
+			return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	else:
 		def get_results( c = None ):
 			return list( wave.get_prereg_results(c) )
