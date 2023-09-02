@@ -92,8 +92,8 @@ Array.prototype.last = function() {
 function GetName( bib ) {
 	const d = data[bib];
 	if( !d )	return '';
-	if( d.FirstName && d.LastName )	return d.FirstName + ' ' + d.LastName;
-	if( d.LastName ) return d.LastName;
+	if( d.FirstName && d.LastName )	return d.LastName.toUpperCase() + ', ' + d.FirstName;
+	if( d.LastName ) return d.LastName.toUpperCase();
 	return d.FirstName;
 }
 
