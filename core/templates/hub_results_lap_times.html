@@ -1,0 +1,409 @@
+{% load date_fmt %}
+{% load i18n %}
+{% load static %}
+{% load format_time_no_decimals %}
+{% load format_field %}
+{% load getattr %}
+{% load formatattr %}
+{% load isnumber %}
+{% load to_js %}
+
+<html>
+<head>
+<title>{% if page_title %}{{page_title}}{% else %}RaceDB by Edward Sitarski{% endif %}</title>
+{% include "meta.html" %}
+<link rel="icon" href="{% static "images/RaceDB_32x32.png" %}">
+
+<style>
+.logo-image {
+	max-height: 70px;
+}
+
+body {
+	font-family: sans-serif;
+}
+
+.styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.styled-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+    padding: 10px 8px;
+}
+
+.fastest-lap {
+	background-color: #f1807e;
+}
+
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:hover td {
+	background-color:#BCD2E5 !important;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+.text-end {
+	text-align: right;
+}
+
+.text-center {
+	text-align: center;
+}
+
+@media print
+{    
+    .no-print, .no-print *
+    {
+        display: none !important;
+    }
+}
+
+</style>
+
+<script>
+
+"use strict";
+
+Array.prototype.last = function() {
+    return this[this.length - 1];
+}
+
+function GetName( bib ) {
+	const d = data[bib];
+	if( !d )	return '';
+	if( d.FirstName && d.LastName )	return d.FirstName + ' ' + d.LastName;
+	if( d.LastName ) return d.LastName;
+	return d.FirstName;
+}
+
+function GetBibName( bib ) {
+	if( hub_mode )
+		return bib + ': ' + '<a href="/RaceDB/Hub/LicenseHolderResults/{{license_holder.id}}/">' + GetName(bib) + '</a>';
+	else
+		return bib + ': ' + GetName(bib);
+}
+
+function GetDateFromSecs( t ) {
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = ~~(secs % 60);
+	var ms = (t - secs) * 1000.0;
+	return new Date( 0, 0, 0, h, m, s, ms );
+}
+
+function FormatTimeHMS( t, highPrecision ) {
+	var tStr = '';
+	if( t < 0 ) {
+		tStr = '-';
+		t = -t;
+	}
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
+	if( h > 0 )
+		tStr += h + 'h' + (m<10?'0':'') + m + 'm' + (s<10?'0':'') + s + 's';
+	else if( m > 0 )
+		tStr += m + 'm' + (s<10?'0':'') + s + 's';
+	else
+		tStr += s + 's';
+	return tStr;
+}
+
+function FormatTime( t, highPrecision ) {
+	var tStr = '';
+	if( t < 0 ) {
+		tStr = '-';
+		t = -t;
+	}
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
+	if( h > 0 )
+		tStr += h + (m < 10 ? ':0' : ':') + m + (s < 10 ? ':0' : ':') + s;
+	else
+		tStr += m + (s < 10 ? ':0' : ':') + s;
+	return tStr;
+}
+
+function FormatTimeGap( t, highPrecision ) {
+	var tStr = '';
+	if( t < 0 ) {
+		tStr = '-';
+		t = -t;
+	}
+	var secs = ~~t;
+	var h = ~~(secs / (60*60));
+	var m = (~~(secs / 60) % 60);
+	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
+	if( h > 0 )
+		tStr += h + (m < 10 ? 'h0' : 'h') + m + (s < 10 ? "'0" : "'") + s;
+	else
+		tStr += m + (s < 10 ? "'0" : "'") + s;
+	tStr += '"';
+	if( tStr == "-0'00\"" )
+		tStr = "0'00\"";
+	return tStr;
+}
+
+function appendType( parent, type ) {
+	let child = document.createElement( type );
+	parent.appendChild( child );
+	return child;
+}
+
+function addText( obj, text ) {
+	let t = document.createTextNode( text );
+	obj.appendChild( t );
+	return obj;
+}
+
+function updateLapTimes() {
+	let table = document.getElementById('idTimesTable');
+	let displayTitle = document.getElementById('idDisplayTitle');
+	const lapTimesShow = document.getElementById('idLapTimes').checked;
+	const raceTimesShow = document.getElementById('idRaceTimes').checked;
+	const gapTimesShow = document.getElementById('idGapTimes').checked;
+	const gapPercentShow = document.getElementById('idGapPercent').checked;
+	const highPrecision = document.getElementById('idHighPrecision').checked;
+	
+	table.innerHTML = '';
+	displayTitle.innerHTML = '';
+	
+	// Show results for this category.
+	let resultsData = [];
+	let catDetail = catDetails[0];
+	let catName = catDetail.name;
+	let lapsMax = 0;
+	let winningTime = 0;
+	let winningRaceTimes = [];
+	let winningBib = 0;
+	
+	let fastestLapBib = 0;
+	let fastestLap = 0;
+	let fastestLapTime = Infinity;
+		
+	for( let p = 0; p < catDetail.pos.length; ++p ) {
+		const num = catDetail.pos[p];
+		const d = data[num];
+		
+		let raceTimes = d['raceTimes'].slice(0);	// Make a copy so we don't disturb the original.
+		
+		// Remove the race start time if this is not a Wave category.
+		if( catDetail.catType != 'Start Wave' && raceTimes.length > 0 ) {
+			for( let j = 1; j < raceTimes.length; ++j )
+				raceTimes[j] -= raceTimes[0];
+			raceTimes[0] = 0;
+		}
+		if( raceTimes.length > lapsMax ) {
+			lapsMax = raceTimes.length;
+			if( d['status'] === 'Finisher' ) {
+				winningTime = raceTimes.last();
+				winningRaceTimes = raceTimes;
+				winningBib = num;
+			}
+		}
+		
+		for( let lap = 1; lap < raceTimes.length; ++lap ) {
+			const lapTime = raceTimes[lap] - raceTimes[lap-1];
+			if( lapTime < fastestLapTime ) {
+				fastestLapTime = lapTime;
+				fastestLapBib = num;
+				fastestLap = lap;
+			}
+		}
+		
+		resultsData.push( [num, raceTimes] );
+	}
+	
+	if( winningBib === 0 ) {
+		return;
+	}
+	
+	table.classList.add('styled-table');
+	
+	if( lapTimesShow )
+		displayTitle.innerHTML = "{% trans "Lap Times" %}";
+	else if( raceTimesShow )
+		displayTitle.innerHTML = "{% trans "Race Times" %}";
+	else if( gapTimesShow )
+		displayTitle.innerHTML = "{% trans "Gap Times" %}";
+	else if( gapPercentShow )
+		displayTitle.innerHTML = "{% trans "Gap %" %}";
+	
+	let categoryCount = 1;
+	
+	// Add headers
+	let headers = ['Rank', 'Bib', 'Name', 'Time', 'Gap'];
+	const iHeaderLabels = headers.length;
+	for( let lap = 1; lap < lapsMax; ++lap ) {
+		headers.push( 'Lap ' + lap );
+	}
+	let thead = appendType( table, 'thead' );
+	let tr = appendType( thead, 'tr' );
+	for( let i = 0; i < headers.length; ++i ) {
+		const h = headers[i];
+		
+		let th = appendType( tr, 'th' );
+		if( i < iHeaderLabels ) {
+			if( h  !== 'Name' )
+				th.classList.add('text-end');
+		}
+		else
+			th.classList.add('text-center');
+		
+		addText( th, h );
+	}
+	
+	// Add body and lap times.
+	let tbody = appendType( table, 'tbody');
+	for( let i = 0; i < resultsData.length; ++i ) {
+		let tr = appendType( tbody, 'tr' );
+		
+		const num = resultsData[i][0];
+		const raceTimes = resultsData[i][1];
+		const d = data[num];
+		
+		let td, text;
+		
+		// Rank
+		td = appendType( tr, 'td' );
+		addText( td, d['status'] == 'Finisher' ? (i + 1) + '.' : d['status'] );
+		td.classList.add('text-end');
+
+		// Bib
+		td = appendType( tr, 'td' );
+		addText( td, num );
+		td.classList.add('text-end');
+		
+		// Name
+		td = appendType( tr, 'td' );
+		addText( td, GetName(num) );
+		
+		// Time
+		td = appendType( tr, 'td' );
+		addText( td, raceTimes.length >= 2 ? FormatTime(raceTimes.last(), highPrecision) : '' );
+		td.classList.add('text-end');
+		
+		// Gap
+		let gap = ''
+		td = appendType( tr, 'td' );
+		if( i === 0 || d['status'] != 'Finisher' )
+			gap = '';
+		else if( raceTimes.length === lapsMax )
+			gap = FormatTimeGap( raceTimes.last() - winningTime, highPrecision );
+		else
+			gap = raceTimes.length - lapsMax;
+		addText( td, gap );
+		td.classList.add('text-end');
+		
+		let get_t = null;
+		if( lapTimesShow )
+			get_t = function( lap ) { return FormatTime(raceTimes[lap] - raceTimes[lap-1], highPrecision); }
+		else if ( raceTimesShow )
+			get_t = function( lap ) { return FormatTime(raceTimes[lap], highPrecision); }
+		else if( gapTimesShow ) {
+			get_t = function( lap ) {
+				if( num != winningBib && lap < winningRaceTimes.length )
+					return FormatTimeGap(raceTimes[lap] - winningRaceTimes[lap], highPrecision);
+				return '';
+			}
+		}
+		else if( gapPercentShow ) {
+			get_t = function( lap ) {
+				if( lap < winningRaceTimes.length ) {
+					const winningLapTime = winningRaceTimes[lap] - winningRaceTimes[lap-1];
+					const lapTime = raceTimes[lap] - raceTimes[lap-1];
+					const p = 100.0 * lapTime / (winningLapTime ? winningLapTime : 1.0) - 100.0;
+					return p < 0 ? p.toFixed( 2 ) : p > 0 ? '+' + p.toFixed( 2 ) : p.toFixed( 2 )
+				}
+				return '';
+			}
+		}
+		
+		// Lap Times
+		for( let lap = 1; lap < lapsMax; ++lap ) {
+			td = appendType( tr, 'td' );
+			if( lap < raceTimes.length ) {
+				addText( td, get_t(lap) );
+			}
+			td.classList.add('text-end');
+			if( lap === fastestLap && num === fastestLapBib )
+				td.classList.add('fastest-lap');
+		}
+	}
+}
+
+function onBodyLoad() {
+	let payload = {{payload|to_js}};
+	for( let [k,v] of Object.entries(payload) )
+		window[k] = v;
+	updateLapTimes();
+}
+
+</script>
+
+</head>
+<body onload="onBodyLoad();">
+	<h1>
+		{% if event.competition.image %}
+			<a
+				{% if event.competition.image.url %}
+					href="{{event.competition.image.url}}" target="_blank"
+				{% else %}
+					href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/"
+				{% endif %}
+			>
+				<img src="{{event.competition.image.image.url}}" class="logo-image" />
+			</a>
+			<br/>
+		{% endif %}
+		<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.title}}</a>: {{event.name}}</strong>
+		- <span id="idDisplayTitle"></span><br/>
+		<span style="font-size: 70%">
+			<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}
+			&nbsp;&nbsp;<span style="font-size:75%">{% trans "Generated" %}: {{time_stamp|date_hhmmss}}</span>
+		</span>
+	</h1>
+	<fieldset class="no-print">
+		<legend>{% trans "Display Options" %}</legend>
+		<div>
+			<input type="radio" id="idLapTimes" name="timeDisplayOptions" checked="checked" onchange="updateLapTimes()">
+			<label for="idLapTimes">{% trans "Lap Times" %}</label>&nbsp;
+			<input type="radio" id="idRaceTimes" name="timeDisplayOptions" onchange="updateLapTimes()">
+			<label for="idRaceTimes">{% trans "Race Times" %}</label>&nbsp;
+			<input type="radio" id="idGapTimes" name="timeDisplayOptions" onchange="updateLapTimes()">
+			<label for="idGapTimes">{% trans "Gap Times" %}</label>&nbsp;
+			<input type="radio" id="idGapPercent" name="timeDisplayOptions" onchange="updateLapTimes()">
+			<label for="idGapPercent">{% trans "Gap %" %}</label>&nbsp;
+			&nbsp;&nbsp;&nbsp;&nbsp;
+			<input type="checkbox" id="idHighPrecision" onchange="updateLapTimes()">
+			<label for="idHighPrecision">{% trans "High Precision" %}</label>
+		</div>
+	</fieldset>
+	<table id="idTimesTable"></table>
+</body>
+</html>

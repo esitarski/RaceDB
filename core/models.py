@@ -2973,6 +2973,13 @@ class Result(models.Model):
 	STATUS_CHOICES = STATUS_CODE_NAMES
 	status = models.PositiveSmallIntegerField( default=0, choices=STATUS_CHOICES, verbose_name=_('Status') )
 	
+	def sort_key( self ):
+		# Fix sort order for DQ and NP.
+		status = self.status
+		if status in (Result.cDQ, Result.cNP):
+			status += 1000
+		return status, self.wave_rank
+	
 	category_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Category Rank') )
 	category_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Category Starters') )
 	category_gap = models.CharField( max_length=24, blank=True, default='' )

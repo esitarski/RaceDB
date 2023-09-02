@@ -1560,6 +1560,9 @@ table.participant_table tr th {
 <ul class="nav nav-tabs hidden-print">
 	<li class="active"><a data-toggle="tab" href="#sectionResults">{% if has_results %}{% trans "Results" %}{% else %}{% trans "Registered" %}{% endif %}</a></li>
 {% if has_results %}
+	{% if has_multiple_laps %}
+		<li><a href="./EventLapTimes/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Times" %}</a></li>
+	{% endif %}
 	{% if not is_timetrial %}
 		<li><a href="./EventLapChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Lap Chart" %}</a></li>
 		<li><a href="./EventGapChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Gap Chart" %}</a></li>
