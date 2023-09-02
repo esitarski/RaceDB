@@ -338,7 +338,7 @@ function updateLapTimes() {
 					const winningTime = winningRaceTimes[lap];
 					const time = raceTimes[lap];
 					const p = 100.0 * time / (winningTime ? winningTime : 1.0) - 100.0;
-					return p < 0.01 ? p.toFixed( 2 ) : p >= 0.01 ? '+' + p.toFixed( 2 ) : p.toFixed( 2 )
+					return p < 0.01 ? p.toFixed( 2 ) : p >= 0.01 ? '+' + p.toFixed( 2 ) : (0.0).toFixed( 2 )
 				}
 				return '';
 			}
