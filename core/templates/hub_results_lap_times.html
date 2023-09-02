@@ -334,11 +334,11 @@ function updateLapTimes() {
 		}
 		else if( gapPercentShow ) {
 			get_t = function( lap ) {
-				if( lap < winningRaceTimes.length ) {
-					const winningLapTime = winningRaceTimes[lap] - winningRaceTimes[lap-1];
-					const lapTime = raceTimes[lap] - raceTimes[lap-1];
-					const p = 100.0 * lapTime / (winningLapTime ? winningLapTime : 1.0) - 100.0;
-					return p < 0 ? p.toFixed( 2 ) : p > 0 ? '+' + p.toFixed( 2 ) : p.toFixed( 2 )
+				if( num != winningBib && lap < winningRaceTimes.length ) {
+					const winningTime = winningRaceTimes[lap];
+					const time = raceTimes[lap];
+					const p = 100.0 * time / (winningTime ? winningTime : 1.0) - 100.0;
+					return p < 0 ? p.toFixed( 2 ) : p >= 0.01 ? '+' + p.toFixed( 2 ) : p.toFixed( 2 )
 				}
 				return '';
 			}
