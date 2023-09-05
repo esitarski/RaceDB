@@ -21,6 +21,7 @@
 
 body {
 	font-family: sans-serif;
+	font-size: 15px;
 }
 
 .styled-table {
@@ -43,8 +44,22 @@ body {
     padding: 10px 8px;
 }
 
+.fastest-overall {
+	background-image: linear-gradient(
+		#00EE00, #00FF00 25%, #00EE00
+	);
+}
+
 .fastest-lap {
-	background-color: #f1807e;
+	background-image: linear-gradient(
+		#FF8840, #FFCC40 25%, #FF8840
+	);
+}
+
+.slowest-lap {
+	background-image: linear-gradient(
+		#4496F7, #9CC7FB 25%, #4496F7
+	);
 }
 
 .styled-table tbody tr {
@@ -105,24 +120,24 @@ function GetBibName( bib ) {
 }
 
 function GetDateFromSecs( t ) {
-	var secs = ~~t;
-	var h = ~~(secs / (60*60));
-	var m = (~~(secs / 60) % 60);
-	var s = ~~(secs % 60);
-	var ms = (t - secs) * 1000.0;
+	let secs = ~~t;
+	let h = ~~(secs / (60*60));
+	let m = (~~(secs / 60) % 60);
+	let s = ~~(secs % 60);
+	let ms = (t - secs) * 1000.0;
 	return new Date( 0, 0, 0, h, m, s, ms );
 }
 
 function FormatTimeHMS( t, highPrecision ) {
-	var tStr = '';
+	let tStr = '';
 	if( t < 0 ) {
 		tStr = '-';
 		t = -t;
 	}
-	var secs = ~~t;
-	var h = ~~(secs / (60*60));
-	var m = (~~(secs / 60) % 60);
-	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
+	let secs = ~~t;
+	let h = ~~(secs / (60*60));
+	let m = (~~(secs / 60) % 60);
+	let s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
 	if( h > 0 )
 		tStr += h + 'h' + (m<10?'0':'') + m + 'm' + (s<10?'0':'') + s + 's';
 	else if( m > 0 )
@@ -218,21 +233,25 @@ function updateLapTimes() {
 				raceTimes[j] -= raceTimes[0];
 			raceTimes[0] = 0;
 		}
-		if( raceTimes.length > lapsMax ) {
-			lapsMax = raceTimes.length;
-			if( d['status'] === 'Finisher' ) {
-				winningTime = raceTimes.last();
-				winningRaceTimes = raceTimes;
-				winningBib = num;
-			}
-		}
 		
-		for( let lap = 1; lap < raceTimes.length; ++lap ) {
-			const lapTime = raceTimes[lap] - raceTimes[lap-1];
-			if( lapTime < fastestLapTime ) {
-				fastestLapTime = lapTime;
-				fastestLapBib = num;
-				fastestLap = lap;
+		// Get winning time and fastest lap if a finisher.
+		if( d['status'] === 'Finisher' )  {
+			if( raceTimes.length > lapsMax ) {
+				lapsMax = raceTimes.length;
+				if( d['status'] === 'Finisher' ) {
+					winningTime = raceTimes.last();
+					winningRaceTimes = raceTimes;
+					winningBib = num;
+				}
+			}
+		
+			for( let lap = 1; lap < raceTimes.length; ++lap ) {
+				const lapTime = raceTimes[lap] - raceTimes[lap-1];
+				if( lapTime < fastestLapTime ) {
+					fastestLapTime = lapTime;
+					fastestLapBib = num;
+					fastestLap = lap;
+				}
 			}
 		}
 		
@@ -344,15 +363,34 @@ function updateLapTimes() {
 			}
 		}
 		
-		// Lap Times
+		// Get Lap Stats
+		let lapTimeMax = 0, iLapTimeMax = -1;
+		let lapTimeMin = Infinity, iLapTimeMin = -1;
+		for( let lap = 1; lap < raceTimes.length; ++lap ) {
+			const lapTime = raceTimes[lap] - raceTimes[lap-1];
+			if( lapTime > lapTimeMax ) {
+				lapTimeMax = lapTime;
+				iLapTimeMax = lap;
+			}
+			if( lapTime < lapTimeMin ) {
+				lapTimeMin = lapTime;
+				iLapTimeMin = lap;
+			}			
+		}
+		
+		// Display Times
 		for( let lap = 1; lap < lapsMax; ++lap ) {
 			td = appendType( tr, 'td' );
 			if( lap < raceTimes.length ) {
 				addText( td, get_t(lap) );
+				td.classList.add('text-end');
+				if( lap === fastestLap && num === fastestLapBib )
+					td.classList.add('fastest-overall');
+				else if( lap === iLapTimeMax )
+					td.classList.add('slowest-lap');
+				else if( lap === iLapTimeMin )
+					td.classList.add('fastest-lap');
 			}
-			td.classList.add('text-end');
-			if( lap === fastestLap && num === fastestLapBib )
-				td.classList.add('fastest-lap');
 		}
 	}
 }
