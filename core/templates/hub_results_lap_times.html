@@ -233,21 +233,25 @@ function updateLapTimes() {
 				raceTimes[j] -= raceTimes[0];
 			raceTimes[0] = 0;
 		}
-		if( raceTimes.length > lapsMax ) {
-			lapsMax = raceTimes.length;
-			if( d['status'] === 'Finisher' ) {
-				winningTime = raceTimes.last();
-				winningRaceTimes = raceTimes;
-				winningBib = num;
-			}
-		}
 		
-		for( let lap = 1; lap < raceTimes.length; ++lap ) {
-			const lapTime = raceTimes[lap] - raceTimes[lap-1];
-			if( lapTime < fastestLapTime ) {
-				fastestLapTime = lapTime;
-				fastestLapBib = num;
-				fastestLap = lap;
+		// Get winning time and fastest lap if a finisher.
+		if( d['status'] === 'Finisher' )  {
+			if( raceTimes.length > lapsMax ) {
+				lapsMax = raceTimes.length;
+				if( d['status'] === 'Finisher' ) {
+					winningTime = raceTimes.last();
+					winningRaceTimes = raceTimes;
+					winningBib = num;
+				}
+			}
+		
+			for( let lap = 1; lap < raceTimes.length; ++lap ) {
+				const lapTime = raceTimes[lap] - raceTimes[lap-1];
+				if( lapTime < fastestLapTime ) {
+					fastestLapTime = lapTime;
+					fastestLapBib = num;
+					fastestLap = lap;
+				}
 			}
 		}
 		
@@ -366,15 +370,15 @@ function updateLapTimes() {
 			const lapTime = raceTimes[lap] - raceTimes[lap-1];
 			if( lapTime > lapTimeMax ) {
 				lapTimeMax = lapTime;
-				iLapTimeMax = lap
+				iLapTimeMax = lap;
 			}
 			if( lapTime < lapTimeMin ) {
 				lapTimeMin = lapTime;
-				iLapTimeMin = lap
+				iLapTimeMin = lap;
 			}			
 		}
 		
-		// Lap Times
+		// Display Times
 		for( let lap = 1; lap < lapsMax; ++lap ) {
 			td = appendType( tr, 'td' );
 			if( lap < raceTimes.length ) {
