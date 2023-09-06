@@ -587,7 +587,7 @@ def SeriesCategoryGroupEdit( request, categoryGroupId ):
 			for pk in categories:
 				category_group.categorygroupelement_set.create( category=Category.objects.get(pk=pk) )
 			
-			series.normalize()
+			series.validate()
 			
 			if 'ok-submit' in request.POST:
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))
