@@ -399,12 +399,13 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	has_results = custom_category.has_results()
 	
 	if has_results:
-		def get_results( c = None ):
-			return sorted( custom_category.get_results(c), key=operator.methodcaller('sort_key') )
+		def get_results():
+			return sorted( custom_category.get_results(), key=operator.methodcaller('sort_key') )
 	else:
-		def get_results( c = None ):
-			return list( custom_category.get_prereg_results(c) )
+		def get_results():
+			return list( custom_category.get_prereg_results() )
 	
+	results = get_results()
 	num_nationalities = len(set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code))
 	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
 	time_stamp = timezone.datetime.now()
