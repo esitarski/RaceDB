@@ -20,7 +20,7 @@
 }
 
 body {
-	font-family: sans-serif;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 15px;
 }
 
@@ -41,6 +41,7 @@ body {
 
 .styled-table th,
 .styled-table td {
+	cursor: pointer;
     padding: 10px 8px;
 }
 
@@ -84,6 +85,10 @@ body {
 
 .text-center {
 	text-align: center;
+}
+
+.hover-column {
+	background-color:#BCD2E5;
 }
 
 @media print
@@ -196,6 +201,23 @@ function addText( obj, text ) {
 	return obj;
 }
 
+function hoverColumn( table, iColumn ) {
+	// If iColumn is negative we are leaving the cell.
+	if( iColumn >= 0 ) {
+		for( let row of table.rows ) {
+			if( row.cells[iColumn].tagName == 'TD' )
+				row.cells[iColumn].classList.add( 'hover-column' );
+		}
+	}
+	else {
+		iColumn = -iColumn;
+		for( let row of table.rows ) {
+			if( row.cells[iColumn].tagName == 'TD' )
+				row.cells[iColumn].classList.remove( 'hover-column' );
+		}
+	}
+}
+
 function updateLapTimes() {
 	let table = document.getElementById('idTimesTable');
 	let displayTitle = document.getElementById('idDisplayTitle');
@@ -291,8 +313,11 @@ function updateLapTimes() {
 			if( h  !== 'Name' )
 				th.classList.add('text-end');
 		}
-		else
+		else {
 			th.classList.add('text-center');
+			th.addEventListener( 'mouseenter', function() { hoverColumn(table, i); } );
+			th.addEventListener( 'mouseleave', function() { hoverColumn(table, -i); } );
+		}
 		
 		addText( th, h );
 	}
@@ -391,6 +416,8 @@ function updateLapTimes() {
 				else if( lap === iLapTimeMin )
 					td.classList.add('fastest-lap');
 			}
+			td.addEventListener( 'mouseenter', function() { hoverColumn(table, iHeaderLabels+lap-1); } );
+			td.addEventListener( 'mouseleave', function() { hoverColumn(table, -(iHeaderLabels+lap-1)); } );
 		}
 	}
 }
