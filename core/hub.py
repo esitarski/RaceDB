@@ -377,17 +377,17 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	
 	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
 	
+	ave_speed = None
+	race_time = None
 	try:
 		# Try to get place from the payload.
 		leader_info = payload['data'][payload['catDetails'][0]['pos'][0]]
-		ave_speed = leader_info['speed']
+		ave_speed = leader_info.get('speed', None)
 		race_time = format_time( leader_info['raceTimes'][-1] - leader_info['raceTimes'][0] )
-		has_multiple_laps = payload['has_multiple_laps']
 	except Exception as e:
-		ave_speed = None
-		race_time = None
-		has_multiple_laps = False
+		pass
 	
+	has_multiple_laps = payload.get('has_multiple_laps', False)
 	return render( request, 'hub_results_list.html', locals() )
 
 def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
