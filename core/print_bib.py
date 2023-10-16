@@ -165,7 +165,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 	
 	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
-	pdf.add_font('Arrows', style='', fname=get_font_file('Arrrows-Regular.ttf'))
+	pdf.add_font('Arrows', style='', fname=get_font_file('Arrows-Regular.ttf'))
 		
 	margin = min(page_height, page_width) / 18.0
 	sep = margin / 2.5
