@@ -164,8 +164,8 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	pdf.set_creator( getpass.getuser() )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 	
-	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
-	pdf.add_font('Arrows', style='', fname=get_font_file('Arrrows-Regular.ttf'), uni=True)
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
+	pdf.add_font('Arrows', style='', fname=get_font_file('Arrrows-Regular.ttf'))
 		
 	margin = min(page_height, page_width) / 18.0
 	sep = margin / 2.5
@@ -238,7 +238,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	pdf.set_subject( 'Bib number.' )
 	pdf.set_creator( getpass.getuser() )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
-	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
 		
 	margin = min(page_height, page_width) / 17.5
 	sep = margin / 2.5
@@ -311,7 +311,7 @@ inch = 72.0
 cm = inch / 2.54 * 1.04
 
 def uci_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
-	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
 	pdf.set_font( 'din1451alt', '', 16 )
 
 	w_page = 8.5*inch
@@ -394,11 +394,11 @@ def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
 	
 	if bib > 9999:
 		# Regular
-		pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'), uni=True)
+		pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'))
 		pdf.set_font('din1451alt', '', 16 )
 	else:
 		# Bold
-		pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+		pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'))
 		pdf.set_font('din1451alt-g', '', 16 )
 
 	#pdf.rect( x_text, y_text, w_text, h_text )
@@ -456,11 +456,11 @@ def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_nam
 		
 		if bib > 9999:
 			# Regular
-			pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'), uni=True)
+			pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'))
 			pdf.set_font('din1451alt', '', 16 )
 		else:
 			# Bold
-			pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+			pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'))
 			pdf.set_font('din1451alt-g', '', 16 )
 
 		#pdf.rect( x_text, y_text, w_text, h_text )
