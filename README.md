@@ -15,7 +15,7 @@ If you are a seasoned RaceDB enthusist or a seasoned python programmer, feel fre
 
 ## Why Use the Docker Container?
 
-Docker is a lightweight virtual machine environment. Unlike VMware, Docker does not virtual the entire machine, but only parts of the operating system needed to spin up a container. As such, it is more effiencent. Further, we have packaged all the software require to run RaceDB inside the container. This is no need to install Python, PostgreSQL, or do any database configuraion or to update Python, PostgreSQL, etc. as you might normally do. This container takes care of that for you. By default, the we also spin up PostgreSQL in another container without any work required from you. We use PostgreSQL for the database for best performance. This is all done for you when you start the container set for the first time.
+Docker is a lightweight virtual machine environment. Unlike VMware, Docker does not virtual the entire machine, but only parts of the operating system needed to spin up a container. As such, it is more efficient. Further, we have packaged all the software require to run RaceDB inside the container. This is no need to install Python, PostgreSQL, or do any database configuraion or to update Python, PostgreSQL, etc. as you might normally do. This container takes care of that for you. By default, we also spin up PostgreSQL in another container without any work required from you. We use PostgreSQL for the database for best performance. This is all done for you when you start the container set for the first time.
 
 Upgrades are a matter of pulling the latest container image. This is a one command affair. Once the latest container is pulled, you just start it as usual. Any updates are taken care of for you. See Updating below.
 
@@ -33,7 +33,7 @@ Additionally, but changing the mapping, you can set the port to anything you wan
 
 ## Running the Container (Windows)
 
-The RaceDB container comes preconfigured for the most used options. However, if you use a RFID reader at registration to "burn" tags, you will want to add the IP number of your reader to the racedb.env file using the setup tool. The setup tool is a Windows UI application that allows the user to edit settings, install, run, and update the container. There is no need to use the commnad line.
+The RaceDB container comes preconfigured for the most used options. However, if you use a RFID reader at registration to "burn" tags, you will want to add the IP number of your reader to the racedb.env file using the setup tool. The setup tool is a Windows UI application that allows the user to edit settings, install, run, and update the container. There is no need to use the command line.
 
 Steps:
 
