@@ -498,7 +498,7 @@
 			{% endif %}
 		{% endif %}
 		{% if tag_ok %}
-			<button class="btn btn-primary hidden-print" onclick="window.print();">{% trans "Voucher" %}</button>
+			<button class="btn btn-primary hidden-print" onclick="window.print();return false;">{% trans "Voucher" %}</button>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 			<a class="btn btn-warning hidden-print" href="./ParticipantRemove/{{p.id}}/">{% trans "Delete" %}</a>
 		{% endif %}
