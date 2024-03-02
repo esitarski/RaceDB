@@ -1,15 +1,6 @@
-import uuid
-from subprocess import Popen, PIPE
-import traceback
-import operator
-
 from django.utils.translation import gettext_lazy as _
-from django.utils.safestring import mark_safe
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
 from .views_common import *
 
-#-----------------------------------------------------------------------
 @autostrip
 class ImageForm( ModelForm ):
 	class Meta:
@@ -83,9 +74,11 @@ def ImageEdit( request, imageId ):
 @access_validation()
 def ImageDelete( request, imageId, confirmed=0 ):
 	image = get_object_or_404( Image, pk=imageId )
+	
 	if int(confirmed):
 		image.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
+	
 	message = format_lazy( '{}: {}, {}', _('Delete'), image.title, image.description )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'

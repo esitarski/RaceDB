@@ -166,6 +166,7 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	
 	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
 	pdf.add_font('Arrows', style='', fname=get_font_file('Arrrows-Regular.ttf'))	# Yes, 3 r's.
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 		
 	margin = min(page_height, page_width) / 18.0
 	sep = margin / 2.5
@@ -239,6 +240,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 	pdf.set_creator( getpass.getuser() )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 		
 	margin = min(page_height, page_width) / 17.5
 	sep = margin / 2.5
@@ -386,6 +388,8 @@ def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
 
 	x_header_margin = 0.5*cm
 	pdf.rect( x, y, w_bib, h_name_header )
+	
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 	pdf.set_font( 'Helvetica', 'B', 16 )
 	pdf.fit_text_in_rectangle( x+x_header_margin, y, w_bib-2*x_header_margin, h_name_header, name )
 
@@ -443,6 +447,8 @@ def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_nam
 	x_text = x + x_text_margin
 	
 	pdf.add_page()
+	
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 
 	for p in range(0, 2):
 		y_text = y + h_name_header + y_text_margin
@@ -519,6 +525,8 @@ def print_id_label( participant ):
 	field = Rect( header.x, header.bottom + sep, width, footer.top - header.bottom - sep*2 )
 
 	leftArrow, rightArrow = chr(172), chr(174)
+	
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 	
 	font_name = 'Helvetica'
 	pdf.add_page()
