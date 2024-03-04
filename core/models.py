@@ -4679,9 +4679,9 @@ class EntryTT( models.Model ):
 		unique_together = (
 			('event', 'participant',),
 		)
-		index_together = (
-			('event', 'start_sequence',),
-		)
+		indexes = [
+			models.Index(fields=['event', 'start_sequence']),
+		]
 
 		verbose_name = _("Time Trial Entry")
 		verbose_name_plural = _("Time Trial Entry")
@@ -5230,11 +5230,11 @@ class ParticipantOption( models.Model ):
 		unique_together = (
 			('competition', 'participant','option_id'),
 		)
-		index_together = (
-			('competition', 'participant','option_id'),
-			('competition', 'participant'),
-			('competition', 'option_id'),
-		)
+		indexes = [
+			models.Index(fields=['competition', 'participant','option_id']),
+			models.Index(fields=['competition', 'participant']),
+			models.Index(fields=['competition', 'option_id']),
+		]
 		verbose_name = _("Participant Option")
 		verbose_name_plural = _("Participant Options")
 
