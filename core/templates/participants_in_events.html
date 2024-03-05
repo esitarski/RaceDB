@@ -22,7 +22,7 @@
 		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Category" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCI ID" %}</th>
+		<th class="text-nowrap">{% trans "UCI ID" %}</th>
 		{% for event in competition_events %}
 			<th class="text-center">{{event.name.split|join:"<br/>"}}</th>
 		{% endfor %}

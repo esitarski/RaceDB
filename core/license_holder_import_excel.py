@@ -1,10 +1,11 @@
 import re
+from io import BytesIO
 import sys
 import html
 import datetime
 import operator
 from collections import namedtuple, defaultdict
-from xlrd import open_workbook, xldate_as_tuple
+from openpyxl import load_workbook
 
 from django.db import transaction, IntegrityError
 from django.db.models import Q
@@ -16,25 +17,25 @@ from .FieldMap import standard_field_map, normalize
 from .get_id import get_id
 from .models import *
 
-class tag(object):
+class tag:
 	def __init__( self, stream, name, attr=None ):
 		self.stream = stream
 		self.name = name
 		self.attr = attr
 	def __enter__(self):
-		self.stream.write( u'<{}'.format(self.name) )
+		self.stream.write( '<{}'.format(self.name) )
 		if self.attr:
-			self.stream.write( u' {}'.format(u' '.join( u'{}="{}"'.format(k,v) for k,v in self.attr.items()) ) )
-		self.stream.write( u'>' )
+			self.stream.write( ' {}'.format(' '.join( '{}="{}"'.format(k,v) for k,v in self.attr.items()) ) )
+		self.stream.write( '>' )
 		return self
 	def __exit__(self, type, value, traceback):
-		self.stream.write( u'</{}>'.format(self.name) )
+		self.stream.write( '</{}>'.format(self.name) )
 
 def license_holder_msg_to_html( msg ):
 	s = StringIO()
 	icon = {
-		1:	u'<span class="is-warn">',
-		2:	u'<span class="is-err">',
+		1:	'<span class="is-warn">',
+		2:	'<span class="is-err">',
 	}
 	bg_class = {
 		1:	{'class':'bg-warning'},
@@ -47,38 +48,38 @@ def license_holder_msg_to_html( msg ):
 		with tag(s, 'thead'):
 			with tag(s, 'tr'):
 				with tag(s, 'th'):
-					s.write( u'' )
+					s.write( '' )
 				with tag(s, 'th'):
-					s.write( u'Row' )
+					s.write( 'Row' )
 				with tag(s, 'th'):
-					s.write( u'Message' )
+					s.write( 'Message' )
 		
 		def write_row( m, bg, icon_str ):
 			with tag(s, 'tr', bg):
 				with tag(s, 'td'):
 					s.write( icon_str )
-				row = u''
+				row = ''
 				if m.startswith('Row'):
 					match = re.search(r'^Row\s+(\d+):', m)
 					row = int(match.group(1))
 					m = m[len(match.group(0)):].strip()
 				with tag(s, 'td', {'class':'text-right'}):
-					s.write( u'{}'.format(row) )
+					s.write( '{}'.format(row) )
 				with tag(s, 'td'):
 					m = html.escape( m )
 					m = re.sub(r'Added:|Unchanged:|Changed:|Updated:|Warning:|Error:',
-						lambda match: u'<strong>{}</strong>'.format(match.group(0)), m, flags=re.I)
+						lambda match: '<strong>{}</strong>'.format(match.group(0)), m, flags=re.I)
 					s.write( m )
 		
 		# Write out all errors and warnings first.
 		for m in msg.split('\n'):
 			m = m.strip()
-			icon_str = u''
+			icon_str = ''
 			bg = None
 			for type in range(2, 0, -1):
-				if m.startswith(u'*'*type):
+				if m.startswith('*'*type):
 					m = m[type:].strip()
-					icon_str = icon.get(type, u'')
+					icon_str = icon.get(type, '')
 					bg = bg_class.get(type, None)
 					write_row( m, bg, icon_str )
 					break
@@ -86,12 +87,12 @@ def license_holder_msg_to_html( msg ):
 		# Then write out all informatoin.
 		for m in msg.split('\n'):
 			m = m.strip()
-			icon_str = u''
+			icon_str = ''
 			bg = None
 			for type in range(2, 0, -1):
-				if m.startswith(u'*'*type):
+				if m.startswith('*'*type):
 					m = m[type:].strip()
-					icon_str = icon.get(type, u'')
+					icon_str = icon.get(type, '')
 					bg = bg_class.get(type, None)
 					break
 			if bg is None:
@@ -136,14 +137,14 @@ def license_holder_import_excel(
 		license_holder_discipline_team.clear()
 
 	Info, Warning, Error = 0, 1, 2
-	prefix = {i:u'*'*i for i in range(3)}
+	prefix = {i:'*'*i for i in range(3)}
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def ms_write( s, flush=False, type=Info ):
-			s = prefix[type] + u'{}'.format(s)
+			s = prefix[type] + '{}'.format(s)
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def ms_write( s, flush=False, type=Info ):
-			s = prefix[type] + u'{}'.format(s)
+			s = prefix[type] + '{}'.format(s)
 			message_stream.write( s )
 			sys.stdout.write( removeDiacritic(s) )
 			if flush:
@@ -190,9 +191,9 @@ def license_holder_import_excel(
 	ifm = standard_field_map()
 	disciplines = list( Discipline.objects.all() )
 	for d in disciplines:
-		aliases = [u'{} Team'.format(d.name)]
-		if d.name == u'Cyclocross':
-			aliases.append( u'CX Team' )
+		aliases = ['{} Team'.format(d.name)]
+		if d.name == 'Cyclocross':
+			aliases.append( 'CX Team' )
 		ifm.set_aliases( d.name, aliases )
 	discipline_teams = []
 	
@@ -243,7 +244,7 @@ def license_holder_import_excel(
 		if not date_of_birth and uci_code:
 			try:
 				date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
-			except:
+			except Exception:
 				pass
 		
 		# If no date of birth, make one up based on the age.
@@ -260,16 +261,16 @@ def license_holder_import_excel(
 		for lc in license_code_aliases:
 			license_code = to_int_str(v(lc, None))
 			if license_code is not None:
-				license_code = license_code.upper().strip()
+				license_code = license_code.upper().strip().split(',')[0]
 				if license_code:
 					break
-		if not license_code or license_code == u'TEMP':
+		if not license_code or license_code == 'TEMP':
 			license_code = None
 		
-		last_name		= to_str(v('last_name',u''))
-		first_name		= to_str(v('first_name',u''))
+		last_name		= to_str(v('last_name',''))
+		first_name		= to_str(v('first_name',''))
 		
-		gender			= to_str(v('gender',u''))
+		gender			= to_str(v('gender',''))
 		gender			= gender_from_str(gender) if gender else None
 		
 		email			= to_str(v('email', None))
@@ -307,11 +308,10 @@ def license_holder_import_excel(
 			'gender':gender,
 			'date_of_birth':date_of_birth,
 			'year_only_dob':year_only_dob,
+			
 			'uci_code':uci_code,
-			'emergency_contact_name':emergency_contact_name,
-			'emergency_contact_phone':emergency_contact_phone,
-			'emergency_medical':emergency_medical,
 			'email':email,
+			'phone':phone,
 			'city':city,
 			'state_prov':state_prov,
 			'nationality':nationality,
@@ -324,6 +324,10 @@ def license_holder_import_excel(
 			'existing_bib':bib,
 			'note':note,
 			
+			'emergency_contact_name':emergency_contact_name,
+			'emergency_contact_phone':emergency_contact_phone,
+			'emergency_medical':emergency_medical,
+
 			'team_name':team_name,
 			'team_code':team_code,
 		}
@@ -346,16 +350,16 @@ def license_holder_import_excel(
 				team_args = {k:v for k,v in team_args.items() if v}
 				
 				if team_name not in team_lookup:
-					msg = u'Row {:>6}: Added team: {}\n'.format(
+					msg = 'Row {:>6}: Added team: {}\n'.format(
 						i,
-						u', '.join( u'{}'.format(v) for v in [team_name, team_code,] ),
+						', '.join( '{}'.format(v) for v in [team_name, team_code,] ),
 					)
 					ms_write( msg )
 				team = team_lookup[team_name]
 				if team and set_attributes_changed( team, team_args, False ):
-					msg = u'Row {:>6}: Updated team: {}\n'.format(
+					msg = 'Row {:>6}: Updated team: {}\n'.format(
 						i,
-						u', '.join( u'{}'.format(v) for v in [team_name, team_code,] ),
+						', '.join( '{}'.format(v) for v in [team_name, team_code,] ),
 					)
 					ms_write( msg )
 					truncate_char_fields(team).save()
@@ -370,9 +374,9 @@ def license_holder_import_excel(
 						d_team.append( (d, None) )
 						continue
 					if tn not in team_lookup:
-						msg = u'Row {:>6}: Added team: {}\n'.format(
+						msg = 'Row {:>6}: Added team: {}\n'.format(
 							i,
-							u', '.join( u'{}'.format(v) for v in [team_name, team_code,] ),
+							', '.join( '{}'.format(v) for v in [team_name, team_code,] ),
 						)
 						ms_write( msg )
 					d_team.append( (d, team_lookup[tn]) )
@@ -385,8 +389,8 @@ def license_holder_import_excel(
 				
 				year_only_dob = lhr.pop('year_only_dob', False)
 				
-				last_name = lhr.get('last_name',u'')
-				first_name = lhr.get('first_name',u'')
+				last_name = lhr.get('last_name','')
+				first_name = lhr.get('first_name','')
 				name = ' '.join( n for n in (first_name, last_name) if n )
 				
 				gender = lhr.get('gender', None)
@@ -412,7 +416,7 @@ def license_holder_import_excel(
 					if len(lhs) == 1:
 						license_holder = lhs[0]
 					elif len(lhs) > 1:
-						ms_write( u'Row {}: Warning:  Name="{}" found duplicate UCIID="{}"\n'.format(
+						ms_write( 'Row {}: Warning:  Name="{}" found duplicate UCI ID="{}"\n'.format(
 								i, name, uci_id,
 							), type=Warning
 						)
@@ -436,7 +440,7 @@ def license_holder_import_excel(
 						status = 'Added'
 					
 					else:
-						ms_write( u'Row {}: Warning:  Update not performed.  Found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+						ms_write( 'Row {}: Warning:  Update not performed.  Found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
 								i, name,
 							), type=Warning
 						)
@@ -473,14 +477,14 @@ def license_holder_import_excel(
 						status = 'Added'
 					
 					elif len(lhs) > 1:
-						ms_write( u'Row {}: Error:  found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+						ms_write( 'Row {}: Error:  found multiple LicenceHolders matching "Last, First, DOB, Gender" Name="{}"\n'.format(
 								i, name,
 							), type=Error,
 						)
 						continue
 					
 				if not license_holder:
-					ms_write( u'Row {}: Error:  Cannot find License Holder: Name="{}"\n'.format(
+					ms_write( 'Row {}: Error:  Cannot find License Holder: Name="{}"\n'.format(
 							i, name,
 						), type=Error,
 					)
@@ -495,20 +499,20 @@ def license_holder_import_excel(
 				
 				status_count[status] += 1
 				if status != 'Unchanged':
-					msg = u'Row {:>6}: {}: {:>8} {}\n'.format(
+					msg = 'Row {:>6}: {}: {:>8} {}\n'.format(
 						i,
 						status,
 						license_holder.license_code,
-						u', '.join( u'{}'.format(v) if v else u'None' for v in [
+						', '.join( '{}'.format(v) if v else 'None' for v in [
 								license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.nation_code, license_holder.uci_id,
-								u'{} {}'.format(license_holder.first_name, license_holder.last_name),
+								'{} {}'.format(license_holder.first_name, license_holder.last_name),
 								license_holder.city, license_holder.state_prov,
 								license_holder.emergency_contact_name, license_holder.emergency_contact_phone,
 							]
 						),
 					)
 					if status == 'Changed':
-						msg += u'            Updated: {}\n'.format( u', '.join( u'{}=({})'.format(k,v) for k,v in fields_changed ) )
+						msg += '            Updated: {}\n'.format( ', '.join( '{}=({})'.format(k,v) for k,v in fields_changed ) )
 					ms_write( msg )
 					
 				if license_holder and d_team:
@@ -524,47 +528,40 @@ def license_holder_import_excel(
 
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = open_workbook( file_contents = worksheet_contents )
+		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
-		wb = open_workbook( fname )
+		wb = open_workbook( filename = fname, read_only=True, data_only=True )
 	
-	license_holder_rows = []
-	import_utils.datemode = wb.datemode
-	
-	ws = None
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name or sheet_name is None:
-			ms_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
-		ms_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+		ms_write( 'Reading sheet "{}"\n'.format(sheet_name) )
+	except Exception:
+		ms_write( 'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 	
-	num_rows = ws.nrows
-	num_cols = ws.ncols
-	for r in range(num_rows):
-		row = ws.row( r )
+	license_holder_rows = []
+	
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(f.value).strip() for f in row]
+			fields = ['{}'.format(f.value).strip() for f in row]
 			ifm.set_headers( fields )
 			license_code_aliases = [lh for lh in ifm.name_to_col.keys() if lh.startswith('license_code')]
 			discipline_teams = [d for d in disciplines if d.name in ifm]
 			
-			ms_write( u'Header Row:\n' )
+			ms_write( 'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
 				name = ifm.get_name_from_alias( f )
 				if name is not None:
-					ms_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+					ms_write( '        {}. {} --> {}\n'.format(col, f, name) )
 				else:
-					ms_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
-			ms_write( u'\n' )
+					ms_write( '        {}. ****{} (Ignored)\n'.format(col, f) )
+			ms_write( '\n' )
 			continue
 			
 		license_holder_rows.append( clean_license_header_row(r+1, [v.value for v in row]) )
@@ -577,8 +574,8 @@ def license_holder_import_excel(
 	process_license_holder_team( license_holder_team )
 	process_license_holder_discipline_team( license_holder_discipline_team )
 		
-	ms_write( u'\n' )
-	ms_write( u'   '.join( u'{}: {}'.format(a, v) for a, v in sorted((status_count.items()), key=operator.itemgetter(0)) ) )
-	ms_write( u'\n' )
-	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
-	ms_write( u'', True )
+	ms_write( '\n' )
+	ms_write( '   '.join( '{}: {}'.format(a, v) for a, v in sorted((status_count.items()), key=operator.itemgetter(0)) ) )
+	ms_write( '\n' )
+	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( '', True )

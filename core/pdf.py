@@ -1,13 +1,12 @@
-import six
 import fpdf
 
 def normalize_text( text ):
 	''' Make sure we only have characters supported by the font. '''
-	return u'{}'.format(text).encode('latin-1', 'replace').decode('latin-1')
+	return '{}'.format(text).encode('latin-1', 'replace').decode('latin-1')
 
 class PDF( fpdf.FPDF ):
 	def __init__( self, orientation='L', format='Letter' ):
-		super( PDF, self ).__init__( orientation=orientation, unit='pt', format=format )
+		super().__init__( orientation=orientation, unit='pt', format=format )
 	
 	def scale_text_in_rectangle( self, x, y, width, height, text ):
 		'''
@@ -76,7 +75,7 @@ class PDF( fpdf.FPDF ):
 		colMax = max( len(row) for row in table )
 		for row in table:
 			if len(row) < colMax:
-				row.extend( [u''] * (colMax - len(row)) )
+				row.extend( [''] * (colMax - len(row)) )
 				
 		lineFactor = 1.15
 		fs, fsMin, fsMax = 0.0, 0.0, 144.0
@@ -147,4 +146,4 @@ class PDF( fpdf.FPDF ):
 		return widthMax, heightMax
 	
 	def to_bytes( self ):
-		return self.output( dest='S' ).encode('latin-1', 'replace') if six.PY3 else self.output( dest='S' )
+		return bytes( self.output() )

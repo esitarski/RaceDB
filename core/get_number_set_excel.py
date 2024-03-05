@@ -2,10 +2,11 @@ import os
 import datetime
 import xlsxwriter
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'Bib', 'Status', 'Date',
@@ -14,7 +15,7 @@ data_headers = (
 	'DOB',
 	'City', 'StateProv',
 	'License',
-	'UCICode',
+	'UCIID',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -59,9 +60,11 @@ def get_number_set_excel( nses ):
 			lh.city,
 			lh.state_prov,
 			lh.license_code,
-			lh.uci_code,
+			lh.uci_id,
 		]
 		row = write_row_data( ws, row, data )
-		
+	
+	add_excel_info( wb )
+	
 	wb.close()
 	return output.getvalue()

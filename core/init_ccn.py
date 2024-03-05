@@ -1,7 +1,6 @@
 import sys
-import six
 import datetime
-from xlrd import open_workbook, xldate_as_tuple
+from openpyxl import load_workbook
 from collections import namedtuple
 from models import *
 from utils import toUnicode, removeDiacritic
@@ -19,7 +18,7 @@ latest_year = (today - datetime.timedelta( days=7*365 )).year
 def date_from_value( s ):
 	if isinstance(s, datetime.date):
 		return s
-	if isinstance(s, float) or isinstance(s, six.integer_types):
+	if isinstance(s, (float,int)):
 		return datetime.date( *(xldate_as_tuple(s, import_utils.datemode)[:3]) )
 	
 	# Assume month, day, year format.
@@ -56,7 +55,7 @@ def set_attributes( obj, attributes ):
 	
 def to_int_str( v ):
 	try:
-		return u'{}'.format(v)
+		return '{}'.format(v)
 	except:
 		pass
 	return toUnicode(v)
@@ -86,11 +85,11 @@ def init_ccn( fname = fnameDefault ):
 			try:
 				date_of_birth	= date_from_value( ur.get('DOB', '') )
 			except Exception as e:
-				safe_print( u'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DOB',''), ur, e ) )
+				safe_print( 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DOB',''), ur, e ) )
 				continue
 				
 			if not ur.get('License Numbers',''):
-				safe_print( u'Row {}: Missing License Code '.format(i) )
+				safe_print( 'Row {}: Missing License Code '.format(i) )
 				continue
 			
 			attributes = {
@@ -118,11 +117,11 @@ def init_ccn( fname = fnameDefault ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			safe_print( u'{i:>6}: {license:>8} {dob:>10} {uci_code} {last}, {first}, {city}, {state_prov}'.format(
+			safe_print( '{i:>6}: {license:>8} {dob:>10} {uci_id} {last}, {first}, {city}, {state_prov}'.format(
 				i=i,
 				license=removeDiacritic(lh.license_code),
 				dob=lh.date_of_birth.strftime('%Y/%m/%d'),
-				uci_code=lh.uci_code,
+				uci_id=lh.uci_id,
 				last=removeDiacritic(lh.last_name), first=removeDiacritic(lh.first_name),
 				city=removeDiacritic(lh.city), state_prov=removeDiacritic(lh.state_prov) )
 			)
@@ -142,31 +141,26 @@ def init_ccn( fname = fnameDefault ):
 				
 	suffix = 'CCN'
 	ur_records = []
-	wb = open_workbook( fname )
-	import_utils.datemode = wb.datemode
+	wb = load_workbook( filename=fname, read_only=True, data_only=True  )
 	
-	ws = None
-	for sheet_name in wb.sheet_names():
+	for sheet_name in wb.sheetnames:
 		if sheet_name.endswith(suffix):
 			safe_print( 'Reading sheet: {}'.format(sheet_name) )
-			ws = wb.sheet_by_name(sheet_name)
+			ws = wb[sheet_name]
 			break
 	
 	if not ws:
-		safe_print( u'Cannot find sheet ending with "{}"'.format(suffix) )
+		safe_print( 'Cannot find sheet ending with "{}"'.format(suffix) )
 		return
 		
-	num_rows = ws.nrows
-	num_cols = ws.ncols
-	for r in range(num_rows):
-		row = ws.row( r )
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [toUnicode(f.value).strip() for f in row]
-			safe_print( u'\n'.join( fields ) )
+			fields = { col:toUnicode(f.value).strip() for col, f in enumerate(row) }
+			safe_print( '\n'.join(fields.values()) )
 			continue
-			
-		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
+		
+		ur = { fields.get(col,''):cell.value for col, cell in enumerate(row) }
 		ur_records.append( (r+1, ur) )
 		if len(ur_records) == 3000:
 			process_ur_records( ur_records )

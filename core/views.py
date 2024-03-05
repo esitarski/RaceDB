@@ -1,11 +1,14 @@
 from .views_common import *
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.utils.html import escape
+from django.db.models import Count
+from django.core import management
+
 try:
 	from django.contrib.auth.views import logout
-except:
+except Exception:
 	from django.contrib.auth import logout
 
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +19,7 @@ import zipfile
 import operator
 import itertools
 import traceback
+import datetime
 
 from .get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from .get_seasons_pass_excel import get_seasons_pass_excel
@@ -45,6 +49,8 @@ from .context_processors import getContext
 
 from django.views.decorators.cache import patch_cache_control
 
+from .get_version import get_version
+
 @access_validation()
 def home( request, rfid_antenna=None ):
 	if rfid_antenna is not None:
@@ -52,7 +58,7 @@ def home( request, rfid_antenna=None ):
 			request.session['rfid_antenna'] = int(rfid_antenna)
 		except Exception as e:
 			pass
-	version = RaceDBVersion
+	version = get_version()
 	return render( request, 'home.html', locals() )
 	
 #-----------------------------------------------------------------------
@@ -63,7 +69,7 @@ class LicenseHolderTagForm( Form ):
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna to Write Tag') )
 	
 	def __init__(self, *args, **kwargs):
-		super(LicenseHolderTagForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -129,8 +135,8 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 				# Report the error - probably a non-unique field.
 				status = False
 				status_entries.append(
-					(_('LicenseHolder') + u': ' + _('Existing Tag Save Exception:'), (
-						u'{}'.format(e),
+					(_('LicenseHolder') + ': ' + _('Existing Tag Save Exception:'), (
+						'{}'.format(e),
 					)),
 				)
 				return render( request, 'rfid_write_status.html', locals() )
@@ -198,16 +204,16 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 							if tagRead != tag:
 								try:
 									license_holder_other = LicenseHolder.objects.get(existing_tag=tagRead)
-									additional_message = u'{} != {} ({})'.format(tag, tagRead, license_holder_other.full_name())
+									additional_message = '{} != {} ({})'.format(tag, tagRead, license_holder_other.full_name())
 								except  (LicenseHolder.DoesNotExist, LicenseHolder.MultipleObjectsReturned) as e:
-									additional_message = u'{} != {}'.format(tag, tagRead)
+									additional_message = '{} != {}'.format(tag, tagRead)
 								status = False
 								status_entries.append(
 									(_('Tag read does NOT match rider tag'), [additional_message] ),
 								)
 							else:
 								status_entries.append(
-									(_('Tag read matches rider tag'), [u'{} = {}'.format(tag, tagRead)] ),
+									(_('Tag read matches rider tag'), ['{} = {}'.format(tag, tagRead)] ),
 								)
 						return render( request, 'rfid_validate.html', locals() )
 					else:
@@ -250,25 +256,25 @@ class LicenseHolderForm( ModelForm ):
 		
 		lh = kwargs.get( 'instance', None )
 	
-		super(LicenseHolderForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
 		
 		def error_html( error ):
-			return u'<span class="help-block"><strong>{}{}</strong>'.format(u'&nbsp;'*8,error) if error else u''
+			return '<span class="help-block"><strong>{}{}</strong>'.format('&nbsp;'*8,error) if error else ''
 		
 		def warning_html( warning ):
 			return '<img src="{}" style="width:20px;height:20px;"/>'.format(static('images/warning.png')) if warning else ''
 		
 		def uci_code_html():
 			if lh and lh.uci_country:
-				return u'<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.uci_country)), lh.uci_code)
+				return '<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.uci_country)), lh.uci_code)
 			return ''
 		
 		def nation_code_html():
 			if lh and lh.nation_code:
-				return u'<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.nation_code)), lh.nation_code)
+				return '<h4><br/><img class="flag" src="{}"/>&nbsp;{}</h4>'.format(static('flags/{}.png'.format(lh.nation_code)), lh.nation_code)
 			return ''
 		
 		self.helper.layout = Layout(
@@ -355,19 +361,19 @@ def license_holders_from_search_text( search_text ):
 	search_text = utils.normalizeSearch(search_text)
 	license_holders = []
 	
-	if not license_holders and search_text.startswith( 'rfid=' ):
+	if not license_holders and search_text.lower().startswith( 'rfid=' ):
 		arg = search_text.split('=',1)[1].strip().upper().lstrip('0')
 		license_holders = list(LicenseHolder.objects.filter(Q(existing_tag=arg) | Q(existing_tag2=arg)))
 		
-	if not license_holders and search_text.startswith( 'scan=' ):
-		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
+	if not license_holders and search_text.lower().startswith( 'scan=' ):
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(' ', '')
 		license_holders = list(LicenseHolder.objects.filter( Q(license_code=arg) | Q(uci_id=arg) ))
 
 	if not license_holders and is_uci_id( search_text ):
 		license_holders = list(LicenseHolder.objects.filter(uci_id = search_text.replace(' ','')))
 	
-	if not license_holders and search_text.startswith( 'uciid=' ):
-		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(u' ', u'')
+	if not license_holders and search_text.lower().startswith( 'uciid=' ):
+		arg = search_text.split('=',1)[1].strip().upper().lstrip('0').replace(' ', '')
 		license_holders = list(LicenseHolder.objects.filter(uci_id = arg or ''))
 	
 	if not license_holders and reUCICode.match( search_text ):
@@ -380,7 +386,7 @@ def license_holders_from_search_text( search_text ):
 		if search_text:
 			q = Q()
 			for n in search_text.split():
-				q &= Q( search_text__contains = n )
+				q &= Q( search_text__icontains = n )
 			license_holders = LicenseHolder.objects.filter(q)[:MaxReturn]
 		else:
 			license_holders = LicenseHolder.objects.all()[:MaxReturn]
@@ -398,8 +404,10 @@ def LicenseHoldersDisplay( request ):
 		('new-submit', _('New LicenseHolder'), 'btn btn-success'),
 		('correct-errors-submit', _('Correct Errors'), 'btn btn-primary'),
 		('manage-duplicates-submit', _('Manage Duplicates'), 'btn btn-primary'),
-		('auto-create-tags-submit', _('Auto Create All Tags'), 'btn btn-primary'),
-		('reset-existing-bibs-submit', _('Reset Existing Bib Numbers'), 'btn btn-primary'),
+		#('auto-create-tags-submit', _('Auto Create All Tags'), 'btn btn-warning'),
+		('reset-existing-bibs-submit', _('Reset Existing Bibs'), 'btn btn-warning'),
+		('reset-existing-tags-submit', _('Reset Existing RFID Tags'), 'btn btn-warning'),
+		('', '', ''),
 		('export-excel-submit', _('Export to Excel'), 'btn btn-primary'),
 		('import-excel-submit', _('Import from Excel'), 'btn btn-primary'),
 	]
@@ -423,6 +431,7 @@ def LicenseHoldersDisplay( request ):
 				('manage-duplicates-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersManageDuplicates') )),
 				('auto-create-tags-submit',		lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersAutoCreateTags') )),
 				('reset-existing-bibs-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersResetExistingBibs') )),
+				('reset-existing-tags-submit',	lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersResetExistingTags') )),
 				('import-excel-submit',			lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersImportExcel') )),
 				('cloud-import-submit',			lambda: HttpResponseRedirect( pushUrl(request,'LicenseHoldersCloudImport') )),
 			):
@@ -437,7 +446,7 @@ def LicenseHoldersDisplay( request ):
 			if 'export-excel-submit' in request.POST:
 				q = Q()
 				for n in search_text.split():
-					q &= Q( search_text__contains = n )
+					q &= Q( search_text__icontains = n )
 				xl = get_license_holder_excel( q )
 				response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 				response['Content-Disposition'] = 'attachment; filename=RaceDB-LicenseHolders-{}.xlsx'.format(
@@ -466,7 +475,7 @@ class UCIDatabaseForm( Form ):
 	
 	def __init__( self, *args, **kwargs ):
 		lh_attrs = kwargs.pop('lh_attrs', {})
-		super(UCIDatabaseForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		for name, attr in self.query_fields:
 			lh_attr = lh_attrs.get(attr, None)
 			if attr == 'uci_id' and lh_attr:
@@ -528,7 +537,7 @@ def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confir
 		uci_records = request.session.get(lh_uci_records, [])
 		try:
 			uci_record = uci_records[int(iUciRecord)]
-		except:
+		except Exception:
 			uci_record = None
 		if uci_record:
 			for attr in ('first_name', 'last_name', 'gender', 'nation_code', 'date_of_birth', 'uci_id'):
@@ -538,7 +547,7 @@ def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confir
 			lh.save()
 		return HttpResponseRedirect(getContext(request,'pop2Url'))
 					
-	message = format_lazy( u'{}: {} {}', _('Update from UCI Database'), lh.first_name, lh.last_name )
+	message = format_lazy( '{}: {} {}', _('Update from UCI Database'), lh.first_name, lh.last_name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )	
@@ -546,22 +555,21 @@ def LicenseHolderUCIDatabaseUpdate( request, licenseHolderId, iUciRecord, confir
 #--------------------------------------------------------------------------
 @autostrip
 class BarcodeScanForm( Form ):
-	scan = forms.CharField( required = False, label = _('Barcode (License Code, RFID Tag or UCIID)') )
+	scan = forms.CharField( required = False, label = _('RFID Tag, License Code, UCI ID or Barcode') )
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
-		super(BarcodeScanForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
-		button_args = [
-			Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' ),
-			CancelButton(),
-		]
-		if hide_cancel_button:
-			button_args = button_args[:-1]
+		button_args = [Submit( 'search-submit', _('Search'), css_class = 'btn btn-primary' )]
+		if not hide_cancel_button:
+			button_args.append( CancelButton() )
+			
+		print( 'hide_cancel_button=', hide_cancel_button )
 		
 		self.helper.layout = Layout(
 			Row(
@@ -579,7 +587,7 @@ def LicenseHolderBarcodeScan( request ):
 			if not scan:
 				return HttpResponseRedirect(getContext(request,'path'))
 				
-			request.session['license_holder_filter'] = u'scan={}'.format(scan.lstrip('0'))
+			request.session['license_holder_filter'] = 'scan={}'.format(scan.lstrip('0'))
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = BarcodeScanForm()
@@ -594,18 +602,15 @@ class RfidScanForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop( 'hide_cancel_button', None )
-		super(RfidScanForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
-		button_args = [
-			Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary  btn-lg', id='focus' ),
-			CancelButton(),
-		]
-		if hide_cancel_button:
-			button_args = button_args[:-1]
+		button_args = [Submit( 'read-tag-submit', _('Read Tag'), css_class = 'btn btn-primary  btn-lg', id='focus' )]
+		if not hide_cancel_button:
+			button_args.append( CancelButton() )
 			
 		self.helper.layout = Layout(
 			Row( *(button_args + [HTML('&nbsp;'*12), Field('rfid_antenna')]) ),
@@ -662,7 +667,7 @@ def LicenseHolderRfidScan( request ):
 			if not status:
 				return render( request, 'license_holder_scan_rfid.html', locals() )
 			
-			request.session['license_holder_filter'] = u'rfid={}'.format(tag.lstrip('0'))
+			request.session['license_holder_filter'] = 'rfid={}'.format(tag.lstrip('0'))
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
 		form = RfidScanForm( initial=dict(rfid_antenna=rfid_antenna) )
@@ -693,7 +698,7 @@ def LicenseHoldersAutoCreateTags( request, confirmed=False ):
 		message.append(_('Existing tags *may* not work anymore.'))
 	else:
 		message.append(_('Existing tags will work if the License Codes have not changed.'))
-	message = format_lazy( u'{}'*len(message), *message )
+	message = format_lazy( '{}'*len(message), *message )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'LicenseHoldersAutoCreateTags/1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -705,12 +710,12 @@ def LicenseHoldersManageDuplicates( request ):
 	return render( request, 'license_holder_duplicate_list.html', locals() )
 
 def format_uci_id( uci_id ):
-	uci_id = uci_id or u''
-	return u' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )
+	uci_id = uci_id or ''
+	return ' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )
 
 def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 	
-	choices = [(lh.pk, u'{last_name}, {first_name} - {gender} - {date_of_birth} - {city}, {state_prov} - {nation_code} - {license} - {uci_id} - ({num_comps})'.format(
+	choices = [(lh.pk, '{last_name}, {first_name} - {gender} - {date_of_birth} - {city}, {state_prov} - {nation_code} - {license} - {uci_id} - ({num_comps})'.format(
 		last_name=lh.last_name,
 		first_name=lh.first_name,
 		gender=lh.get_gender_display(),
@@ -731,7 +736,7 @@ def GetLicenseHolderSelectDuplicatesForm( duplicates ):
 		)
 		
 		def __init__(self, *args, **kwargs):
-			super(LicenseHolderSelectDuplicatesForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -804,10 +809,22 @@ def LicenseHoldersResetExistingBibs( request, confirmed=False ):
 		LicenseHolder.objects.exclude(existing_bib__isnull=True).update( existing_bib=None )
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 		
-	page_title = _('Reset Exsting Bibs')
-	message = _('This will reset all existing bibs to null (no value).')
+	page_title = _('Reset Existing Bibs')
+	message = _('Reset all existing bibs to null (no value).')
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'LicenseHoldersResetExistingBibs/1/'
+	return render( request, 'are_you_sure.html', locals() )
+
+@access_validation()
+def LicenseHoldersResetExistingTags( request, confirmed=False ):
+	if confirmed:
+		LicenseHolder.objects.exclude(Q(existing_tag__isnull=True) & Q(existing_tag2__isnull=True)).update( existing_tag=None, existing_tag2=None )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Reset Existing Tags')
+	message = _('Reset all existing RFID tags to null (no value).')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'LicenseHoldersResetExistingTags/1/'
 	return render( request, 'are_you_sure.html', locals() )
 
 #-----------------------------------------------------------------------
@@ -856,7 +873,7 @@ def LicenseHolderTeamChange( request, licenseHolderId, disciplineId ):
 	search_text = utils.normalizeSearch(search_text)
 	q = Q( active=True )
 	for n in search_text.split():
-		q &= Q( search_text__contains = n )
+		q &= Q( search_text__icontains = n )
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render( request, 'license_holder_team_select.html', locals() )
 
@@ -900,7 +917,7 @@ class CompetitionSearchForm( Form ):
 		request = kwargs.pop('request', None)
 		is_superuser = (request and request.user.is_superuser)
 		
-		super(CompetitionSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		if is_superuser:
 			year_cur = datetime.datetime.now().year
@@ -993,7 +1010,7 @@ def GetCompetitionForm( competition_cur = None ):
 		
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
-			super(CompetitionForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
@@ -1038,15 +1055,23 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col('ftp_host', 2),
-					Col('ftp_user', 2),
-					Col(Field('ftp_password', autocomplete='off'), 2),
-					Col(Field('ftp_path', size=80), 6),
+					Col('use_sftp', 3),
+					Col('ftp_host', 3),
+					Col('ftp_user', 3),
+					Col(Field('ftp_password', autocomplete='off'), 3),
 				),
 				Row(
 					Col('ftp_upload_during_race', 4),
+					Col(Field('ftp_path', size=80), 4),
 				),
-				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(u''), ),
+				Row( HTML('<hr/>') ),
+				Row(
+					Col(Field('image'), 3),
+					Col(Field('gpx_course_default'), 3),
+					Col(Field('ga_tracking_id',size=12), 3),
+					Col(Field('google_maps_api_key',size=40), 3),
+				),
+				Row( HTML('<hr/><strong>Number Print Options:</strong>'), HTML('<div class="alert alert-info" role="info"><strong>Reminder:</strong> Set the <strong>Print Tag Option</strong> in <strong>System Info</strong> to enable printing.</div>') if system_info.print_tag_option == 0 else HTML(''), ),
 				Row(
 					Col(Field('bib_label_print'),2),
 					Col(Field('bibs_label_print'),2),
@@ -1057,8 +1082,7 @@ def GetCompetitionForm( competition_cur = None ):
 				),
 				Row( HTML('<hr/>') ),
 				Row(
-					Col(Field('report_labels',size=8), 4),
-					Col('ga_tracking_id', 4),
+					Col(Field('report_labels'), 4),
 					Col(Field('show_signature'),4),
 				),
 				Row( HTML('<hr/>') ),
@@ -1100,9 +1124,15 @@ def GetCompetitionForm( competition_cur = None ):
 @access_validation()
 def CompetitionsDisplay( request ):
 	form = None
-	search_fields = request.session.get('competition_filter', {})
-	if not isinstance(search_fields, dict):
-		search_fields = {}
+	competition_filter = request.session.get('competition_filter', {})
+	if not isinstance(competition_filter, dict):
+		competition_filter = {}
+		
+	if 'year' not in competition_filter:
+		last_competition = Competition.objects.all().order_by('-start_date').first()
+		if last_competition:
+			competition_filter['year'] = last_competition.start_date.year
+		
 	if request.method == 'POST':
 		if 'new-submit' in request.POST:
 			return HttpResponseRedirect( pushUrl(request,'CompetitionNew') )
@@ -1116,30 +1146,40 @@ def CompetitionsDisplay( request ):
 		if request.user.is_superuser:
 			form = CompetitionSearchForm( request.POST, request=request )
 			if form.is_valid():
-				request.session['competition_filter'] = search_fields = form.cleaned_data
+				request.session['competition_filter'] = competition_filter = form.cleaned_data
 	else:
 		if request.user.is_superuser:
-			form = CompetitionSearchForm( initial=search_fields, request=request )
+			form = CompetitionSearchForm( initial=competition_filter, request=request )
 	
-	competitions = Competition.objects.all().prefetch_related('report_labels')
+	competitions = (Competition.objects
+		.all()
+		.prefetch_related('report_labels')
+		.select_related('discipline', 'race_class')
+	)
+	
+	def add_num_participants( competitions ):
+		return competitions.annotate(num_participants=Count('participant'))
 	
 	if request.user.is_superuser:
-		year = int( search_fields.get( 'year', -1 ) )
+		year = int( competition_filter.get( 'year', -1 ) )
 		if year >= 0:
-			date_min = datetime.date( int(search_fields['year']), 1, 1 )
-			date_max = datetime.date( int(search_fields['year'])+1, 1, 1 ) - datetime.timedelta(days=1)
+			date_min = datetime.date( int(competition_filter['year']), 1, 1 )
+			date_max = datetime.date( int(competition_filter['year'])+1, 1, 1 ) - datetime.timedelta(days=1)
 			competitions = competitions.filter( start_date__range=(date_min, date_max) )
 		
-		dpk = int( search_fields.get( 'discipline', -1 ) )
+		dpk = int( competition_filter.get( 'discipline', -1 ) )
 		if dpk >= 0:
 			competitions = competitions.filter( discipline__pk=dpk )
+
+		competitions = add_num_participants( competitions )
 		
-		if search_fields.get( 'search_text', None ):
-			competitions = applyFilter( search_fields['search_text'], competitions, Competition.get_search_text )
+		if competition_filter.get( 'search_text', None ):
+			competitions = applyFilter( competition_filter['search_text'], competitions, Competition.get_search_text )			
 	else:	
 		# If not super user, only show the competitions for today and after.
 		dNow = datetime.date.today()
 		competitions = competitions.filter( start_date__gte = dNow - datetime.timedelta(days=120) )
+		competitions = add_num_participants( competitions )
 		competitions = [c for c in competitions if not c.is_finished(dNow)]
 	
 	competitions = sorted( competitions, key = operator.attrgetter('start_date'), reverse=True )
@@ -1272,7 +1312,7 @@ def GetRegAnalyticsForm( competition ):
 		day = forms.ChoiceField( required = True, choices=((d, d) for d in dates) )
 		
 		def __init__(self, *args, **kwargs):
-			super(RegAnalyticsForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -1318,7 +1358,7 @@ def CompetitionRegAnalytics( request, competitionId ):
 	payload['license_holder_total'] = LicenseHolder.objects.filter( pk__in = Participant.objects.filter(competition=competition).distinct().values_list('license_holder__pk', flat=True) ).count()
 	try:
 		payload['transactionPeak'][0] = payload['transactionPeak'][0].strftime('%H:%M').lstrip('0')
-	except:
+	except Exception:
 		pass
 		
 	dates = [competition.start_date]
@@ -1360,7 +1400,7 @@ def TeamsShow( request, competitionId ):
 		} for team in competition.get_teams() ]
 	team_info.append(
 		{
-			'team_name':u'{}'.format(_('<<No Team>>')),
+			'team_name':'{}'.format(_('<<No Team>>')),
 			'staff':[],
 			'competitor_count':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).count(),
 			'competitors':Participant.objects.filter(competition=competition, team__isnull=True, role=Participant.Competitor).order_by('bib'),
@@ -1403,13 +1443,13 @@ def StartLists( request, competitionId ):
 def StartList( request, eventId ):
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
-	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
+	page_title = '{} - {}'.format( instance.competition.title, instance.name )
 	return render( request, 'mass_start_start_list.html', locals() )
 	
 def get_annotated_waves( event ):
 	try:
 		waves = list(event.wave_set.all())
-	except:
+	except Exception:
 		waves = list(event.wavett_set.all())
 		
 	category_wave = {}
@@ -1445,7 +1485,7 @@ def get_annotated_waves( event ):
 def StartListTT( request, eventTTId ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	time_stamp = datetime.datetime.now()
-	page_title = u'{} - {}'.format( instance.competition.title, instance.name )
+	page_title = '{} - {}'.format( instance.competition.title, instance.name )
 	wave_tts = get_annotated_waves( instance )
 	return render( request, 'tt_start_list.html', locals() )
 
@@ -1482,7 +1522,7 @@ def UCIExcelDownload( request, eventId, eventType, startList=1 ):
 				utils.cleanFileName(event.name),
 				utils.cleanFileName(category.code_gender),
 			)
-			safe_print( u'adding', fname, '...' )
+			safe_print( 'adding', fname, '...' )
 			zip_writer.writestr( fname, uci_excel(event, category, startList) )
 
 	value = zip_stream.getvalue()
@@ -1527,11 +1567,11 @@ def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competi
 #-----------------------------------------------------------------------
 @autostrip
 class UploadPreregForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	clear_existing = forms.BooleanField( required=False, label=_('Clear All Participants First'), help_text=_("Removes all existing Participants from the Competition before the Upload.  Use with Caution.") )
 	
 	def __init__( self, *args, **kwargs ):
-		super( UploadPreregForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -1575,13 +1615,13 @@ def UploadPrereg( request, competitionId ):
 #-----------------------------------------------------------------------
 @autostrip
 class ImportExcelForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	set_team_all_disciplines = forms.BooleanField( required=False, label=_('Update Default Team for all Disciplines'), )
 	update_license_codes = forms.BooleanField( required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
 			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( ImportExcelForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -1666,9 +1706,9 @@ def LicenseHolderCloudDownload( request ):
 	if not authorization.validate_secret_request(request):
 		return HttpResponseForbidden()
 	
-	safe_print( u'LicenseHolderCloudDownload: processing...' )
+	safe_print( 'LicenseHolderCloudDownload: processing...' )
 	response = handle_export_license_holders()
-	safe_print( u'LicenseHolderCloudDownload: response returned.' )
+	safe_print( 'LicenseHolderCloudDownload: response returned.' )
 	response['Authorization'] = authorization.get_secret_authorization()
 	return response
 
@@ -1677,7 +1717,7 @@ def LicenseHolderCloudDownload( request ):
 def LicenseHoldersCloudImport( request, confirmed=False ):
 	if confirmed:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'LicenseHolderCloudDownload' )
-		safe_print( u'LicenseHoldersCloudImport: sending request to:', url )
+		safe_print( 'LicenseHoldersCloudImport: sending request to:', url )
 		
 		response = requests.get( url, stream=True, headers={'Authorization':authorization.get_secret_authorization()} )
 		
@@ -1685,11 +1725,11 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 		try:
 			response.raise_for_status()
 		except Exception as e:
-			safe_print( u'LicenseHoldersCloudImport: ', e )
+			safe_print( 'LicenseHoldersCloudImport: ', e )
 			errors.append( e )
 		
 		if not errors:
-			safe_print( u'LicenseHoldersCloudImport: received response from:', url )
+			safe_print( 'LicenseHoldersCloudImport: received response from:', url )
 			try:
 				# Download the content and save it into a temporary file.
 				gzip_stream = tempfile.TemporaryFile()
@@ -1700,7 +1740,7 @@ def LicenseHoldersCloudImport( request, confirmed=False ):
 				gzip_handler = gzip.GzipFile( fileobj=gzip_stream, mode='rb' )
 				license_holder_import( gzip_handler )
 			except Exception as e:
-				safe_print( u'LicenseHoldersCloudImport: ', e )
+				safe_print( 'LicenseHoldersCloudImport: ', e )
 				errors.append( e )
 		
 		return render( request, 'license_holder_cloud_import.html', locals() )
@@ -1738,9 +1778,9 @@ def CompetitionCloudExport( request, competitionId ):
 		return HttpResponseForbidden()
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
-	safe_print( u'CompetitionCloudExport: processing Competition id:', competitionId )
+	safe_print( 'CompetitionCloudExport: processing Competition id:', competitionId )
 	response = handle_export_competition( competition )
-	safe_print( u'CompetitionCloudExport: processing completed.' )
+	safe_print( 'CompetitionCloudExport: processing completed.' )
 	return response
 
 class CompetitionCloudForm( Form ):
@@ -1753,7 +1793,7 @@ class CompetitionCloudForm( Form ):
 		for k in list(initial.keys()):
 			if k not in ('id', 'selected'):
 				self.competition_fields[k] = initial.pop(k)
-		super(CompetitionCloudForm, self).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 
 	output_hdrs   = (_('Local'), _('Dates'),      _('Discipline'), _('Name'), _('Class'), _('Organizer'), _('City'), _('Results') )
 	output_fields = (  'local', 'date_range_year_str', 'discipline',    'name', 'race_class',   'organizer',    'city',  'has_results')
@@ -1764,10 +1804,10 @@ class CompetitionCloudForm( Form ):
 		for f in self.output_fields:
 			if f in self.output_bool_fields:
 				v = int(self.competition_fields.get(f,False))
-				s.write( u'<td class="text-center"><span class="{}"></span></td>'.format(['blank', 'is-good'][v]) )
+				s.write( '<td class="text-center"><span class="{}"></span></td>'.format(['blank', 'is-good'][v]) )
 			else:
-				s.write( u'<td>{}</td>'.format(escape(u'{}'.format(self.competition_fields.get(f,u'')))) )
-		p = super(CompetitionCloudForm, self).as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
+				s.write( '<td>{}</td>'.format(escape('{}'.format(self.competition_fields.get(f,'')))) )
+		p = super().as_table().replace( '<th></th>', '' ).replace( '<td>', '<td class="text-center">', 1 )
 		ln = len('</tr>')
 		return mark_safe( p[:-ln] + s.getvalue() + p[-ln:] )
 		
@@ -1804,7 +1844,7 @@ def CompetitionCloudImportList( request ):
 			return HttpResponseRedirect( getContext(request,'cancelUrl') )
 	else:
 		url = SystemInfo.get_singleton().get_cloud_server_url( 'CompetitionCloudQuery' )
-		safe_print( u'CompetitionCloudImportList: sending request:', url )
+		safe_print( 'CompetitionCloudImportList: sending request:', url )
 		response = requests.get( url, headers={'Authorization':authorization.get_secret_authorization()} )
 		
 		cloud_competitions = response.json()
@@ -1816,54 +1856,79 @@ def CompetitionCloudImportList( request ):
 
 #-----------------------------------------------------------------------
 
+def augment_entry_tts( entry_tts ):
+	if entry_tts:	
+		
+		# Get the waves for all participants.
+		participant_wave = {}
+		for event in set( ett.event for ett in entry_tts ):
+			for wave in event.get_wave_set().all():
+				for p in wave.get_participants_unsorted():
+					participant_wave[p.pk] = wave
+
+		# Add the wave, clock_time, entry_tt_i and gap_change to every entry.
+		event_tt = entry_tts[0].event
+		tDelta = datetime.timedelta( seconds = 0 )
+		for i, e in enumerate(entry_tts):
+			e.wave = participant_wave.get( e.participant.pk, None )
+			e.clock_time = event_tt.date_time + e.start_time
+			e.entry_tt_i = i
+			e.gap_change = 0
+			if i > 0:
+				tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
+				if tDeltaCur != tDelta:
+					if i > 1:
+						e.gap_change = 1 if tDeltaCur > tDelta else -1
+					tDelta = tDeltaCur
+
+	return entry_tts
+
 @autostrip
 class AdjustmentForm( Form ):
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
 	seed_option = forms.ChoiceField( choices=Participant.SEED_OPTION_CHOICES )
 	adjustment = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'adjustment'}) )
 	entry_tt_pk = forms.CharField( widget=forms.HiddenInput() )
+	entry_tt_i = forms.CharField( widget=forms.HiddenInput() )
 
 class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000) ):
 	def __init__( self, *args, **kwargs ):
-		if 'entry_tts' in kwargs:
-			entry_tts = list( kwargs['entry_tts'] )
-			del kwargs['entry_tts']
-			super( AdjustmentFormSet, self ).__init__(
+		if 'entry_tts' in kwargs:			
+			entry_tts = kwargs.pop('entry_tts')
+			entry_tt_i = kwargs.pop('entry_tt_i', 0)
+			entry_tts[entry_tt_i].edit_entry = True
+
+			entry_tt_is = {e.pk:i for i, e in enumerate(entry_tts)}
+			
+			before_entries = 5
+			after_entries = 15
+			entry_tts = entry_tts[max(0,entry_tt_i-before_entries):entry_tt_i+after_entries]
+			super().__init__(
 				initial=[{
-					'est_speed':u'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
+					'est_speed':'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
 					'seed_option': e.participant.seed_option,
 					'adjustment': '',
-					'entry_tt_pk': u'{}'.format(e.pk),
+					'entry_tt_pk': '{}'.format(e.pk),
+					'entry_tt_i': '{}'.format(entry_tt_is[e.pk]),
 				} for e in entry_tts]
 			)
-			
-			# Get the waves for each participant.
-			participant_wave = {}
-			for event in set( ett.event for ett in entry_tts ):
-				for wave in event.get_wave_set().all():
-					for p in wave.get_participants_unsorted():
-						participant_wave[p.pk] = wave
 			
 			# Add the entry_tt to each form to support the display.
 			# Also add the wave.
 			# Also add a flag when the time gap changes.
-			tDelta = datetime.timedelta( seconds = 0 )
 			for i, form in enumerate(self):
-				form.entry_tt = entry_tts[i]
-				form.wave = participant_wave.get(entry_tts[i].participant.pk, None)
-				form.gap_change = 0
-				if i > 0:
-					tDeltaCur = entry_tts[i].start_time - entry_tts[i-1].start_time
-					if tDeltaCur != tDelta:
-						if i > 1:
-							form.gap_change = 1 if tDeltaCur > tDelta else -1
-						tDelta = tDeltaCur
+				e = entry_tts[i]
+				form.entry_tt = e
+				form.gap_change = e.gap_change
+				form.edit_entry = getattr(e, 'edit_entry', False)
 		else:
-			super( AdjustmentFormSet, self ).__init__( *args, **kwargs )
+			super().__init__( *args, **kwargs )
 
-def SeedingEdit( request, eventTTId ):
+def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 	instance = get_object_or_404( EventTT, pk=eventTTId )
 	competition = instance.competition
+	entry_tt_i = int( entry_tt_i )
+	
 	if request.method == 'POST':
 		adjustment_formset = AdjustmentFormSet( request.POST )
 		reNum = re.compile( '[^0-9]' )
@@ -1885,6 +1950,8 @@ def SeedingEdit( request, eventTTId ):
 						entry_tt = entries[pk]
 					except KeyError:
 						continue
+						
+					entry_tt_i = int( d['entry_tt_i'] )
 					
 					participant_changed = False
 					
@@ -1913,7 +1980,7 @@ def SeedingEdit( request, eventTTId ):
 					else:
 						direction = None
 					try:
-						adjustment = int( reNum.sub(u'', adjustment) )
+						adjustment = int( reNum.sub('', adjustment) )
 					except ValueError:
 						adjustment = None
 					
@@ -1924,7 +1991,7 @@ def SeedingEdit( request, eventTTId ):
 
 				return eda
 			
-			if "apply_adjustments" in request.POST:
+			if "apply_adjustments" in request.POST or "ok_adjustments" in request.POST:
 				eda = get_eda()
 			
 				def safe_i( i ):
@@ -1984,15 +2051,22 @@ def SeedingEdit( request, eventTTId ):
 				with BulkSave() as bs:
 					for e in eda:
 						bs.append( e[0] )
-					
-			if "regenerate_start_times" in request.POST:
-				instance.create_initial_seeding()
+						
+			if "ok_adjustments" in request.POST:
+				link = getContext(request,'pop2Url') + 'SeedingEdit/{}/{}/'.format(instance.id, entry_tt_i)
+				return HttpResponseRedirect( link )
+
+	entry_tts = augment_entry_tts( list(instance.entrytt_set.all()) )
+	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts, entry_tt_i=entry_tt_i )
 	
+	return render( request, 'seeding_edit_entries.html', locals() )
+
+def SeedingEdit( request, eventTTId, entry_tt_i=None ):
+	instance = get_object_or_404( EventTT, pk=eventTTId )
+	competition = instance.competition
 	instance.repair_seeding()
-	entry_tts=list(instance.entrytt_set.all())
-	for e in entry_tts:
-		e.clock_time = instance.date_time + e.start_time
-	adjustment_formset = AdjustmentFormSet( entry_tts=entry_tts )
+	
+	entry_tts = augment_entry_tts( list(instance.entrytt_set.all()) )
 	wave_tts = get_annotated_waves( instance )
 	return render( request, 'seeding_edit.html', locals() )
 
@@ -2019,7 +2093,7 @@ class EventMassStartForm( ModelForm ):
 		return HttpResponseRedirect( pushUrl(request,'EventApplyToExistingParticipants',eventMassStart.id) )
 	
 	def clean( self ):
-		cleaned_data = super(EventMassStartForm, self).clean()
+		cleaned_data = super().clean()
 		competition = cleaned_data.get("competition")
 		if competition:			
 			date_time = cleaned_data.get("date_time")
@@ -2036,7 +2110,7 @@ class EventMassStartForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
-		super(EventMassStartForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -2057,6 +2131,7 @@ class EventMassStartForm( ModelForm ):
 			Row( Field('rfid_option') ),
 			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4), Col(Field('win_and_out'),4) ),
 			Row( Field('note', rows='4', cols='60') ),
+			Row( Col(Field('gpx_course'),3) ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
@@ -2123,23 +2198,76 @@ def EventMassStartCrossMgr( request, eventId ):
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventMassStart.name),
 	)
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	cml = CrossMgrLog( action=CrossMgrLog.OpenAction, user=user, password=password, success=password_ok )
+	cml.event = eventMassStart
+	cml.save()	
+
 	return response
+
+def checkCrossMgrPassword( request ):
+	try:
+		user, password = request['user'], request['password']
+	except Exception as e:
+		user, password = '', ''
+		
+	if not user:
+		try:
+			user, password = request.GET.get('user',''), request.GET.get('password','')
+		except Exception as e:
+			user, password = '', ''
+		
+	# If no passwords are configured, accept any password.
+	password_ok = (CrossMgrPassword.objects.filter(password=password).exists() or not CrossMgrPassword.objects.all().exists())
+	return password_ok, user, password
 
 @csrf_exempt
 def UploadCrossMgr( request ):
-	payload, response = None, {'errors':[], 'warnings':[]}
+	payload, response = None, {'errors':[], 'warnings':[], 'info':[]}
+	event = None
+	
 	if request.method == "POST":
 		try:
-			payload = json.loads( request.body.decode('utf-8') )
+			payload = json.loads( request.body )
 		except Exception as e:
-			response['errors'].append( u'{}'.format(e) )
+			payload = None
+			response['errors'].append( 'RaceDB: {}'.format(e) )
 	else:
-		response['errors'].append( u'Request must be of type POST with json payload.' )
-	
-	safe_print( u'UploadCrossMgr: processing...' )
+		response['errors'].append( 'RaceDB: method="{}" expecting method="POST" .'.format(request.method) )
+		response['errors'].append( request.body.encode() )
+
+	if not response['errors']:
+		password_ok, user, password = checkCrossMgrPassword( payload.get('credentials', {}) )
+		if not password_ok:
+			payload = None
+			response['errors'].append( 'RaceDB: invalid password ({}, {})'.format(user, password) )
+
 	if payload:
-		response = read_results.read_results_crossmgr( payload )
-	safe_print( u'UploadCrossMgr: Done.' )
+		# safe_print( 'UploadCrossMgr: processing...' )
+		t_start = timezone.now()
+		response, event = read_results.read_results_crossmgr( payload )
+		# safe_print( 'UploadCrossMgr: Done.' )
+		if not response.get('errors', None):
+			response['info'].append( 'RaceDB: SUCCESS!  Uploaded in {} seconds.'.format( (timezone.now() - t_start).total_seconds() ) )
+	else:
+		response['errors'].append( 'RaceDB: payload NOT processed.' )
+
+	# Log the Update interation.
+	cml = CrossMgrLog( action=CrossMgrLog.UploadAction, user=user, password=password, success=bool(response.get('errors', None)) )
+	cml.event = event
+	cml.save()
+	
+	return JsonResponse( response )
+
+@csrf_exempt
+def VerifyCrossMgr( request ):
+	response = {'errors':[], 'warnings':[]}
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	if not password_ok:
+		response['errors'].append( 'RaceDB: invalid password' )
+	
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------
@@ -2154,14 +2282,14 @@ def GetWaveForm( event_mass_start, wave = None ):
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
-			super(WaveForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			category_list = event_mass_start.get_categories_without_wave()
 			
 			if wave is not None and wave.pk is not None:
 				category_list.extend( wave.categories.all() )
 				category_list.sort( key = lambda c: c.sequence )
-				self.fields['distance'].label = u'{} ({})'.format( _('Distance'), wave.distance_unit )
+				self.fields['distance'].label = '{} ({})'.format( _('Distance'), wave.distance_unit )
 			
 			categories_field = self.fields['categories']
 			categories_field.choices = [(category.id, category.full_name()) for category in category_list]
@@ -2216,7 +2344,7 @@ def WaveNew( request, eventMassStartId ):
 			break
 	waveLetter.reverse()
 	waveLetter = ''.join( waveLetter )
-	wave.name = u'Wave' + u' ' + waveLetter
+	wave.name = 'Wave' + ' ' + waveLetter
 	if waves_existing:
 		wave_last = waves_existing[-1]
 		wave.start_offset = wave_last.start_offset + datetime.timedelta(seconds = 60.0)
@@ -2266,7 +2394,7 @@ class EventTTForm( ModelForm ):
 		return HttpResponseRedirect( pushUrl(request,'StartListTT',eventTT.id) )		
 	
 	def clean( self ):
-		cleaned_data = super(EventTTForm, self).clean()
+		cleaned_data = super().clean()
 		competition = cleaned_data.get("competition")
 		if competition:			
 			date_time = cleaned_data.get("date_time")
@@ -2283,7 +2411,7 @@ class EventTTForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
-		super(EventTTForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline hidden-print'
@@ -2308,6 +2436,7 @@ class EventTTForm( ModelForm ):
 			),
 			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4) ),
 			Row( Field('note', rows='4', cols='60') ),
+			Row( Col(Field('gpx_course'),3) ),
 		)
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
@@ -2378,6 +2507,12 @@ def EventTTCrossMgr( request, eventTTId ):
 		utils.cleanFileName(competition.name),
 		utils.cleanFileName(eventTT.name),
 	)
+	
+	password_ok, user, password = checkCrossMgrPassword( request )
+	cml = CrossMgrLog( action=CrossMgrLog.OpenAction, user=user, password=password, success=password_ok )
+	cml.event = eventTT
+	cml.save()
+	
 	return response
 
 #-----------------------------------------------------------------------
@@ -2392,21 +2527,21 @@ def GetWaveTTForm( event_tt, wave_tt = None ):
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 			
-			super(WaveTTForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			category_list = event_tt.get_categories_without_wave()
 			
 			if wave_tt is not None and wave_tt.pk is not None:
 				category_list.extend( wave_tt.categories.all() )
 				category_list.sort( key = lambda c: c.sequence )
-				self.fields['distance'].label = u'{} ({})'.format( _('Distance'), wave_tt.distance_unit )
+				self.fields['distance'].label = '{} ({})'.format( _('Distance'), wave_tt.distance_unit )
 			
 			categories_field = self.fields['categories']
 			categories_field.choices = [(category.id, category.full_name()) for category in category_list]
 			categories_field.label = _('Available Categories')
 			
 			series_for_seeding_field = self.fields['series_for_seeding']
-			series_for_seeding_field.choices = [(u'', u'----')] + [
+			series_for_seeding_field.choices = [('', '----')] + [
 				(series.id, series.name) for series in Series.objects.filter(category_format=event_tt.competition.category_format)
 			]
 			
@@ -2459,7 +2594,7 @@ def WaveTTNew( request, eventTTId ):
 			break
 	wave_tt_letter.reverse()
 	wave_tt_letter = ''.join( wave_tt_letter )
-	wave_tt.name = u'WaveTT' + u' ' + wave_tt_letter
+	wave_tt.name = 'WaveTT' + ' ' + wave_tt_letter
 	if wave_tts_existing:
 		wave_tt_last = wave_tts_existing[-1]
 		wave_tt.distance = wave_tt_last.distance
@@ -2533,7 +2668,7 @@ def LicenseHolderAddConfirm( request, competitionId, licenseHolderId, tag_checke
 	competition_age = competition.competition_age( license_holder )
 	try:
 		tag_checked = int(tag_checked)
-	except:
+	except Exception:
 		tag_checked = 0
 	return render( request, 'license_holder_add_confirm.html', locals() )
 
@@ -2543,7 +2678,7 @@ def LicenseHolderConfirmAddToCompetition( request, competitionId, licenseHolderI
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	try:
 		tag_checked = int(tag_checked)
-	except:
+	except Exception:
 		tag_checked = 0
 	
 	# Try to create a new participant from the license_holder.
@@ -2578,7 +2713,7 @@ class SystemInfoForm( ModelForm ):
 		
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
-		super(SystemInfoForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -2643,11 +2778,21 @@ def UpdateLogShow( request ):
 	update_log = UpdateLog.objects.all()
 	return render( request, 'update_log_show.html', locals() )
 	
+@access_validation()
+def DownloadDatabase( request ):
+	filename = 'RaceDB-Backup-{}.json.gz'.format( datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') )	
+	response = HttpResponse(content_type="application/gzip")
+	response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
+	with gzip.GzipFile( filename=os.path.splitext(filename)[0], mode='w', fileobj=response ) as gz:
+		with io.TextIOWrapper(gz, encoding='utf-8', write_through=True) as io_text:
+			management.call_command('dumpdata', '-e', 'contenttypes', '-e', 'auth.Permission', stdout=io_text)
+	return response
+	
 #-----------------------------------------------------------------------
 
 def get_year_choices():
 	year_choices = [
-		(y, u'{}'.format(y))
+		(y, '{}'.format(y))
 			for y in sorted(
 			set(d.year for d in Competition.objects.all()
 				.order_by('-start_date')
@@ -2690,7 +2835,7 @@ def get_participant_report_form():
 		
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
-			super(ParticipantReportForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -2725,7 +2870,7 @@ def get_participant_report_form():
 			addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, additional_buttons=self.additional_buttons )
 	
 		def clean(self):
-			cleaned_data = super(ParticipantReportForm, self).clean()
+			cleaned_data = super().clean()
 			start_date = cleaned_data.get("start_date")
 			end_date = cleaned_data.get("end_date")
 
@@ -2817,27 +2962,27 @@ def AttendanceAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_participant_report_form()( initial=initial )
 	
-	page_title = [u'Analytics']
+	page_title = ['Analytics']
 	if initial.get('start_date',None) is not None:
-		page_title.append( u'from {}'.format( initial['start_date'] .strftime(SystemInfo.get_formats().date_year_Md_python) ) )
+		page_title.append( 'from {}'.format( initial['start_date'] .strftime(SystemInfo.get_formats().date_year_Md_python) ) )
 	if initial.get('end_date', None) is not None:
-		page_title.append( u'to {}'.format( initial['end_date'].strftime(SystemInfo.get_formats().date_year_Md_python) ) )
+		page_title.append( 'to {}'.format( initial['end_date'].strftime(SystemInfo.get_formats().date_year_Md_python) ) )
 	if initial.get('organizers',None):
-		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
-	page_title = u' '.join( page_title )
+		page_title.append( 'for {}'.format( ', '.join(initial['organizers']) ) )
+	page_title = ' '.join( page_title )
 		
 	def get_name( cls, id ):
 		obj = cls.objects.filter(id=id).first()
 		return obj.name if obj else ''
 	
 	if initial.get('disciplines',None):
-		page_title += u' ({})'.format( u','.join( d.name for d in Discipline.objects.filter(pk__in=initial['disciplines'])) )
+		page_title += ' ({})'.format( ','.join( d.name for d in Discipline.objects.filter(pk__in=initial['disciplines'])) )
 	if initial.get('race_classes',None):
-		page_title += u' ({})'.format(u','.join( d.name for d in RaceClass.objects.filter(pk__in=initial['race_classes'])) )
+		page_title += ' ({})'.format(','.join( d.name for d in RaceClass.objects.filter(pk__in=initial['race_classes'])) )
 	if initial.get('include_labels', None):
-		page_title += u', +({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
+		page_title += ', +({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
 	if initial.get('exclude_labels',None):
-		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
+		page_title += ', -({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
 	return render( request, 'system_analytics.html', locals() )
 	
@@ -2863,7 +3008,7 @@ def get_year_on_year_form():
 		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
 		
 		def __init__( self, *args, **kwargs ):
-			super(YearOnYearReportForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -2910,23 +3055,23 @@ def YearOnYearAnalytics( request ):
 		payload_json = json.dumps(payload, separators=(',',':'))
 		form = get_year_on_year_form()( initial=initial )
 	
-	page_title = [u'Year on Year Analytics']
+	page_title = ['Year on Year Analytics']
 	if initial.get('organizers',None):
-		page_title.append( u'for {}'.format( u', '.join(initial['organizers']) ) )
-	page_title = u' '.join( page_title )
+		page_title.append( 'for {}'.format( ', '.join(initial['organizers']) ) )
+	page_title = ' '.join( page_title )
 		
 	def get_name( cls, id ):
 		obj = cls.objects.filter(id=id).first()
 		return obj.name if obj else ''
 	
 	if initial.get('discipline',0) > 0:
-		page_title += u' {}'.format(get_name(Discipline, initial['discipline']))
+		page_title += ' {}'.format(get_name(Discipline, initial['discipline']))
 	if initial.get('race_class',0) > 0:
-		page_title += u' {}'.format(get_name(RaceClass, initial['race_class']))
+		page_title += ' {}'.format(get_name(RaceClass, initial['race_class']))
 	if initial.get('include_labels', None):
-		page_title += u', +({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
+		page_title += ', +({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['include_labels'])) )
 	if initial.get('exclude_labels',None):
-		page_title += u', -({})'.format( u','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
+		page_title += ', -({})'.format( ','.join( r.name for r in ReportLabel.objects.filter(pk__in=initial['exclude_labels'])) )
 		
 	return render( request, 'year_on_year_analytics.html', locals() )
 
@@ -2977,7 +3122,7 @@ class ExportCompetitionForm( Form ):
 	remove_ftp_info = forms.BooleanField( required=False, label=_('Remove FTP Upload Info') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( ExportCompetitionForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -3034,7 +3179,7 @@ def handle_export_competition( competition, export_as_template=False, remove_ftp
 def CompetitionExport( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	title = format_lazy( u'{}: {}', _('Export'), competition.name )
+	title = format_lazy( '{}: {}', _('Export'), competition.name )
 	
 	response = {}
 	if request.method == 'POST':
@@ -3076,7 +3221,7 @@ class ImportCompetitionForm( Form ):
 	import_as_template = forms.BooleanField( required=False, label=_('Import as Template (ignore Participants and Teams)') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( ImportCompetitionForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -3149,7 +3294,7 @@ def CompetitionImport( request ):
 	
 @csrf_exempt
 def CompetitionCloudUpload( request ):
-	safe_print( u'CompetitionCloudUpload: processing...' )
+	safe_print( 'CompetitionCloudUpload: processing...' )
 	response = {'errors':[], 'warnings':[], 'message':''}
 	if request.method == "POST":
 		if not authorization.validate_secret_request( request ):
@@ -3161,13 +3306,13 @@ def CompetitionCloudUpload( request ):
 			except Exception as e:
 				response['errors'].append( 'Competition Upload Error: {}'.format(e) )
 	else:
-		response['errors'].append( u'Request must be of type POST with gzip json payload.' )
-	safe_print( u'CompetitionCloudUpload: done.' )
+		response['errors'].append( 'Request must be of type POST with gzip json payload.' )
+	safe_print( 'CompetitionCloudUpload: done.' )
 	safe_print( response['message'] )
 	for e in response['errors']:
-		safe_print( u'Error:', e )
+		safe_print( 'Error:', e )
 	for w in response['warnings']:
-		safe_print( u'Error:', w )
+		safe_print( 'Error:', w )
 	return JsonResponse( response )
 
 #-----------------------------------------------------------------------

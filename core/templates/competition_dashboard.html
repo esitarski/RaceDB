@@ -105,11 +105,19 @@
 				<a class="btn btn-success" href="./Participants/{{competition.id}}/"><img src="{% static "images/glyphicons_043_group.png" %}"/>&nbsp;&nbsp;{% trans "Show Participants" %}</a>
 				
 				&nbsp;&nbsp;
-				{% if competition.using_tags %}
-					<a class="btn btn-success" href="./ParticipantRfidAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
-				{% else %}
-					<a class="btn btn-success" href="./ParticipantManualAdd/{{competition.id}}/"><img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}</a>
-				{% endif %}
+				<a class="btn btn-success" 
+					{% if competition.using_tags %}
+						{% if competition.has_rfid_reader %}
+							href="./ParticipantRfidAdd/{{competition.id}}/"
+						{% else %}
+							href="./ParticipantBarcodeAdd/{{competition.id}}/"
+						{% endif %}
+					{% else %}
+						href="./ParticipantManualAdd/{{competition.id}}/"
+					{% endif %}
+					>
+						<img src="{% static "images/glyphicons_006_user_add.png" %}"/>&nbsp;&nbsp;{% trans "Add Participants" %}
+				</a>
 				
 				&nbsp;&nbsp;
 				<a class="btn btn-success" href="./TeamsShow/{{competition.id}}/"><img src="{% static "images/glyphicons-284-t-shirt.png" %}"/>&nbsp;&nbsp;{% trans "Teams" %}</a>
@@ -121,8 +129,13 @@
 					<a class="btn btn-primary hidden-print" href="./CompetitionReports/{{competition.id}}/">{% trans "Reports" %}</a>
 				{% endif %}
 				
+				{% if competition.using_tags and not competition.has_rfid_reader %}
+					&nbsp;
+					<a class="btn btn-primary hidden-print" href="./CompetitionFoundTag/{{competition.id}}/">{% trans "Found Tag" %}</a>
+				{% endif %}
+				
 				&nbsp;
-				<button class="btn btn-primary hidden-print" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Competition Summary" %}</button>
+				<button class="btn btn-primary hidden-print" onClick="window.print()"><img src="{% static "images/glyphicons_015_print.png" %}"/>&nbsp;&nbsp;{% trans "Print Summary" %}</button>
 				
 				{% if system_info.print_tag_option != 0 and competition.any_print %}
 					&nbsp;

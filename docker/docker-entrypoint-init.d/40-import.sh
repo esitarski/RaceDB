@@ -11,9 +11,10 @@ then
     export PYTHONPATH=/RaceDB
     export sqlite3_database_fname=$SQLITEDATA
     cd /RaceDB
-    python3 ./SqliteToDB.py
+    echo "Commencing import from $SQLITEDATA"
+    python3 ./SqliteToDB.py $SQLITEDATA
     mv $SQLITEDATA ${SQLITEDATA}.bak
-    echo "Imported database from $SQLITEDATA file"
+    echo "Imported database from $SQLITEDATA"
 else
     echo "No SQLITE data to import from $SQLITEDATA"
 fi
@@ -23,6 +24,7 @@ then
     export PYTHONPATH=/RaceDB
     cd /RaceDB
     #python3 ./manage.py flush 
+    echo "Commencing import from $JSONIMPORTDATA"
     python3 ./manage.py loaddata $JSONIMPORTDATA
     mv $JSONIMPORTDATA ${JSONIMPORTDATA}.bak
     echo "Imported database from $JSONIMPORTDATA file"

@@ -1,8 +1,13 @@
 {% extends "base.html" %}
-{% block content %}
 {% load i18n %}
 {% load good_err_icon %}
 {% load crispy_forms_tags %}
+
+{% block style %}
+	thead th { position: sticky; top: 0; }
+{% endblock style %}
+
+{% block content %}
 <h2>{{title}}</h2>
 <hr/>
 {% if form %}
@@ -37,12 +42,12 @@
 			<td class="text-nowrap">{{c.date_range_year_str}}</td>
 			<td class="text-nowrap">{{c.discipline.name}} {{c.event_types_text}}</td>
 			<td>{{c.name}}</td>
-			<td style="text-align:right">{{c.get_participants.count}}</td>
+			<td style="text-align:right">{{c.num_participants}}</td>
 			<td>{{c.race_class.name}}</td>
 			<td>{{c.organizer}}</td>
 			<td class="text-center">{% if c.has_results %}<span class="is-finished" />{% endif %}</td>
 			<td>{{c.report_labels_text}}</td>
-			<td class="hidden-print">
+			<td class="hidden-print text-nowrap">
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning btn-sm" href="./CompetitionDelete/{{c.id}}/">{% trans "Delete" %}</a>
 					&nbsp;

@@ -1,5 +1,5 @@
 import datetime
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 from .views_common import *
@@ -15,15 +15,16 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	
 	payload = {}
 	payload['bib'] = result.participant.bib
-	payload['raceName'] = u'{} - {} ({})'.format( competition.title, event.name, competition.discipline.name )
+	payload['raceName'] = '{} - {} ({})'.format( competition.title, event.name, competition.discipline.name )
 	payload['raceScheduledStart'] = timezone.localtime(event.date_time).strftime( '%Y-%m-%d %H:%M' )
 	payload['winAndOut'] = getattr(event, 'win_and_out', False)
 	payload['isTimeTrial'] = (event.event_type == 1)
 	payload['primes'] = None
 	payload['raceIsRunning'] = False
 	payload["raceIsUnstarted"] = False
-	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCIID', 'NatCode', 'City', 'StateProv']
+	payload['infoFields'] = ['LastName', 'FirstName', 'Team', 'License', 'UCI ID', 'NatCode', 'City', 'StateProv']
 	payload['has_results'] = has_results
+	has_multiple_laps = False
 	
 	data = {}
 	race_times_all = []
@@ -37,16 +38,20 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 	speed_unit = 'km/h' if competition.distance_unit == 0 else 'mph'
 	distance_unit = 'km' if competition.distance_unit == 0 else 'miles'
 	
+	participant_ids = set()
 	for rr in result_list:
 		p = rr.participant
 		h = p.license_holder
+		participant_ids.add( p.id )
 		
 		info = rr.get_info_by_lap()
 		race_times, lap_kmh, lap_km = info['race_times'], info['lap_kmh'], info['lap_km']
+		has_multiple_laps |= (rr.is_finisher and len(race_times) > 2)
+		
 		d = {
 			'LastName': h.last_name,
 			'FirstName': h.first_name,
-			'Team':		p.team.name if p.team else u'',
+			'Team':		p.team.name if p.team else '',
 			'License':	h.license_code_trunc,
 			'UCIID':	h.uci_id,
 			'NatCode':	h.nation_code,
@@ -61,7 +66,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 			'status':	rr.status_text,
 		}
 		if rr.ave_kmh:
-			d['speed'] = u'{:.2f} {}'.format(rr.ave_kmh*units_conversion, speed_unit)
+			d['speed'] = '{:.2f} {}'.format(rr.ave_kmh*units_conversion, speed_unit)
 			# Get raceDistance from leader.
 			if raceDistance is None and race_times:
 				raceDistance = units_conversion * rr.ave_kmh * (race_times[-1] - race_times[0])/(60.0*60.0)
@@ -72,7 +77,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 				try:
 					firstLapDistance = units_conversion * lap_km[0]
 					lapDistance = units_conversion * lap_km[1]
-				except:
+				except Exception:
 					pass
 				
 		data[p.bib] = d
@@ -94,7 +99,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		'pos':		pos,
 		'gapValue':	gapValue,
 		'laps':		winner_laps,
-		'startOffset':	0,
+		'startOffset': 0,
 	}
 	if raceDistance:
 		catDetails['raceDistance'] = raceDistance
@@ -104,6 +109,15 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		catDetails['lapDistance'] = lapDistance
 	payload['catDetails'] = [catDetails]
 	payload['data'] = data
+	
+	Prime = event.get_prime_class()
+	primes = [
+		prime.as_dict()
+		for prime in Prime.objects.filter( event=event ).select_related('participant')
+			if prime.participant_id in participant_ids
+	]
+	payload['primes'] = primes or None;
+	payload['has_multiple_laps'] = bool(has_multiple_laps)
 	return payload
 
 '''

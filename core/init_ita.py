@@ -1,6 +1,6 @@
 import sys
 import datetime
-from xlrd import open_workbook, xldate_as_tuple
+from openpyxl import load_workbook
 import HTMLParser
 from collections import namedtuple
 from models import *
@@ -22,10 +22,10 @@ def set_attributes( obj, attributes ):
 	
 def to_int_str( v ):
 	try:
-		return u'{}'.format(int(v))
-	except:
+		return '{}'.format(int(v))
+	except Exception:
 		pass
-	return u'{}'.format(v)
+	return '{}'.format(v)
 		
 def to_str( v ):
 	return toUnicode(v)
@@ -51,11 +51,11 @@ def init_ccn( fname ):
 			try:
 				date_of_birth	= date_from_value( ur.get('DateBirth', '') )
 			except Exception as e:
-				safe_print( u'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e ) )
+				safe_print( 'Row {}: Invalid birthdate "{}" ({}) {}'.format( i, ur.get('DateBirth',''), ur, e ) )
 				continue
 				
 			if not ur.get('License',''):
-				safe_print( u'Row {}: Missing License '.format(i) )
+				safe_print( 'Row {}: Missing License '.format(i) )
 				continue
 			
 			attributes = {
@@ -64,7 +64,7 @@ def init_ccn( fname ):
 				'first_name':	to_str(ur.get('Firstname','')).strip(),
 				'gender':		gender_from_str(to_str(ur.get('Sex','m'))),
 				'date_of_birth':date_of_birth if date_of_birth and date_of_birth != invalid_date_of_birth else None,
-				'uci_code':		to_str(ur.get('Ucicode','')).strip(),
+				'uci_id':		to_str(ur.get('UCIID','')).strip(),
 				'city':			to_str(ur.get('City','')).strip(),
 				'state_prov':	to_str(ur.get('Province','')).strip(),
 				'nationality':  to_str(ur.get('Nat','')).strip(),
@@ -82,10 +82,10 @@ def init_ccn( fname ):
 				lh = LicenseHolder( **attributes )
 				lh.save()
 			
-			fields = {u'i': i}
+			fields = {'i': i}
 			fields.update( attributes )
 			safe_print(
-				u'{i:>6}: {license_code:>8} {date_of_birth:%Y/%m/%d} {uci_code}, {last_name}, {first_name}, {city}, {state_prov}, {nationality}'.format( **fields )
+				'{i:>6}: {license_code:>8} {date_of_birth:%Y/%m/%d} {uci_id}, {last_name}, {first_name}, {city}, {state_prov}, {nationality}'.format( **fields )
 			)
 			TeamHint.objects.filter( license_holder=lh ).delete()
 			
@@ -96,28 +96,25 @@ def init_ccn( fname ):
 					TeamHint( discipline=d, license_holder=lh, effective_date=effective_date, team=team )
 					break
 				
-	ur_records = []
-	wb = open_workbook( fname )
-	import_utils.datemode = wb.datemode
+	wb = load_workbook( filename=fname, read_only=True, data_only=True )
 	
 	ws = None
 	for sheet_name in wb.sheet_names():
-		safe_print( u'Reading sheet: {}'.format(sheet_name) )
+		safe_print( 'Reading sheet: {}'.format(sheet_name) )
 		ws = wb.sheet_by_name(sheet_name)
 		break
 	
 	if not ws:
-		safe_print( u'Cannot find sheet.' )
+		safe_print( 'Cannot find sheet.' )
 		return
 		
-	num_rows = ws.nrows
-	num_cols = ws.ncols
+	ur_records = []
 	for r in range(num_rows):
 		row = ws.row( r )
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(f.value).strip() for f in row]
-			safe_print( u'\n'.join(fields) )
+			fields = ['{}'.format(f.value).strip() for f in row]
+			safe_print( '\n'.join(fields) )
 			continue
 			
 		ur = dict( (f, row[c].value) for c, f in enumerate(fields) )
@@ -128,4 +125,4 @@ def init_ccn( fname ):
 			
 	process_ur_records( ur_records )
 	
-	safe_print( u'Initialization in: ', datetime.datetime.now() - tstart )
+	safe_print( 'Initialization in: ', datetime.datetime.now() - tstart )

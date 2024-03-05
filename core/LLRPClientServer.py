@@ -2,20 +2,19 @@ import re
 import socket
 import select
 import json
-import six
 import time
 import datetime
 import threading
 import argparse
 import random
-from six.moves.queue import Queue, Empty
+from queue import Queue, Empty
 
 import traceback
 
 from pyllrp import *
 from pyllrp.TagInventory import TagInventory
 from pyllrp.TagWriter import TagWriter
-from .AutoDetect import AutoDetect
+from pyllrp.AutoDetect import AutoDetect
 
 #-----------------------------------------------------------------------
 # Find a unique port for the LLRPServer.
@@ -94,7 +93,7 @@ class LLRPServer( threading.Thread ):
 		self.messageQ = messageQ
 		self.exception_termination = False
 		self.llrp_host = None
-		super(LLRPServer, self).__init__( name='LLRPServer' )
+		super().__init__( name='LLRPServer' )
 		self.daemon = True
 
 	def logMessage( self, *args ):
@@ -154,14 +153,14 @@ class LLRPServer( threading.Thread ):
 				return marshal( dict(success=success, tag=message['tag'], antenna=message['antenna'], errors=errors) ), True
 			except Exception as e:
 				return marshal( dict(success=False, tag=message['tag'], antenna=message['antenna'],
-								errors=[u'{}'.format(e), traceback.format_exc()]) ), True
+								errors=['{}'.format(e), traceback.format_exc()]) ), True
 		
 		elif cmd == 'read':
 			try:
 				tags, errors = self.readTags( antenna=message['antenna'] )
 				return marshal( dict(success=not errors, tags=tags, antenna=message['antenna'], errors=errors) ), True
 			except Exception as e:
-				return marshal( dict(success=False, antenna=message['antenna'], errors=[u'{}'.format(e), traceback.format_exc()]) ), True
+				return marshal( dict(success=False, antenna=message['antenna'], errors=['{}'.format(e), traceback.format_exc()]) ), True
 		
 		elif cmd == 'status':
 			return marshal( dict(success=True) ), True
@@ -186,7 +185,7 @@ class LLRPServer( threading.Thread ):
 			
 		try:
 			antenna = int(antenna)
-		except:
+		except Exception:
 			errors.append( 'Tag Write Failure: Invalid antenna.  Must be 1, 2, 3 or 4.' )
 			return False, errors
 		
@@ -350,7 +349,7 @@ class LLRPClient( object ):
 			s.close()
 			return response.get('success', False), response
 		except Exception as e:
-			return False, dict(errors=[u'{}'.format(e)])
+			return False, dict(errors=['{}'.format(e)])
 	
 	def write( self, tag, antenna ):
 		return self.sendCmd( cmd='write', tag=tag, antenna=antenna )
@@ -362,10 +361,10 @@ class LLRPClient( object ):
 		return self.sendCmd( cmd='status' )
 	
 def writeLog( message ):
-	print ( u'[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message ) )
+	print ( '[LLRPServer {}]  {}'.format( datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message ) )
 
 def doAutoDetect():
-	LLRPHost = AutoDetect( callback=lambda m: writeLog('AutoDetect Checking: ' + m) )
+	LLRPHost, hostname = AutoDetect()
 	if LLRPHost:
 		writeLog( 'AutoDetect: LLRP Reader found on ({}:{})'.format(LLRPHost, 5084) )
 	return LLRPHost

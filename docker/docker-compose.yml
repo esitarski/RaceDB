@@ -1,7 +1,7 @@
 version: "3.4"
 services:
     db:
-        image: postgres:11-alpine
+        image: postgres:15-alpine
         restart: always
         container_name: postgresql_racedb_app
         environment:
@@ -18,7 +18,7 @@ services:
         restart: always
         container_name: racedb_app
         ports:
-            - "80:8000"
+            - "80:8000" 
         environment:
             - sqlite3_database_fname:/racedb-data/RaceDB.sqlite3
             - PYTHONPATH:/RaceDB
@@ -40,4 +40,3 @@ volumes:
 
 networks:
     racedb:
-

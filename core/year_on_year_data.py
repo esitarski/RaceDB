@@ -1,9 +1,8 @@
-import six
 import datetime
 import operator
 import itertools
 from collections import defaultdict
-StringIO = six.StringIO()
+from io import StringIO
 
 from . import utils
 from .models import *
@@ -89,7 +88,7 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 	attendees_men_total = sum( yoy['attendees_men_total'] for yoy in year_on_year )
 	attendees_women_total = sum( yoy['attendees_women_total'] for yoy in year_on_year )
 	def add_year_label( a ):
-		return [['Year', 'Total']] + [[u'{}'.format(y),{'v':v, 'f':'{}: {:.2f}%'.format(v, 0.0 if not att else (v*100.0/att))}]
+		return [['Year', 'Total']] + [['{}'.format(y),{'v':v, 'f':'{}: {:.2f}%'.format(v, 0.0 if not att else (v*100.0/att))}]
 				for y, v, att in zip(years, a, license_holders_total_year)]
 		
 	last_year_but_not_this_year = [0]
@@ -139,19 +138,19 @@ def year_on_year_data( discipline=None, race_class=None, organizers=None, includ
 			competition_counts[event.competition] += count
 		
 		out = StringIO()
-		out.write( u'<div style="padding:5px 5px 5px 5px">' )
-		out.write( u'<strong>{}:</strong>&nbsp;{}<br/>'.format(participants_total, d.strftime('%Y-%m-%d')) )
+		out.write( '<div style="padding:5px 5px 5px 5px">' )
+		out.write( '<strong>{}:</strong>&nbsp;{}<br/>'.format(participants_total, d.strftime('%Y-%m-%d')) )
 		
 		competition_last = None
 		for event, count in zip(events, counts):
 			if event.competition != competition_last:
 				if competition_last is not None:
-					out.write( u'</ul>' )
-				out.write( u'<strong>{}:&nbsp;</strong>&nbsp;{}<ul>'.format(competition_counts[event.competition], event.competition.name.replace(u' ', u'&nbsp;') ) )
+					out.write( '</ul>' )
+				out.write( '<strong>{}:&nbsp;</strong>&nbsp;{}<ul>'.format(competition_counts[event.competition], event.competition.name.replace(' ', '&nbsp;') ) )
 				competition_last = event.competition
-			out.write( u'<li><strong>{}:</strong>&nbsp;{}</li>'.format(count, event.name.replace(u' ', u'&nbsp;')) )
+			out.write( '<li><strong>{}:</strong>&nbsp;{}</li>'.format(count, event.name.replace(' ', '&nbsp;')) )
 		
-		out.write( u'</ul></div>' )
+		out.write( '</ul></div>' )
 		return [[d.year, d.month-1, d.day], participants_total, out.getvalue()]
 		
 	calendar = sorted( format_competitions_events(d, v) for d, v in events_by_day.items() )

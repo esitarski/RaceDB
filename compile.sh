@@ -1,13 +1,13 @@
 #!/bin/bash
 
 OSNAME=$(uname -s)
-PYTHONVER=python3.8
+PYTHONVER=python3.10
 ENVDIR=env
 if [ "$OSNAME" == "Darwin" ]; then
-	PYTHONVER="python3.8"
+	PYTHONVER="python3.10"
 fi
 if [ "$OSNAME" == "Linux" ]; then
-	PYTHONVER="python3.8"
+	PYTHONVER="python3.10"
 fi
 
 checkEnvActive() {

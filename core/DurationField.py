@@ -6,7 +6,6 @@ from django.forms.fields import CharField
 from django.forms.utils import ValidationError as FormValidationError
 
 import re
-import six
 import datetime
 import math
 
@@ -40,10 +39,10 @@ class formatted_timedelta(datetime.timedelta):
 		return format_seconds( self.total_seconds(), high_precision=True )
 
 	def format_no_decimals( self ):
-		return format_seconds( self.total_seconds(), False )
+		return format_seconds( self.total_seconds(), high_precision=False )
 
 	def __unicode__( self ):
-		return u'{}'.format(self.__repr__())
+		return '{}'.format(self.__repr__())
 		
 	def __str__( self ):
 		return self.__repr__()
@@ -51,10 +50,10 @@ class formatted_timedelta(datetime.timedelta):
 class DurationFormField( CharField ):
 	def __init__(self, *args, **kwargs):
 		self.max_length = 13
-		super(DurationFormField, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 
 	def clean(self, value):
-		value = super(DurationFormField, self).clean(value)
+		value = super().clean(value)
 		value = value.strip()
 		if value and not reDuration.match(value):
 			raise FormValidationError('Must be in format [-]HH:MM:SS.ddd')
@@ -68,9 +67,9 @@ class DurationField( FloatField ):
 
 	def __init__( self, *args, **kwargs ):
 		d = kwargs.get('default',None)
-		if isinstance(d, six.integer_types) or isinstance(d, float):
+		if isinstance(d, (int, float)):
 			kwargs['default'] = formatted_timedelta( seconds=d )
-		super( DurationField, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 	
 	def to_python( self, value ):
 		if value is None:
@@ -82,7 +81,7 @@ class DurationField( FloatField ):
 		if isinstance(value, datetime.timedelta):
 			return formatted_timedelta( seconds=value.total_seconds() )
 			
-		if isinstance(value, six.integer_types) or isinstance(value, float):
+		if isinstance(value, (int, float)):
 			return formatted_timedelta( seconds=value )
 			
 		if isinstance(value, datetime.time):
@@ -104,7 +103,7 @@ class DurationField( FloatField ):
 			for f in value.split(':'):
 				try:
 					secs = secs * 60.0 + float(f)
-				except:
+				except Exception:
 					secs *= 60.0
 			return formatted_timedelta( seconds = sgn * secs )
 		except Exception as e:

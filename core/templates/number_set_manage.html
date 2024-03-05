@@ -30,7 +30,7 @@
 		<th>{% trans "DOB" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCIID" %}</th>
+		<th class="text-nowrap">{% trans "UCI ID" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
 </thead>
@@ -44,13 +44,13 @@
 		{% with lh=nse.license_holder %}
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td class="text-right"><strong>{{nse.bib}}</strong></td>
-			<td>{% if nse.date_issued %}{{nse.date_issued|date_short}}{% endif %}</td>
-			<td>{% if nse.date_lost %}<strong>{% trans "Lost"%} {{nse.date_lost|date_short}}</strong>{% else %}<span class="is-good"/>{% endif %}</td>
+			<td class="text-nowrap">{% if nse.date_issued %}{{nse.date_issued|date_short}}{% endif %}</td>
+			<td class="text-nowrap">{% if nse.date_lost %}<strong>{% trans "Lost"%}<br/>{{nse.date_lost|date_short}}</strong>{% else %}<span class="is-good"/>{% endif %}</td>
 			<td><strong>{{lh.full_name}}</strong></td>
 			<td>{{lh.get_gender_display}}</td>
-			<td>{{lh.date_of_birth|date_short}}</td>
+			<td class="text-nowrap">{{lh.date_of_birth|date_short}}</td>
 			<td>{{lh.get_location}}</td>
-			<td>{{lh.license_code_trunc}}</td>
+			<td class="text-nowrap">{{lh.license_code_trunc}}</td>
 			<td class="text-nowrap">{{lh.get_flag_uci_id_html}}</td>
 			<td class="hidden-print">
 				{% if nse.date_lost %}

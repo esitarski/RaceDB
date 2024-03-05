@@ -1,4 +1,3 @@
-import six
 import types
 
 # Put the encodings you expect in sequence.
@@ -18,7 +17,7 @@ encodings = (
 def to_unicode(s):
 	''' Try a number of encodings in an attempt to convert the text to unicode. '''
 	if not isinstance( s, bytes ):
-		return u'{}'.format(s)
+		return '{}'.format(s)
 
 	for encoding in encodings:
 		try:
@@ -37,10 +36,7 @@ try:
 			conn.text_factory = to_unicode
 			return conn
 
-		if six.PY2:
-			DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, None, DatabaseWrapper )
-		else:
-			DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, DatabaseWrapper )
+		DatabaseWrapper.get_new_connection = types.MethodType( get_new_connection_tolerant, DatabaseWrapper )
 		DatabaseWrapper.get_new_connection_is_patched = True
 except Exception as e:
 	pass	# If we get an sqlite version error, ignore and let another part of Django raise it.

@@ -5,9 +5,10 @@ import math
 import getpass
 import glob
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .models import *
+from .get_version import get_version
 from .pdf import PDF
 from .encode_code128 import encode_code128
 
@@ -117,7 +118,7 @@ class Rect( object ):
 	
 	def draw_text_to_fit( self, pdf, text, options=AlignCenter|AlignMiddle, consider_descenders=False ):
 		if not isinstance(text, str):
-			text = u'{}'.format(text)
+			text = '{}'.format(text)
 		
 		descenders = has_descenders(text) if consider_descenders else False
 		
@@ -157,14 +158,15 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 	page_height = 2.4 * inches_to_points
 	
 	pdf = PDF( 'L', (page_height, page_width) )
-	pdf.set_author( RaceDBVersion )
+	pdf.set_author( get_version() )
 	pdf.set_title( 'Race Bib Number: {}'.format(bib) )
 	pdf.set_subject( 'Bib number and rider info to be printed as a label to apply on the chip tag.' )
 	pdf.set_creator( getpass.getuser() )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
 	
-	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
-	pdf.add_font('Arrows', style='', fname=get_font_file('Arrrows-Regular.ttf'), uni=True)
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
+	pdf.add_font('Arrows', style='', fname=get_font_file('Arrrows-Regular.ttf'))	# Yes, 3 r's.
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 		
 	margin = min(page_height, page_width) / 18.0
 	sep = margin / 2.5
@@ -225,20 +227,20 @@ def print_bib_tag_label( participant, sponsor_name=None, left_page=True, right_p
 			if license_code:
 				draw_code128( pdf, license_code, barcode_rect.x, barcode_rect.y, barcode_rect.width, barcode_rect.height )
 		
-	pdf_str = pdf.to_bytes()
-	return pdf_str
+	return pdf.to_bytes()
 
 def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches=5.9, heightInches=3.9, copies=1, onePage=False ):
 	page_width = widthInches * inches_to_points
 	page_height = heightInches * inches_to_points
 	
 	pdf = PDF( 'L', (page_height * (copies if onePage else 1), page_width) )
-	pdf.set_author( RaceDBVersion )
+	pdf.set_author( get_version() )
 	pdf.set_title( 'Race Bib Number: {}'.format(bib) )
 	pdf.set_subject( 'Bib number.' )
 	pdf.set_creator( getpass.getuser() )
 	pdf.set_keywords( 'RaceDB CrossMgr Bicycle Racing Software Database Road Time Trial MTB CycloCross RFID' )
-	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 		
 	margin = min(page_height, page_width) / 17.5
 	sep = margin / 2.5
@@ -276,8 +278,7 @@ def print_bib_on_rect( bib, license_code=None, name=None, logo=None, widthInches
 			name_rect = Rect( x, page_height-margin+page_y, page_width-text_margin - x, text_height )
 			name_rect.draw_text_to_fit( pdf, name, Rect.AlignRight|Rect.AlignMiddle )
 	
-	pdf_str = pdf.to_bytes()
-	return pdf_str
+	return pdf.to_bytes()
 	
 def print_body_bib( participant, copies=2, onePage=False ):
 	copies = int(copies)
@@ -312,7 +313,7 @@ inch = 72.0
 cm = inch / 2.54 * 1.04
 
 def uci_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
-	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+	pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt G.ttf'))
 	pdf.set_font( 'din1451alt', '', 16 )
 
 	w_page = 8.5*inch
@@ -356,7 +357,7 @@ def print_uci_bib( participant, copies=2 ):
 #---------------------------------------------------------------------------------------------------------
 def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
 	if first_name:
-		name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+		name = '{}  {}.'.format( last_name, first_name[:1] ).upper()
 	else:
 		name = last_name.upper()
 
@@ -387,6 +388,8 @@ def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
 
 	x_header_margin = 0.5*cm
 	pdf.rect( x, y, w_bib, h_name_header )
+	
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 	pdf.set_font( 'Helvetica', 'B', 16 )
 	pdf.fit_text_in_rectangle( x+x_header_margin, y, w_bib-2*x_header_margin, h_name_header, name )
 
@@ -395,11 +398,11 @@ def aso_bib( pdf, bib, first_name='', last_name='', competition_name='' ):
 	
 	if bib > 9999:
 		# Regular
-		pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'), uni=True)
+		pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'))
 		pdf.set_font('din1451alt', '', 16 )
 	else:
 		# Bold
-		pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+		pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'))
 		pdf.set_font('din1451alt-g', '', 16 )
 
 	#pdf.rect( x_text, y_text, w_text, h_text )
@@ -420,7 +423,7 @@ def print_aso_bib( participant, copies=2 ):
 
 def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_name='' ):
 	if first_name:
-		name = u'{}  {}.'.format( last_name, first_name[:1] ).upper()
+		name = '{}  {}.'.format( last_name, first_name[:1] ).upper()
 	else:
 		name = last_name.upper()
 	
@@ -444,6 +447,8 @@ def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_nam
 	x_text = x + x_text_margin
 	
 	pdf.add_page()
+	
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
 
 	for p in range(0, 2):
 		y_text = y + h_name_header + y_text_margin
@@ -457,11 +462,11 @@ def aso_bib_two_per_page( pdf, bib, first_name='', last_name='', competition_nam
 		
 		if bib > 9999:
 			# Regular
-			pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'), uni=True)
+			pdf.add_font('din1451alt', style='', fname=get_font_file('din1451alt.ttf'))
 			pdf.set_font('din1451alt', '', 16 )
 		else:
 			# Bold
-			pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'), uni=True)
+			pdf.add_font('din1451alt-g', style='', fname=get_font_file('din1451alt G.ttf'))
 			pdf.set_font('din1451alt-g', '', 16 )
 
 		#pdf.rect( x_text, y_text, w_text, h_text )
@@ -502,7 +507,7 @@ def print_id_label( participant ):
 	page_height = 2.4 * inches_to_points
 	
 	pdf = PDF( 'L', (page_height, page_width) )
-	pdf.set_author( RaceDBVersion )
+	pdf.set_author( get_version() )
 	pdf.set_title( 'Bib Number: {}'.format(bib) )
 	pdf.set_subject( 'Rider ID and Emergency Information.' )
 	pdf.set_creator( getpass.getuser() )
@@ -521,6 +526,8 @@ def print_id_label( participant ):
 
 	leftArrow, rightArrow = chr(172), chr(174)
 	
+	pdf.add_font('Helvetica', style='', fname=get_font_file('Helvetica.ttf'))
+	
 	font_name = 'Helvetica'
 	pdf.add_page()
 	pdf.set_font( font_name, 'b' )
@@ -530,43 +537,42 @@ def print_id_label( participant ):
 	pdf.set_font( font_name )
 	info = []
 	info.append(
-		['', u',  '.join([
-			u'Age: {}'.format(license_holder.get_age()),
-			u'Gender: {}'.format(license_holder.get_gender_display()),
-			u'Nation: {}'.format(license_holder.nation_code),
+		['', ',  '.join([
+			'Age: {}'.format(license_holder.get_age()),
+			'Gender: {}'.format(license_holder.get_gender_display()),
+			'Nation: {}'.format(license_holder.nation_code),
 			]),
 		]
 	)
 	info.append( ['', ''] )
 	if participant.team:
-		info.append( ['', u'{}'.format(participant.team.name) ] )
+		info.append( ['', '{}'.format(participant.team.name) ] )
 	info.append(
-		['', u',  '.join([
-			u'Bib: {}'.format(participant.bib),
-			u'Category: {}'.format(participant.category.code_gender if participant.category else ''),
+		['', ',  '.join([
+			'Bib: {}'.format(participant.bib),
+			'Category: {}'.format(participant.category.code_gender if participant.category else ''),
 			]),
 		]
 	)
 	if license_holder.phone:
 		info.append(
-			['', u'  '.join([
-				u'Phone: {}'.format(format_phone(license_holder.phone)),
+			['', '  '.join([
+				'Phone: {}'.format(format_phone(license_holder.phone)),
 				]),
 			]
 		)
 	
 	info.append( ['',''] )
 	if license_holder.emergency_medical:
-		info.append( ['', u'Medical Alert: {}'.format(license_holder.emergency_medical)] )
-	info.append( ['', u'Emergency Contact:'] )
+		info.append( ['', 'Medical Alert: {}'.format(license_holder.emergency_medical)] )
+	info.append( ['', 'Emergency Contact:'] )
 	if license_holder.emergency_contact_name:
-		info.append( ['', u'  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
-	info.append( ['', u'  {}'.format(format_phone(license_holder.emergency_contact_phone) or 'No phone number provided')] )
+		info.append( ['', '  {}'.format(license_holder.emergency_contact_name or 'None provided')] )
+	info.append( ['', '  {}'.format(format_phone(license_holder.emergency_contact_phone) or 'No phone number provided')] )
 	
 	pdf.table_in_rectangle( field.x, field.y, field.width, field.height, info,
 		leftJustifyCols = [0,1], hasHeader=False, horizontalLines=False )
 	
 	footer.draw_text_to_fit( pdf, system_name, Rect.AlignRight, consider_descenders=True )
 	
-	pdf_str = pdf.to_bytes()
-	return pdf_str
+	return pdf.to_bytes()

@@ -3,6 +3,11 @@
 {% load crispy_forms_tags %}
 {% load paginate_html %}
 {% load non_empty_list %}
+
+{% block style %}
+	thead th { position: sticky; top: 0; }
+{% endblock style %}
+
 {% block content %}
 
 {% include "hub_nav.html" %}

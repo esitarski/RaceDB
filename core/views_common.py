@@ -12,7 +12,7 @@ from .WriteLog import logCall
 try:
 	locale.setlocale(locale.LC_ALL, "")
 except Exception as e:
-	safe_print( u'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e) )
+	safe_print( 'Error: locale.setlocale(locale.LC_ALL, "") fails with "{}".'.format(e) )
 
 from django.db.models import Q
 from django.db import transaction, IntegrityError
@@ -20,7 +20,7 @@ from django.utils.text import format_lazy
 
 try:
 	from django.contrib.auth.views import logout
-except:
+except Exception:
 	from django.contrib.auth import logout
 
 from django.http import HttpResponse, HttpResponseRedirect
@@ -35,7 +35,7 @@ from django.forms.models import inlineformset_factory
 from django.forms.formsets import formset_factory
 
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from django.utils import timezone
 
@@ -91,7 +91,7 @@ def access_validation( selfserve_ok=False, no_cache=True ):
 				elif 'eventId' in kwargs and 'eventType' in kwargs:
 					try:
 						eventType = int(kwargs['eventType'])
-					except:
+					except Exception:
 						eventType = -1
 					if eventType == 0:
 						event = EventMassStart.objects.filter(id=kwargs['eventId']).select_related('competition').first()
@@ -154,7 +154,7 @@ class SearchForm( Form ):
 		additional_buttons_on_new_row = kwargs.pop('additional_buttons_on_new_row', False)
 		hide_cancel_button = kwargs.pop( 'hide_cancel_button', False )
 		
-		super(SearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline search'
@@ -184,11 +184,19 @@ class SearchForm( Form ):
 				button_args.append( HTML('&nbsp;' * 8) )
 			for ab in additional_buttons:
 				name, value, cls = ab[:3]
+				if not name:	# If the name is blank, start a new row.
+					if button_args and isinstance(button_args[-1], HTML):
+						button_args = button_args[:-1]
+					self.helper.layout.append( Row( *button_args ) )
+					button_args = []
+					continue
+					
 				if len(ab) == 3:
 					button_args.append( Submit( name, value, css_class = cls + " hidden-print") )
 		
 		self.helper.layout.append(  HTML( '{{ form.errors }} {{ form.non_field_errors }}' ) )
-		self.helper.layout.append( Row( *button_args ) )
+		if button_args:
+			self.helper.layout.append( Row( *button_args ) )
 
 #--------------------------------------------------------------------------------------------
 
@@ -210,15 +218,15 @@ def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, pri
 		btns.append( CancelButton(cancel_alias) )
 	
 	if print_button:
-		btns.append( HTML(u'&nbsp;' * 4) )
-		btns.append( HTML(format_lazy( u'<button class="btn btn-primary hidden-print" onClick="window.print()">{}</button>', print_button) ) )
+		btns.append( HTML('&nbsp;' * 4) )
+		btns.append( HTML(format_lazy( '<button class="btn btn-primary hidden-print" onClick="window.print()">{}</button>', print_button) ) )
 	
 	if additional_buttons:
 		if additional_buttons_on_new_row:
 			form.helper.layout.append( Div(*btns, css_class='row') )
 			btns = []
 		else:
-			btns.append( HTML(u'&nbsp;' * 4) )
+			btns.append( HTML('&nbsp;' * 4) )
 		
 		for i, ab in enumerate(additional_buttons):
 			name, value, cls = ab[:3]
@@ -239,7 +247,7 @@ def GenericModelForm( ModelClass ):
 		def __init__( self, *args, **kwargs ):
 			self.button_mask = kwargs.pop( 'button_mask', [] )
 			
-			super(GMForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
@@ -250,7 +258,7 @@ def GenericModelForm( ModelClass ):
 	return GMForm
 
 def GenericNew( ModelClass, request, ModelFormClass=None, template=None, additional_context={}, instance_fields={} ):
-	title = format_lazy(u'{} {}', _('New'), ModelClass._meta.verbose_name)
+	title = format_lazy('{} {}', _('New'), ModelClass._meta.verbose_name)
 	
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
@@ -283,7 +291,7 @@ def GenericEdit( ModelClass, request, instanceId, ModelFormClass=None, template=
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = True
 	
-	title = format_lazy(u'{} {}', _('Edit'), ModelClass._meta.verbose_name)
+	title = format_lazy('{} {}', _('Edit'), ModelClass._meta.verbose_name)
 	if request.method == 'POST':
 		form = ModelFormClass( request.POST, button_mask=EDIT_BUTTONS, instance=instance )
 		if form.is_valid():
@@ -320,7 +328,7 @@ def GenericDelete( ModelClass, request, instanceId, ModelFormClass = None, templ
 	ModelFormClass = ModelFormClass or GenericModelForm(ModelClass)
 	isEdit = False
 	
-	title = format_lazy( u'{} {} ({})', _('Delete'), ModelClass._meta.verbose_name, _('are you sure? - there is no undo.') )
+	title = format_lazy( '{} {} ({})', _('Delete'), ModelClass._meta.verbose_name, _('are you sure? - there is no undo.') )
 	if request.method == 'POST':
 		instance.delete()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
@@ -376,9 +384,9 @@ def pushUrl( request, name, *args, **kwargs ):
 		name = name[:-1]
 	target = getContext(request, 'cancelUrl' if cancelUrl else 'path')
 	if args:
-		url = u'{}{}/{}/'.format( target, name, u'/'.join( u'{}'.format(a) for a in args ) )
+		url = '{}{}/{}/'.format( target, name, '/'.join( '{}'.format(a) for a in args ) )
 	else:
-		url = u'{}{}/'.format( target, name )
+		url = '{}{}/'.format( target, name )
 	return url
 
 def popPushUrl( request, name, *args, **kwargs ):
@@ -402,7 +410,7 @@ def getQuery( filter_name, request, queryName = 'q' ):
 	request.session[filter_name] = query
 	return query
 
-def applyFilter( query, objects, keyFunc = lambda x: u'{}'.format(x), doSort = True, reverse = False ):
+def applyFilter( query, objects, keyFunc = lambda x: '{}'.format(x), doSort = True, reverse = False ):
 	query = utils.normalizeSearch( query )
 	if query:
 		qFields = query.split()

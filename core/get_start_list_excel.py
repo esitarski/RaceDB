@@ -1,10 +1,11 @@
 import os
 import datetime
 import xlsxwriter
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'Wave',
@@ -17,7 +18,7 @@ data_headers = (
 	'City', 'StateProv',
 	'License',
 	'NatCode',
-	'UCIID',
+	'UCI ID',
 	'Prereg',
 	'Paid',
 	'SeasonsPass',
@@ -67,10 +68,10 @@ def get_start_list_excel( event ):
 				lh = p.license_holder
 				data = [
 					w.name,
-					p.category.code if p.category else u'None',
+					p.category.code if p.category else 'None',
 					p.bib if p.bib else 'None',
 					lh.last_name, lh.first_name,
-					u'{}'.format(p.team_name),
+					'{}'.format(p.team_name),
 					lh.get_gender_display(),
 					lh.date_of_birth.strftime('%Y-%m-%d'),
 					lh.city, lh.state_prov,
@@ -79,7 +80,7 @@ def get_start_list_excel( event ):
 					p.paid,
 					lh.pk in seasons_pass,
 					p.confirmed,
-					p.note if p.note else u'',
+					p.note if p.note else '',
 				]
 				row = write_row_data( ws, row, data )
 	elif event.event_type == 1:
@@ -90,10 +91,10 @@ def get_start_list_excel( event ):
 			data = [
 				timezone.localtime(p.clock_time).strftime('%H:%M:%S') if p.clock_time else p.clock_time,
 				p.start_time,
-				p.category.code if p.category else u'None',
+				p.category.code if p.category else 'None',
 				p.bib if p.bib else 'None',
 				lh.last_name, lh.first_name,
-				u'{}'.format(p.team_name),
+				'{}'.format(p.team_name),
 				lh.get_gender_display(),
 				lh.date_of_birth.strftime('%Y-%m-%d'),
 				lh.city, lh.state_prov,
@@ -102,10 +103,11 @@ def get_start_list_excel( event ):
 				p.paid,
 				lh.pk in seasons_pass,
 				p.confirmed,
-				p.note if p.note else u'',
+				p.note if p.note else '',
 			]
 			row = write_row_data( ws, row, data, format_list )
 		
-			
+	add_excel_info( wb )
+				
 	wb.close()
 	return output.getvalue()

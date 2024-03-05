@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.db.models.aggregates import Max
 import xlsxwriter
 
@@ -7,6 +7,7 @@ import datetime
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'LastName', 'FirstName',
@@ -16,7 +17,7 @@ data_headers = (
 	'Email',
 	'Phone',
 	'License',
-	'NatCode', 'UCIID',
+	'NatCode', 'UCI ID',
 	'Emergency Contact', 'Emergency Phone', 'Medical Alert',
 	'ZipPostal',
 )
@@ -53,7 +54,7 @@ def get_license_holder_excel( q = None ):
 	
 	#disciplines = list( Discipline.objects.filter(id__in=Competition.objects.all().values_list('discipline',flat=True).distinct() ) )
 	disciplines = []
-	local_headers = list(data_headers) + [u'{} Team'.format(d.name) for d in disciplines]
+	local_headers = list(data_headers) + ['{} Team'.format(d.name) for d in disciplines]
 	
 	row = write_row_data( ws, 0, local_headers, title_format )
 	for lh in LicenseHolder.objects.filter(q):
@@ -75,8 +76,10 @@ def get_license_holder_excel( q = None ):
 			lh.emergency_medical,
 			lh.zip_postal,
 		]
-		data.extend( (team.name if team else u'Independent') for team in lh.get_teams_for_disciplines(disciplines) )
+		data.extend( (team.name if team else 'Independent') for team in lh.get_teams_for_disciplines(disciplines) )
 		row = write_row_data( ws, row, data )
-			
+	
+	add_excel_info( wb )
+	
 	wb.close()
 	return output.getvalue()

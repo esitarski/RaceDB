@@ -34,6 +34,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django_extensions',
     'crispy_forms',
+    'crispy_bootstrap3',
     'core',
 )
 
@@ -62,6 +63,7 @@ ROOT_URLCONF = 'RaceDB.urls'
 WSGI_APPLICATION = 'RaceDB.wsgi.application'
 
 # Crispy forms configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3"
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_FAIL_SILENTLY = not DEBUG
 
@@ -139,8 +141,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join( BASE_DIR, 'RaceDB', 'static_root' )
+STATIC_ROOT=os.path.join(BASE_DIR, 'static')
+try:
+	from . import StaticUrl
+	STATIC_URL = StaticUrl.STATIC_URL
+except ImportError:
+	STATIC_URL = '/static/'
+
+# Path where media is stored
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+try:
+	from . import MediaUrl
+except ImportError:
+	MEDIA_URL = '/media/'
 
 TEMPLATES = [
 {
@@ -156,6 +169,7 @@ TEMPLATES = [
 			'django.template.context_processors.media',
 			'django.template.context_processors.static',
 			'django.template.context_processors.tz',
+			'django.template.context_processors.request',
 			'django.contrib.messages.context_processors.messages',
 		],
 		'loaders': [
@@ -183,7 +197,10 @@ if os.path.exists(r'c:\Projects\RaceDBDeploy') or 'home/nloaner' in __file__  or
 				'django.template.context_processors.media',
 				'django.template.context_processors.static',
 				'django.template.context_processors.tz',
+				'django.template.context_processors.request',
 				'django.contrib.messages.context_processors.messages',
 			],
 		},
 	}]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

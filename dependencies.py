@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import sys
-import shutil
 import argparse
 import subprocess
 import platform
@@ -9,12 +8,14 @@ import platform
 is_windows = (platform.system() == 'Windows')
 
 def update_dependencies( upgrade ):
+	pip_cmd = 'pip3'
+	
 	print( 'Updating Dependencies...' )
 	
-	py = sys.executable
-	args = ["pip", "install", "-r", "requirements.txt"]
 	if upgrade:
-		args = ["pip", "install", "--upgrade", "-r", "requirements.txt"]
+		args = [pip_cmd, "install", "--upgrade", "-r", "requirements.txt"]
+	else:
+		args = [pip_cmd, "install", "-r", "requirements.txt"]
 	print( ' '.join(args) )
 	subprocess.call( args )
 
@@ -26,8 +27,9 @@ def update_dependencies( upgrade ):
 				os.remove( fname )
 
 if __name__ == '__main__':
-	if sys.version_info.major != 3:
-		print("Python 3 is required for RaceDB. Please upgrade. Python {}.{} is no longer supported".format(sys.version_info.major, sys.version_info.minor))
+	python_min = (3,7)
+	if sys.version_info[:len(python_min)] < python_min:
+		print("Python {} or later is required for RaceDB. Please upgrade".format(python_min))
 		sys.exit(1)
 	parser = argparse.ArgumentParser( description='Update RaceDB Dependencies' )
 	parser.add_argument(

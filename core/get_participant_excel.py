@@ -2,11 +2,12 @@ import os
 import datetime
 import xlsxwriter
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 from . import utils
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'LastName', 'FirstName',
@@ -14,7 +15,7 @@ data_headers = (
 	'DOB',
 	'City', 'StateProv', 'Nationality',
 	'Email',
-	'License', 'UCICode',
+	'License', 'UCI ID',
 	'Emergency Contact', 'Emergency Phone',
 	'ZipPostal',
 	'Category',
@@ -89,14 +90,14 @@ def get_participant_excel( q = None ):
 			lh.nationality,
 			lh.email,
 			lh.license_code,
-			lh.uci_code,
+			lh.uci_id,
 			lh.emergency_contact_name,
 			lh.emergency_contact_phone,
 			lh.zip_postal,
-			p.category.code_gender if p.category else u'',
-			p.bib if p.bib else u'',
-			p.tag if p.tag else u'',
-			p.team.name if p.team else u'',
+			p.category.code_gender if p.category else '',
+			p.bib if p.bib else '',
+			p.tag if p.tag else '',
+			p.team.name if p.team else '',
 			p.get_role_display(),
 			p.confirmed,
 			p.paid,
@@ -109,6 +110,8 @@ def get_participant_excel( q = None ):
 		for e in optional_events:
 			data.append( e.is_participating(p) )
 		row = write_row_data( ws, row, data )
-			
+	
+	add_excel_info( wb )
+	
 	wb.close()
 	return output.getvalue()

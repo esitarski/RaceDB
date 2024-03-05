@@ -2,7 +2,11 @@
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
-]{% load format_time_no_decimals %}
+{% load format_time_no_decimals %}
+{% load format_field %}
+{% load getattr %}
+{% load formatattr %}
+{% load isnumber %}
 {% load to_js %}
 
 {% block style %}
@@ -10,14 +14,17 @@
 	margin-left:-10px;
 	margin-right:-10px;
 }
+.lpad {
+	margin-left: 8px;
+}
 {% endblock style %}
 
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
-       'version':'1','packages':['corechart']}]}"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>       
 {% endblock srcjavascript %}
 
 {% block javascript %}
+google.charts.load('current', {'packages':['corechart']});
 google.setOnLoadCallback(onLoad);
 
 var payload = {{payload|to_js}};
@@ -69,184 +76,7 @@ function getOrdinal( n ) {
 	return n + (s[(v-20)%10]||s[v]||s[0]);
 }
 
-function byte2Hex(n) {
-	var nybHexString = "0123456789ABCDEF";
-	return String(nybHexString.substr((n >> 4) & 0x0F,1)) + nybHexString.substr(n & 0x0F,1);
-}
-
-function RGB2Color(r,g,b) {
-	return '#' + byte2Hex(r) + byte2Hex(g) + byte2Hex(b);
-}
-
-function makeColorGradient(frequency1, frequency2, frequency3,
-                             phase1, phase2, phase3,
-                             center, width, len)
-{
-	if (len == undefined)      len = 50;
-	if (center == undefined)   center = 128;
-	if (width == undefined)    width = 127;
-
-	var grad = [];
-	for (var i = 0; i <= len; ++i)
-	{
-		var red = Math.sin(frequency1*i + phase1) * width + center;
-		var grn = Math.sin(frequency2*i + phase2) * width + center;
-		var blu = Math.sin(frequency3*i + phase3) * width + center;
-		grad.push( RGB2Color(red,grn,blu) );
-	}
-	return grad.slice(1);  // Skip the first pink colour.
-}
-
-function lighterColor( k ) {
-	var s = '#';
-	for( var i = 0; i < 3; ++i )
-	{
-		var c = parseInt(k.substring(1 + i*2, 1 + i*2 + 2), 16);
-		c += (255 - c) * 0.6;
-		c = ~~c;
-		s += (c < 16 ? '0' : '') + c.toString(16);
-	}
-	return s;
-}
-
-function drawSegment( c, x, y, w, h, color, colorLighter ) {
-	c.save();
-	
-	var gr = c.createLinearGradient( x, y, x, y+h );
-	gr.addColorStop(0.0, color);
-	gr.addColorStop(0.33, colorLighter);
-	gr.addColorStop(1.0, color );
-	c.fillStyle = gr;
-	c.fillRect( x, y, w, h );
-	if( color != '#FFFFFF' )
-	{
-		c.strokeStyle = '#000';
-		c.strokeRect( x, y, w, h );
-	}
-	c.restore();
-}
-
-function drawDiamond( c, xCenter, yCenter, radius ) {
-	c.save();
-	
-	c.beginPath();
-	c.moveTo( xCenter + radius, yCenter );
-	c.lineTo( xCenter         , yCenter - radius );
-	c.lineTo( xCenter - radius, yCenter );
-	c.lineTo( xCenter         , yCenter + radius );
-	c.closePath();
-	
-	var grd = c.createRadialGradient( 0+ xCenter, - radius*0.50 + yCenter, 0, 0 + xCenter, radius + 1 + yCenter, radius );
-	grd.addColorStop(0, '#FFFFFF');
-	grd.addColorStop(1, 'rgb(220,220,0)');
-	
-	c.fillStyle = 'rgb(220,220,0)';
-	c.fill();
-	c.fillStyle = grd;
-	c.fill();
-	
-	c.lineWidth = 1.0;
-	c.strokeStyle = 'rgb(128,128,128)';
-	c.stroke();
-	
-	c.restore();
-}
-
-function drawStar( c, xCenter, yCenter, numPoints, radius, radiusInner ) {
-	c.save();
-	
-	c.beginPath();
-	var angle = (Math.PI * 2.0) / numPoints;
-	var angle2 = angle / 2.0;
-	c.moveTo( 0 + xCenter, -radius + yCenter );
-	for( var p = 0; p < numPoints; ++p ) {
-		var a = p * angle + angle2 + Math.PI / 2.0;
-		c.lineTo( Math.cos(a) * radiusInner+ xCenter, -Math.sin(a) * radiusInner+ yCenter );
-		a = (p + 1) * angle + Math.PI / 2.0;
-		c.lineTo( Math.cos(a) * radius+ xCenter, -Math.sin(a) * radius+ yCenter );
-	}
-	c.closePath();
-	
-	var grd = c.createRadialGradient( 0+ xCenter, - radius*0.50 + yCenter, 0, 0 + xCenter, radius + 1 + yCenter, radius );
-	grd.addColorStop(0, '#FFFFFF');
-	grd.addColorStop(1, 'rgb(255,165,0)');
-	
-	c.fillStyle = 'rgb(255,165,0)';
-	c.fill();
-	c.fillStyle = grd;
-	c.fill();
-	
-	c.lineWidth = 1.0;
-	c.strokeStyle = 'rgb(128,128,128)';
-	c.stroke();
-	
-	c.restore();
-}
-
-var colors = makeColorGradient(2.4,2.4,2.4,0,2,4,128,127,500);
-
-function GetName( bib ) {
-	var d = data[bib];
-	if( !d )	return '';
-	if( d.FirstName && d.LastName )	return d.FirstName + ' ' + d.LastName;
-	if( d.LastName ) return d.LastName;
-	return d.FirstName;
-}
-
-function GetInitials( bib ) {
-	var d = data[bib];
-	if( !d )	return '';
-	if( d.LastName && d.FirstName )	return d.FirstName.charAt(0) + '.' + d.LastName.charAt(0) + '.';
-	if( d.LastName ) return d.LastName.charAt(0) + '.';
-	return d.FirstName.charAt(0) + '.';
-}
-
-function GetBibName( bib ) {
-	if( hub_mode )
-		return bib + ': ' + '<a href="/RaceDB/Hub/LicenseHolderResults/{{license_holder.id}}/">' + GetName(bib) + '</a>';
-	else
-		return bib + ': ' + GetName(bib);
-}
-
-function GetNameBib( bib ) {
-	var name = GetName( bib );
-	if( name )
-		return name + ' ' + bib;
-	return bib + '';
-
-}
-
-function GetDateFromSecs( t ) {
-	var secs = ~~t;
-	var h = ~~(secs / (60*60));
-	var m = (~~(secs / 60) % 60);
-	var s = ~~(secs % 60);
-	var ms = (t - secs) * 1000.0;
-	return new Date( 0, 0, 0, h, m, s, ms );
-}
-
-function FormatTimeHMS( t, highPrecision )
-{
-	var tStr = '';
-	if( t < 0 ) {
-		tStr = '-';
-		t = -t;
-	}
-	var secs = ~~t;
-	var h = ~~(secs / (60*60));
-	var m = (~~(secs / 60) % 60);
-	var s = (~~(secs % 60) + t - secs).toFixed( highPrecision ? 3 : 0 );
-	if( h > 0 )
-		tStr += h + 'h' + (m<10?'0':'') + m + 'm' + (s<10?'0':'') + s + 's';
-	else if( m > 0 )
-		tStr += m + 'm' + (s<10?'0':'') + s + 's';
-	else
-		tStr += s + 's';
-	return tStr;
-}
-
-function FormatTime( t, highPrecision )
-{
+function FormatTime( t, highPrecision ) {
 	var tStr = '';
 	if( t < 0 ) {
 		tStr = '-';
@@ -281,6 +111,21 @@ function FormatTimeGap( t, highPrecision ) {
 	return tStr;
 }
 
+function DrawCircle( ctx, x, y, radius ) {
+	ctx.beginPath();
+	ctx.arc(x, y, radius, 0.0, Math.PI*2, true);
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+}
+
+function DrawLine( ctx, x1, y1, x2, y2 ) {
+	ctx.beginPath();
+	ctx.moveTo( x1, y1 );
+	ctx.lineTo( x2, y2 );
+	ctx.stroke();
+}
+
 function FormatDistanceGap( d, distanceUnit ) {
 	var suffix = 'behind';
 	if( d < 0 ) {
@@ -297,240 +142,6 @@ function FormatDistanceGap( d, distanceUnit ) {
 			return (d*5280.0).toFixed(0) + ' ft ' + suffix;
 		return d.toFixed(1) + ' ' + distanceUnit + ' ' + suffix;
 	}
-}
-
-function DrawCircle( ctx, x, y, radius ) {
-	ctx.beginPath();
-	ctx.arc(x, y, radius, 0.0, Math.PI*2, true);
-	ctx.closePath();
-	ctx.fill();
-	ctx.stroke();
-}
-
-function DrawLine( ctx, x1, y1, x2, y2 ) {
-	ctx.beginPath();
-	ctx.moveTo( x1, y1 );
-	ctx.lineTo( x2, y2 );
-	ctx.stroke();
-}
-
-function updateRaceChart()
-{
-	var canvasRaceChart = document.getElementById('idRaceChart');
-	if( !isCanvasSupported() || winAndOut )
-		return;
-
-	// Show results for this category.
-	var dataMax = 0;
-	var resultsData = [];
-	var lapsMax = 0;
-	var catDetail = catDetails[0];
-	var catName = catDetail.name;
-		
-	for( var p = 0; p < catDetail.pos.length; ++p ) {
-		var num = catDetail.pos[p];
-		var d = data[num];
-		
-		var raceTimes = d['raceTimes'].slice(0);	// Make a copy so we don't disturb the original.
-		
-		// Remove the race start time if this is not a Wave category.
-		if( catDetail.catType != 'Start Wave' && raceTimes.length > 0 ) {
-			for( var j = 1; j < raceTimes.length; ++j )
-				raceTimes[j] -= raceTimes[0];
-			raceTimes[0] = 0;
-		}
-		resultsData.push( [	raceTimes.length,
-							raceTimes.length ? raceTimes.back() : 99999,
-							num,
-							raceTimes,
-							d['status'],
-							d['finishTime']
-						] );
-		if( raceTimes.length > 0 ) {
-			if( raceTimes.back() > dataMax )
-				dataMax = raceTimes.back();
-			if( raceTimes.length > lapsMax )
-				lapsMax = raceTimes.length;
-		}
-	}
-	
-	if( resultsData.length == 0 || lapsMax == 0 ) {
-		canvasRaceChart.height = 8;
-		return;
-	}
-		
-	var categoryCount = 1;
-
-	// Adjust the height of the race chart to make each row reasonably high.
-	var rowMin = 14, rowMax = rowMin*2, rows = resultsData.length + categoryCount + 2;
-	if( canvasRaceChart.height / rows < rowMin )
-		canvasRaceChart.height = ~~(rowMin * rows);
-	else if( canvasRaceChart.height / rows > rowMax )
-		canvasRaceChart.height = ~~(rowMax * rows);
-	var width = canvasRaceChart.width;
-	var height = canvasRaceChart.height;
-		
-	var dc = canvasRaceChart.getContext('2d');
-	
-	var backColour = 'white';
-	dc.textBaseline = "top";
-	dc.fillStyle = backColour;
-	dc.fillRect(0, 0, width, height );
-	
-	var iNum = 2;
-	var iRaceTimes = 3;
-	var iStatus = 4;
-
-	// Check if all the data have the same offset.
-	var startOffset = 0.0;
-	
-	var colors = makeColorGradient(2.4,2.4,2.4,0,2,4,128,127,500);
-	var lighterColors = [];
-	for( var i = 0; i < colors.length; ++i )
-		lighterColors.push( lighterColor(colors[i]) );
-
-	var barHeight = ~~(height / (resultsData.length + 3 + (categoryCur == 'All' ? categories.length-1 : 0)));
-	if( barHeight < 4 || dataMax == 0 )
-		return;
-	barHeight = Math.min( barHeight, 18 );
-	var minimizeLabels = false;
-
-	var normalTextHeight = barHeight * 0.80;
-	var textHeight = normalTextHeight;
-	var fontStr = textHeight + "px Arial";
-	dc.font = fontStr;
-	
-	var textWidthLeft = dc.measureText('0000').width;
-	for( var i = 0; i < resultsData.length; ++i ) {
-		var rd = resultsData[i];
-		var num = rd[iNum];
-		textWidthLeft = Math.max(	dc.measureText(GetNameBib(num) + '0:0').width,
-									dc.measureText(catName + '0:0').width,
-									textWidthLeft );
-	}
-	
-	var legendSep = 4;			// Separations between legend entries and the Gantt bars.
-	var labelsWidthLeft = textWidthLeft + legendSep;
-	var labelsWidthRight = dc.measureText('0000').width + legendSep;
-	var drawLabels = true;
-		
-	if( labelsWidthLeft + labelsWidthRight > width ) {
-		labelsWidthLeft = labelsWidthRight = 0;
-		drawLabels = false;
-	}
-
-	var xLeft = labelsWidthLeft;
-	var xRight = width - labelsWidthRight;
-	var yBottom = barHeight * (resultsData.length + categoryCount + 1);
-	var yTop = 2 * barHeight;
-	var lineWidth = 0.5;
-
-	var fontLegendStr = (normalTextHeight*.75) + "px Arial";
-	dc.font = fontLegendStr;
-	textHeight = (normalTextHeight * .75);
-	textWidth = dc.measureText( dataMax < 60*60 ? '00:00' : '00:00:00' ).width;
-		
-	// Draw the horizontal labels.
-	// Find some reasonable tickmarks for the x axis.
-	var numLabels = (xRight - xLeft) / (textWidth * 2.0);
-	var idealInterval = dataMax / numLabels;
-	var intervals = [1, 2, 5, 10, 15, 20, 30, 1*60, 2*60, 5*60, 10*60, 15*60, 20*60, 30*60, 1*60*60, 2*60*60, 4*60*60, 8*60*60, 12*60*60, 24*60*60];
-	for( d = 1; d < intervals.length - 1 && intervals[d] < idealInterval; ++d )
-		continue;
-	d = intervals[d];
-	var dFactor = (xRight - xLeft) / dataMax;
-	
-	dc.strokeStyle = 'black';
-	dc.fillStyle = 'black';
-	dc.lineWidth = lineWidth;
-	for( var tCur = 0; tCur < dataMax; tCur += d ) {
-		var x = xLeft + tCur * dFactor;
-		var s = FormatTime(tCur);
-		var w = dc.measureText(s).width;
-		dc.fillText( s, x - w/2, barHeight + 2 );
-		if( !minimizeLabels )
-			dc.fillText( s, x - w/2, yBottom + 4 );
-		DrawLine( dc, x, yBottom+3, x, yTop-3 );
-	}
-	
-	// Draw the Gantt chart.
-	dc.font = fontStr;
-	textHeight = normalTextHeight;
-	textWidth = dc.measureText('0000').width;
-
-	dc.lineCap = 'butt';
-	dc.lineJoin = 'miter';
-	
-	var categoryStartOffset = 0;
-
-	var xFactor = (width - labelsWidthLeft - labelsWidthRight) / dataMax;
-	var yLast = 2 * barHeight;
-	var yHighlight = null;
-	segmentsCur = [];
-	for( var i = 0; i < resultsData.length; ++i ) {
-		if( i == 0 ) {
-			dc.fillStyle = '#FFFFFF';
-			var w = dc.measureText(catName + '0:00').width;
-			dc.fillRect( legendSep, yLast, w + 1, barHeight + 1 );
-			dc.fillStyle = '#000000';
-			dc.fillText( catName, legendSep, yLast - barHeight );
-			DrawLine( dc, 0, yLast, width - labelsWidthRight + 1, yLast );
-		}
-
-		yCur = yLast + barHeight;
-		xLast = labelsWidthLeft;
-		xCur = xLast;
-		var num = resultsData[i][iNum];
-		var raceTimes = resultsData[i][iRaceTimes];
-		
-		if( resultsData[i][iStatus] != 'Finisher' ) {
-			dc.fillStyle = dnfBackgroundColour;
-			dc.fillRect( 0, yLast, width, yCur - yLast + 1 );
-		}
-		
-		dc.strokeStyle = "#0F0F0F";
-		for( var j = 0; j < raceTimes.length; ++j ) {
-			var tCur = raceTimes[j] - categoryStartOffset;
-			xCur = ~~(labelsWidthLeft + tCur * xFactor);
-			if( j == 0 ) {
-				dc.fillStyle = resultsData[i][iStatus] == 'Finisher' ? '#FFFFFF' : dnfBackgroundColour;
-				dc.fillRect( xLast, yLast, xCur - xLast + 1, yCur - yLast + 1 );
-				dc.strokeRect( xLast, yLast, xCur - xLast + 1, yCur - yLast + 1 );
-			}
-			else {
-				var riderData = data[num];
-				var hover = j + ', ' + FormatTime(raceTimes[j] - raceTimes[j-1]);
-				drawSegment( dc, xLast, yLast, xCur - xLast + 1, yCur - yLast + 1, colors[j], lighterColors[j] );
-				segmentsCur.push( [xLast, yLast, xCur - xLast + 1, yCur - yLast + 1, hover, num, j] );
-			}
-			xLast = xCur;
-		}
-		
-		// Draw the last empty bar.
-		xCur = ~~(labelsWidthLeft + dataMax * xFactor);
-		dc.fillStyle = resultsData[i][iStatus] == 'Finisher' ? '#FFFFFF' : dnfBackgroundColour;
-		dc.fillRect( xLast, yLast, width - xLast, yCur - yLast + 1 );
-		dc.strokeRect( xLast, yLast, xCur - xLast + 1, yCur - yLast + 1 );
-		
-		// Draw the label on both ends.
-		dc.fillStyle = '#000000';
-		var lab = GetName( resultsData[i][iNum] );
-		if( lab )
-			lab += ' ' + resultsData[i][iNum];
-		else
-			lab = resultsData[i][iNum] + '';
-		dc.fillStyle = '#000000';
-		dc.fillText( lab, labelsWidthLeft - dc.measureText(lab).width - legendSep, yLast );
-		if( !minimizeLabels ) {
-			lab = resultsData[i][iNum] + '';
-			dc.fillText( lab, width - labelsWidthRight + legendSep, yLast );
-		}
-		yLast = yCur;
-	}
-	
-	xFactorCur = xFactor;
-	barHeightCur = barHeight;
-	labelsWidthCur = labelsWidthLeft;
 }
 
 function updateHistogramChart() {
@@ -600,35 +211,37 @@ function updateHistogramChart() {
 
 // ---------------------------------------------------------------------
 
-function Rect( x, y, width, height ) {
-	this.x = x;
-	this.y = y;
-	this.width = width;
-	this.height = height;
-}
-Rect.prototype.GetLeft = function() { return this.x; }
-Rect.prototype.GetRight = function() { return this.x + this.width; }
-Rect.prototype.GetTop = function() { return this.y; }
-Rect.prototype.GetBottom = function() { return this.y + this.height; }
-Rect.prototype.GetWidth = function() { return this.width; }
-Rect.prototype.GetHeight = function() { return this.height; }
-Rect.prototype.SetTop = function( y ) { this.y = y; }
-Rect.prototype.SetBottom = function( y ) { this.y = y - this.height; }
-Rect.prototype.SetLeft = function( x ) { this.x = x; }
-Rect.prototype.SetRight = function( x ) { this.x = x - this.width; }
-Rect.prototype.ContainsXY = function(x, y) {
-	return this.x <= x && x <= this.x + this.width && this.y <= y && y <= this.y + this.height;
-}
-Rect.prototype.print = function( label ) {
-	console.log( label + ': Rect(' + this.x + ',' + this.y + ',' + this.width + ',' + this.height + ')' );
-}
-Rect.prototype.Intersects = function( r ) {
-	return !(
-		r.x + r.width < this.x ||
-		this.x + this.width < r.x ||
-		r.y + r.height < this.y ||
-		this.y + this.height < r.y
-	);
+class Rect {
+	constructor( x, y, width, height ) {
+		this.x = x;
+		this.y = y;
+		this.width = width;
+		this.height = height;
+	}
+	GetLeft()		{ return this.x; }
+	GetRight()		{ return this.x + this.width; }
+	GetTop()		{ return this.y; }
+	GetBottom()		{ return this.y + this.height; }
+	GetWidth()		{ return this.width; }
+	GetHeight()		{ return this.height; }
+	SetTop( y )		{ this.y = y; }
+	SetBottom( y )	{ this.y = y - this.height; }
+	SetLeft( x )	{ this.x = x; }
+	SetRight( x )	{ this.x = x - this.width; }
+	ContainsXY( x, y) {
+		return this.x <= x && x <= this.x + this.width && this.y <= y && y <= this.y + this.height;
+	}
+	Intersects( r ) {
+		return !(
+			r.x + r.width < this.x ||
+			this.x + this.width < r.x ||
+			r.y + r.height < this.y ||
+			this.y + this.height < r.y
+		);
+	}
+	print( label ) {
+		console.log( label + ': Rect(' + this.x + ',' + this.y + ',' + this.width + ',' + this.height + ')' );
+	}
 }
 
 // ---------------------------------------------------------------------
@@ -1758,7 +1371,7 @@ function LapChart( ) {
 			dc.setLineDash( [] );
 			var xLast = width;
 			for( var lap = lapsData.length - 1; lap >= 0; --lap ) {
-				var sLap = ' ' + (lap+1) + ' ';
+				var sLap = ' ' + (lapsData.length-lap) + ' ';
 				var tWidth = dc.measureText(sLap).width;
 				var xMiddle = getX(lap) + lapWidth/2;
 				if( xMiddle + tWidth / 2 > xLast )
@@ -1876,13 +1489,6 @@ function SituationAnimate() {
 	updateHistogramChart();
 	
 	if( !isTimeTrial && isCanvasSupported() ) {
-		lapChartCanvas = document.getElementById('idLapChart');
-		lapChartObj = new LapChart();
-		lapChartObj.init( lapChartCanvas );
-		lapChartObj.draw();
-
-		raceChartCanvas = document.getElementById('idRaceChart');
-		
 		var situationCanvas = document.getElementById('idSituation');
 		var timeRange = document.getElementById( 'idTimeRange' );
 		var situationDetail = document.getElementById( 'idSituationDetailDiv' );
@@ -1891,15 +1497,7 @@ function SituationAnimate() {
 		//situationObj.animate = true;
 		
 		function resizeCanvas() {
-			lapChartCanvas.width = window.innerWidth * 0.85;
-			lapChartCanvas.height = window.innerHeight * 0.6;
-			lapChartObj.draw();
-			
-			raceChartCanvas.width = window.innerWidth * 0.85;
-			raceChartCanvas.height = window.innerHeight * 0.75;
-			updateRaceChart();
-			
-			situationCanvas.width = window.innerWidth * 0.70;
+			situationCanvas.width = Math.max(10, window.innerWidth * 0.7);
 			situationCanvas.height = window.innerHeight * 0.75;
 			SituationRefresh();
 		}
@@ -1921,14 +1519,35 @@ function SituationAnimate() {
 {% block content %}
 {% include "hub_nav.html" %}
 <h1>
+	{% if event.competition.image %}
+		<a
+			{% if event.competition.image.url %}
+				href="{{event.competition.image.url}}" target="_blank"
+			{% else %}
+				href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/"
+			{% endif %}
+		>
+			<img src="{{event.competition.image.image.url}}" class="logo-image" />
+		</a>
+		<br/>
+	{% endif %}
 	<strong><a href="/RaceDB/Hub/CompetitionResults/{{event.competition.id}}/">{{event.competition.title}}</a>: {{event.name}}</strong>{% if not has_results %}: {% trans "Registered Only (no results)" %}{% endif %}<br/>
-	<span style="font-size: 75%">
-		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}<br/>
-		{{event.date_time|date_hhmm}}&nbsp;&nbsp; {% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp; {% trans "Starters" %}: {{num_starters}}
+	<span style="font-size: 70%">
+		<strong>{{category.code_gender}} - {{wave.name}}</strong>&nbsp;&nbsp;{{event.competition.discipline.name}} {{event.competition.race_class.name}}
+		&nbsp;&nbsp;<span style="font-size:75%">{% trans "Generated" %}: {{time_stamp|date_hhmmss}}</span>
+		<br/>
+		{{event.date_time|date_hhmm}}&nbsp;&nbsp;
+		{% trans "Starters" %}: {{num_starters}}&nbsp;&nbsp;
+		{% trans "Nations" %}: {{num_nationalities}}&nbsp;&nbsp;
+		{% if race_time %}
+			{% trans "Winning Time" %}: {{race_time}}&nbsp;&nbsp;
+		{% endif %}
+		{% if ave_speed %}
+			{% trans "Ave. Speed" %}: {{ave_speed}}&nbsp;&nbsp;
+		{% endif %}
 	</span>
 </h1>
-{% trans "Generated" %}: {{time_stamp|date_hhmmss}}
-<p/>
+
 <style>
 table.participant_table tr td {
 	font-size: 85%;
@@ -1941,10 +1560,17 @@ table.participant_table tr th {
 <ul class="nav nav-tabs hidden-print">
 	<li class="active"><a data-toggle="tab" href="#sectionResults">{% if has_results %}{% trans "Results" %}{% else %}{% trans "Registered" %}{% endif %}</a></li>
 {% if has_results %}
+	{% if has_multiple_laps %}
+		<li><a href="./EventLapTimes/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Times" %}</a></li>
+	{% endif %}
 	{% if not is_timetrial %}
-		<li><a data-toggle="tab" href="#sectionLapChart">{% trans "Lap Chart" %}</a></li>
-		<li><a data-toggle="tab" href="#sectionRaceChart">{% trans "Race Chart" %}</a></li>
+		<li><a href="./EventLapChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Lap Chart" %}</a></li>
+		<li><a href="./EventGapChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Gap Chart" %}</a></li>
+		<li><a href="./EventRaceChart/{{eventId}}/{{eventType}}/{{categoryId}}/">{% trans "Race Chart" %}</a></li>
 		<li><a data-toggle="tab" href="#sectionSituation">{% trans "Situation" %}</a></li>
+	{% endif %}
+	{% if has_results and event.has_gpx_course %}
+		<li><a href="./EventAnimation/{{eventId}}/{{eventType}}/{{categoryId}}/"</a>{% trans "Animation" %}</a></li>
 	{% endif %}
 		<li><a data-toggle="tab" href="#histogram">{% trans "Histogram" %}</a></li>
 {% endif %}
@@ -1964,7 +1590,7 @@ table.participant_table tr th {
 		<th>{% trans "Team" %}</th>
 		{% if show_category %}<th>{% trans "Category" %}</th>{% endif %}
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCIID" %}</th>
+		<th class="text-nowrap">{% trans "UCI ID" %}</th>
 		{% if has_results %}
 			<th class="text-right">{% trans "Time" %}</th>
 			<th class="text-right">{% trans "Gap" %}</th>
@@ -1994,18 +1620,48 @@ table.participant_table tr th {
 </tbody>
 </table>
 {% endspaceless %}
+{% if primes %}
+	<hr/>
+	<h3>{% trans "Primes" %}</h3>
+	{% spaceless %}
+	<table class="table table-striped table-hover table-condensed participant_table">
+	<thead>
+		<tr>
+			<th class="text-right"></th>
+			<th class="text-right">{% trans "Bib" %}</th>
+			<th>{% trans "Name" %}</th>
+			<th>{% trans "Team" %}</th>
+			<th>{% trans "License" %}</th>
+			<th class="text-nowrap">{% trans "UCI ID" %}</th>
+			<th>{% trans "Effort" %}</th>
+			{% for pf in prime_fields %}
+				<th class="text-nowrap">{{pf.name | format_field}}</th>
+			{% endfor %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for pp in primes %}
+			{% with p=pp.participant h=pp.participant.license_holder %}
+			<tr>
+				<td class="text-right">{{forloop.counter}}.</td>
+				<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
+				<td>{{h.full_name}}</td>
+				<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+				<td>{{h.license_code_trunc}}</td>
+				<td>{{h.get_flag_uci_id_html}}</td>
+				<td>{{pp.effort_name}}</td>
+				{% for pf in prime_fields %}
+					<td {% if pp|getattr:pf.name|isnumber %}class="text-center"{% endif %}>{{pp|getattr:pf.name|formatattr}}</td>
+				{% endfor %}
+			</tr>
+			{% endwith %}
+		{% endfor %}
+	</tbody>
+	</table>
+	{% endspaceless %}
+{% endif %}
 	</div>
 {% if not is_timetrial %}
-	<div id="sectionLapChart" class="tab-pane fade">
-		<div id="idLapChartDiv">
-			<canvas id="idLapChart">
-			<a href="http://www.sites.google.com/site/crossmgrsoftware">CrossMgr</a> Requires support for the HTML5 Canvas.<br/>
-			Please upgrade to a more recent browser version.<br/>
-			For Internet Explorer (IE), you need version 9.0 or higher.<br/><br/>
-			Current versions of Chrome, FireFox and Opera work fine.
-			</canvas>
-		</div><!-- idLapChartDiv -->
-	</div>
 	<div id="sectionSituation" class="tab-pane fade">
 		<div id="idSituationDiv" class="noprint">
 			<table><tr>
@@ -2038,15 +1694,6 @@ table.participant_table tr th {
 				</td>
 			</tr></table>
 		</div><!-- idSituationDiv -->
-	</div>
-	<div id="sectionRaceChart" class="tab-pane fade">
-		<br/>
-		<canvas id="idRaceChart" width="800" height="600">
-		<a href="http://www.sites.google.com/site/crossmgrsoftware">CrossMgr</a> Requires support for the HTML5 Canvas.<br/>
-		Please upgrade to a more recent browser version.<br/>
-		For Internet Explorer (IE), you need version 9.0 or higher.<br/><br/>
-		Current versions of Chrome, FireFox and Opera work fine.
-		</canvas>
 	</div>
 {% endif %}
 	<div id="histogram" class="tab-pane fade">

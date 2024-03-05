@@ -6,6 +6,16 @@
 {% block content %}
 {% include "hub_nav.html" %}
 <h1>
+	{% if series.image %}
+		{% if series.image.url %}
+			<a href="{{series.image.url}}" target="_blank" />
+				<img src="{{series.image.image.url}}" class="logo-image" />
+			</a>
+		{% else %}
+			<img src="{{series.image.image.url}}" class="logo-image" />
+		{% endif %}
+		<br/>
+	{% endif %}
 	<strong>{{series.name}}</strong><br/>
 	<span style="font-size: 75%">
 		{{series.description}}
@@ -68,7 +78,7 @@
 	</tr>
 </thead>
 <tbody>
-	{% for c in series.get_competitions %}
+	{% for c in series.get_current_competitions %}
 		<tr>
 			<td class="text-right">{{forloop.counter}}.</td>
 			<td>{{c.date_range_year_str}}</td>

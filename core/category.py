@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 
@@ -14,7 +14,7 @@ class CategoryFormatForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', EDIT_BUTTONS )
 		
-		super(CategoryFormatForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -96,7 +96,7 @@ class CategoryForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop('button_mask', EDIT_BUTTONS)
 		
-		super(CategoryForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -118,7 +118,7 @@ class CategoryForm( ModelForm ):
 def CategoryNew( request, categoryFormatId ):
 	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
 
-	title = u'{} {}'.format(_('New'), Category._meta.verbose_name.title())
+	title = '{} {}'.format(_('New'), Category._meta.verbose_name.title())
 	
 	if request.method == 'POST':
 		form = CategoryForm( request.POST )

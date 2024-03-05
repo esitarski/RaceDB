@@ -1,14 +1,14 @@
 import operator
 from collections import defaultdict
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.forms import formset_factory
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 
 from .views_common import *
 
-ItemsPerPage = 25
+ItemsPerPage = 50
 def getPaginator( request, page_key, items ):
 	paginator = Paginator( items, ItemsPerPage )
 	page = request.GET.get('page',None) or request.session.get(page_key,None)
@@ -29,7 +29,7 @@ def getPaginator( request, page_key, items ):
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesList( request ):
 	validate_sequence( Series.objects.all() )		
-	series = Series.objects.all()
+	series = Series.objects.all().annotate(num_events=Count('seriescompetitionevent')).order_by( 'sequence' )
 	return render( request, 'series_list.html', locals() )
 
 @access_validation()
@@ -62,7 +62,7 @@ class SeriesForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(SeriesForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -74,6 +74,7 @@ class SeriesForm( ModelForm ):
 			),
 			Row(
 				Field('description', size=40),
+				Field('image'),
 			),
 			Row(
 				Field('ranking_criteria'),
@@ -92,7 +93,7 @@ class SeriesForm( ModelForm ):
 				Field('tie_breaking_rule'),
 			),
 			Row(
-				HTML( _('Finally, break remaining ties with the most recent result.') ),
+				HTML( _("Finally, break remaining ties by the most recent event's results.") ),
 			),
 			Row( HTML('<hr/>') ),
 			Row(
@@ -138,7 +139,6 @@ def SeriesEdit( request, seriesId ):
 
 	return GenericEdit( Series, request, series.id, SeriesForm, 'series_form.html', locals() )
 
-
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
 def SeriesDetailEdit( request, seriesId ):
@@ -151,7 +151,7 @@ def SeriesDelete( request, seriesId, confirmed=0 ):
 	if int(confirmed):
 		series.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( u'{}: {}, {}', _('Delete'), series.name, series.description )
+	message = format_lazy( '{}: {}, {}', _('Delete'), series.name, series.description )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -166,12 +166,12 @@ class EventSelectForm( Form ):
 		competition = kwargs.pop( 'competition' )
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(EventSelectForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		categories = set( series.get_categories() )
 		events = [e for e in competition.get_events() if not set(e.get_categories()).isdisjoint(categories)]
 		events.sort( key=operator.attrgetter('date_time') )
-		self.fields['events'].choices = [('{}-{}'.format(e.event_type,e.id), u'{}: {}'.format(e.date_time.strftime('%Y-%m-%d %H:%M'), e.name)) for e in events]
+		self.fields['events'].choices = [('{}-{}'.format(e.event_type,e.id), '{}: {}'.format(e.date_time.strftime('%Y-%m-%d %H:%M'), e.name)) for e in events]
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -214,7 +214,7 @@ def SeriesCompetitionRemove( request, seriesId, competitionId, confirmed=0 ):
 	if int(confirmed):
 		series.remove_competition( competition )
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( u'{}: {}:{}', _('Remove'), competition.date_range_year_str, competition.name )
+	message = format_lazy( '{}: {}:{}', _('Remove'), competition.date_range_year_str, competition.name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -226,7 +226,7 @@ def SeriesCompetitionRemoveAll( request, seriesId, confirmed=0 ):
 	if int(confirmed):
 		series.seriescompetitionevent_set.all().delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( u'{}: {}', _('Remove All Events from this Series'), series.name )
+	message = format_lazy( '{}: {}', _('Remove All Events from this Series'), series.name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -243,7 +243,7 @@ def GetEventForm( series ):
 		pk = forms.IntegerField( widget = forms.HiddenInput(), required=False )
 		
 		def __init__( self, *args, **kwargs ):
-			super( EventForm, self ).__init__( *args, **kwargs )
+			super().__init__( *args, **kwargs )
 			initial = kwargs.get( 'initial', {} )
 			if initial:
 				self.fields['label'] = initial['name']
@@ -315,7 +315,7 @@ class SeriesPointsStructureForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(SeriesPointsStructureForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -355,7 +355,7 @@ def SeriesPointsStructureDelete( request, seriesPointsStructureId, confirmed=0 )
 	if int(confirmed):
 		series_points_structure.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( u'{}: {}', _('Delete'), series_points_structure.name )
+	message = format_lazy( '{}: {}', _('Delete'), series_points_structure.name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -371,10 +371,10 @@ class CategorySelectForm( Form ):
 		
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(CategorySelectForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.fields['categories'].choices = [
-			(c.id, format_lazy( u'{}: {} ({})', c.get_gender_display(), c.code, c.description))
+			(c.id, format_lazy( '{}: {} ({})', c.get_gender_display(), c.code, c.description))
 				for c in series.category_format.category_set.all()
 		]
 		self.fields['custom_categories'].choices = [(i, cc) for i, cc in enumerate(custom_category_names)]
@@ -407,7 +407,7 @@ def SeriesCategoriesChange( request, seriesId ):
 			for v in form.cleaned_data['custom_categories']:
 				try:
 					cc_names.append( custom_category_names[int(v)] )
-				except:
+				except Exception:
 					pass
 			series.custom_category_names = ',\n'.join( cc_names )
 			series.save()
@@ -446,7 +446,7 @@ def SeriesUpgradeProgressionDelete( request, seriesUpgradeProgressionId, confirm
 	if int(confirmed):
 		series_upgrade_progression.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( u'{}: {}', _('Delete'), series_upgrade_progression.get_text() )
+	message = format_lazy( '{}: {}', _('Delete'), series_upgrade_progression.get_text() )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -459,9 +459,9 @@ def GetCategoryProgressionForm( series ):
 		category = forms.ChoiceField( label=_('') )
 		
 		def __init__( self, *args, **kwargs ):
-			super(CategoryProgressionForm, self).__init__(*args, **kwargs)		
+			super().__init__(*args, **kwargs)		
 			self.fields['category'].choices = [(-1, '---')] + [
-				(c.pk, format_lazy(u'{}: {} - {}', c.get_gender_display(), c.code, c.description)) for c in series.category_format.category_set.all()
+				(c.pk, format_lazy('{}: {} - {}', c.get_gender_display(), c.code, c.description)) for c in series.category_format.category_set.all()
 			]
 
 	return CategoryProgressionForm
@@ -538,7 +538,7 @@ def SeriesCategoryGroupDelete( request, categoryGroupId, confirmed=0 ):
 	if int(confirmed):
 		category_group.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( u'{}: {}, {}', _('Delete'), category_group.name, category_group.get_text() )
+	message = format_lazy( '{}: {}, {}', _('Delete'), category_group.name, category_group.get_text() )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )
@@ -553,10 +553,10 @@ class CategoryGroupForm( Form ):
 		series = category_group.series
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(CategoryGroupForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 
-		self.fields['categories'].choices = [(c.id, format_lazy(u'{}: {} {}', c.get_gender_display(), c.code, c.description)) for c in series.get_categories_not_in_groups()]
+		self.fields['categories'].choices = [(c.id, format_lazy('{}: {} {}', c.get_gender_display(), c.code, c.description)) for c in series.get_categories_not_in_groups()]
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -587,7 +587,7 @@ def SeriesCategoryGroupEdit( request, categoryGroupId ):
 			for pk in categories:
 				category_group.categorygroupelement_set.create( category=Category.objects.get(pk=pk) )
 			
-			series.normalize()
+			series.validate()
 			
 			if 'ok-submit' in request.POST:
 				return HttpResponseRedirect(getContext(request,'cancelUrl'))

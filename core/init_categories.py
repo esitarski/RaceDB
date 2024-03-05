@@ -2,7 +2,7 @@ from django.db import transaction
 from .models import *
 from .large_delete_all import large_delete_all
 
-uci_road = u'''
+uci_road = '''
 RWU13	Women	Road Girls Under 13 <age 10-12>
 RWU15	Women	Road Girls Under 15 <age 13-14>
 RWU17	Women	Road Girls Under 17 <age 15-16>
@@ -220,18 +220,18 @@ MU24	Men	Men Under 24 <age 19-23>
 '''
 
 rfs = [
-	(u'Age',			u'Age Based', age),
-	(u'UCI - Road',		u'Union Cycliste Internationale Road', uci_road),
-	(u'UCI - MTB',		u'Union Cycliste Internationale Mountain Bike', uci_mtb),
-	(u'UCI - DH',		u'Union Cycliste Internationale Downhill', uci_dh),
-	(u'UCI - 4X',		u'Union Cycliste Internationale 4-Cross', uci_4x),
-	(u'OCA - Road',		u'Ontario Cycling Association', oca_road),
-	(u'CC - Road',		u'Canadian Cycling', cc_road),
-	(u'Open',			u'Men and Women', open),
-	(u'USAC - Road',	u'USA Cycling Road', usac_road),
-	(u'USAC - CycloCross',	u'USA Cycling CycloCross', usac_cx),
-	(u'USAC - MTB',	u'USA Cycling MTB', usac_mtb),
-	(u'USAC - Track',	u'USA Cycling Tracl', usac_mtb),
+	('Age',				'Age Based', age),
+	('UCI - Road',		'Union Cycliste Internationale Road', uci_road),
+	('UCI - MTB',		'Union Cycliste Internationale Mountain Bike', uci_mtb),
+	('UCI - DH',		'Union Cycliste Internationale Downhill', uci_dh),
+	('UCI - 4X',		'Union Cycliste Internationale 4-Cross', uci_4x),
+	('OCA - Road',		'Ontario Cycling Association', oca_road),
+	('CC - Road',		'Canadian Cycling', cc_road),
+	('Open',			'Men and Women', open),
+	('USAC - Road',		'USA Cycling Road', usac_road),
+	('USAC - CycloCross',	'USA Cycling CycloCross', usac_cx),
+	('USAC - MTB',		'USA Cycling MTB', usac_mtb),
+	('USAC - Track',	'USA Cycling Tracl', usac_mtb),
 ]
 
 def init_categories():
@@ -250,7 +250,7 @@ def init_categories():
 					code, gender, description = cat.split( '\t' )
 				except ValueError:
 					continue
-				safe_print( u'    ', code, gender, description )
+				safe_print( '    ', code, gender, description )
 				c = Category(	format = rf,
 								code = code,
 								gender = ['Men','Women','Open'].index(gender),

@@ -1,7 +1,7 @@
 import operator
 from collections import defaultdict
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 
@@ -15,7 +15,7 @@ def GetCustomCategoryForm( cls, event ):
 		def __init__( self, *args, **kwargs ):
 			button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 			
-			super(CustomCategoryForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline'
@@ -105,7 +105,7 @@ def CustomCategoryDelete( request, eventId, eventType, customCategoryId, confirm
 	if int(confirmed):
 		custom_category.delete()
 		return HttpResponseRedirect( getContext(request,'cancelUrl') )
-	message = format_lazy( u'{}: {}', _('Delete'), custom_category.name )
+	message = format_lazy( '{}: {}', _('Delete'), custom_category.name )
 	cancel_target = getContext(request,'cancelUrl')
 	target = getContext(request,'path') + '1/'
 	return render( request, 'are_you_sure.html', locals() )

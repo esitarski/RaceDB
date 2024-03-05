@@ -1,8 +1,9 @@
 from django.forms import modelformset_factory
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 import xlsxwriter
-from xlrd import open_workbook
+from openpyxl import load_workbook
+from io import BytesIO
 
 from .views_common import *
 from .FieldMap import standard_field_map
@@ -77,14 +78,14 @@ def ccos_to_excel( competition ):
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	title_format = wb.add_format( dict(bold=True) )
 	
-	sheet_name = u'RaceDB-CCO'
+	sheet_name = 'RaceDB-CCO'
 	ws = wb.add_worksheet(sheet_name)
 	
 	row = 0
 	
-	ws.write( row, 0, u'{}'.format(_('Category')), title_format )
-	ws.write( row, 1, u'{}'.format(_('License Check Required')), title_format )
-	ws.write( row, 2, u'{}'.format(_('Note')), title_format )
+	ws.write( row, 0, '{}'.format(_('Category')), title_format )
+	ws.write( row, 1, '{}'.format(_('License Check Required')), title_format )
+	ws.write( row, 2, '{}'.format(_('Note')), title_format )
 	
 	for cco in ccos_query:
 		row += 1
@@ -92,11 +93,11 @@ def ccos_to_excel( competition ):
 		ws.write( row, 1, cco.license_check_required )
 		ws.write( row, 2, cco.note )
 			
-	sheet_name = u'RaceDB-Common'
+	sheet_name = 'RaceDB-Common'
 	ws = wb.add_worksheet(sheet_name)
 	row = 0
 	
-	ws.write( row, 0, u'{}'.format(_('License Check Note')), title_format )
+	ws.write( row, 0, '{}'.format(_('License Check Note')), title_format )
 	row += 1
 	ws.write( row, 0, competition.license_check_note )
 	
@@ -107,27 +108,22 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 	CompetitionCategoryOption.normalize( competition )
 	ccos_query = competition.competitioncategoryoption_set.all().order_by('category__sequence').select_related('category')
 
-	wb = open_workbook( file_contents = worksheet_contents )
+	wb = load_workbook( filename=BytesIO(worksheet_contents), read_only=True, data_only=True )
 	
-	ws = None
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name or sheet_name is None:
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+	except Exception:
 		return
 	
 	ccos = {cco.category.code_gender.lower():cco for cco in ccos_query}
 	
 	ifm = standard_field_map()
 
-	num_rows = ws.nrows
-	for r in range(num_rows):
-		row = ws.row( r )
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(v.value).strip() for v in row]
+			fields = ['{}'.format(v.value).strip() for v in row]
 			ifm.set_headers( fields )
 			continue
 		
@@ -147,28 +143,22 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 		
 		note = v('note', None)
 		if note is not None:
-			cco.note = u'{}'.format(note)
+			cco.note = '{}'.format(note)
 		
 		cco.save()
 	
-	ws = None
 	sheet_name = 'RaceDB-Common'
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name:
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
+	try:
+		ws = wb[sheet_name]
+	except Exception:
 		return
 	
 	ifm = standard_field_map()
 
-	num_rows = ws.nrows
-	for r in range(num_rows):
-		row = ws.row( r )
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(v.value).strip() for v in row]
+			fields = ['{}'.format(v.value).strip() for v in row]
 			ifm.set_headers( fields )
 			continue
 		
@@ -184,10 +174,10 @@ def ccos_from_excel( competition, worksheet_contents, sheet_name=None ):
 #-----------------------------------------------------------------------
 @autostrip
 class UploadCCOForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( UploadCCOForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'

@@ -4,6 +4,10 @@
 {% load paginate_html %}
 {% load good_err_icon %}
 
+{% block style %}
+	thead th { position: sticky; top: 0; }
+{% endblock style %}
+
 {% block content %}
 
 {% include "hub_nav.html" %}
@@ -19,7 +23,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCIID" %}</th>
+		<th class="text-nowrap">{% trans "UCI ID" %}</th>
 	</tr>
 </thead>
 <tbody>

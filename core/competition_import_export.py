@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 import json
-import six
 import datetime
 from collections import defaultdict, deque
 
@@ -10,7 +7,7 @@ from django.conf import settings
 from django.core import serializers
 from django.core.serializers import base
 from django.db import DEFAULT_DB_ALIAS, models
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.db import transaction
 
 from .utils import get_search_text, removeDiacritic
@@ -42,7 +39,7 @@ class processing_status( object ):
 			ave_rate = self.instance_count / ((t_cur - self.t_start).total_seconds() + 0.000001 )
 			
 			s_remaining = (self.instance_total - self.instance_count) / ave_rate
-			safe_print( u'{:4.1f}%   {:7.1f} objs/sec   {:4.0f} secs  {:4.0f} est secs remaining ({})...'.format(
+			safe_print( '{:4.1f}%   {:7.1f} objs/sec   {:4.0f} secs  {:4.0f} est secs remaining ({})...'.format(
 					(100.0*self.instance_count)/self.instance_total,
 					rate,
 					(t_cur - self.t_start).total_seconds(),
@@ -266,7 +263,7 @@ def competition_deserializer( object_list, **options ):
 				continue
 
 			if isinstance(field_value, str):
-				field_value = force_text(
+				field_value = force_str(
 					field_value, options.get("encoding", settings.DEFAULT_CHARSET), strings_only=True
 				)
 
@@ -276,7 +273,7 @@ def competition_deserializer( object_list, **options ):
 			if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
 				model = field.remote_field.model
 				def m2m_convert(v):
-					return force_text(model._meta.pk.to_python(v), strings_only=True)
+					return force_str(model._meta.pk.to_python(v), strings_only=True)
 
 				try:
 					m2m_data[field.name] = []
@@ -330,7 +327,7 @@ def competition_deserializer( object_list, **options ):
 					.values_list('license_holder__id',flat=True)
 				)
 				existing_license_holder_category = set( tuple(lh_cat)
-					for lh_cat in Participant.objects.filter(competition=competition).values_list('license_holder', 'category') )
+					for lh_cat in Participant.objects.filter(competition__id=competition.id).values_list('license_holder', 'category') )
 			
 			db_object = base.DeserializedObject(instance, m2m_data)
 			if existing_instance:	# This is an update as there is an existing instance.
@@ -370,9 +367,9 @@ def competition_deserializer( object_list, **options ):
 				elif Model == Participant:
 					lh_cat = (instance.license_holder_id, instance.category_id if instance.category else None)
 					if lh_cat in existing_license_holder_category:
-						safe_print( u'****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.' )
+						safe_print( '****Duplicate Participant LicenseHolder Category Integrity Error.  Skipped.' )
 						lh = instance.license_holder
-						safe_print( u'    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
+						safe_print( '    {},{} {}'.format(lh.last_name, lh.first_name, lh.license_code) )
 					else:
 						existing_license_holder_category.add( lh_cat )
 						ts.save( Model, db_object, instance, pk_old )
@@ -432,7 +429,7 @@ def competition_export( competition, stream, export_as_template=False, remove_ft
 	competition.sync_tags()
 
 	if remove_ftp_info:
-		attrs = ("ftp_host", "ftp_user", "ftp_password", "ftp_path", "ftp_upload_during_race", "ga_tracking_id")
+		attrs = ("use_sftp", "ftp_host", "ftp_user", "ftp_password", "ftp_path", "ftp_upload_during_race", "ga_tracking_id")
 		ftp_info_save = { a:getattr(competition, a) for a in attrs }
 		for a in attrs:
 			setattr( competition, a, Competition._meta.get_field(a).default )

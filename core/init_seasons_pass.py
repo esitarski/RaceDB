@@ -1,6 +1,7 @@
 import sys
 import datetime
-from xlrd import open_workbook, xldate_as_tuple
+from openpyxl import load_workbook
+from io import BytesIO
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 
@@ -19,13 +20,13 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def ms_write( s ):
-			message_stream.write( u'{}'.format(s) )
+			message_stream.write( '{}'.format(s) )
 			sys.stdout.write( removeDiacritic(s) )
 	
 	try:
 		seasons_pass = SeasonsPass.objects.get( pk=seasonsPassId )
 	except SeasonsPass.DoesNotExist:
-		ms_write( u'**** Cannot find SeasonsPass\n' )
+		ms_write( '**** Cannot find SeasonsPass\n' )
 		return
 		
 	if clear_existing:
@@ -49,9 +50,9 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 				date_of_birth = None
 			
 			date_of_birth 	= date_of_birth if date_of_birth != invalid_date_of_birth else None
-			license_code	= to_int_str(v('license_code', u'')).upper().strip()
-			last_name		= to_str(v('last_name',u''))
-			first_name		= to_str(v('first_name',u''))
+			license_code	= to_int_str(v('license_code', '')).upper().strip()
+			last_name		= to_str(v('last_name',''))
+			first_name		= to_str(v('first_name',''))
 			uci_id			= to_uci_id(v('uci_id', None))
 
 			license_holder = None
@@ -69,7 +70,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 
 			if not license_holder:
 				ms_write(
-					u'Row {i:>6}: Cannot find License Holder by License Code or LastName, FirstName [Date of Birth]\n'.format(
+					'Row {i:>6}: Cannot find License Holder by License Code or LastName, FirstName [Date of Birth]\n'.format(
 						i=i,
 					)
 				)
@@ -77,7 +78,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 				
 			seasons_pass.add( license_holder )
 			ms_write(
-				u'Row {i:>6}: {license_code:>8} {dob:>10} {last_name}, {first_name}, {city}, {state_prov}\n'.format(
+				'Row {i:>6}: {license_code:>8} {dob:>10} {last_name}, {first_name}, {city}, {state_prov}\n'.format(
 					i=i,
 					license_code=license_holder.license_code,
 					dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
@@ -89,42 +90,35 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = open_workbook( file_contents = worksheet_contents )
+		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
-		wb = open_workbook( fname )
+		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	
-	ur_records = []
-	import_utils.datemode = wb.datemode
-	
-	ws = None
-	for cur_sheet_name in wb.sheet_names():
-		ms_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
-		ws = wb.sheet_by_name(cur_sheet_name)
-		break
-	
-	if not ws:
-		ms_write( u'Cannot find sheet.\n' )
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+		ms_write( 'Reading sheet "{}"\n'.format(sheet_name) )
+	except Exception:
+		ms_write( 'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 		
-	num_rows = ws.nrows
-	num_cols = ws.ncols
-	for r in six.moves.range(num_rows):
-		row = ws.row( r )
+	ur_records = []
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(f.value).strip() for f in row]
+			fields = ['{}'.format(f.value).strip() for f in row]
 			ifm.set_headers( fields )
-			ms_write( u'Header Row:\n' )
+			ms_write( 'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
 				name = ifm.get_name_from_alias( f )
 				if name is not None:
-					ms_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+					ms_write( '        {}. {} --> {}\n'.format(col, f, name) )
 				else:
-					ms_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
+					ms_write( '        {}. ****{} (Ignored)\n'.format(col, f) )
 			continue
 			
 		ur_records.append( (r+1, [v.value for v in row]) )
@@ -134,5 +128,5 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 			
 	process_ur_records( ur_records )
 	
-	ms_write( u'\n' )
-	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( '\n' )
+	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )

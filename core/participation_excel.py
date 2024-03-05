@@ -4,7 +4,7 @@ import sys
 import locale
 import datetime
 import xlsxwriter
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from . import utils
 from .models import *
@@ -52,16 +52,16 @@ def participation_excel( start_date=None, end_date=None, disciplines=None, race_
 	
 	row = col = 0
 	
-	ws.write( row, col, u'{}'.format(_('Name')), title_format )
+	ws.write( row, col, '{}'.format(_('Name')), title_format )
 	col += 1
 	
-	ws.write( row, col, u'{}'.format(_('Gender')), title_format )
+	ws.write( row, col, '{}'.format(_('Gender')), title_format )
 	col += 1
 	
 	for e in events:
 		ws.write( 
 			row, col,
-			u'\n'.join([
+			'\n'.join([
 				e.competition.name, e.name, e.get_event_type_display(),
 				timezone.localtime(e.date_time).strftime('%Y-%m-%d %H:%M')
 			]),
@@ -72,7 +72,7 @@ def participation_excel( start_date=None, end_date=None, disciplines=None, race_
 	
 	for lh in license_holders:
 		col = 0
-		ws.write( row, col, lh.last_name + u', ' + lh.first_name )
+		ws.write( row, col, lh.last_name + ', ' + lh.first_name )
 		col += 1
 		
 		ws.write( row, col, lh.get_gender_display() )
@@ -81,7 +81,7 @@ def participation_excel( start_date=None, end_date=None, disciplines=None, race_
 		for e in events:
 			try:
 				participant = p[(lh.id, e.id)]
-				ws.write( row, col, participant.category.code_gender if participant.category else u'{}'.format(_('Unknown')) )
+				ws.write( row, col, participant.category.code_gender if participant.category else '{}'.format(_('Unknown')) )
 			except KeyError:
 				pass
 			col += 1

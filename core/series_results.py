@@ -42,11 +42,11 @@ class EventResult( object ):
 	@property
 	def team_name( self ):
 		team = self.participant.team
-		return team.name if team else u''
+		return team.name if team else ''
 		
 	@property
 	def status_rank( self ):
-		return self.rank if self.status == 0 else 999999
+		return self.rank if self.status == 0 else 99999		# 0 == Result.cFinisher
 	
 	@property
 	def rank_text( self ):
@@ -56,7 +56,7 @@ class EventResult( object ):
 		
 	def __repr__( self ):
 		return utils.removeDiacritic(
-			u'("{}",{}: event="{}",{}, rank={}, strs={}, vfr={}, oc={})'.format(
+			'("{}",{}: event="{}",{}, rank={}, strs={}, vfr={}, oc={})'.format(
 				self.license_holder.full_name(), self.license_holder.pk,
 				self.event.name, self.event.pk,
 				self.rank, self.starters, self.value_for_rank, self.original_category.code_gender
@@ -81,7 +81,7 @@ def extract_event_results( sce, filter_categories=None, filter_license_holders=N
 	category_pk = [c.pk for c in filter_categories]
 	category_wave = {}
 	for w in sce.event.get_wave_set().all():
-		for c in w.categories.all().filter( pk__in=category_pk ):
+		for c in w.categories.filter( pk__in=category_pk ):
 			category_wave[c] = w
 
 	if not category_wave:
@@ -232,26 +232,26 @@ def series_results( series, categories, eventResults ):
 		return [], []
 	eventResults.sort( key=operator.attrgetter('event.date_time', 'event.name', 'rank') )
 	
-	# Assign a sequence number to the events.
+	# Assign a sequence number to the events in increasing date_time order.
 	events = sorted( set(rr.event for rr in eventResults), key=operator.attrgetter('date_time') )
 	eventSequence = {e:i for i, e in enumerate(events)}
 	
 	lhEventsCompleted = defaultdict( int )
 	lhPlaceCount = defaultdict( lambda : defaultdict(int) )
-	lhTeam = defaultdict( lambda: u'' )
+	lhTeam = defaultdict( lambda: '' )
 		
 	lhResults = defaultdict( lambda : [None] * len(events) )
 	lhFinishes = defaultdict( lambda : [None] * len(events) )
 	
 	lhValue = defaultdict( float )
 	
-	percentFormat = u'{:.2f}'
-	floatFormat = u'{:0.2f}'
+	percentFormat = '{:.2f}'
+	floatFormat = '{:0.2f}'
 	
 	# Get the individual results for each lh, and the total value.
 	for rr in eventResults:
 		lh = rr.license_holder
-		lhTeam[lh] = rr.participant.team.name if rr.participant.team else u''
+		lhTeam[lh] = rr.participant.team.name if rr.participant.team else ''
 		lhResults[lh][eventSequence[rr.event]] = rr
 		lhValue[lh] += rr.value_for_rank
 		lhPlaceCount[lh][rr.rank] += 1
@@ -267,7 +267,7 @@ def series_results( series, categories, eventResults ):
 			if len(iResults) > bestResultsToConsider:
 				if scoreByTime:
 					iResults.sort( key=(lambda x: (x[1].value_for_rank, x[0])) )
-				else:
+				else:	# scoreByPoints
 					iResults.sort( key=(lambda x: (-x[1].value_for_rank, x[0])) )
 				for i, rr in iResults[bestResultsToConsider:]:
 					lhValue[lh] -= rr.value_for_rank
@@ -276,13 +276,14 @@ def series_results( series, categories, eventResults ):
 
 	lhGap = {}
 	if scoreByTime:
-		# Sort by decreasing events completed, then increasing time.
-		lhOrder.sort( key = lambda r: tuple(itertools.chain(
-				[-lhEventsCompleted[r], lhValue[r]],
-				[-lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1)],
-				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
-			))
-		)
+		def sort_key( r ):
+			key = [-lhEventsCompleted[r], lhValue[r]]											# Decreasing events completed, then increasing time.
+			key.extend( -lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1) )			# Decreasing count for each finish place.
+			key.extend( (rr.status_rank if rr else 9999999) for rr in reversed(lhResults[r]) )	# Reverse last rank.  If didn't participate, rank at 9999999.
+			return key
+		
+		lhOrder.sort( key=sort_key )
+		
 		# Compute the time gap.
 		if lhOrder:
 			leader = lhOrder[0]
@@ -290,15 +291,16 @@ def series_results( series, categories, eventResults ):
 			leaderEventsCompleted = lhEventsCompleted[leader]
 			lhGap = { r : lhValue[r] - leaderValue if lhEventsCompleted[r] == leaderEventsCompleted else None for r in lhOrder }
 	
-	else:
-		# Sort by decreasing value.
-		lhOrder.sort( key = lambda r: tuple(itertools.chain(
-				[-lhValue[r]],
-				([-lhEventsCompleted[r]] if considerMostEventsCompleted else []),
-				[-lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1)],
-				[rr.status_rank if rr else 9999999 for rr in reversed(lhResults[r])]
-			))
-		)
+	else:	# Score by points.
+		def sort_key( r ):
+			key = [-lhValue[r]]																	# Decreasing points (adjusted for best events).
+			if considerMostEventsCompleted:
+				key.append( -lhEventsCompleted[r] )												# Events completed.
+			key.extend( -lhPlaceCount[r][k] for k in range(1, numPlacesTieBreaker+1) ) 			# Decreasing count for each finish place.
+			key.extend( (rr.status_rank if rr else 9999999) for rr in reversed(lhResults[r]) )	# Reverse last rank.  If didn't participate, rank at 9999999.
+			return key
+		
+		lhOrder.sort( key=sort_key )
 		
 		# Compute the gap.
 		lhGap = {}
@@ -389,7 +391,7 @@ def get_callups_for_wave( series, wave, eventResultsAll=None ):
 		# Return the participant and the points value.
 		if randomize:
 			# Randomize athletes with no results.
-			random.seed( (competition.id, series.id, c.id, wave.id) )
+			random.seed( hash((competition.id, series.id, c.id, wave.id)) )
 			for p_start, (p, value) in enumerate(p_values):
 				if value == 0.0:
 					r = p_values[p_start:]

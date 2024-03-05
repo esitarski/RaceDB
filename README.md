@@ -15,7 +15,7 @@ If you are a seasoned RaceDB enthusist or a seasoned python programmer, feel fre
 
 ## Why Use the Docker Container?
 
-Docker is a lightweight virtual machine environment. Unlike VMware, Docker does not virtual the entire machine, but only parts of the operating system needed to spin up a container. As such, it is more effiencent. Further, we have packaged all the software require to run RaceDB inside the container. This is no need to install Python, PostgreSQL, or do any database configuraion or to update Python, PostgreSQL, etc. as you might normally do. This container takes care of that for you. By default, the we also spin up PostgreSQL in another container without any work required from you. We use PostgreSQL for the database for best performance. This is all done for you when you start the container set for the first time.
+Docker is a lightweight virtual machine environment. Unlike VMware, Docker does not virtual the entire machine, but only parts of the operating system needed to spin up a container. As such, it is more efficient. Further, we have packaged all the software require to run RaceDB inside the container. This is no need to install Python, PostgreSQL, or do any database configuraion or to update Python, PostgreSQL, etc. as you might normally do. This container takes care of that for you. By default, we also spin up PostgreSQL in another container without any work required from you. We use PostgreSQL for the database for best performance. This is all done for you when you start the container set for the first time.
 
 Upgrades are a matter of pulling the latest container image. This is a one command affair. Once the latest container is pulled, you just start it as usual. Any updates are taken care of for you. See Updating below.
 
@@ -23,7 +23,7 @@ About the only con is the Docker on Linux is a pain to setup the first time. How
 
 ## Default Port
 
-While racedb installed from source uses port 8000 [http://localhost:8000], the container has been setup to use the standard http port, port 80, for convenience. If you have a non-standard setup (run a local web server on the same machine as racedb), you will need to change this port number. To do so, do the following:
+While racedb installed from source uses port 8000 [http://localhost:8000/RaceDB], the container has been setup to use the standard http port, port 80, for convenience. If you have a non-standard setup (run a local web server on the same machine as racedb), you will need to change this port number. To do so, do the following:
 
 - edit the docker-compose.yml file
 - find the line "80:8000"
@@ -33,7 +33,7 @@ Additionally, but changing the mapping, you can set the port to anything you wan
 
 ## Running the Container (Windows)
 
-The RaceDB container comes preconfigured for the most used options. However, if you use a RFID reader at registration to "burn" tags, you will want to add the IP number of your reader to the racedb.env file using the setup tool. The setup tool is a Windows UI application that allows the user to edit settings, install, run, and update the container. There is no need to use the commnad line.
+The RaceDB container comes preconfigured for the most used options. However, if you use a RFID reader at registration to "burn" tags, you will want to add the IP number of your reader to the racedb.env file using the setup tool. The setup tool is a Windows UI application that allows the user to edit settings, install, run, and update the container. There is no need to use the command line.
 
 Steps:
 
@@ -49,9 +49,9 @@ Steps:
 
 - Now the container is installed, you can start it. Hit the Start button. After a few seconds, the "Start Command Send" box will appear, and the RaceDB Controller will indicate RaceDB is running.
 
-- Now, wait about two mins point your webbrowser to [http://localhost]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
+- Now, wait about two mins, and point your webbrowser to [http://localhost/RaceDB]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23/RaceDB].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
 
-- The default admin login is super and the password is super. Be sure to use the [http://localhost/admin] page to change the password!
+- The default login is super and the password is super. Be sure to use the __python3 manage.py set_password super ???__ command to change the password!
 
 We recommend configuring Docker to start with your system. If you do so, RaceDB will automatically start with Docker starts. Additionally, you can use the Docker control panel to control RaceDB.
 
@@ -73,9 +73,9 @@ Steps:
 
 - For this step, you require internet access. From the terminal prompt run: "bash racedb.sh run" from the racedb container directory to start the container. The first time this command run, docker will download the container images from the internet and then spin up the containers, configure the database and racedb, and start racedb. The container download can take 1-10 mins depending on the speed of your internet connection. The download only happens the first time. Any other time you start the container, it will start from disk.
 
-- Now, wait about two mins point your webbrowser to [http://localhost]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
+- Now, wait about two mins point and your webbrowser to [http://localhost/RaceDB]. This delay is required to allow the database container to start. From another computer on the network, use the IP number of your computer. For example, [http://192.168.30.23/RaceDB].  The first time RaceDB starts it will initialize the database and setup the default configuration, which can, depending on the speed of your system, take up to two minutes.
 
-- The default admin login is super and the password is super. Be sure to use the [http://localhost/admin] page to change the password!
+- The default admin login is super and the password is super. Be sure to use __python3 manage.py set_password super ???__ to change the password.
 
 We recommend configuring Docker to start with your system. If you do so, RaceDB will automatically start with Docker starts. Additionally, you can use the Docker control panel to control RaceDB.
 
@@ -294,18 +294,22 @@ python dependencies.py
 
   RaceDB does not require the internet while it is running.
 
+  It is not necessary for RaceDB to be connected to an rfid reader (eg. Impinj).  Rather, you can use relatively inexpensive (UHF USB Readers)[https://www.amazon.ca/s?k=usb+rfid+reader+uhf+epc&sprefix=uhf+usb+%2Caps%2C99&ref=nb_sb_ss_ts-doa-p_1_8] that work in the 902-928MHz range (don't get the 13.56MHz ones - these won't work).
+  With these readers, you can issue pre-programmed tags, revoke lost tags for reuse, and enable self-checking for races using RFID tags from any computer, tablet or smart phone connnected to the RaceDB network.
+
+  You can still run RaceDB with a traditional RFID reader with RaceDB, you must first open port 5084 on your operating system.
+  
   To start RaceDB and connect to an Impinj RFID reader, use the following command:
 
 ```
   python manage.py launch --rfid_reader
 ```
 
-  You must open port 5084 on your operating system.
-  
   When RaceDB comes up, login with username="super", password="super". This will log you into the system with superuser capabilities, which you will need to configure races.
  
   To see all possible "launch" command options, do:
-
+  
+  
 ``` 
   python manage.py launch --help
 ```

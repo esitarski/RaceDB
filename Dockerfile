@@ -1,9 +1,12 @@
-FROM python:3
+FROM python:3.10-alpine
 
-RUN apt-get update \
-  && apt-get install -y \
-    vim.tiny \
-    postgresql-client-11
+# Add modules not included in the default alpine container.
+RUN apk update \
+  && apk add \
+    git \
+    vim \
+    postgresql-client \
+    bash
 # Add this back in when we figure out how to use host networking
 #    avahi-daemon \
 
@@ -17,11 +20,11 @@ ENV DATABASE_USER=racedb
 ENV TESTING=0
 
 # Set out hostname for avahi
+# alpine creates a postgres user and group automatically so we don't have to do it here.
 RUN echo "racedb.local" > /etc/hostname && \
     mkdir -p /RaceDB && \
     mkdir -p /docker-entrypoint-init.d/ && \
-    useradd -m -s /bin/bash postgres && \
-    useradd -m -s /bin/bash racedb
+    adduser -D -s /bin/bash racedb
 
 # Copy in our source code
 COPY . /RaceDB/
@@ -30,8 +33,8 @@ WORKDIR /RaceDB
 # We are left in the /RaceDB at this point by WORKDIR. Setup RaceDB
 RUN rm -rf Dockerfile release test_data migrations_old env docker .git .vscode core/__pycache__  RaceDB/__pycache__ __pycache__ helptxt/__pycache__ .git* .dockerdef && \
     python3 -m pip install --upgrade pip && \
+    python3 -m pip install psycopg2-binary && \
     python3 -m pip install -r requirements.txt && \
-    python3 -m pip install PyMySQL mysqlclient psycopg2 && \
     cd helptxt && \
     python3 compile.py && \
     cd /RaceDB && \

@@ -21,6 +21,7 @@
 {% crispy form %}
 <hr/>
 {% spaceless %}
+{% if instance.id %}
 {% with wave_set=instance.wave_set.all %}
 	{% if wave_set.exists %}
 		<h2 class="visible-print">{% trans "Waves" %}</h2>
@@ -135,5 +136,7 @@
 		{% endfor %}
 	{% endif %}
 {% endwith %}
+{% endif %}
 {% endspaceless %}
+
 {% endblock content %}

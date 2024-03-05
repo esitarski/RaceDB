@@ -32,7 +32,7 @@
 		<tr><td class="text-right">{% trans "From" %}:</td>				<td><strong>{% non_empty_list license_holder.city license_holder.state_prov %}</strong></td></tr>
 		<tr><td class="text-right">{% trans "Nationality" %}:</td>		<td><strong>{{license_holder.nationality}}</strong></td></tr>
 		<tr><td class="text-right">{% trans "License" %}:</td>			<td><strong>{{license_holder.license_code}}</strong></td></tr>
-		<tr><td class="text-right">{% trans "UCI ID" %}:</td>			<td><strong>{{license_holder.get_flag_uci_id_html}}</strong></td></tr>
+		<tr><td class="text-right text-nowrap">{% trans "UCI ID" %}:</td>			<td><strong>{{license_holder.get_flag_uci_id_html}}</strong></td></tr>
 	</tbody>
 </table>
 {% endspaceless %}

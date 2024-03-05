@@ -7,7 +7,7 @@
 {% endblock srcjavascript %}
 
 {% block onload %}
-var className = 'Series';
+const className = 'Series';
 $('#sort_table_id').rowSorter({
 	
 	// if new_index === old_index, this function won't be called.
@@ -65,7 +65,7 @@ $('#sort_table_id').rowSorter({
 			<td>{{s.description}}</td>
 			<td>{{s.category_format.name}}</td>
 			<td class="text-right">{{s.get_competitions|length}}</td>
-			<td class="text-right">{{s.seriescompetitionevent_set.all.count}}</td>
+			<td class="text-right">{{s.num_events}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-success" href="./SeriesEdit/{{s.id}}/">{% trans "Edit" %}</a>
 				<a class="btn btn-warning" href="./SeriesDelete/{{s.id}}/">{% trans "Delete" %}</a>

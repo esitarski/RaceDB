@@ -2,9 +2,10 @@ import re
 import sys
 import datetime
 import operator
+from io import BytesIO
 from collections import defaultdict
 from fnmatch import fnmatch
-from xlrd import open_workbook, xldate_as_tuple
+from openpyxl import load_workbook
 from collections import namedtuple, defaultdict
 from django.db import transaction, IntegrityError
 from django.db.models import Q
@@ -15,7 +16,7 @@ from . import import_utils
 from .import_utils import *
 from .models import *
 
-class TimeTracker( object ):
+class TimeTracker:
 	def __init__( self ):
 		self.startTime = None
 		self.curLabel = None
@@ -54,7 +55,7 @@ def init_prereg(
 			message_stream.write( removeDiacritic(s) )
 	else:
 		def ms_write( s, flush=False ):
-			message_stream.write( u'{}'.format(s) )
+			message_stream.write( '{}'.format(s) )
 			sys.stdout.write( removeDiacritic(s) )
 			if flush:
 				sys.stdout.flush()
@@ -67,10 +68,10 @@ def init_prereg(
 		try:
 			competition = Competition.objects.get( name=competition_name )
 		except Competition.DoesNotExist:
-			ms_write( u'**** Cannot find Competition: "{}"\n'.format(competition_name) )
+			ms_write( '**** Cannot find Competition: "{}"\n'.format(competition_name) )
 			return
 		except Competition.MultipleObjectsReturned:
-			ms_write( u'**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
+			ms_write( '**** Found multiple Competitions matching: "{}"\n'.format(competition_name) )
 			return
 	
 	optional_events = { normalize(event.name):event for event in competition.get_events() if event.optional }
@@ -83,11 +84,11 @@ def init_prereg(
 			event_name_count[event.name] += 1
 	for event_name, count in event_name_count.items():
 		if count > 1:
-			ms_write( u'**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
+			ms_write( '**** Error: Duplicate Optional Event Name: "{}".  Perferences to Optional Events may not work properly.\n'.format(event_name) )
 	
 	role_code = {}
 	for role_type, roles in Participant.COMPETITION_ROLE_CHOICES:
-		role_code.update( { u'{}'.format(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
+		role_code.update( { '{}'.format(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
 		
 	# Construct a cache to find categories quicker.
 	category_code_gender_suffix = re.compile( r'\(Open\)$|\(Men\)$|\(Women\)$' )
@@ -134,7 +135,7 @@ def init_prereg(
 			if not date_of_birth and uci_code and not uci_code.isdigit():
 				try:
 					date_of_birth = datetime.date( int(uci_code[3:7]), int(uci_code[7:9]), int(uci_code[9:11]) )
-				except:
+				except Exception:
 					pass
 			
 			# If no date of birth, make one up based on the age.
@@ -148,14 +149,14 @@ def init_prereg(
 			# As a last resort, pick the default DOB
 			date_of_birth 	= date_of_birth or invalid_date_of_birth
 			
-			license_code	= to_int_str(v('license_code', u'')).upper().strip()
-			last_name		= to_str(v('last_name',u''))
-			first_name		= to_str(v('first_name',u''))
-			name			= to_str(v('name',u''))
+			license_code	= (to_int_str(v('license_code', '')) or '').upper().strip() or None
+			last_name		= to_str(v('last_name',''))
+			first_name		= to_str(v('first_name',''))
+			name			= to_str(v('name',''))
 			if not name:
 				name = ' '.join( n for n in [first_name, last_name] if n )
 			
-			gender			= to_str(v('gender',u''))
+			gender			= to_str(v('gender',''))
 			gender			= gender_from_str(gender) if gender else None
 			
 			email			= to_str(v('email', None))
@@ -169,7 +170,7 @@ def init_prereg(
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))
 			bib				= (to_int(v('bib', None)) or None)
-			bib_auto		= (bib is None and u'{}'.format(v('bib',u'')).lower() == u'auto')
+			bib_auto		= (bib is None and '{}'.format(v('bib','')).lower() == 'auto')
 			tag				= to_int_str(v('tag', None))
 			note		 	= to_str(v('note', None))
 			team_name		= to_str(v('team', None))
@@ -224,11 +225,11 @@ def init_prereg(
 				if uci_id:
 					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
 					
-				if not license_holder and license_code and license_code.upper() != u'TEMP':
+				if not license_holder and license_code and license_code.upper() != 'TEMP':
 					try:
 						license_holder = LicenseHolder.objects.get( license_code=license_code )
 					except LicenseHolder.DoesNotExist:
-						ms_write( u'**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
+						ms_write( '**** Row {}: cannot find LicenceHolder from LicenseCode: {}, Name="{}"\n'.format(
 							i, license_code, name) )
 						continue
 				elif not license_holder:
@@ -273,13 +274,13 @@ def init_prereg(
 							)
 							truncate_char_fields(license_holder).save()
 						except Exception as e:
-							ms_write( u'**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
+							ms_write( '**** Row {}: New License Holder Exception: {}, Name="{}"\n'.format(
 									i, e, name,
 								)
 							)
 							continue
 					except LicenseHolder.MultipleObjectsReturned:
-						ms_write( u'**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
+						ms_write( '**** Row {}: found multiple LicenceHolders matching "Last, First" Name="{}"\n'.format(
 								i, name,
 							)
 						)
@@ -308,7 +309,7 @@ def init_prereg(
 						truncate_char_fields(license_holder).save()
 						truncate_char_fields( license_holder )
 					except Exception as e:
-						ms_write( u'**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
+						ms_write( '**** Row {}: Update License Holder Exception: {}, Name="{}"\n'.format(
 								i, e, name,
 							)
 						)
@@ -322,7 +323,7 @@ def init_prereg(
 					tt.start( 'get_category_from_code' )
 					category = get_category( category_code, license_holder.gender )
 					if category is None:
-						ms_write( u'**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
+						ms_write( '**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
 							i, category_code, name,
 						) )
 				
@@ -335,7 +336,7 @@ def init_prereg(
 					team = None
 				else:
 					if team_name not in team_lookup:
-						msg = u'Row {:>6}: Added team: {}\n'.format(
+						msg = 'Row {:>6}: Added team: {}\n'.format(
 							i, team_name,
 						)
 						ms_write( msg )
@@ -352,7 +353,7 @@ def init_prereg(
 				except Participant.DoesNotExist:
 					participant = Participant( **participant_keys )
 				except Participant.MultipleObjectsReturned:
-					ms_write( u'**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
+					ms_write( '**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
 						i, name,
 					) )
 					continue
@@ -403,14 +404,14 @@ def init_prereg(
 				try:
 					truncate_char_fields(participant).save()
 				except IntegrityError as e:
-					ms_write( u'**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+					ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
 						i, e,
 						bib, category_code, license_code, name,
 					) )
 					success, integrity_error_message, conflict_participant = participant.explain_integrity_error()
 					if success:
-						ms_write( u'{}\n'.format(integrity_error_message) )
-						ms_write( u'{}\n'.format(conflict_participant) )
+						ms_write( '{}\n'.format(integrity_error_message) )
+						ms_write( '{}\n'.format(conflict_participant) )
 					continue
 				
 				tt.start( 'add_to_default_optional_events' )
@@ -423,8 +424,11 @@ def init_prereg(
 					}
 					option_included = { event.option_id:included for event, included in participant_optional_events.items() }
 					ParticipantOption.sync_option_ids( participant, option_included )
-					override_events_str = u' ' + u', '.join(
-						u'"{}"={}'.format(event.name, included) for event, included in sorted(participant_optional_events.items())
+					override_events_str = ' ' + ', '.join(
+						'"{}"={}'.format(event.name, included)
+							for event, included in sorted(
+								participant_optional_events.items(), key=lambda event_included: event_included[0].date_time
+							)
 					)
 				else:
 					override_events_str = ''
@@ -442,7 +446,7 @@ def init_prereg(
 				
 				tt.end()
 				
-				ms_write( u'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
+				ms_write( 'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
 							row=i,
 							license=license_holder.license_code,
 							dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
@@ -457,41 +461,34 @@ def init_prereg(
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = open_workbook( file_contents = worksheet_contents )
+		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')
-		except:
+		except Exception:
 			fname = worksheet_name
-		wb = open_workbook( fname )
+		wb = load_workbook( filename = fname, read_only=True, data_only=True )
 	
-	ur_records = []
-	import_utils.datemode = wb.datemode
-	
-	ws = None
-	for cur_sheet_name in wb.sheet_names():
-		if cur_sheet_name == sheet_name or sheet_name is None:
-			ms_write( u'Reading sheet: {}\n'.format(cur_sheet_name) )
-			ws = wb.sheet_by_name(cur_sheet_name)
-			break
-	
-	if not ws:
-		ms_write( u'Cannot find sheet "{}"\n'.format(sheet_name) )
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+		ms_write( 'Reading sheet "{}"\n'.format(sheet_name) )
+	except Exception:
+		ms_write( 'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
 		
-	num_rows = ws.nrows
-	num_cols = ws.ncols
-	for r in range(num_rows):
-		row = ws.row( r )
+	ur_records = []
+	
+	for r, row in enumerate(ws.iter_rows()):
 		if r == 0:
 			# Get the header fields from the first row.
-			fields = [u'{}'.format(v.value).strip() for v in row]
+			fields = ['{}'.format(v.value).strip() for v in row]
 			
 			# Add all Optional Event patterns.
 			for field in fields:
 				try:
 					pattern = normalize( field )
-				except:
+				except Exception:
 					continue
 				for event_name, event in optional_events.items():
 					if fnmatch(event_name, pattern):
@@ -500,46 +497,46 @@ def init_prereg(
 				ifm.set_aliases( pattern, (pattern,) )
 			
 			ifm.set_headers( fields )
-			ms_write( u'Header Row:\n' )
+			ms_write( 'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
 				if f.lower().strip() in optional_events:
-					ms_write( u'        {}. {} (Optional Event)\n'.format(col,f) )
+					ms_write( '        {}. {} (Optional Event)\n'.format(col,f) )
 				else:
 					name = ifm.get_name_from_alias( f )
 					if name is not None:
-						ms_write( u'        {}. {} --> {}\n'.format(col, f, name) )
+						ms_write( '        {}. {} --> {}\n'.format(col, f, name) )
 					else:
-						ms_write( u'        {}. ****{} (Ignored)\n'.format(col, f) )
+						ms_write( '        {}. ****{} (Ignored)\n'.format(col, f) )
 			
 			fields_lower = [f.lower() for f in fields]
 			if clear_existing or 'bib' in ifm:
-				ms_write( u'Recording previous license checkes...\n' )
+				ms_write( 'Recording previous license checks...\n' )
 				if competition.report_label_license_check:
 					tt.start( 'license_check_state_refresh' )
 					LicenseCheckState.refresh()
 	
-				ms_write( u'Clearing existing Participants...\n' )
+				ms_write( 'Clearing existing Participants...\n' )
 				tt.start( 'clearing_existing_participants' )
 				large_delete_all( Participant, Q(competition=competition) )
 			
 			if 'license_code' not in ifm and 'uci_id' not in ifm:
-				ms_write( u'Header Row must contain one of (or both) License or UCI ID.  Aborting.\n' )
+				ms_write( 'Header Row must contain one of (or both) License or UCIID.  Aborting.\n' )
 				return
 			
-			ms_write( u'\n' )
+			ms_write( '\n' )
 			continue
 			
 		ur_records.append( (r+1, [v.value for v in row]) )
-		if len(ur_records) == 1000:
+		if len(ur_records) == 300:
 			process_ur_records( ur_records )
-			ur_records = []
+			ur_records[:] = []
 			
 	process_ur_records( ur_records )
 	
-	ms_write( u'\n' )
+	ms_write( '\n' )
 	for section, total in sorted( times.items(), key = operator.itemgetter(1), reverse=True ):
-		ms_write( u'{}={:.6f}\n'.format(section, total) )
-	ms_write( u'\n' )
-	ms_write( u'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
-	ms_write( u'\n' )
+		ms_write( '{}={:.6f}\n'.format(section, total) )
+	ms_write( '\n' )
+	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+	ms_write( '\n' )
 	ms_write( tt.__repr__() )

@@ -1,16 +1,16 @@
 import re
 import os
-import six
 import sys
 import locale
 import datetime
 import xlsxwriter
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from . import utils
 from . import scramble
 from . import minimal_intervals
 from .models import *
+from .add_excel_info import add_excel_info
 
 data_headers = (
 	'Bib#',
@@ -19,7 +19,7 @@ data_headers = (
 	'City', 'StateProv',
 	'Category', 'Age', 'Gender',
 	'License',
-	'NatCode', 'UCIID',
+	'NatCode', 'UCI ID',
 	'Tag', 'Tag2',				# These must be last.
 )
 
@@ -53,6 +53,7 @@ property_headers = (
 	'Time Trial',
 	'RFID Option',
 	
+	'Use SFTP',
 	'FTP Host',
 	'FTP User',
 	'FTP Password',
@@ -65,25 +66,26 @@ property_headers = (
 	'Win and Out',
 	'Event Long Name',
 	'Email',
+	'Google Maps API Key',
 )
 	
 def get_number_range_str( numbers ):
 	# Combine consecutive numbers into range pairs.
 	numbers = sorted( set(numbers) )
 	if len(numbers) <= 1:
-		return u','.join( u'{}'.format(n) for n in numbers )
+		return ','.join( '{}'.format(n) for n in numbers )
 	pairs = [[numbers[0], numbers[0]]]
 	for n in numbers[1:]:
 		if n == pairs[-1][1] + 1:
 			pairs[-1][1] += 1
 		else:
 			pairs.append( [n, n] )
-	return u','.join( u'{}'.format(p[0]) if p[0] == p[1] else u'{}-{}'.format(*p) for p in pairs )
+	return ','.join( '{}'.format(p[0]) if p[0] == p[1] else '{}-{}'.format(*p) for p in pairs )
 
 def get_subset_number_range_str( bib_all, bib_subset ):
 	bib_subset = sorted( bib_subset )
 	if len(bib_subset) <= 1:
-		return u','.join( u'{}'.format(n) for n in bib_subset )
+		return ','.join( '{}'.format(n) for n in bib_subset )
 	bib_all = sorted( bib_all )
 	
 	bib_i = {bib:i for i, bib in enumerate(bib_all)}
@@ -96,15 +98,15 @@ def get_subset_number_range_str( bib_all, bib_subset ):
 			pairs.append( [n, n] )
 	
 	i_bib = {i:bib for i, bib in enumerate(bib_all)}
-	return u','.join( u'{}'.format(i_bib[p[0]]) if p[0] == p[1] else u'{}-{}'.format(i_bib[p[0]],i_bib[p[1]]) for p in pairs )	
+	return ','.join( '{}'.format(i_bib[p[0]]) if p[0] == p[1] else '{}-{}'.format(i_bib[p[0]],i_bib[p[1]]) for p in pairs )	
 	
 def get_gender_str( g ):
-	return (u'Men', u'Women', u'Open')[g]
+	return ('Men', 'Women', 'Open')[g]
 
 def safe_xl( v ):
-	if v is None or isinstance(v, six.string_types) or isinstance(v, six.integer_types) or isinstance(v, (float, bool, datetime.datetime, datetime.date) ):
+	if v is None or isinstance(v, (str, int, float, bool, datetime.datetime, datetime.date) ):
 		return v
-	return u'{}'.format(v)
+	return '{}'.format(v)
 	
 def write_row_data( ws, row, row_data, format = None ):
 	if format is None:
@@ -174,43 +176,43 @@ def add_categories_page( wb, title_format, event ):
 		if len(categories) == 1:	# If only one category, do not output Component waves.
 			for category in categories:
 				row_data = [
-					u'Wave',
+					'Wave',
 					category.code,
 					get_gender_str(category.gender),
 					#get_number_range_str( p.bib for p in participants if p.category == category and p.bib ),
 					category_intervals.get(category,''),
-					u'{}'.format(getattr(wave,'start_offset',u'')),
-					wave.laps if wave.laps else u'',
-					competition.to_local_distance(wave.distance) if wave.distance else u'',
-					getattr(wave, 'minutes', None) or u'',
+					'{}'.format(getattr(wave,'start_offset','')),
+					wave.laps if wave.laps else '',
+					competition.to_local_distance(wave.distance) if wave.distance else '',
+					getattr(wave, 'minutes', None) or '',
 					True, True, True,
 				]
 				row = write_row_data( ws, row, row_data )
 		else:
 			genders = list( set(c.gender for c in categories) )
 			row_data = [
-				u'Wave',
+				'Wave',
 				wave.name,
 				get_gender_str( 2 if len(genders) != 1 else genders[0] ),
-				u'',	# No ranges here - these come from the categories.
-				u'{}'.format(getattr(wave,'start_offset',u'')),
-				wave.laps if wave.laps else u'',
-				competition.to_local_distance(wave.distance) if wave.distance else u'',
-				getattr(wave, 'minutes', None) or u'',
+				'',	# No ranges here - these come from the categories.
+				'{}'.format(getattr(wave,'start_offset','')),
+				wave.laps if wave.laps else '',
+				competition.to_local_distance(wave.distance) if wave.distance else '',
+				getattr(wave, 'minutes', None) or '',
 				wave_flag, wave_flag, wave_flag,
 			]
 			row = write_row_data( ws, row, row_data )
 			
 			for category in categories:
 				row_data = [
-					u'Component',
+					'Component',
 					category.code,
 					get_gender_str(category.gender),
 					category_intervals.get(category,''),
-					u'{}'.format(getattr(wave,'start_offset',u'')),
-					u'',
-					u'',
-					u'',
+					'{}'.format(getattr(wave,'start_offset','')),
+					'',
+					'',
+					'',
 					component_flag, component_flag, component_flag,
 				]
 				row = write_row_data( ws, row, row_data )
@@ -220,14 +222,14 @@ def add_categories_page( wb, title_format, event ):
 		if bibs_all is None:
 			bibs_all = event.get_participants().exclude(bib__isnull=True).values_list('bib',flat=True)
 		row_data = [
-			u'Custom',
+			'Custom',
 			category.code,
 			get_gender_str(category.gender),
 			get_subset_number_range_str( bibs_all, category.get_bibs() ),
-			u'',
-			u'',
-			u'',
-			u'',
+			'',
+			'',
+			'',
+			'',
 			True, True, True,
 		]
 		row = write_row_data( ws, row, row_data )
@@ -240,14 +242,14 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 	ws = wb.add_worksheet('--CrossMgr-Properties')
 	row = write_row_data( ws, 0, property_headers, title_format )
 	row_data = [
-		u'-'.join( [competition.name, event.name] ),
+		'-'.join( (competition.name, event.name) ),
 		competition.organizer,
 		competition.city,
 		competition.stateProv,
 		competition.country,
 		server_date_time.strftime( '%Y-%m-%d' ),
 		server_date_time.strftime( '%H:%M' ),
-		timezone.get_current_timezone().zone,
+		str(timezone.get_current_timezone()),
 		raceNumber,
 		competition.discipline.name,
 		competition.using_tags,
@@ -255,6 +257,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		True if event.event_type == 1 else False,		# Time Trial
 		event.rfid_option,
 		
+		competition.use_sftp,
 		competition.ftp_host,
 		competition.ftp_user,
 		scramble.encode(utils.removeDiacritic(competition.ftp_password)),
@@ -265,8 +268,9 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 		event.road_race_finish_times,
 		event.dnsNoData,
 		getattr(event, 'win_and_out', False),
-		u'-'.join( [competition.long_name, event.name] ) if competition.long_name else u'',
+		'-'.join( [competition.long_name, event.name] ) if competition.long_name else '',
 		competition.organizer_email,
+		competition.google_maps_api_key,
 	]
 	row = write_row_data( ws, row, row_data )
 
@@ -289,7 +293,7 @@ def get_crossmgr_excel( event_mass_start ):
 		row_data = [
 			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			u'{}'.format(p.team_name), p.team.team_code if p.team else u'',
+			'{}'.format(p.team_name), p.team.team_code if p.team else '',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code_export,
@@ -321,6 +325,8 @@ def get_crossmgr_excel( event_mass_start ):
 			break
 		raceNumber += 1
 	add_properties_page( wb, title_format, event_mass_start, raceNumber )
+	
+	add_excel_info( wb )
 	
 	wb.close()
 	return output.getvalue()
@@ -355,10 +361,10 @@ def get_crossmgr_excel_tt( event_tt ):
 		start_time = start_times.get(p, None)
 		h = p.license_holder
 		row_data = [
-			start_time.total_seconds() / (24.0*60.0*60.0) if start_time is not None else u'',
-			p.bib if p.bib else u'',
+			start_time.total_seconds() / (24.0*60.0*60.0) if start_time is not None else '',
+			p.bib if p.bib else '',
 			h.last_name, h.first_name,
-			p.team.name if p.team else u'', p.team.team_code if p.team else u'',
+			p.team.name if p.team else '', p.team.team_code if p.team else '',
 			h.city, h.state_prov,
 			p.category.code, competition.competition_age(h), get_gender_str(h.gender),
 			h.license_code,
@@ -392,5 +398,7 @@ def get_crossmgr_excel_tt( event_tt ):
 		raceNumber += 1
 	add_properties_page( wb, title_format, event_tt, raceNumber )
 	
+	add_excel_info( wb )
+
 	wb.close()
 	return output.getvalue()

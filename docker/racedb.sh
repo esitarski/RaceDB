@@ -42,7 +42,7 @@ bash() {
 
 manage() {
     checkconfig
-    $DOCKERCMD racedb /RaceDB/manage.py $@
+    $DOCKERCMD exec racedb /RaceDB/manage.py $@
 }
 
 stop() {

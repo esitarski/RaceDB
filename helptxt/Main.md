@@ -9,6 +9,7 @@ Get started with RaceDB
 * [Teams][]
 * [Legal Entities][]
 * [Series][]
+* [RFID][]
 
 ## Structure Data
 
@@ -17,6 +18,10 @@ Get started with RaceDB
 * [Season's Passes][]
 * [Race Classes][]
 * [Disciplines][]
+
+## CrossMgr Integration
+
+* [CrossmgrIntegration][]
 
 ## Users and Roles
 

@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from . import utils
@@ -13,7 +13,7 @@ class CustomLabelForm( Form ):
 		system_info = kwargs.pop( 'system_info' )
 		c = kwargs.pop( 'competition' )
 
-		super(CustomLabelForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -43,7 +43,7 @@ class CustomLicenseHolder( object ):
 		self.last_name = self.first_last = self.first_last_short = last_name
 	
 	def __getattr__( self, name ):
-		return u''
+		return ''
 	
 class CustomParticipant( object ):
 	def __init__( self, bib, competition ):
@@ -54,13 +54,13 @@ class CustomParticipant( object ):
 		self.team = None
 	
 	def __getattr__( self, name ):
-		return u''
+		return ''
 
 @access_validation()
 def CustomLabel( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
-	custom_label_text = u'{}'.format(request.session.get('custom_label_text', u''))
+	custom_label_text = '{}'.format(request.session.get('custom_label_text', ''))
 
 	if request.method == 'POST':
 		form = CustomLabelForm( request.POST, system_info=SystemInfo.get_singleton(), competition=competition )

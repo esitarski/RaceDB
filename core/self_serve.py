@@ -1,11 +1,12 @@
 import operator
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .participant_key_filter import participant_key_filter, add_participant_from_license_holder
 from .ReadWriteTag import ReadTag, WriteTag
 from .participant import ParticipantSignatureForm
+from .get_version import get_version
 
 def get_valid_competitions():
 	dNow = timezone.localtime(timezone.now()).date()
@@ -20,19 +21,19 @@ def get_valid_competitions():
 @autostrip
 class SelfServeCompetitionForm( Form ):
 	competition_choice = forms.ChoiceField(
-				choices = lambda: [(c.pk, format_lazy(u'{} - {}', c.name, c.date_range_str))
+				choices = lambda: [(c.pk, format_lazy('{} - {}', c.name, c.date_range_str))
 					for c in get_valid_competitions()],
 				label = _('Choose a Competition') )
 	
 	def __init__(self, *args, **kwargs):
-		super(SelfServeCompetitionForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
 		button_args = [
-			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+			Submit( 'ok-submit', '' ),	# Styling by template.
 		]
 		
 		self.helper.layout = Layout(
@@ -42,21 +43,42 @@ class SelfServeCompetitionForm( Form ):
 		
 @autostrip
 class SelfServeAntennaForm( Form ):
-	rfid_antenna = forms.ChoiceField( choices = [(i, mark_safe('&nbsp;&nbsp;&nbsp;{}&nbsp;&nbsp;&nbsp;'.format(i))) for i in range(1,5)], label = _('Antenna to Read Tags') )
+	rfid_antenna = forms.ChoiceField( choices = [(-1, _("USB Reader"))] + [(i, mark_safe('&nbsp;&nbsp;&nbsp;Ant {}&nbsp;&nbsp;&nbsp;'.format(i))) for i in range(1,5)], label = _('Antenna to Read Tags') )
 	
 	def __init__(self, *args, **kwargs):
-		super(SelfServeAntennaForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'navbar-form navbar-left'
 		
 		button_args = [
-			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-primary' ),
+			Submit( 'ok-submit', '' ),	# Styled by template.
 		]
 		
 		self.helper.layout = Layout(
-			Row( Field('rfid_antenna', size=4, style="font-size: 250%;"), ),
+			Row( Field('rfid_antenna', size=5, style="font-size: 250%;"), ),
+			Row( button_args[0], ),
+		)
+
+@autostrip
+class SelfServeUSBReader( Form ):
+	rfid_tag = forms.CharField( max_length=24, label=_('RFID Tag') )
+	
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'ok-submit', '' ),	# Styled by the template.
+		]
+		
+		self.helper.layout = Layout(
+			Row( Field('rfid_tag', size=24), ),
+			Row( HTML('<hr/>') ),
 			Row( button_args[0], ),
 		)
 
@@ -101,8 +123,8 @@ def SelfServeSignature( request ):
 				return HttpResponseRedirect( url_error )
 			
 			for p in participants:
-				p.signature = signature
-				p.save()
+				p.signature = signature				
+			Participant.objects.bulk_update( participants, 'signature' )
 			
 			return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	else:
@@ -118,7 +140,7 @@ def SelfServeSignature( request ):
 	)
 
 #----------------------------------------------------------------------------
-# do_scan states:
+# action states:
 # 0: show self serve screen
 # 1: read rfid
 # 2: confirm logout
@@ -126,15 +148,15 @@ def SelfServeSignature( request ):
 # 4: get signature
 	
 @access_validation( selfserve_ok=True )
-def SelfServe( request, do_scan=0 ):
+def SelfServe( request, action=0 ):
 	# Prevent non-serve users from coming here.
 	if request.user.username != 'serve':
 		return HttpResponseRedirect( '/RaceDB' )
 	
-	do_scan = int(do_scan)
+	action = int(action)
 	
 	exclude_breadcrumbs = True
-	version = RaceDBVersion
+	version = get_version()
 	
 	form = None
 	status_entries = []
@@ -146,14 +168,14 @@ def SelfServe( request, do_scan=0 ):
 	
 	path_noargs = getContext(request, 'cancelUrl') + 'SelfServe/'
 	
-	if do_scan != 4:
-		# Forget tag if not retrieve signature.
-		request.session['tag'] = None
+	if action != 4:
+		# Forget rfid_tag if not retrieve signature.
+		request.session['rfid_tag'] = None
 	
-	if do_scan == 2:
+	if action == 2:
 		confirm_logout = True
 		return render( request, 'self_serve.html', locals() )
-	elif do_scan == 3:
+	elif action == 3:
 		logout( request )
 		return HttpResponseRedirect( '/RaceDB/Home/' )		
 		
@@ -189,8 +211,16 @@ def SelfServe( request, do_scan=0 ):
 		errors.append( _('Competition must be configured to use tags.') )
 		return render( request, 'self_serve.html', locals() )
 
-	rfid_antenna = request.session.get('rfid_antenna', None)
-	if rfid_antenna is None:
+	# If there is no rfid reader available, default to a usb reader.
+	if not competition.has_rfid_reader():
+		rfid_antenna = request.session['rfid_antenna'] = -1
+		action = 1
+	else:
+		rfid_antenna = request.session.get('rfid_antenna', None)
+		
+	# Othewise, get the rfid reader antenna to use.
+	if action == 0 or rfid_antenna is None:
+		
 		if request.method == 'POST':
 			form = SelfServeAntennaForm( request.POST )
 			if form.is_valid():
@@ -198,47 +228,60 @@ def SelfServe( request, do_scan=0 ):
 				if not rfid_antenna:
 					return HttpResponseRedirect( path_noargs )
 				request.session['rfid_antenna'] = rfid_antenna
-			
-			return HttpResponseRedirect( path_noargs )
+			return HttpResponseRedirect( path_noargs + '1/' )
 		else:
 			form = SelfServeAntennaForm()
 			return render( request, 'self_serve.html', locals() )
-		
-	if not do_scan:
-		return render( request, 'self_serve.html', locals() )
 
+	# Read the tag.
 	debugRFID = False
-	tag = request.session.get('tag', None)
-	if tag:
-		tags = [tag]
-		status = True
-	else:
-		if not debugRFID:
-			tag = None
-			status, response = ReadTag(rfid_antenna)
-			if not status:
-				status_entries.append(
-					(_('Tag Read Failure'), response.get('errors',[]) ),
-				)
+	if rfid_antenna == -1:
+		# Get the value from the USB Reader.
+		if request.method == 'POST':
+			form = SelfServeUSBReader( request.POST )
+			if form.is_valid():
+				rfid_tag = form.cleaned_data['rfid_tag']
+				tags = [rfid_tag]
+				status = True
+				form = None
 			else:
-				tags = response.get('tags', [])
-				try:
-					tag = tags[0]
-				except (AttributeError, IndexError) as e:
-					status = False
-					status_entries.append(
-						(_('Tag Read Failure'), [e] ),
-					)
+				return render( request, 'self_serve.html', locals() )
 		else:
-			tag = '8F7200647614'
-			tags = [tag]
+			form = SelfServeUSBReader()
+			return render( request, 'self_serve.html', locals() )
+	else:
+		# Scan from a RFID Reader antenna.
+		rfid_tag = request.session.get('rfid_tag', None)
+		if tag:
+			tags = [rfid_tag]
 			status = True
-	
-	if tag and len(tags) > 1:
+		else:
+			if not debugRFID:
+				rfid_tag = None
+				status, response = ReadTag(rfid_antenna)
+				if not status:
+					status_entries.append(
+						(_('Tag Read Failure'), response.get('errors',[]) ),
+					)
+				else:
+					tags = response.get('tags', [])
+					try:
+						rfid_t = tags[0]
+					except (AttributeError, IndexError) as e:
+						status = False
+						status_entries.append(
+							(_('Tag Read Failure'), [e] ),
+						)
+			else:
+				rfid_tag = '8F7200647614'
+				tags = [rfid_tag]
+				status = True
+		
+	if rfid_tag and len(tags) > 1:
 		status = False
 		tags = [add_name_to_tag(competition, t) for t in tags]
 		if len(tags) > 4:
-			tags = tags[:4] + [u'...']
+			tags = tags[:4] + ['...']
 		status_entries.append(
 			(_('Multiple Tags Read (ensure only ONE tag is near the antenna).'), tags )
 		)
@@ -246,12 +289,12 @@ def SelfServe( request, do_scan=0 ):
 	if not status:
 		return render( request, 'self_serve.html', locals() )
 	
-	request.session['tag'] = tag
-	license_holder, participants = participant_key_filter( competition, tag, False )
+	request.session['rfid_tag'] = rfid_tag
+	license_holder, participants = participant_key_filter( competition, rfid_tag, False )
 	
 	if not license_holder:
-		request.session['tag'] = None
-		errors.append( format_lazy(u'{} ({}).', _('Tag not found'), tag) )
+		request.session['rfid_tag'] = None
+		errors.append( format_lazy('{} ({}).', _('Tag not found'), rfid_tag) )
 		return render( request, 'self_serve.html', locals() )
 	
 	# If the license holder has a season's pass for the competition, try to add him/her as a participant.
@@ -261,14 +304,10 @@ def SelfServe( request, do_scan=0 ):
 		else:
 			errors.append( _("Season's Pass required.") )
 	
-	# We got this far by reading a tag, so, set the tag_checked flag as the tag was valid.
-	for p in participants:
-		if not p.tag_checked:
-			p.tag_checked = True
-			p.save()
-	
 	if not participants:
 		errors.append( _('Not Registered') )
+	else:
+		bulk_update_if_different( Participant, participants, 'tag_checked', True )	
 		
 	if not errors and competition.show_signature:
 		if not all( p.good_signature() for p in participants ):
@@ -282,6 +321,6 @@ def SelfServe( request, do_scan=0 ):
 			warnings.extend( w )
 				
 	if not errors:
-		Participant.objects.filter( id__in=[p.id for p in participants if not p.confirmed] ).update( confirmed=True )
+		bulk_update_if_different( Participant, participants, 'confirmed', True )
 
 	return render( request, 'self_serve.html', locals() )

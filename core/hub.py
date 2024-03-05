@@ -3,17 +3,18 @@ import datetime
 import operator
 from collections import defaultdict
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 
 from .views_common import *
 from .models import *
+from .utils import format_time
 
 from .views import license_holders_from_search_text
 from .results import get_payload_for_result
 
-ItemsPerPage = 25
+ItemsPerPage = 50
 
 def competitions_with_results( competitions=None ):
 	if competitions is None:
@@ -35,7 +36,7 @@ class CompetitionSearchForm( Form ):
 	name_text = forms.CharField( required=False, label = _('Name Text') )
 	
 	def __init__(self, *args, **kwargs):
-		super(CompetitionSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		competitions = competitions_with_results_or_prereg()
 		
@@ -45,7 +46,7 @@ class CompetitionSearchForm( Form ):
 		year_min = competition.start_date.year if competition else year_cur
 		competition = competitions.order_by('-start_date').first()
 		year_max = competition.start_date.year if competition else year_cur
-		self.fields['year'].choices =  [(-1, '----')] + [(y, u'{:04d}'.format(y)) for y in range(year_max, year_min-1, -1)]
+		self.fields['year'].choices =  [(-1, '----')] + [(y, '{:04d}'.format(y)) for y in range(year_max, year_min-1, -1)]
 		
 		disciplines = Discipline.objects.filter( pk__in=competitions.values_list('discipline', flat=True).distinct() )
 		self.fields['discipline'].choices =  [(-1, '----')] + [(d.pk, d.name) for d in disciplines]
@@ -90,6 +91,12 @@ def SearchCompetitions( request ):
 	page_key = key + '_page'
 
 	competition_filter = request.session.get(key, {})
+	
+	# Set a defauilt to the last year with a competition if unspecified.
+	if 'year' not in competition_filter:
+		last_competition = Competition.objects.all().order_by('-start_date').first()
+		if last_competition:
+			competition_filter['year'] = last_competition.start_date.year
 	
 	if request.method == 'POST':
 		form = CompetitionSearchForm( request.POST )
@@ -177,17 +184,174 @@ def CompetitionResults( request, competitionId ):
 	exclude_breadcrumbs = True
 	return render( request, 'hub_events_list.html', locals() )
 
-def CategoryResults( request, eventId, eventType, categoryId ):
+def get_primes( event, bibs ):
+	Prime = event.get_prime_class()
+	primes = []
+	used_fields = set()
+	
+	for p in Prime.objects.filter( event=event ).select_related('participant', 'participant__license_holder'):
+		if p.participant.bib not in bibs:
+			continue
+			
+		for f in Prime._meta.get_fields():
+			if not f.is_relation and 'effort' not in f.name and f.name != 'id' and bool( getattr(p, f.name) ):
+				used_fields.add( f )
+		primes.append( p )
+	
+	prime_fields = [f for f in Prime._meta.get_fields() if f in used_fields]
+	return primes, prime_fields
+
+def EventAnimation( request, eventId, eventType, categoryId ):
 	eventType = int(eventType)
 	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
 	category = get_object_or_404( Category, pk=categoryId )
 	wave = event.get_wave_for_category( category )
 	
 	has_results = wave.has_results()
+	def get_results( c = None ):
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	gpx_course = event.get_gpx_course()
+	payload['lat_lon_elevation'] = gpx_course.lat_lon_elevation
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_animation.html', locals() )
+
+def EventLapTimes( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	time_stamp = timezone.datetime.now()
+	
+	return render( request, 'hub_results_lap_times.html', locals() )
+
+def EventLapChart( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_lap_chart.html', locals() )
+
+def EventGapChart( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_gap_chart.html', locals() )
+
+def EventRaceChart( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
+	def get_results( c = None ):
+		return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
+	
+	if wave.rank_categories_together:
+		results = get_results()
+		cat_name = wave.name
+		cat_type = 'Start Wave'
+	else:
+		results = get_results( category )
+		cat_name = category.code_gender
+		cat_type = 'Component'
+	
+	payload = get_payload_for_result( has_results, results, cat_name, cat_type )
+	exclude_breadcrumbs = True
+	hub_mode = True
+	is_timetrial = (eventType == 1)
+	show_category = wave.rank_categories_together
+	
+	return render( request, 'hub_results_race_chart.html', locals() )
+
+def CategoryResults( request, eventId, eventType, categoryId ):
+	eventType = int(eventType)
+	event = get_object_or_404( (EventMassStart,EventTT)[eventType], pk=eventId )
+	category = get_object_or_404( Category, pk=categoryId )
+	custom_category = None
+	wave = event.get_wave_for_category( category )
+	
+	has_results = wave.has_results()
 	
 	if has_results:
 		def get_results( c = None ):
-			return list( wave.get_results(c) )
+			return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	else:
 		def get_results( c = None ):
 			return list( wave.get_prereg_results(c) )
@@ -200,7 +364,7 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 		results = get_results( category )
 		cat_name = category.code_gender
 		cat_type = 'Component'
-	
+
 	num_nationalities = len( set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code) )
 	num_starters = sum( 1 for rr in results if rr.status!=Result.cDNS )
 	time_stamp = timezone.datetime.now()
@@ -210,6 +374,20 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	hub_mode = True
 	is_timetrial = (eventType == 1)
 	show_category = wave.rank_categories_together
+	
+	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
+	
+	ave_speed = None
+	race_time = None
+	try:
+		# Try to get place from the payload.
+		leader_info = payload['data'][payload['catDetails'][0]['pos'][0]]
+		ave_speed = leader_info.get('speed', None)
+		race_time = format_time( leader_info['raceTimes'][-1] - leader_info['raceTimes'][0] )
+	except Exception as e:
+		pass
+	
+	has_multiple_laps = payload.get('has_multiple_laps', False)
 	return render( request, 'hub_results_list.html', locals() )
 
 def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
@@ -220,7 +398,14 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	
 	has_results = custom_category.has_results()
 	
-	results = custom_category.get_results() if has_results else custom_category.get_prereg_results()
+	if has_results:
+		def get_results():
+			return sorted( custom_category.get_results(), key=operator.methodcaller('sort_key') )
+	else:
+		def get_results():
+			return list( custom_category.get_prereg_results() )
+	
+	results = get_results()
 	num_nationalities = len(set(rr.participant.license_holder.nation_code for rr in results if rr.participant.license_holder.nation_code))
 	num_starters = sum( 1 for rr in results if rr.status != Result.cDNS )
 	time_stamp = timezone.datetime.now()
@@ -230,6 +415,10 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	hub_mode = True
 	is_timetrial = (eventType == 1)
 	show_category = True
+
+	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
+	has_multiple_laps = payload['has_multiple_laps']
+
 	return render( request, 'hub_results_list.html', locals() )
 
 def LicenseHolderResults( request, licenseHolderId ):
@@ -251,7 +440,7 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 	
 	if has_results:
 		def get_results( c = None ):
-			return list( wave.get_results(c) )
+			return sorted( wave.get_results(c), key=operator.methodcaller('sort_key') )
 	else:
 		def get_results( c = None ):
 			return list( wave.get_prereg_results(c) )
@@ -278,11 +467,11 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 @autostrip
 class LicenseHolderSearchForm( Form ):
 	search_text = forms.CharField( required=False, label=_('Text') )
-	search_type = forms.ChoiceField( required=False, choices = ((0,_('Name (Last, First)')),(1,_('License')),(2,_('UCIID'))),
+	search_type = forms.ChoiceField( required=False, choices = ((0,_('Name (Last, First)')),(1,_('License')),(2,_('UCI ID'))),
 		label=_('Search by') ) 
 	
 	def __init__(self, *args, **kwargs):
-		super(LicenseHolderSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -409,18 +598,18 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	max_team_len = 15
 	for rank, (lh, team, totalValue, gap, event_results) in enumerate(results[:sankeyMax], 1):
 		rider_name = lh.full_name()
-		node_name = u'{:2d}. {} ({})'.format( rank, rider_name, total_values[rank-1] )
+		node_name = '{:2d}. {} ({})'.format( rank, rider_name, total_values[rank-1] )
 		for er in event_results:
 			if not er or er.ignored:
 				continue
-			event_name = u'{}-{}: {}'.format( er.event.competition.title, er.event.name, timezone.localtime(er.event.date_time).strftime('%Y-%m-%d') )
+			event_name = '{}-{}: {}'.format( er.event.competition.title, er.event.name, timezone.localtime(er.event.date_time).strftime('%Y-%m-%d') )
 			json_data.append( [
 				event_name,
 				node_name,
 				{'v':er.value_for_rank, 'f':json_format(er.value_for_rank)},
-				None if True else u'{} \u2192 {}, {}{} \u2192 {}'.format(
+				None if True else '{} \u2192 {}, {}{} \u2192 {}'.format(
 					event_name,
-					re.sub(r'.00$|0$', '', json_format(er.value_for_rank)), er.rank_text, u'\u00A0\u2191' if er.upgraded else u'',
+					re.sub(r'.00$|0$', '', json_format(er.value_for_rank)), er.rank_text, '\u00A0\u2191' if er.upgraded else '',
 					rider_name,
 				),
 			] )
@@ -430,11 +619,11 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 				except KeyError:
 					if not team or Team.is_independent_name(team):
 						team_count += 1
-						team_name = u'Ind {}'.format(team_count)
+						team_name = 'Ind {}'.format(team_count)
 					else:
 						team_name = team
 					if len(team_name) > max_team_len:
-						team_name = team_name[:max_team_len].strip() + u'...'
+						team_name = team_name[:max_team_len].strip() + '...'
 					team_map[node_name] = team_name
 				
 				team_arc[(node_name, team_name)] += er.value_for_rank
@@ -446,7 +635,7 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	for node_name, team_name, value in sorted( ((n, t, v) for (n,t), v in team_arc.items()), key=operator.itemgetter(2), reverse=True ):
 		json_data.append( [
 			node_name,
-			u'{} ({})'.format(team_name, team_total[team_name]),
+			'{} ({})'.format(team_name, team_total[team_name]),
 			{'v':value, 'f':json_format(value)},
 			None,
 		] )
@@ -470,7 +659,7 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 	
 	if series.ranking_criteria == 1:
 		total_values = format_column_time( total_values )
-		gaps = [(v or u'') for v in format_column_gap(gaps)]
+		gaps = [(v or '') for v in format_column_gap(gaps)]
 		for erv in event_results_values.values():
 			erv[:] = format_column_time( erv )
 	else:

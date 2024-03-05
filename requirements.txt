@@ -1,13 +1,18 @@
-django==2.2.13
+wheel
+Pillow
+django
 django-crispy-forms
+crispy-bootstrap3
 django-extensions
 requests
 dj_static
 waitress
 xlsxwriter
 xlrd
+openpyxl
 pytz
 tzlocal
 fpdf2
+numpy
 -e git+https://github.com/esitarski/pyllrp.git#egg=pyllrp
 markdown

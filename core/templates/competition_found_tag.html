@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+<h2>{{title}}</h2>
+<h3>{{competition.title}}</h3>
+<hr/>
+{% if not rfid_tag %}
+	{% crispy form %}	{# Read tag for the required action #}
+{% else %}
+	{% if matching_license_holders %}
+		<div class="alert alert-warning">
+			<h3>{% trans "Tag Matches:" %}</h3>
+			<ul>
+			{% for lh in matching_license_holders %}
+				<li style="font-size:120%">{{lh.first_last}}, {{lh.get_location}}, {{lh.full_license}}</li>
+			{% endfor %}
+			</ul>
+		</div>
+	{% else %}
+		<div class="alert alert-success">
+			{% trans "Tag has No Matches and can be issued." %}
+		</div>
+	{% endif %}
+	<hr/>
+	<a href="{{cancelUrl}}" class="btn btn-primary">{% trans "OK" %}</a>
+	{% if matching_license_holders %}
+		<a href="{{path_noargs}}{{competition.id}}/{{rfid_tag}}/1/" class="btn btn-warning" style="margin-left: 20px">{% trans "Revoke Tag for Reuse" %}</a>
+	{% endif %}
+{% endif %}
+{% endblock content %}

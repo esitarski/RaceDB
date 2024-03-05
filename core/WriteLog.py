@@ -1,7 +1,6 @@
 from django.db import models
 from django.http import HttpRequest
 import sys
-import six
 import datetime
 import platform
 import traceback
@@ -11,7 +10,7 @@ import time
 from os.path import expanduser
 from os import environ
 import threading
-from six.moves.queue import Queue, Empty
+from queue import Queue, Empty
 from .utils import removeDiacritic, safe_print
 
 global logFileName
@@ -80,14 +79,14 @@ def logCall( f ):
 					'REMOTE_USER',
 					] if x.META.get(n, '')
 			] + ['username="{}"'.format(x.user.username)] + ['path="{}"'.format(x.path)]
-			return u', '.join( fields )
+			return ', '.join( fields )
 		elif isinstance(x, models.Model):
-			return u'<<{}>>'.format(x.__class__.__name__)
-		return u'{}'.format(x)
+			return '<<{}>>'.format(x.__class__.__name__)
+		return '{}'.format(x)
 	
 	def new_f( *args, **kwargs ):
-		parameters = [_getstr(a) for a in args] + [ u'{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
-		writeLog( '{}({})'.format(f.__name__, removeDiacritic(u', '.join(parameters))) )
+		parameters = [_getstr(a) for a in args] + [ '{}={}'.format( key, _getstr(value) ) for key, value in kwargs.items() ]
+		writeLog( '{}({})'.format(f.__name__, removeDiacritic(', '.join(parameters))) )
 		return f( *args, **kwargs)
 	return new_f
 	

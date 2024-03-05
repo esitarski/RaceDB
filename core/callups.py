@@ -1,7 +1,4 @@
-import operator
-from collections import defaultdict
-
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .series_results import extract_event_results, get_callups_for_wave
@@ -33,7 +30,7 @@ def Callups( request, eventId, eventType, seriesId ):
 		
 		# Format the points colunms nicely.
 		for cg, p_points in callups:
-			p_points[:] = [(lh, fp if not fp.startswith('0') else u'')
+			p_points[:] = [(lh, fp if not fp.startswith('0') else '')
 				for lh, fp in zip(
 					[lh for lh, p in p_points],
 					format_column_float(p for lh, p in p_points)

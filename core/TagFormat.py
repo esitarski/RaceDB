@@ -2,22 +2,22 @@ import re
 from math import log, ceil
 from . import utils
 
-reTemplate = re.compile( u'#+' )
-validChars = set( u'0123456789ABCDEF#' )
+reTemplate = re.compile( '#+' )
+validChars = set( '0123456789ABCDEF#' )
 
 def getValidTagFormatStr( template ):
-	template = u''.join( c for c in template if c in validChars )
+	template = ''.join( c for c in template if c in validChars )
 	return template
 
 def getTagFormatStr( template ):
 	template = getValidTagFormatStr( template )
-	if u'#' not in template:
-		template = u'#' + template
+	if '#' not in template:
+		template = '#' + template
 	while 1:
 		m = reTemplate.search( template )
 		if not m:
 			break
-		template = template[:m.start(0)] + u'{{n:0{}d}}'.format(len(m.group(0))) + template[m.end(0):]
+		template = template[:m.start(0)] + '{{n:0{}d}}'.format(len(m.group(0))) + template[m.end(0):]
 	return template
 
 bytes_from_digits = tuple( int(ceil(log(10**n, 256))) for n in range(0, 16) )
@@ -117,7 +117,7 @@ def getLicenseFromTag( tag, tag_from_license_id=0 ):
 		return None
 	
 	# Return the ascii and number formatted to the correct length.
-	return text + u'{}'.format(num).rjust( num_count, '0' )
+	return text + '{}'.format(num).rjust( num_count, '0' )
 
 if __name__ == '__main__':
 	for license in ('CAN19650922', 'ON0123', 'BC0567', 'SK9999', '123567', 'ALLTEXT', '', '999999999999999', 'ABCDEFGHIJ', '_XXX_UMM2TLHSTBNI94ESDHQYIG81LFA'):
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 		print ( '"{}" {} ({}) "{}"'.format(license, tag, len(tag), license_new) )
 		assert license.startswith('_') or license == license_new
 	
-	assert getLicenseFromTag( 'FE00' ) == None
-	assert getLicenseFromTag( 'FF10' ) == None
-	assert getLicenseFromTag( 'FF01' ) == None
+	assert getLicenseFromTag( 'FE00' ) is None
+	assert getLicenseFromTag( 'FF10' ) is None
+	assert getLicenseFromTag( 'FF01' ) is None
 	assert getLicenseFromTag( 'FF0601E2AF' ) == '123567'

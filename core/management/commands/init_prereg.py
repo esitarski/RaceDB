@@ -18,7 +18,7 @@ class Command(BaseCommand):
 			default='--MissingSpreadsheet--',
 			help='\n'.join([
 				'Name of the Excel spreadsheet in the form: ExcelFile$SheetName.',
-				'That is, the FileName (either .xls or xlms) followed by a "$", followed by the Worksheet name.',
+				'That is, the FileName (either .xls or xlsx) followed by a "$", followed by the Worksheet name.',
 				'The Worksheet name is optional - the default is to read the first sheet.',
 			]),
 		)

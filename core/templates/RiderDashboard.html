@@ -5,8 +5,7 @@
 {% load to_js %}
 
 {% block srcjavascript %}
-<script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization',
-       'version':'1','packages':['table', 'corechart', 'timeline',]}]}"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 {% endblock srcjavascript %}
 
 {% block style %}
@@ -25,6 +24,7 @@ select {
 {% endblock style %}
        
 {% block javascript %}
+google.charts.load('current', {'packages':['table','corechart','timeline']});
 google.setOnLoadCallback(onLoad);
 
 var payload = {{payload|to_js}};
@@ -2172,7 +2172,7 @@ function SituationAnimate() {
 			For Internet Explorer (IE), you need version 9.0 or higher.<br/><br/>
 			Current versions of Chrome, FireFox and Opera work fine.
 			</canvas>
-		</div><!-- idLapChartDiv -->
+		</div>  <!-- idLapChartDiv -->
 	</div>
 	<div id="sectionSituation" class="tab-pane fade">
 		<div id="idSituationDiv" class="noprint">

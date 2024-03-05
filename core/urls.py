@@ -1,6 +1,8 @@
-from django.conf.urls import re_path
+from django.urls import include, path, re_path
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
+from django.conf import settings
+from django.conf.urls.static import static
 
 from core import views
 from core import participant
@@ -21,6 +23,10 @@ from core import custom_category
 from core import callups
 from core import custom_label
 from core import competition_category_option
+from core import competition_found_tag
+from core import crossmgr_password
+from core import image
+from core import gpx_course
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -35,6 +41,11 @@ urlpatterns = [
 	re_path(r'^.*Hub/CompetitionResults/(?P<competitionId>\d+)/$', hub.CompetitionResults),
 	re_path(r'^.*Hub/CategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.CategoryResults),
 	re_path(r'^.*Hub/CustomCategoryResults/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<customCategoryId>\d+)/$', hub.CustomCategoryResults),
+	re_path(r'^.*EventAnimation/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventAnimation),
+	re_path(r'^.*EventLapTimes/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventLapTimes),
+	re_path(r'^.*EventLapChart/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventLapChart),
+	re_path(r'^.*EventGapChart/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventGapChart),
+	re_path(r'^.*EventRaceChart/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<categoryId>\d+)/$', hub.EventRaceChart),
 	
 	re_path(r'^.*Hub/LicenseHolderResults/(?P<licenseHolderId>\d+)/$', hub.LicenseHolderResults),
 	re_path(r'^.*Hub/ResultAnalysis/(?P<eventId>\d+)/(?P<eventType>\d+)/(?P<resultId>\d+)/$', hub.ResultAnalysis),
@@ -47,7 +58,7 @@ urlpatterns = [
 	re_path(r'^.*Hub/SeriesCategoryResults/(?P<seriesId>\d+)/(?P<categoryId>\d+)/(?P<customCategoryIndex>\d+)/$', hub.SeriesCategoryResults),
 	
 	re_path(r'^.*SelfServe/$', self_serve.SelfServe),
-	re_path(r'^.*SelfServe/(?P<do_scan>\d+)/$', self_serve.SelfServe),
+	re_path(r'^.*SelfServe/(?P<action>\d+)/$', self_serve.SelfServe),
 	re_path(r'^.*SelfServe/4/SelfServeSignature/$', self_serve.SelfServeSignature),
 	re_path(r'^.*SelfServe/SelfServeQR/$', self_serve.SelfServeQRCode),
 	
@@ -91,6 +102,18 @@ urlpatterns = [
 	re_path(r'^.*ParticipantRfidAdd/(?P<competitionId>\d+)/(?P<autoSubmit>\d+)/$', participant.ParticipantRfidAdd),
 	re_path(r'^.*ParticipantBibAdd/(?P<competitionId>\d+)/$', participant.ParticipantBibAdd),
 	
+	re_path(r'^.*ParticipantsResetBibs/(?P<competitionId>\d+)/$', participant.ParticipantsResetBibs),
+	re_path(r'^.*ParticipantsResetBibs/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', participant.ParticipantsResetBibs),
+
+	re_path(r'^.*ParticipantsResetTags/(?P<competitionId>\d+)/$', participant.ParticipantsResetTags),
+	re_path(r'^.*ParticipantsResetTags/(?P<competitionId>\d+)/(?P<confirmed>\d+)/$', participant.ParticipantsResetTags),
+
+	re_path(r'^.*ParticipantTagChangeUSBReader/(?P<participantId>\d+)/$', participant.ParticipantTagChangeUSBReader),
+	re_path(r'^.*ParticipantTagChangeUSBReader/(?P<participantId>\d+)/(?P<action>\d+)/$', participant.ParticipantTagChangeUSBReader),
+	
+	re_path(r'^.*CompetitionFoundTag/(?P<competitionId>\d+)/$', competition_found_tag.CompetitionFoundTag),
+	re_path(r'^.*CompetitionFoundTag/(?P<competitionId>\d+)/(?P<rfid_tag>[^/]+)/(?P<action>\d+)/$', competition_found_tag.CompetitionFoundTag),
+	
 	re_path(r'^.*CategoryNumbers/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersDisplay),
 	re_path(r'^.*CategoryNumbersNew/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersNew),
 	re_path(r'^.*CategoryNumbersEdit/(?P<categoryNumbersId>\d+)/$', category_numbers.CategoryNumbersEdit),
@@ -103,6 +126,7 @@ urlpatterns = [
 	re_path(r'^.*EventMassStartDelete/(?P<eventId>\d+)/$', views.EventMassStartDelete),
 	
 	re_path(r'^.*UploadCrossMgr/$', views.UploadCrossMgr),
+	re_path(r'^.*VerifyCrossMgr/$', views.VerifyCrossMgr),
 	
 	re_path(r'^.*CustomLabel/(?P<competitionId>\d+)/$', custom_label.CustomLabel),
 	
@@ -120,6 +144,8 @@ urlpatterns = [
 	re_path(r'^.*EventApplyToExistingParticipants/(?P<eventId>\d+)/(?P<confirmed>\d+)/$', views.EventApplyToExistingParticipants),
 	
 	re_path(r'^.*SeedingEdit/(?P<eventTTId>\d+)/$', views.SeedingEdit),
+	re_path(r'^.*SeedingEdit/(?P<eventTTId>\d+)/(?P<entry_tt_i>\d+)/$', views.SeedingEdit),
+	re_path(r'^.*SeedingEditEntry/(?P<eventTTId>\d+)/(?P<entry_tt_i>\d+)/$', views.SeedingEditEntry),
 	re_path(r'^.*GenerateStartTimes/(?P<eventTTId>\d+)/$', views.GenerateStartTimes),
 	
 	re_path(r'^.*WaveTTNew/(?P<eventTTId>\d+)/$', views.WaveTTNew),
@@ -216,6 +242,8 @@ urlpatterns = [
 	re_path(r'^.*LicenseHoldersMergeDuplicatesOK/(?P<mergeId>\d+)/(?P<duplicateIds>[0-9,]+)/$', views.LicenseHoldersMergeDuplicatesOK),
 	re_path(r'^.*LicenseHoldersResetExistingBibs/$', views.LicenseHoldersResetExistingBibs),
 	re_path(r'^.*LicenseHoldersResetExistingBibs/(?P<confirmed>\d+)/$', views.LicenseHoldersResetExistingBibs),
+	re_path(r'^.*LicenseHoldersResetExistingTags/$', views.LicenseHoldersResetExistingTags),
+	re_path(r'^.*LicenseHoldersResetExistingTags/(?P<confirmed>\d+)/$', views.LicenseHoldersResetExistingTags),
 	re_path(r'^.*LicenseHoldersCloudImport/$', views.LicenseHoldersCloudImport),
 	re_path(r'^.*LicenseHoldersCloudImport/(?P<confirmed>\d+)/$', views.LicenseHoldersCloudImport),
 	
@@ -308,6 +336,7 @@ urlpatterns = [
 	
 	re_path(r'^.*SystemInfoEdit/$', views.SystemInfoEdit),
 	re_path(r'^.*UpdateLogShow/$', views.UpdateLogShow),
+	re_path(r'^.*DownloadDatabase/$', views.DownloadDatabase),
 	re_path(r'^.*AttendanceAnalytics/$', views.AttendanceAnalytics),
 	re_path(r'^.*ParticipantReport/$', views.ParticipantReport),
 	re_path(r'^.*YearOnYearAnalytics/$', views.YearOnYearAnalytics),
@@ -366,6 +395,26 @@ urlpatterns = [
 	re_path(r'^.*Resequence_(?P<modelClassName>[^_]+)_Class/(?P<instanceId>\d+)/(?P<newSequence>\d+)/$', views.Resequence),
 	
 	re_path(r'^PastCompetition/$', views.PastCompetition),
+	
+	re_path(r'^.*CrossMgrPasswords/$', crossmgr_password.CrossMgrPasswordDisplay),
+	re_path(r'^.*CrossMgrPasswordNew/$', crossmgr_password.CrossMgrPasswordNew),
+	re_path(r'^.*CrossMgrPasswordEdit/(?P<crossMgrPasswordId>\d+)/$', crossmgr_password.CrossMgrPasswordEdit),
+	re_path(r'^.*CrossMgrPasswordDelete/(?P<crossMgrPasswordId>\d+)/$', crossmgr_password.CrossMgrPasswordDelete),
+	
+	re_path(r'^.*CrossMgrLogs/$', crossmgr_password.CrossMgrLogDisplay),
+	re_path(r'^.*CrossMgrLogClear/$', crossmgr_password.CrossMgrLogClear),
+
+	re_path(r'^.*Images/$', image.Images),
+	re_path(r'^.*ImageNew/$', image.ImageNew),
+	re_path(r'^.*ImageEdit/(?P<imageId>\d+)/$', image.ImageEdit),
+	re_path(r'^.*ImageDelete/(?P<imageId>\d+)/$', image.ImageDelete),
+	re_path(r'^.*ImageDelete/(?P<imageId>\d+)/(?P<confirmed>\d+)/$', image.ImageDelete),
+	
+	re_path(r'^.*GPXCourses/$', gpx_course.GPXCourses),
+	re_path(r'^.*GPXCourseNew/$', gpx_course.GPXCourseNew),
+	re_path(r'^.*GPXCourseEdit/(?P<gpxCourseId>\d+)/$', gpx_course.GPXCourseEdit),
+	re_path(r'^.*GPXCourseDelete/(?P<gpxCourseId>\d+)/$', gpx_course.GPXCourseDelete),
+	re_path(r'^.*GPXCourseDelete/(?P<gpxCourseId>\d+)/(?P<confirmed>\d+)/$', gpx_course.GPXCourseDelete),
 	
 	re_path(r'^[Ll]ogin/$',  auth_views.LoginView.as_view(template_name='login.html'), name='login'),
 	re_path(r'^.*[Ll]ogout/$', views.Logout),

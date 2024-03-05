@@ -43,6 +43,10 @@ h2, h3, h4, h5 { margin: 1px; }
     border: 1px solid #CCC;
 }
 
+.logo-image {
+	max-height: 70px;
+}
+
 .is-good::before {
 	content: url({% static "images/glyphicons_206_ok_2_blue.png" %});
 }
@@ -234,7 +238,7 @@ function onLoad()
 	});
 	
 	// Set button background to black when pressed to give feedback.
-	$('.btn').click(function() {
+	$('.btn').not('.dropdown-toggle').click(function() {
 		var button = $(this);
 		var backgroundColorCur = button.css( "background-color" );
 		button.css( {"background-color": '#666666'} );
@@ -249,8 +253,10 @@ function onLoad()
 		});
 	}
 	
-	// Check for keyboard focus exception.
-	if( document.getElementById("focus") )
+	// Check for tag and keyboard focus exception.
+	if( document.getElementById("id_rfid_tag") )
+		document.getElementById("id_rfid_tag").focus();	// Make sure tag fields always get focus so auto-enter works.
+	else if( document.getElementById("focus") )
 		document.getElementById("focus").focus();
 	else {
 		// Give the first visible form field the keyboard focus.

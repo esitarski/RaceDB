@@ -6,6 +6,16 @@
 {% block content %}
 {% include "hub_nav.html" %}
 <h1>
+	{% if competition.image %}
+		{% if competition.image.url %}
+			<a href="{{competition.image.url}}" target="_blank" />
+				<img src="{{competition.image.image.url}}" class="logo-image" />
+			</a>
+		{% else %}
+			<img src="{{competition.image.image.url}}" class="logo-image" />
+		{% endif %}
+		<br/>
+	{% endif %}
 	<strong>{{competition.title}}</strong><br/>
 	<span style="font-size: 75%">
 		{{competition.date_range_year_str}},

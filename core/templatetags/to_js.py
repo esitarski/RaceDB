@@ -13,4 +13,4 @@ def to_js(value):
 	JSON.parse. The serialized string must be escaped appropriately before dumping into the client-side code.
 	"""
 	# separators is passed to remove whitespace in output
-	return mark_safe(u'JSON.parse("{}")'.format(escapejs(json.dumps(value, separators=(',', ':')))))
+	return mark_safe('JSON.parse("{}")'.format(escapejs(json.dumps(value, separators=(',', ':')))))

@@ -1,6 +1,6 @@
 from django import template
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 register = template.Library()
 
 class FormatCrudNode( template.Node ):
@@ -12,10 +12,10 @@ class FormatCrudNode( template.Node ):
 	def render( self, context ):
 		try:
 			actual_instance = self.instance.resolve( context )
-			return u'<a class="hidden-print btn btn-{}" href="./{}{}/{}/">{}</a>'.format(
+			return '<a class="hidden-print btn btn-{}" href="./{}{}/{}/">{}</a>'.format(
 				self.btn_type, actual_instance.__class__.__name__, _(self.op), actual_instance.id )
 		except template.VariableDoesNotExist:
-			return u'<span>LOUD FAIL: cannot find "{}"</span>'.format( self.instance )
+			return '<span>LOUD FAIL: cannot find "{}"</span>'.format( self.instance )
 
 valid_btn_types = { 'default', 'primary', 'info', 'success', 'warning', 'danger', 'inverse' }
 
@@ -25,7 +25,7 @@ def do_btn_crud( parser, token ):
 	try:
 		token_name, instance = args[:2]
 	except ValueError:
-		raise template.TemplateSyntaxError( '%r tag requires at least one argument: the instance' % token.contents.split()[0] )
+		raise template.TemplateSyntaxError( '{} tag requires at least one argument: the instance'.format(token.contents.split()[0]) )
 	
 	try:
 		btn_type = args[2]
@@ -36,7 +36,7 @@ def do_btn_crud( parser, token ):
 		}.get( token_name, 'primary' )
 
 	if btn_type not in valid_btn_types:
-		raise template.TemplateSyntaxError( '%r tag btn_type must be one of %s' % (token.contents.split()[0], valid_btn_types) )
+		raise template.TemplateSyntaxError( '{} tag btn_type must be one of {}'.format(token.contents.split()[0], valid_btn_types) )
 	
 	return FormatCrudNode( token_name[4:].title(), instance, btn_type )
 

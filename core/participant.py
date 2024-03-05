@@ -3,7 +3,7 @@ from subprocess import Popen, PIPE
 import traceback
 import operator
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -48,14 +48,14 @@ class ParticipantSearchForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
-		super(ParticipantSearchForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		if competition:
 			self.fields['category'].choices = \
 				[(-1, '----')] + [(-2, _('*** Missing ***'))] + [(category.id, category.code_gender) for category in competition.get_categories()]
 			events = sorted( competition.get_events(), key = operator.attrgetter('date_time') )
 			self.fields['event'].choices = \
-				[(u'-1.0', _('All'))] + [(u'{}.{}'.format(event.event_type, event.id), u'{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
+				[('-1.0', _('All'))] + [('{}.{}'.format(event.event_type, event.id), '{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
 			
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
@@ -71,6 +71,9 @@ class ParticipantSearchForm( Form ):
 			CancelButton( _('OK'), css_class='btn btn-primary' ),
 			Submit( 'emails-submit', _('Emails'), css_class = 'btn btn-primary' ),
 			Submit( 'export-excel-submit', _('Export to Excel'), css_class = 'btn btn-primary' ),
+
+			Submit( 'reset-bibs-submit', _('Reset Bibs'), css_class = 'btn btn-warning' ),
+			Submit( 'reset-tags-submit', _('Reset Tags'), css_class = 'btn btn-warning' ),
 		]
 		
 		self.helper.layout = Layout(
@@ -83,12 +86,12 @@ class ParticipantSearchForm( Form ):
 					[Field('complete'), Field('has_events'), ]
 				)
 			),
-			Row( *(button_args[:-2] + [HTML('&nbsp;'*8)] + button_args[-2:]) ),
+			Row( *(button_args[:-4] + [HTML('&nbsp;'*8)] + button_args[-4:]) ),
 		)
 
 @access_validation()
 def Participants( request, competitionId ):
-	ParticipantsPerPage = 25
+	ParticipantsPerPage = 50
 	
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -131,7 +134,7 @@ def Participants( request, competitionId ):
 	event = None
 	try:
 		event_type, event_pk = [int(v) for v in participant_filter.get('event', '-1.0').split('.')]
-	except:
+	except Exception:
 		event_type, event_pk = None, None
 	if event_type == 0:
 		event = competition.eventmassstart_set.filter(pk=event_pk).first()
@@ -151,9 +154,9 @@ def Participants( request, competitionId ):
 		else:
 			# Show empty tags.
 			if competition.use_existing_tags:
-				bad_tag_query = Q(license_holder__existing_tag__isnull=True) | Q(license_holder__existing_tag=u'')
+				bad_tag_query = Q(license_holder__existing_tag__isnull=True) | Q(license_holder__existing_tag='')
 			else:
-				bad_tag_query = Q(tag__isnull=True) | Q(tag=u'')
+				bad_tag_query = Q(tag__isnull=True) | Q(tag='')
 	else:
 		bad_tag_query = Q()
 	
@@ -164,8 +167,11 @@ def Participants( request, competitionId ):
 		names = name_text.split()
 		if names:
 			q = Q()
+			if names[0].startswith('^') and len(names[0]) >= 2:
+				q &= Q(license_holder__last_name__istartswith = names[0][1:])
+				names = names[1:]
 			for n in names:
-				q |= Q(license_holder__search_text__contains = n)
+				q &= Q(license_holder__search_text__icontains = n)
 			participants = participants.filter( q ).select_related('team', 'license_holder')
 			participants, paginator = getPaginator( participants )
 			return render( request, 'participant_list.html', locals() )
@@ -208,7 +214,7 @@ def Participants( request, competitionId ):
 		names = name_text.split()
 		if names:
 			for n in names:
-				participants = participants.filter( license_holder__search_text__contains=n )
+				participants = participants.filter( license_holder__search_text__icontains=n )
 			def name_filter( p ):
 				lh_name = utils.removeDiacritic(p.license_holder.full_name()).lower()
 				return all(n in lh_name for n in names)
@@ -236,7 +242,7 @@ def Participants( request, competitionId ):
 			participants = participants.filter( team__isnull = False )
 			q = Q()
 			for t in team_search.split():
-				q &= Q( team__search_text__contains=t )
+				q &= Q( team__search_text__icontains=t )
 			participants = participants.filter( q )
 		
 	if 0 <= int(participant_filter.get('complete',-1) or 0) <= 1:
@@ -249,7 +255,7 @@ def Participants( request, competitionId ):
 		
 	if competition.using_tags and participant_filter.get('rfid_text',''):
 		rfid = participant_filter.get('rfid_text','').upper()
-		if rfid == u'-1':
+		if rfid == '-1':
 			participants = participants.filter( bad_tag_query )
 		else:
 			if competition.use_existing_tags:
@@ -277,11 +283,47 @@ def Participants( request, competitionId ):
 				datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
 			)
 			return response
+		
 		if 'emails-submit' in request.POST:
 			return show_emails( request, participants=participants )
 			
+		if 'reset-bibs-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'ParticipantsResetBibs', competition.id) )
+		
+		if 'reset-tags-submit' in request.POST:
+			return HttpResponseRedirect( pushUrl(request,'ParticipantsResetTags', competition.id) )
+			
 	participants, paginator = getPaginator( participants )
 	return render( request, 'participant_list.html', locals() )
+
+#-----------------------------------------------------------------------
+@access_validation()
+def ParticipantsResetBibs( request, competitionId, confirmed=False ):
+	competition = get_object_or_404( Competition, pk=competitionId )	
+	
+	if confirmed:
+		competition.participant_set.exclude(bib__isnull=True).update( bib=None )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Reset All Participant Bibs')
+	message = _('Reset the bibs of all participants in this Competition to null (no value).  This applies to this competition only and will not change the permanent bib number.')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'ParticipantsResetBibs/{}/1/'.format(competition.id)
+	return render( request, 'are_you_sure.html', locals() )
+
+@access_validation()
+def ParticipantsResetTags( request, competitionId, confirmed=False ):
+	competition = get_object_or_404( Competition, pk=competitionId )	
+
+	if confirmed:
+		competition.participant_set.exclude(Q(tag__isnull=True) & Q(tag2__isnull=True)).update( tag=None, tag2=None, tag_checked=False )
+		return HttpResponseRedirect(getContext(request,'cancelUrl'))
+		
+	page_title = _('Reset All Participant Tags')
+	message = _('Reset the RFID tags of all participants to null (no value).  This applies to this competition only and will not change the permanent RFID tag value.')
+	cancel_target = getContext(request,'popUrl')
+	target = getContext(request,'popUrl') + 'ParticipantsResetTags/{}/1/'.format(competition.id)
+	return render( request, 'are_you_sure.html', locals() )
 
 #-----------------------------------------------------------------------
 
@@ -318,7 +360,7 @@ class BibScanForm( Form ):
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop('hide_cancel_button', None)
-		super(BibScanForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -344,7 +386,7 @@ def ParticipantBibAdd( request, competitionId ):
 	
 	add_by_bib = True
 	if request.method == 'POST':
-		form = BibScanForm( request.POST, hide_cancel_button=True )
+		form = BibScanForm( request.POST )
 		if form.is_valid():
 			bib = form.cleaned_data['bib']
 			if not bib:
@@ -358,7 +400,7 @@ def ParticipantBibAdd( request, competitionId ):
 				
 			return render( request, 'participant_scan_error.html', locals() )			
 	else:
-		form = BibScanForm( hide_cancel_button=True )
+		form = BibScanForm()
 	
 	return render( request, 'participant_add_bib.html', locals() )
 
@@ -385,7 +427,7 @@ def ParticipantManualAdd( request, competitionId ):
 	search_text = utils.normalizeSearch( search_text )
 	q = Q( active = True )
 	for term in search_text.split():
-		q &= Q(search_text__contains = term)
+		q &= Q(search_text__icontains = term)
 	license_holders = LicenseHolder.objects.filter(q).order_by('search_text')[:MaxReturn]
 	
 	# Flag which license_holders are already entered in this competition.
@@ -423,10 +465,12 @@ def ParticipantAddToCompetitionDifferentCategory( request, competitionId, licens
 	
 	participant = Participant.objects.filter( competition=competition, license_holder=license_holder ).first()
 	if participant:
-		participant.id = None
+		# Get all deferred fields before participant copy.
+		participant.refresh_from_db( fields=participant.get_deferred_fields() )
 		participant.category = None
 		participant.role = Participant.Competitor
 		participant.bib = None
+		participant.id = None
 		participant.save()
 		return HttpResponseRedirect('{}ParticipantEdit/{}/'.format(getContext(request,'pop2Url'), participant.id))
 	
@@ -448,7 +492,7 @@ def ParticipantAddToCompetitionDifferentCategoryConfirm( request, competitionId,
 def ParticipantEdit( request, participantId ):
 	try:
 		participant = Participant.objects.get( pk=participantId )
-	except:
+	except Exception:
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))		
 	competition = participant.competition
 	participant.enforce_tag_constraints()
@@ -516,18 +560,18 @@ def get_cmd( cmd ):
 		return cmd.replace('$gswin', gs_cmd() or 'gs_not_found', 1)
 	return cmd
 	
-def print_pdf( request, participant, pdf_str, print_type ):
+def print_pdf( request, participant, pdf_bytes, print_type ):
 	system_info = SystemInfo.get_singleton()
 	if system_info.print_tag_option == SystemInfo.SERVER_PRINT_TAG:
 		try:
 			tmp_file = get_temp_print_filename( request, participant.bib, print_type )
 			with open(tmp_file, 'wb') as f:
-				f.write( pdf_str )
+				f.write( pdf_bytes )
 			p = Popen(
 				get_cmd(system_info.server_print_tag_cmd).replace('$1', tmp_file), shell=True, bufsize=-1,
 				stdin=PIPE, stdout=PIPE, stderr=PIPE,
 			)
-			stdout_info, stderr_info = p.communicate( pdf_str )
+			stdout_info, stderr_info = p.communicate( pdf_bytes )
 			returncode = p.returncode
 		except Exception as e:
 			stdout_info, stderr_info = '', e
@@ -535,13 +579,13 @@ def print_pdf( request, participant, pdf_str, print_type ):
 		
 		try:
 			os.remove( tmp_file )
-		except:
+		except Exception:
 			pass
 		
 		title = _("Print Status")
 		return render( request, 'cmd_response.html', locals() )
 	elif system_info.print_tag_option == SystemInfo.CLIENT_PRINT_TAG:
-		response = HttpResponse(pdf_str, content_type="application/pdf")
+		response = HttpResponse(pdf_bytes, content_type="application/pdf")
 		response['Content-Disposition'] = 'inline'
 		return response
 	else:
@@ -636,7 +680,7 @@ class ParticipantCategorySelectForm( Form ):
 								initial = -1 )
 	
 	def __init__(self, *args, **kwargs):
-		super(ParticipantCategorySelectForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -648,9 +692,9 @@ class ParticipantCategorySelectForm( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			HTML( u'{}:&nbsp;&nbsp;&nbsp;&nbsp;'.format( _("Search") ) ),
+			HTML( '{}:&nbsp;&nbsp;&nbsp;&nbsp;'.format( _("Search") ) ),
 			Div( Field('gender', css_class = 'form-control'), css_class = 'form-group' ),
-			HTML( u'&nbsp;&nbsp;&nbsp;&nbsp;' ),
+			HTML( '&nbsp;&nbsp;&nbsp;&nbsp;' ),
 			button_args[0],
 			button_args[1],
 		)
@@ -756,7 +800,7 @@ def ParticipantRoleSelect( request, participantId, role ):
 def ParticipantLicenseCheckChange( request, participantId ):
 	participant = get_participant( participantId )
 	cco = CompetitionCategoryOption.objects.filter( competition=participant.competition, category=participant.category ).first()
-	note = cco.note if cco else u''
+	note = cco.note if cco else ''
 	return render( request, 'participant_license_check_select.html', locals() )
 
 @access_validation()
@@ -802,7 +846,7 @@ def ParticipantTeamChange( request, participantId ):
 	search_text = utils.normalizeSearch(search_text)
 	q = Q( active=True )
 	for n in search_text.split():
-		q &= Q( search_text__contains = n )
+		q &= Q( search_text__icontains = n )
 	teams = Team.objects.filter(q)[:MaxReturn]
 	return render( request, 'participant_team_select.html', locals() )
 	
@@ -831,7 +875,7 @@ def LicenseHolderNationCodeSelect( request, licenseHolderId, iocI ):
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	iocI = int(iocI)
 	if iocI < 0:
-		license_holder.nation_code = u''
+		license_holder.nation_code = ''
 	else:
 		license_holder.nation_code = get_ioc_countries()[iocI][-1]
 	license_holder.save()
@@ -841,9 +885,9 @@ def LicenseHolderNationCodeSelect( request, licenseHolderId, iocI ):
 def LicenseHolderNationCodeChange( request, licenseHolderId ):
 	license_holder = get_object_or_404( LicenseHolder, pk=licenseHolderId )
 	countries = [[i, flag_html(c[-1])] + list(c) for i, c in enumerate(get_ioc_countries())]
-	flag_instance = u''
-	code_instance = u''
-	name_instance = u''
+	flag_instance = ''
+	code_instance = ''
+	name_instance = ''
 	for c in countries:
 		if c[-1] == license_holder.nation_code:
 			flag_instance = c[1]
@@ -861,7 +905,7 @@ class TeamDisciplineForm( Form ):
 	disciplines = forms.MultipleChoiceField(required=False, widget=forms.CheckboxSelectMultiple,)
 	
 	def __init__(self, *args, **kwargs):
-		super(TeamDisciplineForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.fields['disciplines'].choices = [(d.id, d.name) for d in Discipline.objects.all()]
 		
@@ -902,21 +946,18 @@ def ParticipantTeamSelectDiscipline( request, participantId, teamId ):
 		participant.team = team
 		participant.auto_confirm().save()
 		
-		today = timezone.localtime(timezone.now()).date()
-		for id in disciplines:
-			if team:
-				try:
-					th = TeamHint.objects.get( discipline__id=id, license_holder=participant.license_holder )
-					if th.team_id == team.id:
-						continue
-					th.team = team
-				except TeamHint.DoesNotExist:
-					th = TeamHint( license_holder=participant.license_holder, team=team )
-					th.discipline_id = id
-				th.effective_date = today
-				th.save()
-			else:
-				TeamHint.objects.filter( discipline__id=id, license_holder=participant.license_holder ).delete()
+		# First, delete all existing teams for the given disciplines.
+		TeamHint.objects.filter( discipline__id__in=disciplines, license_holder=participant.license_holder ).delete()
+
+		if team:
+			today = timezone.localtime(timezone.now()).date()
+			to_create = []
+			for id in disciplines:
+				th = TeamHint( license_holder=participant.license_holder, team=team ,effective_date=today )
+				th.discipline_id = id
+				to_create.append( th )	
+			TeamHint.objects.bulk_create( to_create )
+			
 		return HttpResponseRedirect(getContext(request,'pop2Url'))
 	else:
 		form = TeamDisciplineForm( initial = {'disciplines': [competition.discipline_id]} )
@@ -929,7 +970,7 @@ class Bib( object ):
 	def __init__( self, bib, license_holder = None, date_lost=None ):
 		self.bib = bib
 		self.license_holder = license_holder
-		self.full_name = license_holder.full_name() if license_holder else u''
+		self.full_name = license_holder.full_name() if license_holder else ''
 		self.date_lost = date_lost
 
 @access_validation()
@@ -954,7 +995,7 @@ def ParticipantBibChange( request, participantId ):
 		for b in bibs:
 			try:
 				b.full_name = bib_participants[b.bib].full_name_team
-			except:
+			except Exception:
 				pass
 	
 	has_existing_number_set_bib = (
@@ -1020,7 +1061,7 @@ class ParticipantNoteForm( Form ):
 	note = forms.CharField( widget = forms.Textarea, required = False, label = _('Note') )
 	
 	def __init__(self, *args, **kwargs):
-		super(ParticipantNoteForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1080,7 +1121,7 @@ def ParticipantGeneralNoteChange( request, participantId ):
 #-----------------------------------------------------------------------
 
 def GetParticipantOptionForm( participation_optional_events ):
-	choices = [(event.option_id, u'{} ({})'.format(event.name, event.get_event_type_display()))
+	choices = [(event.option_id, '{} ({})'.format(event.name, event.get_event_type_display()))
 					for event, is_participating in participation_optional_events]
 	
 	@autostrip
@@ -1088,7 +1129,7 @@ def GetParticipantOptionForm( participation_optional_events ):
 		options = forms.MultipleChoiceField( required = False, label = _('Optional Events'), choices=choices )
 		
 		def __init__(self, *args, **kwargs):
-			super(ParticipantOptionForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -1142,12 +1183,12 @@ def GetParticipantEstSpeedForm( participant ):
 	@autostrip
 	class ParticipantEstSpeedForm( Form ):
 		est_speed = forms.FloatField( required = False,
-			label=format_lazy(u'{} ({})', _('Estimated Speed for Time Trial'), competition.speed_unit_display),
+			label=format_lazy('{} ({})', _('Estimated Speed for Time Trial'), competition.speed_unit_display),
 			help_text=_('Enter a value or choose from the grid below.')
 		)
 		if km:
 			est_duration = DurationField.DurationFormField( required = False,
-			label=format_lazy(u'{} ({})', _('or Estimated Time for Time Trial'), participant.get_tt_distance_text() ),
+			label=format_lazy('{} ({})', _('or Estimated Time for Time Trial'), participant.get_tt_distance_text() ),
 			help_text=_('In [HH:]MM:SS format.')
 		)
 		seed_option = forms.ChoiceField( required = False, choices=Participant.SEED_OPTION_CHOICES, label=_('Seed Option'),
@@ -1155,7 +1196,7 @@ def GetParticipantEstSpeedForm( participant ):
 		)
 		
 		def __init__(self, *args, **kwargs):
-			super(ParticipantEstSpeedForm, self).__init__(*args, **kwargs)
+			super().__init__(*args, **kwargs)
 			
 			self.helper = FormHelper( self )
 			self.helper.form_action = '.'
@@ -1203,11 +1244,11 @@ def ParticipantEstSpeedChange( request, participantId ):
 	if competition.distance_unit == 0:
 		for col, kmh in enumerate(range(20, 51)):
 			for row, decimal in enumerate(range(0, 10)):
-				speed_rc[(col, row)] = u'{}.{:01d}'.format(kmh, decimal)
+				speed_rc[(col, row)] = '{}.{:01d}'.format(kmh, decimal)
 	else:
 		for col, mph in enumerate(range(12, 32)):
 			for row, decimal in enumerate(range(0, 10)):
-				speed_rc[(col, row)] = u'{}.{:01d}'.format(mph, decimal)
+				speed_rc[(col, row)] = '{}.{:01d}'.format(mph, decimal)
 	
 	row_max = max( row for row, col in speed_rc.keys() ) + 1
 	col_max = max( col for row, col in speed_rc.keys() ) + 1
@@ -1222,7 +1263,7 @@ def ParticipantEstSpeedChange( request, participantId ):
 @autostrip
 class ParticipantWaiverForm( Form ):
 	def __init__(self, *args, **kwargs):
-		super(ParticipantWaiverForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1262,11 +1303,10 @@ def ParticipantWaiverChange( request, participantId ):
 @autostrip
 class ParticipantTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
-	make_this_existing_tag = forms.BooleanField( required = False, label = _('Rider keeps tag for other races') )
 	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna') )
 	
 	def __init__(self, *args, **kwargs):
-		super(ParticipantTagForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1287,7 +1327,6 @@ class ParticipantTagForm( Form ):
 			Row( HTML('<hr style="margin:32px"/>') ),
 			Row(
 				Col( Field('tag', rows='2', cols='60'), 5 ),
-				Col( Field('make_this_existing_tag'), 4 ),
 				Col( Field('rfid_antenna'), 3 ),
 			),
 			HTML( '<br/>' ),
@@ -1310,11 +1349,16 @@ class ParticipantTagForm( Form ):
 
 def get_bits_from_hex( s ):
 	return len(s or '') * 4
-		
+
 @access_validation()
 def ParticipantTagChange( request, participantId ):
 	participant = get_participant( participantId )
 	competition = participant.competition
+	
+	if not competition.has_rfid_reader():
+		return ParticipantTagChangeUSBReader( request, participantId, participant=participant )
+	
+	make_this_existing_tag = competition.use_existing_tags
 	license_holder = participant.license_holder
 	system_info = SystemInfo.get_singleton()
 	rfid_antenna = int(request.session.get('rfid_antenna', 0))
@@ -1344,9 +1388,9 @@ def ParticipantTagChange( request, participantId ):
 			return False
 		return True
 
-	def check_unique_tag( tag, make_this_existing_tag ):
+	def check_unique_tag( tag ):
 		if make_this_existing_tag:
-			lh = LicenseHolder.objects.filter( existing_tag=tag ).exclude( pk=license_holder.pk ).first()
+			lh = LicenseHolder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) ).exclude( pk=license_holder.pk ).first()
 			if lh:
 				status_entries.append(
 					(_('Duplicate Tag'), (
@@ -1355,7 +1399,7 @@ def ParticipantTagChange( request, participantId ):
 					)),
 				)
 				return False
-		p = Participant.objects.filter( competition=competition, tag=tag ).exclude( license_holder=license_holder ).first()
+		p = Participant.objects.filter( competition=competition ).filter( Q(tag=tag) | Q(tag2=tag) ).exclude( license_holder=license_holder ).first()
 		if p:
 			status_entries.append(
 				(_('Duplicate Tag'), (
@@ -1389,7 +1433,7 @@ def ParticipantTagChange( request, participantId ):
 			has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
 			status_entries.append(
 				(_('Participant Save Failure'), (
-					u'{}'.format(e),
+					'{}'.format(e),
 				)),
 			)
 			return False
@@ -1400,7 +1444,6 @@ def ParticipantTagChange( request, participantId ):
 		if form.is_valid():
 
 			tag = form.cleaned_data['tag'].strip().upper()
-			make_this_existing_tag = form.cleaned_data['make_this_existing_tag']
 			rfid_antenna = request.session['rfid_antenna'] = int(form.cleaned_data['rfid_antenna'])
 			
 			if 'check-tag-submit' in request.POST:
@@ -1460,7 +1503,6 @@ def ParticipantTagChange( request, participantId ):
 					status_entries.append(
 						(_('Non-Hex Characters in Tag'), (
 							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
-							_('Please change the Tag to all hexadecimal.'),
 						)),
 					)
 			
@@ -1470,12 +1512,14 @@ def ParticipantTagChange( request, participantId ):
 				return render( request, 'rfid_write_status.html', locals() )
 			
 			participant.tag = tag
+			participant.tag2 = None
 			status &= participant_save( participant )
 			if not status:
 				return render( request, 'rfid_write_status.html', locals() )
 			
-			if make_this_existing_tag and license_holder.existing_tag != tag:
+			if make_this_existing_tag and license_holder.existing_tag != tag and license_holder.existing_tag2 != None:
 				license_holder.existing_tag = tag
+				license_holder.existing_tag2 = None
 				try:
 					license_holder.save()
 				except Exception as e:
@@ -1483,8 +1527,8 @@ def ParticipantTagChange( request, participantId ):
 					status = False
 					status_entries.append(
 						(
-							format_lazy(u'{}: {}', _('LicenseHolder'), _('Existing Tag Save Exception:')),
-							(u'{}'.format(e),)
+							format_lazy('{}: {}', _('LicenseHolder'), _('Existing Tag Save Exception:')),
+							('{}'.format(e),)
 						),
 					)
 					return render( request, 'rfid_write_status.html', locals() )
@@ -1520,12 +1564,193 @@ def ParticipantTagChange( request, participantId ):
 #-----------------------------------------------------------------------
 
 @autostrip
+class ParticipantTagUSBReaderForm( Form ):
+	rfid_tag = forms.CharField( max_length=24, label=_('Tag') )
+	
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'navbar-form navbar-left'
+		
+		button_args = [
+			Submit( 'ok-submit', _('OK'), css_class = 'btn btn-success' ),
+			CancelButton(),
+		]
+		
+		self.helper.layout = Layout(
+			Row(
+				Col( Field('rfid_tag', size='40'), 6 ),
+			),
+			HTML( '<br/>' ),
+			Row( 
+				button_args[0],
+				HTML( '&nbsp;' * 5 ),
+				button_args[1],
+			),
+		)
+
+@access_validation()
+def ParticipantTagChangeUSBReader( request, participantId, action=-1, participant=None ):
+	participant = participant or get_participant( participantId )
+	competition = participant.competition
+	license_holder = participant.license_holder
+	system_info = SystemInfo.get_singleton()
+	validate_success = False
+	status = True
+	status_entries = []
+	
+	action = int(action)
+	
+	path_noargs = getContext(request, 'cancelUrl') + 'ParticipantTagChangeUSBReader/'
+	path_actions = '{}{}/'.format(path_noargs, participantId)
+	
+	participant.enforce_tag_constraints()
+	
+	rfid_tag1 = license_holder.existing_tag  if competition.use_existing_tags else participant.tag
+	rfid_tag2 = license_holder.existing_tag2 if competition.use_existing_tags else participant.tag2
+	
+	if action < 0:
+		title = _("RFID USB Reader")
+		return render( request, 'participant_tag_change_usb_reader.html', locals() )
+	else:
+		title = [_("Validate Tag"), _("Issue Tag 1"),_("Issue Tag 2")][action]
+
+	if competition.use_existing_tags:
+		def check_unique_tag( tag ):
+			lh = LicenseHolder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) ).exclude( pk=license_holder.pk ).first()
+			if lh:
+				status_entries.append(
+					(_('Duplicate Tag'), (
+						_('Tag in use by LicenseHolder.'),
+						lh.__repr__(),
+					))
+				)
+				return False
+			return True
+	else:
+		def check_unique_tag( tag ):
+			p = Participant.objects.filter( competition=competition ).filter( Q(tag=tag) | Q(tag2=tag) ).exclude( license_holder=license_holder ).first()
+			if p:
+				status_entries.append(
+					(_('Duplicate Tag'), (
+						_('Tag in use by Participant.'), p.license_holder.__repr__())
+					)
+				)
+				return False
+			return True
+
+	def participant_save( particiant ):
+		try:
+			participant.auto_confirm().save()
+		except IntegrityError as e:
+			# Report the error - probably a non-unique field.
+			has_error, conflict_explanation, conflict_participant = participant.explain_integrity_error()
+			status_entries.append(
+				(_('Participant Save Failure'), ('{}'.format(e),))
+			)
+			return False
+		return True
+		
+	def license_holder_save( license_holder ):
+		try:
+			license_holder.save()
+			return True
+		except Exception as e:
+			# Report the error - probably a non-unique field.
+			status_entries.append(
+				(
+					format_lazy('{}: {}', _('LicenseHolder'), _('Save Exception:')),
+					('{}'.format(e),)
+				),
+			)
+			return False
+			
+	if request.method == 'POST':
+		form = ParticipantTagUSBReaderForm( request.POST )
+		if form.is_valid():
+			rfid_tag = form.cleaned_data['rfid_tag'].upper().lstrip('0')
+			
+			try:
+				if system_info.tag_all_hex and not utils.allHex(rfid_tag):
+					status_entries.append(
+						(_('Non-Hex Characters in Tag'), (
+							_('All Tag characters must be hexadecimal ("0123456789ABCDEF").'),
+						)),
+					)
+					raise ValueError('tag contains non-hex characters')
+				
+				if not check_unique_tag( rfid_tag ):
+					raise ValueError('tag is non unique')
+				
+				if action == 0:			# Validate tag.
+					if competition.use_existing_tags:
+						validate_success = (license_holder.existing_tag == rfid_tag or license_holder.existing_tag2 == rfid_tag)
+					else:
+						validate_success = (participant.tag == rfid_tag or participant.tag2 == rfid_tag)
+					if not validate_success:
+						status_entries.append(
+							(_('Tag Validation Failure'), (_("***DOES NOT MATCH PARTICIPANT***"),) ),
+						)
+						if participant.tag_checked:
+							participant.tag_checked = False
+							participant_save( participant )
+						raise RuntimeError('tag does not match participant')
+					
+					status_entries.append(
+						(_('Tag Validation Success'), (_("***MATCHES PARTICIPANT***"),) ),
+					)
+					if not participant.tag_checked :
+						participant.tag_checked = True
+						if not participant_save( participant ):
+							raise RuntimeError('participant save fails')
+					
+				elif action in (1, 2):		# Issue tag
+					if not check_unique_tag( rfid_tag ):
+						raise RuntimeError('tag is already in use')
+					
+					if competition.use_existing_tags:
+						# Reset the tags for the participant in case of a license holder save failure.
+						setattr( participant, ('tag', 'tag2')[action-1], None )
+						participant.tag_checked = False
+						participant_save( participant )
+						
+						# Set the existing tag for the license holder.
+						setattr( license_holder, ('existing_tag', 'existing_tag2')[action-1], rfid_tag )
+						if not license_holder_save( license_holder ):
+							raise RuntimeError('license_holder save failure')
+							
+						# Update the participant tags.
+						participant.tag = license_holder.existing_tag
+						participant.tag2  = license_holder.existing_tag2
+					else:
+						# Set the tag for this participant only.
+						setattr( participant, ('tag', 'tag2')[action-1], rfid_tag )
+					
+					# Mark as checked as we had to have read the tag to get this far.
+					participant.tag_checked = True
+					if not participant_save( participant ):
+						raise RuntimeError('participant save failure')
+						
+			except Exception as e:
+				status = False
+								
+			if not status_entries:
+				return HttpResponseRedirect( path_actions )
+	
+	form = ParticipantTagUSBReaderForm( initial={'rfid_tag':''} )
+		
+	return render( request, 'participant_tag_change_usb_reader.html', locals() )
+	
+#-----------------------------------------------------------------------
+@autostrip
 class ParticipantSignatureForm( Form ):
 	signature = forms.CharField( required = False, label = _('Signature') )
 	
 	def __init__(self, *args, **kwargs):
 		is_jsignature = kwargs.pop( 'is_jsignature', True )
-		super(ParticipantSignatureForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1534,9 +1759,9 @@ class ParticipantSignatureForm( Form ):
 		
 		if is_jsignature:
 			button_args = [
-				Submit( 'ok-submit', format_lazy( u'{}{}{}', '&nbsp;'*10, _('OK'), '&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
+				Submit( 'ok-submit', format_lazy( '{}{}{}', '&nbsp;'*10, _('OK'), '&nbsp;'*10), css_class = 'btn btn-success', style='font-size:200%' ),
 				CancelButton( style='font-size:200%' ),
-				HTML(u'<button class="btn btn-warning hidden-print" onClick="reset_signature()">{}</button>'.format(_('Reset'))),
+				HTML('<button class="btn btn-warning hidden-print" onClick="reset_signature()">{}</button>'.format(_('Reset'))),
 			]
 		else:
 			button_args = [
@@ -1602,7 +1827,7 @@ def ParticipantBarcodeAdd( request, competitionId ):
 	
 	add_by_barcode = True
 	if request.method == 'POST':
-		form = BarcodeScanForm( request.POST, hide_cancel_button=True )
+		form = BarcodeScanForm( request.POST )
 		if form.is_valid():
 			scan = form.cleaned_data['scan'].strip()
 			if not scan:
@@ -1620,7 +1845,7 @@ def ParticipantBarcodeAdd( request, competitionId ):
 			
 			return HttpResponseRedirect(pushUrl(request,'LicenseHolderAddConfirm', competition.id, license_holder.id))
 	else:
-		form = BarcodeScanForm( hide_cancel_button=True )
+		form = BarcodeScanForm()
 		
 	return render( request, 'participant_scan_form.html', locals() )
 
@@ -1719,7 +1944,7 @@ class ParticipantConfirmForm( Form ):
 	nation_code = forms.CharField( max_length=3, required=False, label=_('Nation Code'), widget=forms.TextInput(attrs={'size': 3}) )
 	gender = forms.ChoiceField( required=False, choices = ((0, _('Men')), (1, _('Women'))), label=_('Gender') )
 	
-	uci_id = forms.CharField( required=False, label=_('UCIID') )
+	uci_id = forms.CharField( required=False, label=_('UCI ID') )
 	license_code = forms.CharField( required=False, label=_('License Code') )
 	
 	category_name = forms.CharField( required=False, label = _('Category') )
@@ -1782,7 +2007,7 @@ class ParticipantConfirmForm( Form ):
 		participant = kwargs.pop( 'participant', None )
 		competition = participant.competition
 		license_holder = participant.license_holder
-		super(ParticipantConfirmForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		
 		self.fields['category_name'].widget.attrs['readonly'] = True
 		self.fields['team_name'].widget.attrs['readonly'] = True
@@ -1804,12 +2029,12 @@ class ParticipantConfirmForm( Form ):
 		
 		nation_code_error = license_holder.nation_code_error
 		if not license_holder.uci_id:
-			uci_id_error = u'missing'
+			uci_id_error = 'missing'
 		else:
 			uci_id_error = license_holder.uci_id_error
 		
 		def warning_html( warning ):
-			return u'<img src="{}" style="width:20px;height:20px;"/>{}'.format(static('images/warning.png'), warning) if warning else u''
+			return '<img src="{}" style="width:20px;height:20px;"/>{}'.format(static('images/warning.png'), warning) if warning else ''
 
 		self.helper.layout = Layout(
 			Row( button_args[0], HTML('&nbsp;'*8), button_args[1], HTML('&nbsp;'*8), button_args[2] ),
@@ -1822,7 +2047,7 @@ class ParticipantConfirmForm( Form ):
 			),
 			Row(
 				HTML(warning_html(nation_code_error)),
-				HTML(flag_html(license_holder.nation_code) + ' ' + ioc_country.get(license_holder.nation_code, u'')),
+				HTML(flag_html(license_holder.nation_code) + ' ' + ioc_country.get(license_holder.nation_code, '')),
 				FieldWithButtons(Field('nation_code', css_class='no-highlight'), self.submit_button(change_nation_code) ),
 				HTML('&nbsp;'*2), Field('gender', css_class='no-highlight'),
 				HTML('&nbsp;'*2), FieldWithButtons(Field('team_name', size=40, css_class='no-highlight'), self.submit_button(change_team) ),
@@ -1869,7 +2094,7 @@ class ParticipantNotFoundForm( Form ):
 	def __init__(self, *args, **kwargs):
 		from_post = kwargs.pop('from_post', False)
 		has_matches = kwargs.pop('has_matches', False)
-		super(ParticipantNotFoundForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 			
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
@@ -1919,7 +2144,7 @@ def ParticipantNotFound( request, competitionId ):
 			
 			if 'search-submit' in request.POST:
 				matches = LicenseHolder.objects.filter( gender=gender, date_of_birth=date_of_birth, search_text__startswith=utils.get_search_text(last_name) )
-				secondary_matches = LicenseHolder.objects.filter( search_text__contains=utils.get_search_text(last_name) ).exclude( pk__in=matches.values_list('pk',flat=True) )
+				secondary_matches = LicenseHolder.objects.filter( search_text__icontains=utils.get_search_text(last_name) ).exclude( pk__in=matches.values_list('pk',flat=True) )
 				has_matches = matches.exists() or secondary_matches.exists()
 				if has_matches:
 					form = ParticipantNotFoundForm( initial={'last_name':last_name, 'gender':gender, 'date_of_birth':date_of_birth}, has_matches=has_matches, from_post=True )

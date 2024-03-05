@@ -7,25 +7,22 @@ from heapq import heappush
 import datetime
 import base64
 import operator
+import secrets
 import random
 import itertools
 from collections import defaultdict
-try:
-	from StringIO import StringIO
-	BytesIO = StringIO
-except:
-	from io import StringIO, BytesIO
+from io import StringIO, BytesIO
 import locale
 
 from django.db import models, connection
 from django.db import transaction, IntegrityError
-from django.db.models import Q, F, Max, Count
+from django.db.models import Q, F, Max, Count, Index
 
 from django.contrib.contenttypes.models import ContentType
 
 from django.utils import timezone
 from django.utils.timezone import get_default_timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils.text import format_lazy
 
@@ -36,7 +33,7 @@ from django.utils.html import escape
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
-from . import DurationField
+from .DurationField import DurationField, format_seconds, formatted_timedelta
 from .get_abbrev import get_abbrev
 
 from .get_id import get_id
@@ -90,11 +87,11 @@ class BulkSave( object ):
 
 def ordinal( n ):
 	return "{}{}".format(n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
-
+	
 def fixNullUpper( s ):
 	if not s:
 		return None
-	s = (s or u'').strip()
+	s = (s or '').strip()
 	if s:
 		return utils.removeDiacritic(s).upper().lstrip('0')
 	else:
@@ -110,28 +107,51 @@ def getSrcStr( fname ):
 KmToMiles = 0.621371192
 MilesToKm = 1.0 / KmToMiles
 
+def has_rfid_reader():
+	return 'has_rfid_reader' in os.environ
+	
+def bulk_update_if_different( cls, objs, field, value ):
+	to_update = []
+	for o in objs:
+		if getattr(o, field) != value:
+			setattr( o, field, value )
+			to_update.append( o )
+	if to_update:
+		cls.objects.bulk_update( to_update, [field] )
+
+def attrsetter( attr, value ):
+	def f( o ):
+		setattr( o, attr, value )
+		return o
+	return f
+
 #----------------------------------------------------------------------------------------
 def getCopyName( ModelClass, cur_name ):
-	suffix = u' - ['
+	pre, post = ' - [', ']'
 	try:
-		base_name = cur_name[:cur_name.rindex(suffix)]
-	except:
+		base_name = cur_name[:cur_name.rindex(pre)]
+	except Exception:
 		base_name = cur_name
 	
-	while 1:
+	try:
+		max_length = ModelClass._meta.get_field('name').max_length
+	except Exception:
+		max_length = 8192
+		
+	try:
+		names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
+	except Exception:
+		return cur_name
+	
+	iMax = 2
+	for n in names:
 		try:
-			names = set( ModelClass.objects.filter(name__startswith=base_name).values_list('name', flat=True) )
-		except:
-			return cur_name
+			iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
+		except Exception:
+			continue
 		
-		iMax = 2
-		for n in names:
-			try:
-				iMax = max( iMax, int(n[n.rindex('[')+1:-1]) + 1 )
-			except:
-				continue
-		
-		new_name = u'{}{}{}]'.format( base_name, suffix, iMax )
+	for i in range(iMax, iMax+32):
+		new_name = '{}{}{}{}'.format( base_name, pre, iMax, post )[:max_length]
 		if not ModelClass.objects.filter( name=new_name ).exists():
 			return new_name
 	
@@ -139,11 +159,13 @@ def getCopyName( ModelClass, cur_name ):
 
 #----------------------------------------------------------------------------------------
 def validate_sequence( elements ):
-	with transaction.atomic():
-		for seq, e in enumerate(list(elements)):
-			if e.sequence != seq:
-				e.sequence = seq
-				e.save()
+	to_update = []
+	for seq, e in enumerate(list(elements)):
+		if e.sequence != seq:
+			e.sequence = seq
+			to_update.append( e )
+	if to_update:
+		type(to_update[0]).objects.bulk_update( to_update, ['sequence'] )
 	
 class Sequence( models.Model ):
 	sequence = models.PositiveSmallIntegerField( default=32767, blank=True, verbose_name=_('Sequence') )
@@ -200,8 +222,8 @@ class Sequence( models.Model ):
 		return self.get_container().count()
 	
 	class Meta:
-		ordering = ['sequence']
 		abstract = True
+		ordering = ['sequence']
 
 #----------------------------------------------------------------------------------------
 class SystemInfo(models.Model):
@@ -226,7 +248,7 @@ class SystemInfo(models.Model):
 	tag_from_license = models.BooleanField( default = False, verbose_name = _("RFID Tag from License"),
 			 help_text=_('Generate RFID tag from license (not database id)'))
 	
-	ID_CHOICES = [(i, u'{}'.format(i)) for i in range(32)]
+	ID_CHOICES = [(i, '{}'.format(i)) for i in range(32)]
 	tag_from_license_id = models.PositiveSmallIntegerField( default=0, choices=ID_CHOICES, verbose_name=_('Identifier'),
 		help_text=_('Identifier for generating tags from License Code.') )
 		
@@ -294,7 +316,7 @@ class SystemInfo(models.Model):
 	
 	@classmethod
 	def get_tag_template_default( cls ):
-		rs = ''.join( '0123456789ABCDEF'[random.randint(1,15)] for i in range(4))
+		rs = ''.join( secrets.choice('123456789ABCDEF') for i in range(4) )
 		tt = '{}######{:02}'.format( rs, datetime.datetime.now().year % 100 )
 		return tt
 	
@@ -355,11 +377,11 @@ class CategoryFormat(models.Model):
 	def next_category_seq( self ):
 		try:
 			return self.category_set.all().aggregate( Max('sequence') )['sequence__max'] + 1
-		except:
+		except Exception:
 			return 1
 		
 	def full_name( self ):
-		return u','.join( [self.name, self.description] )
+		return ','.join( [self.name, self.description] )
 		
 	def get_search_text( self ):
 		return utils.get_search_text( [self.name, self.description] )
@@ -395,7 +417,7 @@ class Category(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_last( Category, self )
-		return super( Category, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def make_copy( self, category_format ):
 		category_new = self
@@ -406,17 +428,17 @@ class Category(models.Model):
 		return category_new
 	
 	def full_name( self ):
-		return u', '.join( [self.code, self.get_gender_display(), self.description] )
+		return ', '.join( [self.code, self.get_gender_display(), self.description] )
 		
 	@property
 	def code_gender( self ):
-		return u'{} ({})'.format(self.code, self.get_gender_display())
+		return '{} ({})'.format(self.code, self.get_gender_display())
 	
 	def get_search_text( self ):
-		return utils.normalizeSearch(u' '.join( u'"{}"'.format(f) for f in [self.code, self.get_gender_display(), self.description] ) )
+		return utils.normalizeSearch(' '.join( '"{}"'.format(f) for f in [self.code, self.get_gender_display(), self.description] ) )
 		
 	def __str__( self ):
-		return u'{} ({}) [{}]'.format(self.code, self.description, self.format.name)
+		return '{} ({}) [{}]'.format(self.code, self.description, self.format.name)
 		
 	class Meta:
 		verbose_name = _('Category')
@@ -430,7 +452,7 @@ class Discipline(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_first( Discipline, self )
-		return super( Discipline, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -450,7 +472,7 @@ class RaceClass(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_first( RaceClass, self )
-		return super( RaceClass, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -547,8 +569,8 @@ class NumberSet(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_first( NumberSet, self )
-		self.range_str = self.reRangeExcept.sub( u'', self.range_str )
-		return super( NumberSet, self ).save( *args, **kwargs )
+		self.range_str = self.reRangeExcept.sub( '', self.range_str )
+		return super().save( *args, **kwargs )
 		
 	def get_bib( self, competition, license_holder, category, category_numbers_set=None ):
 		numbers = None
@@ -660,7 +682,7 @@ class SeasonsPass(models.Model):
 
 	def save( self, *args, **kwargs ):
 		init_sequence_first( SeasonsPass, self )
-		return super( SeasonsPass, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -668,7 +690,7 @@ class SeasonsPass(models.Model):
 	def clone( self ):
 		name_new = None
 		for i in range(1, 1000):
-			name_new = u'{} Copy({})'.format( self.name.split( ' Copy(' )[0], i )
+			name_new = '{} Copy({})'.format( self.name.split( ' Copy(' )[0], i )
 			if not SeasonsPass.objects.filter( name=name_new ).exists():
 				break
 		seasons_pass_new = SeasonsPass( name=name_new )
@@ -706,7 +728,7 @@ class SeasonsPassHolder(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name = _("LicenseHolder"), on_delete=models.CASCADE )
 	
 	def __str__( self ):
-		return u''.join( [u'{}'.format(self.seasons_pass), u': ', u'{}'.format(self.license_holder)] )
+		return ''.join( ['{}'.format(self.seasons_pass), ': ', '{}'.format(self.license_holder)] )
 	
 	class Meta:
 		ordering = ['license_holder__search_text']
@@ -781,6 +803,7 @@ class Competition(models.Model):
 	)
 	distance_unit=models.PositiveSmallIntegerField(choices=DISTANCE_UNIT_CHOICES, default=0, verbose_name=_('Distance Unit') )
 	
+	use_sftp=models.BooleanField( default=False, verbose_name=_("Use SFTP") )
 	ftp_host=models.CharField( max_length=80, default='', blank=True, verbose_name=_('FTP Host') )
 	ftp_user=models.CharField( max_length=80, default='', blank=True, verbose_name=_('FTP User') )
 	ftp_password=models.CharField( max_length=64, default='', blank=True, verbose_name=_('FTP Password') )
@@ -820,6 +843,11 @@ class Competition(models.Model):
 		help_text=_('Previous Competitions considered for License Check must have this label'),
 	)
 	
+	google_maps_api_key = models.CharField( max_length=64, default='', blank=True, verbose_name=_('Google Maps API Key') )
+	
+	image = models.ForeignKey( "Image", blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Image") )
+	gpx_course_default = models.ForeignKey( "GPXCourse", blank=True, null=True, default=None, on_delete=models.SET_NULL, verbose_name=_("GPX Course Default") )
+	
 	@property
 	def title( self ):
 		return self.long_name or self.name
@@ -829,7 +857,7 @@ class Competition(models.Model):
 		return self.bib_label_print or self.bibs_label_print or self.bibs_laser_print or self.shoulders_label_print or self.frame_label_print or self.frame_label_print_1
 	
 	def get_filename_base( self ):
-		return utils.cleanFileName(u'{}-{}'.format( self.name, self.start_date.strftime('%Y-%m-%d'))).replace(' ', '-')
+		return utils.cleanFileName('{}-{}'.format( self.name, self.start_date.strftime('%Y-%m-%d'))).replace(' ', '-')
 	
 	@property
 	def speed_unit_display( self ):
@@ -837,7 +865,7 @@ class Competition(models.Model):
 	
 	@property
 	def report_labels_text( self ):
-		return u', '.join( r.name for r in self.report_labels.all() )
+		return ', '.join( r.name for r in self.report_labels.all() )
 		
 	@property
 	def has_results( self ):
@@ -881,8 +909,11 @@ class Competition(models.Model):
 			types.append( _('TT') )
 		if types:
 			types = ['('] + types + [')']
-			return format_lazy( u'{}'*len(types), *types )
-		return u''
+			return format_lazy( '{}'*len(types), *types )
+		return ''
+		
+	def has_rfid_reader( self ):
+		return has_rfid_reader()
 	
 	def to_local_speed( self, kmh ):
 		return kmh if self.distance_unit == 0 else kmh * 0.621371
@@ -908,7 +939,7 @@ class Competition(models.Model):
 				self.adjust_event_times( time_delta )
 		
 		
-		return super(Competition, self).save(*args, **kwargs)
+		return super().save(*args, **kwargs)
 	
 	@transaction.atomic
 	def make_copy( self ):
@@ -1015,7 +1046,7 @@ class Competition(models.Model):
 		ParticipantOption.objects.bulk_create( options )
 	
 	def full_name( self ):
-		return u' '.join( [self.name, self.organizer] )
+		return ' '.join( [self.name, self.organizer] )
 		
 	def get_search_text( self ):
 		return utils.get_search_text( [self.name, self.organizer] )
@@ -1101,16 +1132,23 @@ class Competition(models.Model):
 	def sync_tags( self ):
 		if self.using_tags and self.use_existing_tags:
 			qtag = self.get_participants().exclude( Q(tag=F('license_holder__existing_tag')) & Q(tag2=F('license_holder__existing_tag2')) )
-			if qtag.exists():
-				qtag.update( tag=None, tag2=None )
-				with transaction.atomic():
-					for p in qtag.select_related('license_holder'):
-						p.tag  = p.license_holder.existing_tag
-						p.tag2 = p.license_holder.existing_tag2
-						p.save()
+			participants_to_update = list( qtag.select_related('license_holder') )
+			if participants_to_update:
+				for p in participants_to_update:
+					p.tag  = p.license_holder.existing_tag
+					p.tag2 = p.license_holder.existing_tag2
+				Participant.objects.bulk_update( participants_to_update, ['tag', 'tag2'] )
 				return True
 		return False
-			
+	
+	def filter_by_tag( self, tag ):
+		''' Return all Participants with the given tag. '''
+		if not self.using_tags:
+			return Participant.objects.none()
+		if self.use_existing_tags:
+			return self.get_participants().filter( license_holder__id__in=get_ids(LicenseHolder.filter_by_tag(tag), 'license_holder') )
+		return self.get_participants().filter( Q(tag=tag) | Q(tag2=tag) )
+	
 	def get_available_categories( self, license_holder, gender=None, participant_exclude=None ):
 		categories_remaining = Category.objects.filter( format=self.category_format )
 		if gender is None:
@@ -1327,35 +1365,35 @@ def validate_range_str( range_str ):
 	
 	num_max = 99999
 	pairs = []
-	for p in r.split( u',' ):
+	for p in r.split( ',' ):
 		p = p.strip()
 		if p.startswith( '-' ):
-			exclude = u'-'
+			exclude = '-'
 			p = p[1:]
 		else:
-			exclude = u''
+			exclude = ''
 			
-		pair = p.split( u'-' )
+		pair = p.split( '-' )
 		if len(pair) == 1:
 			try:
 				n = int(pair[0])
-			except:
+			except Exception:
 				continue
-			pairs.append( exclude + u'{}'.format(n) )
+			pairs.append( exclude + '{}'.format(n) )
 		elif len(pair) >= 2:
 			try:
 				nBegin = int(pair[0])
-			except:
+			except Exception:
 				continue
 			try:
 				nEnd = int(pair[1])
-			except:
+			except Exception:
 				continue
 			nBegin = min( nBegin, num_max )
 			nEnd = min( max(nBegin,nEnd), num_max )
-			pairs.append( exclude + u'{}'.format(nBegin) + u'-' + u'{}'.format(nEnd) )
+			pairs.append( exclude + '{}'.format(nBegin) + '-' + '{}'.format(nEnd) )
 	
-	return u', '.join( pairs )
+	return ', '.join( pairs )
 
 def get_numbers( range_str ):
 	include = set()
@@ -1396,7 +1434,7 @@ class CategoryNumbers( models.Model ):
 	
 	@property
 	def category_list( self ):
-		return u', '.join( c.code_gender for c in self.get_category_list() )
+		return ', '.join( c.code_gender for c in self.get_category_list() )
 	
 	def get_category_list( self ):
 		return sorted( self.categories.all(), key = lambda c: c.sequence )
@@ -1447,15 +1485,15 @@ class CategoryNumbers( models.Model ):
 		
 	def add_bib( self, n ):
 		if n not in self:
-			self.range_str += u', {}'.format( n )
+			self.range_str += ', {}'.format( n )
 			
 	def remove_bib( self, n ):
 		if n in self:
-			self.range_str += u', -{}'.format( n )
+			self.range_str += ', -{}'.format( n )
 		
 	def save(self, *args, **kwargs):
 		self.validate()
-		return super(CategoryNumbers, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	class Meta:
 		verbose_name = _('CategoryNumbers')
@@ -1481,7 +1519,7 @@ class Event( models.Model ):
 		return '{}/{}'.format( ['EventMassStart', 'EventTT', 'EventSprint'][self.event_type], self.pk )
 	
 	optional = models.BooleanField( default=False, verbose_name=_('Optional'),
-		help_text=_('Allows Participants to choose to enter the Event.  Otherwise the Event is included for all participants.') )
+		help_text=_('Allows Participants to choose to enter the Event.  Otherwise the Event is included automatically for all participants in the Event categories.') )
 	option_id = models.PositiveIntegerField( default=0, verbose_name = _('Option Id') )
 	select_by_default = models.BooleanField( default=False, verbose_name=_('Select by Default'),
 		help_text=_('If the Event is "Optional", and "Select by Default", Participants will be automatically added to the Event (but can opt-out later).') )
@@ -1500,9 +1538,17 @@ class Event( models.Model ):
 	
 	dnsNoData = models.BooleanField( default=True, verbose_name = _("Show Participants with no race data as DNS"), )
 	
+	gpx_course = models.ForeignKey( "GPXCourse", null=True, blank=True, default=None, on_delete=models.SET_NULL, verbose_name=_("GPX Course") )
+
+	def get_gpx_course( self ):
+		return self.gpx_course or self.competition.gpx_course_default
+		
+	def has_gpx_course( self ):
+		return self.gpx_course_id or self.competition.gpx_course_default_id
+		
 	@property
 	def note_html( self ):
-		return mark_safe( u'<br/>'.join( escape(v) for v in self.note.split(u'\n') ) ) if self.note else u''
+		return mark_safe( '<br/>'.join( escape(v) for v in self.note.split('\n') ) ) if self.note else ''
 	
 	@property
 	def is_optional( self ):
@@ -1512,7 +1558,7 @@ class Event( models.Model ):
 		if not self.optional and self.option_id:
 			ParticipantOption.delete_option_id( self.competition, self.option_id )
 			self.option_id = 0
-		super( Event, self ).save( *args, **kwargs )
+		super().save( *args, **kwargs )
 		if self.optional and not self.option_id:
 			ParticipantOption.set_event_option_id( self.competition, self )
 	
@@ -1541,7 +1587,10 @@ class Event( models.Model ):
 		raise NotImplementedError("Please Implement this method")
 			
 	def get_results( self ):
-		return self.get_result_class().objects.filter( event=self )
+		return self.get_result_class().objects.filter( event=self ).select_related('participant', 'participant__license_holder')
+		
+	def get_prime_class( self ):
+		raise NotImplementedError("Please Implement this method")
 		
 	def add_laps_to_results_query( self, results ):
 		return results.annotate( laps=Count(self.get_race_time_class().__name__.lower()) )
@@ -1616,7 +1665,7 @@ class Event( models.Model ):
 			for c in w.categories.all():
 				for p in Participant.objects.filter( competition=self.competition, role=Participant.Competitor, category=c, bib__isnull=False ):
 					if p.bib in bibParticipant:
-						s = format_lazy( u'{}: {} ({}) and {} ({}) {} {}',
+						s = format_lazy( '{}: {} ({}) and {} ({}) {} {}',
 								w.name, bibParticipant[p.bib].name, bibParticipant[p.bib].category.code,
 								p.name, p.category.code,
 								_('have duplicate Bib'), p.bib
@@ -1643,8 +1692,8 @@ class Event( models.Model ):
 				numbersConflict = numbersLeft & numbersRight
 				if numbersConflict:
 					potential_duplicates.append( (
-						u', '.join( c.code for c in cnLeft.categories.all() ),
-						u', '.join( c.code for c in cnRight.categories.all() ),
+						', '.join( c.code for c in cnLeft.categories.all() ),
+						', '.join( c.code for c in cnRight.categories.all() ),
 						sorted(numbersConflict)
 					))						
 		return potential_duplicates
@@ -1677,7 +1726,7 @@ class Event( models.Model ):
 			'name':	self.name,
 			'pk': self.pk,
 			'competition_name': self.competition.name,
-			'date_time': u'{}'.format(server_date_time),
+			'date_time': '{}'.format(server_date_time),
 			'event_type': self.event_type,
 			'optional':	self.optional,
 			'select_by_default': self.select_by_default,
@@ -1687,25 +1736,25 @@ class Event( models.Model ):
 		
 	@property
 	def wave_text( self ):
-		return u', '.join( u'{} ({})'.format(w.name, w.category_text) for w in self.get_wave_set().all() )
+		return ', '.join( '{} ({})'.format(w.name, w.category_text) for w in self.get_wave_set().all() )
 	
 	@property
 	def wave_text_line_html( self ):
-		return u', '.join( u'<strong>{}</strong> {}'.format(w.name, w.category_text) for w in self.get_wave_set().all() )
+		return ', '.join( '<strong>{}</strong> {}'.format(w.name, w.category_text) for w in self.get_wave_set().all() )
 	
 	@property
 	def wave_text_html( self ):
-		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}</strong>, {}<br/>{}'.format(
+		return '<ol><li>' + '</li><li>'.join( '<strong>{}</strong>, {}<br/>{}'.format(
 			w.name, w.get_details_html(True), 
 			w.category_count_html
-		) for w in self.get_wave_set().all() ) + u'</li></ol>'
+		) for w in self.get_wave_set().all() ) + '</li></ol>'
 	
 	@property
 	def custom_category_text_html( self ):
 		ccs = self.get_custom_categories()
 		if not ccs:
-			return u''
-		return u'<ol><li>' + u'</li><li>'.join( u'<strong>{}</strong>'.format(cc.name) for cc in ccs ) + u'</li></ol>'
+			return ''
+		return '<ol><li>' + '</li><li>'.join( '<strong>{}</strong>'.format(cc.name) for cc in ccs ) + '</li></ol>'
 	
 	def get_categories_query( self ):
 		q = None
@@ -1777,11 +1826,11 @@ class Event( models.Model ):
 		)
 			
 	def __str__( self ):
-		return u'{}, {} ({})'.format(self.date_time, self.name, self.competition.name)
+		return '{}, {} ({})'.format(self.date_time, self.name, self.competition.name)
 	
 	@property
 	def short_name( self ):
-		return u'{} ({})'.format( self.name, {0:_('Mass'), 1:_('TT')}.get(self.event_type,u'') )
+		return '{} ({})'.format( self.name, {0:_('Mass'), 1:_('TT')}.get(self.event_type,'') )
 	
 	def apply_optional_participants( self ):
 		if not self.optional:
@@ -1808,8 +1857,9 @@ class Event( models.Model ):
 
 class EventMassStart( Event ):
 	def __init__( self, *args, **kwargs ):
-		kwargs['event_type'] = 0
-		super( EventMassStart, self ).__init__( *args, **kwargs )
+		if not args:
+			kwargs['event_type'] = 0
+		super().__init__( *args, **kwargs )
 		
 	def get_result_class( self ):
 		return ResultMassStart
@@ -1820,6 +1870,9 @@ class EventMassStart( Event ):
 	def get_custom_category_class( self ):
 		return CustomCategoryMassStart
 		
+	def get_prime_class( self ):
+		return PrimeMassStart
+		
 	def get_series( self ):
 		for ce in SeriesCompetitionEvent.objects.filter( event_mass_start=self ).exclude( series__callup_max=0 ).order_by('series__sequence'):
 			if ce and not set( self.get_categories() ).isdisjoint( ce.series.get_categories() ):
@@ -1828,7 +1881,7 @@ class EventMassStart( Event ):
 	
 	win_and_out = models.BooleanField( default = False, verbose_name = _("Win and Out") )
 
-	class Meta:
+	class Meta( Event.Meta ):
 		verbose_name = _('Mass Start Event')
 		verbose_name_plural = _('Mass Starts Event')
 
@@ -2053,7 +2106,7 @@ class WaveBase( models.Model ):
 	
 	@property
 	def category_text( self ):
-		return u', '.join( category.code_gender for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) )
+		return ', '.join( category.code_gender for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) )
 	
 	def get_category_count( self ):
 		category_count = defaultdict( int )
@@ -2069,33 +2122,49 @@ class WaveBase( models.Model ):
 	
 	@property
 	def category_count_text( self ):
-		return u', '.join( u'{} {}'.format(category.code_gender, category_count) for category, category_count in self.get_category_count() )
+		return ', '.join( '{} {}'.format(category.code_gender, category_count) for category, category_count in self.get_category_count() )
 	
 	@property
 	def category_count_html( self ):
-		return u', '.join( u'{} {}'.format(category.code_gender, category_count).replace(u' ', u'&nbsp;') for category, category_count in self.get_category_count() )
+		return ', '.join( '{} {}'.format(category.code_gender, category_count).replace(' ', '&nbsp;') for category, category_count in self.get_category_count() )
 	
 	@property
 	def category_text_html( self ):
-		return u'<ol><li>' + u'</li><li>'.join( category.code_gender for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) ) + u'</li></ol>'
+		return '<ol><li>' + '</li><li>'.join( category.code_gender for category in sorted(self.categories.all(), key=operator.attrgetter('sequence')) ) + '</li></ol>'
 		
 	def get_details_html( self, include_starters=False ):
-		distance = None
 		if self.distance:
 			if self.laps:
-				distance = self.distance * self.laps
+				distance = '{:.2f} <strong>{}</strong>'.format(self.distance * self.laps, self.distance_unit)
 			else:
-				distance = self.distance
-		s = u', '.join( v for v in (
-			u'{}:&nbsp;<strong>{}</strong>'.format(u'Offset', self.start_offset) if include_starters and hasattr(self,'start_offset') else None,
-			u'{}:&nbsp;<strong>{}</strong>'.format(u'Start Time', timezone.localtime(self.event.date_time + self.start_offset).strftime('%H:%M:%S')) if include_starters and hasattr(self,'start_offset') else None,
-			u'{:.2f}&nbsp;<strong>{}</strong>'.format(distance, self.distance_unit) if distance else None,
-			u'{}&nbsp;<strong>{}</strong>'.format(self.laps, u'laps' if self.laps != 1 else u'lap') if self.laps else None,
-			u'<strong>{}&nbsp;{}</strong>'.format(self.minutes, u'min') if getattr(self, 'minutes', None) else None,
-			u'Rank&nbsp;Together' if getattr(self, 'rank_categories_together', False) else None,
-			u'{}:&nbsp;<strong>{}</strong>'.format(u'Starters', self.get_starters_str().replace(' ', '&nbsp;')) if include_starters else None,
-		) if v )
-		return s
+				distance = '{:.2f} <strong>{}</strong> loop'.format(self.distance, self.distance_unit)
+		else:
+			distance = None
+		
+		if hasattr(self,'start_offset'):
+			start_offset = self.start_offset or datetime.timedelta(seconds=0.0)
+		else:
+			start_offset = None
+			
+		fields = []
+		if include_starters and start_offset is not None:
+			fields.append( '{}: <strong>{}</strong>'.format('Offset', start_offset) )
+			fields.append( '{}: <strong>{}</strong>'.format(
+				'Start Time',
+				timezone.localtime(self.event.date_time + start_offset).strftime('%H:%M:%S'))
+			)
+		if distance:
+			fields.append( distance )
+		if self.laps:
+			fields.append( '{} <strong>{}</strong>'.format(self.laps, 'laps' if self.laps != 1 else 'lap') )
+		if getattr(self, 'minutes', None):
+			fields.append( '<strong>{} {}</strong>'.format(self.minutes, 'min') )
+		if getattr(self, 'rank_categories_together', False):
+			fields.append( 'Rank Together' )
+		if include_starters:
+			fields.append( '{}: <strong>{}</strong>'.format('Starters', self.get_starters_str()) )
+			
+		return ', '.join( f.replace(' ', '&nbsp;') for f in fields )
 	
 	class Meta:
 		verbose_name = _('Wave Base')
@@ -2104,21 +2173,21 @@ class WaveBase( models.Model ):
 
 class Wave( WaveBase ):
 	event = models.ForeignKey( EventMassStart, db_index = True, on_delete=models.CASCADE )
-	start_offset = DurationField.DurationField( default = duration_field_0, null = True, blank = True, verbose_name = _('Start Offset') )
+	start_offset = DurationField( default = duration_field_0, null = True, blank = True, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
 	
 	def get_results( self, category = None ):
-		return super( Wave, self ).get_results( category ).select_related('participant', 'participant__license_holder')
+		return super().get_results( category ).select_related('participant', 'participant__license_holder')
 	
 	def get_json( self ):
 		self.start_offset = self.start_offset or datetime.timedelta( seconds=0.0 )
-		js = super(Wave, self).get_json()
+		js = super().get_json()
 		try:
 			seconds = self.start_offset.total_seconds()
-		except:
+		except Exception:
 			seconds = self.start_offset
-		js['start_offset'] = DurationField.format_seconds( seconds )
+		js['start_offset'] = format_seconds( seconds )
 		return js
 	
 	def get_start_time( self ):
@@ -2128,7 +2197,7 @@ class Wave( WaveBase ):
 		except TypeError:
 			return self.event.date_time + datetime.timedelta(self.start_offset)
 	
-	class Meta:
+	class Meta( WaveBase.Meta ):
 		verbose_name = _('Wave')
 		verbose_name_plural = _('Waves')
 		ordering = ['start_offset', 'name']
@@ -2175,9 +2244,18 @@ class Team(models.Model):
 	@property
 	def license_holder_pks( self ):
 		return (
-			set(TeamHint.objects.filter(team=self).values_list('license_holder',flat=True).distinct()) |
-			set(Participant.objects.filter(team=self).values_list('license_holder',flat=True).distinct())
+			set(TeamHint.objects.filter(team=self).values_list('license_holder',flat=True)) |
+			set(Participant.objects.filter(team=self).values_list('license_holder',flat=True))
 		)
+	
+	@staticmethod
+	def all_license_holder_count():
+		lhc = defaultdict( set )
+		for t_pk, lh_pk in TeamHint.objects.filter(team__isnull=False).values_list('team','license_holder'):
+			lhc[t_pk].add( lh_pk )
+		for t_pk, lh_pk in Participant.objects.filter(team__isnull=False).values_list('team','license_holder'):
+			lhc[t_pk].add( lh_pk )
+		return {k:len(v) for k, v in lhc.items()}
 	
 	@property
 	def license_holder_count( self ):
@@ -2188,25 +2266,25 @@ class Team(models.Model):
 		return LicenseHolder.objects.filter( pk__in=self.license_holder_pks )
 
 	def get_team_aliases( self ):
-		return u', '.join(u'"{}"'.format(ta.alias) for ta in self.teamalias_set.all())
+		return ', '.join('"{}"'.format(ta.alias) for ta in self.teamalias_set.all())
 
 	def get_team_aliases_html( self ):
 		team_aliases = list(self.teamalias_set.all())
 		if not team_aliases:
-			return u''
-		strings = [u'<ul>']
+			return ''
+		strings = ['<ul>']
 		for ta in team_aliases:
-			strings.extend( [u'<li>', escape(ta.alias), u'</li>'] )
-		strings.append( u'</ul>' )
-		return mark_safe( format_lazy(u'{}'*len(strings), *strings) )
+			strings.extend( ['<li>', escape(ta.alias), '</li>'] )
+		strings.append( '</ul>' )
+		return mark_safe( format_lazy('{}'*len(strings), *strings) )
 
 	def save( self, *args, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
-		return super(Team, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def full_name( self ):
 		fields = [self.name, self.team_code, self.get_team_type_display(), self.nation_code]
-		return u', '.join( f for f in fields if f )
+		return ', '.join( f for f in fields if f )
 	
 	def get_search_text( self ):
 		return utils.get_search_text( [self.name, self.team_code, self.get_team_type_display(), self.nation_code] )
@@ -2215,13 +2293,13 @@ class Team(models.Model):
 		return self.name
 		
 	def __str__( self ):
-		return u'{}, {}'.format(self.name, self.team_type_display())
+		return '{}, {}'.format(self.name, self.team_type_display())
 	
 	@staticmethod
 	def is_independent_name( team_name ):
 		if team_name is None:
 			return False
-		return team_name.lower() == u'independent'
+		return team_name.lower() == 'independent'
 	
 	class Meta:
 		verbose_name = _('Team')
@@ -2286,12 +2364,12 @@ def validate_postal_code( postal ):
 	postal = (postal or '').replace(' ', '').upper()
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
 
-def random_temp_license( prefix = u'TEMP_'):
-	return u'{}{}'.format( prefix, ''.join(random.choice('0123456789') for i in range(15)) )
+def random_temp_license( prefix = 'TEMP_'):
+	return '{}{}'.format( prefix, ''.join(secrets.choice('0123456789') for i in range(15)) )
 
 def format_phone( phone ):
 	if len(phone) == len('AAA333NNNN') and phone.isdigit():
-		return u'({}) {}-{}'.format(phone[:3], phone[3:6], phone[6:])
+		return '({}) {}-{}'.format(phone[:3], phone[3:6], phone[6:])
 	return phone
 
 def flag_html( nation_code ):
@@ -2329,7 +2407,7 @@ class LicenseHolder(models.Model):
 	phone = models.CharField( max_length=64, blank=True, default='', verbose_name=_('Phone') )
 	
 	uci_code = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI Code') )
-	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCIID') )
+	uci_id = models.CharField( max_length=11, blank=True, default='', db_index=True, verbose_name=_('UCI ID') )
 	
 	license_code = models.CharField( max_length=32, null=True, unique=True, verbose_name=_('License Code') )
 	
@@ -2392,8 +2470,8 @@ class LicenseHolder(models.Model):
 	
 	reUCIID = re.compile( r'[^\d]' )
 	def save( self, *args, **kwargs ):
-		self.uci_code = (self.uci_code or u'').replace(u' ', '').upper()
-		self.uci_id = self.reUCIID.sub( u'', (self.uci_id or u'') )[:11]
+		self.uci_code = (self.uci_code or '').replace(' ', '').upper()
+		self.uci_id = self.reUCIID.sub( '', (self.uci_id or '') )[:11]
 		
 		self.gender = self.gender or 0
 		
@@ -2407,7 +2485,7 @@ class LicenseHolder(models.Model):
 				
 		# Fix nation code.
 		if not self.nation_code:
-			self.nation_code = u''
+			self.nation_code = ''
 			if self.uci_code and country_from_ioc(self.uci_code[:3]):
 				self.nation_code = self.uci_code[:3].upper()
 			elif ioc_from_country(self.nationality):
@@ -2420,17 +2498,17 @@ class LicenseHolder(models.Model):
 				self.nation_code = iso_uci_country_codes.get(self.nation_code, self.nation_code)
 		
 			if self.nation_code not in uci_country_codes_set:
-				self.nation_code = u''
+				self.nation_code = ''
 		
 		if self.nation_code and country_from_ioc(self.nation_code):
 			self.nationality = country_from_ioc(self.nation_code)
 		else:
-			self.nation_code = u''
+			self.nation_code = ''
 			
 		if not self.emergency_contact_name or self.emergency_contact_name.startswith('0'):
-			self.emergency_contact_name = u''
+			self.emergency_contact_name = ''
 		if not self.emergency_contact_phone or self.emergency_contact_phone == '0':
-			self.emergency_contact_phone = u''
+			self.emergency_contact_phone = ''
 		
 		# Fix up date of birth.
 		if self.date_of_birth != invalid_date_of_birth:
@@ -2458,24 +2536,24 @@ class LicenseHolder(models.Model):
 		
 		# If the license_code is TEMP or empty, make a unique temporary code.
 		# This is required by Django.
-		if self.license_code == u'TEMP' or not self.license_code:
+		if self.license_code == 'TEMP' or not self.license_code:
 			self.license_code = random_temp_license()
 
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		
-		super(LicenseHolder, self).save( *args, **kwargs )
+		super().save( *args, **kwargs )
 		
 	@property
 	def is_temp_license( self ):
-		return self.license_code.startswith(u'TEMP') or self.license_code.startswith(u'_')
+		return self.license_code.startswith('TEMP') or self.license_code.startswith('_')
 
 	@property
 	def license_code_export( self ):
-		return u'TEMP' if not self.license_code or self.is_temp_license else self.license_code
+		return 'TEMP' if not self.license_code or self.is_temp_license else self.license_code
 	
 	@property
 	def license_code_trunc( self ):
-		return self.license_code if len(self.license_code) <= 11 else u'{}...'.format(self.license_code[:11])
+		return self.license_code if len(self.license_code) <= 11 else '{}...'.format(self.license_code[:11])
 
 	@property
 	def has_results( self ):
@@ -2493,10 +2571,10 @@ class LicenseHolder(models.Model):
 			return None
 			
 		if not self.nation_code:
-			return _(u'missing')
+			return _('missing')
 			
 		if self.nation_code not in uci_country_codes_set:
-			return _(u'invalid nation code')	
+			return _('invalid nation code')	
 		return None
 	
 	@property
@@ -2504,19 +2582,19 @@ class LicenseHolder(models.Model):
 		if not self or not self.uci_id:
 			return None
 			
-		self.uci_id = u'{}'.format(self.uci_id).upper().replace(u' ', u'')
+		self.uci_id = '{}'.format(self.uci_id).upper().replace(' ', '')
 		
 		if not self.uci_id.isdigit():
-			return _(u'uci id must be all digits')
+			return _('uci id must be all digits')
 		
 		if self.uci_id.startswith('0'):
-			return _(u'uci id must not start with zero')
+			return _('uci id must not start with zero')
 		
 		if len(self.uci_id) != 11:
-			return _(u'uci id must be 11 digits')
+			return _('uci id must be 11 digits')
 			
 		if int(self.uci_id[:-2]) % 97 != int(self.uci_id[-2:]):
-			return _(u'uci id check digit error')
+			return _('uci id check digit error')
 		return None
 	
 	@property
@@ -2524,40 +2602,40 @@ class LicenseHolder(models.Model):
 		if not self or not self.uci_code:
 			return None
 			
-		self.uci_code = u'{}'.format(self.uci_code).upper().replace(u' ', u'')
+		self.uci_code = '{}'.format(self.uci_code).upper().replace(' ', '')
 		
 		if len(self.uci_code) != 11:
-			return _(u'invalid length for uci code')
+			return _('invalid length for uci code')
 			
 		if self.uci_code[:3] not in uci_country_codes_set:
-			return _(u'invalid nation code')
+			return _('invalid nation code')
 			
 		try:
 			year = int(self.uci_code[3:7])
 		except ValueError:
-			return _(u'year is not a number')
+			return _('year is not a number')
 		try:
 			month = int(self.uci_code[7:9])
 		except ValueError:
-			return _(u'month is not a number')
+			return _('month is not a number')
 		try:
 			day = int(self.uci_code[9:])
 		except ValueError:
-			return _(u'day is not a number')
+			return _('day is not a number')
 		
 		try:
 			d = datetime.date(year, month, day)
 		except ValueError as e:
-			return u'{}'.format(e)
+			return '{}'.format(e)
 		
 		if d != self.date_of_birth:
-			return _(u'inconsistent with date of birth')
+			return _('inconsistent with date of birth')
 		
 		age = timezone.localtime(timezone.now()).date().year - d.year
 		if age < self.MinAge:
-			return _(u'date too recent')
+			return _('date too recent')
 		if age > self.MaxAge:
-			return _(u'date too early')
+			return _('date too early')
 		return None
 
 	@property
@@ -2566,9 +2644,9 @@ class LicenseHolder(models.Model):
 			return None
 		age = timezone.localtime(timezone.now()).date().year - self.date_of_birth.year
 		if age < self.MinAge:
-			return _(u'age too young')
+			return _('age too young')
 		if age > self.MaxAge:
-			return _(u'age too old')
+			return _('age too old')
 		return None
 
 	@property
@@ -2577,7 +2655,7 @@ class LicenseHolder(models.Model):
 	
 	@property
 	def license_code_error( self ):
-		return _(u'temp license') if self.is_temp_license else None
+		return _('temp license') if self.is_temp_license else None
 	
 	@property
 	def has_error( self ):
@@ -2591,21 +2669,21 @@ class LicenseHolder(models.Model):
 		)
 		
 	def full_name( self ):
-		return u"{}, {}".format(self.last_name.upper(), self.first_name)
+		return '{}, {}'.format(self.last_name.upper(), self.first_name)
 		
 	def full_license( self ):
-		return u', '.join( f for f in (self.uci_id, self.license_code) if f )
+		return ', '.join( f for f in (self.uci_id, self.license_code) if f )
 		
 	def get_location( self ):
-		return u', '.join( f for f in (self.city, get_abbrev(self.state_prov)) if f )
+		return ', '.join( f for f in (self.city, get_abbrev(self.state_prov)) if f )
 	
 	@property
 	def first_last( self ):
-		return u' '.join( f for f in (self.first_name, self.last_name) if f )
+		return ' '.join( f for f in (self.first_name, self.last_name) if f )
 		
 	@property
 	def first_last_short( self ):
-		return u'. '.join( f for f in (self.first_name[:1], self.last_name) if f )
+		return '. '.join( f for f in (self.first_name[:1], self.last_name) if f )
 		
 	def get_search_text( self ):
 		return utils.get_search_text( [
@@ -2642,9 +2720,13 @@ class LicenseHolder(models.Model):
 			tag = getTagFormatStr( system_info.tag_template ).format( n=self.id )
 			
 		elif system_info.tag_creation ==	SystemInfo.tcLicenseCode:
+			tag = None
 			if self.license_code:
-				tag = getTagFromLicense( self.license_code, system_info.tag_from_license_id )
-			else:
+				try:
+					tag = getTagFromLicense( self.license_code, system_info.tag_from_license_id )
+				except Exception:
+					pass
+			if tag is None:
 				tag = get_id(system_info.tag_bits)
 		else:
 			assert False, 'Unknown tag creation option'
@@ -2656,14 +2738,14 @@ class LicenseHolder(models.Model):
 		return tag
 	
 	def get_existing_tag_str( self ):
-		return u', '.join( [t for t in [self.existing_tag, self.existing_tag2] if t] )
+		return ', '.join( [t for t in [self.existing_tag, self.existing_tag2] if t] )
 	
 	def get_existing_tag_str_abbr( self ):
 		def tag_abbr( tag ):
 			if tag and len(tag) > 8:
-				tag = tag[:8] + u'...'
+				tag = tag[:8] + '...'
 			return tag
-		return u', '.join( [t for t in [tag_abbr(self.existing_tag), tag_abbr(self.existing_tag2)] if t] )
+		return ', '.join( [t for t in [tag_abbr(self.existing_tag), tag_abbr(self.existing_tag2)] if t] )
 	
 	def get_participation_as_competitor( self ):
 		return Participant.objects.select_related('competition', 'team', 'category').filter(
@@ -2698,7 +2780,7 @@ class LicenseHolder(models.Model):
 		for last_name, first_name, gender, date_of_birth, uci_id, pk in LicenseHolder.objects.values_list(
 				'last_name','first_name','gender','date_of_birth','uci_id','pk'):
 			
-			name_initial = u'{}, {}'.format(utils.removeDiacritic(last_name).upper(), utils.removeDiacritic(first_name[:1]).upper())
+			name_initial = '{}, {}'.format(utils.removeDiacritic(last_name).upper(), utils.removeDiacritic(first_name[:1]).upper())
 			key = (
 				name_initial,
 				gender,
@@ -2706,7 +2788,7 @@ class LicenseHolder(models.Model):
 			)
 			duplicates[key].append( pk )
 			if uci_id:
-				duplicates[(u'{} UCIID'.format(u' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )),None,None)].append( pk )
+				duplicates[('{} UCIID'.format(' '.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) )),None,None)].append( pk )
 			
 			# Check for reversed day/month
 			if date_of_birth.day != date_of_birth.month and date_of_birth.day <= 12:
@@ -2729,7 +2811,7 @@ class LicenseHolder(models.Model):
 		
 		duplicates = [{
 				'key': key,
-				'duplicateIds': u','.join(u'{}'.format(pk) for pk in pks),
+				'duplicateIds': ','.join('{}'.format(pk) for pk in pks),
 				'license_holders': LicenseHolder.objects.filter(pk__in=pks).order_by('search_text'),
 				'license_holders_len': len(pks),
 			} for key, pks in duplicates.items() if len(pks) > 1]
@@ -2748,7 +2830,7 @@ class LicenseHolder(models.Model):
 	def nation_title( self ):
 		country = country_from_ioc(self.nation_code)
 		if country:
-			return u'{} - {}'.format(self.nation_code, country )
+			return '{} - {}'.format(self.nation_code, country )
 		return self.nation_code
 		
 	def get_uci_html( self ):
@@ -2763,18 +2845,18 @@ class LicenseHolder(models.Model):
 			return self.nation_code
 	
 	def get_uci_id_text( self ):
-		return u' '.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) )
+		return ' '.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) )
 	
 	def get_uci_id_html( self ):
-		return mark_safe( u'&nbsp;'.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) ) )
+		return mark_safe( '&nbsp;'.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) ) )
 	
 	def get_flag_uci_id_html( self ):
 		if self.nation_code and self.nation_code in uci_country_codes_set:
 			flag = '<img src="{}/{}.png" title="{}"/>'.format(static('flags'), self.nation_code, self.nation_title)
 		else:
 			flag = self.nation_code
-		uci_id = u'&nbsp;'.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) )
-		return mark_safe( u'{}&nbsp;{}'.format(flag, uci_id) )
+		uci_id = '&nbsp;'.join( self.uci_id[i:i+3] for i in range(0, len(self.uci_id), 3) )
+		return mark_safe( '{}&nbsp;{}'.format(flag, uci_id) )
 	
 	def get_team_for_discipline( self, discipline, teamHintOnly=False ):
 		team_hint = TeamHint.objects.filter(license_holder=self, discipline=discipline).order_by('-effective_date').first()
@@ -2806,17 +2888,21 @@ class LicenseHolder(models.Model):
 	def get_teams_for_disciplines_html( self, disciplines, teamHintOnly=False ):
 		r = []
 		for t in self.get_teams_for_disciplines(disciplines, teamHintOnly):
-			r.append( u'<td>{}</td>'.format( escape(t.name) if t else u'Independent' ) )
+			r.append( '<td>{}</td>'.format( escape(t.name) if t else 'Independent' ) )
 		return mark_safe(''.join(r))
 	
 	def get_tag_str( self ):
 		tags = (self.existing_tag, self.existing_tag2)
-		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+		return '{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or '')
 	
 	def get_short_tag_str( self ):
 		tags = (self.existing_tag, self.existing_tag2)
 		tags = [t[:8] + '...' if t and len(t) > 8 else t for t in tags]
-		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+		return '{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or '')
+	
+	@staticmethod
+	def filter_by_tag( tag ):
+		return Licenseholder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) )
 	
 	class Meta:
 		verbose_name = _('LicenseHolder')
@@ -2838,11 +2924,24 @@ def add_name_to_tag( competition, tag ):
 		lh = LicenseHolder.objects.filter( existing_tag=tag ).first()
 	
 	if lh:
-		s.extend( [u': ', lh.first_last] )
+		s.extend( [': ', lh.first_last] )
 	if bibs:
-		s.extend( [u'; ', _('Bib'), u' ', u', '.join( u'{}'.format(b) for b in bibs )] )
-	return format_lazy( u'{}'*len(s), *s )
-		
+		s.extend( ['; ', _('Bib'), ' ', ', '.join( '{}'.format(b) for b in bibs )] )
+	return format_lazy( '{}'*len(s), *s )
+
+'''
+#---------------------------------------------------------------------------------------------------------
+class PermanentRFIDTag( models.Model ):
+	license_holder = models.ForeignKey( 'LicenseHolder', db_index = True, verbose_name=_('LicenseHolder'), on_delete=models.CASCADE )
+	tag=models.CharField( max_length=36, verbose_name=_('Tag') )
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['license_holder__search_text', 'created_at']
+		verbose_name = _('PermanentRFIDTag')
+		verbose_name_plural = _('PermanentRFIDTags')
+'''
+
 #---------------------------------------------------------------
 class Waiver(models.Model):
 	license_holder = models.ForeignKey( 'LicenseHolder', db_index=True, on_delete=models.CASCADE )
@@ -2874,29 +2973,36 @@ class Result(models.Model):
 	STATUS_CHOICES = STATUS_CODE_NAMES
 	status = models.PositiveSmallIntegerField( default=0, choices=STATUS_CHOICES, verbose_name=_('Status') )
 	
+	def sort_key( self ):
+		# Fix sort order for DQ and NP.
+		status = self.status
+		if status in (Result.cDQ, Result.cNP):
+			status += 1000
+		return status, self.wave_rank
+	
 	category_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Category Rank') )
 	category_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Category Starters') )
-	category_gap = models.CharField( max_length=8, blank=True, default='' )
+	category_gap = models.CharField( max_length=24, blank=True, default='' )
 	
 	wave_rank = models.PositiveSmallIntegerField( default=32000, verbose_name=_('Wave Rank') )
 	wave_starters = models.PositiveSmallIntegerField( default=0, verbose_name=_('Wave Starters') )
-	wave_gap = models.CharField( max_length=8, blank=True, default='' )
+	wave_gap = models.CharField( max_length=16, blank=True, default='' )
 	
-	finish_time = DurationField.DurationField( default=None, null=True, blank=True, verbose_name=_('Finish Time') )
-	adjustment_time = DurationField.DurationField( default=None, null=True, blank=True, verbose_name=_('Adjustment Time') )
+	finish_time = DurationField( default=None, null=True, blank=True, verbose_name=_('Finish Time') )
+	adjustment_time = DurationField( default=None, null=True, blank=True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length=128, default='', blank=True, verbose_name=_('Adjustment Note') )
 	
 	ave_kmh = models.FloatField( default=0.0, null=True, blank=True, verbose_name=_('Ave km/h') )
 	
 	points = models.SmallIntegerField( default=0, verbose_name=_('Points') )
-	time_bonus = DurationField.DurationField( null=True, blank=True, verbose_name=_('Time Bonus') )
+	time_bonus = DurationField( null=True, blank=True, verbose_name=_('Time Bonus') )
 	
 	relegated = models.BooleanField( default=False, verbose_name=_('Relegated') )
 
 	@property
 	def adjusted_finish_time( self ):
 		if self.finish_time and self.adjustment_time:
-			return DurationField.formatted_timedelta(seconds=self.finish_time.total_seconds() + self.adjustment_time.total_seconds())
+			return formatted_timedelta(seconds=self.finish_time.total_seconds() + self.adjustment_time.total_seconds())
 		return self.finish_time
 	
 	@property
@@ -2912,14 +3018,14 @@ class Result(models.Model):
 	def format_result_html( self, rank, gap, starters ):
 		if self.status == 0:
 			if rank == 1:
-				gap = u', winner'
+				gap = ', winner'
 			else:
-				gap = u', gap:{}'.format(gap) if gap else ''
+				gap = ', gap:{}'.format(gap) if gap else ''
 		else:
 			rank = self.get_status_display()
 			gap = ''
 		
-		return mark_safe(u'{}/{}{}'.format(rank, starters, gap).replace(' ', '&nbsp;'))
+		return mark_safe('{}/{}{}'.format(rank, starters, gap).replace(' ', '&nbsp;'))
 	
 	@property
 	def is_finisher( self ):
@@ -2937,13 +3043,13 @@ class Result(models.Model):
 	def wave_rank_html( self ):
 		if self.status != 0:
 			return self.get_status_display()
-		return mark_safe(u'{}{}.'.format(self.wave_rank, u'&nbsp;REL' if self.relegated else u''))
+		return mark_safe('{}{}.'.format(self.wave_rank, '&nbsp;REL' if self.relegated else ''))
 	
 	@property
 	def category_rank_html( self ):
 		if self.status != 0:
 			return self.get_status_display()
-		return mark_safe(u'{}{}.'.format(self.category_rank, u'&nbsp;REL' if self.relegated else u''))
+		return mark_safe('{}{}.'.format(self.category_rank, '&nbsp;REL' if self.relegated else ''))
 	
 	@property
 	def result_html( self ):
@@ -2954,6 +3060,7 @@ class Result(models.Model):
 		return self.get_race_time_query().exists()
 	
 	def set_race_times( self, race_times, lap_speeds=[], do_create=True ):
+		# Race time zero is the start offset.
 		self.delete_race_times()
 		if len(lap_speeds) < len(race_times)-1:
 			lap_speeds.extend( [0.0] * (len(race_times) - 1 - len(lap_speeds) ) )
@@ -2962,7 +3069,7 @@ class Result(models.Model):
 			rtcs = [
 				RTC(
 					result=self,
-					race_time=DurationField.formatted_timedelta(seconds=rt),
+					race_time=formatted_timedelta(seconds=rt),
 					lap_kmh=lap_speeds[i-1] if i > 0 else 0.0,
 				) for i, rt in enumerate(race_times)
 			]
@@ -2979,7 +3086,7 @@ class Result(models.Model):
 		self.set_race_times( race_times, lap_speeds )
 	
 	def add_race_time( self, rt, lk=0.0 ):
-		self.get_race_time_class()( result=self, race_time=DurationField.formatted_timedelta(seconds=rt), lap_kmh=lk ).save()
+		self.get_race_time_class()( result=self, race_time=formatted_timedelta(seconds=rt), lap_kmh=lk ).save()
 		
 	def add_lap_time( self, lt, lk=0.0 ):
 		rt = self.get_race_query().order_by('-race_time').first()
@@ -2990,7 +3097,14 @@ class Result(models.Model):
 		self.get_race_time_query().delete()
 		
 	def get_race_times( self ):
-		return [ rt.total_seconds() for rt in self.get_race_time_query().values_list('race_time',flat=True) ]
+		return [ rt.total_seconds() for rt in self.get_race_time_query().order_by('race_time').values_list('race_time',flat=True) ]
+		
+	def compute_finish_time( self ):
+		rts = self.get_race_times()
+		try:
+			return formatted_timedelta(seconds = rts[-1] - rts[0])
+		except IndexError:
+			return None
 		
 	def get_num_laps( self ):
 		return self.get_race_time_query().count() - 1
@@ -2998,7 +3112,7 @@ class Result(models.Model):
 	def get_num_laps_fast( self ):
 		try:
 			return self._num_laps
-		except:
+		except AttributError:
 			self._num_laps = self.get_num_laps()
 			return self._num_laps
 	
@@ -3052,9 +3166,9 @@ class Result(models.Model):
 		return race_times[1] - race_times[0]
 	
 	class Meta:
+		abstract = True
 		verbose_name = _('Result')
 		verbose_name_plural = _('Results')
-		abstract = True
 		ordering = ['status', 'wave_rank']
 
 class ResultMassStart(Result):
@@ -3062,7 +3176,7 @@ class ResultMassStart(Result):
 	def get_race_time_class( self ):
 		return RaceTimeMassStart
 		
-	class Meta:
+	class Meta( Result.Meta ):
 		unique_together = (
 			('participant', 'event'),
 		)
@@ -3074,7 +3188,7 @@ class ResultTT(Result):
 	def get_race_time_class( self ):
 		return RaceTimeTT
 	
-	class Meta:
+	class Meta( Result.Meta ):
 		unique_together = (
 			('participant', 'event'),
 		)
@@ -3083,8 +3197,93 @@ class ResultTT(Result):
 
 #---------------------------------------------------------------
 
+class Prime(models.Model):
+	participant = models.ForeignKey( 'Participant', db_index=True, on_delete=models.CASCADE )
+
+	EffortChoices = (
+		(0, _('Pack')),
+		(1, _('Break')),
+		(2, _('Chase')),
+		(-1, _('Custom')),	# This one must be last.
+	)
+	effort = models.SmallIntegerField( default=0, choices=EffortChoices, verbose_name=_('Effort') )
+	
+	'''
+	(_('or Custom'),			'effortCustom',	's'),
+	(_('Position'),				'position',		'i'),
+	(_('Laps\nTo Go'),			'lapsToGo',		'i'),
+	(_('Sponsor'),				'sponsor', 		's'),
+	(_('Cash'),					'cash', 		'f'),
+	(_('Merchandise'),			'merchandise', 	's'),
+	(_('Points'),				'points', 		'i'),
+	(_('Time\nBonus'),			'timeBonus', 	't'),
+	'''
+	
+	effort_custom = models.CharField( max_length=36, default='', blank=True, verbose_name=_('Effort Custom') )
+	position = models.PositiveSmallIntegerField( null=True, default=None, verbose_name=_('Position') )
+	laps_to_go = models.PositiveSmallIntegerField( null=True, default=None, verbose_name=_('Laps to Go') )
+	sponsor = models.CharField( max_length=80, default='', blank=True, verbose_name=_('Sponser') )
+	cash = models.FloatField( null=True, default=None, verbose_name=_('Cash') )
+	merchandise = models.CharField( max_length=64, default='', blank=True, verbose_name=_('Merchandise') )
+	points = models.PositiveSmallIntegerField( null=True, default=None, verbose_name=_('Points') )
+	time_bonus = DurationField( null=True, default=None, verbose_name=_('Time Bonus') )
+	
+	@property
+	def effort_name( self ):
+		if self.effort >= 0:
+			try:
+				return self.EffortChoices[self.effort][1]
+			except Exceptions as e:
+				return _('Unknown')
+		return self.effort_custom or ''
+
+	@staticmethod
+	def to_camel( field ):
+		parts = field.split('_')
+		return parts[0] + ''.join( p.capitalize() for p in parts[1:] )
+	
+	def as_dict( self ):
+		d = {}
+		for f in Prime._meta.get_fields():
+			a = f.name
+			if a == 'participant':
+				a = 'winner_bib'
+				v = self.participant.bib
+			elif a == 'effort':
+				v = str(self.get_effort_display())
+			else:
+				v = getattr( self, a )
+			d[self.to_camel(a)] = v
+		return d
+	
+	class Meta:
+		abstract = True
+		verbose_name = _('Prime')
+		verbose_name_plural = _('Primes')
+		ordering = ['-laps_to_go', 'position', 'participant__bib']
+
+class PrimeMassStart(Prime):
+	event = models.ForeignKey( 'EventMassStart', db_index=True, on_delete=models.CASCADE )
+	def get_prime_class( self ):
+		return PrimeMassStart
+		
+	class Meta( Prime.Meta ):
+		verbose_name = _('PrimeMassStart')
+		verbose_name_plural = _('PrimesMassStart')
+
+class PrimeTT(Prime):
+	event = models.ForeignKey( 'EventTT', db_index=True, on_delete=models.CASCADE )
+	def get_prime_class( self ):
+		return PrimeTT
+	
+	class Meta( Prime.Meta ):
+		verbose_name = _('PrimeTT')
+		verbose_name_plural = _('PrimesTT')
+
+#---------------------------------------------------------------
+
 class RaceTime(models.Model):
-	race_time = DurationField.DurationField( verbose_name=_('Race Time') )
+	race_time = DurationField( verbose_name=_('Race Time') )
 	lap_kmh = models.FloatField( blank=True, default=0.0, verbose_name=_('Lap km/h') )
 	
 	class Meta:
@@ -3096,14 +3295,14 @@ class RaceTime(models.Model):
 class RaceTimeMassStart(RaceTime):
 	result = models.ForeignKey( 'ResultMassStart', verbose_name=_('ResultMassStart'), on_delete=models.CASCADE )
 	
-	class Meta:
+	class Meta( RaceTime.Meta ):
 		verbose_name = _('RaceTimeMassStart')
 		verbose_name_plural = _('RaceTimesMassStart')
 
 class RaceTimeTT(RaceTime):
 	result = models.ForeignKey( 'ResultTT', verbose_name=_('ResultTT'), on_delete=models.CASCADE )
 	
-	class Meta:
+	class Meta( RaceTime.Meta ):
 		verbose_name = _('RaceTimeTT')
 		verbose_name_plural = _('RaceTimesTT')
 
@@ -3142,7 +3341,7 @@ class CustomCategory( Sequence ):
 	in_category = models.ForeignKey( 'Category', blank=True, default=None, null=True, on_delete=models.SET_NULL, verbose_name=_('In Category') )
 	
 	def full_name( self ):
-		return format_lazy( u'{}, {}', self.name, Category.GENDER_CHOICES[self.gender][1] )
+		return format_lazy( '{}, {}', self.name, Category.GENDER_CHOICES[self.gender][1] )
 	
 	@property
 	def code( self ):
@@ -3150,7 +3349,7 @@ class CustomCategory( Sequence ):
 	
 	@property
 	def code_gender( self ):
-		return format_lazy(u'{} ({})', self.name, Category.GENDER_CHOICES[self.gender][1] )
+		return format_lazy('{} ({})', self.name, Category.GENDER_CHOICES[self.gender][1] )
 	
 	def validate( self ):
 		self.range_str = validate_range_str( self.range_str )
@@ -3176,11 +3375,11 @@ class CustomCategory( Sequence ):
 		if self.date_of_birth_maximum:
 			q &= Q(license_holder__date_of_birth__lte=self.date_of_birth_maximum)
 		if self.license_code_prefixes:
-			q &= Q(license_holder__license_code__iregex=u'^({}).*$'.format(self.license_code_prefixes.replace(',','|')))
+			q &= Q(license_holder__license_code__iregex='^({}).*$'.format(self.license_code_prefixes.replace(',','|')))
 		if self.nation_code_str:
-			q &= Q(license_holder__nation_code__iregex=u'^({})$'.format(self.nation_code_str.replace(',','|')))
+			q &= Q(license_holder__nation_code__iregex='^({})$'.format(self.nation_code_str.replace(',','|')))
 		if self.state_prov_str:
-			q &= Q(license_holder__state_prov__iregex=u'^({})$'.format(self.state_prov_str.replace('.',r'\.').replace(',','|')))
+			q &= Q(license_holder__state_prov__iregex='^({})$'.format(self.state_prov_str.replace('.',r'\.').replace(',','|')))
 		if self.in_category:
 			q &= Q(category=self.in_category)
 		return q
@@ -3198,7 +3397,7 @@ class CustomCategory( Sequence ):
 	
 	def save(self, *args, **kwargs):
 		self.validate()
-		return super(CustomCategory, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 		
 	def has_results( self ):
 		custom_participants = self.event.get_participants().filter(self.get_participant_query())
@@ -3219,7 +3418,7 @@ class CustomCategory( Sequence ):
 		if getattr(self.event, 'win_and_out', False):
 			results.sort( key=lambda rr: (rr.status, rr.get_num_laps(), rr.participant.bib) )
 			for rr in results:
-				rr.wave_gap = rr.category_gap = u''
+				rr.wave_gap = rr.category_gap = ''
 			return results
 		
 		# Rank the combined results together.
@@ -3232,27 +3431,27 @@ class CustomCategory( Sequence ):
 		winner_time = winner.adjusted_finish_time
 		if winner.status != 0 or not winner_time:
 			for rr in results:
-				rr.wave_gap = rr.category_gap = u''
+				rr.wave_gap = rr.category_gap = ''
 			return results
 
 		winner_laps = winner.get_num_laps()
 		for rr in results:
 			if rr is winner or rr.status != 0:
-				rr.wave_gap = rr.category_gap = u''
+				rr.wave_gap = rr.category_gap = ''
 				continue
 			
 			if winner_laps:
-				laps_down = winner_laps - rr.get_num_laps()
+				laps_down = int(winner_laps - rr.get_num_laps())
 				if laps_down > 0:
-					rr.wave_gap = rr.category_gap = u'-{} {}'.format(laps_down, ('lap','laps')[int(laps_down>1)])
+					rr.wave_gap = rr.category_gap = '-{} {}'.format(laps_down, ('lap','laps')[int(laps_down>1)])
 					continue
 				
 			rr_time = rr.adjusted_finish_time
 			if not rr_time:
-				rr.wave_gap = rr.category_gap = u''
+				rr.wave_gap = rr.category_gap = ''
 				continue
 				
-			t = DurationField.formatted_timedelta(seconds=rr_time.total_seconds() - winner_time.total_seconds())
+			t = formatted_timedelta(seconds=rr_time.total_seconds() - winner_time.total_seconds())
 			rr.wave_gap = rr.category_gap = t.format_no_decimals()
 
 		return results
@@ -3308,10 +3507,10 @@ class TeamHint(models.Model):
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def __str__( self ):
-		return u', '.join((u'{}'.format(self.license_holder), u'{}'.format(self.discipline), u'{}'.format(self.team), u'{}'.format(self.effective_date)))
+		return ', '.join(('{}'.format(self.license_holder), '{}'.format(self.discipline), '{}'.format(self.team), '{}'.format(self.effective_date)))
 	
 	def __repr__( self ):
-		return u'TeamHint({})'.format(self.__str__())
+		return 'TeamHint({})'.format(self.__str__())
 
 	@staticmethod
 	def set_all_disciplines( license_holder, team ):
@@ -3375,7 +3574,7 @@ class CategoryHint(models.Model):
 	effective_date = models.DateField( verbose_name = _('Effective Date'), db_index = True )
 	
 	def __str__( self ):
-		return u'{}'.format(self.license_holder) + ' ' + u'{}'.format(self.discipline) + ' ' + u'{}'.format(self.category) + ' ' + u'{}'.format(self.effective_date)
+		return '{}'.format(self.license_holder) + ' ' + '{}'.format(self.discipline) + ' ' + '{}'.format(self.category) + ' ' + '{}'.format(self.effective_date)
 	
 	class Meta:
 		verbose_name = _('CategoryHint')
@@ -3425,7 +3624,7 @@ class NumberSetEntry(models.Model):
 			raise IntegrityError()
 		if self.date_issued is None:
 			self.date_issued = datetime.date.today()
-		return super( NumberSetEntry, self ).save()
+		return super().save()
 	
 	class Meta:
 		verbose_name = _('NumberSetEntry')
@@ -3438,7 +3637,7 @@ class FormatTimeDelta( datetime.timedelta ):
 		return '{}:{:02d}:{:02.3f}'.format(seconds // (60*60), (seconds // 60) % 60, seconds % 60 + fraction)
 	
 	def __str__( self ):
-		return u'{}'.format( self.__repr__() )
+		return '{}'.format( self.__repr__() )
 
 class ParticipantDefaultValues( object ):
 	def __init__( self, competition ):
@@ -3561,10 +3760,10 @@ class Participant(models.Model):
 	registration_timestamp=models.DateTimeField( auto_now_add=True )
 	category=models.ForeignKey( 'Category', null=True, blank=True, db_index=True, on_delete=models.SET_NULL )
 	
-	bib=models.PositiveSmallIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
+	bib=models.PositiveIntegerField( null=True, blank=True, db_index=True, verbose_name=_('Bib') )
 	
-	tag=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag') )
-	tag2=models.CharField( max_length=36, null=True, blank=True, verbose_name=_('Tag2') )
+	tag=models.CharField( max_length=36, null=True, blank=True, db_index=True, verbose_name=_('Tag') )
+	tag2=models.CharField( max_length=36, null=True, blank=True, db_index=True, verbose_name=_('Tag2') )
 	tag_checked=models.BooleanField( default=False, verbose_name=_('Tag Checked') )
 
 	license_checked=models.BooleanField( default=False, verbose_name=_('License Checked') )
@@ -3613,10 +3812,10 @@ class Participant(models.Model):
 	
 	@property
 	def est_speed_display( self ):
-		return u'{:g} {}{}'.format(
+		return '{:g} {}{}'.format(
 			self.competition.to_local_speed(self.est_kmh),
 			self.competition.speed_unit_display,
-			u' ({})'.format( self.get_seed_option_display() ) if self.seed_option != 1 else u'',
+			' ({})'.format( self.get_seed_option_display() ) if self.seed_option != 1 else '',
 		)
 		
 	@property
@@ -3648,8 +3847,8 @@ class Participant(models.Model):
 	def get_tt_distance_text( self ):
 		tt_km = self.get_tt_km()
 		if not tt_km:
-			return u''
-		return u'{:.2f}{}'.format( self.competition.to_local_distance(tt_km), self.competition.get_distance_unit_display() )
+			return ''
+		return '{:.2f}{}'.format( self.competition.to_local_distance(tt_km), self.competition.get_distance_unit_display() )
 	
 	def get_tt_est_duration( self ):
 		if not self.est_kmh:
@@ -3657,13 +3856,13 @@ class Participant(models.Model):
 		tt_km = self.get_tt_km()
 		if not tt_km:
 			return None
-		return DurationField.formatted_timedelta( hours = tt_km / self.est_kmh )
+		return formatted_timedelta( hours = tt_km / self.est_kmh )
 	
 	def get_tt_est_time_text( self ):
 		tt_est_duration = self.get_tt_est_duration()
 		if not tt_est_duration:
-			return u''
-		return DurationField.format_seconds( round(tt_est_duration.total_seconds()), False )
+			return ''
+		return format_seconds( round(tt_est_duration.total_seconds()), False )
 	
 	@property
 	def team_name( self ):
@@ -3671,7 +3870,7 @@ class Participant(models.Model):
 	
 	@property
 	def category_name( self ):
-		return self.category.code_gender if self.category else u''
+		return self.category.code_gender if self.category else ''
 	
 	def save( self, *args, **kwargs ):
 		license_holder_update = kwargs.pop('license_holder_update', True)
@@ -3686,11 +3885,11 @@ class Participant(models.Model):
 		
 		competition = self.competition
 		license_holder = self.license_holder
-		
-		for f in ['signature', 'note']:
+
+		for f in ('signature', 'note'):
 			setattr( self, f, (getattr(self, f) or '').strip() )
 		
-		for f in ['tag', 'tag2']:
+		for f in ('tag', 'tag2'):
 			setattr( self, f, fixNullUpper(getattr(self, f)) )
 		
 		if self.role == self.Competitor:
@@ -3724,7 +3923,7 @@ class Participant(models.Model):
 			self.tag2 = ''
 				
 		self.propagate_bib_tag()
-		return super(Participant, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	@property
 	def roleCode( self ):
@@ -3755,7 +3954,7 @@ class Participant(models.Model):
 
 	@property
 	def role_full_name( self ):
-		return u'{} {}'.format( self.ROLE_NAMES[self.roleCode], self.get_role_display() )
+		return '{} {}'.format( self.ROLE_NAMES[self.roleCode], self.get_role_display() )
 	
 	@property
 	def needs_bib( self ):
@@ -3777,13 +3976,13 @@ class Participant(models.Model):
 		fields = [ getattr(self.license_holder, a) for a in ('first_name', 'last_name', 'uci_code', 'license_code') ]
 		if self.team:
 			fields.append( self.team.short_name() )
-		return u''.join( [u'{} '.format(self.bib) if self.bib else u'', u', '.join( [f for f in fields if f] )] )
+		return ''.join( ['{} '.format(self.bib) if self.bib else '', ', '.join( [f for f in fields if f] )] )
 	
 	@property
 	def full_name_team( self ):
 		full_name = self.license_holder.full_name()
 		if self.team:
-			full_name = u'{}:  {}'.format( full_name, self.team.name )
+			full_name = '{}:  {}'.format( full_name, self.team.name )
 		return full_name
 	
 	@property
@@ -3918,14 +4117,19 @@ class Participant(models.Model):
 			)
 		
 		# Initialize from past participants of the same discipline and category_format.
+		other_category_participants = []
 		for pp in Participant.objects.filter(
 					license_holder=self.license_holder,
 					competition__discipline=self.competition.discipline,
 					competition__category_format=self.competition.category_format,
 					role=Participant.Competitor,
-				).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+				).exclude(category__isnull=True).defer('signature').select_related('competition','category').order_by(
 					'-competition__start_date','category__sequence')[:8]:
 			if pdv.update_participant( pp ):
+				other_category_participants = list( Participant.objects
+					.filter( competition=pp.competition, license_holder=self.license_holder, role=Participant.Competitor )
+					.exclude( category=pp.category )
+				)	
 				break
 
 		# Initialize from past participants of the same discipline (relax category format).
@@ -3934,7 +4138,7 @@ class Participant(models.Model):
 						license_holder=self.license_holder,
 						competition__discipline=self.competition.discipline,
 						role=Participant.Competitor,
-					).exclude(category__isnull=True).defer('signature').select_related('competition').order_by(
+					).exclude(category__isnull=True).defer('signature').select_related('competition','category').order_by(
 						'-competition__start_date','category__sequence')[:8]:
 				if pdv.update_participant( pp ):
 					break			
@@ -3944,7 +4148,7 @@ class Participant(models.Model):
 			for pp in Participant.objects.filter(
 						license_holder=self.license_holder,
 						competition__discipline=self.competition.discipline,
-					).exclude(category__isnull=True).select_related('competition').order_by(
+					).exclude(category__isnull=True).select_related('competition','category').order_by(
 						'-competition__start_date','category__sequence')[:8]:
 				if pdv.update_participant( pp ):
 					break			
@@ -3988,12 +4192,22 @@ class Participant(models.Model):
 		if self.is_seasons_pass_holder:
 			self.paid = True
 		
-		# Remove anomylous fields if not competitor.
+		# Remove unused fields if not competitor.
 		if self.role != self.Competitor:
 			self.bib = None
 			self.category = None
 			if self.role >= 200:			# Remove team for non-team roles.
 				self.team = None
+	
+		# Add the license holder to the other categories.
+		if other_category_participants:
+			for p in other_category_participants:
+				p_new = Participant.objects.get_or_create(
+					competition=self.competition,
+					license_holder=self.license_holder,
+					category=p.category,
+					defaults={'bib':p.bib, 'team':p.team, 'paid':self.paid, 'tag':self.tag, 'tag2':self.tag2, 'est_kmh':p.est_kmh, 'role':Participant.Competitor}
+				)
 		
 		return self
 	
@@ -4108,7 +4322,7 @@ class Participant(models.Model):
 			if not getattr(self, check)():
 				if check in ('good_bib', 'good_paid'):
 					errors.append(
-						format_lazy( u'{} ({})', message, self.category.code if self.category else _('Missing Category') )
+						format_lazy( '{} ({})', message, self.category.code if self.category else _('Missing Category') )
 					)
 				else:
 					errors.append( message )
@@ -4286,7 +4500,7 @@ class Participant(models.Model):
 	
 	def get_tag_str( self ):
 		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)
-		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+		return '{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or '')
 	
 	def get_tag( self ):
 		return self.license_holder.existing_tag if self.competition.use_existing_tags else self.tag
@@ -4301,7 +4515,7 @@ class Participant(models.Model):
 	def get_short_tag_str( self ):
 		tags = (self.license_holder.existing_tag, self.license_holder.existing_tag2) if self.competition.use_existing_tags else (self.tag, self.tag2)
 		tags = [t[:8] + '...' if t and len(t) > 8 else t for t in tags]
-		return u'{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or u'')
+		return '{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or '')
 	
 	def set_tag_checked( self, checked=True ):
 		checked = bool( checked )
@@ -4422,6 +4636,7 @@ class Participant(models.Model):
 		verbose_name = _('Participant')
 		verbose_name_plural = _('Participants')
 
+
 #---------------------------------------------------------------------------------------------------------
 
 class EntryTT( models.Model ):
@@ -4433,10 +4648,10 @@ class EntryTT( models.Model ):
 	
 	start_sequence = models.PositiveIntegerField( default = 0, db_index = True, verbose_name = _('Start Sequence') )
 	
-	start_time = DurationField.DurationField( null = True, blank = True, verbose_name=_('Start Time') )
+	start_time = DurationField( null = True, blank = True, verbose_name=_('Start Time') )
 	
-	finish_time = DurationField.DurationField( null = True, blank = True, verbose_name=_('Finish Time') )
-	adjustment_time = DurationField.DurationField( null = True, blank = True, verbose_name=_('Adjustment Time') )
+	finish_time = DurationField( null = True, blank = True, verbose_name=_('Finish Time') )
+	adjustment_time = DurationField( null = True, blank = True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length = 128, default = '', verbose_name=_('Adjustment Note') )
 	
 	def swap_position( self, tt ):
@@ -4464,9 +4679,9 @@ class EntryTT( models.Model ):
 		unique_together = (
 			('event', 'participant',),
 		)
-		index_together = (
-			('event', 'start_sequence',),
-		)
+		indexes = [
+			models.Index(fields=['event', 'start_sequence']),
+		]
 
 		verbose_name = _("Time Trial Entry")
 		verbose_name_plural = _("Time Trial Entry")
@@ -4474,14 +4689,18 @@ class EntryTT( models.Model ):
 
 class EventTT( Event ):
 	def __init__( self, *args, **kwargs ):
-		kwargs['event_type'] = 1
-		super( EventTT, self ).__init__( *args, **kwargs )
+		if not args:
+			kwargs['event_type'] = 1
+		super().__init__( *args, **kwargs )
 		
 	def get_result_class( self ):
 		return ResultTT
 		
 	def get_race_time_class( self ):
 		return RaceTimeTT
+		
+	def get_prime_class( self ):
+		return PrimeTT
 	
 	def get_custom_category_class( self ):
 		return CustomCategoryTT
@@ -4491,7 +4710,7 @@ class EventTT( Event ):
 
 	group_size = models.PositiveSmallIntegerField( default=0, verbose_name = _('Group Size'),
 		help_text=_('Maximum number of starters without a Group Size Gap.  The Group Size Gap will be inserted between riders of Group Size (if non-zero).') )
-	group_size_gap = DurationField.DurationField( verbose_name=_('Group Size Gap'), default = duration_field_5m )
+	group_size_gap = DurationField( verbose_name=_('Group Size Gap'), default = duration_field_5m )
 	
 	def create_initial_seeding( self ):
 		large_delete_all( EntryTT, Q(event=self) )
@@ -4499,16 +4718,24 @@ class EventTT( Event ):
 		min_gap = datetime.timedelta( seconds=10 )
 		zero_gap = datetime.timedelta( seconds=0 )
 		
+		# Time multiples for each bib gap.
+		bib_gaps = {
+			WaveTT.bib_60:datetime.timedelta( seconds=60 ),
+			WaveTT.bib_30:datetime.timedelta( seconds=30 ),
+		}
+		
 		empty_gap_before_wave = zero_gap
 		
 		sequenceCur = 1
 		groupCount = 0
 		tCur = datetime.timedelta( seconds = 0 )
 		for wave_tt in self.wavett_set.all():
+			tWave = tCur
 			
 			gap_before_wave = wave_tt.gap_before_wave or zero_gap
 			regular_start_gap = wave_tt.regular_start_gap or zero_gap
 			fastest_participants_start_gap = wave_tt.fastest_participants_start_gap or zero_gap
+			bib_gap = bib_gaps.get( wave_tt.sequence_option, None )
 
 			participants = sorted(
 				[p for p in wave_tt.get_participants_unsorted()
@@ -4524,21 +4751,28 @@ class EventTT( Event ):
 			last_fastest = len(participants) - wave_tt.num_fastest_participants
 			entry_tt_pending = []
 			for i, p in enumerate(participants):
-				rider_gap = max(
-					fastest_participants_start_gap if i >= last_fastest else zero_gap,
-					regular_start_gap,
-					min_gap,
-				)
-				gap = max( max(empty_gap_before_wave, gap_before_wave) if i == 0 else zero_gap, rider_gap )
-				if self.group_size:
-					if gap >= self.group_size_gap:
-						groupCount = 0		# If there was already a gap larger than the group size gap, reset the group count.
-					elif groupCount >= self.group_size:	# Else, if we are at a group boundary, insert the group gap.
-						gap = max( gap, self.group_size_gap )
-						groupCount = 0
-					groupCount += 1
+				if bib_gap:
+					# The start time is a multiple of the bib number.
+					if not p.bib:
+						continue
+					tCur = tWave + bib_gap * p.bib
+				else:
+					# Compute the rider gap based on the formal criteria.
+					rider_gap = max(
+						fastest_participants_start_gap if i >= last_fastest else zero_gap,
+						regular_start_gap,
+						min_gap,
+					)
+					gap = max( max(empty_gap_before_wave, gap_before_wave) if i == 0 else zero_gap, rider_gap )
+					if self.group_size:
+						if gap >= self.group_size_gap:
+							groupCount = 0		# If there was already a gap larger than the group size gap, reset the group count.
+						elif groupCount >= self.group_size:	# Else, if we are at a group boundary, insert the group gap.
+							gap = max( gap, self.group_size_gap )
+							groupCount = 0
+						groupCount += 1
 				
-				tCur += gap
+					tCur += gap
 				
 				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
 				sequenceCur += 1
@@ -4669,9 +4903,9 @@ class WaveTT( WaveBase ):
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name = _('Sequence') )
 	
 	# Fields for assigning start times.	
-	gap_before_wave = DurationField.DurationField( null=True, blank=True, verbose_name=_('Gap Before Wave'), default = duration_field_5m )
-	regular_start_gap = DurationField.DurationField( null=True, blank=True, verbose_name=_('Regular Start Gap'), default = duration_field_1m )
-	fastest_participants_start_gap = DurationField.DurationField( null=True, blank=True, verbose_name=_('Fastest Participants Start Gap'), default = duration_field_2m )
+	gap_before_wave = DurationField( null=True, blank=True, verbose_name=_('Gap Before Wave'), default = duration_field_5m )
+	regular_start_gap = DurationField( null=True, blank=True, verbose_name=_('Regular Start Gap'), default = duration_field_1m )
+	fastest_participants_start_gap = DurationField( null=True, blank=True, verbose_name=_('Fastest Participants Start Gap'), default = duration_field_2m )
 	num_fastest_participants = models.PositiveSmallIntegerField(
 						verbose_name=_('Number of Fastest Participants'),
 						choices=[(i, '%d' % i) for i in range(0, 16)],
@@ -4686,6 +4920,8 @@ class WaveTT( WaveBase ):
 	bib_decreasing = 4
 	series_decreasing = 5
 	est_speed_decreasing = 6	# Added to support para and covid.
+	bib_60 = 7					# Seeds by bib number * 60
+	bib_30 = 8					# Seeds by bib number * 30
 	SEQUENCE_CHOICES = (
 		(_("Increasing"), (
 				(est_speed_increasing, _("Est. Speed - Increasing")),
@@ -4697,6 +4933,11 @@ class WaveTT( WaveBase ):
 				(est_speed_decreasing, _("Est. Speed - Decreasing")),
 				(age_decreasing, _("Oldest to Youngest")),
 				(bib_decreasing, _("Bib - Decreasing")),
+			),
+		),
+		(_("Bib Time Multiple"), (
+				(bib_60, _("Bib x 60s")),
+				(bib_30, _("Bib x 30s")),
 			),
 		),
 		(_("Series"), (
@@ -4715,10 +4956,10 @@ class WaveTT( WaveBase ):
 	
 	def save( self, *args, **kwargs ):
 		init_sequence_last( WaveTT, self )
-		return super( WaveTT, self ).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 	
 	def get_results( self, category = None ):
-		return super( WaveTT, self ).get_results( category ).select_related('participant', 'participant__license_holder')
+		return super().get_results( category ).select_related('participant', 'participant__license_holder')
 	
 	def get_speed( self, participant ):
 		try:
@@ -4766,6 +5007,12 @@ class WaveTT( WaveBase ):
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
+		elif self.sequence_option in (self.bib_60, self.bib_30):
+			return lambda p: (
+				p.bib or 0,
+				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
+				p.id,
+			)
 		elif self.sequence_option == self.age_decreasing:
 			return lambda p: (
 				p.seed_option,
@@ -4800,20 +5047,31 @@ class WaveTT( WaveBase ):
 	
 	@property
 	def gap_rules_html( self ):
-		summary = [u'<table>']
+		def find_nested( v, tree ):
+			for t in tree:
+				if isinstance(t[1], (list, tuple)):
+					s = find_nested( v, t[1] )
+					if s:
+						return s
+				elif v == t[0]:
+					return t[1]
+			return ''
+		
+		summary = ['<table>']
 		try:
 			for label, value in (
+					('', find_nested(self.sequence_option, self.SEQUENCE_CHOICES)),
 					(_('GapBefore'), self.gap_before_wave if self.gap_before_wave else None),
 					(_('RegularGap'), self.regular_start_gap if self.regular_start_gap else None),
 					(_('FastGap'), self.fastest_participants_start_gap if self.num_fastest_participants else None),
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
 				if value is not None:
-					summary.append( u'<tr><td class="text-right">{}&nbsp&nbsp</td><td class="text-right">{}</td><tr>'.format(label, u'{}'.format(value)) )
+					summary.append( '<tr><td class="text-right">{}&nbsp&nbsp</td><td class="text-right">{}</td><tr>'.format(label, '{}'.format(value)) )
 		except Exception as e:
 			return e
 		summary.append( '</table>' )
-		return u''.join( summary )
+		return ''.join( summary )
 	
 	@property
 	def gap_rules_text( self ):
@@ -4826,10 +5084,10 @@ class WaveTT( WaveBase ):
 					(_('NumFast'), self.num_fastest_participants if self.num_fastest_participants else None),
 				):
 				if value is not None:
-					summary.append( u'{}={}'.format(label, u'{}'.format(value)) )
+					summary.append( '{}={}'.format(label, '{}'.format(value)) )
 		except Exception as e:
 			return e
-		return u' '.join( summary )
+		return ' '.join( summary )
 	
 	def get_participants( self ):
 		participants = list( self.get_participants_unsorted().select_related('category', 'license_holder','team') )
@@ -4892,7 +5150,7 @@ class WaveTT( WaveBase ):
 	
 	def get_sequence_option_str( self ):
 		if self.sequence_option == self.series_decreasing:
-			return format_lazy( u'{}: {}', self.get_sequence_option_display(), self.series_for_seeding.name if self.series_for_seeding else _('Missing'))
+			return format_lazy( '{}: {}', self.get_sequence_option_display(), self.series_for_seeding.name if self.series_for_seeding else _('Missing'))
 		else:
 			return self.get_sequence_option_display()
 	
@@ -4904,12 +5162,12 @@ class WaveTT( WaveBase ):
 			else:
 				distance = self.distance
 		
-		details = [u'{:.2f}&nbsp;<strong>{}</strong>'.format(distance, self.distance_unit) if distance else None]
+		details = ['{:.2f}&nbsp;<strong>{}</strong>'.format(distance, self.distance_unit) if distance else None]
 		if self.sequence_option == self.series_decreasing:
-			details.append( u'{}: {}'.format( self.get_sequence_option_display(), self.series_for_seeding.name if self.series_for_seeding else _('Missing')) )
+			details.append( '{}: {}'.format( self.get_sequence_option_display(), self.series_for_seeding.name if self.series_for_seeding else _('Missing')) )
 		else:
 			details.append( self.get_sequence_option_display() )
-		s = u', '.join( v for v in details if v )
+		s = ', '.join( v for v in details if v )
 		return s
 	
 	class Meta:
@@ -4972,11 +5230,11 @@ class ParticipantOption( models.Model ):
 		unique_together = (
 			('competition', 'participant','option_id'),
 		)
-		index_together = (
-			('competition', 'participant','option_id'),
-			('competition', 'participant'),
-			('competition', 'option_id'),
-		)
+		indexes = [
+			models.Index(fields=['competition', 'participant','option_id']),
+			models.Index(fields=['competition', 'participant']),
+			models.Index(fields=['competition', 'option_id']),
+		]
 		verbose_name = _("Participant Option")
 		verbose_name_plural = _("Participant Options")
 
@@ -4987,8 +5245,8 @@ def categories_from_pks( pks ):
 	return sorted( (c for c in Category.objects.in_bulk(pks).values()), key=operator.attrgetter('sequence') )
 
 class Series( Sequence ):
-	name = models.CharField( max_length=32, default = 'MySeries', verbose_name=_('Name') )
-	description = models.CharField( max_length=80, blank=True, default='', verbose_name=_('Description') )
+	name = models.CharField( max_length=128, default = 'MySeries', verbose_name=_('Name') )
+	description = models.CharField( max_length=255, blank=True, default='', verbose_name=_('Description') )
 
 	category_format = models.ForeignKey( CategoryFormat, db_index=True, on_delete=models.CASCADE )
 	
@@ -5017,7 +5275,7 @@ class Series( Sequence ):
 	consider_primes = models.BooleanField( default=True, verbose_name=_('Consider Points or Time Primes') )
 	
 	BEST_RESULTS_CHOICES = [(0, _('All Results')), (1, _('Best Result Only'))] + [
-		(i, format_lazy(u'{} {}', i, _('Best Results Only'))) for i in range(2,31)
+		(i, format_lazy('{} {}', i, _('Best Results Only'))) for i in range(2,31)
 	]
 	best_results_to_consider = models.PositiveSmallIntegerField( default=0, choices=BEST_RESULTS_CHOICES,
 		verbose_name=_('Consider')
@@ -5033,6 +5291,8 @@ class Series( Sequence ):
 	
 	custom_category_names = models.TextField( default='', blank=True, verbose_name=_('Custom Categories') )
 	
+	image = models.ForeignKey( "Image", blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_("Image") )
+	
 	def make_copy( self ):
 		self_pk = self.pk
 		collections = (
@@ -5046,7 +5306,7 @@ class Series( Sequence ):
 		series_new = self
 		series_new.pk = None
 		series_new.id = None
-		series_new.name += timezone.now().strftime(' %Y-%m-%d %H:%M:%S')
+		series_new.name = getCopyName( Series, series_new.name )
 		series_new.save()
 		
 		for collection in collections:
@@ -5109,6 +5369,10 @@ class Series( Sequence ):
 		
 	def get_competitions( self ):
 		return sorted( set(ce.competition for ce in self.seriescompetitionevent_set.all()), key=operator.attrgetter('start_date'), reverse=True )
+	
+	def get_current_competitions( self ):
+		today = (timezone.now() - datetime.timedelta(days=-1)).date()
+		return [c for c in self.get_competitions() if c.start_date <= today]
 	
 	def remove_competition( self, competition ):
 		for ce in [ce for ce in self.seriescompetitionevent_set.all() if ce.competition == competition]:
@@ -5188,14 +5452,14 @@ class SeriesPointsStructure( Sequence ):
 	reNonDigit = re.compile( r'[^\d]' )
 	def save( self, *args, **kwargs ):
 		pfp = [d for d in sorted((int(v) for v in self.reNonDigit.sub(' ', self.points_for_place).split() if v), reverse=True) if d]
-		self.points_for_place = u','.join( '{}'.format(d) for d in pfp )
+		self.points_for_place = ','.join( '{}'.format(d) for d in pfp )
 		if pfp:
 			lowest_pfp = pfp[-1]
 			for a in ('finish_points', 'dnf_points', 'dns_points'):
 				setattr( self, a, min( getattr(self, a), lowest_pfp ) )
 		self.dnf_points = min( self.dnf_points, self.finish_points )
 		self.dns_points = min( self.dns_points, self.dnf_points )
-		super( SeriesPointsStructure, self ).save( args, kwargs )
+		super().save( args, kwargs )
 
 	@property
 	def points_deep( self ):
@@ -5214,14 +5478,14 @@ class SeriesPointsStructure( Sequence ):
 		return points_getter
 
 	def __str__( self ):
-		f = [u'{}: Points for place: {}'.format( self.name, self.points_for_place )]
+		f = ['{}: Points for place: {}'.format( self.name, self.points_for_place )]
 		if self.finish_points:
-			f.append( u' finish={}'.format(self.finish_points) )
+			f.append( ' finish={}'.format(self.finish_points) )
 		if self.dnf_points:
-			f.append(  u' dnf={}'.format(self.dnf_points) )
+			f.append(  ' dnf={}'.format(self.dnf_points) )
 		if self.dns_points:
-			f.append(  u' dns={}'.format(self.dns_points) )
-		return u', '.join( f )
+			f.append(  ' dns={}'.format(self.dns_points) )
+		return ', '.join( f )
 		
 	class Meta( Sequence.Meta ):
 		verbose_name = _("PointsStructure")
@@ -5286,7 +5550,7 @@ class SeriesCompetitionEvent( models.Model ):
 						return None
 					try:
 						t = rr.finish_time.total_seconds()
-					except:
+					except Exception:
 						return None
 					if rr.adjustment_time:
 						t += rr.adjustment_time.total_seconds()
@@ -5299,7 +5563,7 @@ class SeriesCompetitionEvent( models.Model ):
 						return None
 					try:
 						t = rr.finish_time.total_seconds()
-					except:
+					except Exception:
 						return None
 					if rr.adjustment_time:
 						t += rr.adjustment_time.total_seconds()
@@ -5310,7 +5574,7 @@ class SeriesCompetitionEvent( models.Model ):
 					return None
 				try:
 					v = min( 100.0, 100.0 * (rr_winner.finish_time.total_seconds() / rr.finish_time.total_seconds()) )
-				except:
+				except Exception:
 					v = 0
 				return v
 		else:
@@ -5335,11 +5599,11 @@ class UpdateLog( models.Model ):
 	@property
 	def description_html( self ):
 		html = []
-		for i, d in enumerate(self.description.split(u'\n')):
+		for i, d in enumerate(self.description.split('\n')):
 			if i != 0:
-				html.append( u'<br/>' )
+				html.append( '<br/>' )
 			html.append( escape(d) )
-		return mark_safe( u''.join(html) )
+		return mark_safe( ''.join(html) )
 	
 	class Meta:
 		verbose_name = _("UpdateLog")
@@ -5399,7 +5663,7 @@ class CategoryGroup( Sequence ):
 			text.extend( [cge.category.code_gender, ', '] )
 		if text:
 			text = text[:-1]
-		return u''.join( text )
+		return ''.join( text )
 	
 	class Meta( Sequence.Meta ):
 		verbose_name = _("CategoryGroup")
@@ -5446,7 +5710,7 @@ class SeriesUpgradeProgression( Sequence ):
 		if not s:
 			return _('Empty')
 		s = s[:-1]
-		return format_lazy( u'{}'*len(s), *s )
+		return format_lazy( '{}'*len(s), *s )
 		
 	def harmonize_categories( self, allowed_categories ):
 		self.seriesupgradecategory_set.exclude( category__in=allowed_categories ).delete()
@@ -5457,7 +5721,7 @@ class SeriesUpgradeProgression( Sequence ):
 	def save( self, *args, **kwargs ):
 		if self.factor > 1.0 or self.factor < 0.0:
 			self.factor = 0.5
-		super( SeriesUpgradeProgression, self ).save( *args, **kwargs )
+		super().save( *args, **kwargs )
 	
 	class Meta( Sequence.Meta ):
 		verbose_name = _("SeriesUpgradeProgression")
@@ -5495,7 +5759,7 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	#-------------------------------------------------------------------
 	# Record the merge in the log.
 	def get_lh_info( lh ):
-		return u'"{}" license="{}" uciid="{}" dob={} gender={}\n'.format(
+		return '"{}" license="{}" uciid="{}" dob={} gender={}\n'.format(
 			lh.full_name(),
 			lh.license_code_trunc,
 			lh.get_uci_id_text(),
@@ -5506,7 +5770,7 @@ def license_holder_merge_duplicates( license_holder_merge, duplicates ):
 	description = StringIO()
 	for lh in LicenseHolder.objects.filter( pk__in=license_holder_duplicate_pks ):
 		description.write( get_lh_info(lh) )
-	description.write( u'--->\n' )
+	description.write( '--->\n' )
 	lh = license_holder_merge
 	description.write( get_lh_info(lh) )
 	UpdateLog( update_type=0, description=description.getvalue() ).save()
@@ -5649,7 +5913,7 @@ class CompetitionCategoryOption(models.Model):
 	
 	def save( self, *args, **kwargs ):
 		self.note = self.note.strip()
-		return super(CompetitionCategoryOption, self).save( *args, **kwargs )
+		return super().save( *args, **kwargs )
 		
 	def make_copy( self, competition_new ):
 		cco_new = self
@@ -5776,9 +6040,132 @@ class LicenseCheckState(models.Model):
 		LicenseCheckState.objects.bulk_create( to_add )
 		
 #-----------------------------------------------------------------------------------------------
+class CrossMgrLog(models.Model):
+	timestamp = models.DateTimeField( auto_now_add=True, db_index=True, verbose_name = _('Timestamp') )
+
+	OpenAction, UploadAction = tuple(range(2))
+	ACTION_CHOICES = (
+		(OpenAction,	_('Open')),
+		(UploadAction,	_('Upload')),
+	)
+	action = models.PositiveSmallIntegerField( default=0, choices=ACTION_CHOICES, verbose_name=_('Action'), )
+	user = models.CharField( max_length = 32, verbose_name = _('User') )
+	password = models.CharField( max_length = 32, default='', verbose_name = _('Password') )
+	
+	event_mass_start = models.ForeignKey( EventMassStart, null=True, default=None, on_delete=models.CASCADE, verbose_name = _('Event Mass Start') )
+	event_tt = models.ForeignKey( EventTT, null=True, default=None, on_delete=models.CASCADE, verbose_name = _('Event TT') )
+	
+	success = models.BooleanField( default=True, verbose_name=_('Success') )
+
+	@property
+	def event( self ):
+		return self.event_mass_start or self.event_tt
+		
+	@event.setter
+	def event( self, e ):
+		self.event_mass_start = None
+		self.event_tt = None
+		if e is not None:
+			if e.event_type == 0:
+				self.event_mass_start = e
+			else:
+				self.event_tt = e
+
+	class Meta:
+		verbose_name = _("CrossMgrLog")
+		verbose_name_plural = _("CrossMgrLogs")
+		ordering = ['timestamp']
+
+class CrossMgrPassword(models.Model):
+	password = models.CharField( max_length = 32, db_index=True, verbose_name = _('Password') )
+	description = models.CharField( max_length = 80, blank = True, default = '', verbose_name = _('Description') )
+
+	class Meta:
+		verbose_name = _("CrossMgrPassword")
+		verbose_name_plural = _("CrossMgrPasswords")
+		ordering = ['password']
+
+#-----------------------------------------------------------------------------------------------
+
+class Image(models.Model):
+	title = models.CharField( max_length = 32, db_index=True, verbose_name = _('Title') )
+	description = models.CharField( max_length = 80, blank = True, default = '', verbose_name = _('Description') )
+	url = models.URLField( max_length=200, blank = True, default = '', verbose_name = _('URL'), help_text=_('URL link followed when the viewer clicks on the image') )
+	image = models.ImageField( upload_to="uploads/" )
+	
+	def __str__( self ):
+		return self.title
+		
+	class Meta:
+		verbose_name = _("Image")
+		verbose_name_plural = _("Images")
+		ordering = ['title']
+
+#-----------------------------------------------------------------------------------------------
+from .gpx_util import lat_lon_elevation_to_points_itr
+
+class GPXCourse(models.Model):
+	name = models.CharField( max_length = 64, db_index=True, verbose_name=_('Name') )
+	description = models.CharField( max_length = 160, blank = True, default = '', verbose_name=_('Description') )
+	
+	# array of triples [[lat,lon,elevation], ...[lat,lon,elevation]]
+	lat_lon_elevation = models.JSONField( verbose_name=_("LatLonElevation"), editable=False )
+	is_loop = models.BooleanField( default=True, verbose_name=_("Is Loop") )
+
+	# Length of the course in meters.
+	meters = models.FloatField( default=0.0, editable=False, verbose_name=_("Meters") )
+	
+	# start of the course.
+	lat_start = models.FloatField( default=0.0, editable=False, verbose_name=_('LatStart') )
+	lon_start = models.FloatField( default=0.0, editable=False, verbose_name=_('LonStart') )
+	
+	# boundaries of the course.
+	lat_min = models.FloatField( default=0.0, editable=False, verbose_name=_('LatMin') )
+	lat_max = models.FloatField( default=0.0, editable=False, verbose_name=_('LatMax') )
+	lon_min = models.FloatField( default=0.0, editable=False, verbose_name=_('LonMin') )
+	lon_max = models.FloatField( default=0.0, editable=False, verbose_name=_('LonMax') )
+
+	# min/max elevation.
+	ele_min = models.FloatField( default=0.0, editable=False, verbose_name=_('EleMin') )
+	ele_max = models.FloatField( default=0.0, editable=False, verbose_name=_('EleMax') )
+	
+	def save( self, *args, **kwargs ):
+		if not self.lat_lon_elevation:
+			self.lat_lon_elevaton = [(0.0,0.0,0.0)]
+		
+		self.lat_start, self.lon_start = self.lat_lon_elevation[0][:2]
+		
+		for i,a, in enumerate(('lat_min', 'lon_min', 'ele_min')):
+			setattr( self, a, min(v[i] for v in self.lat_lon_elevation) )
+		for i,a, in enumerate(('lat_max', 'lon_max', 'ele_max')):
+			setattr( self, a, max(v[i] for v in self.lat_lon_elevation) )
+			
+		x_y_elevation = tuple( lat_lon_elevation_to_points_itr(self.lat_lon_elevation) )
+		self.meters = sum( math.sqrt(sum( (v1-v0)**2 for v0,v1 in zip(p0,p1) )) for p0,p1 in itertools.pairwise(x_y_elevation) )
+		if self.is_loop:
+			self.meters += math.sqrt(sum( (v1-v0)**2 for v0,v1 in zip(x_y_elevation[-1], x_y_elevation[0]) ))
+				
+		super().save( *args, **kwargs )
+		
+	def __str__( self ):
+		return self.name
+		
+	def ggoogle_directions_url( self ):
+		return 'https://www.google.com/maps/dir/?api=1&destination={}%2C{}'.format( self.lat_start, self.lon_start )
+
+	def ggoogle_search_url( self ):
+		return 'https://www.google.com/maps/search/?api=1&query={}%2C{}'.format( self.lat_start, self.lon_start )
+		
+	class Meta:
+		verbose_name = _("GPX Course")
+		verbose_name_plural = _("GPX Corses")
+		ordering = ['name']
+
+#-----------------------------------------------------------------------------------------------
+
 def truncate_char_fields( obj ):
 	for f in type(obj)._meta.get_fields():
-		if isinstance(f, models.CharField) and len(getattr(obj, f.name) or u'') > f.max_length:
+		if isinstance(f, models.CharField) and len(getattr(obj, f.name) or '') > f.max_length:
 			v = getattr( obj, f.name )
 			setattr( obj, f.name, v[:f.max_length] )
 	return obj
@@ -5793,10 +6180,10 @@ def bad_data_test():
 		first_name = '00-TEST-FIRST-NAME',
 		date_of_birth = timezone.localtime(timezone.now()).date(),
 	
-		license_code = '0000{}'.format( random.randint(0,10000) ),
+		license_code = '0000{}'.format( secrets.randbelow(10000) ),
 	
-		existing_tag = '0000{}'.format( random.randint(0,10000) ),
-		existing_tag2 = '0000{}'.format( random.randint(0,10000) ),
+		existing_tag = '0000{}'.format( secrets.randbelow(10000) ),
+		existing_tag2 = '0000{}'.format( secrets.randbelow(10000) ),
 	)
 	
 	# Use bulk create to avoid calling the save method (otherwise data validation would take place)
@@ -5807,11 +6194,11 @@ def bad_data_test():
 '''
 
 def fix_bad_category_hints():
-	safe_print( u'fix_bad_category_hints...' )
+	safe_print( 'fix_bad_category_hints...' )
 	CategoryHint.objects.all().exclude(discipline__id__in=Discipline.objects.all().values_list('id',flat=True)).delete()
 
 def fix_phone_numbers():
-	safe_print( u'fix_phone_numbers...' )
+	safe_print( 'fix_phone_numbers...' )
 	with BulkSave() as bs:
 		for lh in LicenseHolder.objects.filter(Q(phone__endswith='.0') | Q(emergency_contact_phone__endswith='.0')):
 			if lh.phone and lh.phone.endswith('.0'):
@@ -5825,7 +6212,7 @@ def fix_phone_numbers():
 			bs.append( t )
 	
 def fix_bad_license_codes():
-	safe_print( u'fix_bad_license_codes and emergency contacts...' )
+	safe_print( 'fix_bad_license_codes and emergency contacts...' )
 	q = (
 		Q(license_code__startswith='0') | Q(existing_tag__startswith='0') | Q(existing_tag2__startswith='0') |
 		Q(emergency_contact_name='0.0') | Q(emergency_contact_phone='0')
@@ -5840,16 +6227,56 @@ def fix_bad_license_codes():
 			bs.append( p )
 
 def fix_non_unique_number_set_entries():
-	safe_print( u'fix_non_unique_number_set_entries...' )
+	safe_print( 'fix_non_unique_number_set_entries...' )
 	for ns in NumberSet.objects.all():
 		ns.validate()
 
 def fix_nation_code():
-	safe_print( u'fix_nation_codes...' )
+	safe_print( 'fix_nation_codes...' )
 	with BulkSave() as bs:
 		for lh in LicenseHolder.objects.filter(nation_code__exact='').exclude(uci_code__exact=''):
 			if lh.uci_code[:3].upper() in uci_country_codes_set:
 				bs.append( lh )
+
+def fix_finish_times():
+	safe_print( 'fix results finish times...' )
+	fix_count = 0
+	with BulkSave() as bs:
+		for rtype in (ResultTT, ResultMassStart):
+			for r in rtype.objects.all():
+				ft = r.compute_finish_time()
+				if r.finish_time != ft:
+					r.finish_time = ft
+					bs.append( r )
+					fix_count += 1
+	if fix_count:
+		safe_print( '{} results fixed.'.format(fix_count) )
+
+def fix_team_search_text():
+	safe_print( 'fix team search_text...' )
+	fix_count = 0
+	with BulkSave() as bs:
+		for team in Team.objects.all():
+			search_text = team.get_search_text()[:Team.SearchTextLength]
+			if team.search_text != search_text:
+				team.search_text = search_text
+				bs.append( team )
+				fix_count += 1
+	if fix_count:
+		safe_print( '{} team search_texts fixed.'.format(fix_count) )
+
+def fix_license_holder_search_text():
+	safe_print( 'fix license holder search_text...' )
+	fix_count = 0
+	with BulkSave() as bs:
+		for lh in LicenseHolder.objects.all():
+			search_text = lh.get_search_text()[:LicenseHolder.SearchTextLength]
+			if lh.search_text != search_text:
+				lh.search_text = search_text
+				bs.append( lh )
+				fix_count += 1
+	if fix_count:
+		safe_print( '{} license holder search_texts fixed.'.format(fix_count) )
 
 def models_fix_data():
 	fix_bad_license_codes()
@@ -5857,6 +6284,10 @@ def models_fix_data():
 	fix_non_unique_number_set_entries()
 	fix_bad_category_hints()
 	fix_phone_numbers()
+	fix_license_holder_search_text()
+	fix_team_search_text()
+	#fix_finish_times()
+	safe_print( '--- All data fixed ---' )
 
 
 

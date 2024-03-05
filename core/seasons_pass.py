@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .views import license_holders_from_search_text
@@ -10,7 +10,7 @@ class SeasonsPassDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(SeasonsPassDisplayForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -42,7 +42,7 @@ class SeasonsPassForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(SeasonsPassForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -195,18 +195,18 @@ def SeasonsPassHolderRemove( request, seasonsPassHolderId ):
 #-----------------------------------------------------------------------
 @autostrip
 class UploadSeasonsPassForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	clear_existing = forms.BooleanField( required=False, label=_('Clear Existing Seasons Pass Holders First'), help_text=_("Removes all current Season's Pass Holders.  Use with Caution.") )
 	
 	def __init__( self, *args, **kwargs ):
-		super( UploadSeasonsPassForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
 		
 		self.helper.layout = Layout(
 			Row(
-				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+				Col( Field('excel_file', accept=".xlsx"), 8),
 				Col( Field('clear_existing'), 4 ),
 			),
 		)

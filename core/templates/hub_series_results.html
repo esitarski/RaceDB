@@ -61,6 +61,18 @@ table.results-table tr th {
 
 {% include "hub_nav.html" %}
 <h1>
+	{% if series.image %}
+		<a
+		{% if series.image.url %}
+			href="{{series.image.url}}" target="_blank"
+		{% else %}
+			href="/RaceDB/Hub/SeriesCategories/{{series.id}}/"
+		{% endif %}
+		>
+			<img src="{{series.image.image.url}}" class="logo-image" />
+		</a>
+		<br/>
+	{% endif %}
 	<strong><a href='/RaceDB/Hub/SeriesCategories/{{series.id}}/'>{{series.name}}</strong></a> <span style="font-size: 75%">{{series.description}}</span><br/>
 	<span style="font-size: 75%">
 		{% if custom_category_name %}<strong>{{custom_category_name}}</strong>{% endif %}
@@ -125,10 +137,10 @@ table.results-table tr th {
 </table>
 {% endspaceless %}
 {% if has_ignored %}
-	<p class="hidden-print">&#x2717; - {% trans "Result ignored: better result used." %}</p>
+	<p class="hidden-print">&#x2717; - {% trans "Better result used for total." %}</p>
 {% endif %}
 {% if has_upgrades %}
-	<p class="hidden-print">&#x2191; - {% trans "Result from upgrade." %}</p>
+	<p class="hidden-print">&#x2191; - {% trans "From upgrade." %}</p>
 {% endif %}
 {% if series.must_have_completed > 0 %}
 	<p>
@@ -168,7 +180,7 @@ table.results-table tr th {
 		{% endif %}
 	{% endif %}
 	
-	{% if has_upgrades and series.seriesupgradeprogression_set.exists %}
+	{% if has_upgrades and series.id and series.seriesupgradeprogression_set.exists %}
 		<p/>
 		<h4>{% trans "Upgrade Progressions" %}</h4>
 		<table class="table table-condensed" style="width: auto;" >
@@ -206,7 +218,7 @@ table.results-table tr th {
 {% if series.tie_breaking_rule %}
 	<li>{{series.get_tie_breaking_rule_display}}.  {% trans "If still a tie:" %}</li>
 {% endif %}
-	<li>{% trans "Most recent result." %}</li>
+	<li>{% trans "Most recent event's results." %}</li>
 </ol>
 
 {% if series.ranking_criteria != 1 %}

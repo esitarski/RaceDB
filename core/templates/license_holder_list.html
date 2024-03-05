@@ -4,6 +4,11 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load callargs %}
+
+{% block style %}
+	thead th { position: sticky; top: 0; }
+{% endblock style %}
+
 {% block content %}
 <h2>{{title}}</h2>
 <hr/>
@@ -16,12 +21,13 @@
 		<th></th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Gender" %}</th>
-		<th>{% trans "Date of Birth" %}</th>
+		<th class="text-nowrap">{% trans "Date of Birth" %}</th>
 		<th>{% trans "Location" %}</th>
 		<th>{% trans "License" %}</th>
-		<th>{% trans "UCIID" %}</th>
-		<th>{% trans "Existing Tag" %}</th>
-		<th>{% trans "Emergency Contact" %}</th>
+		<th class="text-nowrap">{% trans "UCI ID" %}</th>
+		<th class="text-nowrap">{% trans "Existing Bib" %}</th>
+		<th class="text-nowrap">{% trans "Existing Tag" %}</th>
+		<th class="text-nowrap">{% trans "Emergency Contact" %}</th>
 		{% if isEdit %}
 		<th class="hidden-print"></th>
 		{% endif %}
@@ -47,6 +53,7 @@
 			<td class="text-nowrap">
 				{% if h.uci_id_error %}<span class="is-warn"/>&nbsp;{% endif %}{{h.get_flag_uci_id_html}}
 			</td>
+			<td>{{h.existing_bib|default_if_none:""}}</td>
 			<td>{{h.get_short_tag_str}}</td>
 			<td class="text-nowrap">
 				{% if h.emergency_contact_incomplete %}<span class="is-warn"/>&nbsp;{% endif %}

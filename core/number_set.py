@@ -1,6 +1,6 @@
 import re
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 from .get_number_set_excel import get_number_set_excel
@@ -11,7 +11,7 @@ class NumberSetDisplayForm( Form ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(NumberSetDisplayForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -31,7 +31,7 @@ class NumberSetForm( ModelForm ):
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', OK_BUTTON )
 		
-		super(NumberSetForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -119,7 +119,7 @@ def BibReturn( request, numberSetEntryId, confirmed=False ):
 		nse.number_set.return_to_pool( nse.bib, nse.license_holder )
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	page_title = _('Return Bib to NumberSet')
-	message = format_lazy( u'<strong>{}</strong>: {}<br/><br/>{}', nse.bib, nse.license_holder.full_name(), _('Return Bib to the NumberSet so it can be used again.') )
+	message = format_lazy( '<strong>{}</strong>: {}<br/><br/>{}', nse.bib, nse.license_holder.full_name(), _('Return Bib to the NumberSet so it can be used again.') )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'BibReturn/{}/{}/'.format(numberSetEntryId,1)
 	return render( request, 'are_you_sure.html', locals() )
@@ -132,7 +132,7 @@ def BibLost( request, numberSetEntryId, confirmed=False ):
 		nse.save()
 		return HttpResponseRedirect(getContext(request,'cancelUrl'))
 	page_title = _('Record Bib as Lost (and unavailable)')
-	message = format_lazy( u'<strong>{}</strong>: {}<br/><br/>{}', nse.bib, nse.license_holder.full_name(), _('Record Bib as Lost and no longer available.') )
+	message = format_lazy( '<strong>{}</strong>: {}<br/><br/>{}', nse.bib, nse.license_holder.full_name(), _('Record Bib as Lost and no longer available.') )
 	cancel_target = getContext(request,'popUrl')
 	target = getContext(request,'popUrl') + 'BibLost/{}/{}/'.format(numberSetEntryId,1)
 	return render( request, 'are_you_sure.html', locals() )
@@ -144,17 +144,17 @@ def NumberSetEdit( request, numberSetId ):
 
 @autostrip
 class UploadNumberSetForm( Form ):
-	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx, *.xls)') )
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	
 	def __init__( self, *args, **kwargs ):
-		super( UploadNumberSetForm, self ).__init__( *args, **kwargs )
+		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
 		
 		self.helper.layout = Layout(
 			Row(
-				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+				Col( Field('excel_file', accept=".xlsx"), 8),
 			),
 		)
 		
@@ -193,7 +193,7 @@ class NumberSetManageForm( Form ):
 	search_bib = forms.IntegerField( required=False, label=_("Search Bib"), min_value=1, max_value=999999 )
 	
 	def __init__( self, *args, **kwargs ):
-		super(NumberSetManageForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'
@@ -272,7 +272,7 @@ class BibListForm( Form ):
 	bibs = forms.CharField( required=False, label=_("Bib Numbers"), help_text=_("Comma separated list of bib numbers.") )
 	
 	def __init__( self, *args, **kwargs ):
-		super(BibListForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_class = 'form-inline'

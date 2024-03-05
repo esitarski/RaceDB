@@ -13,7 +13,7 @@ name: DevelopmentBuild
 jobs:
     build:
         name: RaceDB Unix
-        runs-on: ubuntu-18.04
+        runs-on: ubuntu-20.04
         steps:
             - name: Show Environment
               run: set | grep GIT
@@ -21,9 +21,9 @@ jobs:
               run: |
                 docker login -u ${{ secrets.HUB_USER }} -p ${{ secrets.HUB_PASSWD }}
             - name: Setup Python environment
-              uses: actions/setup-python@v1.1.1
+              uses: actions/setup-python@v4
               with:
-                python-version: 3.8.*
+                python-version: 3.10.*
             - name: Checkout code
               uses: actions/checkout@master
             - name: Setup Environment
@@ -63,7 +63,7 @@ jobs:
                 cd $env:GITHUB_WORKSPACE
                 .\compile.ps1 -all
             - name: Upload Dev Release
-              uses: svenstaro/upload-release-action@v1-release
+              uses: svenstaro/upload-release-action@v2
               with:
                 repo_token: ${{ secrets.GITHUB_TOKEN }}
                 file: release/*
