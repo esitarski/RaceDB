@@ -813,7 +813,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Participant Option',
                 'verbose_name_plural': 'Participant Options',
-                'index_together': {('competition', 'participant', 'option_id'), ('competition', 'option_id'), ('competition', 'participant')},
+                'indexes': [models.Index(fields=['competition', 'participant', 'option_id'], name='core_partic_competi_36c115_idx'), models.Index(fields=['competition', 'participant'], name='core_partic_competi_c665bb_idx'), models.Index(fields=['competition', 'option_id'], name='core_partic_competi_21c187_idx')],
                 'unique_together': {('competition', 'participant', 'option_id')},
             },
         ),
@@ -838,7 +838,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Time Trial Entry',
                 'verbose_name_plural': 'Time Trial Entry',
-                'index_together': {('event', 'start_sequence')},
+                'indexes': [models.Index(fields=['event', 'start_sequence'], name='core_entryt_event_i_f9f4e7_idx')],
                 'ordering': ['start_time'],
                 'unique_together': {('event', 'participant')},
             },
