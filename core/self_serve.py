@@ -252,7 +252,7 @@ def SelfServe( request, action=0 ):
 	else:
 		# Scan from a RFID Reader antenna.
 		rfid_tag = request.session.get('rfid_tag', None)
-		if tag:
+		if rfid_tag:
 			tags = [rfid_tag]
 			status = True
 		else:
