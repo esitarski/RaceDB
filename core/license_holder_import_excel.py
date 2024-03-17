@@ -337,7 +337,7 @@ def license_holder_import_excel(
 			'existing_tag':existing_tag if replace_tags else None,
 			'existing_tag2':existing_tag2 if replace_tags else None,
 			
-			'existing_bib':existing_bib if replace_bib else None,
+			'existing_bib':existing_bib if replace_bibs else None,
 			
 			'note':note,
 			

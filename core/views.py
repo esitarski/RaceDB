@@ -1617,9 +1617,9 @@ def UploadPrereg( request, competitionId ):
 class ImportExcelForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	set_team_all_disciplines = forms.BooleanField( initial=False, required=False, label=_('Update Default Team for all Disciplines'), )
-	update_tags = forms.BooleanField( initial=False, required=False, label=_('Replace License Holder Bib Numbers (if present).'),
+	replace_tags = forms.BooleanField( initial=False, required=False, label=_('Replace License Holder Bib Numbers (if present).'),
 			help_text=_('WARNING: Only check this if you wish to replace the chip tags with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
-	update_bibs = forms.BooleanField( initial=False, required=False, label=_('Replace License Holder Tags (if present).'),
+	replace_bibs = forms.BooleanField( initial=False, required=False, label=_('Replace License Holder Tags (if present).'),
 			help_text=_('WARNING: Only check this if you wish to replace the bib numbers with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	update_license_codes = forms.BooleanField( initial=False, required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
 			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
@@ -1638,10 +1638,10 @@ class ImportExcelForm( Form ):
 				Field('set_team_all_disciplines'),
 			),
 			Row(
-				Field('update_tags'),
+				Field('replace_tags'),
 			),
 			Row(
-				Field('update_bibs'),
+				Field('replace_bibs'),
 			),
 			Row(
 				Field('update_license_codes'),
