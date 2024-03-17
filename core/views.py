@@ -1616,8 +1616,12 @@ def UploadPrereg( request, competitionId ):
 @autostrip
 class ImportExcelForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
-	set_team_all_disciplines = forms.BooleanField( required=False, label=_('Update Default Team for all Disciplines'), )
-	update_license_codes = forms.BooleanField( required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
+	set_team_all_disciplines = forms.BooleanField( initial=False, required=False, label=_('Update Default Team for all Disciplines'), )
+	update_tags = forms.BooleanField( initial=False, required=False, label=_('Replace License Holder Bib Numbers (if present).'),
+			help_text=_('WARNING: Only check this if you wish to replace the chip tags with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
+	update_bibs = forms.BooleanField( initial=False, required=False, label=_('Replace License Holder Tags (if present).'),
+			help_text=_('WARNING: Only check this if you wish to replace the bib numbers with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
+	update_license_codes = forms.BooleanField( initial=False, required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
 			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	
 	def __init__( self, *args, **kwargs ):
@@ -1634,13 +1638,18 @@ class ImportExcelForm( Form ):
 				Field('set_team_all_disciplines'),
 			),
 			Row(
+				Field('update_tags'),
+			),
+			Row(
+				Field('update_bibs'),
+			),
+			Row(
 				Field('update_license_codes'),
 			),
 		)
-
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_license_holder_import_excel( excel_contents, update_license_codes, set_team_all_disciplines ):
+def handle_license_holder_import_excel( excel_contents, update_license_codes, set_team_all_disciplines, replace_bibs, replace_tags ):
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO()
 	license_holder_import_excel(
@@ -1648,6 +1657,8 @@ def handle_license_holder_import_excel( excel_contents, update_license_codes, se
 		message_stream=message_stream,
 		update_license_codes=update_license_codes,
 		set_team_all_disciplines=set_team_all_disciplines,
+		replace_bibs=replace_bibs,
+		replace_tags=replace_tags,
 	)
 	results_str = message_stream.getvalue()
 	return license_holder_msg_to_html(results_str)
@@ -1660,8 +1671,10 @@ def LicenseHoldersImportExcel( request ):
 		if form.is_valid():
 			results_str = handle_license_holder_import_excel(
 				request.FILES['excel_file'],
-				form.cleaned_data['update_license_codes'],
-				form.cleaned_data['set_team_all_disciplines'],
+				update_license_codes=form.cleaned_data['update_license_codes'],
+				set_team_all_disciplines=form.cleaned_data['set_team_all_disciplines'],
+				replace_bibs=form.cleaned_data['replace_bibs'],
+				replace_tags=form.cleaned_data['replace_tags'],
 			)
 			return render( request, 'license_holder_import_excel.html', locals() )
 	else:
