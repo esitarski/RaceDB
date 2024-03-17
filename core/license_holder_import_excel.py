@@ -103,7 +103,9 @@ def license_holder_msg_to_html( msg ):
 def license_holder_import_excel(
 		worksheet_name='', worksheet_contents=None, message_stream=sys.stdout,
 		update_license_codes=False,
-		set_team_all_disciplines=False
+		set_team_all_disciplines=False,
+		replace_bibs=False,
+		replace_tags=False,
 	):
 	system_info = SystemInfo.get_singleton()
 	tstart = datetime.datetime.now()
@@ -155,6 +157,7 @@ def license_holder_import_excel(
 		'Road':				['national road', 'provincial road'],
 		'Cyclocross':		['national cyclocross', 'provincial cyclocross'],
 		'Track':			['track'],
+		'Gravel':			['gravel'],
 		'MTB':				['cross country', 'provincial cross country', 'downhill', 'fourx'],
 		'Para':				['para cycling'],
 	}
@@ -286,7 +289,12 @@ def license_holder_import_excel(
 		nation_code		= to_str(v('nation_code', None))
 		
 		bib				= (to_int(v('bib', None)) or None)
+		existing_bib	= (to_int(v('existing_bib', None)) or None)
+		
 		tag				= to_int_str(v('tag', None))
+		existing_tag	= to_int_str(v('existing_tag', None))
+		existing_tag2	= to_int_str(v('existing_tag2', None))
+		
 		note		 	= to_str(v('note', None))
 		
 		emergency_contact_name = to_str(v('emergency_contact_name', None))
@@ -298,6 +306,12 @@ def license_holder_import_excel(
 		if not team_name:
 			team_name = club_name
 		team_code		= to_str(v('team_code', None))
+		
+		# Override the exisiting fields if we have specific data.
+		if tag and not existing_tag:
+			existing_tag = tag
+		if bib and not existing_bib:
+			existing_bib = bib
 
 		#---------------------------------------------
 		
@@ -320,8 +334,11 @@ def license_holder_import_excel(
 			'nation_code':nation_code,
 			'uci_id':uci_id,
 			
-			'existing_tag':tag,
-			'existing_bib':bib,
+			'existing_tag':existing_tag if replace_tags else None,
+			'existing_tag2':existing_tag2 if replace_tags else None,
+			
+			'existing_bib':existing_bib if replace_bibs else None,
+			
 			'note':note,
 			
 			'emergency_contact_name':emergency_contact_name,

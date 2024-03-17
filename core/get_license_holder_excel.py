@@ -20,6 +20,8 @@ data_headers = (
 	'NatCode', 'UCI ID',
 	'Emergency Contact', 'Emergency Phone', 'Medical Alert',
 	'ZipPostal',
+	'SeasonBib',
+	'SeasonTag', 'SeasonTag2',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -75,6 +77,9 @@ def get_license_holder_excel( q = None ):
 			lh.emergency_contact_phone,
 			lh.emergency_medical,
 			lh.zip_postal,
+			lh.existing_bib or '',
+			lh.existing_tag or '',
+			lh.existing_tag2 or '',
 		]
 		data.extend( (team.name if team else 'Independent') for team in lh.get_teams_for_disciplines(disciplines) )
 		row = write_row_data( ws, row, data )
