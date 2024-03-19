@@ -2790,7 +2790,7 @@ def SystemInfoEdit( request ):
 def UpdateLogShow( request ):
 	update_log = UpdateLog.objects.all()
 	return render( request, 'update_log_show.html', locals() )
-	
+
 @access_validation()
 def DownloadDatabase( request ):
 	filename = 'RaceDB-Backup-{}.json.gz'.format( datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') )	
@@ -2798,9 +2798,50 @@ def DownloadDatabase( request ):
 	response['Content-Disposition'] = 'attachment; filename={}'.format(filename)
 	with gzip.GzipFile( filename=os.path.splitext(filename)[0], mode='w', fileobj=response ) as gz:
 		with io.TextIOWrapper(gz, encoding='utf-8', write_through=True) as io_text:
-			management.call_command('dumpdata', '-e', 'contenttypes', '-e', 'auth.Permission', stdout=io_text)
+			management.call_command(*get_backup_cmd(), stdout=io_text)
 	return response
+
+#-----------------------------------------------------------------------
+
+def get_backup_cmd():
+	# Use this command to make a backup of the database.
+	return ['dumpdata', '-e', 'contenttypes', '-e', 'auth.Permission']
+
+def get_model_names( fname ):
+	model_names = set()
+	with gzip.GzipFile( filename=fname ) as gz:
+		for obj in json.load( gz ):
+			if obj['model'] not in model_names:
+				model_names.add( obj['model'] )
+				yield obj['model']
+
+def backup_restore( fname ):
+	from django.apps import apps
+
+	if not os.path.exists(fname):
+		return False, 'File "{}" cannot be found.  Aborting.'.format(fname)
+	if not fname.endswith('.json.gz'):
+		return False, 'File "{}" does not end with ".json.gz".  Aborting.'.format(fname)
+
+	# Clear all records from tables in the backup file.
+	print( 'Clearing tables from "{}"...'.format(fname) )
+	for mn in get_model_names(fname):
+		print( 'Clearing table {}...'.format(mn), end='' )
+		model = apps.get_model( *mn.split(',',1) )
+		model.objects.all().delete()
+		print( ' Done.' )
 	
+	# Restore the backup data.
+	print( 'Loading backup data from "{}" (be patient, this can take a while).'.format(fname) )
+	management.call_command( 'loaddata', fname )	
+	return True, 'Success'
+
+def backup_create( fname ):
+	assert fname.endswith('.json.gz')
+	with gzip.GzipFile( fname, mode='wb' ) as gz:
+		with io.TextIOWrapper(gz, encoding='utf-8', write_through=True) as io_text:
+			management.call_command(*get_backup_cmd(), stdout=io_text)
+
 #-----------------------------------------------------------------------
 
 def get_year_choices():
