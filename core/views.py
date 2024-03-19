@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.db.models import Count
 from django.core import management
+from django.apps import apps
 
 try:
 	from django.contrib.auth.views import logout
@@ -2816,8 +2817,6 @@ def get_model_names( fname ):
 				yield obj['model']
 
 def backup_restore( fname ):
-	from django.apps import apps
-
 	if not os.path.exists(fname):
 		return False, 'File "{}" cannot be found.  Aborting.'.format(fname)
 	if not fname.endswith('.json.gz'):

@@ -4,7 +4,7 @@ from core.views import backup_restore
 
 class Command(BaseCommand):
 	
-	help = 'Restore a RaceDB database from backup'
+	help = 'Restore a RaceDB database from a backup created with backup_create or downloaded'
 	
 	def add_arguments(self, parser):
 		parser.add_argument('backup_filename', help='name of backup file ending in .json.gz')
@@ -12,13 +12,11 @@ class Command(BaseCommand):
 					
 	def handle(self, *args, **options):
 		backup_filename = options['backup_filename']
-		check_input = not options['no_input']
-		if check_input:
+		if not options['no_input']:
 			if input('Overwrite the current database (type "yes" to continue)? ') != 'yes':
 				print( 'Cancelled.' )
 				return
 		
-		print( backup_filename )
 		status, msg = backup_restore( backup_filename )
 		if not status:
 			print( 'Failure: {}'.format(msg) )
