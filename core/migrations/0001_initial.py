@@ -5,6 +5,10 @@ import datetime
 from django.db import migrations, models
 import django.db.models.deletion
 
+def name_fields( model_name, fields ):
+	# Create a unique index name based on the model name and the fields.
+	# This is based on the previous Django version.
+	return {'name':'_{:x}'.format( abs(hash((('core_' + model_name).lower(), ','.join(fields)))) ), 'fields':fields}
 
 class Migration(migrations.Migration):
 
@@ -813,10 +817,15 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Participant Option',
                 'verbose_name_plural': 'Participant Options',
-                'index_together': {('competition', 'participant', 'option_id'), ('competition', 'option_id'), ('competition', 'participant')},
+                #'index_together': {('competition', 'participant', 'option_id'), ('competition', 'option_id'), ('competition', 'participant')},
                 'unique_together': {('competition', 'participant', 'option_id')},
             },
         ),
+        #----
+        migrations.AddIndex( 'ParticipantOption', models.Index(**name_fields('ParticipantOption', ('competition', 'participant', 'option_id'))) ),
+        migrations.AddIndex( 'ParticipantOption', models.Index(**name_fields('ParticipantOption', ('competition',  'option_id'))) ),
+        migrations.AddIndex( 'ParticipantOption', models.Index(**name_fields('ParticipantOption',('competition', 'participant'))) ),
+        #----
         migrations.AlterUniqueTogether(
             name='participant',
             unique_together={('competition', 'category', 'license_holder'), ('competition', 'category', 'tag2'), ('competition', 'category', 'tag'), ('competition', 'category', 'bib')},
@@ -838,11 +847,15 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Time Trial Entry',
                 'verbose_name_plural': 'Time Trial Entry',
-                'index_together': {('event', 'start_sequence')},
+                #'index_together': {('event', 'start_sequence')},
                 'ordering': ['start_time'],
                 'unique_together': {('event', 'participant')},
             },
         ),
+        #----
+        migrations.AddIndex( 'EntryTT', models.Index(**name_fields('EntryTT', ('event', 'start_sequence'))) ),
+        #----
+
         migrations.CreateModel(
             name='CompetitionCategoryOption',
             fields=[
