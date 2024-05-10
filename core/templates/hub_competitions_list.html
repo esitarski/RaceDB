@@ -8,6 +8,11 @@
 	thead th { position: sticky; top: 0; }
 {% endblock style %}
 
+{% block onload %}
+// Call a submit after every selection change.
+document.querySelectorAll('select').forEach( (e) => { e.addEventListener('change', () => e.form.submit()); } );
+{% endblock onload %}
+
 {% block content %}
 
 {% include "hub_nav.html" %}
