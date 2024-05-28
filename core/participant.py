@@ -29,9 +29,10 @@ class ParticipantSearchForm( Form ):
 	name_text = forms.CharField( required=False, label = _('Name') )
 	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
 	category = forms.ChoiceField( required=False, label = _('Category') )
-	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib (-1 for Missing Bib)') )
+	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib (-1 for Missing)') )
 	rfid_text = forms.CharField( required=False, label = _('RFIDTag (-1 for Missing)') )
 	eligible = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Eligible') )	
+	license_checked = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Lic. Check') )
 	paid = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Paid') )
 	confirmed = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Confirmed') )
 
@@ -79,10 +80,10 @@ class ParticipantSearchForm( Form ):
 		self.helper.layout = Layout(
 			Row( Field('scan', size=20, autofocus=True ), HTML('&nbsp;'*8), Field('event'),),
 			Row( *(
-					[Field('name_text'), Field('gender'), Field('category'), Field('bib'),] +
-					([Field('rfid_text'),] if competition and competition.using_tags else []) +
-					[Field('eligible'), Field('paid'), Field('confirmed'), Field('team_text'), Field('role_type'),] +
-					[Field('city_text'), Field('state_prov_text'), Field('nationality_text'), ] + 
+					[Field('name_text'), Field('gender'), Field('category'), Field('bib', size=7),] +
+					([Field('rfid_text', size=16),] if competition and competition.using_tags else []) +
+					[Field('eligible'), Field('license_checked'), Field('paid'), Field('confirmed'), Field('team_text'), Field('role_type'),] +
+					[Field('city_text'), Field('state_prov_text', size=12), Field('nationality_text', size=12), ] + 
 					[Field('complete'), Field('has_events'), ]
 				)
 			),
@@ -263,6 +264,60 @@ def Participants( request, competitionId ):
 			else:
 				participants = participants.filter( tag=rfid )
 	
+	# Get all categories that require a license check.
+	category_requires_license_check_query = CompetitionCategoryOption.objects.filter( competition=competition, license_check_required=True ).values_list('category__id', flat=True)
+	category_requires_license_check = set( category_requires_license_check_query )
+	if category_requires_license_check and competition.report_label_license_check:
+		license_holder_license_checked = set(
+			# Get all participants that have had their license checked in the last year.
+			Participant.objects.filter(
+				id__in=participants.values_list('id', flat=True),
+				license_checked=True,
+				category__id__in=category_requires_license_check_query,
+				competition__discipline__id=competition.discipline_id,
+				competition__start_date__gte=datetime.date(competition.start_date.year,1,1),
+				competition__start_date__lte=competition.start_date,
+				competition__report_label_license_check=competition.report_label_license_check,
+			).values_list('category__id', 'license_holder__id')
+		) | set(
+			# Check all participante that have had their license check logged in the last year.
+			LicenseCheckState.objects.filter(
+				license_holder__id__in=participants.values_list('license_holder__id', flat=True),
+				category__id__in=category_requires_license_check_query,
+				discipline__id=competition.discipline_id,
+				report_label_license_check=competition.report_label_license_check,
+				check_date__gte=datetime.date(competition.start_date.year,1,1),
+				check_date__lte=competition.start_date,
+			).values_list('category__id', 'license_holder__id')
+		)
+		
+		# Set the current license check flag based on whether it was set in previous events.
+		cat_lh = defaultdict( list )
+		for category_id, license_holder_id in license_holder_license_checked:
+			cat_lh[category_id].append( license_holder_id )
+		for category_id, license_holders in cat_lh.items():
+			Participant.objects.filter( category__id=category_id, license_holder__id__in=license_holders ).exclude( participant.license_checked ).update( license_checked=True )
+	else:
+		license_holder_license_checked = set()
+	
+	requires_license_check = bool(category_requires_license_check)
+	
+	def is_license_checked_html( participant ):
+		''' Returns: 1: Yes, 0: No, -1: Unnecessary '''
+		if not participant.category or participant.category_id not in category_requires_license_check:
+			return ''
+		if participant.license_checked or (participant.category_id, participant.license_holder_id) in license_holder_license_checked:
+			return mark_safe('<span class="is-good"/>')
+		else:
+			return mark_safe('<span class="is-bad"/>')
+
+	if requires_license_check:
+		license_checked = int(participant_filter.get('license_checked', 2))
+		if license_checked == 1:
+			participants = participants.filter( license_checked=True )
+		elif license_checked == 0:
+			participants = participants.filter( license_checked=False )
+
 	has_events = int(participant_filter.get('has_events',-1))
 	if has_events == 0:
 		participants = participants.filter( role = Participant.Competitor )
@@ -1991,7 +2046,7 @@ class ParticipantConfirmForm( Form ):
 		
 	def changeNationCodeCB( self, request ):
 		participant = get_object_or_404( Participant, pk=self.cleaned_data['participant_id'] )
-		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderNationCodeChange', participant.license_holder.id) )
+		return HttpResponseRedirect( pushUrl(request, 'LicenseHolderNationCodeChange', participant.license_holder_id) )
 	
 	def dispatch( self, request ):
 		for ab in self.additional_buttons:

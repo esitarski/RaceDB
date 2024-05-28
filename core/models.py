@@ -3794,7 +3794,7 @@ class Participant(models.Model):
 				not self.competition.report_label_license_check or
 				not self.is_license_check_required()
 			):
-			return True			
+			return True
 		return LicenseCheckState.check_participant( self )
 	
 	def enforce_tag_constraints( self ):
@@ -5939,7 +5939,7 @@ class LicenseCheckState(models.Model):
 			license_holder__id=participant.license_holder_id,
 			category__id=participant.category_id,
 			license_checked=True,
-			competition__discipline__id=participant.competition.discipline.id,
+			competition__discipline__id=participant.competition.discipline_id,
 			competition__start_date__gte=datetime.date(participant.competition.start_date.year,1,1),
 			competition__start_date__lte=participant.competition.start_date,
 			competition__report_label_license_check=participant.competition.report_label_license_check,
@@ -5949,7 +5949,7 @@ class LicenseCheckState(models.Model):
 		q = LicenseCheckState.objects.filter(
 			license_holder__id=participant.license_holder_id,
 			category__id=participant.category_id,
-			discipline__id=participant.competition.discipline.id,
+			discipline__id=participant.competition.discipline_id,
 			report_label_license_check=participant.competition.report_label_license_check,
 			check_date__gte=datetime.date(participant.competition.start_date.year,1,1),
 			check_date__lte=participant.competition.start_date,
