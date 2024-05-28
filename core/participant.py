@@ -269,7 +269,7 @@ def Participants( request, competitionId ):
 	category_requires_license_check = set( category_requires_license_check_query )
 	if category_requires_license_check and competition.report_label_license_check:
 		license_holder_license_checked = set(
-			# Get all participants that have had their license checked in the last year.
+			# Get all participants that have had their license checked at previous competitions in the last year.
 			Participant.objects.filter(
 				id__in=participants.values_list('id', flat=True),
 				license_checked=True,
@@ -278,7 +278,7 @@ def Participants( request, competitionId ):
 				competition__start_date__gte=datetime.date(competition.start_date.year,1,1),
 				competition__start_date__lte=competition.start_date,
 				competition__report_label_license_check=competition.report_label_license_check,
-			).values_list('category__id', 'license_holder__id')
+			).exclude( competition=competition ).order_by().values_list('category__id', 'license_holder__id').iterator()
 		) | set(
 			# Check all participante that have had their license check logged in the last year.
 			LicenseCheckState.objects.filter(
@@ -288,13 +288,14 @@ def Participants( request, competitionId ):
 				report_label_license_check=competition.report_label_license_check,
 				check_date__gte=datetime.date(competition.start_date.year,1,1),
 				check_date__lte=competition.start_date,
-			).values_list('category__id', 'license_holder__id')
+			).order_by().values_list('category__id', 'license_holder__id').iterator()
 		)
 		
 		# Set the current license check flag based on whether it was set in previous events.
 		cat_lh = defaultdict( list )
 		for category_id, license_holder_id in license_holder_license_checked:
 			cat_lh[category_id].append( license_holder_id )
+		# For each category, update the license holders to the status of the past license check.
 		for category_id, license_holders in cat_lh.items():
 			Participant.objects.filter( category__id=category_id, license_holder__id__in=license_holders ).exclude( participant.license_checked ).update( license_checked=True )
 	else:
