@@ -48,6 +48,8 @@ table.participant_table tr th {
 									<th></th>
 									<th>{% trans "Bib" %}</th>
 									<th>{% trans "Name" %}</th>
+									<th>{% trans "Team" %}</th>
+									<th>{% trans "UCI ID" %}</th>
 									<th>{% if series.ranking_criteria == 1 %}{% trans 'Time' %}{% else %}{% trans "Pts" %}{% endif %}</th>
 								</tr>
 							</thead>
@@ -57,6 +59,8 @@ table.participant_table tr th {
 									<td class="text-right">{{forloop.counter}}.</td>
 									<td>{{participant.bib}}</td>
 									<td>{{participant.license_holder.full_name}}</td>
+									<td>{{participant.team_name}}</td>
+									<td class="text-nowrap">{{participant.license_holder.get_flag_uci_id_html}}</td>
 									<td class="text-right">{{points}}</td>
 								</tr>
 								{% endfor %}

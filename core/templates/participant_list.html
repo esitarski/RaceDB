@@ -4,6 +4,7 @@
 {% load good_bad_icon %}
 {% load good_err_icon %}
 {% load paginate_html %}
+{% load callfunc %}
 
 {% block style %}
 thead th { position: sticky; top: 0; }
@@ -47,6 +48,7 @@ thead th { position: sticky; top: 0; }
 		<th>{% trans "Bib" %}</th>
 		{% if using_tags %}<th>{% trans "Tag" %}</th>{% endif %}
 		<th>{% trans "Eligible" %}</th>
+		{% if requires_license_check %}<th>{% trans "Lic. Check" %}</th>{% endif %}
 		{% if using_waiver %}<th>{% trans "Waiver" %}</th>{% endif %}
 		<th>{% trans "Paid" %}</th>
 		{% if using_signature %}<th>{% trans "Sig." %}</th>{% endif %}
@@ -77,6 +79,9 @@ thead th { position: sticky; top: 0; }
 				<td>{% if not p.tag_valid %}<span class="is-err"/>{% endif %}{{p.get_short_tag_str|safe}}</td>
 			{% endif %}
 			<td class="text-center">{% if p.role == 110 %}{{h.eligible|good_err_icon}}{% endif %}</td>
+			{% if requires_license_check %}
+				<td class="text-center">{% callfunc "is_license_checked_html" p %}</td>
+			{% endif %}
 			{% if using_waiver %}
 				<td class="text-center">{{p.good_waiver|good_err_icon}}</td>
 			{% endif %}
