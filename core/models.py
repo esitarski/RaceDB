@@ -3965,7 +3965,9 @@ class Participant(models.Model):
 		competition = self.competition
 		if not competition.using_tags or not self.is_competitor:
 			return True
-		tag = self.license_holder.existing_tag if competition.use_existing_tags else self.tag
+		
+		# Get a valid tag for the participant.
+		tag = (self.license_holder.existing_tag or self.license_holder.existing_tag2) if competition.use_existing_tags else (self.tag or self.tag2)
 		if competition.do_tag_validation:
 			return tag and self.tag_checked
 		else:
