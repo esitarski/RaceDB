@@ -66,9 +66,7 @@ function reset_signature() {
 	<strong>{{participant.license_holder.date_of_birth|date_short}}</strong>.
 {% endif %}
 </h2>
-<div class="container">
-	{% crispy form %}
-</div>
+{% crispy form %}
 <div class="container hidden-print">
 	<div class="row">
 		<div class="col-md-12 text-right">

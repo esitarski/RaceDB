@@ -1811,6 +1811,7 @@ class ParticipantSignatureForm( Form ):
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_id = 'id_signature_form'
+		self.helper.form_class = 'navbar-form navbar-left'
 		
 		if is_jsignature:
 			button_args = [
@@ -1826,20 +1827,24 @@ class ParticipantSignatureForm( Form ):
 		
 		if is_jsignature:
 			self.helper.layout = Layout(
-				Row( Col(Field('signature'), 12) ),
-				Row( Col(Div(id="id_signature_canvas"), 12) ),
-				Row(
-					Col(button_args[0],4),
-					Col(button_args[1],4),
-					Col(button_args[2],4),
-				),
+				Container(
+					Row( Col(Field('signature'), 12) ),
+					Row( Col(Div(id="id_signature_canvas"), 12) ),
+
+					Row(
+						Col(button_args[0],4),
+						Col(button_args[1],4),
+						Col(button_args[2],4),
+					),
+				)
 			)
 		else:
 			self.helper.layout = Layout(
+				Container(
 					Row( Col( Field( 'signature' ), 12) ),
 					Row( Div( Div(*button_args, css_class='row'), css_class='col-md-12 text-center' ) ),
 				)
-			
+			)
 
 @access_validation()
 def ParticipantSignatureChange( request, participantId ):
