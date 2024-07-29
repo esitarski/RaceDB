@@ -40,7 +40,7 @@ class TimeTracker:
 		return '\n'.join( s )
 
 def init_prereg(
-		competition_name='', worksheet_name='', clear_existing=False,
+		competition_name='', worksheet_name='', assign_missing_bibs=False, clear_existing=False,
 		competitionId=None, worksheet_contents=None, message_stream=sys.stdout ):
 
 	tt = TimeTracker()
@@ -379,22 +379,30 @@ def init_prereg(
 
 				# Ensure the existing bib number is compatible with the category.
 				tt.start( 'update_bib_new_category' )
-				participant.update_bib_new_category()
+				bib = participant.update_bib_new_category( category_numbers_set[participant.category] )
 				
-				# Only auto-assign a bib only if there isn't one already.
-				if bib_auto and not participant.bib:
+				# Auto-assign the bib if there isn't one already.
+				if not bib and (assign_missing_bibs or bib_auto):
 					tt.start( 'get_bib_auto' )
-					bib = participant.get_bib_auto()
+					
+					# Retrieve the existing bib if it exists for this license_holder and category.
+					if competition.number_set:
+						bib = competition.number_set.get_bib( competition, license_holder, category, category_numbers_set[participant.category] )
+					
+					# If no existing bib, allocate the next available one.
+					if not bib:
+						bib = participant.get_bib_auto()
+						if bib and competition.number_set:
+							competition.number_set.assign_bib( participant.license_holder, bib )
 				
 				# If we have an assigned bib, ensure it is respected.
 				tt.start( 'validate_bib' )
 				if bib and bib in category_numbers_set[participant.category]:
 					participant.bib = bib
-					# Add the assigned bib to the number set if it exists.
 					if competition.number_set:
 						competition.number_set.assign_bib( participant.license_holder, participant.bib )
 
-				# Do a final check for bib compatibility.
+				# Final check for participant bib integrity.
 				if participant.bib and participant.bib not in category_numbers_set[participant.category]:
 					participant.bib = None
 				
@@ -447,15 +455,15 @@ def init_prereg(
 				tt.end()
 				
 				ms_write( 'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
-							row=i,
-							license=license_holder.license_code,
-							dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
-							uci=license_holder.uci_code,
-							lname=license_holder.last_name,
-							fname=license_holder.first_name,
-							city=license_holder.city,
-							state_prov=license_holder.state_prov,
-							ov=override_events_str,
+						row=i,
+						license=license_holder.license_code,
+						dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
+						uci=license_holder.uci_code,
+						lname=license_holder.last_name,
+						fname=license_holder.first_name,
+						city=license_holder.city,
+						state_prov=license_holder.state_prov,
+						ov=override_events_str,
 					)
 				)
 	

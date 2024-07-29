@@ -573,6 +573,8 @@ class NumberSet(models.Model):
 		return super().save( *args, **kwargs )
 		
 	def get_bib( self, competition, license_holder, category, category_numbers_set=None ):
+		# Get the bib number for this license_holder and categoryt from the NumberSetEntries.
+		# Does not assign bibs.  Returns None if no bib is found.
 		numbers = None
 		if category_numbers_set:
 			numbers = category_numbers_set
@@ -595,16 +597,17 @@ class NumberSet(models.Model):
 		if not bib:
 			return True
 		
-		# Check if this license_holder already has this bib assigned, or lost it.
+		# Check if this license_holder already has this bib.
 		with transaction.atomic():
 			nse = self.numbersetentry_set.filter( license_holder=license_holder, bib=bib ).first()
 			if nse:
+				# If this bib is being assigned, it is no longer lost.
 				if nse.date_lost is not None:
 					nse.date_lost = None
 					nse.save()
 				return True
 
-		# Check if this bib is available.  If so, take it.
+		# Check if this bib is available.  If so, assign it to the license_holder.
 		with transaction.atomic():
 			if self.get_bib_available(bib) > 0:
 				NumberSetEntry( number_set=self, license_holder=license_holder, bib=bib ).save()
@@ -4370,15 +4373,15 @@ class Participant(models.Model):
 			tag2=self.tag2
 		)
 		
-	def update_bib_new_category( self ):
+	def update_bib_new_category( self, category_numbers_set=None ):
 		if self.competition.number_set:
-			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category )
-			return
+			self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category, category_numbers_set )
+			return self.bib
 		
 		category_numbers = self.competition.get_category_numbers( self.category )
 		if not category_numbers:
 			self.bib = None
-			return
+			return self.bib
 		
 		compatible_participant = Participant.objects.filter(
 			competition=self.competition,
@@ -4393,6 +4396,7 @@ class Participant(models.Model):
 			self.bib = compatible_participant.bib
 		else:
 			self.bib = None
+		return self.bib
 	
 	def get_other_category_participants( self ):
 		return list(

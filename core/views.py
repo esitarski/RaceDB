@@ -1569,6 +1569,7 @@ def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competi
 @autostrip
 class UploadPreregForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
+	assign_missing_bibs = forms.BooleanField( required=False, label=_('Assign Bib Numbers'), help_text=_("Assigns the lowest available bib number (if required)") )
 	clear_existing = forms.BooleanField( required=False, label=_('Clear All Participants First'), help_text=_("Removes all existing Participants from the Competition before the Upload.  Use with Caution.") )
 	
 	def __init__( self, *args, **kwargs ):
@@ -1580,19 +1581,23 @@ class UploadPreregForm( Form ):
 		self.helper.layout = Layout(
 			Row(
 				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
+			),
+			Row(
+				Col( Field('assign_missing_bibs'), 4 ),
 				Col( Field('clear_existing'), 4 ),
 			),
 		)
 		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_upload_prereg( competitionId, excel_contents, clear_existing ):
+def handle_upload_prereg( competitionId, excel_contents, assign_missing_bibs, clear_existing ):
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO()
 	init_prereg(
 		competitionId=competitionId,
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
+		assign_missing_bibs=assign_missing_bibs,
 		clear_existing=clear_existing,
 	)
 	results_str = message_stream.getvalue()
@@ -1606,7 +1611,7 @@ def UploadPrereg( request, competitionId ):
 	if request.method == 'POST':
 		form = UploadPreregForm(request.POST, request.FILES)
 		if form.is_valid():
-			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['clear_existing'] )
+			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['assign_missing_bibs'], form.cleaned_data['clear_existing'] )
 			return render( request, 'upload_prereg.html', locals() )
 	else:
 		form = UploadPreregForm()
