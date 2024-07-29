@@ -116,7 +116,7 @@ def init_prereg(
 	# Process the records in large transactions for efficiency.
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
-		
+			
 			tt.start( 'get_fields_from_row' )
 		
 			v = ifm.finder( ur )
@@ -348,10 +348,12 @@ def init_prereg(
 				if category is not None:
 					participant_keys['category'] = category
 				
+				participant_created = False
 				try:
 					participant = Participant.objects.get( **participant_keys )
 				except Participant.DoesNotExist:
 					participant = Participant( **participant_keys )
+					participant_created = True
 				except Participant.MultipleObjectsReturned:
 					ms_write( '**** Row {}: found multiple Participants for this license_holder, Name="{}".\n'.format(
 						i, name,
@@ -454,11 +456,12 @@ def init_prereg(
 				
 				tt.end()
 				
-				ms_write( 'Row {row:>6}: {license:>8} {dob:>10} {uci}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
+				ms_write( '{created:} Row {row:>6}: {uci:>11} {license:>12} bib={bib:>4}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
+						created='*' if participant_created else ' ',
 						row=i,
-						license=license_holder.license_code,
-						dob=license_holder.date_of_birth.strftime('%Y-%m-%d'),
-						uci=license_holder.uci_code,
+						uci=license_holder.uci_id or '',
+						license=(license_holder.license_code or '').replace(' ', ''),
+						bib=participant.bib or '',
 						lname=license_holder.last_name,
 						fname=license_holder.first_name,
 						city=license_holder.city,

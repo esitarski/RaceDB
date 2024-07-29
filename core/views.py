@@ -1569,7 +1569,7 @@ def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competi
 @autostrip
 class UploadPreregForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
-	assign_missing_bibs = forms.BooleanField( required=False, label=_('Assign Bib Numbers'), help_text=_("Assigns the lowest available bib number (if required)") )
+	assign_missing_bibs = forms.BooleanField( required=False, label=_('Assign Bib Numbers'), help_text=_("Assign a Bib Number if the participant does not already have one.") )
 	clear_existing = forms.BooleanField( required=False, label=_('Clear All Participants First'), help_text=_("Removes all existing Participants from the Competition before the Upload.  Use with Caution.") )
 	
 	def __init__( self, *args, **kwargs ):

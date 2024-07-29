@@ -4174,20 +4174,17 @@ class Participant(models.Model):
 		self.est_kmh	= pdv.est_kmh or 0.0
 		
 		# If we have a category, check the bib number.
-		if self.category:
+		if self.bib and self.category:
 			cn = self.competition.get_category_numbers( self.category )
 			category_numbers_set = cn.get_numbers() if cn else set()
 			
 			if self.bib in category_numbers_set:
-				# This is a valid bib.
+				# This is a valid bib.  Ensure that it is assigned.
 				if self.competition.number_set:
 					self.competition.number_set.assign_bib( self.license_holder, self.bib )
 			else:
-				# This is an INVALID bib.
-				if self.competition.number_set:
-					self.bib = self.competition.number_set.get_bib( self.competition, self.license_holder, self.category, category_numbers_set )
-				else:
-					self.bib = None
+				# This is an INVALID bib.  Reset to None.
+				self.bib = None
 		
 		# Use default tags.
 		if self.competition.use_existing_tags:
