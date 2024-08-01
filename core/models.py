@@ -3,7 +3,6 @@ from . import patch_sqlite_text_factory	# Must be first.
 import re
 import os
 import math
-from heapq import heappush
 import datetime
 import base64
 import operator
@@ -11,8 +10,7 @@ import secrets
 import random
 import itertools
 from collections import defaultdict
-from io import StringIO, BytesIO
-import locale
+from io import StringIO
 
 from django.db import models, connection
 from django.db import transaction, IntegrityError
@@ -986,6 +984,7 @@ class Competition(models.Model):
 		return self.start_date + datetime.timedelta( days = self.number_of_days - 1 )
 	
 	reMatchLeadingZeros = re.compile( '^0| 0' )
+	
 	def fix_date_leading_zeros( self, s ):
 		return self.reMatchLeadingZeros.sub(' ', s).strip()
 	
@@ -2362,7 +2361,7 @@ class TeamLookup( object ):
 			self.map[utils.get_search_text([team.name])] = team
 		return team
 		
-rePostalCode = re.compile('^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$')
+rePostalCode = re.compile(r'^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$')
 def validate_postal_code( postal ):
 	postal = (postal or '').replace(' ', '').upper()
 	return postal[0:3] + ' ' + postal[3:] if rePostalCode.match(postal) else postal
@@ -2472,13 +2471,14 @@ class LicenseHolder(models.Model):
 			self.save()
 	
 	reUCIID = re.compile( r'[^\d]' )
+	
 	def save( self, *args, **kwargs ):
 		self.uci_code = (self.uci_code or '').replace(' ', '').upper()
 		self.uci_id = self.reUCIID.sub( '', (self.uci_id or '') )[:11]
 		
 		self.gender = self.gender or 0
 		
-		if not( self.existing_bib is None or isinstance(self.existing_bib, int) ):
+		if not ( self.existing_bib is None or isinstance(self.existing_bib, int) ):
 			self.existing_bib = None
 		
 		for f in ('last_name', 'first_name', 'city', 'state_prov', 'nationality', 'nation_code'):
@@ -2905,7 +2905,7 @@ class LicenseHolder(models.Model):
 	
 	@staticmethod
 	def filter_by_tag( tag ):
-		return Licenseholder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) )
+		return LicenseHolder.objects.filter( Q(existing_tag=tag) | Q(existing_tag2=tag) )
 	
 	class Meta:
 		verbose_name = _('LicenseHolder')
@@ -3115,7 +3115,7 @@ class Result(models.Model):
 	def get_num_laps_fast( self ):
 		try:
 			return self._num_laps
-		except AttributError:
+		except AttributeError:
 			self._num_laps = self.get_num_laps()
 			return self._num_laps
 	
@@ -3176,6 +3176,7 @@ class Result(models.Model):
 
 class ResultMassStart(Result):
 	event = models.ForeignKey( 'EventMassStart', db_index=True, on_delete=models.CASCADE )
+	
 	def get_race_time_class( self ):
 		return RaceTimeMassStart
 		
@@ -3188,6 +3189,7 @@ class ResultMassStart(Result):
 
 class ResultTT(Result):
 	event = models.ForeignKey( 'EventTT', db_index=True, on_delete=models.CASCADE )
+	
 	def get_race_time_class( self ):
 		return RaceTimeTT
 	
@@ -3236,7 +3238,7 @@ class Prime(models.Model):
 		if self.effort >= 0:
 			try:
 				return self.EffortChoices[self.effort][1]
-			except Exceptions as e:
+			except Exception:
 				return _('Unknown')
 		return self.effort_custom or ''
 
@@ -3267,6 +3269,7 @@ class Prime(models.Model):
 
 class PrimeMassStart(Prime):
 	event = models.ForeignKey( 'EventMassStart', db_index=True, on_delete=models.CASCADE )
+	
 	def get_prime_class( self ):
 		return PrimeMassStart
 		
@@ -3276,6 +3279,7 @@ class PrimeMassStart(Prime):
 
 class PrimeTT(Prime):
 	event = models.ForeignKey( 'EventTT', db_index=True, on_delete=models.CASCADE )
+	
 	def get_prime_class( self ):
 		return PrimeTT
 	
@@ -3356,7 +3360,7 @@ class CustomCategory( Sequence ):
 	
 	def validate( self ):
 		self.range_str = validate_range_str( self.range_str )
-		 # Replace invalid characters with commas.
+		# Replace invalid characters with commas.
 		self.nation_code_str = validate_str_list( re.sub(r'[^A-Z]', ',', self.nation_code_str, flags=re.IGNORECASE) )
 		self.license_code_prefixes = validate_str_list(re.sub( r'[^A-Z0-9]', ',', self.license_code_prefixes, flags=re.IGNORECASE) )
 		self.state_prov_str = validate_str_list( re.sub(r'[^A-Z0-9 -.]', ',', self.state_prov_str, flags=re.IGNORECASE) )

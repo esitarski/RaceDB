@@ -11,7 +11,6 @@ from .views_common import *
 from .models import *
 from .utils import format_time
 
-from .views import license_holders_from_search_text
 from .results import get_payload_for_result
 
 ItemsPerPage = 50

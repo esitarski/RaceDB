@@ -1,12 +1,8 @@
-import sys
 import datetime
 from openpyxl import load_workbook
-from collections import namedtuple
 from models import *
 from utils import toUnicode, removeDiacritic
 from django.db import transaction
-from django.db.models import Q
-from fix_utf8 import fix_utf8
 import import_utils
 from import_utils import get_key
 from large_delete_all import large_delete_all
@@ -56,7 +52,7 @@ def set_attributes( obj, attributes ):
 def to_int_str( v ):
 	try:
 		return '{}'.format(v)
-	except:
+	except Exception:
 		pass
 	return toUnicode(v)
 		

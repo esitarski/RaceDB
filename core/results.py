@@ -1,4 +1,3 @@
-import datetime
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
@@ -116,7 +115,7 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 		for prime in Prime.objects.filter( event=event ).select_related('participant')
 			if prime.participant_id in participant_ids
 	]
-	payload['primes'] = primes or None;
+	payload['primes'] = primes or None
 	payload['has_multiple_laps'] = bool(has_multiple_laps)
 	return payload
 

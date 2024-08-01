@@ -1,11 +1,6 @@
-from django.utils.translation import gettext_lazy as _
-from django.db.models.aggregates import Max
 import xlsxwriter
+from django.db.models.aggregates import Max
 
-import os
-import datetime
-
-from . import utils
 from .models import *
 from .add_excel_info import add_excel_info
 

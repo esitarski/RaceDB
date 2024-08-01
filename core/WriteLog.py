@@ -9,7 +9,6 @@ import random
 import time
 from os.path import expanduser
 from os import environ
-import threading
 from queue import Queue, Empty
 from .utils import removeDiacritic, safe_print
 

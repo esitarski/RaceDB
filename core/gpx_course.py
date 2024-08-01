@@ -1,8 +1,6 @@
 import io
-import operator
 
 from django.utils.translation import gettext_lazy as _
-from django.utils.safestring import mark_safe
 
 from .views_common import *
 from .gpx_util import simplify_gpx_file

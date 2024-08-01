@@ -121,7 +121,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 			fields = ['{}'.format(f.value).strip() for f in row]
 			ifm.set_headers( fields )
 			
-			expected_fields = {'bib', 'license_code', 'uci_id'};
+			expected_fields = {'bib', 'license_code', 'uci_id'}
 			
 			ms_write( 'Header Row:\n' )
 			for col, f in enumerate(fields, 1):

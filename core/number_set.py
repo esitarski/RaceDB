@@ -302,7 +302,7 @@ def NumberSetBibList( request, numberSetId ):
 		form = BibListForm( request.POST )
 		if form.is_valid():
 			bibs = form.cleaned_data['bibs']
-			bibs = re.sub( '\D+', ' ', bibs ).strip()
+			bibs = re.sub( r'\D+', ' ', bibs ).strip()
 			bib_nums = set( int(n) for n in bibs.split() )
 			
 			if 'lost-submit' in request.POST:

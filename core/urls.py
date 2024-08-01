@@ -16,7 +16,6 @@ from core import legal_entity
 from core import category
 from core import category_numbers
 from core import team
-from core import results
 from core import hub
 from core import series
 from core import custom_category

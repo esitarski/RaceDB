@@ -177,7 +177,7 @@ def simplify_gpx_file( gpx, epsilon=1.0 ):
 	points_itr = lat_lon_elevation_to_points_itr( lat_lon_elevation )
 	p = np.fromiter( points_itr, dtype=np.dtype((float, 3)) )
 	
-	mask = rdp( p, epsilon, return_mask=True );
+	mask = rdp( p, epsilon, return_mask=True )
 	lat_lon_elevation = [v for i, v in enumerate(lat_lon_elevation) if mask[i]]
 	
 	p = p[mask]

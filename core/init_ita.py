@@ -1,11 +1,7 @@
-import sys
 import datetime
 from openpyxl import load_workbook
-import HTMLParser
-from collections import namedtuple
 from models import *
 from django.db import transaction
-from django.db.models import Q
 from utils import toUnicode, removeDiacritic, gender_from_str
 import import_utils
 from import_utils import *

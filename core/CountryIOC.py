@@ -1,12 +1,12 @@
 import os
-import io
 import json
 
 from .utils import removeDiacritic
 
 # from https://github.com/mledoze/countries
 fname = os.path.join( os.path.dirname(__file__), 'static', 'flags', 'countries.json' )
-with io.open(fname, mode='r') as fp:
+
+with open(fname, mode='r', encoding='utf8') as fp:
 	country_info = json.loads( fp.read() )
 
 uci_country_codes = {}
@@ -21,6 +21,7 @@ country_short_forms = {
 
 for c in country_info:
 	names = set()
+	
 	def scan( d ):
 		for k, v in d.items():
 			if isinstance(v, dict):

@@ -1,9 +1,7 @@
-import sys
 import datetime
 from openpyxl import load_workbook
 from html.parser import HTMLParser
 from html import unescape
-from collections import namedtuple
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 

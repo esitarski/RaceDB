@@ -77,7 +77,6 @@ code_prov_terr = {
 prov_terr_code = {prov:code for code, prov in code_prov_terr.items() }
 
 def get_abbrev( s ):
-	t = prov_terr_code.get(s, None) or state_code.get(s, None) or s
 	return prov_terr_code.get(s, None) or state_code.get(s, None) or s
 	
 if __name__ == '__main__':

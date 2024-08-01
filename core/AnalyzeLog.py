@@ -50,8 +50,6 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 	# Debug.
 	# logfile, start, end = 'core/RaceDBLog.txt', datetime.datetime(2015, 10, 10), datetime.datetime(2015, 10, 11)
 	
-	errors = []
-	
 	participantCount = defaultdict( int )
 	transactionRateOverTime = defaultdict( int )
 	transactionClientRateOverTime = defaultdict( lambda: defaultdict(int) )
@@ -64,7 +62,7 @@ def AnalyzeLog( logfile = None, start=None, end=None, include_superuser=False ):
 		]
 	}
 	
-	with open(logfile, 'r') as f:
+	with open(logfile, 'r', encoding='utf8') as f:
 		for lineNo, line in enumerate(f):
 			line = line.strip()
 			if not line:

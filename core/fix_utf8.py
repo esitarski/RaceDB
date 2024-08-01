@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from utils import toUnicode, removeDiacritic
+from utils import toUnicode
 import sqlite3
 import sys
 

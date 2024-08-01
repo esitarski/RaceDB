@@ -1,9 +1,7 @@
-import datetime
 import operator
 import statistics
 from collections import defaultdict
 
-from . import utils
 from .models import *
 
 def get_average( s ):

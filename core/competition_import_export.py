@@ -10,7 +10,7 @@ from django.db import DEFAULT_DB_ALIAS, models
 from django.utils.encoding import force_str
 from django.db import transaction
 
-from .utils import get_search_text, removeDiacritic
+from .utils import get_search_text
 from .get_id import get_id
 
 from .models import *
@@ -54,6 +54,7 @@ def get_key( Model, pk ):
 
 class transaction_save( object ):
 	MaxTransactionRecords = 999
+	
 	def __init__( self, old_new ):
 		self.model = None
 		self.old_new = old_new

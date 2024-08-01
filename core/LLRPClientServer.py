@@ -5,9 +5,8 @@ import json
 import time
 import datetime
 import threading
-import argparse
 import random
-from queue import Queue, Empty
+from queue import Queue
 
 import traceback
 

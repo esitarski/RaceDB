@@ -1,10 +1,5 @@
-import os
 import re
-import sys
 import math
-import string
-import urllib
-import datetime
 import unicodedata
 
 def uniquify(seq, idfun=None):  
@@ -96,7 +91,7 @@ def safe_print( *args ):
 	print ( removeDiacritic( ' '.join('{}'.format(a) for a in args) ) )
 
 def cleanExcelSheetName( s ):
-	return re.sub( '[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]
+	return re.sub( r'[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]
 
 reInvalidFilenameChars = re.compile( '[^-_.() a-zA-Z0-9]' )
 def cleanFileName( filename ):

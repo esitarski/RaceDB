@@ -44,9 +44,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 			try:
 				date_of_birth = date_from_value(date_of_birth)
 			except Exception as e:
-				ms_write( 'Row {i:>6}: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
-					i, date_of_birth, ur, e)
-				)
+				ms_write( f'Row {i:>6}: Ignoring birthdate (must be YYYY-MM-DD) "{date_of_birth}" ({ur}) {e}' )
 				date_of_birth = None
 			
 			date_of_birth 	= date_of_birth if date_of_birth != invalid_date_of_birth else None
@@ -69,11 +67,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 					license_holder = LicenseHolder.objects.filter( q ).first()
 
 			if not license_holder:
-				ms_write(
-					'Row {i:>6}: Cannot find License Holder by License Code or LastName, FirstName [Date of Birth]\n'.format(
-						i=i,
-					)
-				)
+				ms_write( f'Row {i:>6}: Cannot find License Holder by License Code or LastName, FirstName [Date of Birth]\n' )
 				continue
 				
 			seasons_pass.add( license_holder )

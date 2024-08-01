@@ -2,7 +2,6 @@ from django.db import transaction
 import datetime
 
 from .models import *
-from . import utils
 from .large_delete_all import large_delete_all
 
 tdf = '''
@@ -204,12 +203,11 @@ tdf = '''
 217&#x9;Fabrice Jeandesboz&#x9; France&#x9;Saur-Sojasun&#x9;26&#x9;124
 218&#x9;Laurent Mangel&#x9; France&#x9;Saur-Sojasun&#x9;30&#x9;122
 219&#x9;Yannick Talabardon&#x9; France&#x9;Saur-Sojasun&#x9;29&#x9;47
-'''
+'''.strip()
 
 def init_riders():
 	large_delete_all( Rider )
 
-	tdf = tdf.strip()
 	lines = tdf.split( '\n' )
 	with transaction.atomic():
 		for count, line in enumerate(lines):

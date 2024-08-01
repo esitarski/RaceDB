@@ -1,5 +1,3 @@
-import re
-
 formatMap = {
 	'd': 'DD',
 	'D': 'ddd',

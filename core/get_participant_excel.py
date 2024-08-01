@@ -1,11 +1,6 @@
-import os
-import datetime
 import xlsxwriter
-
-from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
-from . import utils
 from .models import *
 from .add_excel_info import add_excel_info
 

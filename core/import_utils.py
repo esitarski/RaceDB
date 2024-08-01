@@ -23,13 +23,13 @@ def date_from_value( s ):
 		
 	try:
 		s = s.replace('-', '/')
-	except:
+	except Exception:
 		pass
 	
 	# Start with month, day, year format.
 	try:
 		mm, dd, yy = [int(v.strip()) for v in s.split('/')]
-	except:
+	except Exception:
 		return invalid_date_of_birth
 	
 	if mm > 1900:
@@ -51,7 +51,7 @@ def date_from_value( s ):
 	try:
 		return datetime.date( year=yy, month=mm, day=dd )
 	except Exception as e:
-		print ( yy, mm, dd )
+		print( yy, mm, dd )
 		raise e
 		
 def set_attributes( obj, attributes, accept_empty_values=False ):
@@ -85,7 +85,7 @@ def to_int_str( v ):
 	fix_spaces( v )
 	try:
 		return '{}'.format(int(v))
-	except:
+	except Exception:
 		pass
 	return toUnicode(v)
 
@@ -95,7 +95,7 @@ def to_uci_id( v ):
 		return None
 	try:
 		v = '{}'.format(int(v))
-	except:
+	except Exception:
 		v = toUnicode(v)
 	return reUCIID.sub( '', v )
 		
@@ -122,7 +122,7 @@ def to_int( v ):
 	v = fix_spaces( v )
 	try:
 		return int(v)
-	except:
+	except Exception:
 		return None
 
 def to_float( v ):
@@ -131,7 +131,7 @@ def to_float( v ):
 	v = fix_spaces( v )
 	try:
 		return float(v)
-	except:
+	except Exception:
 		return None
 
 def to_tag( v ):
@@ -153,7 +153,7 @@ def date_of_birth_from_age( age, today=None ):
 		return age.date()
 	try:
 		age = int(age)
-	except:
+	except Exception:
 		return None
 	if 1900 <= age:
 		return datetime.date( age, 1, 1 )

@@ -3,16 +3,13 @@ import sys
 import datetime
 import operator
 from io import BytesIO
-from collections import defaultdict
 from fnmatch import fnmatch
 from openpyxl import load_workbook
-from collections import namedtuple, defaultdict
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 
 from .large_delete_all import large_delete_all
 from .FieldMap import standard_field_map, normalize
-from . import import_utils
 from .import_utils import *
 from .models import *
 

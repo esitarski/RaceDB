@@ -23,8 +23,6 @@ import traceback
 import datetime
 
 from .get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
-from .get_seasons_pass_excel import get_seasons_pass_excel
-from .get_number_set_excel import get_number_set_excel
 from .get_start_list_excel import get_start_list_excel
 from .get_license_holder_excel import get_license_holder_excel
 from .participation_excel import participation_excel
@@ -34,7 +32,6 @@ from .license_holder_import_excel import license_holder_import_excel, license_ho
 from .uci_excel_dataride import uci_excel
 from . import authorization
 
-from .participant_key_filter import participant_key_filter, participant_bib_filter
 from .init_prereg import init_prereg
 from .emails import show_emails
 
@@ -900,7 +897,7 @@ def GetFinishLynxResponse( competition ):
 
 def ApplyNumberSet( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
-	participants_changed = competition.apply_number_set()
+	competition.apply_number_set()
 	return HttpResponseRedirect(getContext(request,'cancelUrl'))
 
 def InitializeNumberSet( request, competitionId ):
@@ -1427,11 +1424,6 @@ def TeamsShow( request, competitionId ):
 def FinishLynx( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	return GetFinishLynxResponse( competition )
-
-#-----------------------------------------------------------------------
-@access_validation()
-def CompetitionEventParticipationSummary( request, competitionId ):
-	competition = get_object_or_404( Competition, pk=competitionId )
 
 #-----------------------------------------------------------------------
 @access_validation()
@@ -3170,7 +3162,6 @@ import tempfile
 from wsgiref.util import FileWrapper
 import json
 import gzip
-import shutil
 import requests
 from django.http import StreamingHttpResponse
 

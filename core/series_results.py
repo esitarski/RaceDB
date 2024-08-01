@@ -1,12 +1,7 @@
-import os
-import math
-import operator
-import datetime
-import itertools
 import random
+import operator
 from copy import deepcopy
 from collections import defaultdict
-from django.utils.safestring import mark_safe
 
 from . import utils
 from .models import *

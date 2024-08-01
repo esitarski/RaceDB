@@ -1,10 +1,8 @@
-import datetime
 import operator
 import itertools
 from collections import defaultdict
 from io import StringIO
 
-from . import utils
 from .models import *
 
 def year_on_year_data( discipline=None, race_class=None, organizers=None, include_labels=None, exclude_labels=None ):

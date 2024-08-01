@@ -27,7 +27,7 @@ def fix_load( fname ):
 	if any( s_to in contents for s_from, s_to in from_to ) and '{% load date_fmt %}' not in contents:
 		try:
 			i = contents.find( '{% load' )
-		except:
+		except Exception:
 			return
 		contents = contents[:i] + '{% load date_fmt %}\n' + contents[i:]
 		print( fname, contents )

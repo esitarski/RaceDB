@@ -1,8 +1,3 @@
-import re
-import os
-import sys
-import locale
-import datetime
 import xlsxwriter
 from django.utils.translation import gettext_lazy as _
 

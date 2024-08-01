@@ -72,7 +72,7 @@ def query_rider( category=None, team_code=None, uci_id=None, first_name=None, la
 	data = urllib.parse.urlencode( filter_criteria, quote_via=urllib.parse.quote )
 	url_full = url + '?' + data
 	with urllib.request.urlopen(url_full) as response:
-	   ret = response.read()			
+		ret = response.read()			
 	
 	try:
 		values = json.loads( ret.decode() )							# Try standard utf-8.
