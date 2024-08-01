@@ -55,8 +55,8 @@ function reset_signature() {
 	</h3>
 {% endif %}
 {% if participant.category %}
-	<h3>{% trans "Category" %}: <strong>"{{participant.category.code}}"</strong>
-	{{participant.category.get_gender_display}}, {{participant.category.description}}
+	<h3>{% trans "Category" %}: <strong>{{participant.category.code}}</strong>
+	({{participant.category.get_gender_display}}), {{participant.category.description}}
 	</h3>
 {% endif %}
 <hr/>
@@ -64,7 +64,7 @@ function reset_signature() {
 {% trans "I confirm that I am" %}
 <strong>{{participant.license_holder.first_name}} {{participant.license_holder.last_name}}</strong>,
 {% if participant.category %}
-	{% trans "racing category" %} <strong>"{{participant.category.code}}"</strong>
+	{% trans "racing category" %} <strong>{{participant.category.code}}</strong> ({{participant.category.get_gender_display}})
 	{% trans "and my date of birth is " %}
 	<strong>{{participant.license_holder.date_of_birth|date_short}}</strong>.
 {% else %}
