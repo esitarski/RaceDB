@@ -38,8 +38,14 @@ function reset_signature() {
   margin: 0 0 0 0;
   border: 2px dotted #000;
 }
+
 .btn {
 	padding: 4;
+}
+
+.container {
+	margin-left:0px;
+	margin-right:0px;
 }
 </style>
 
@@ -49,7 +55,7 @@ function reset_signature() {
 	</h3>
 {% endif %}
 {% if participant.category %}
-	<h3>{% trans "Category" %}: <strong>{{participant.category.code}}:</strong>
+	<h3>{% trans "Category" %}: <strong>"{{participant.category.code}}"</strong>
 	{{participant.category.get_gender_display}}, {{participant.category.description}}
 	</h3>
 {% endif %}
@@ -58,7 +64,7 @@ function reset_signature() {
 {% trans "I confirm that I am" %}
 <strong>{{participant.license_holder.first_name}} {{participant.license_holder.last_name}}</strong>,
 {% if participant.category %}
-	{% trans "racing category" %} <strong>{{participant.category.code}}:</strong>,
+	{% trans "racing category" %} <strong>"{{participant.category.code}}"</strong>
 	{% trans "and my date of birth is " %}
 	<strong>{{participant.license_holder.date_of_birth|date_short}}</strong>.
 {% else %}
@@ -70,7 +76,7 @@ function reset_signature() {
 <div class="container hidden-print">
 	<div class="row">
 		<div class="col-md-12 text-right">
-			<a class="btn btn-primary" href="{{path}}SetSignatureWithTouchScreen/0/">{% trans "Get Signature with Scriptel" %}</a>
+			<a class="btn btn-primary" href="./SetSignatureWithTouchScreen/0/">{% trans "Get Signature with Scriptel" %}</a>
 		</div>
 	</div>
 </div>

@@ -1811,7 +1811,6 @@ class ParticipantSignatureForm( Form ):
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 		self.helper.form_id = 'id_signature_form'
-		self.helper.form_class = 'navbar-form navbar-left'
 		
 		if is_jsignature:
 			button_args = [
@@ -1828,8 +1827,8 @@ class ParticipantSignatureForm( Form ):
 		if is_jsignature:
 			self.helper.layout = Layout(
 				Container(
-					Row( Col(Field('signature'), 12) ),
-					Row( Col(Div(id="id_signature_canvas"), 12) ),
+					Row( Field('signature') ),
+					Row( Div(id="id_signature_canvas") ),
 
 					Row(
 						Col(button_args[0],4),
@@ -1841,7 +1840,7 @@ class ParticipantSignatureForm( Form ):
 		else:
 			self.helper.layout = Layout(
 				Container(
-					Row( Col( Field( 'signature' ), 12) ),
+					Row( Field('signature') ),
 					Row( Div( Div(*button_args, css_class='row'), css_class='col-md-12 text-center' ) ),
 				)
 			)
