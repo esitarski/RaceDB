@@ -14,5 +14,5 @@ pytz
 tzlocal
 fpdf2
 numpy
--e git+https://github.com/esitarski/pyllrp.git#egg=pyllrp
+pyllrp
 markdown
