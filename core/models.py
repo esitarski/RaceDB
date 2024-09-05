@@ -5189,18 +5189,17 @@ class ParticipantOption( models.Model ):
 	
 	@staticmethod
 	@transaction.atomic
-	def set_option_ids( participant, option_ids = [] ):
+	def set_option_ids( participant, option_ids = None ):
+		option_ids = option_ids or []
 		ParticipantOption.objects.filter(competition=participant.competition, participant=participant).delete()
-		if option_ids:
-			ParticipantOption.objects.bulk_create(
-				[ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id )
-					for option_id in set(option_ids)]
-			)
+		for option_id in set(option_ids):
+			ParticipantOption.objects.get_or_create( competition=participant.competition, participant=participant, option_id=option_id )
 	
 	@staticmethod
 	@transaction.atomic
-	def sync_option_ids( participant, option_id_included = {} ):
+	def sync_option_ids( participant, option_id_included = None ):
 		''' Expected option_id_included to be { option_id: True/False }. '''
+		option_id_included = option_id_included or {}
 		ParticipantOption.objects.filter(
 			competition=participant.competition,
 			participant=participant,
