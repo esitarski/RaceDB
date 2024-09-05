@@ -5189,25 +5189,28 @@ class ParticipantOption( models.Model ):
 	
 	@staticmethod
 	@transaction.atomic
-	def set_option_ids( participant, option_ids = None ):
-		option_ids = option_ids or []
-		ParticipantOption.objects.filter(competition=participant.competition, participant=participant).delete()
-		for option_id in set(option_ids):
+	def set_option_ids( participant, option_ids=None ):
+		option_ids = set( option_ids or [] )
+		for option_id in option_ids:
 			ParticipantOption.objects.get_or_create( competition=participant.competition, participant=participant, option_id=option_id )
+		ParticipantOption.objects.filter( competition=participant.competition, participant=participant ).exclude( option_id__in=option_ids ).delete()
 	
 	@staticmethod
 	@transaction.atomic
-	def sync_option_ids( participant, option_id_included = None ):
+	def sync_option_ids( participant, option_id_included=None ):
 		''' Expected option_id_included to be { option_id: True/False }. '''
 		option_id_included = option_id_included or {}
-		ParticipantOption.objects.filter(
-			competition=participant.competition,
-			participant=participant,
-			option_id__in = option_id_included.keys()
-		).delete()
-		for option_id, included in option_id_included.items():
-			if included:
-				ParticipantOption( competition=participant.competition, participant=participant, option_id=option_id ).save()
+		to_create = [option_id for option_id, included in option_id_included.items() if included]
+		for option_id in to_create:
+			ParticipantOption.objects.get_or_create( competition=participant.competition, participant=participant, option_id=option_id )
+		
+		to_delete = [option_id for option_id, included in option_id_included.items() if not included]
+		if to_delete:
+			ParticipantOption.objects.filter(
+				competition=participant.competition,
+				participant=participant,
+				option_id__in=to_delete
+			).delete()		
 	
 	@staticmethod
 	def get_option_ids( competition, participant ):
