@@ -1621,7 +1621,7 @@ def ParticipantTagChange( request, participantId ):
 
 @autostrip
 class ParticipantTagUSBReaderForm( Form ):
-	rfid_tag = forms.CharField( max_length=35, label=_('Tag') )
+	rfid_tag = forms.CharField( max_length=Participant._meta.get_field('tag').max_length, label=_('Tag') )
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
