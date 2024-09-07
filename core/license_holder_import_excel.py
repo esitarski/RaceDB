@@ -9,6 +9,7 @@ from openpyxl import load_workbook
 
 from django.db import transaction, IntegrityError
 from django.db.models import Q
+from django.forms.models import model_to_dict
 
 from . import import_utils
 from .import_utils import *
@@ -225,6 +226,14 @@ def license_holder_import_excel(
 	# Process the records in large transactions for efficiency.
 	today = datetime.date.today()
 	
+	def v_to_str( k, v ):
+		# Return a reasonable string field.
+		if isinstance(v, str):
+			return f'"{v}"'
+		if k == 'gender':
+			return ['Men','Women'][v]
+		return str(v)
+				
 	def clean_license_header_row( i, ur ):
 		v = ifm.finder( ur )
 		
@@ -516,17 +525,11 @@ def license_holder_import_excel(
 				
 				status_count[status] += 1
 				if status != 'Unchanged':
-					msg = 'Row {:>6}: {}: {:>8} {}\n'.format(
+					msg = 'Row {:>6}: {}: {:>8}: {}\n'.format(
 						i,
 						status,
 						license_holder.license_code,
-						', '.join( '{}'.format(v) if v else 'None' for v in [
-								license_holder.date_of_birth.strftime('%Y-%m-%d'), license_holder.nation_code, license_holder.uci_id,
-								'{} {}'.format(license_holder.first_name, license_holder.last_name),
-								license_holder.city, license_holder.state_prov,
-								license_holder.emergency_contact_name, license_holder.emergency_contact_phone,
-							]
-						),
+						', '.join( f'{k}={v_to_str(k,v)}' for k,v in model_to_dict( license_holder ).items() if k not in ('id','search_text') and v not in (None,'') )
 					)
 					if status == 'Changed':
 						msg += '            Updated: {}\n'.format( ', '.join( '{}=({})'.format(k,v) for k,v in fields_changed ) )

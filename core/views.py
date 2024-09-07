@@ -1615,9 +1615,9 @@ def UploadPrereg( request, competitionId ):
 class ImportExcelForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 	set_team_all_disciplines = forms.BooleanField( initial=False, required=False, label=_('Update Default Team for all Disciplines'), )
-	replace_tags = forms.BooleanField( initial=False, required=False, label=_('Replace Seasons Bib Numbers (if present).'),
+	replace_bibs = forms.BooleanField( initial=False, required=False, label=_('Replace Seasons Bib Numbers (if present).'),
 			help_text=_('WARNING: Only check this if you wish to replace the seasons (existing) chip tags with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
-	replace_bibs = forms.BooleanField( initial=False, required=False, label=_('Replace Seasons RFID Tags (if present).'),
+	replace_tags = forms.BooleanField( initial=False, required=False, label=_('Replace Seasons RFID Tags (if present).'),
 			help_text=_('WARNING: Only check this if you wish to replace the seasons (existing) bib numbers with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	update_license_codes = forms.BooleanField( initial=False, required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
 			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
@@ -1667,6 +1667,7 @@ def LicenseHoldersImportExcel( request ):
 	if request.method == 'POST':
 		form = ImportExcelForm(request.POST, request.FILES)
 		if form.is_valid():
+			replace_tags=form.cleaned_data['replace_tags'],
 			results_str = handle_license_holder_import_excel(
 				request.FILES['excel_file'],
 				update_license_codes=form.cleaned_data['update_license_codes'],
