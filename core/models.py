@@ -2900,7 +2900,7 @@ class LicenseHolder(models.Model):
 	
 	def get_short_tag_str( self ):
 		tags = (self.existing_tag, self.existing_tag2)
-		tags = [t[:8] + '...' if t and len(t) > 8 else t for t in tags]
+		tags = [(t[:5] + '...' + t[-5:]) if t and len(t) > 12 else t for t in tags]
 		return '{}, {}'.format( *tags ) if (tags[0] and tags[1]) else (tags[0] or tags[1] or '')
 	
 	@staticmethod
