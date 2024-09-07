@@ -61,7 +61,7 @@ class SelfServeAntennaForm( Form ):
 
 @autostrip
 class SelfServeUSBReader( Form ):
-	rfid_tag = forms.CharField( max_length=24, label=_('RFID Tag') )
+	rfid_tag = forms.CharField( label=_('RFID Tag') )
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -75,7 +75,7 @@ class SelfServeUSBReader( Form ):
 		]
 		
 		self.helper.layout = Layout(
-			Row( Field('rfid_tag', size=24), ),
+			Row( Field('rfid_tag', size=40), ),
 			Row( HTML('<hr/>') ),
 			Row( button_args[0], ),
 		)
