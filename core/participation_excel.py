@@ -1,5 +1,6 @@
 import xlsxwriter
 from django.utils.translation import gettext_lazy as _
+import io
 
 from . import utils
 from .models import *
@@ -10,7 +11,7 @@ def participation_excel( start_date=None, end_date=None, disciplines=None, race_
 		competitions = competitions.filter( start_date__gte = start_date )
 	if end_date is not None:
 		competitions = competitions.filter( start_date__lte = end_date )
-	if disciplines > 0:
+	if disciplines:
 		competitions = competitions.filter( discipline__pk__in = disciplines )
 	if race_classes:
 		competitions = competitions.filter( race_class__pk__in = race_classes )
@@ -38,7 +39,7 @@ def participation_excel( start_date=None, end_date=None, disciplines=None, race_
 	license_holders = sorted( license_holders, key=lambda x: x.get_search_text() )
 	events.sort( key=lambda x: x.date_time )
 	
-	output = BytesIO()
+	output = io.BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	title_format = wb.add_format( dict(bold=True, text_wrap= True) )
 	
