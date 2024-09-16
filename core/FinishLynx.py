@@ -1,3 +1,4 @@
+import io
 import csv
 import codecs
 import socket
@@ -5,15 +6,14 @@ import getpass
 import zipfile
 import operator
 import datetime
-from io import BytesIO, StringIO
 
 from .models import *
 from .get_version import get_version
 
 def getWriterIO():
-	io = StringIO()
-	writer = csv.writer( io )
-	return writer, io
+	s = io.StringIO()
+	writer = csv.writer( s )
+	return writer, s
 	
 def FinishLynxExport( competition ):
 	
@@ -62,7 +62,7 @@ def FinishLynxExport( competition ):
 				)
 			evtWriter.writerow( ['{}'.format(v) for v in (['', p.bib])] )
 	
-	zipIO = BytesIO()
+	zipIO = io.BytesIO()
 	with zipfile.ZipFile(zipIO, 'w') as zip:
 		for fname, io in fnameIOs:
 			# Write as UTF-16-LE with appropriate BOM (Byte Order Mark).

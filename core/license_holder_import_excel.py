@@ -1,5 +1,5 @@
+import io
 import re
-from io import BytesIO
 import sys
 import html
 import datetime
@@ -548,7 +548,7 @@ def license_holder_import_excel(
 
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
+		wb = load_workbook( filename = io.BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')

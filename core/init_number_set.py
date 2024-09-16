@@ -2,7 +2,6 @@ import io
 import sys
 import datetime
 from openpyxl import load_workbook
-from io import BytesIO
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from . import import_utils

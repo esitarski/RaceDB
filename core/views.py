@@ -1,5 +1,12 @@
-import io
 from .views_common import *
+
+import io
+import zipfile
+import operator
+import itertools
+import traceback
+import datetime
+
 from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils import timezone
@@ -15,13 +22,6 @@ except Exception:
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseForbidden
-
-import io
-import zipfile
-import operator
-import itertools
-import traceback
-import datetime
 
 from .get_crossmgr_excel import get_crossmgr_excel, get_crossmgr_excel_tt
 from .get_start_list_excel import get_start_list_excel

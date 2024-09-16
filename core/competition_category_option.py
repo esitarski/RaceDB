@@ -4,7 +4,6 @@ from django.utils.translation import gettext_lazy as _
 import io
 import xlsxwriter
 from openpyxl import load_workbook
-from io import BytesIO
 
 from .views_common import *
 from .FieldMap import standard_field_map
