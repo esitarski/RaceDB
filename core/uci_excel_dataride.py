@@ -1,3 +1,4 @@
+import io
 import xlsxwriter
 import operator
 
@@ -86,7 +87,7 @@ def uci_excel( event, category, fname, startList=True ):
 				rr.finish_time = None
 			results.append( rr )
 	
-	output = BytesIO()
+	output = io.BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(font_size=24, valign='vcenter') )

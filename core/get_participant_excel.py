@@ -1,3 +1,4 @@
+import io
 import xlsxwriter
 from django.utils import timezone
 
@@ -46,7 +47,7 @@ def write_row_data( ws, row, row_data, format = None ):
 def get_participant_excel( q = None ):
 	q = (q or Q()) & Q( role=Participant.Competitor )
 	
-	output = BytesIO()
+	output = io.BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( {'bold': True} )

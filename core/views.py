@@ -1,3 +1,4 @@
+import io
 from .views_common import *
 from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe

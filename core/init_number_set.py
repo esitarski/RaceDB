@@ -1,3 +1,4 @@
+import io
 import sys
 import datetime
 from openpyxl import load_workbook
@@ -98,7 +99,7 @@ def init_number_set( numberSetId, worksheet_name='', worksheet_contents=None, me
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
+		wb = load_workbook( filename = io.BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')

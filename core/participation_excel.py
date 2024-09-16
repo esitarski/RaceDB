@@ -1,6 +1,6 @@
+import io
 import xlsxwriter
 from django.utils.translation import gettext_lazy as _
-import io
 
 from . import utils
 from .models import *

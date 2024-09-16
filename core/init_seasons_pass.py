@@ -84,7 +84,7 @@ def init_seasons_pass( seasonsPassId, worksheet_name='', worksheet_contents=None
 	
 	sheet_name = None
 	if worksheet_contents is not None:
-		wb = load_workbook( filename = BytesIO(worksheet_contents), read_only=True, data_only=True )
+		wb = load_workbook( filename = io.BytesIO(worksheet_contents), read_only=True, data_only=True )
 	else:
 		try:
 			fname, sheet_name = worksheet_name.split('$')

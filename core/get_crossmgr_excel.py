@@ -1,3 +1,4 @@
+import io
 import datetime
 import xlsxwriter
 
@@ -272,7 +273,7 @@ def add_properties_page( wb, title_format, event, raceNumber ):
 def get_crossmgr_excel( event_mass_start ):
 	competition = event_mass_start.competition
 
-	output = BytesIO()
+	output = io.BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
@@ -331,7 +332,7 @@ def get_crossmgr_excel( event_mass_start ):
 def get_crossmgr_excel_tt( event_tt ):
 	competition = event_tt.competition
 
-	output = BytesIO()
+	output = io.BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )

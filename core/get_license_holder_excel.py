@@ -1,3 +1,4 @@
+import io
 import xlsxwriter
 from django.db.models.aggregates import Max
 
@@ -42,7 +43,7 @@ def write_row_data( ws, row, row_data, format = None ):
 def get_license_holder_excel( q = None ):
 	q = q or Q()
 	
-	output = BytesIO()
+	output = io.BytesIO()
 	wb = xlsxwriter.Workbook( output, {'in_memory': True} )
 	
 	title_format = wb.add_format( dict(bold = True) )
