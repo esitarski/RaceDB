@@ -1,1 +1,1 @@
-version="v3.0.105-private"
+version="v3.0.106-private"
