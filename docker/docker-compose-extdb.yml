@@ -1,4 +1,3 @@
-version: "3.4"
 services:
     racedb:
         image: esitarski/racedb:latest
