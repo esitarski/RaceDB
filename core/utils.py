@@ -90,8 +90,14 @@ def removeDiacritic( s ):
 def safe_print( *args ):
 	print ( removeDiacritic( ' '.join('{}'.format(a) for a in args) ) )
 
+'''
+def cleanExcelSheetName( sheetName ):
+	sheetName = unicodedata.normalize('NFKD', '{}'.format(sheetName)).encode('ASCII', 'ignore').decode()
+	return re.sub(r'[+!#$%&+~`".:;|\\/?*\[\] ]+', ' ', sheetName)[:31]
+'''
+
 def cleanExcelSheetName( s ):
-	return re.sub( r'[\[\]\:\*\?\/\\\]', '-', removeDiacritic(s) )[:31]
+	return removeDiacritic(s).replace( '"[]:*?\\\'', '' )[:31]
 
 reInvalidFilenameChars = re.compile( '[^-_.() a-zA-Z0-9]' )
 def cleanFileName( filename ):

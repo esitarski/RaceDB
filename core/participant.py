@@ -297,7 +297,7 @@ def Participants( request, competitionId ):
 			cat_lh[category_id].append( license_holder_id )
 		# For each category, update the license holders to the status of the past license check.
 		for category_id, license_holders in cat_lh.items():
-			Participant.objects.filter( category__id=category_id, license_holder__id__in=license_holders ).exclude( participant.license_checked ).update( license_checked=True )
+			Participant.objects.filter( category__id=category_id, license_holder__id__in=license_holders ).exclude( license_checked=True ).update( license_checked=True )
 	else:
 		license_holder_license_checked = set()
 	
