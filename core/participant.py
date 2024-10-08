@@ -280,7 +280,7 @@ def Participants( request, competitionId ):
 				competition__report_label_license_check=competition.report_label_license_check,
 			).exclude( competition=competition ).order_by().values_list('category__id', 'license_holder__id').iterator()
 		) | set(
-			# Check all participante that have had their license check logged in the last year.
+			# Check all participants that have had their license check logged in the last year.
 			LicenseCheckState.objects.filter(
 				license_holder__id__in=participants.values_list('license_holder__id', flat=True),
 				category__id__in=category_requires_license_check_query,

@@ -384,15 +384,27 @@ def init_prereg(
 				if not bib and (assign_missing_bibs or bib_auto):
 					tt.start( 'get_bib_auto' )
 					
+					has_existing_bib = False
+					has_number_set = bool( competition.number_set )
+					allocated_bib = False
+					
 					# Retrieve the existing bib if it exists for this license_holder and category.
 					if competition.number_set:
 						bib = competition.number_set.get_bib( competition, license_holder, category, category_numbers_set[participant.category] )
+						has_existing_bib = bool( bib )
 					
 					# If no existing bib, allocate the next available one.
 					if not bib:
 						bib = participant.get_bib_auto()
 						if bib and competition.number_set:
-							competition.number_set.assign_bib( participant.license_holder, bib )
+							allocated_bib = competition.number_set.assign_bib( participant.license_holder, bib )
+							
+					if not bib:
+						if not competition.number_set:
+							ms_write( '**** Row {}: Error={}\nCategory={} Name="{}"\n'.format(
+								i, 'Competition has no NumberSet: cannot auto-allocate bib',
+								category_code, name,
+							) )
 				
 				# If we have an assigned bib, ensure it is respected.
 				tt.start( 'validate_bib' )
