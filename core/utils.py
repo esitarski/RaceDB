@@ -96,9 +96,9 @@ def cleanExcelSheetName( sheetName ):
 	return re.sub(r'[+!#$%&+~`".:;|\\/?*\[\] ]+', ' ', sheetName)[:31]
 '''
 
-excel_replace_chars = str.maketrans( {c:'-' for c in '#$%,;|"[]:*?\\\''} )
+excel_sheet_replace_chars = str.maketrans( {c:'-' for c in '#$%,;|"[]:*?\\'} )
 def cleanExcelSheetName( s ):
-	return removeDiacritic(s).translate( excel_replace_chars )[:31]
+	return removeDiacritic(s).translate( excel_sheet_replace_chars )[:31]
 
 reInvalidFilenameChars = re.compile( '[^-_.() a-zA-Z0-9]' )
 def cleanFileName( filename ):
@@ -119,7 +119,7 @@ def toUnicode( s ):
 				pass
 		return s.decode('utf-8', 'ignore')
 	
-	return '{}'.format(s)
+	return f'{s}'
 
 def getHeaderFields( fields ):
 	def sanitize( v, i ):
