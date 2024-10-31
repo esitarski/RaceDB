@@ -381,7 +381,7 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	primes, prime_fields = get_primes( event, bibs_in_results )
 	result_notes = sorted( (rr for rr in results if rr.result_note), operator.attrgetter('participant.bib') )
 	
-	note_col_span = 3 + has_licenses + has_uci_ids
+	note_col_span = 3 + has_licenses + has_uci_ids - 1
 	
 	ave_speed = None
 	race_time = None
