@@ -64,6 +64,9 @@ def get_payload_for_result( has_results, result_list, cat_name, cat_type, result
 			'lastTimeOrig': race_times[-1] if race_times else 0.0,
 			'status':	rr.status_text,
 		}
+		if rr.result_note:
+			d['resultNote'] = rr.resultNote
+		
 		if rr.ave_kmh:
 			d['speed'] = '{:.2f} {}'.format(rr.ave_kmh*units_conversion, speed_unit)
 			# Get raceDistance from leader.

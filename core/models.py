@@ -361,7 +361,7 @@ class CategoryFormat(models.Model):
 	
 	@transaction.atomic
 	def make_copy( self ):
-		categories = self.category_set.all()
+		categories = list( self.category_set.all() )
 		
 		category_format_new = self
 		category_format_new.pk = None
@@ -1448,7 +1448,7 @@ class CategoryNumbers( models.Model ):
 			return -1
 	
 	def make_copy( self, competition_new ):
-		categories = self.categories.all()
+		categories = list( self.categories.all() )
 		
 		category_numbers_new = self
 		category_numbers_new.pk = None
@@ -1909,7 +1909,7 @@ class WaveBase( models.Model ):
 		return self.event.competition.category_format
 	
 	def make_copy( self, event_new ):
-		categories = self.categories.all()
+		categories = list( self.categories.all() )
 		wave_new = self
 		wave_new.pk = None
 		wave_new.id = None
@@ -3001,6 +3001,8 @@ class Result(models.Model):
 	time_bonus = DurationField( null=True, blank=True, verbose_name=_('Time Bonus') )
 	
 	relegated = models.BooleanField( default=False, verbose_name=_('Relegated') )
+
+	result_note = models.TextField( default=None, null=True, blank=True, verbose_name=_('Result Note') )
 
 	@property
 	def adjusted_finish_time( self ):
@@ -5305,11 +5307,11 @@ class Series( Sequence ):
 	def make_copy( self ):
 		self_pk = self.pk
 		collections = (
-			self.seriesincludecategory_set.all(),
-			self.seriespointsstructure_set.all(),
-			self.seriesupgradeprogression_set.all(),
-			self.categorygroup_set.all(),
-			self.seriescompetitionevent_set.all(),	# This must be last.
+			list( self.seriesincludecategory_set.all() ),
+			list( self.seriespointsstructure_set.all() ),
+			list( self.seriesupgradeprogression_set.all() ),
+			list( self.categorygroup_set.all() ),
+			list( self.seriescompetitionevent_set.all() ),	# This must be last.
 		)
 		
 		series_new = self

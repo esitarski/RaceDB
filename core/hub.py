@@ -374,7 +374,14 @@ def CategoryResults( request, eventId, eventType, categoryId ):
 	is_timetrial = (eventType == 1)
 	show_category = wave.rank_categories_together
 	
-	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
+	has_licenses = any( rr.participant_license_holder.license_code for rr in result )
+	has_uci_ids = any( rr.participant_license_holder.uci_id for rr in result )
+	
+	bibs_in_results = {rr.participant.bib for rr in results}
+	primes, prime_fields = get_primes( event, bibs_in_results )
+	result_notes = sorted( (rr for rr in results if rr.result_note), operator.attrgetter('participant.bib') )
+	
+	note_col_span = 3 + has_licenses + has_uci_ids
 	
 	ave_speed = None
 	race_time = None
