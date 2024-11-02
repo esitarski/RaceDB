@@ -8,7 +8,8 @@ class Command(BaseCommand):
 	
 	def add_arguments(self, parser):
 		parser.add_argument('backup_filename', help='name of backup file ending in .json.gz')
-		parser.add_argument('--no_input', help='suppress asking for confirmation')
+		parser.add_argument('--reset_db', action='store_true', help='DROP then CREATE the database, then run migrate ')
+		parser.add_argument('--no_input', action='store_true', help='suppress asking for confirmation')
 					
 	def handle(self, *args, **options):
 		backup_filename = options['backup_filename']
@@ -17,7 +18,7 @@ class Command(BaseCommand):
 				print( 'Cancelled.' )
 				return
 		
-		status, msg = backup_restore( backup_filename )
+		status, msg = backup_restore( backup_filename, options['reset_db'] )
 		if not status:
 			print( 'Failure: {}'.format(msg) )
 		else:

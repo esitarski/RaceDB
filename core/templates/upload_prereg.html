@@ -80,17 +80,17 @@ The same prereg data sheet can be imported into the same Competition any number 
 <tr><th>Column</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong> or <strong>Lic</strong> or <strong>Lic #</strong></td><td>Recommended.  Regional License code (<strong>not UCI code</strong>).<br/>
+<tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong> or <strong>Lic</strong> or <strong>Lic #</strong></td><td>Recommended.  Regional License code (<strong>not UCI ID</strong>).<br/>
 Used to find the LicenseHolder in the database.<br/>
 If the UCI ID and License Code is missing or blank, RaceDB will attempt to find the LicenseHolder using the <strong>LastName</strong>, <strong>FirstName</strong>, <strong>Date of Birth</strong> (if present) and <strong>Gender</strong> (if present).<br/>
 If the record can be found, it is updated with all provided data fields.<br/>
 If a match cannot be found, a new LicenseHolder will be created with a temporary license code using all provided data fields.<br/>
 If multiple matches are found, an error will be reported.</td></tr>
-<tr><td><strong>UCI Code</strong> or <strong>UCICode</strong> or <strong>UCI</strong></td><td>Optional data field.  UCI code (format NNNYYYYMMDD).</td></tr>
+<tr><td><strong>UCI ID</strong> or <strong>UCIID</strong></td><td>Optional data field.  UCI ID (11-digit number optional format NNN NNN NNN NN).</td></tr>
 <tr><td><strong>LastName</strong> or <strong>Last Name</strong> or <strong>LName</strong></td><td>Optional data field.  Rider's Last name.</td></tr>
 <tr><td><strong>FirstName</strong> or <strong>First Name</strong> or <strong>FName</strong></td><td>Optional data field.  Rider's First name.</td></tr>
 <tr><td><strong>Gender</strong> or <strong>Rider Gender</strong> or <strong>Sex</strong></td><td>Optional data field.  Riders Gender (Men/Women).  Read as <strong>Women</strong> if the cell value's first character is 'w', 'W', 'f' or 'F'.  If the field has a value of anything else, or is blank, it is read as <strong>Men</strong>.</td></tr>
-<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional data field.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.   If missing, and the UCI Code is present, the date of birth will be extracted from the UCI code.</td></tr>
+<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional data field.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.</td></tr>
 <tr><td><strong>Category</strong> or <strong>Category Code</strong></td><td>Optional.  Rider's Category for this race.  The field must match the Category Code of a Category in the Competition's Category Format.</td></tr>
 <tr><td><strong>Team</strong> or <strong>Rider Team</strong> or <strong>Team Name</strong></td><td>Optional data field.  Rider's Team.  The Team must already be defined in the database.</td></tr>
 <tr><td><strong>Preregistered</strong></td><td>Optional.  Sets the rider's preregistered flag.  Default is True. **</td></tr>

@@ -3984,7 +3984,7 @@ class Participant(models.Model):
 	
 	@property
 	def name( self ):
-		fields = [ getattr(self.license_holder, a) for a in ('first_name', 'last_name', 'uci_code', 'license_code') ]
+		fields = [ getattr(self.license_holder, a) for a in ('first_name', 'last_name', 'uci_id', 'license_code') ]
 		if self.team:
 			fields.append( self.team.short_name() )
 		return ''.join( ['{} '.format(self.bib) if self.bib else '', ', '.join( [f for f in fields if f] )] )

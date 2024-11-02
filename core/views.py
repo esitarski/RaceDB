@@ -2815,22 +2815,29 @@ def get_model_names( fname ):
 				model_names.add( obj['model'] )
 				yield obj['model']
 
-def backup_restore( fname ):
+def backup_restore( fname, reset_db=False ):
 	if not os.path.exists(fname):
-		return False, 'File "{}" cannot be found.  Aborting.'.format(fname)
+		return False, f'File "{fname}" cannot be found.  Aborting.'
 	if not fname.endswith('.json.gz'):
-		return False, 'File "{}" does not end with ".json.gz".  Aborting.'.format(fname)
+		return False, f'File "{fname}" does not end with ".json.gz".  Aborting.'
 
-	# Clear all records from tables in the backup file.
-	print( 'Clearing tables from "{}"...'.format(fname) )
-	for mn in get_model_names(fname):
-		print( 'Clearing table {}...'.format(mn), end='' )
-		model = apps.get_model( *mn.split(',',1) )
-		model.objects.all().delete()
-		print( ' Done.' )
+	if reset_db:
+		# DROP and CREATE the database with reset_db.  Then run migrate.
+		print( f'Resetting database...' )
+		management.call_command( 'reset_db', '--noinput' )	
+		print( f'Migrating database...' )
+		management.call_command( 'migrate' )	
+	else:
+		# Clear all records from tables in the backup file.
+		print( f'Clearing tables from "{fname}"...' )
+		for mn in get_model_names(fname):
+			print( f'Clearing table {mn}...', end='' )
+			model = apps.get_model( *mn.split(',',1) )
+			model.objects.all().delete()
+			print( ' Done.' )
 	
 	# Restore the backup data.
-	print( 'Loading backup data from "{}" (be patient, this can take a while).'.format(fname) )
+	print( f'Loading backup data from "{fname}" (be patient, this can take a while).'
 	management.call_command( 'loaddata', fname )	
 	return True, 'Success'
 
