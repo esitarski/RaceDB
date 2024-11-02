@@ -2,9 +2,9 @@
 
 from django.db import migrations, models
 
-from .IgnoreException import IgnoreExceptionSubclass
 
 # Ignore exceptions from RenameIndex which can occure if the old indexes don't exist.
+from core.IgnoreException import IgnoreExceptionSubclass
 RenameIndexIgnoreException = IgnoreExceptionSubclass( migrations.RenameIndex )
 
 class Migration(migrations.Migration):

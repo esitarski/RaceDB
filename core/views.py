@@ -2837,7 +2837,7 @@ def backup_restore( fname, reset_db=False ):
 			print( ' Done.' )
 	
 	# Restore the backup data.
-	print( f'Loading backup data from "{fname}" (be patient, this can take a while).'
+	print( f'Loading backup data from "{fname}" (be patient, this can take a while).' )
 	management.call_command( 'loaddata', fname )	
 	return True, 'Success'
 
