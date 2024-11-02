@@ -27,16 +27,16 @@
 <p>
 Seasons Pass holders must match pre-existing <strong>License Holders</strong> in the database.<br/>
 Seasons Pass Holders are identified by their License, or alternatively, their LastName, FirstName and optionally Date of Birth.<br/>
-If you have the License code, use that for identification as it is guaranteed unique.<br\>
-If you don't have the License Code, you can use the <strong>Last Name</strong>, <strong>First Name</strong> and optionally the <strong>Date of Birth</strong>
-(if you have it) to match the License Holder.  Be aware that by not using the License code, some License Holders may not match
+If you have the License code or UCI ID, use that for identification as it is guaranteed unique.<br\>
+If you don't have the License Code or UCI ID, you can use the <strong>Last Name</strong>, <strong>First Name</strong> and optionally the <strong>Date of Birth</strong>
+(if you have it) to match the License Holder.  Be aware that some License Holders may not match
 (say, due to spelling errors) and/or there could be more than one match (if two people have exactly the same name).
 </p>
 <p>
-When using LastName and FirstName, capitalization and accents are ignored in the search.  Otherwise the name must match exactly.  For example, Joseph != Joey != Joe, Bob != Robert, Sue != Susan, Kris != Chris, etc.
+When using LastName and FirstName, capitalization and accents are ignored.  Otherwise the name must match exactly.  For example, Joseph != Joey != Joe, Bob != Robert, Sue != Susan, Kris != Chris, etc.
 </p>
 <p>
-Check for import errors carefully.  Failed matches, or multiple matches, and those riders will not be added to the Season's Pass list.
+Check import errors carefully.  Failed matches, or multiple matches will not be added to the Season's Pass list.
 </p>
 <p>
 The spreadsheet must have a specific format:
@@ -45,7 +45,8 @@ The spreadsheet must have a specific format:
 <li>The first Row of the sheet must be a <strong>Header Row</strong>.</li>
 <li>Columns in the <strong>Header Row</strong> can be in any order.</li>
 <li>The Header Row must contain a <strong>License</strong> column if you are importing by License.</li>
-<li>The Header Row can contain Last Name, First Name and ideally, Date of Birth if you don't have the License code.</li>
+<li>Or, the Header Row must contain a <strong>UCI ID</strong> column if you are importing by UCI ID.</li>
+<li>The Header Row can contain Last Name, First Name and ideally, Date of Birth if you don't have the License code or UCI ID.</li>
 <li>Addition column headers are ignored.</li>
 </ul>
 </p>
@@ -59,9 +60,9 @@ The same Seasons Pass data sheet can be imported any number of times without pro
 <tbody>
 <tr><td><strong>License</strong> or <strong>License Code</strong> or <strong>License Numbers</strong></td><td>Regional License code (<strong>not UCI ID</strong>).  Use this if you have it.</td></tr>
 <tr><td><strong>UCI ID</strong> or <strong>UCIID</strong></td><td>UCI ID.  Use this if you have it as it is guaranteed to be unique.</td></tr>
-<tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Rider's Last name.  Required if not using License codes.</td></tr>
-<tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Rider's First name.  Required if not using License codes</td></tr>
-<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional data field.  Helps if you have License Holders with the same name.  The rider's birthday as an Excel date or as a string of the form YYYY-MM-DD.</td></tr>
+<tr><td><strong>LastName</strong> or <strong>Last Name</strong></td><td>Rider's Last name.  Required if not using License codes or UCI ID.</td></tr>
+<tr><td><strong>FirstName</strong> or <strong>First Name</strong></td><td>Rider's First name.  Required if not using License codes or UCI ID</td></tr>
+<tr><td><strong>Date of Birth</strong> or <strong>DOB</strong> or <strong>Birthdate</strong></td><td>Optional data field.  Helps if you have License Holders with the same name.  Must be an Excel date or a string of the form YYYY-MM-DD.</td></tr>
 </tbody>
 </table>
 {% endblock content %}
