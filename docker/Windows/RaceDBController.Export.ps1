@@ -256,9 +256,9 @@ zL13clOn81zV5pNRx+3ZvdpA7OyjKbO9gfG0LnY+zmdy/+MlzK9fP+E/FvPHbJh5zru0rfL5B/yt
 	
 	$exportToolStripMenuItem_Click = {
 		$date = Get-Date -Format "yyyyMMdd-HHmm"
-		$filename = "racedb-export-$date.json"
+		$filename = "racedb-export-$date.json.gz"
 		# docker exec racedb python3 /RaceDB/manage.py dumpdata core --indent 2 --output /racedb-data/${filename}
-		Execute-Command -commandTitle "status" -commandPath "docker.exe" -commandArguments "exec racedb_app python3 /RaceDB/manage.py dumpdata core --indent 2 --output /racedb-data/${filename}"
+		Execute-Command -commandTitle "status" -commandPath "docker.exe" -commandArguments "exec racedb_app python3 /RaceDB/manage.py backup_create /racedb-data/${filename}"
 		[System.Windows.Forms.MessageBox]::Show("Data Exported to racedb-data\${filename}", "Data Export");
 		Invoke-Item .
 	}
@@ -269,7 +269,7 @@ zL13clOn81zV5pNRx+3ZvdpA7OyjKbO9gfG0LnY+zmdy/+MlzK9fP+E/FvPHbJh5zru0rfL5B/yt
 		
 		$OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
 		$OpenFileDialog.initialDirectory = $initialDirectory
-		$OpenFileDialog.filter = "JSON (*.json)| *.json"
+		$OpenFileDialog.filter = "GZip (*.gz)| *.gz"
 		$OpenFileDialog.ShowDialog() | Out-Null
 		return ($OpenFileDialog.filename)
 	}
@@ -282,8 +282,7 @@ zL13clOn81zV5pNRx+3ZvdpA7OyjKbO9gfG0LnY+zmdy/+MlzK9fP+E/FvPHbJh5zru0rfL5B/yt
 			{
 				Copy-Item -Path $filename -Destination .\racedb-data
 				$importname = [System.IO.Path]::GetFileName($filename)
-				Execute-Command -commandTitle "status" -commandPath "docker.exe" -commandArguments "exec racedb_app python3 /RaceDB/manage.py flush"
-				Execute-Command -commandTitle "status" -commandPath "docker.exe" -commandArguments "exec racedb_app python3 /RaceDB/manage.py loaddata /racedb-data/${importname}"
+				Execute-Command -commandTitle "status" -commandPath "docker.exe" -commandArguments "exec racedb_app python3 /RaceDB/manage.py backup_restore /racedb-data/${importname}"
 				[System.Windows.Forms.MessageBox]::Show("Data Imported from ${filename} (racedb-data\$importname)", "Data Export");
 			}
 			else

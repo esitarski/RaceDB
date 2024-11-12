@@ -137,8 +137,7 @@ importdata()
         exit 1
     fi
     echo "Importing racedb-data/${filename}..."
-    $DOCKERCMD exec racedb python3 /RaceDB/manage.py flush
-    $DOCKERCMD exec racedb python3 /RaceDB/manage.py loaddata /racedb-data/${filename}
+    $DOCKERCMD exec racedb python3 /RaceDB/manage.py backup_restore /racedb-data/${filename}
 }
 
 exportdata()
@@ -146,7 +145,7 @@ exportdata()
     filename=$1
     if [ -z "$filename" ]; then
         DATE=$(date +%Y%m%d-%H%M%S)
-        filename="racedb-export-${DATE}.json"
+        filename="racedb-export-${DATE}.json.gz"
     fi
     if [ ! -f "$COMPOSEFILE" ]; then
         echo "ERROR: Command must be run from same directory as the $COMPOSEFILE file."
@@ -157,7 +156,7 @@ exportdata()
         exit 1
     fi
     echo "Exporting to racedb-data/${filename}..."
-    $DOCKERCMD exec racedb python3 /RaceDB/manage.py dumpdata core --indent 2 --output /racedb-data/${filename}
+    $DOCKERCMD exec racedb python3 /RaceDB/manage.py backup_create /racedb-data/${filename}
     echo "Export saved to racedb-data/${filename}..."
 }
 

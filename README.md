@@ -97,11 +97,18 @@ Commands:
 | export | export database to racedb-data |
 | import {filename} | database database from racedb-data/{filename} |
 
-On Windows, most above commands are encapsulated in the UI with the expection of the manage command.
+On Windows, most above commands are encapsulated in the UI with the exception of the manage command.
+
+It is recommended to run the __export__ command before attempting to upgrade.
+In this way, if the upgrade fails, you will be able to restore all your data from the export file.
 
 ## Data Directory and Automatic Backups
 
-When the container is started, it will create a racedb-data directory in the same directory as the docker-compose.yml file. This directory is where data is exchanged from inside the container. You will also find the racedb log file that is created as racedb is running. By default, when the container is started, the container will save the current database to the racedb-data/backups directory, effectively backing up the database. The output is a json file suitable to restore the database using the manage.py command. You should check the contents of the directory randomly and clean up the files. Files are compressed with gzip to save space.
+When the container is started, it will create a racedb-data directory in the same directory as the docker-compose.yml file
+This directory is where data is exchanged from inside the container. You will also find the racedb log file that is created as racedb is running
+By default, when the container is started, the container will save the current database to the racedb-data/backups directory, effectively backing up the database.
+The output is a json.gz file suitable to restore the database using the manage.py command.
+You should check the contents of the directory randomly and clean up the files. Files are compressed with gzip to save space.
 
 You can disable automatic backups by creating an empty file named ".nobackup" in the racedb-data directory.
 
