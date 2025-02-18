@@ -103,7 +103,8 @@ def license_holder_msg_to_html( msg ):
 
 def license_holder_import_excel(
 		worksheet_name='', worksheet_contents=None, message_stream=sys.stdout,
-		update_license_codes=False,
+		update_license_codes_by_name_dob_gender=False,
+		update_license_codes_by_uci_id=False,
 		set_team_all_disciplines=False,
 		replace_bibs=False,
 		replace_tags=False,
@@ -448,8 +449,11 @@ def license_holder_import_excel(
 							), type=Warning
 						)
 				
+					if update_license_codes_by_uci_id:
+						ensure_unique( license_code, existing_tag, license_holder.id )						
+						
 				#------------------------------------------------------------------------------
-				if not license_holder and update_license_codes:
+				if not license_holder and update_license_codes_by_name_dob_gender:
 					# Try to find the license holder by name, DOB, gender
 					lhs = list( LicenseHolder.objects.filter(qNameDOBGender) )
 					if len(lhs) == 1:

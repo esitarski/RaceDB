@@ -1620,8 +1620,16 @@ class ImportExcelForm( Form ):
 			help_text=_('WARNING: Only check this if you wish to replace the seasons (existing) chip tags with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
 	replace_tags = forms.BooleanField( initial=False, required=False, label=_('Replace Seasons RFID Tags (if present).'),
 			help_text=_('WARNING: Only check this if you wish to replace the seasons (existing) bib numbers with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
-	update_license_codes = forms.BooleanField( initial=False, required=False, label=_('Update License Codes based on First Name, Last Name, Date of Birth, Gender match'),
-			help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!') )
+	UPDATE_CHOICES = (
+		(0, _('Do not update from import')),
+		(1, _('Update based on UCI ID match')),
+		(2, _('update based on First Name, Last Name, Date of Birth, Gender match')),
+	)
+	update_license_codes = forms.ChoiceField(
+		initial=0, required=False, label=_('Update License Codes'),
+		help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!'),
+		choices = UPDATE_CHOICES
+	)
 	
 	def __init__( self, *args, **kwargs ):
 		super().__init__( *args, **kwargs )
@@ -1648,13 +1656,19 @@ class ImportExcelForm( Form ):
 		)
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_license_holder_import_excel( excel_contents, update_license_codes, set_team_all_disciplines, replace_bibs, replace_tags ):
+def handle_license_holder_import_excel( excel_contents,
+		update_license_codes_by_name_dob_gender,
+		update_license_codes_by_uci_id, set_team_all_disciplines,
+		replace_bibs,
+		replace_tags
+	):
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO()
 	license_holder_import_excel(
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
-		update_license_codes=update_license_codes,
+		update_license_codes_by_name_dob_gender=update_license_codes_by_name_dob_gender,
+		update_license_codes_by_uci_id=update_license_codes_by_uci_id,
 		set_team_all_disciplines=set_team_all_disciplines,
 		replace_bibs=replace_bibs,
 		replace_tags=replace_tags,
@@ -1668,10 +1682,13 @@ def LicenseHoldersImportExcel( request ):
 	if request.method == 'POST':
 		form = ImportExcelForm(request.POST, request.FILES)
 		if form.is_valid():
-			replace_tags=form.cleaned_data['replace_tags'],
+			replace_tags=form.cleaned_data['replace_tags']
+			update_license_codes = form.cleaned_data['update_license_codes']
+			print( 'update_license_codes', update_license_codes)
 			results_str = handle_license_holder_import_excel(
 				request.FILES['excel_file'],
-				update_license_codes=form.cleaned_data['update_license_codes'],
+				update_license_codes_by_name_dob_gender=update_license_codes==2,
+				update_license_codes_by_uci_id=update_license_codes==1,
 				set_team_all_disciplines=form.cleaned_data['set_team_all_disciplines'],
 				replace_bibs=form.cleaned_data['replace_bibs'],
 				replace_tags=form.cleaned_data['replace_tags'],
