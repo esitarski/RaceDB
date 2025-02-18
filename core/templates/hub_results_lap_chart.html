@@ -144,7 +144,7 @@ class LapChart {
 					return {'x1':x1, 'y1':y1, 'x2':x2, 'y2':y2, 'num':num};
 				}
 				
-				let dBest = Number.MAX_VALUE;
+				const dBest = Number.MAX_VALUE;
 				for( let j = 0; j < lapsData[lap].length; ++j ) {
 					for( let lapCur = lap; lapCur < lap + 2; ++lapCur ) {
 						let segment = getSegment( lapCur, j );

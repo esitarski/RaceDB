@@ -244,13 +244,14 @@ def license_holder_import_excel(
 		date_of_birth	= v('date_of_birth', None)
 		age             = to_int(v('age', None))
 		
-		try:
-			date_of_birth = date_from_value(date_of_birth)
-		except Exception as e:
-			ms_write( 'Row {}: Warning: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
-				i, date_of_birth, ur, e), type=Warning,
-			)
-			date_of_birth = None
+		if date_of_birth is not None:
+			try:
+				date_of_birth = date_from_value(date_of_birth)
+			except Exception as e:
+				ms_write( 'Row {}: Warning: Ignoring birthdate (must be YYYY-MM-DD) "{}" ({}) {}'.format(
+					i, date_of_birth, ur, e), type=Warning,
+				)
+				date_of_birth = None
 		
 		# If no date of birth, try to get it from the UCI code.
 		if not date_of_birth and uci_code:
@@ -265,9 +266,6 @@ def license_holder_import_excel(
 			year_only_dob = True
 		else:
 			year_only_dob = False
-		
-		# As a last resort, pick the default DOB
-		date_of_birth 	= date_of_birth or invalid_date_of_birth
 		
 		license_code = None
 		for lc in license_code_aliases:
@@ -426,7 +424,9 @@ def license_holder_import_excel(
 				uci_id = lhr.get('uci_id', None)
 				existing_tag = lhr.get('existing_tag', None)
 				
-				# Get a query by Last, First, DOB and Gender.
+				#------------------------------------------------------------------------------
+				# Make a query by Last, First, DOB and Gender.
+				# This may not be used if we find the license holder by other method.
 				qNameDOBGender = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 				if date_of_birth and date_of_birth != invalid_date_of_birth:
 					if year_only_dob:
@@ -438,6 +438,7 @@ def license_holder_import_excel(
 				
 				#------------------------------------------------------------------------------
 				if not license_holder and uci_id:
+					# Try to match from uci_id.
 					lhs = list( LicenseHolder.objects.filter(uci_id=uci_id) )
 					if len(lhs) == 1:
 						license_holder = lhs[0]
