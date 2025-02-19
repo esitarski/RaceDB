@@ -453,30 +453,32 @@ def license_holder_import_excel(
 						ensure_unique( license_code, existing_tag, license_holder.id )						
 						
 				#------------------------------------------------------------------------------
-				if not license_holder and update_license_codes_by_name_dob_gender:
-					# Try to find the license holder by name, DOB, gender
-					lhs = list( LicenseHolder.objects.filter(qNameDOBGender) )
-					if len(lhs) == 1:
-						license_holder = lhs[0]
+				if update_license_codes_by_name_dob_gender:
+					if license_holder:
 						ensure_unique( license_code, existing_tag, license_holder.id )
-					
-					elif len(lhs) == 0:
-						# Create a new license holder from the information given.
-						if not license_code:
-							lhr['license_code'] = license_code = random_temp_license()
-						
-						ensure_unique( license_code, existing_tag )
-						license_holder = LicenseHolder( **lhr )
-						truncate_char_fields(license_holder).save()
-						status = 'Added'
-					
 					else:
-						ms_write( 'Row {}: Warning:  Update not performed.  Found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
-								i, name,
-							), type=Warning
-						)
-						continue
+						# Try to find the license holder by name, DOB, gender
+						lhs = list( LicenseHolder.objects.filter(qNameDOBGender) )
+						if len(lhs) == 1:
+							license_holder = lhs[0]
+							ensure_unique( license_code, existing_tag, license_holder.id )
 						
+						elif len(lhs) == 0:
+							# Create a new license holder from the information given.
+							if not license_code:
+								lhr['license_code'] = license_code = random_temp_license()
+							
+							ensure_unique( license_code, existing_tag )
+							license_holder = LicenseHolder( **lhr )
+							truncate_char_fields(license_holder).save()
+							status = 'Added'
+						
+						else:
+							ms_write( 'Row {}: Warning:  Update not performed.  Found multiple LicenceHolders matching "Last, First DOB Gender" Name="{}"\n'.format(
+									i, name,
+								), type=Warning
+							)
+							continue
 					
 				#------------------------------------------------------------------------------
 				if not license_holder and license_code:
@@ -493,7 +495,7 @@ def license_holder_import_excel(
 						status = 'Added'
 							
 				if not license_holder:
-					# Try to find the license holder by name, DOB, gender
+					# Try to find the license holder by name, DOB, gender (last-ditch attempt).
 					lhs = list( LicenseHolder.objects.filter(qNameDOBGender) )
 					if len(lhs) == 1:
 						license_holder = lhs[0]
