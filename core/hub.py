@@ -423,7 +423,7 @@ def CustomCategoryResults( request, eventId, eventType, customCategoryId ):
 	show_category = True
 
 	primes, prime_fields = get_primes( event, {rr.participant.bib for rr in results} )
-	has_multiple_laps = payload['has_multiple_laps']
+	has_multiple_laps = payload.get('has_multiple_laps',False)
 
 	return render( request, 'hub_results_list.html', locals() )
 
