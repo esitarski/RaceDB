@@ -403,10 +403,16 @@ def init_prereg(
 				
 				# If we have an assigned bib, ensure it is respected.
 				tt.start( 'validate_bib' )
-				if bib and bib in category_numbers_set[participant.category]:
-					participant.bib = bib
-					if competition.number_set:
-						competition.number_set.assign_bib( participant.license_holder, participant.bib )
+				if bib:					
+					if bib in category_numbers_set[participant.category]:
+						participant.bib = bib
+						if competition.number_set:
+							competition.number_set.assign_bib( participant.license_holder, participant.bib )
+					else:
+						ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+							i, 'Participant Bib Number is out of range for Category ',
+							bib, category_code, license_code, name,
+						) )
 
 				# Final check for participant bib integrity.
 				if participant.bib and participant.bib not in category_numbers_set[participant.category]:
@@ -460,7 +466,7 @@ def init_prereg(
 				
 				tt.end()
 				
-				ms_write( '{created:} Row {row:>6}: {uci:>11} {license:>12} bib={bib:>4}, {lname}, {fname}, {city}, {state_prov} {ov}\n'.format(
+				ms_write( '{created:} Row {row:>6}: {uci:>11} {license:>12} bib={bib:>4}, {lname}, {fname}, "{cat_code}", {city}, {state_prov} {ov}\n'.format(
 						created='*' if participant_created else ' ',
 						row=i,
 						uci=license_holder.uci_id or '',
@@ -468,6 +474,7 @@ def init_prereg(
 						bib=participant.bib or '',
 						lname=license_holder.last_name,
 						fname=license_holder.first_name,
+						cat_code=participant.category.code if participant.category else '',
 						city=license_holder.city,
 						state_prov=license_holder.state_prov,
 						ov=override_events_str,
