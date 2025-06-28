@@ -1,4 +1,4 @@
-FROM python:3.10-alpine
+FROM python:3.10.18-alpine3.22
 
 # Add modules not included in the default alpine container.
 RUN apk update \
@@ -6,7 +6,8 @@ RUN apk update \
     git \
     vim \
     postgresql-client \
-    bash
+    bash \
+    shadow
 # Add this back in when we figure out how to use host networking
 #    avahi-daemon \
 
@@ -40,7 +41,7 @@ RUN rm -rf Dockerfile release test_data migrations_old env docker .git .vscode c
     cd /RaceDB && \
     chmod 755 manage.py && \
     ./manage.py collectstatic -v 2 -c --no-input && \
-    chown -R racedb.racedb /RaceDB/
+    chown -R racedb:racedb /RaceDB/
 
 ENV PYTHONPATH=/RaceDB
 WORKDIR /
