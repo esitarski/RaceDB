@@ -22,6 +22,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 LOGIN_URL='/RaceDB/Login/'
+LOGIN_REDIRECT_URL='/RaceDB/Home/'
 
 # Application definition
 

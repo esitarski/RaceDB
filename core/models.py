@@ -334,12 +334,12 @@ class SystemInfo(models.Model):
 	def get_exclude_empty_categories( cls ):
 		return cls.get_singleton().exclude_empty_categories
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		self.tag_template = getValidTagFormatStr( self.tag_template )
 		self.rfid_server_host = (self.rfid_server_host or self.RFID_SERVER_HOST_DEFAULT)
 		self.rfid_server_port = (self.rfid_server_port or self.RFID_SERVER_PORT_DEFAULT)
 		SystemInfo.formats = date_transform.FormatCache( self )
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	@classmethod
 	def get_formats( cls ):
@@ -413,9 +413,9 @@ class Category(models.Model):
 	description = models.CharField( max_length=80, default='', blank=True, verbose_name=_('Description') )
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name=_('Sequence') )
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		init_sequence_last( Category, self )
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	def make_copy( self, category_format ):
 		category_new = self
@@ -448,9 +448,9 @@ class Discipline(models.Model):
 	name = models.CharField( max_length = 64 )
 	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = 0 )
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		init_sequence_first( Discipline, self )
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -468,9 +468,9 @@ class RaceClass(models.Model):
 	name = models.CharField( max_length = 64 )
 	sequence = models.PositiveSmallIntegerField( verbose_name = _('Sequence'), default = 0 )
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		init_sequence_first( RaceClass, self )
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -565,10 +565,10 @@ class NumberSet(models.Model):
 			bib_available_all[bib] -= used
 		return bib_available_all
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		init_sequence_first( NumberSet, self )
 		self.range_str = self.reRangeExcept.sub( '', self.range_str )
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 		
 	def get_bib( self, competition, license_holder, category, category_numbers_set=None ):
 		# Get the bib number for this license_holder and categoryt from the NumberSetEntries.
@@ -681,9 +681,9 @@ class SeasonsPass(models.Model):
 	name = models.CharField( max_length = 64, verbose_name = _('Name') )
 	sequence = models.PositiveSmallIntegerField( db_index = True, verbose_name=_('Sequence'), default = 0 )
 
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		init_sequence_first( SeasonsPass, self )
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	def __str__( self ):
 		return self.name
@@ -925,7 +925,7 @@ class Competition(models.Model):
 	def to_kmh( self, speed ):
 		return speed if self.distance_unit == 0 else speed / 0.621371
 	
-	def save(self, *args, **kwargs):
+	def save(self, **kwargs):
 		''' If the start_date has changed, automatically update all the event dates too. '''
 		if self.pk:
 			try:
@@ -940,7 +940,7 @@ class Competition(models.Model):
 				self.adjust_event_times( time_delta )
 		
 		
-		return super().save(*args, **kwargs)
+		return super().save(**kwargs)
 	
 	@transaction.atomic
 	def make_copy( self ):
@@ -1493,9 +1493,9 @@ class CategoryNumbers( models.Model ):
 		if n in self:
 			self.range_str += ', -{}'.format( n )
 		
-	def save(self, *args, **kwargs):
+	def save(self, **kwargs):
 		self.validate()
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	class Meta:
 		verbose_name = _('CategoryNumbers')
@@ -1556,11 +1556,11 @@ class Event( models.Model ):
 	def is_optional( self ):
 		return self.option_id != 0
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		if not self.optional and self.option_id:
 			ParticipantOption.delete_option_id( self.competition, self.option_id )
 			self.option_id = 0
-		super().save( *args, **kwargs )
+		super().save( **kwargs )
 		if self.optional and not self.option_id:
 			ParticipantOption.set_event_option_id( self.competition, self )
 	
@@ -2280,9 +2280,9 @@ class Team(models.Model):
 		strings.append( '</ul>' )
 		return mark_safe( format_lazy('{}'*len(strings), *strings) )
 
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	def full_name( self ):
 		fields = [self.name, self.team_code, self.get_team_type_display(), self.nation_code]
@@ -2472,7 +2472,7 @@ class LicenseHolder(models.Model):
 	
 	reUCIID = re.compile( r'[^\d]' )
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		self.uci_code = (self.uci_code or '').replace(' ', '').upper()
 		self.uci_id = self.reUCIID.sub( '', (self.uci_id or '') )[:11]
 		
@@ -2544,7 +2544,7 @@ class LicenseHolder(models.Model):
 
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		
-		super().save( *args, **kwargs )
+		super().save( **kwargs )
 		
 	@property
 	def is_temp_license( self ):
@@ -3404,9 +3404,9 @@ class CustomCategory( Sequence ):
 		custom_category.save()
 		return custom_category
 	
-	def save(self, *args, **kwargs):
+	def save(self, **kwargs):
 		self.validate()
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 		
 	def has_results( self ):
 		custom_participants = self.event.get_participants().filter(self.get_participant_query())
@@ -3628,12 +3628,12 @@ class NumberSetEntry(models.Model):
 	# If date_lost is null, the number is in use.
 	date_lost = models.DateField( db_index=True, null=True, default=None, verbose_name=_('Date Lost') )
 	
-	def save( self ):
+	def save( self, **kwargs ):
 		if self.date_lost is None and self.id is None and self.number_set.get_bib_available(self.bib) <= 0:
 			raise IntegrityError()
 		if self.date_issued is None:
 			self.date_issued = datetime.date.today()
-		return super().save()
+		return super().save( **kwargs )
 	
 	class Meta:
 		verbose_name = _('NumberSetEntry')
@@ -3881,7 +3881,7 @@ class Participant(models.Model):
 	def category_name( self ):
 		return self.category.code_gender if self.category else ''
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		license_holder_update = kwargs.pop('license_holder_update', True)
 		number_set_update = kwargs.pop('number_set_update', True)
 		
@@ -3932,7 +3932,7 @@ class Participant(models.Model):
 			self.tag2 = ''
 				
 		self.propagate_bib_tag()
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	@property
 	def roleCode( self ):
@@ -4963,9 +4963,9 @@ class WaveTT( WaveBase ):
 	series_for_seeding=models.ForeignKey( "Series", blank=True, null=True, on_delete=models.SET_NULL, verbose_name=_('Series for Seeding'),
 		help_text=_('Must be specified if Sequence Option is Series') )
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		init_sequence_last( WaveTT, self )
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 	
 	def get_results( self, category = None ):
 		return super().get_results( category ).select_related('participant', 'participant__license_holder')
@@ -5461,7 +5461,7 @@ class SeriesPointsStructure( Sequence ):
 		return self.series.seriespointsstructure_set.all()
 	
 	reNonDigit = re.compile( r'[^\d]' )
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		pfp = [d for d in sorted((int(v) for v in self.reNonDigit.sub(' ', self.points_for_place).split() if v), reverse=True) if d]
 		self.points_for_place = ','.join( '{}'.format(d) for d in pfp )
 		if pfp:
@@ -5470,7 +5470,7 @@ class SeriesPointsStructure( Sequence ):
 				setattr( self, a, min( getattr(self, a), lowest_pfp ) )
 		self.dnf_points = min( self.dnf_points, self.finish_points )
 		self.dns_points = min( self.dns_points, self.dnf_points )
-		super().save( args, kwargs )
+		super().save( **kwargs )
 
 	@property
 	def points_deep( self ):
@@ -5729,10 +5729,10 @@ class SeriesUpgradeProgression( Sequence ):
 	def get_categories( self ):
 		return [ce.category for ce in self.seriesupgradecategory_set.all().select_related('category').only('category')]
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		if self.factor > 1.0 or self.factor < 0.0:
 			self.factor = 0.5
-		super().save( *args, **kwargs )
+		super().save( **kwargs )
 	
 	class Meta( Sequence.Meta ):
 		verbose_name = _("SeriesUpgradeProgression")
@@ -5922,9 +5922,9 @@ class CompetitionCategoryOption(models.Model):
 		cco = CompetitionCategoryOption.objects.filter( competition=competition, category=category ).first()
 		return cco and cco.license_check_required
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		self.note = self.note.strip()
-		return super().save( *args, **kwargs )
+		return super().save( **kwargs )
 		
 	def make_copy( self, competition_new ):
 		cco_new = self
@@ -6140,7 +6140,7 @@ class GPXCourse(models.Model):
 	ele_min = models.FloatField( default=0.0, editable=False, verbose_name=_('EleMin') )
 	ele_max = models.FloatField( default=0.0, editable=False, verbose_name=_('EleMax') )
 	
-	def save( self, *args, **kwargs ):
+	def save( self, **kwargs ):
 		if not self.lat_lon_elevation:
 			self.lat_lon_elevaton = [(0.0,0.0,0.0)]
 		
@@ -6156,7 +6156,7 @@ class GPXCourse(models.Model):
 		if self.is_loop:
 			self.meters += math.sqrt(sum( (v1-v0)**2 for v0,v1 in zip(x_y_elevation[-1], x_y_elevation[0]) ))
 				
-		super().save( *args, **kwargs )
+		super().save( **kwargs )
 		
 	def __str__( self ):
 		return self.name
