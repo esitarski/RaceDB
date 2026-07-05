@@ -3,6 +3,7 @@ from . import patch_sqlite_text_factory	# Must be first.
 import re
 import os
 import math
+import string
 import datetime
 import base64
 import operator
@@ -571,7 +572,7 @@ class NumberSet(models.Model):
 		return super().save( **kwargs )
 		
 	def get_bib( self, competition, license_holder, category, category_numbers_set=None ):
-		# Get the bib number for this license_holder and categoryt from the NumberSetEntries.
+		# Get the bib number for this license_holder and category from the NumberSetEntries.
 		# Does not assign bibs.  Returns None if no bib is found.
 		numbers = None
 		if category_numbers_set:
@@ -791,6 +792,9 @@ class Competition(models.Model):
 	start_date=models.DateField( db_index=True, verbose_name=_('Start Date') )
 	number_of_days=models.PositiveSmallIntegerField( default=1, verbose_name=_('Number of Days') )
 	
+	def get_end_date( self ):
+		return self.start_date + datetime.timedelta( days=self.number_of_days-1 )
+	
 	discipline=models.ForeignKey( Discipline, verbose_name=_("Discipline"), on_delete=models.CASCADE )
 	race_class=models.ForeignKey( RaceClass, verbose_name=_("Race Class"), on_delete=models.CASCADE )
 	
@@ -852,6 +856,20 @@ class Competition(models.Model):
 	@property
 	def title( self ):
 		return self.long_name or self.name
+	
+	@property
+	def image_html( self ):
+		if self.image:
+			if self.image.url:
+				s = [
+					f'<a href="{self.image.url}" target="_blank" />',
+					f'<img src="{self.image.image.url}" class="logo-image" />',
+					'</a><br/>',
+				]
+				return mark_safe( '\n'.join(s) )
+			else:
+				return mark_safe(f'<img src="{self.image.image.url}" class="logo-image" /><br/>')
+		return ''
 	
 	@property
 	def any_print( self ):
@@ -1426,11 +1444,189 @@ def get_numbers( range_str ):
 				include.update( range(nBegin, nEnd+1) )
 	
 	return include
+
+RANKING_MAX = 4
+RANKING_OPTION = ( (0, _('UCI')), (1, _('Ranking')) )
+NO_RANK = 999999
+
+def do_fix_ranking_options( obj ):
+	rankings = []
+	uci_count = 0
+	for r in range(1, RANKING_MAX+1):
+		option = getattr(obj, f'ranking_{r}_option')
+		uci_count += (option == 0)
+		if uci_count > 1:
+			option = 1
+		ranking = getattr( obj, f'ranking_{r}' )
+		if option == 0:
+			ranking = None
+		rankings.append( (option, ranking) )
+
+	already_seen = set()
+	rankings = [v for v in rankings if not (v in already_seen or already_seen.add(v))]
+	rankings.extend( [(1, None)] * (RANKING_MAX - len(rankings)) )
+
+	print( rankings )
 	
+	def set_value( obj, field, value ):
+		if getattr(obj, field) != value:
+			setattr(obj, field, value)
+			return True
+		return False
+
+	changed = False
+	for r, (option, ranking) in enumerate( rankings, 1 ):
+		changed |= set_value( obj, f'ranking_{r}_option', option )
+		changed |= set_value( obj, f'ranking_{r}', ranking )
+	
+	return changed
+
+	already_seen = set()
+	ranking_ids = []
+	for r in range(1, RANKING_MAX+1):
+		ri = -1 if (getattr(obj, f'ranking_{r}_option') == 0) else getattr(obj, f'ranking_{r}')
+		print( getattr(obj, f'ranking_{r}_option') )
+		if ri is not None and ri not in already_seen:
+			ranking_ids.append( ri )
+			already_seen.add( ri )
+	
+	print( ranking_ids )
+	ranking_ids.extend( [None] * (RANKING_MAX - len(ranking_ids)) )
+	
+	changed = False
+	for r, ri in enumerate(ranking_ids, 1):
+		if ri == -1:
+			changed |= set_value(obj, f'ranking_{r}_option', 0)
+			changed |= set_value(obj, f'ranking_{r}', None)
+		else:
+			changed |= set_value(obj, f'ranking_{r}_option', 1)
+			changed |= set_value(obj, f'ranking_{r}', ri)
+		
+	return changed
+
+def get_ranking_titles( obj ):
+	do_fix_ranking_options( obj )
+	titles = []
+	for r in range(1, RANKING_MAX+1):
+		if getattr(obj, f'ranking_{r}_option') == 0:
+			titles.append( _('UCI Rank') )
+		else:
+			ranking = getattr(obj, f'ranking_{r}')
+			if ranking:
+				titles.append( ranking.name )
+	return titles
+
+def get_callup_key( competition, obj ):
+	# Get the lookup functions for all the callup criteria.
+	ranking_lookups = []
+	for r in range(1, RANKING_MAX+1):
+		if getattr(obj, f'ranking_{r}_option') == 0:
+			uci_lookup = {
+				uci_id:rank
+					for uci_id,rank in UCIRank.objects.filter(competition=competition).values_list('uci_id', 'rank')
+			}
+			ranking_lookups.append( lambda p: uci_lookup.get(p.license_holder.uci_id, NO_RANK) )
+		else:
+			# Use the given ranking.
+			ranking = getattr(obj, f'ranking_{r}')
+			if ranking is None:
+				continue
+			ranking_lookups.append( lambda p: ranking.get_rank(p, NO_RANK) )
+
+	def get_callup_key_func( p ):
+		key = [lookup(p) for lookup in ranking_lookups]
+		p.callup_ranks = [k if k != NO_RANK else None for k in key]	# Keep track of the rankings to show the work later.
+		# Add a "random" criteria if no other ranking is found.
+		key.append( hash(p.id) )
+		return key
+	
+	return get_callup_key_func
+
+SORT_MAX = 4
 class CategoryNumbers( models.Model ):
 	competition = models.ForeignKey( Competition, db_index = True, on_delete=models.CASCADE )
 	categories = models.ManyToManyField( Category )
 	range_str = models.TextField( default = '1-99,120-129,-50-60,181,-87', verbose_name=_('Range') )
+	
+	ranking_1_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_1=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	ranking_2_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_2=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	ranking_3_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_3=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	ranking_4_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_4=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	
+	SORT_CHOICES = (
+		(  0, '---'),
+		(100, _('Category')),
+		(200, _('Rank')),
+		(300, _('Team')),
+		(400, _('Name')),
+		(500, _('Nation')),
+		(600, _('State/Prov')),
+		(700, _('Bib')),
+	)
+	sort_1=models.PositiveSmallIntegerField( default=0 )
+	sort_2=models.PositiveSmallIntegerField( default=0 )
+	sort_3=models.PositiveSmallIntegerField( default=0 )
+	sort_4=models.PositiveSmallIntegerField( default=0 )
+	
+	def fix_sort_order( self ):
+		already_seen = set()
+		sort_fix = []
+		for s in range(1, SORT_MAX+1):
+			v = getattr(self, f'sort_{s}')
+			if v and v not in already_seen:
+				sort_fix.append( v )
+				already_seen.add( v )
+		
+		sort_fix.extend( [0] * (SORT_MAX - len(sort_fix)) )
+		for s, v in enumerate(sort_fix, 1):
+			setattr(self, f'sort_{s}', v)
+			
+	def fix_ranking_options( self ):
+		do_fix_ranking_options( self )
+		
+	def get_participants_sorted( self ):
+		callup_key_func = get_callup_key( self.competition, self )
+		
+		participants = list( self.get_participants().select_related('license_holder', 'team').order_by().iterator() )
+		
+		field_deref = {
+			  0: lambda p: 0,
+			100: lambda p: p.category.code if p.category else '~~~',# Category
+			200: lambda p: callup_key_func( p ),					# Rank
+			300: lambda p: p.team.name if p.team else '~~~',		# Team
+			400: lambda p: utils.removeDiacritic( '{} {}'.format(p.license_holder.last_name, string.capwords(p.license_holder.first_name.lower())) ), # Name
+			500: lambda p: p.license_holder.nation_code,			# Nation
+			600: lambda p: p.license_holder.state_prov,				# State/Prov
+			700: lambda p: p.bib if p.bib else 999999,				# Bib
+		}
+		
+		def get_sort_key( p ):
+			# Assemble all the specified sort keys.
+			key = []
+			for s in range(1, SORT_MAX+1):
+				s_choice = getattr(self, f'sort_{s}')
+				if s_choice:
+					key.append( field_deref[s_choice](p) )
+				else:
+					if not key:
+						key = (field_deref[400](p), field_deref[600](p))
+					break
+			return key
+
+		participants.sort( key=get_sort_key )
+		return participants
+		
+	def get_participants( self ):
+		return self.competition.participant_set.filter( category__in=self.categories.all() )
+	
+	def clear_bibs( self ):
+		assert not self.competition.number_set
+		for p in self.get_participants().iterator():
+			p.bib = None
 	
 	numCache = None
 	
@@ -1462,7 +1658,7 @@ class CategoryNumbers( models.Model ):
 		self.range_str = validate_range_str( self.range_str )
 		return self.range_str
 	
-	def getNumbersWorker( self ):
+	def get_numbers_worker( self ):
 		self.validate()
 		include = get_numbers( self.range_str )
 		if self.competition.number_set:
@@ -1475,7 +1671,7 @@ class CategoryNumbers( models.Model ):
 	
 	def get_numbers( self ):
 		if self.numCache is None or getattr(self, 'range_str_cache', None) != self.range_str:
-			self.numCache = self.getNumbersWorker()
+			self.numCache = self.get_numbers_worker()
 			self.range_str_cache = self.range_str
 		return self.numCache
 		
@@ -1487,15 +1683,21 @@ class CategoryNumbers( models.Model ):
 		
 	def add_bib( self, n ):
 		if n not in self:
-			self.range_str += ', {}'.format( n )
+			self.range_str += f', {n}'
 			
 	def remove_bib( self, n ):
 		if n in self:
-			self.range_str += ', -{}'.format( n )
+			self.range_str += f', -{n}'
 		
 	def save(self, **kwargs):
 		self.validate()
+		self.fix_sort_order()
+		do_fix_ranking_options( self )
 		return super().save( **kwargs )
+	
+	@property
+	def ranking_titles( self ):
+		return get_ranking_titles( self )
 	
 	class Meta:
 		verbose_name = _('CategoryNumbers')
@@ -1555,6 +1757,9 @@ class Event( models.Model ):
 	@property
 	def is_optional( self ):
 		return self.option_id != 0
+	
+	def has_callup_rankings( self ):
+		return any( w.has_callup_rankings for w in self.wave_set.all() )
 	
 	def save( self, **kwargs ):
 		if not self.optional and self.option_id:
@@ -1875,6 +2080,9 @@ class EventMassStart( Event ):
 	def get_prime_class( self ):
 		return PrimeMassStart
 		
+	def has_callup_rankings( self ):
+		return any( w.has_callup_rankings() for w in self.wave_set.all() )
+		
 	def get_series( self ):
 		for ce in SeriesCompetitionEvent.objects.filter( event_mass_start=self ).exclude( series__callup_max=0 ).order_by('series__sequence'):
 			if ce and not set( self.get_categories() ).isdisjoint( ce.series.get_categories() ):
@@ -1977,7 +2185,22 @@ class WaveBase( models.Model ):
 	
 	def get_participants( self ):
 		return self.get_participants_unsorted().select_related('category', 'license_holder').order_by('bib')
-		
+	
+	def get_bib_numbers_str( self ):
+		bibs = sorted( self.get_participants_unsorted().filter( bib__isnull=False ).values_list('bib', flat=True) )
+		if not bibs:
+			return ''
+		s = []
+		start = end = bibs[0]
+		for n in bibs[1:]:
+			if n == end + 1:
+				end = n
+			else:
+				s.append( f"{start}-{end}" if start != end else str(start) )
+				start = end = n
+		s.append( f"{start}-{end}" if start != end else str(start) )
+		return ','.join( s )
+	
 	def get_participants_within_max( self ):
 		if not self.max_participants or self.max_participants < 0:
 			return self.get_participants()
@@ -2199,6 +2422,39 @@ class Wave( WaveBase ):
 		except TypeError:
 			return self.event.date_time + datetime.timedelta(self.start_offset)
 	
+	ranking_1_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_1=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_2_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_2=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_3_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_3=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_4_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_4=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	
+	def has_callup_rankings( self ):
+		for r in range(1, RANKING_MAX+1):
+			if (
+					getattr(self, f'ranking_{r}_option') == 0 or
+					(getattr(self, f'ranking_{r}_option') == 1 and getattr(self, f'ranking_{r}') is not None)
+				):
+				return True
+		return False
+	
+	def fix_ranking_options( self ):
+		do_fix_ranking_options( self )
+		
+	def save( self, **kwargs ):
+		self.fix_ranking_options()
+		super().save( **kwargs )
+	
+	def get_participants_callup_order( self, reverse=False ):
+		callup_key_func = get_callup_key( self.event.competition, self )				
+		return sorted( self.get_participants().order_by(), key=callup_key_func, reverse=reverse )
+		
+	@property
+	def ranking_titles( self ):
+		return get_ranking_titles( self )
+	
 	class Meta( WaveBase.Meta ):
 		verbose_name = _('Wave')
 		verbose_name_plural = _('Waves')
@@ -2384,6 +2640,25 @@ def flag_html( nation_code ):
 class LicenseHolderManager(models.Manager):
 	def get_queryset( self ):
 		return super().get_queryset().defer('note')
+
+def get_uci_id_error( uci_id ):
+	if not uci_id:
+		return _('uci id is missing')
+		
+	uci_id = str(uci_id).upper().replace(' ', '')
+	
+	if not uci_id.isdigit():
+		return _('uci id must be digits')
+	
+	if uci_id.startswith('0'):
+		return _('uci id must not start with a zero')
+	
+	if len(uci_id) != 11:
+		return _('uci id must be 11 digits')
+		
+	if int(uci_id[:-2]) % 97 != int(uci_id[-2:]):
+		return _('uci id check digit error')
+	return None
 
 class LicenseHolder(models.Model):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), db_index=True )
@@ -2586,19 +2861,7 @@ class LicenseHolder(models.Model):
 			return None
 			
 		self.uci_id = '{}'.format(self.uci_id).upper().replace(' ', '')
-		
-		if not self.uci_id.isdigit():
-			return _('uci id must be all digits')
-		
-		if self.uci_id.startswith('0'):
-			return _('uci id must not start with zero')
-		
-		if len(self.uci_id) != 11:
-			return _('uci id must be 11 digits')
-			
-		if int(self.uci_id[:-2]) % 97 != int(self.uci_id[-2:]):
-			return _('uci id check digit error')
-		return None
+		return get_uci_id_error( self.uci_id )
 	
 	@property
 	def uci_code_error( self ):
@@ -4610,6 +4873,7 @@ class Participant(models.Model):
 		return available_numbers, allocated_numbers, lost_bibs, category_numbers_defined
 
 	def get_bib_auto( self ):
+		# If no bib, return the first one that is available.
 		if self.bib:
 			return self.bib
 		available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = self.get_available_numbers()
@@ -4634,6 +4898,27 @@ class Participant(models.Model):
 			if key not in mr_category or mr_category[key][1] < dt:
 				mr_category[key] = (cat, dt)
 	
+	@staticmethod
+	def get_sequence_cmp( p, series_rank_max=None ):
+		# Get the sequence comparison key in callup order.
+		# To get it in time-trial order, reverse the sense of the sort.
+		# Ties with missing criteria are broken deterministically, so multiple
+		# calls will produce stable results.
+		rank_max = 9999999.0
+		series_rank_max = series_rank_max or rank_max
+		if p.series_rank is not None and p.series_rank > series_max:
+			series_rank = series_rank_max
+		else:
+			series_rank = p.series_rank
+		# To break ties "randomly" but deterministically, return a hash of the id, competition_id and license_holder_id.
+		# To break any ties after that, return our own rank.
+		return (
+			p.uci_rank if p.uci_rank is not None else rank_max,		# First by rank
+			series_rank if series_rank is not None else rank_max,	# Then by series.
+			hash((p.id, p.competition_id, p.license_holder_id)),	# Then by self, competition and license_holder id.
+			p.id,													# Finally by id to break all ties.
+		)
+	
 	class Meta:
 		unique_together = (
 			('competition', 'category', 'license_holder'),
@@ -4645,6 +4930,130 @@ class Participant(models.Model):
 		verbose_name = _('Participant')
 		verbose_name_plural = _('Participants')
 
+#---------------------------------------------------------------------------------------------------------
+def get_timestamp_from_str( s ):
+	if isinstance(s, str):
+		ms = int( s[len('/Date('):-len(')/')] )
+		return timezone.datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
+	return s
+
+def get_str( s ):
+	return str(s) if s else ''
+
+def get_uci_id( v ):
+	if isinstance(v, float):
+		v = str(int(v))
+	elif isinstance( v, int):
+		v = str(v)
+	elif not isinstance(v, str):
+		v = str(v)
+	v = re.sub(r'\D', '', v)   # \D matches any non-digit
+	return v
+		
+class UCIRank( models.Model ):
+	competition = models.ForeignKey( 'Competition', db_index = True, verbose_name=_('Competition'), on_delete=models.CASCADE )
+	uci_id = models.CharField( max_length = 11, db_index = True, verbose_name=_('UCI ID') )
+	display_name = models.CharField( max_length = 128, verbose_name=_('Display Name') )
+	team_name = models.CharField( max_length = 128, verbose_name=_('Team Name') )
+	team_code = models.CharField( max_length = 3, verbose_name=_('Team Code') )
+	nation_name = models.CharField( max_length = 3, verbose_name=_('Nation Name') )
+	nation_full_name = models.CharField( max_length = 64, verbose_name=_('Nation Name') )
+	country_iso2 = models.CharField( max_length = 2, verbose_name=_('Country Iso') )
+	rank = models.PositiveIntegerField( verbose_name=_('Rank') )
+	points = models.FloatField( verbose_name=_('Points') )
+	computation_date = models.DateTimeField( verbose_name=_("Computation Timestamp") )
+
+	FieldMap = (
+		('uci_id',			'UciId',			get_uci_id),
+		('display_name',	'DisplayName',		get_str),
+		('team_name',		'TeamName',			get_str),
+		('team_code',		'TeamCode',			get_str),
+		('nation_name',		'NationName',		get_str),
+		('nation_full_name','NationFullName',	get_str),
+		('country_iso2',	'CountryIsoCode2',	get_str),
+		('rank',			'Rank',				int),
+		('points',			'Points',			float),
+		('computation_date','ComputationDate',	get_timestamp_from_str),
+	)
+
+	def get_first_last( self ):
+		last, first = [], []
+		is_last = True
+		for name in self.display_name.split():
+			if is_last and name.upper() != name:
+				is_last = False
+			if is_last:
+				last.append( name )
+			else:
+				first.append( name )
+		return ' '.join( first ), ' '.join( last )
+		
+	@property
+	def first_name( self ):
+		return self.get_first_last()[0]
+
+	@property
+	def last_name( self ):
+		return self.get_first_last()[1]
+
+	class Meta:
+		ordering = ['uci_id']
+		constraints = [
+			models.UniqueConstraint(fields=['uci_id'], name='unique uci_id')
+		]
+		verbose_name = _('UCIRank')
+		verbose_name_plural = _('UCIRanks')
+
+class Ranking( models.Model ):
+	competition = models.ForeignKey( 'Competition', db_index=True, verbose_name=_('Competition'), on_delete=models.CASCADE )
+	name = models.CharField( max_length=128, default = 'MyRanking', verbose_name=_('Name') )
+	description = models.CharField( max_length=255, blank=True, default='', verbose_name=_('Description') )
+
+	MATCH_KEY_CHOICES = (
+		(0, _('UCI ID')),
+		(1, _('License Code')),
+	)
+	match_key = models.PositiveSmallIntegerField( default=0, verbose_name = _('Match Key'), choices=MATCH_KEY_CHOICES )
+	
+	def get_rank( self, participant, default=None ):
+		try:
+			rank_lookup = self._rank_lookup
+		except AttributeError:
+			if self.match_key == 0:
+				self._rank_lookup = {
+					re.uci_id:re.rank
+					for re in self.rankingentry_set.all().iterator() if re.uci_id is not None
+				}
+			else:
+				self._rank_lookup = {
+					re.license_code:re.rank
+					for re in self.rankingentry_set.all().iterator() if re.license_code is not None
+				}
+			rank_lookup = self._rank_lookup
+		
+		return rank_lookup.get( participant.uci_id if self.match_key == 0 else participant.license_code, default )
+	
+	def get_entry_count( self ):
+		return self.rankingentry_set.all().count()
+	
+	class Meta:
+		ordering = ['name']
+		verbose_name = _('Ranking')
+		verbose_name_plural = _('Rankings')
+
+class RankingEntry( models.Model ):
+	ranking = models.ForeignKey( 'Ranking', db_index=True, verbose_name=_('Ranking'), on_delete=models.CASCADE )
+	
+	uci_id = models.CharField( max_length=11, null=True, default=None, verbose_name=_('UCI ID') )
+	license_code = models.CharField( max_length=32, null=True, default=None, verbose_name=_('License Code') )
+	
+	rank = models.PositiveIntegerField( verbose_name=_('Rank') )
+	points = models.FloatField( default=None, null=True, verbose_name=_('Points') )	
+
+	class Meta:
+		ordering = ['uci_id', 'license_code']
+		verbose_name = _('RankingEntry')
+		verbose_name_plural = _('RankingEntries')
 
 #---------------------------------------------------------------------------------------------------------
 
@@ -6299,6 +6708,4 @@ def models_fix_data():
 	fix_team_search_text()
 	#fix_finish_times()
 	safe_print( '--- All data fixed ---' )
-
-
 

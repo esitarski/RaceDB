@@ -135,7 +135,7 @@ standard_field_aliases = (
 	#),
 	('uci_id',
 		('UCIID','UCI ID',),
-		"11 digit UCIID of the form XXX XXX XXX XX",
+		"11 digit UCIID.  The form XXX XXX XXX XX is also supported,",
 	),
 	('bib',
 		('Bib','BibNum','Bib Num','Bib Number','BibNumber','Bib #','Bib#','Rider Bib #','Rider Num','Plate',),
@@ -252,6 +252,14 @@ standard_field_aliases = (
 	('age',
 		('Age','Competition Age'),
 		"age",
+	),
+	('rank',
+		('Rank','Rider Rank','Pos','Pos.','Position'),
+		"Rank of the rider in rhe ranking",
+	),
+	('points',
+		('Points','Rider Points', 'Pnts'),
+		"Points earned by the rider",
 	),
 )
 

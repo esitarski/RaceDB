@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load date_fmt %}
+{% load format_uci_id %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<h2>
+	{{title}} ({{competition.ucirank_set.all.count}} {% trans "records" %}), {% trans "Discipline Code" %}: {{discipline_code}}:
+</h2>
+<h2>
+	<a class="btn btn-warning" href="./CompetitionUpdateUCI/{{competition.id}}/">{% trans "Refresh from UCI Dataride Database" %}</a>
+	<a class="btn btn-success" href="{{cancelUrl}}">{% trans "OK" %}</a>
+</h2>
+<hr/>
+<table class="table table-striped table-hover">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "UCI ID" %}</th>
+		<th>{% trans "Last" %}</th>
+		<th>{% trans "First" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Team Code" %}</th>
+		<th>{% trans "Nation Name" %}</th>
+		<th>{% trans "Nation Full" %}</th>
+		<th class="text-right">{% trans "Rank" %}</th>
+		<th class="text-right">{% trans "Points" %}</th>
+		<th>{% trans "Computation Date" %}</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+	{% for r in uci_rank %}
+		<tr>
+			<td class="text-right">{{forloop.counter}}.</td>
+			<td>{{r.uci_id|format_uci_id}}</td>
+			<td>{{r.last_name}}</td>
+			<td>{{r.first_name}}</td>
+			<td>{{r.team_name|default:""}}</td>
+			<td>{{r.team_code|default:""}}</td>
+			<td>{{r.nation_name}}</td>
+			<td>{{r.nation_full_name}}</td>
+			<td class="text-right">{{r.rank}}</td>
+			<td class="text-right">{{r.points|floatformat:"-2"}}</td>
+			<td class="text-nowrap">{{r.computation_date|date:"Y-m-d"}}</td>
+		</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock content %}

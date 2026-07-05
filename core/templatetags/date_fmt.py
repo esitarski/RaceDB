@@ -32,6 +32,10 @@ def date_Md_hhmm( value ):
 	return dateformat.DateFormat( value ).format(SystemInfo.get_formats().date_Md_hhmm)
 
 @register.filter(expects_localtime=True)
+def date_Md_hhmmss( value ):
+	return dateformat.DateFormat( value ).format(SystemInfo.get_formats().date_Md_hhmmss)
+
+@register.filter(expects_localtime=True)
 def date_year_Md_hhmm( value ):
 	return dateformat.DateFormat( value ).format(SystemInfo.get_formats().date_year_Md_hhmm)
 

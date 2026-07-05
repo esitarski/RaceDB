@@ -33,6 +33,7 @@
 				<th>{% trans "Start Offset" %}</th>
 				<th>{% trans "Categories" %}</th>
 				<th>{% trans "Rank Together" %}</th>
+				<th>{% trans "Callup Criteria" %}</th>
 				<th>{% trans "Nat." %}</th>
 				<th>{% trans "Starters" %}</th>
 				{% if isEdit %}
@@ -48,6 +49,7 @@
 					<td>{{w.start_offset}}</td>
 					<td>{{w.category_text}}</td>
 					<td>{{w.rank_categories_together}}</td>
+					<td>{{w.ranking_titles|join:" | "}}</td>
 					<td>{{w.get_num_nationalities}}</td>
 					<td>{{w.get_starters_str}}</td>
 					{% if isEdit %}

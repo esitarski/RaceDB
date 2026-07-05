@@ -80,12 +80,13 @@ def format_time( secs, highPrecision=False, forceHours=False ):
 	else:
 		return "{}{:02d}:{}".format(sign, minutes, secStr)
 
-def removeDiacritic( s ):
+def removeDiacritic( input_str ):
 	'''
 	Accept a unicode string, and return a normal string
 	without any diacritical marks.
 	'''
-	return unicodedata.normalize('NFKD', '{}'.format(s)).encode('ASCII', 'ignore').decode()
+	nfkd_form = unicodedata.normalize('NFKD', input_str)
+	return u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
 	
 def safe_print( *args ):
 	print ( removeDiacritic( ' '.join('{}'.format(a) for a in args) ) )

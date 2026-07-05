@@ -40,7 +40,7 @@ def init_prereg(
 		competition_name='', worksheet_name='', assign_missing_bibs=False, clear_existing=False,
 		competitionId=None, worksheet_contents=None, message_stream=sys.stdout ):
 
-	tt = TimeTracker()
+	t_track = TimeTracker()
 		
 	team_lookup = TeamLookup()
 		
@@ -114,7 +114,7 @@ def init_prereg(
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
 			
-			tt.start( 'get_fields_from_row' )
+			t_track.start( 'get_fields_from_row' )
 		
 			v = ifm.finder( ur )
 			date_of_birth	= v('date_of_birth', None)
@@ -217,7 +217,7 @@ def init_prereg(
 			license_holder = None
 			#with transaction.atomic():
 			if True:
-				tt.start( 'get_license_holder' )
+				t_track.start( 'get_license_holder' )
 			
 				if uci_id:
 					license_holder = LicenseHolder.objects.filter( uci_id=uci_id ).first()
@@ -284,7 +284,7 @@ def init_prereg(
 						continue
 				
 				# Update the license_holder record with all new information.
-				tt.start( 'update_license_holder' )
+				t_track.start( 'update_license_holder' )
 				if set_attributes( license_holder, {
 						'date_of_birth':date_of_birth
 							if not year_only_dob and date_of_birth != invalid_date_of_birth
@@ -317,7 +317,7 @@ def init_prereg(
 				#
 				category = None
 				if category_code:
-					tt.start( 'get_category_from_code' )
+					t_track.start( 'get_category_from_code' )
 					category = get_category( category_code, license_holder.gender )
 					if category is None:
 						ms_write( '**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
@@ -327,7 +327,7 @@ def init_prereg(
 				#------------------------------------------------------------------------------
 				# Get Team
 				#
-				tt.start( 'get_team' )
+				t_track.start( 'get_team' )
 				team = None
 				if Team.is_independent_name(team_name):
 					team = None
@@ -340,7 +340,7 @@ def init_prereg(
 					team = team_lookup[team_name]
 				
 				#------------------------------------------------------------------------------
-				tt.start( 'get_participant' )
+				t_track.start( 'get_participant' )
 				participant_keys = { 'competition': competition, 'license_holder': license_holder, }
 				if category is not None:
 					participant_keys['category'] = category
@@ -358,11 +358,11 @@ def init_prereg(
 					continue
 				
 				# First get the defaults based on previous hints and categories.
-				tt.start( 'init_participant_defaults' )
+				t_track.start( 'init_participant_defaults' )
 				participant.init_default_values()
 				
 				# Now, override default values with specified ones.
-				tt.start( 'override_participant_defaults' )
+				t_track.start( 'override_participant_defaults' )
 				for attr, value in (
 						('category',category),
 						('bib',bib), ('tag',tag), ('note',note),
@@ -375,25 +375,40 @@ def init_prereg(
 						setattr( participant, attr, value )
 				if team_name:
 					participant.team = team
+				
+				suggested_bib = participant.bib
 
 				# Ensure the existing bib number is compatible with the category.
-				tt.start( 'update_bib_new_category' )
+				t_track.start( 'update_bib_new_category' )
 				bib = participant.update_bib_new_category( category_numbers_set[participant.category] )
+
+				if suggested_bib and bib and suggested_bib != bib:
+					# The participant has been given a new number.
+					# Let them continue to own it until it is turned in.
+					bib = None
 				
 				# Auto-assign the bib if there isn't one already.
 				if not bib and (assign_missing_bibs or bib_auto):
-					tt.start( 'get_bib_auto' )
+					t_track.start( 'get_bib_auto' )
 					
-					# Retrieve the existing bib if it exists for this license_holder and category.
+					# Try to retrieve the existing bib from the license_holder for this category.
+					has_existing_bib = False
 					if competition.number_set:
 						bib = competition.number_set.get_bib( competition, license_holder, category, category_numbers_set[participant.category] )
 						has_existing_bib = bool( bib )
 					
-					# If no existing bib, allocate the next available one.
+					if has_existing_bib and suggested_bib and suggested_bib != bib:
+						# Change the bib?
+						pass
+					
+					# If no existing bib, use the suggested one, or if no suggestion, allocate the next available one.
 					if not bib:
-						bib = participant.get_bib_auto()
-						if bib and competition.number_set:
-							allocated_bib = competition.number_set.assign_bib( participant.license_holder, bib )
+						if suggested_bib:
+							bib = suggested_bib
+						else:
+							bib = participant.get_bib_auto()
+							if bib and competition.number_set:
+								competition.number_set.assign_bib( participant.license_holder, bib )
 							
 					if not bib:
 						ms_write( '**** Row {}: Error={}\nCategory={} Name="{}"\n'.format(
@@ -401,26 +416,35 @@ def init_prereg(
 							category_code, name,
 						) )
 				
-				# If we have an assigned bib, ensure it is respected.
-				tt.start( 'validate_bib' )
+				# If we have an assigned bib, ensure it respects all the constraints.
+				t_track.start( 'validate_bib' )
 				if bib:					
 					if bib in category_numbers_set[participant.category]:
 						participant.bib = bib
 						if competition.number_set:
-							competition.number_set.assign_bib( participant.license_holder, participant.bib )
+							if not competition.number_set.assign_bib( participant.license_holder, participant.bib ):
+								ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+									i, 'Participant Bib Number is unavailble (lost or already allocated). ',
+									bib, category_code, license_code, name,
+								) )
+								participant.bib = None
 					else:
 						ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
-							i, 'Participant Bib Number is out of range for Category ',
+							i, 'Bib Number is out of range for Category ',
 							bib, category_code, license_code, name,
 						) )
 
-				# Final check for participant bib integrity.
+				# final check for bib integrity.
 				if participant.bib and participant.bib not in category_numbers_set[participant.category]:
 					participant.bib = None
+					ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+						i, 'Participant Bib is out of range for Category ',
+						bib, category_code, license_code, name,
+					) )
 				
 				participant.preregistered = True
 				
-				tt.start( 'participant_save' )
+				t_track.start( 'participant_save' )
 				try:
 					truncate_char_fields(participant).save()
 				except IntegrityError as e:
@@ -434,7 +458,7 @@ def init_prereg(
 						ms_write( '{}\n'.format(conflict_participant) )
 					continue
 				
-				tt.start( 'add_to_default_optional_events' )
+				t_track.start( 'add_to_default_optional_events' )
 				participant.add_to_default_optional_events()
 				
 				if participant_optional_events:
@@ -454,17 +478,17 @@ def init_prereg(
 					override_events_str = ''
 				
 				if waiver is not None:
-					tt.start( 'waiver' )
+					t_track.start( 'waiver' )
 					if waiver:
 						participant.sign_waiver_now( waiver_signed_date )
 					else:
 						participant.unsign_waiver_now()
 						
 				if not category and not participant_optional_events:
-					tt.start( 'add_other_categories' )
+					t_track.start( 'add_other_categories' )
 					participant.add_other_categories()
 				
-				tt.end()
+				t_track.end()
 				
 				ms_write( '{created:} Row {row:>6}: {uci:>11} {license:>12} bib={bib:>4}, {lname}, {fname}, "{cat_code}", {city}, {state_prov} {ov}\n'.format(
 						created='*' if participant_created else ' ',
@@ -534,11 +558,11 @@ def init_prereg(
 			if clear_existing or 'bib' in ifm:
 				ms_write( 'Recording previous license checks...\n' )
 				if competition.report_label_license_check:
-					tt.start( 'license_check_state_refresh' )
+					t_track.start( 'license_check_state_refresh' )
 					LicenseCheckState.refresh()
 	
 				ms_write( 'Clearing existing Participants...\n' )
-				tt.start( 'clearing_existing_participants' )
+				t_track.start( 'clearing_existing_participants' )
 				large_delete_all( Participant, Q(competition=competition) )
 			
 			if 'license_code' not in ifm and 'uci_id' not in ifm:
@@ -561,4 +585,4 @@ def init_prereg(
 	ms_write( '\n' )
 	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
 	ms_write( '\n' )
-	ms_write( tt.__repr__() )
+	ms_write( t_track.__repr__() )

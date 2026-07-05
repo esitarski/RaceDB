@@ -224,11 +224,16 @@
 					<img src="{% static "images/glyphicons_181_download_alt.png" %}">&nbsp;&nbsp;{% trans "CrossMgr" %}
 				</a>
 				<br/>&nbsp;<br/>
-				<a class="btn btn-success btn-sm hidden-print" href="./StartList/{{e.id}}/">{% trans "Start List" %}</a>
-				{% with series=e.get_series %}{% if series %}
-				<br/>&nbsp;<br/>
-				<a class="btn btn-primary btn-sm hidden-print" href="./Callups/{{e.id}}/{{e.event_type}}/{{series.id}}/">{% trans "Callups" %}</a>
-				{% endif %}{% endwith %}
+				<div class="btn-group-vertical">
+					{% if e.has_callup_rankings %}
+						<a class="btn btn-primary btn-sm hidden-print" href="./StartList/{{e.id}}/1/">{% trans "Start List Callup Order" %}</a>
+					{% endif %}
+					<a class="btn btn-primary btn-sm hidden-print" href="./StartList/{{e.id}}/">{% trans "Start List Bib Order" %}</a>
+					{% with series=e.get_series %}{% if series %}
+						<a class="btn btn-primary btn-sm hidden-print" href="./Callups/{{e.id}}/{{e.event_type}}/{{series.id}}/">{% trans "Series Callups" %}</a>
+					{% endif %}{% endwith %}
+					<a class="btn btn-primary btn-sm hidden-print" href="./DatarideReports/{{e.id}}/">{% trans "Dataride" %}</a>
+				</div>
 			</td>
 		</tr>
 	{% endfor %}
@@ -358,6 +363,9 @@
 			<td>
 				{% if request.user.is_superuser %}
 					<a class="btn btn-warning hidden-print" href="./CategoryNumbersDelete/{{c.id}}/">{% trans "Delete" %}</a>&nbsp;
+					{% if not competition.number_set %}
+						<a class="btn btn-primary hidden-print" href="./CategoryNumbersAssign/{{c.id}}/">{% trans "Assign" %}</a>&nbsp;
+					{% endif %}
 					<a class="btn btn-success hidden-print" href="./CategoryNumbersEdit/{{c.id}}/">{% trans "Edit" %}</a>
 				{% endif %}
 			</td>

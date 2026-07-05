@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block style %}
+tbody tr { cursor: pointer; user-select: none; }
+tbody tr.selected { background-color: #0d6efd33; }
+{% endblock style %}
+
+{% block onload %}
+
+let isDragging = false;
+let startRow = null;
+let selecting = true; // true = selecting, false = deselecting
+
+document.querySelectorAll('tbody tr').forEach(row => {
+    row.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startRow = row;
+        row.classList.add('selected');
+        //e.preventDefault(); // prevent text selection
+    });
+
+    row.addEventListener('mouseover', () => {
+        if (isDragging) {
+            row.classList.add('selected');
+        }
+    });
+});
+
+function processRows(rows) {
+	let value = parseInt( prompt("Enter a starting Bib for the selection:"), 10 );
+	if( !isNaN(value) ) {
+		for( let row of rows ) {
+			row.querySelector('input').value = value;
+			value += 1;
+		}
+	}
+}
+
+function highlightMissing() {
+	document.querySelectorAll('tbody tr').forEach(row => {
+		const input = row.querySelector('input');
+		if (input) {
+			const check = () => {
+				input.style.backgroundColor = input.value.trim() === '' ? 'yellow' : '';
+			};
+			check(); // check on load
+			input.addEventListener('input', check); // check on change
+		}
+	});
+}
+highlightMissing();
+
+document.querySelector('form').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') e.preventDefault();
+});
+
+document.addEventListener('mouseup', () => {
+    isDragging = false;
+    startRow = null;
+    
+    const selected = [...document.querySelectorAll('tbody tr.selected')];
+    if (selected.length > 1) {
+        processRows( selected );
+    }
+	for( let row of selected ) {
+		row.classList.remove( 'selected' );
+	}
+});
+
+{% endblock onload %}
+{% block content %}
+
+<h2>{{title}}</h2>
+<h4>{% trans "Bib Range" %}: {{category_numbers.range_str}}</h4>
+<h4>{% trans "Categories" %}: {{category_numbers.category_list}}</h4>
+
+<form acton="." method="post">
+	{% csrf_token %}
+
+<hr/>
+<p>
+	{% trans "Rank by" %}: {% for f in form.rank_fields %} {{f}} {% endfor %}
+</p>
+<p>
+	{% trans "Sort by" %}: {% for f in form.sort_fields %} {{f}} {% endfor %}
+</p>
+
+<hr/>
+
+<button class="btn btn-success" type="submit" name="save-submit">{% trans "Save" %}</button>
+<a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
+
+<hr/>
+
+{% spaceless %}
+<table class="table table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Bib" %}</th>
+		<th>{% trans "UCI ID" %}</th>
+		<th>{% trans "Last Name" %}</th>
+		<th>{% trans "First Name" %}</th>
+		<th>{% trans "Nation" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Category" %}</th>
+		<th>{% trans "Gender" %}</th>
+		{% for h in category_numbers.ranking_titles %}
+			<th class="text-right">{{h}}</th>
+		{% endfor %}
+	</tr>
+</thead>
+<tbody>
+	{% for bib_field, p in form.rows %}
+	<tr>
+		<td class="text-right">{{forloop.counter}}.</td>
+		<td>{{bib_field}}</td>
+		<td>{{p.license_holder.uci_id}}</td>
+		<td>{{p.license_holder.last_name}}</td>
+		<td>{{p.license_holder.first_name}}</td>
+		<td class="text-center">{{p.license_holder.nation_code}}</td>
+		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+		<td>{{p.category.code}}</td>
+		<td class="text-center">{{p.category.get_gender_display}}</td>
+		{% for rank in p.callup_ranks %}
+			<td class="text-right">{% if v %}{{rank|floatformat:"-2"}}{% endif %}</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+</form>
+{% endblock content %}

@@ -27,7 +27,7 @@ RME	Men	Road Men Elite
 uci_mtb = '''
 XWU13.N	Women	MTB Novice Girls Under 13 <age 10-12>
 XWU13.S	Women	MTB Senior Girls Under 13 <age 10-12>
-XWU13.E	Women	MTB Export Girls Under 13 <age 10-12>
+XWU13.E	Women	MTB Expert Girls Under 13 <age 10-12>
 
 XWU15.N	Women	MTB Novice Girls Under 15 <age 13-14>
 XWU15.S	Women	MTB Senior Girls Under 15 <age 13-14>
@@ -41,22 +41,22 @@ XWJ	Women	MTB Women Junior <age 17-18>
 
 XWMC.N	Women	MTB Novice Women Masters <50+>
 XWMC.S	Women	MTB Senior Women Masters <50+>
-XWMC.E	Women	MTB Export Women Masters <50+>
+XWMC.E	Women	MTB Expert Women Masters <50+>
 
 XWMB.N	Women	MTB Novice Women Masters <40-49>
 XWMB.S	Women	MTB Senior Women Masters <40-49>
-XWMB.E	Women	MTB Export Women Masters <40-49>
+XWMB.E	Women	MTB Expert Women Masters <40-49>
 
 XWMA.N	Women	MTB Novice Women Masters <30-39>
 XWMA.S	Women	MTB Senior Women Masters <30-39>
-XWMA.E	Women	MTB Export Women Masters <30-39>
+XWMA.E	Women	MTB Expert Women Masters <30-39>
 
 XWU	Women	MTB Women Under 23
 XWE	Women	MTB Women Elite
 
 XMU13.N	Men	MTB Novice Boys Under 13 <age 10-12>
 XMU13.S	Men	MTB Senior Boys Under 13 <age 10-12>
-XMU13.E	Men	MTB Export Boys Under 13 <age 10-12>
+XMU13.E	Men	MTB Expert Boys Under 13 <age 10-12>
 
 XMU15.N	Men	MTB Novice Boys Under 15 <age 13-14>
 XMU15.S	Men	MTB Senior Boys Under 15 <age 13-14>
@@ -72,19 +72,19 @@ XMJ.E	Men	MTB Expert Men Junior <age 17-18>
 
 XMMD.N	Men	MTB Novice Men Masters <60+>
 XMMD.S	Men	MTB Senior Men Masters <60+>
-XMMD.E	Men	MTB Export Men Masters <60+>
+XMMD.E	Men	MTB Expert Men Masters <60+>
 
 XMMC.N	Men	MTB Novice Men Masters <50-59>
 XMMC.S	Men	MTB Senior Men Masters <50-59>
-XMMC.E	Men	MTB Export Men Masters <50-59>
+XMMC.E	Men	MTB Expert Men Masters <50-59>
 
 XMMB.N	Men	MTB Novice Men Masters <40-49>
 XMMB.S	Men	MTB Senior Men Masters <40-49>
-XMMB.E	Men	MTB Export Men Masters <40-49>
+XMMB.E	Men	MTB Expert Men Masters <40-49>
 
 XMMA.N	Men	MTB Novice Men Masters <30-39>
 XMMA.S	Men	MTB Senior Men Masters <30-39>
-XMMA.E	Men	MTB Export Men Masters <30-39>
+XMMA.E	Men	MTB Expert Men Masters <30-39>
 
 XMU	Men	MTB Men Under 23
 XME	Men	MTB Men Elite

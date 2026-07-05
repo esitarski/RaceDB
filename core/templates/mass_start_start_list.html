@@ -8,8 +8,10 @@
 {% load good_bad_icon %}
 {% load good_err_icon %}
 
-
 {% with late_reg_exists=instance.get_late_reg_exists %}
+
+{% include "competition_image.html" %}
+
 <h2 class="hidden-print">{{title}}</h2>
 {% trans "Generated" %}: {{time_stamp|date_hhmmss}}
 <h2><strong>{{instance.competition.title}}</strong></h2>
@@ -77,6 +79,7 @@
 {% endspaceless %}
 {% for w in instance.wave_set.all %}
 <hr class="page-break-before"/>
+{% include "competition_image.html" competition=instance.competition %}
 <span class="visible-print">{{instance.competition.title}}, {{instance.name}}, {{instance.date_time|date_hhmm}}</span>
 <h4>
 	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Nations" %}: {{w.get_num_nationalities}}, {% trans "Starters" %}: {{w.get_participants.count}}
@@ -86,38 +89,83 @@
 <h5 style="margin-top: 8px">{% trans "Categories" %}: {{w.category_count_text}}</h5>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed participant_table">
-<thead>
-	<tr>
-		<th>{% trans "Bib" %}</th>
-		<th>{% trans "Name" %}</th>
-		<th>{% trans "Team" %}</th>
-		<th>{% trans "Category" %}</th>
-		<th class="text-nowrap">{% trans "UCI ID" %}</th>
-		{% if late_reg_exists %}<th class="hidden-print">{% trans "Late Reg" %}</th>{% endif %}
-		<th class="hidden-print"></th>
-	</tr>
-</thead>
-<tbody>
-	{% with late_reg_set=w.get_late_reg_set %}
-		{% for p in w.get_participants %}
-			{% with h=p.license_holder %}
-			<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
-				<td>{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
-				<td>{{p.license_holder.full_name}}</td>
-				<td>{{p.team_name}}</td>
-				<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-				<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
-				{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
-				<td class="hidden-print">
-					<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
-					&nbsp;&nbsp;
-					<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
-				</td>
-			</tr>
-			{% endwith %}
-		{% endfor %}
-	{% endwith %}
-</tbody>
+{% if show_callups and w.ranking_titles %}
+	<thead>
+		<tr>
+			<th class="text-right">{% trans "Bib" %}</th>
+			<th>{% trans "Name" %}</th>
+			<th>{% trans "Category" %}</th>
+			<th>{% trans "Team" %}</th>
+			<th>{% trans "Nation" %}</th>
+			<th class="text-nowrap">{% trans "UCI ID" %}</th>
+			{% for title in w.ranking_titles %}
+				<th class="text-right">{{title}}</th>
+			{% endfor %}
+			{% if late_reg_exists %}<th class="hidden-print">{% trans "Late Reg" %}</th>{% endif %}
+			<th class="hidden-print"></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% with late_reg_set=w.get_late_reg_set %}
+			{% for p in w.get_participants_callup_order %}
+				{% with h=p.license_holder %}
+				<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
+					<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
+					<td>{{p.license_holder.full_name}}</td>
+					<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
+					<td>{{p.team_name}}</td>
+					<td>{{p.license_holder.nation_code}}</td>
+					<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
+					{% for rank in p.callup_ranks %}
+						<td class="text-right">{% if rank %}{{rank|floatformat:"-2"}}{% endif %}</td>
+					{% endfor %}
+					{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
+					<td class="hidden-print">
+						<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
+						&nbsp;&nbsp;
+						<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
+					</td>
+				</tr>
+				{% endwith %}
+			{% endfor %}
+		{% endwith %}
+	</tbody>
+{% else %}
+	<thead>
+		<tr>
+			<th class="text-right">{% trans "Bib" %}</th>
+			<th>{% trans "Name" %}</th>
+			<th>{% trans "Category" %}</th>
+			<th>{% trans "Team" %}</th>
+			<th>{% trans "Nation" %}</th>
+			<th class="text-nowrap">{% trans "UCI ID" %}</th>
+			{% if late_reg_exists %}<th class="hidden-print">{% trans "Late Reg" %}</th>{% endif %}
+			<th class="hidden-print"></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% with late_reg_set=w.get_late_reg_set %}
+			{% for p in w.get_participants %}
+				{% with h=p.license_holder %}
+				<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
+					<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
+					<td>{{p.license_holder.full_name}}</td>
+					<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
+					<td>{{p.team_name}}</td>
+					<td>{{p.license_holder.nation_code}}</td>
+					<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
+					{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
+					<td class="hidden-print">
+						<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
+						&nbsp;&nbsp;
+						<a class="btn btn-success btn-xs" href="./ParticipantEdit/{{p.id}}/">{% trans "Edit" %}</a>
+					</td>
+				</tr>
+				{% endwith %}
+			{% endfor %}
+		{% endwith %}
+	</tbody>
+{% endif %}
 </table>
 {% endspaceless %}
 {% endfor %}

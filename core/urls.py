@@ -26,6 +26,8 @@ from core import competition_found_tag
 from core import crossmgr_password
 from core import image
 from core import gpx_course
+from core import ranking
+from core import dataride_report
 
 import warnings
 warnings.simplefilter('error', DeprecationWarning)
@@ -78,7 +80,12 @@ urlpatterns = [
 	re_path(r'^.*UploadPrereg/(?P<competitionId>\d+)/$', views.UploadPrereg),
 	re_path(r'^.*FinishLynx/(?P<competitionId>\d+)/$', views.FinishLynx),
 	re_path(r'^.*StartLists/(?P<competitionId>\d+)/$', views.StartLists),
+
 	re_path(r'^.*StartList/(?P<eventId>\d+)/$', views.StartList),
+	re_path(r'^.*StartList/(?P<eventId>\d+)/(?P<byCallup>\d+)/$', views.StartList),
+
+	re_path(r'^.*CompetitionShowUCIRanking/(?P<competitionId>\d+)/$', views.CompetitionShowUCIRanking),
+	re_path(r'^.*CompetitionUpdateUCI/(?P<competitionId>\d+)/$', views.CompetitionUpdateUCI),
 	
 	re_path(r'^.*CompetitionCloudUpload/$', views.CompetitionCloudUpload),
 	
@@ -117,12 +124,23 @@ urlpatterns = [
 	re_path(r'^.*CategoryNumbersNew/(?P<competitionId>\d+)/$', category_numbers.CategoryNumbersNew),
 	re_path(r'^.*CategoryNumbersEdit/(?P<categoryNumbersId>\d+)/$', category_numbers.CategoryNumbersEdit),
 	re_path(r'^.*CategoryNumbersDelete/(?P<categoryNumbersId>\d+)/$', category_numbers.CategoryNumbersDelete),
+	re_path(r'^.*CategoryNumbersAssign/(?P<categoryNumbersId>\d+)/$', category_numbers.CategoryNumbersAssign),
 	
 	re_path(r'^.*EventMassStarts/(?P<competitionId>\d+)/$', views.EventMassStartDisplay),
 	re_path(r'^.*EventMassStartNew/(?P<competitionId>\d+)/$', views.EventMassStartNew),
 	re_path(r'^.*EventMassStartEdit/(?P<eventId>\d+)/$', views.EventMassStartEdit),
 	re_path(r'^.*EventMassStartCrossMgr/(?P<eventId>\d+)/$', views.EventMassStartCrossMgr),
 	re_path(r'^.*EventMassStartDelete/(?P<eventId>\d+)/$', views.EventMassStartDelete),
+	re_path(r'^.*DatarideReports/(?P<eventId>\d+)/$', dataride_report.DatarideReports),
+	re_path(r'^.*DatarideReport/(?P<waveId>\d+)/$', dataride_report.DatarideReport),
+	
+	re_path(r'^.*EventMassStartRankCallups/(?P<eventId>\d+)/$', views.EventMassStartRankCallups),
+
+	re_path(r'^.*RankingsDisplay/(?P<competitionId>\d+)/$', ranking.RankingsDisplay),
+	re_path(r'^.*RankingNew/(?P<competitionId>\d+)/$', ranking.RankingNew),
+	re_path(r'^.*RankingEdit/(?P<rankingId>\d+)/$', ranking.RankingEdit),
+	re_path(r'^.*RankingDelete/(?P<rankingId>\d+)/$', ranking.RankingDelete),
+	re_path(r'^.*RankingImportFromExcel/(?P<rankingId>\d+)/$', ranking.RankingImportFromExcel),
 	
 	re_path(r'^.*UploadCrossMgr/$', views.UploadCrossMgr),
 	re_path(r'^.*VerifyCrossMgr/$', views.VerifyCrossMgr),

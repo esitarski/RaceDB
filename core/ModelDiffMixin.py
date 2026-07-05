@@ -31,11 +31,11 @@ class ModelDiffMixin:
 		"""
 		return self.diff.get(field_name, None)
 
-	def save(self, *args, **kwargs):
+	def save(self, **kwargs):
 		"""
 		Saves model and set initial state.
 		"""
-		super().save(*args, **kwargs)
+		super().save(**kwargs)
 		self.__initial = self._dict
 
 	@property

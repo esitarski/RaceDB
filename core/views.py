@@ -31,6 +31,7 @@ from .participation_data import participation_data, get_competitions
 from .year_on_year_data import year_on_year_data
 from .license_holder_import_excel import license_holder_import_excel, license_holder_msg_to_html
 from .uci_excel_dataride import uci_excel
+from .get_uci_ranking import get_uci_rank, get_discipline_code
 from . import authorization
 
 from .init_prereg import init_prereg
@@ -1003,6 +1004,12 @@ def GetCompetitionForm( competition_cur = None ):
 		
 		def setLicenseChecks( self, request, competition ):
 			return HttpResponseRedirect( pushUrl(request,'SetLicenseChecks', competition.id) )
+			
+		def showUCIRanking( self, request, competition ):
+			return HttpResponseRedirect( pushUrl(request,'CompetitionShowUCIRanking', competition.id) )
+		
+		def showOtherRankings( self, request, competition ):
+			return HttpResponseRedirect( pushUrl(request,'RankingsDisplay', competition.id) )
 		
 		def __init__( self, *args, **kwargs ):
 			system_info = SystemInfo.get_singleton()
@@ -1092,10 +1099,16 @@ def GetCompetitionForm( competition_cur = None ):
 				Field( 'license_check_note', type='hidden' ),
 			)
 			
+			if competition_cur:
+				try:
+					uci_ranking_computation_date = competition_cur.ucirank_set.all().first().computation_date
+				except Exception:
+					uci_ranking_computation_date = None
+			
 			self.additional_buttons = []
 			if button_mask == EDIT_BUTTONS:
 				self.additional_buttons.append(
-					('upload-prereg-list-submit', _('Upload Prereg List'), 'btn btn-success', self.uploadPrereg),
+					('upload-prereg-list-submit', _('Upload Prereg Excel'), 'btn btn-success', self.uploadPrereg),
 				)
 				self.additional_buttons.append(
 					('edit-report-labels-submit', _('Edit Report Labels'), 'btn btn-primary', self.editReportTags),
@@ -1103,6 +1116,17 @@ def GetCompetitionForm( competition_cur = None ):
 				self.additional_buttons.append(
 					('set-license-checks-submit', _('Set License Checks'), 'btn btn-primary', self.setLicenseChecks),
 				)
+				
+				if competition_cur:
+					self.additional_buttons.append(
+						('uci-ranking-submit',
+						format_lazy('{} ({})', _('UCI Ranking'), uci_ranking_computation_date.strftime('%Y-%m-%d')),
+						'btn btn-primary',
+						self.showUCIRanking),
+					)
+					self.additional_buttons.append(
+						('other-ranking-submit', _('Other Ranking'), 'btn btn-primary', self.showOtherRankings),
+					)
 				
 				if competition_cur and competition_cur.using_tags:
 					self.additional_buttons.append(
@@ -1282,6 +1306,21 @@ def CompetitionReports( request, competitionId ):
 	return render( request, 'competition_reports.html', locals() )
 
 @access_validation()
+def CompetitionUpdateUCI( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+
+	get_uci_rank( competition )
+	return HttpResponseRedirect(getContext(request,'cancelUrl'))
+	
+@access_validation()
+def CompetitionShowUCIRanking( request, competitionId ):
+	competition = get_object_or_404( Competition, pk=competitionId )
+	discipline_code = get_discipline_code( competition )
+
+	uci_rank = sorted( competition.ucirank_set.all(), key=operator.attrgetter('rank') )
+	return render( request, 'competition_uci_rank.html', locals() )
+
+@access_validation()
 def CompetitionParticipationSummary( request, competitionId ):
 	competition = get_object_or_404( Competition, pk=competitionId )
 	
@@ -1434,10 +1473,13 @@ def StartLists( request, competitionId ):
 	return render( request, 'start_lists.html', locals() )
 	
 @access_validation()
-def StartList( request, eventId ):
+def StartList( request, eventId, byCallup=0 ):
+	byCallup = int( byCallup )
 	instance = get_object_or_404( EventMassStart, pk=eventId )
 	time_stamp = datetime.datetime.now()
+	title = format_lazy( '{} {}', _('Start List'), _('Callup Order') if byCallup else _('Bib Order') )
 	page_title = '{} - {}'.format( instance.competition.title, instance.name )
+	show_callups = byCallup
 	return render( request, 'mass_start_start_list.html', locals() )
 	
 def get_annotated_waves( event ):
@@ -2150,6 +2192,7 @@ class EventMassStartForm( ModelForm ):
 			Field( 'competition', type='hidden' ),
 			Field( 'event_type', type='hidden' ),
 			Field( 'option_id', type='hidden' ),
+			
 			Row(
 				Col(Field('name', size=40), 6),
 				Col(Field('date_time', size=24), 6),
@@ -2235,6 +2278,12 @@ def EventMassStartCrossMgr( request, eventId ):
 	cml.save()	
 
 	return response
+
+@access_validation()
+def EventMassStartRankCallups( request, eventId ):
+	eventMassStart = get_object_or_404( EventMassStart, pk=eventId )
+	competition = eventMassStart.competition
+	return render( request, 'event_mass_start_list.html', locals() )
 
 def checkCrossMgrPassword( request ):
 	try:
@@ -2329,8 +2378,13 @@ def GetWaveForm( event_mass_start, wave = None ):
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline hidden-print'
 			
+			for r in range(1, RANKING_MAX+1):
+				self.fields[f'ranking_{r}_option'].label = format_lazy( '{} {}', _("Option"), str(r) )
+				self.fields['ranking_1'].label = _("Use")
+			
 			self.helper.layout = Layout( 
 				Field( 'event', type='hidden' ),
+				
 				Row(
 					Col(Field('name', size=40), 4),
 					Col(Field('max_participants'), 3),
@@ -2345,6 +2399,17 @@ def GetWaveForm( event_mass_start, wave = None ):
 					Col(Field('categories', size=12, css_class='hidden-print'), 6),
 					Col(Field('rank_categories_together'), 3),
 				),
+				Row( HTML( format_lazy('{}:', _('Callup Sequence')) ) ),
+				Row(
+					Field( 'ranking_1_option' ),
+					Field( 'ranking_1' ),
+					Field( 'ranking_2_option' ),
+					Field( 'ranking_2' ),
+					Field( 'ranking_3_option' ),
+					Field( 'ranking_3' ),
+					Field( 'ranking_4_option' ),
+					Field( 'ranking_4' ),
+				),			
 			)
 			addFormButtons( self, button_mask )
 			
@@ -2403,6 +2468,15 @@ def WaveDelete( request, waveId ):
 		pre_edit_func=pre_edit_fix_wave_distance,
 	)
 
+	
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def WaveCallup( request, waveId ):
+	wave = get_object_or_404( Wave, pk=waveId )
+	ranking_titles = wave.ranking_titles
+	participants = wave.get_participants_callup_order()
+	return render( request, 'wave_callup.html', locals() )
+	
 #-----------------------------------------------------------------------
 
 @autostrip

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+<h2>{{title}}</h2>
+<p></p>
+<h4>
+	<strong>{% trans "Competition" %}:</strong>
+	{{competition.name}}
+</h4>
+<h4>
+	<strong>{% trans "Wave" %}:</strong>
+	{{wave.name}},
+	{{wave.get_start_time|date:"D d M Y H:i:s"}},
+	{{wave.get_details_html|safe}},
+	{{wave.category_count_html|safe}}
+	<br/>
+	{% trans "Starters" %}: {{wave.get_starters_str}},
+	{% trans "Bibs" %}:{{wave.get_bib_numbers_str}}
+</h4>
+
+<hr class="hidden-print"/>
+{% crispy form %}
+<hr class="hidden-print"/>
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th>{% trans "Rank" %}</th>
+		<th>{% trans "BIB" %}</th>
+		<th>{% trans "UCI ID" %}</th>
+		<th>{% trans "Last Name" %}</th>
+		<th>{% trans "First Name" %}</th>
+		<th>{% trans "Country" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Phase" %}</th>
+		<th>{% trans "Heat" %}</th>
+		<th>{% trans "Result" %}</th>
+		<th>{% trans "IRM" %}</th>
+		<th>{% trans "Sort Order" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for r in report %}
+	<tr {% if r.missing %}style="font-weight: bold;"{% endif %}>
+		<td class="text-center">{{r.rank}}</td>
+		<td class="text-center">{{r.bib}}</td>
+		<td>{{r.uci_id}}</td>
+		<td>{{r.last_name}}</td>
+		<td>{{r.first_name}}</td>
+		<td class="text-center">{{r.country}}</td>
+		<td class="text-center">{{r.team}}</td>
+		<td class="text-center">{{r.gender}}</td>
+		<td></td>
+		<td></td>
+		<td>{{r.result|default:""}}</td>
+		<td>{{r.irm|default:""}}</td>
+		<td class="text-center">{{r.sort_order}}</td>
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+{% endblock content %}
