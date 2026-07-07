@@ -573,7 +573,7 @@ class NumberSet(models.Model):
 		
 	def get_bib( self, competition, license_holder, category, category_numbers_set=None ):
 		# Get the bib number for this license_holder and category from the NumberSetEntries.
-		# Does not assign bibs.  Returns None if no bib is found.
+		# Does not assign the bib.  Returns None if no bib is found.
 		numbers = None
 		if category_numbers_set:
 			numbers = category_numbers_set
@@ -583,8 +583,13 @@ class NumberSet(models.Model):
 				numbers = category_numbers.get_numbers()
 		
 		if numbers:
-			for bib in self.numbersetentry_set.filter(
-					license_holder=license_holder, date_lost=None ).order_by('bib').values_list('bib', flat=True):
+			# Check all the numbers owned by this license_holder.
+			# If the number is compatible with the number set, return it.
+			for bib in (self.numbersetentry_set
+					.filter( license_holder=license_holder, date_lost=None )
+					.order_by('bib')
+					.values_list('bib', flat=True)
+				):
 				if bib in numbers:
 					return bib
 		return None
@@ -856,20 +861,6 @@ class Competition(models.Model):
 	@property
 	def title( self ):
 		return self.long_name or self.name
-	
-	@property
-	def image_html( self ):
-		if self.image:
-			if self.image.url:
-				s = [
-					f'<a href="{self.image.url}" target="_blank" />',
-					f'<img src="{self.image.image.url}" class="logo-image" />',
-					'</a><br/>',
-				]
-				return mark_safe( '\n'.join(s) )
-			else:
-				return mark_safe(f'<img src="{self.image.image.url}" class="logo-image" /><br/>')
-		return ''
 	
 	@property
 	def any_print( self ):
@@ -4872,13 +4863,13 @@ class Participant(models.Model):
 			
 		return available_numbers, allocated_numbers, lost_bibs, category_numbers_defined
 
-	def get_bib_auto( self ):
-		# If no bib, return the first one that is available.
+	def get_bib_auto( self, suggested_bib=None ):
 		if self.bib:
 			return self.bib
+		# If no bib, return the first one that is available.
 		available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = self.get_available_numbers()
-		for bib in available_numbers:
-			if bib not in allocated_numbers and bib not in lost_bibs:
+		for bib in ([suggested_bib] if suggested_bib else available_numbers):
+			if bib in available_numbers and bib not in allocated_numbers and bib not in lost_bibs:
 				return bib
 		return None
 	

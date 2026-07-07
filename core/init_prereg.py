@@ -37,8 +37,9 @@ class TimeTracker:
 		return '\n'.join( s )
 
 def init_prereg(
-		competition_name='', worksheet_name='', assign_missing_bibs=False, clear_existing=False,
-		competitionId=None, worksheet_contents=None, message_stream=sys.stdout ):
+		competition_name='', worksheet_name='', assign_bibs=False, clear_existing=False,
+		competitionId=None, worksheet_contents=None, message_stream=sys.stdout
+	):
 
 	t_track = TimeTracker()
 		
@@ -114,6 +115,8 @@ def init_prereg(
 	def process_ur_records( ur_records ):
 		for i, ur in ur_records:
 			
+			suggested_bib = number_set_bib = None
+			
 			t_track.start( 'get_fields_from_row' )
 		
 			v = ifm.finder( ur )
@@ -166,8 +169,8 @@ def init_prereg(
 			
 			preregistered	= to_bool(v('preregistered', True))
 			paid			= to_bool(v('paid', None))
-			bib				= (to_int(v('bib', None)) or None)
-			bib_auto		= (bib is None and '{}'.format(v('bib','')).lower() == 'auto')
+			suggested_bib	= (to_int(v('bib', None)) or None)
+			bib_auto		= (suggested_bib is None and str(v('bib','')).lower() == 'auto')
 			tag				= to_int_str(v('tag', None))
 			note		 	= to_str(v('note', None))
 			team_name		= to_str(v('team', None))
@@ -345,9 +348,9 @@ def init_prereg(
 				if category is not None:
 					participant_keys['category'] = category
 				
-				participant_created = False
 				try:
 					participant = Participant.objects.get( **participant_keys )
+					participant_created = False
 				except Participant.DoesNotExist:
 					participant = Participant( **participant_keys )
 					participant_created = True
@@ -362,10 +365,11 @@ def init_prereg(
 				participant.init_default_values()
 				
 				# Now, override default values with specified ones.
+				# Except for the bib number, which we process seperately.
 				t_track.start( 'override_participant_defaults' )
 				for attr, value in (
 						('category',category),
-						('bib',bib), ('tag',tag), ('note',note),
+						('tag',tag), ('note',note),
 						('preregistered',preregistered), ('paid',paid), 
 						('seed_option',seed_option), ('est_kmh',est_kmh), 
 						('role',role),
@@ -376,72 +380,50 @@ def init_prereg(
 				if team_name:
 					participant.team = team
 				
-				suggested_bib = participant.bib
-
 				# Ensure the existing bib number is compatible with the category.
 				t_track.start( 'update_bib_new_category' )
-				bib = participant.update_bib_new_category( category_numbers_set[participant.category] )
+				participant.update_bib_new_category( category_numbers_set[participant.category] )
 
-				if suggested_bib and bib and suggested_bib != bib:
-					# The participant has been given a new number.
-					# Let them continue to own it until it is turned in.
-					bib = None
-				
-				# Auto-assign the bib if there isn't one already.
-				if not bib and (assign_missing_bibs or bib_auto):
+				# Try to get the missing bib from the number set and license holder.
+				if not participant.bib and competition.number_set:
+					participant.bib = competition.number_set.get_bib( competition, license_holder, category, category_numbers_set[participant.category] )
+					
+				if participant.bib and suggested_bib and assign_bibs and participant.bib != suggested_bib:
+					ms_write( '**** Row {}: Warning={}\nCategory={} Name="{}"\n'.format(
+						i, 'Participant already has a bib number.  Given bib was ignored.',
+						category_code, name,
+					) )
+
+				# We still don't have a bib number.  Try to auto-assign it.
+				if not participant.bib and (assign_bibs or bib_auto):
 					t_track.start( 'get_bib_auto' )
 					
-					# Try to retrieve the existing bib from the license_holder for this category.
-					has_existing_bib = False
-					if competition.number_set:
-						bib = competition.number_set.get_bib( competition, license_holder, category, category_numbers_set[participant.category] )
-						has_existing_bib = bool( bib )
-					
-					if has_existing_bib and suggested_bib and suggested_bib != bib:
-						# Change the bib?
-						pass
-					
-					# If no existing bib, use the suggested one, or if no suggestion, allocate the next available one.
-					if not bib:
-						if suggested_bib:
-							bib = suggested_bib
-						else:
-							bib = participant.get_bib_auto()
-							if bib and competition.number_set:
-								competition.number_set.assign_bib( participant.license_holder, bib )
-							
-					if not bib:
+					# Get a new bib using the suggested one (if supplied).
+					bib_auto = participant.get_bib_auto( suggested_bib )
+					if bib_auto:
+						participant.bib = bib_auto
+						if competition.number_set:
+							competition.number_set.assign_bib( participant.license_holder, bib_auto )
+
+					if not participant_bib:
 						ms_write( '**** Row {}: Error={}\nCategory={} Name="{}"\n'.format(
-							i, 'Auto-allocate bib failed: Category Numbers undefined or full.',
+							i, 'Bib allocation failed: Category Numbers are undefined, full, or invalid for suggested bib.',
 							category_code, name,
 						) )
 				
-				# If we have an assigned bib, ensure it respects all the constraints.
+				# If we have an assigned bib, check all constraints so we do not get incorrect bibs allocated.
 				t_track.start( 'validate_bib' )
-				if bib:					
-					if bib in category_numbers_set[participant.category]:
-						participant.bib = bib
-						if competition.number_set:
-							if not competition.number_set.assign_bib( participant.license_holder, participant.bib ):
-								ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
-									i, 'Participant Bib Number is unavailble (lost or already allocated). ',
-									bib, category_code, license_code, name,
-								) )
-								participant.bib = None
-					else:
+				if participant.bib:					
+					if participant.bib not in category_numbers_set[participant.category]:
+						ms_write( f'**** Row {i}: Error=Bib Number is out of range for Category\nBib={bib} Category={category_code} License={license_code} Name="{name}"\n' )
+						participant.bib = None
+					elif competition.number_set and not competition.number_set.assign_bib( participant.license_holder, participant.bib ):
 						ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
-							i, 'Bib Number is out of range for Category ',
+							i, 'Participant Bib Number is unavailble (lost or already allocated). ',
 							bib, category_code, license_code, name,
 						) )
+						participant.bib = None
 
-				# final check for bib integrity.
-				if participant.bib and participant.bib not in category_numbers_set[participant.category]:
-					participant.bib = None
-					ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
-						i, 'Participant Bib is out of range for Category ',
-						bib, category_code, license_code, name,
-					) )
-				
 				participant.preregistered = True
 				
 				t_track.start( 'participant_save' )
