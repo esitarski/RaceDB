@@ -4868,7 +4868,8 @@ class Participant(models.Model):
 			return self.bib
 		# If no bib, return the first one that is available.
 		available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = self.get_available_numbers()
-		for bib in ([suggested_bib] if suggested_bib else available_numbers):
+		search_numbers = [suggested_bib] if suggested_bib else available_numbers
+		for bib in search_numbers:
 			if bib in available_numbers and bib not in allocated_numbers and bib not in lost_bibs:
 				return bib
 		return None

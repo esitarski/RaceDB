@@ -389,8 +389,8 @@ def init_prereg(
 					participant.bib = competition.number_set.get_bib( competition, license_holder, category, category_numbers_set[participant.category] )
 					
 				if participant.bib and suggested_bib and assign_bibs and participant.bib != suggested_bib:
-					ms_write( '**** Row {}: Warning={}\nCategory={} Name="{}"\n'.format(
-						i, 'Participant already has a bib number.  Given bib was ignored.',
+					ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+						i, f'Cannot assign bib={suggested_bib} when participant already has bib={participant.bib} from number set.',
 						category_code, name,
 					) )
 
@@ -398,18 +398,37 @@ def init_prereg(
 				if not participant.bib and (assign_bibs or bib_auto):
 					t_track.start( 'get_bib_auto' )
 					
-					# Get a new bib using the suggested one (if supplied).
-					bib_auto = participant.get_bib_auto( suggested_bib )
-					if bib_auto:
-						participant.bib = bib_auto
-						if competition.number_set:
-							competition.number_set.assign_bib( participant.license_holder, bib_auto )
-
-					if not participant_bib:
-						ms_write( '**** Row {}: Error={}\nCategory={} Name="{}"\n'.format(
-							i, 'Bib allocation failed: Category Numbers are undefined, full, or invalid for suggested bib.',
+					if not participant.category:
+						ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+							i, 'Cannot assign bib when category is unmatched or missing.',
 							category_code, name,
 						) )
+					else:						
+						# Get a new bib using the suggested one (if supplied).
+						bib_auto = participant.get_bib_auto( suggested_bib )
+						if bib_auto:
+							participant.bib = bib_auto
+							if competition.number_set:
+								competition.number_set.assign_bib( participant.license_holder, bib_auto )
+
+						if not participant.bib:
+							if suggested_bib:
+								available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = participant.get_available_numbers()
+								if suggested_bib not in available_numbers:
+									ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+										i, f'Suggested Bib={suggested_bib} is not in the available numbers for the category.',
+										category_code, name,
+									) )
+								elif suggested_bub in allocated_numbers:
+									ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+										i, f'Suggested Bib={suggested_bib} is already allocated to another rider.',
+										category_code, name,
+									) )
+							else:
+								ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+									i, 'Bib allocation failed: Category Numbers have no available bibs or are undefined.',
+									category_code, name,
+								) )
 				
 				# If we have an assigned bib, check all constraints so we do not get incorrect bibs allocated.
 				t_track.start( 'validate_bib' )
