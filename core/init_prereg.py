@@ -400,7 +400,7 @@ def init_prereg(
 					
 					if not participant.category:
 						ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
-							i, 'Cannot assign bib when category is unmatched or missing.',
+							i, 'Cannot assign bib with unmatched or missing Category.',
 							category_code, name,
 						) )
 					else:						
@@ -416,7 +416,7 @@ def init_prereg(
 								available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = participant.get_available_numbers()
 								if suggested_bib not in available_numbers:
 									ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
-										i, f'Suggested Bib={suggested_bib} is not in the available numbers for the category.',
+										i, f'Suggested Bib={suggested_bib} is not in the available numbers for the Category.',
 										category_code, name,
 									) )
 								elif suggested_bub in allocated_numbers:
@@ -434,10 +434,10 @@ def init_prereg(
 				t_track.start( 'validate_bib' )
 				if participant.bib:					
 					if participant.bib not in category_numbers_set[participant.category]:
-						ms_write( f'**** Row {i}: Error=Bib Number is out of range for Category\nBib={bib} Category={category_code} License={license_code} Name="{name}"\n' )
+						ms_write( f'**** Row {i}: Error: Bib Number is out of range for Category\nBib={bib} Category={category_code} License={license_code} Name="{name}"\n' )
 						participant.bib = None
 					elif competition.number_set and not competition.number_set.assign_bib( participant.license_holder, participant.bib ):
-						ms_write( '**** Row {}: Error={}\nBib={} Category={} License={} Name="{}"\n'.format(
+						ms_write( '**** Row {}: Error: {}\nBib={} Category={} License={} Name="{}"\n'.format(
 							i, 'Participant Bib Number is unavailble (lost or already allocated). ',
 							bib, category_code, license_code, name,
 						) )
