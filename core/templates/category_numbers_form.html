@@ -26,4 +26,13 @@
 	{% endfor %}
 </tbody>
 </table>
+
+{% for field, errors in form.errors.items %}
+	{{field}}
+    {% for error in errors %}
+		{{error}}
+	{% endfor %}
+	<br/>
+{% endfor %}
+
 {% endblock content %}

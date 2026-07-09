@@ -210,6 +210,7 @@ EDIT_BUTTONS	= 0xFFFF
 
 def addFormButtons( form, button_mask=EDIT_BUTTONS, additional_buttons=None, print_button=None, cancel_alias=None, additional_buttons_on_new_row=False ):
 	btns = []
+	
 	if button_mask & SAVE_BUTTON:
 		btns.append( Submit('save-submit', _('Save'), css_class='btn btn-primary hidden-print') )
 	if button_mask & OK_BUTTON:
@@ -245,7 +246,7 @@ def GenericModelForm( ModelClass ):
 			fields = '__all__'
 			
 		def __init__( self, *args, **kwargs ):
-			self.button_mask = kwargs.pop( 'button_mask', [] )
+			self.button_mask = kwargs.pop( 'button_mask', 0 )
 			
 			super().__init__(*args, **kwargs)
 			self.helper = FormHelper( self )
@@ -253,7 +254,8 @@ def GenericModelForm( ModelClass ):
 			self.helper.form_class = 'form-inline'
 			
 			self.additional_buttons = []
-			addFormButtons( self, self.button_mask, self.additional_buttons )
+			if self.button_mask:
+				addFormButtons( self, button_mask=self.button_mask, additional_buttons=self.additional_buttons )
 			
 	return GMForm
 

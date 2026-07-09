@@ -2,9 +2,12 @@ from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
 
-def GetCategoryNumbersForm( competition, category_numbers = None ):
+def GetCategoryNumbersForm( competition, category_numbers=None ):
+	
 	class CategoryNumbersForm( GenericModelForm(CategoryNumbers) ):
 		def __init__( self, *args, **kwargs ):
+			button_mask = kwargs.pop( 'button_mask', EDIT_BUTTONS )
+			
 			super().__init__(*args, **kwargs)
 			categories_field = self.fields['categories']
 			
@@ -25,6 +28,8 @@ def GetCategoryNumbersForm( competition, category_numbers = None ):
 			
 			for s in range(1, SORT_MAX+1):
 				self.helper[f'sort_{s}'].wrap( Field, type='hidden' )
+				
+			addFormButtons( self, button_mask=button_mask )
 
 	return CategoryNumbersForm
 		

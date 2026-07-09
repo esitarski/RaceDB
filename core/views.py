@@ -1604,11 +1604,17 @@ def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competi
 @autostrip
 class UploadPreregForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
-	assign_bibs = forms.BooleanField(
-		required=False,
-		label=_('Assign Bib Numbers'),
-		help_text=_("Assign a Bib Number if the participant does not already have one.  Use the spreadsheet bib number as a suggestion.")
+
+	DO_NOT_ASSIGN_NEW_BIBS = 0
+	ASSIGN_NEW_BIBS_FROM_SPREADSHEET_ONLY = 1
+	ASSIGN_NEW_BIBS_FROM_SPREADSHEET_AUTO_BLANK = 2
+	NEW_BIB_ASSIGNMENT_CHOICES = (
+		(0, _('Do not assign new Bib numbers.  Bib numbers from the spreadsheet are ignored entirely.') ),
+		(1, _("Assign new Bib numbers from the spreadsheet's Bib column, but only where a value is present.  Leave the Bib unassigned if the spreadsheet's Bib entry is blank.") ),
+		(2, _("Assign new Bib numbers from the spreadsheet's Bib column where present; where blank, assign the next available Bib number.") ),
 	)
+	assign_bibs_option = forms.ChoiceField( choices=NEW_BIB_ASSIGNMENT_CHOICES, required=False )
+	
 	clear_existing = forms.BooleanField(
 		required=False,
 		label=_('Clear All Participants First'),
@@ -1626,21 +1632,24 @@ class UploadPreregForm( Form ):
 				Col( Field('excel_file', accept=".xls,.xlsx"), 8),
 			),
 			Row(
-				Col( Field('assign_bibs'), 4 ),
+				Col( Field('assign_bibs_option'), 12 ),
+			),
+			Row( HTML(_("IMPORTANT: If the Competition has a Number Set, its Bibs take precedence — the spreadsheet's Bib value is ignored (even if present).")) ),
+			Row(
 				Col( Field('clear_existing'), 4 ),
 			),
 		)
 		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_upload_prereg( competitionId, excel_contents, assign_bibs, clear_existing ):
+def handle_upload_prereg( competitionId, excel_contents, assign_bibs_option, clear_existing ):
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO()
 	init_prereg(
 		competitionId=competitionId,
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
-		assign_bibs=assign_bibs,
+		assign_bibs_option=assign_bibs_option,
 		clear_existing=clear_existing,
 	)
 	results_str = message_stream.getvalue()
@@ -1654,7 +1663,7 @@ def UploadPrereg( request, competitionId ):
 	if request.method == 'POST':
 		form = UploadPreregForm(request.POST, request.FILES)
 		if form.is_valid():
-			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['assign_bibs'], form.cleaned_data['clear_existing'] )
+			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['assign_bibs_option'], form.cleaned_data['clear_existing'] )
 			return render( request, 'upload_prereg.html', locals() )
 	else:
 		form = UploadPreregForm()

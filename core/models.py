@@ -1540,13 +1540,13 @@ class CategoryNumbers( models.Model ):
 	range_str = models.TextField( default = '1-99,120-129,-50-60,181,-87', verbose_name=_('Range') )
 	
 	ranking_1_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_1=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	ranking_1=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_2_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_2=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	ranking_2=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_3_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_3=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	ranking_3=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_4_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_4=models.ForeignKey( 'Ranking', null=True, default=None, on_delete=models.SET_NULL, related_name='+' )
+	ranking_4=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	
 	SORT_CHOICES = (
 		(  0, '---'),
@@ -2414,13 +2414,13 @@ class Wave( WaveBase ):
 			return self.event.date_time + datetime.timedelta(self.start_offset)
 	
 	ranking_1_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_1=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_1=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_2_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_2=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_2=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_3_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_3=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_3=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_4_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
-	ranking_4=models.ForeignKey( 'Ranking', null=True, default=None, blank=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_4=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	
 	def has_callup_rankings( self ):
 		for r in range(1, RANKING_MAX+1):
