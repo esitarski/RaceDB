@@ -1120,7 +1120,7 @@ def GetCompetitionForm( competition_cur = None ):
 				if competition_cur:
 					self.additional_buttons.append(
 						('uci-ranking-submit',
-						format_lazy('{}', _('UCI Ranking'), uci_ranking_computation_date.strftime(' (%Y-%m-%d)') if uci_ranking_computation_date else ""),
+						format_lazy('{}{}', _('UCI Ranking'), uci_ranking_computation_date.strftime(' (%Y-%m-%d)') if uci_ranking_computation_date else ""),
 						'btn btn-primary',
 						self.showUCIRanking),
 					)
