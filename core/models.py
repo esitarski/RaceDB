@@ -5230,7 +5230,10 @@ class EventTT( Event ):
 		participants.sort(
 			key=lambda p: (
 				p.start_time.total_seconds() if p.start_time else 1000.0*24.0*60.0*60.0,
-				p.bib or 0, p.license_holder.date_of_birth,
+				p.category.code_gender if p.category else "~",
+				p.bib or 999999,
+				utils.removeDiacritic(p.license_holder.last_name.lower()),
+				utils.removeDiacritic(p.license_holder.first_name.lower()),
 			)
 		)
 		
@@ -5244,7 +5247,7 @@ class EventTT( Event ):
 						if i > 1:
 							p.gap_change = 1 if tDeltaCur > tDelta else -1
 						tDelta = tDeltaCur
-				except Exception as e:
+				except Exception:
 					pass
 		
 		return participants
