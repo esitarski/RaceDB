@@ -15,11 +15,13 @@
 		{% trans "by" %} {{competition.organizer}}, {{competition.discipline.name}} {{competition.race_class.name}}
 	</span>
 </h1>
-<p>&nbsp;</p>
 
 {% if tt_event_startlists %}
 <div class="row">
-	<h3>{% trans "TT Start Lists" %}</h3>
+	<hr/>
+	<h3>{% trans "Time Trial Start Lists" %}</h3>
+	<p></p>
+	<h4>
 	<ul>
 	{% for e in tt_event_startlists %}
 		<li>
@@ -29,6 +31,8 @@
 		</li>
 	{% endfor %}
 	</ul>
+	</h4>
+	<hr/>
 </div>
 {% endif %}
 
