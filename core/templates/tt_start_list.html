@@ -127,8 +127,9 @@
 	{% if instance.competition.description %}{{instance.competition.description}}, {% endif %}
 	{{instance.competition.category_format.name}}
 </h4>
-<h4 class="visible-print">&nbsp;</h4>
+<h4>&nbsp;</h4>
 <h3>{% trans "TT Start List" %}</h3>
+<h4>&nbsp;</h4>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed participant_table">
 <thead>
@@ -155,7 +156,7 @@
 		<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 		<td>{{h.full_name}}</td>
 		<td>{{p.team_name}}</td>
-		<td>{{h.nation_code}}</td>
+		<td class="text-center">{{h.nation_code}}</td>
 		<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 		<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
 		<td class="hidden-print">

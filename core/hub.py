@@ -136,7 +136,7 @@ def CompetitionResults( request, competitionId ):
 	
 	def has_valid_tt_startlist( e ):
 		# Check that this is a tt event without results, and every participant in the seeding is valid.
-		return e.event_type == 1 and not e.has_results and all( (p.start_time and p.bib and p.category) for p in e.get_participants_seeded() )
+		return e.event_type == 1 and not e.has_results() and all( (p.start_time and p.bib and p.category) for p in e.get_participants_seeded() )
 	
 	tt_event_startlists = [e for e in events if has_valid_tt_startlist(e)]
 	
@@ -208,7 +208,8 @@ def get_primes( event, bibs ):
 
 def TTStartList( request, eventId ):
 	event = get_object_or_404( EventTT, pk=eventId )
-	return render( request, 'hub_tt_startlist.html', locals() )
+	competition = event.competition
+	return render( request, 'hub_tt_start_list.html', locals() )
 
 def EventAnimation( request, eventId, eventType, categoryId ):
 	eventType = int(eventType)

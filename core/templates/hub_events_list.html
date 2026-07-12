@@ -21,9 +21,9 @@
 <div class="row">
 	<h3>{% trans "TT Start Lists" %}</h3>
 	<ul>
-	{% for tt_event in tt_event_startlists %}
+	{% for e in tt_event_startlists %}
 		<li>
-		<a href="/RaceDB/Hub/TTStarlist/{{e.id}}/">
+		<a href="/RaceDB/Hub/TTStartList/{{e.id}}/">
 			<strong>{{e.name}} {{e.get_type_abbrev}}: {{e.date_time|date_Md_hhmm}}</strong>
 		</a>
 		</li>
