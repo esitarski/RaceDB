@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load static %}
+{% load date_fmt %}
 {% load non_empty_list %}
 
 {% block content %}
@@ -15,6 +16,21 @@
 	</span>
 </h1>
 <p>&nbsp;</p>
+
+{% if tt_event_startlists %}
+<div class="row">
+	<h3>{% trans "TT Start Lists" %}</h3>
+	<ul>
+	{% for tt_event in tt_event_startlists %}
+		<li>
+		<a href="/RaceDB/Hub/TTStarlist/{{e.id}}/">
+			<strong>{{e.name}} {{e.get_type_abbrev}}: {{e.date_time|date_Md_hhmm}}</strong>
+		</a>
+		</li>
+	{% endfor %}
+	</ul>
+</div>
+{% endif %}
 
 <div class="row">
 {% for cat_gender, category_results in gender_category_results %}
@@ -54,6 +70,7 @@
 	</div>
 {% endfor %}
 </div>
+
 {% if custom_category_results %}
 	<div class="row">
 		<div class="col-md-12">

@@ -128,7 +128,7 @@
 	{{instance.competition.category_format.name}}
 </h4>
 <h4 class="visible-print">&nbsp;</h4>
-<h3>{% trans "Start List" %}</h3>
+<h3>{% trans "TT Start List" %}</h3>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed participant_table">
 <thead>
@@ -136,9 +136,10 @@
 		<th></th>
 		<th class="text-center">{% trans "Clock" %}</th>
 		<th class="text-center">{% trans "Stopwatch" %}</th>
-		<th>{% trans "Bib" %}</th>
+		<th class="text-right">{% trans "Bib" %}</th>
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
+		<th>{% trans "Nation" %}</th>
 		<th>{% trans "Category" %}</th>
 		<th class="text-nowrap">{% trans "UCI ID" %}</th>
 		<th class="hidden-print"></th>
@@ -147,13 +148,14 @@
 <tbody>
 {% for p in instance.get_participants_seeded %}
 	{% with h=p.license_holder %}
-	<tr onclick="jump('./ParticipantEdit/{{p.id}}/');" {% if p.gap_change > 0 %}class="gap-change-inc"{% elif p.gap_change < 0%}class="gap-change-dec"{% endif %}>
+	<tr onclick="jump('./ParticipantEdit/{{p.id}}/');" {% if p.gap_change > 0 %}class="gap-change-inc"{% elif p.gap_change < 0 %}class="gap-change-dec"{% endif %}>
 		<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
 		<td class="text-right clock-time">{% if p.clock_time %}{{p.clock_time | time:"H:i:s"}}{% else %}{% trans "None" %}{% endif %}</td>
 		<td class="text-right start-time">{% if p.start_time %}{{p.start_time}}{% else %}{% trans "None" %}{% endif %}</td>
-		<td>{% if p.bib %}{{p.bib}}{% endif %}</td>
-		<td>{{p.license_holder.full_name}}</td>
+		<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
+		<td>{{h.full_name}}</td>
 		<td>{{p.team_name}}</td>
+		<td>{{h.nation_code}}</td>
 		<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 		<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
 		<td class="hidden-print">

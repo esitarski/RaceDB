@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% load date_fmt %}
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+{% include "hub_nav.html" %}
+<h1>
+	{% include "competition_image.html" %}
+	<strong>{{competition.title}}</strong><br/>
+	<span style="font-size: 75%">
+		{{competition.date_range_year_str}},
+		{% non_empty_list competition.city competition.stateProv competition.country %}<br/>
+		{% trans "by" %} {{competition.organizer}}, {{competition.discipline.name}} {{competition.race_class.name}}
+	</span>
+</h1>
+<p>&nbsp;</p>
+
+<h3>{{event.name}} {{event.get_type_abbrev}}: {{event.date_time|date_Md_hhmm}}</h3>
+<h3>{% trans "TT Start List" %}</h3>
+
+<h4>
+{% trans "Nations" %}: {{event.get_num_nationalities}},
+{% trans "Starters" %}: {{event.get_participant_count}}
+</h4>
+
+<style>
+	table.participant_table tr td.start-time {
+		font-weight: bold;
+	}
+	table.participant_table tr td.clock-time {
+		white-space: nowrap;
+	}
+	.gap-change {
+		border-top: 3px solid #000;
+	}
+	.gap-change-inc {
+		border-top: 2px solid #006400;
+	}
+	.gap-change-dec {
+		border-top: 2px solid #640000;
+	}
+</style>
+
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed participant_table">
+<thead>
+	<tr>
+		<th></th>
+		<th class="text-center">{% trans "Clock" %}</th>
+		<th class="text-center">{% trans "Stopwatch" %}</th>
+		<th class="text-right">{% trans "Bib" %}</th>
+		<th>{% trans "Name" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Nation" %}</th>
+		<th>{% trans "Category" %}</th>
+		<th class="text-nowrap">{% trans "UCI ID" %}</th>
+	</tr>
+</thead>
+<tbody>
+{% for p in event.get_participants_seeded %}
+	{% with h=p.license_holder %}
+	<tr {% if p.gap_change > 0 %}class="gap-change-inc"{% elif p.gap_change < 0 %}class="gap-change-dec"{% endif %} >
+		<td class="text-right">{{forloop.counter}}.</td>
+		<td class="text-right clock-time">{% if p.clock_time %}{{p.clock_time | time:"H:i:s"}}{% else %}{% trans "None" %}{% endif %}</td>
+		<td class="text-right start-time">{% if p.start_time %}{{p.start_time}}{% else %}{% trans "None" %}{% endif %}</td>
+		<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
+		<td>{{h.full_name}}</td>
+		<td>{{p.team_name}}</td>
+		<td class="text-center">{{h.nation_code}}</td>
+		<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
+		<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
+	</tr>
+	{% endwith %}
+{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+{% endwith %}
+{% endblock content %}

@@ -2822,6 +2822,8 @@ class LicenseHolder(models.Model):
 	
 	@property
 	def license_code_trunc( self ):
+		if self.is_temp_license:
+			return 'Ⓣ'
 		return self.license_code if len(self.license_code) <= 11 else '{}...'.format(self.license_code[:11])
 
 	@property

@@ -134,6 +134,12 @@ def CompetitionResults( request, competitionId ):
 	events = competition.get_events()
 	events.sort( key=operator.attrgetter('date_time') )
 	
+	def has_valid_tt_startlist( e ):
+		# Check that this is a tt event without results, and every participant in the seeding is valid.
+		return e.event_type == 1 and not e.has_results and all( (p.start_time and p.bib and p.category) for p in e.get_participants_seeded() )
+	
+	tt_event_startlists = [e for e in events if has_valid_tt_startlist(e)]
+	
 	event_days = sorted( set( timezone.localtime(e.date_time).strftime('%Y-%m-%d') for e in events ) )
 	get_day = {d:i for i, d in enumerate(event_days)}
 	
@@ -199,6 +205,10 @@ def get_primes( event, bibs ):
 	
 	prime_fields = [f for f in Prime._meta.get_fields() if f in used_fields]
 	return primes, prime_fields
+
+def TTStartList( request, eventId ):
+	event = get_object_or_404( EventTT, pk=eventId )
+	return render( request, 'hub_tt_startlist.html', locals() )
 
 def EventAnimation( request, eventId, eventType, categoryId ):
 	eventType = int(eventType)
