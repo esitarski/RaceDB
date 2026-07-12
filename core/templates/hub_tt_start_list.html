@@ -65,7 +65,7 @@
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td class="text-right clock-time">{% if p.clock_time %}{{p.clock_time | time:"H:i:s"}}{% else %}{% trans "None" %}{% endif %}</td>
 		<td class="text-right start-time">{% if p.start_time %}{{p.start_time}}{% else %}{% trans "None" %}{% endif %}</td>
-		<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
+		<td class="text-right">{{p.bib}}</td>
 		<td>{{h.full_name}}</td>
 		<td>{{p.team_name}}</td>
 		<td class="text-center">{{h.nation_code}}</td>
@@ -77,5 +77,4 @@
 </tbody>
 </table>
 {% endspaceless %}
-{% endwith %}
 {% endblock content %}
