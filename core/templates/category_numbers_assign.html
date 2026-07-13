@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load format_uci_id %}
 {% load i18n %}
 
 {% block style %}
@@ -113,13 +114,14 @@ document.addEventListener('mouseup', () => {
 </thead>
 <tbody>
 	{% for bib_field, p in form.rows %}
+	{% with h=p.license_holder %}
 	<tr>
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{bib_field}}</td>
-		<td>{{p.license_holder.uci_id}}</td>
-		<td>{{p.license_holder.last_name}}</td>
-		<td>{{p.license_holder.first_name}}</td>
-		<td class="text-center">{{p.license_holder.get_nation_code_html}}</td>
+		<td>{{h.uci_id|format_uci_id}}</td>
+		<td>{{h.last_name}}</td>
+		<td>{{h.first_name}}</td>
+		<td class="text-center">{{h.get_nation_code_html}}</td>
 		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 		<td>{{p.category.code}}</td>
 		<td class="text-center">{{p.category.get_gender_display}}</td>
@@ -127,6 +129,7 @@ document.addEventListener('mouseup', () => {
 			<td class="text-right">{% if v %}{{rank|floatformat:"-2"}}{% endif %}</td>
 		{% endfor %}
 	</tr>
+	{% endwith %}
 	{% endfor %}
 </tbody>
 </table>

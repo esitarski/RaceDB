@@ -112,10 +112,10 @@
 				{% with h=p.license_holder %}
 				<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
 					<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
-					<td>{{p.license_holder.full_name}}</td>
+					<td>{{h.full_name}}</td>
 					<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 					<td>{{p.team_name}}</td>
-					<td>{{p.license_holder.get_nation_code_html}}</td>
+					<td>{{h.get_nation_code_html}}</td>
 					<td class="text-nowrap">{{h.uci_id|format_uci_id}}</td>
 					{% for rank in p.callup_ranks %}
 						<td class="text-right">{% if rank %}{{rank|floatformat:"-2"}}{% endif %}</td>
@@ -150,10 +150,10 @@
 				{% with h=p.license_holder %}
 				<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
 					<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
-					<td>{{p.license_holder.full_name}}</td>
+					<td>{{h.full_name}}</td>
 					<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 					<td>{{p.team_name}}</td>
-					<td>{{p.license_holder.get_nation_code_html}}</td>
+					<td>{{h.get_nation_code_html}}</td>
 					<td class="text-nowrap">{{h.uci_id|format_uci_id}}</td>
 					{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
 					<td class="hidden-print">

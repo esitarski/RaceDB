@@ -23,7 +23,7 @@
 		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Date of Birth" %}</th>
 		<th>{% trans "Location" %}</th>
-		<th>{% trans "Nat." %}</th>
+		<th class='text-center'>{% trans "Nation" %}</th>
 		<th>{% trans "License" %}</th>
 		<th class="text-nowrap">{% trans "UCI ID" %}</th>
 		<th class="text-nowrap">{% trans "# Comps" %}</th>
@@ -37,7 +37,7 @@
 			<td>{{h.get_gender_display}}</td>
 			<td>{{h.date_of_birth|date_short}}</td>
 			<td>{% non_empty_list h.city h.state_prov %}</td>
-			<td>{{h.get_nation_code_html}}</td>
+			<td class='text-center'>{{h.get_nation_code_html}}</td>
 			<td>{{h.license_code_trunc}}</td>
 			<td>{{h.uci_id|format_uci_id}}</td>
 			<td class='text-center'>{{h.competition_count}}</td>
