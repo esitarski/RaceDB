@@ -7,6 +7,7 @@
 {% load crispy_forms_tags %}
 {% load good_bad_icon %}
 {% load good_err_icon %}
+{% load format_uci_id %}
 
 {% with late_reg_exists=instance.get_late_reg_exists %}
 
@@ -79,7 +80,7 @@
 {% endspaceless %}
 {% for w in instance.wave_set.all %}
 <hr class="page-break-before"/>
-{% include "competition_image.html" competition=instance.competition %}
+{% include "competition_image.html" with competition=instance.competition %}
 <span class="visible-print">{{instance.competition.title}}, {{instance.name}}, {{instance.date_time|date_hhmm}}</span>
 <h4>
 	<strong style="font-size:125%">{{w.name}}</strong>: {% trans "Offset" %}: {{w.start_offset}}, {{w.get_details_html|safe}}, {% trans "Nations" %}: {{w.get_num_nationalities}}, {% trans "Starters" %}: {{w.get_participants.count}}
@@ -114,8 +115,8 @@
 					<td>{{p.license_holder.full_name}}</td>
 					<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 					<td>{{p.team_name}}</td>
-					<td>{{p.license_holder.nation_code}}</td>
-					<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
+					<td>{{p.license_holder.get_nation_code_html}}</td>
+					<td class="text-nowrap">{{h.uci_id|format_uci_id}}</td>
 					{% for rank in p.callup_ranks %}
 						<td class="text-right">{% if rank %}{{rank|floatformat:"-2"}}{% endif %}</td>
 					{% endfor %}
@@ -152,8 +153,8 @@
 					<td>{{p.license_holder.full_name}}</td>
 					<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 					<td>{{p.team_name}}</td>
-					<td>{{p.license_holder.nation_code}}</td>
-					<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
+					<td>{{p.license_holder.get_nation_code_html}}</td>
+					<td class="text-nowrap">{{h.uci_id|format_uci_id}}</td>
 					{% if late_reg_exists %}<td>{% if p in late_reg_set %}<span class="label label-warning hidden-print">{% trans "Late" %}</span>{% endif %}</td>{% endif %}
 					<td class="hidden-print">
 						<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>

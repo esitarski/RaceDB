@@ -5149,9 +5149,10 @@ class EventTT( Event ):
 			fastest_participants_start_gap = wave_tt.fastest_participants_start_gap or zero_gap
 			bib_gap = bib_gaps.get( wave_tt.sequence_option, None )
 
+			# Consider eligible participants.  Must have a bib number.
 			participants = sorted(
 				[p for p in wave_tt.get_participants_unsorted()
-					.select_related('license_holder','category') if p.can_tt_start()
+					.select_related('license_holder','category') if p.can_tt_start() and p.bib
 				],
 				key=wave_tt.get_sequence_key() )
 			
@@ -5165,8 +5166,6 @@ class EventTT( Event ):
 			for i, p in enumerate(participants):
 				if bib_gap:
 					# The start time is a multiple of the bib number.
-					if not p.bib:
-						continue
 					tCur = tWave + bib_gap * p.bib
 				else:
 					# Compute the rider gap based on the formal criteria.
@@ -5188,7 +5187,7 @@ class EventTT( Event ):
 				
 				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
 				sequenceCur += 1
-				
+			
 			EntryTT.objects.bulk_create( entry_tt_pending )
 			entry_tt_pending = []
 			empty_gap_before_wave = zero_gap
@@ -5207,7 +5206,8 @@ class EventTT( Event ):
 				p.wave = w
 			participants |= participants_cur
 
-		participants = list( participants )
+		# Do not consider participants without an assigned bib number and category.
+		participants = [p for p in participants if p.bib and p.category]
 		
 		if self.create_seeded_startlist:
 			start_times = {
@@ -5231,9 +5231,7 @@ class EventTT( Event ):
 			key=lambda p: (
 				p.start_time.total_seconds() if p.start_time else 1000.0*24.0*60.0*60.0,
 				p.category.code_gender if p.category else "~",
-				p.bib or 999999,
-				utils.removeDiacritic(p.license_holder.last_name.lower()),
-				utils.removeDiacritic(p.license_holder.first_name.lower()),
+				p.bib,	# Safe as bib is not None.
 			)
 		)
 		

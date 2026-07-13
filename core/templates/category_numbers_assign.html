@@ -119,7 +119,7 @@ document.addEventListener('mouseup', () => {
 		<td>{{p.license_holder.uci_id}}</td>
 		<td>{{p.license_holder.last_name}}</td>
 		<td>{{p.license_holder.first_name}}</td>
-		<td class="text-center">{{p.license_holder.nation_code}}</td>
+		<td class="text-center">{{p.license_holder.get_nation_code_html}}</td>
 		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 		<td>{{p.category.code}}</td>
 		<td class="text-center">{{p.category.get_gender_display}}</td>

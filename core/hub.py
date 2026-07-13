@@ -134,11 +134,7 @@ def CompetitionResults( request, competitionId ):
 	events = competition.get_events()
 	events.sort( key=operator.attrgetter('date_time') )
 	
-	def has_valid_tt_startlist( e ):
-		# Check that this is a tt event without results, and every participant in the seeding is valid.
-		return e.event_type == 1 and not e.has_results() and all( (p.start_time and p.bib and p.category) for p in e.get_participants_seeded() )
-	
-	tt_event_startlists = [e for e in events if has_valid_tt_startlist(e)]
+	tt_event_startlists = [e for e in events if e.event_type == 1 and not e.has_results()]
 	
 	event_days = sorted( set( timezone.localtime(e.date_time).strftime('%Y-%m-%d') for e in events ) )
 	get_day = {d:i for i, d in enumerate(event_days)}

@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load non_empty_list %}
+{% load format_uci_id %}
 {% block content %}
 <style>
 .table>tbody>tr.highlight {
@@ -36,9 +37,9 @@
 			<td>{{h.get_gender_display}}</td>
 			<td>{{h.date_of_birth|date_short}}</td>
 			<td>{% non_empty_list h.city h.state_prov %}</td>
-			<td>{{h.nation_code}}</td>
+			<td>{{h.get_nation_code_html}}</td>
 			<td>{{h.license_code_trunc}}</td>
-			<td>{{h.get_flag_uci_id_html}}</td>
+			<td>{{h.uci_id|format_uci_id}}</td>
 			<td class='text-center'>{{h.competition_count}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-primary" href="./LicenseHolderEdit/{{h.id}}/">{% trans "Edit" %}</a>

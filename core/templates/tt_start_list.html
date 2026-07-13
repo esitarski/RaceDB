@@ -4,6 +4,7 @@
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
+{% load format_uci_id %}
 {% load crispy_forms_tags %}
 
 {% with late_reg_exists=instance.get_late_reg_exists %}
@@ -47,8 +48,10 @@
 		<div class="alert alert-danger">
 			<strong>{% trans "Warning" %}!</strong><br/>
 			{% trans "There are " %} <strong>{{unseeded_count}}</strong> {% trans "participant(s) with no start times." %}
-			<br class="hidden-print"/>
-			<span class="hidden-print">{% trans "Press 'Edit Seeding' to Regenerate and Edit start times before starting the event." %}</span>
+			<p class="hidden-print">
+				{% trans "Press 'Edit Seeding' to Regenerate and Edit start times before downloading the event in CrossMgr." %}<br/>
+				{% trans "Note: Participants MUST have an assigned Bib number to be seeded." %}
+			</p>
 		</div>
 	{% endif %}
 {% endwith %}
@@ -156,9 +159,9 @@
 		<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 		<td>{{h.full_name}}</td>
 		<td>{{p.team_name}}</td>
-		<td class="text-center">{{h.nation_code}}</td>
+		<td class="text-center">{{h.get_nation_code_html}}</td>
 		<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-		<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
+		<td class="text-nowrap">{{h.uci_id|format_uci_id}}</td>
 		<td class="hidden-print">
 			<a class="btn btn-warning btn-xs" href="./ParticipantRemove/{{p.id}}/">{% trans "Remove" %}</a>
 			&nbsp;&nbsp;

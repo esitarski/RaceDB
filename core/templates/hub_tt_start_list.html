@@ -3,6 +3,7 @@
 {% load date_fmt %}
 {% load i18n %}
 {% load static %}
+{% load format_uci_id %}|
 {% load non_empty_list %}
 
 {% block content %}
@@ -70,8 +71,8 @@
 		<td>{{h.full_name}}</td>
 		<td>{{p.team_name}}</td>
 		<td>{{p.category.code_gender}}</td>
-		<td class="text-center">{{h.nation_code}}</td>
-		<td class="text-nowrap">{{h.get_flag_uci_id_html}}</td>
+		<td class="text-center">{{h.get_nation_code_html}}</td>
+		<td class="text-nowrap">{{h.uci_id|format_uci_id}}</td>
 	</tr>
 	{% endwith %}
 {% endfor %}

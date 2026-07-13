@@ -23,7 +23,7 @@
 		<th class="text-nowrap">{% trans "Last Name" %}</th>
 		<th>{% trans "Gender" %}</th>
 		<th class="text-nowrap">{% trans "Date of Birth" %}</th>
-		<th class="text-nowrap">{% trans "Nat. Code" %}</th>
+		<th class="text-nowrap">{% trans "Nation" %}</th>
 		<th class="text-nowrap">{% trans "UCI ID" %}</th>
 		<th class="hidden-print"></th>
 	</tr>
@@ -49,7 +49,7 @@
 			<td>{% if r.gender == 0 %}{% trans "Men" %}{% elif r.gender == 1 %}{% trans "Women" %}{% else %}X{% endif %}</td>
 			<td>{{r.date_of_birth|date_short}}</td>
 			<td>{{r.nation_code}}</td>
-			<td>{{r.uci_id|format_uci_id}}</td>
+			<td>{{r.uci_id}}</td>
 			<td class="hidden-print">
 				<a class="btn btn-primary btn-sm" href="./LicenseHolderUCIDatabaseUpdate/{{license_holder.id}}/{{forloop.counter0}}">{% trans "Update" %}</a>
 			</td>

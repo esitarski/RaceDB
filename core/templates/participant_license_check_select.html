@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load format_uci_id %}
 {% load i18n %}
 
 {% block content %}
@@ -12,9 +13,9 @@
 <table style="width: auto;">
 	<tbody style="font-size:120%">
 		<tr><td class="text-right">{% trans "Gender" %}:</td><th>{{participant.license_holder.get_gender_display}}</th></tr>
-		<tr><td class="text-right">{% trans "Nat. Code" %}:</td><th>{{participant.license_holder.nation_code}}</th></tr>
+		<tr><td class="text-right">{% trans "Nation" %}:</td><th>{{participant.license_holder.get_nation_code_html}}</th></tr>
 		<tr><td class="text-right">{% trans "License Code" %}:</td><th>{{participant.license_holder.license_code}}</th></tr>
-		<tr><td class="text-right">{% trans "UCI ID" %}:</td><th>{{participant.license_holder.get_uci_id_html}}</th></tr>
+		<tr><td class="text-right">{% trans "UCI ID" %}:</td><th>{{participant.license_holder.uci_id|format_uci_id}}</th></tr>
 		<tr><td class="text-right">{% trans "Team" %}:</td><th>{{participant.team_name}}</th></tr>
 		<tr><td class="text-right">{% trans "Competition Category" %}:</td><th>{{participant.category.code_gender}}</th></tr>
 	</tbody>

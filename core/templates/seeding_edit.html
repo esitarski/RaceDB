@@ -118,7 +118,7 @@
 		<th>{% trans "Name" %}</th>
 		<th>{% trans "Team" %}</th>
 		<th>{% trans "Category" %}</th>
-		<th>{% trans "NatCode" %}</th>
+		<th>{% trans "Nation" %}</th>
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
 		<th>{% trans "Seed Option" %}</th>
@@ -127,7 +127,7 @@
 </thead>
 <tbody>
 	{% for e in entry_tts %}
-		{% with w=e.wave p=e.participant h=.participant.license_holder %}
+		{% with w=e.wave p=e.participant h=e.participant.license_holder %}
 		<tr id="e_{{forloop.counter0}}" {% if e.gap_change > 0 %}class="gap-change-inc"{% elif e.gap_change < 0 %}class="gap-change-dec"{% endif %}>
 			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
 			<td class="text-right">{{e.clock_time | time:"H:i:s"}}</td>
