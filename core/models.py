@@ -5059,9 +5059,6 @@ class UCIRank( models.Model ):
 
 	class Meta:
 		ordering = ['uci_id']
-		constraints = [
-			models.UniqueConstraint(fields=['uci_id'], name='unique uci_id')
-		]
 		verbose_name = _('UCIRank')
 		verbose_name_plural = _('UCIRanks')
 

@@ -45,6 +45,8 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 	ifm = standard_field_map()
 	
 	to_add = []
+	uci_id_seen = set()
+	license_code_seen = set()
 	for i, row in enumerate(ws.iter_rows()):
 		if i == 0:
 			# Get the header fields from the first row.
@@ -99,10 +101,27 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 				continue
 				
 		if not rank or not str(rank).isdigit():
-			ms_write( '**** Row {:>6}: Ignoring. Rank is invalid or missing\n'.format(i) )
-			coninue
+			ms_write( '**** Row {:>6}: Ignoring. Rank is invalid or missing "{}"\n'.format(i, rank) )
+			continue
 		
 		points = v('points', None)
+		
+		if uci_id:
+			if uci_id in uci_id_seen:
+				ms_write( '**** Row {:>6}: Ignoring. Duplicate uci_id "{}"\n'.format(i, uci_id) )
+				continue
+			uci_id_seen.add( uci_id )
+			
+		if license_code:
+			if license_code in license_code_seen:
+				ms_write( '**** Row {:>6}: Ignoring. Duplicate license_code "{}"\n'.format(i, license_code) )
+				continue
+			license_code_seen.add( license_code )
+		
+		if not uci_id and not license_code:
+			ms_write( '**** Row {:>6}: Ignoring. Missing uci_id and license_code\n'.format(i) )
+			continue
+		
 		to_add.append( RankingEntry(ranking=ranking, uci_id=uci_id, license_code=license_code, rank=rank, points=points) )
 
 	ranking.rankingentry_set.all().delete()

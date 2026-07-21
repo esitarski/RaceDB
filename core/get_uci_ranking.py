@@ -36,7 +36,7 @@ CATEGORY_CONFIG = {
     "RWE": {"label": "Road Women Elite",   "rankingId": "32", "categoryId": "23", "RaceTypeId": 0, "disciplineId":10 },
 
 	# Cyclocross
-	# This uses a different SeaonId (FIXLATER).
+	# This uses a different SeasonId (FIXLATER).
     "CME": {"label": "Cyclocross Men Elite",    "rankingId": "163", "categoryId": "22", "RaceTypeId": 0, "disciplineId":3 },
     "CMJ": {"label": "Cyclocross Men Junior",   "rankingId": "168", "categoryId": "24", "RaceTypeId": 9, "disciplineId":3 },
     "CWE": {"label": "Cyclocross Women Elite",  "rankingId": "168", "categoryId": "23", "RaceTypeId": 0, "disciplineId":3 },
@@ -191,7 +191,11 @@ def get_uci_rank_records( discipline_code ):
 def get_discipline_code( competition ):
 	category_format = competition.category_format
 	for category in category_format.category_set.all():
-		if category.code[0] in 'XRMC':
+		# X - MTB Cross Country
+		# D - MTB Downhill
+		# R - Road
+		# C - Cyclocross
+		if category.code[0] in 'XDRC':
 			return category.code[0]
 	return 'X'
 
@@ -199,10 +203,14 @@ def get_uci_rank( competition ):
 	records = get_uci_rank_records( get_discipline_code(competition) )
 	
 	to_add = []
+	uci_id_seen = set()
 	for uci_record in records:
 		fields = { field:convert(uci_record[key]) for field, key, convert in UCIRank.FieldMap }
 		ur = UCIRank( competition=competition, **fields )
-		to_add.append( ur )
+		# Ensure that all the uci_ids are unique.
+		if ur.uci_id and ur.uci_id not in uci_id_seen:
+			to_add.append( ur )
+			uci_id_seen.add( ur.uci_id )
 	
 	UCIRank.objects.filter( competition=competition ).delete()
 	UCIRank.objects.bulk_create( to_add )

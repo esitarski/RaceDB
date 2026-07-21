@@ -13,6 +13,7 @@
 <thead>
 	<tr>
 		<th>{% trans "Name" %}</th>
+		<th>{% trans "Aliases" %}</th>
 		<th>{% trans "Description" %}</th>
 	</tr>
 </thead>
@@ -20,6 +21,7 @@
 	{% for c in instance.format.category_set.all %}
 		<tr>
 			<td>{{c.code}}</td>
+			<td>{{c.aliases}}</td>
 			<td>{{c.description}}</td>
 		</tr>
 	{% endfor %}
