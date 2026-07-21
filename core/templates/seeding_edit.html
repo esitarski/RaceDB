@@ -120,7 +120,7 @@
 		<th>{% trans "Category" %}</th>
 		<th>{% trans "Nation" %}</th>
 		<th>{% trans "Wave" %}</th>
-		<th>{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
+		<th class="text-right">{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
 		<th>{% trans "Seed Option" %}</th>
 		<th></th>
 	</tr>
@@ -136,9 +136,9 @@
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-			<td class="text-nowrap">{{h.get_nation_code_html}}</td>
+			<td class="text-center">{{h.get_nation_code_html}}</td>
 			<td>{{w.name}}</td>
-			<td>{{e.est_speed}}</td>
+			<td class="text-right">{{e.est_speed}}</td>
 			<td>{{e.get_seed_option_display}}</td>
 			<td><a class="btn btn-success btn-xs" href="./SeedingEditEntry/{{instance.id}}/{{e.entry_tt_i}}/">{% trans "Adjust" %}</a></td>
 		</tr>

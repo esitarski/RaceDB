@@ -107,11 +107,13 @@ class CategoryForm( ModelForm ):
 				Field('gender'),
 				Field('description', size=80),
 			),
+			Row(
+				Col(Field('aliases', size=160), 12),
+			),
 			Field( 'sequence', type='hidden' ),
 			Field( 'format', type='hidden' ),
 		)
 		addFormButtons( self, button_mask )
-
 		
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )

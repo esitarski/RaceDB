@@ -355,6 +355,64 @@ class SystemInfo(models.Model):
 		verbose_name = _('SystemInfo')
 
 #----------------------------------------------------------------------------------------
+def split_ignoring_escaped(s, sep = ';'):
+    """
+    Split `s` on unescaped occurrences of `sep`.
+    A separator preceded by a backslash (\\;) is treated as literal
+    and not split on. The backslash is then removed from the result.
+    """
+    parts = re.split(r'(?<!\\)' + re.escape(sep), s)
+    # Remove the escaping backslash from each part
+    return [p.replace('\\' + sep, sep) for p in parts]
+    
+class CategoryFinder:
+	''' Finds the category from a string in O(1) time. '''
+	''' Case insensitive, and ignores diacritics. '''
+	def __init__( self, categories ):
+		self.categories = list( categories )
+		patterns = []
+		for c in self.categories:
+			# Initialize to the code name (escaped).  Add the gender code at the end.
+			aliases = [re.escape(utils.removeDiacritic(c.code.strip()))+f'_{c.gender}']
+			for a in split_ignoring_escaped(c.aliases):
+				a = a.strip()
+				if not a:
+					continue
+				if a.startswith('/') and a.endswith('/'):
+					# Treat as a regex if surrounded by /.
+					rx = a[1:-1]+f'_{c.gender}'
+					try:
+						re.compile( rx )		# Check if we can compile it.
+						aliases.append( rx )
+					except re.error:
+						# if the compile fails, treat as an exact match string.		
+						aliases.append( re.escape(a) )
+				else:
+					# This is a non-regex match, so escape it
+					aliases.append( re.escape(a)+f'_{c.gender}' )
+				
+			p = '|'.join( aliases )
+			try:
+				# If there is a regex compile error with the combined aliases, just use the escaped category code: aliases[0]
+				re.compile( p )
+				patterns.append( p )
+			except re.error:
+				patterns.append( aliases[0] )
+
+		# Combine all the regex's together and code them with the corresponding category index.
+		# This allows us to search all patterns simultaneously.
+		self.combined = re.compile('|'.join(f'(?P<p{i}>{p})' for i, p in enumerate(patterns)), re.IGNORECASE)
+			
+	def fullmatch( self, s, gender_code ):
+		# Returns category matching the string, or None if no match.
+		for g in (gender_code, 2):	# In addition to the given gender, check for an Open gender match.
+			m = self.combined.fullmatch( utils.removeDiacritic(s.strip())+f'_{gender_code}' )
+			if m:
+				return self.categories[int(m.lastgroup[1:])]  # extracts i from 'p{i}'
+		return None
+		
+	def __call__( self, s, gender_code ):
+		return self.fullmatch( s, gender_code )
 
 class CategoryFormat(models.Model):
 	name = models.CharField( max_length = 32, default = '', verbose_name = _('Name') )
@@ -388,6 +446,12 @@ class CategoryFormat(models.Model):
 	def __str__( self ):
 		return self.name
 		
+	def category_finder( self ):
+		cf = CategoryFinder()
+		for c in self.category_set.all():
+			cf.add( c.name, c.aliases )
+		return cf
+		
 	class Meta:
 		ordering = ['name']
 		verbose_name = _('CategoryFormat')
@@ -412,6 +476,9 @@ class Category(models.Model):
 	)
 	gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES, default=0, verbose_name=_('Gender') )
 	description = models.CharField( max_length=80, default='', blank=True, verbose_name=_('Description') )
+	aliases = models.CharField( max_length=160, default='', blank=True, verbose_name = _('Aliases'),
+		help_text=("Semi-colon (;) separated list of alternate names.  To use regex's, surround the element with slashes (eg /Elite [MH]/ or /Elite [WF]/)")
+	)
 	sequence = models.PositiveSmallIntegerField( default=0, verbose_name=_('Sequence') )
 	
 	def save( self, **kwargs ):

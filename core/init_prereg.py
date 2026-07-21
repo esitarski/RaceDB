@@ -93,20 +93,27 @@ def init_prereg(
 		role_code.update( { '{}'.format(name).lower().replace(' ','').replace('.',''):code for code, name in roles } )
 		
 	# Construct a cache to find categories quicker.
+	
 	category_code_gender_suffix = re.compile( r'\(Open\)$|\(Men\)$|\(Women\)$' )
 	cat_gender = defaultdict( list )
 	category_numbers_set = {None: set()}
-	for category in Category.objects.filter( format=competition.category_format ).order_by('gender', 'code'):
+	for category in competition.category_format.category_set.all().order_by('gender', 'code'):
 		cat_gender[category.code].append( (category, category.gender) )
 		cn = competition.get_category_numbers( category )
 		category_numbers_set[category] = cn.get_numbers() if cn else set()
 	
+	category_finder = CategoryFinder( competition.category_format.category_set.all() )
+	def get_category( category_code_search, gender_search ):
+		return category_finder.fullmatch( category_code_search, gender_search )
+
+	'''
 	def get_category( category_code_search, gender_search ):
 		category_code_search = category_code_gender_suffix.sub( '', category_code_search ).strip()
 		for category, gender in cat_gender.get(category_code_search, []):
 			if gender_search == gender or gender == 2:
 				return category
 		return None
+	'''
 		
 	times = defaultdict(float)
 	

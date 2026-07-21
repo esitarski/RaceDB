@@ -52,22 +52,31 @@ function highlightMissing() {
 }
 highlightMissing();
 
-document.querySelector('form').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') e.preventDefault();
-});
-
-document.addEventListener('mouseup', () => {
+function processSelectedRows() {
     isDragging = false;
     startRow = null;
-    
     const selected = [...document.querySelectorAll('tbody tr.selected')];
     if (selected.length > 1) {
         processRows( selected );
     }
 	for( let row of selected ) {
 		row.classList.remove( 'selected' );
-	}
+	}    
+}
+
+function selectProcessAll() {
+	document.querySelectorAll('tbody tr').forEach(row => {
+        row.classList.add('selected');
+	});
+	processSelectedRows();
+}
+document.getElementById('id-select-all').addEventListener('click', selectProcessAll );
+
+document.querySelector('form').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') e.preventDefault();
 });
+
+document.addEventListener('mouseup', processSelectedRows);
 
 {% endblock onload %}
 {% block content %}
@@ -93,6 +102,10 @@ document.addEventListener('mouseup', () => {
 <a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 
 <hr/>
+<p>
+{% trans "Drag-Select to assign to multiple rows." %}
+<button type="button" class="btn btn-primary" id="id-select-all">{% trans "Select All" %}</button>
+</p>
 
 {% spaceless %}
 <table class="table table-condensed">
