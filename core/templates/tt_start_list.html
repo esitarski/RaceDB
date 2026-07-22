@@ -8,8 +8,12 @@
 {% load crispy_forms_tags %}
 
 {% with late_reg_exists=instance.get_late_reg_exists %}
+
+{% include "competition_image.html" with competition=instance.competition %}
+
 <h2 class="hidden-print">{{title}}</h2>
 {% trans "Generated" %}: {{time_stamp|date_hhmmss}}
+
 <h2><strong>{{instance.competition.title}}</strong></h2>
 <h2><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
 <br/>

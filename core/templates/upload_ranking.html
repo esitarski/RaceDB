@@ -32,6 +32,7 @@ The spreadsheet must have a specific format:
 <li>The first Row of the sheet must be a <strong>Header Row</strong>.</li>
 <li>The Header Row must contain a <strong>Rank</strong> column.</li>
 <li>The Header Row must contain a <strong>UCI ID</strong> column and/or a <strong>License Code</strong> column.</li>
+<li>The Header Row may contain a <strong>Last Name</strong> column and a <strong>First Name</strong> column or a <strong>Name</strong> column.  If a Name column is present, the fist and last name will be parsed from it.</li>
 <li>A Points header row is also accepted.</li>
 <li>Other header columns are ignored.</li>
 <li>Capitalization in the Header Row is ignored (RANK=rank=Rank).  Underscores '_' are treated as spaces.</li>
@@ -59,29 +60,30 @@ The spreadsheet must have a specific format:
 </tbody>
 </table>
 </p>
-<p>
-	<strong>Note:</strong> At least one of the <strong>UCI ID</strong> or the <strong>License Code</strong> must be set.
-</p>
 <hr>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed">
 <thead>
 	<tr>
 		<th></th>
-		<th>{% trans "UCI ID" %}</th>
-		<th>{% trans "License Code" %}</th>
 		<th class="text-right">{% trans "Rank" %}</th>
 		<th class="text-right">{% trans "Points" %}</th>
+		<th>{% trans "Last Name" %}</th>
+		<th>{% trans "First Name" %}</th>
+		<th>{% trans "UCI ID" %}</th>
+		<th>{% trans "License Code" %}</th>
 	</tr>
 </thead>
 <tbody>
 	{% for re in ranking_entries %}
 	<tr>
 		<td class="text-right">{{forloop.counter}}.</td>
-		<td>{{re.uci_id|default:""}}</td>
-		<td>{{re.license_code|default:""}}</td>
 		<td class="text-right">{{re.rank}}</td>
 		<td class="text-right">{% if re.points %}{{re.points|floatformat:"-2"}}{% endif %}</td>
+		<td>{{re.last_name}}</td>
+		<td>{{re.first_name}}</td>
+		<td>{{re.uci_id|default:""}}</td>
+		<td>{{re.license_code|default:""}}</td>
 	</tr>
 	{% endfor %}
 </tbody>

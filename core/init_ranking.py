@@ -1,4 +1,5 @@
 import io
+import re
 import sys
 import datetime
 from openpyxl import load_workbook
@@ -6,6 +7,29 @@ from . import import_utils
 from .FieldMap import standard_field_map
 from .import_utils import *
 from .models import *
+
+def parse_name( name ):
+	name = name.strip()
+	if ',' in name:
+		last_name, first_name = name.split( ',', 1 )
+		return ' '.join( first_name.strip().split() ), ' '.join( last_name.strip().split() )
+	else:
+		# Try assigning mixed-case names to first, and upper-case names to last.
+		fields = [f for f in name.split() if not (f.startswith('(') and f.endswith(')'))]	# Ignore values surrounded by brackets.
+		first_names = []
+		last_names = []
+		for f in fields:
+			if f.upper() != f:
+				first_names.append( f )
+			else:
+				last_names.append( f )
+		
+		# If all names are mixed-case, assume the first is the name and the last is the rest of the names.
+		if len(first_names) > 1 and not last_names:
+			last_names = first_names[1:]
+			first_names = first_names[:1]
+		
+		return ' '.join( first_names ), ' '.join( last_names )
 
 def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message_stream=sys.stdout ):
 	
@@ -51,9 +75,11 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 		if i == 0:
 			# Get the header fields from the first row.
 			fields = ['{}'.format(f.value).strip() for f in row]
-			ifm.set_headers( fields )
 			
-			expected_fields = {'license_code', 'uci_id', 'rank', 'points'}
+			ifm.set_headers( fields )
+			print( ifm.get_names(), ifm.unmapped )
+			
+			expected_fields = {'rank', 'points', 'license_code', 'uci_id', 'last_name', 'first_name', 'name'}
 			
 			ms_write( 'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
@@ -65,8 +91,8 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 					if name in ifm:
 						del ifm[name]
 			
-			if sum( int(f in ifm) for f in ('uci_id', 'license_code') ) == 0:
-				ms_write( 'Header Row must contain "UCIID" or "License" or both\n' )
+			if not any( f in ifm for f in ('uci_id', 'license_code', 'name', 'first_name', 'last_name') ):
+				ms_write( 'Header Row must contain "UCIID" or "License" or First/Last Name or Name\n' )
 				return
 				
 			ms_write( '\n' )
@@ -74,6 +100,13 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 		
 		values = [v.value for v in row]
 		v = ifm.finder( values )
+		
+		first_name = (v('first_name',"") or '').strip()
+		last_name  = (v('last_name',"" or '')).strip()
+		
+		name = (v('name', "") or '').strip()
+		if name and not first_name and not last_name:
+			first_name, last_name = parse_name( name )
 		
 		uci_id = v('uci_id', None)
 		if uci_id:
@@ -85,15 +118,16 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 				continue
 				
 		license_code = v('license_code', None)
-		if uci_id is None and license_code is None:
-			ms_write( '**** Row {:>6}: Ignoring. A UCI ID and/or a License Code must be present\n'.format(i) )
+		if not (uci_id or license_code or first_name or last_name):
+			ms_write( '**** Row {:>6}: Ignoring. A UCI ID or a License Code or First or Last Name must be present\n'.format(i) )
 			continue
 		rank = v('rank', None)
 		if rank is None:
 			ms_write( '**** Row {:>6}: Ignoring. missing rank\n'.format(i) )
 		if isinstance(rank, float):
 			rank = int( rank )
-		if isinstance( rank, str ):
+		elif isinstance( rank, str ):
+			rank = re.sub(r'\D', '', rank)	# Remove non-digts.
 			try:
 				rank = int( rank )
 			except Exception:
@@ -118,11 +152,11 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 				continue
 			license_code_seen.add( license_code )
 		
-		if not uci_id and not license_code:
-			ms_write( '**** Row {:>6}: Ignoring. Missing uci_id and license_code\n'.format(i) )
+		if not uci_id and not license_code and not first_name and not last_name:
+			ms_write( '**** Row {:>6}: Ignoring. Missing uci_id or license_code or first_name or last_name\n'.format(i) )
 			continue
 		
-		to_add.append( RankingEntry(ranking=ranking, uci_id=uci_id, license_code=license_code, rank=rank, points=points) )
+		to_add.append( RankingEntry(ranking=ranking, uci_id=uci_id, license_code=license_code, rank=rank, points=points, last_name=last_name, first_name=first_name) )
 
 	ranking.rankingentry_set.all().delete()
 	RankingEntry.objects.bulk_create( to_add )

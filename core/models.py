@@ -1,6 +1,8 @@
 from . import patch_sqlite_text_factory	# Must be first.
 
 import re
+import unicodedata
+
 import os
 import math
 import string
@@ -5062,6 +5064,19 @@ class UCIRank( models.Model ):
 		verbose_name = _('UCIRank')
 		verbose_name_plural = _('UCIRanks')
 
+def clean_string(s):
+	# Decompose accented characters into base letter + combining marks
+	normalized = unicodedata.normalize('NFKD', s)
+	# Strip out the combining marks (diacritics)
+	no_diacritics = ''.join(c for c in normalized if not unicodedata.combining(c))
+	# Lowercase
+	lowered = no_diacritics.lower()
+	# Keep only a-z, no runs of spaces.
+	return re.sub(r'[^a-z]+', ' ', lowered)
+    
+def get_name_key( first_name, last_name ):
+	return (clean_string(first_name), clean_string(last_name))
+
 class Ranking( models.Model ):
 	competition = models.ForeignKey( 'Competition', db_index=True, verbose_name=_('Competition'), on_delete=models.CASCADE )
 	name = models.CharField( max_length=128, default = 'MyRanking', verbose_name=_('Name') )
@@ -5070,6 +5085,7 @@ class Ranking( models.Model ):
 	MATCH_KEY_CHOICES = (
 		(0, _('UCI ID')),
 		(1, _('License Code')),
+		(2, _('First Last Name')),
 	)
 	match_key = models.PositiveSmallIntegerField( default=0, verbose_name = _('Match Key'), choices=MATCH_KEY_CHOICES )
 	
@@ -5082,14 +5098,25 @@ class Ranking( models.Model ):
 					re.uci_id:re.rank
 					for re in self.rankingentry_set.all().iterator() if re.uci_id is not None
 				}
-			else:
+			elif self.match_key == 1:
 				self._rank_lookup = {
 					re.license_code:re.rank
 					for re in self.rankingentry_set.all().iterator() if re.license_code is not None
 				}
+			else:
+				self._rank_lookup = {
+					get_name_key(re.first_name, re.last_name):re.rank
+					for re in self.rankingentry_set.all().iterator() if re.license_code is not None
+				}
 			rank_lookup = self._rank_lookup
 		
-		return rank_lookup.get( participant.uci_id if self.match_key == 0 else participant.license_code, default )
+		key = [
+			lambda p: p.license_holder.uci_id,
+			lambda p: p.license_holder.license_code,
+			lambda p: get_name_key( p.license_holder.first_name, p.license_holder.last_name ),
+		][self.match_key]( participant )
+		
+		return rank_lookup.get( key, default )
 	
 	def get_entry_count( self ):
 		return self.rankingentry_set.all().count()
@@ -5105,11 +5132,14 @@ class RankingEntry( models.Model ):
 	uci_id = models.CharField( max_length=11, null=True, default=None, verbose_name=_('UCI ID') )
 	license_code = models.CharField( max_length=32, null=True, default=None, verbose_name=_('License Code') )
 	
+	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), blank=True, default='' )
+	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), blank=True, default='' )
+
 	rank = models.PositiveIntegerField( verbose_name=_('Rank') )
 	points = models.FloatField( default=None, null=True, verbose_name=_('Points') )	
 
 	class Meta:
-		ordering = ['uci_id', 'license_code']
+		ordering = ['uci_id', 'license_code', 'last_name', 'first_name']
 		verbose_name = _('RankingEntry')
 		verbose_name_plural = _('RankingEntries')
 

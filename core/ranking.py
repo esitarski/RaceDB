@@ -58,7 +58,9 @@ def UploadRanking( request, rankingId ):
 		ranking.save()
 
 	ifm = standard_field_map()
-	column_info = [(f, ifm.get_aliases(f), optional, ifm.get_description(f)) for f, optional in (('uci_id', True), ('license_code', True), ('rank', False), ('points', True))]
+	column_info = [(f, ifm.get_aliases(f), optional, ifm.get_description(f))
+		for f, optional in (('uci_id', True), ('license_code', True), ('rank', False), ('points', True), ('first_name', True), ('last_name', True), ('name', True))
+	]
 
 	return render( request, 'upload_ranking.html', locals() )
 
