@@ -142,7 +142,7 @@ standard_field_aliases = (
 		"11 digit UCIID.  The form XXX XXX XXX XX is also supported.",
 	),
 	('bib',
-		('Bib','BibNum','Bib Num','Bib Number','BibNumber','Bib #','Bib#','Rider Bib #','Rider Num','Plate',),
+		('Bib','BibNum','Bib Num','Bib Number','BibNumber','Bib #','Bib#','Rider Bib #','Rider Num','Plate','Plate Num',),
 		"Bib number",
 	),
 	('existing_bib',

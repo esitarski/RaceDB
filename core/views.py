@@ -1649,7 +1649,7 @@ def handle_upload_prereg( competitionId, excel_contents, assign_bibs_option, cle
 		competitionId=competitionId,
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
-		assign_bibs_option=assign_bibs_option,
+		assign_bibs_option=int(assign_bibs_option),
 		clear_existing=clear_existing,
 	)
 	results_str = message_stream.getvalue()
