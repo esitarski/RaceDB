@@ -449,7 +449,7 @@ def init_prereg(
 								competition.number_set.assign_bib( participant.license_holder, bib_auto )
 						else:
 							ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
-								i, f'Cannot automatically assign bib (numbers are full, or unavailable)',
+								i, f'Cannot automatically assign bib (numbers are full or unavailable)',
 								category_code, name,
 							) )
 								

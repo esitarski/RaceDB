@@ -1,6 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
+from .get_category_numbers_assign_excel import get_category_numbers_assign_excel
 
 def GetCategoryNumbersForm( competition, category_numbers=None ):
 	
@@ -28,6 +29,7 @@ def GetCategoryNumbersForm( competition, category_numbers=None ):
 			
 			for s in range(1, SORT_MAX+1):
 				self.helper[f'sort_{s}'].wrap( Field, type='hidden' )
+			self.helper['reverse'].wrap( Field, type='hidden' )
 				
 			addFormButtons( self, button_mask=button_mask )
 
@@ -109,11 +111,13 @@ class CategoryNumbersRankSortAssignForm( Form ):
 			f = f'ranking_{r}'
 			ranking = getattr( category_numbers, f )
 			initial[f] = ranking.id if ranking else 0
-			
+		
 		for s in range(1, SORT_MAX+1):
 			f = f'sort_{s}'
 			initial[f] = getattr( category_numbers, f )
 
+		initial['reverse'] = category_numbers.reverse
+		
 		for p in category_numbers.get_participants().order_by():
 			initial[CategoryNumbersRankSortAssignForm.bib_field(p)] = p.bib
 		
@@ -137,13 +141,15 @@ class CategoryNumbersRankSortAssignForm( Form ):
 			f = f'ranking_{r}'
 			self.fields[f] = forms.ChoiceField( choices=ranking_choices, required=False, label=f'ranking_{r}' )
 			self.rank_fields.append( self[f] )
-			
+		
 		self.sort_fields = []
 		for s in range(1, SORT_MAX+1):
 			f = f'sort_{s}'
 			self.fields[f] = forms.ChoiceField( choices=self.category_numbers.SORT_CHOICES, label=f'sort_{s}' )
 			self.sort_fields.append( self[f] )
 
+		self.fields['reverse'] = forms.BooleanField( required=False, initial=self.category_numbers.reverse, label=_('Reverse') )
+		
 		self.rows = []
 		for p in self.category_numbers.get_participants_sorted():
 			f = self.bib_field(p)
@@ -160,6 +166,7 @@ class CategoryNumbersRankSortAssignForm( Form ):
 		for s in range(1, SORT_MAX+1):
 			f = f'sort_{s}'
 			setattr( self.category_numbers, f, int(self.cleaned_data[f]) )
+		self.category_numbers.reverse = self.cleaned_data['reverse']
 			
 		self.category_numbers.save()
 
@@ -195,7 +202,14 @@ def CategoryNumbersAssign( request, categoryNumbersId ):
 		if form.is_valid():
 			form.save()
 			
-	category_numbers = get_object_or_404( CategoryNumbers, pk=categoryNumbersId )
+		if 'excel-submit' in request.POST:
+			xl = get_category_numbers_assign_excel( category_numbers )
+			response = HttpResponse(xl, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+			response['Content-Disposition'] = 'attachment; filename=RaceDB-CategoryNumberSetAssign-{}.xlsx'.format(
+				datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'),
+			)
+			return response
+			
 	form = CategoryNumbersRankSortAssignForm( initial=CategoryNumbersRankSortAssignForm.get_initial(category_numbers), category_numbers=category_numbers )
 	
 	return render( request, 'category_numbers_assign.html', locals() )

@@ -94,11 +94,13 @@ document.addEventListener('mouseup', processSelectedRows);
 </p>
 <p>
 	{% trans "Sort by" %}: {% for f in form.sort_fields %} {{f}} {% endfor %}
+	{{form.reverse.label_tag}} {{form.reverse}}
 </p>
 
 <hr/>
 
 <button class="btn btn-success" type="submit" name="save-submit">{% trans "Save" %}</button>
+<button class="btn btn-primary" type="submit" name="excel-submit">{% trans "Export to Excel" %}</button>
 <a class="btn btn-warning" href="{{cancelUrl}}">{% trans "Cancel" %}</a>
 
 <hr/>
@@ -113,13 +115,13 @@ document.addEventListener('mouseup', processSelectedRows);
 	<tr>
 		<th></th>
 		<th>{% trans "Bib" %}</th>
-		<th>{% trans "UCI ID" %}</th>
 		<th>{% trans "Last Name" %}</th>
 		<th>{% trans "First Name" %}</th>
-		<th>{% trans "Nation" %}</th>
-		<th>{% trans "Team" %}</th>
-		<th>{% trans "Category" %}</th>
 		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Team" %}</th>
+		<th>{% trans "Nation" %}</th>
+		<th>{% trans "Category" %}</th>
+		<th>{% trans "UCI ID" %}</th>
 		{% for h in category_numbers.ranking_titles %}
 			<th class="text-right">{{h}}</th>
 		{% endfor %}
@@ -131,13 +133,14 @@ document.addEventListener('mouseup', processSelectedRows);
 	<tr>
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td>{{bib_field}}</td>
-		<td>{{h.uci_id|format_uci_id}}</td>
 		<td>{{h.last_name}}</td>
 		<td>{{h.first_name}}</td>
-		<td class="text-center">{{h.get_nation_code_html}}</td>
-		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-		<td>{{p.category.code}}</td>
 		<td class="text-center">{{p.category.get_gender_display}}</td>
+		<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
+		<td>{{h.nation_code}}</td>
+		<td>{{p.category.code}}</td>
+		<td>{{h.uci_id|format_uci_id}}</td>
+		<td class="text-center">{{h.get_nation_code_html}}</td>
 		{% for rank in p.callup_ranks %}
 			<td class="text-right">{% if v %}{{rank|floatformat:"-2"}}{% endif %}</td>
 		{% endfor %}

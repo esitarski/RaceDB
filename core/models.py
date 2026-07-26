@@ -1631,6 +1631,7 @@ class CategoryNumbers( models.Model ):
 	sort_2=models.PositiveSmallIntegerField( default=0 )
 	sort_3=models.PositiveSmallIntegerField( default=0 )
 	sort_4=models.PositiveSmallIntegerField( default=0 )
+	reverse = models.BooleanField( default=False, verbose_name=_('Reverse') )
 	
 	def fix_sort_order( self ):
 		already_seen = set()
@@ -1677,7 +1678,7 @@ class CategoryNumbers( models.Model ):
 					break
 			return key
 
-		participants.sort( key=get_sort_key )
+		participants.sort( key=get_sort_key, reverse=self.reverse )
 		return participants
 		
 	def get_participants( self ):

@@ -1613,7 +1613,7 @@ class UploadPreregForm( Form ):
 		(1, _("Assign new Bib numbers from the spreadsheet's Bib column, but only where a value is present.  Leave the Bib unassigned if the spreadsheet's Bib entry is blank.") ),
 		(2, _("Assign new Bib numbers from the spreadsheet's Bib column where present; where blank, assign the next available Bib number.") ),
 	)
-	assign_bibs_option = forms.ChoiceField( choices=NEW_BIB_ASSIGNMENT_CHOICES, required=False )
+	assign_bibs_option = forms.TypedChoiceField( choices=NEW_BIB_ASSIGNMENT_CHOICES, required=False, coerce=int )
 	
 	clear_existing = forms.BooleanField(
 		required=False,
@@ -1649,7 +1649,7 @@ def handle_upload_prereg( competitionId, excel_contents, assign_bibs_option, cle
 		competitionId=competitionId,
 		worksheet_contents=worksheet_contents,
 		message_stream=message_stream,
-		assign_bibs_option=int(assign_bibs_option),
+		assign_bibs_option=assign_bibs_option,
 		clear_existing=clear_existing,
 	)
 	results_str = message_stream.getvalue()
