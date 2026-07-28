@@ -170,7 +170,7 @@ standard_field_aliases = (
 		"Email",
 	),
 	('phone',
-		tuple(product(('Phone','Telephone','Tel'), ('', 'Number','No','#'))) + ('Registrant Telephone','Rider Phone'),
+		tuple(product(('Phone','Telephone','Tel'), ('', 'Number','No','#'))) + ('Registrant Telephone','Rider Phone',),
 		"Phone",
 	),
 	('city',
