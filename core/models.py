@@ -1576,15 +1576,16 @@ def get_ranking_titles( obj ):
 				titles.append( ranking.name )
 	return titles
 
-def get_callup_key( competition, obj ):
+def get_callup_key_uci_lookup( competition ):
+	return { uci_id:rank for uci_id, rank in UCIRank.objects.filter(competition=competition).values_list('uci_id', 'rank') }
+
+def get_callup_key( competition, obj, uci_lookup = None ):
 	# Get the lookup functions for all the callup criteria.
 	ranking_lookups = []
 	for r in range(1, RANKING_MAX+1):
 		if getattr(obj, f'ranking_{r}_option') == 0:
-			uci_lookup = {
-				uci_id:rank
-					for uci_id,rank in UCIRank.objects.filter(competition=competition).values_list('uci_id', 'rank')
-			}
+			if not uci_lookup:
+				uci_lookup = get_callup_key_uci_lookup( competition )
 			ranking_lookups.append( lambda p: uci_lookup.get(p.license_holder.uci_id, NO_RANK) )
 		else:
 			# Use the given ranking.
@@ -1659,7 +1660,7 @@ class CategoryNumbers( models.Model ):
 			100: lambda p: p.category.code if p.category else '~~~',# Category
 			200: lambda p: callup_key_func( p ),					# Rank
 			300: lambda p: p.team.name if p.team else '~~~',		# Team
-			400: lambda p: utils.removeDiacritic( '{} {}'.format(p.license_holder.last_name, string.capwords(p.license_holder.first_name.lower())) ), # Name
+			400: lambda p: utils.removeDiacritic( '{} {}'.format(p.license_holder.last_name.upper(), string.capwords(p.license_holder.first_name.lower())) ), # Name
 			500: lambda p: p.license_holder.nation_code,			# Nation
 			600: lambda p: p.license_holder.state_prov,				# State/Prov
 			700: lambda p: p.bib if p.bib else 999999,				# Bib
@@ -5082,6 +5083,7 @@ class Ranking( models.Model ):
 	competition = models.ForeignKey( 'Competition', db_index=True, verbose_name=_('Competition'), on_delete=models.CASCADE )
 	name = models.CharField( max_length=128, default = 'MyRanking', verbose_name=_('Name') )
 	description = models.CharField( max_length=255, blank=True, default='', verbose_name=_('Description') )
+	import_timestamp = models.DateTimeField( null=True, blank=True, default=None, verbose_name=_('Last Imported') )
 
 	MATCH_KEY_CHOICES = (
 		(0, _('UCI ID')),
@@ -5091,31 +5093,34 @@ class Ranking( models.Model ):
 	match_key = models.PositiveSmallIntegerField( default=0, verbose_name = _('Match Key'), choices=MATCH_KEY_CHOICES )
 	
 	def get_rank( self, participant, default=None ):
+		match_key = self.match_key
+		
 		try:
 			rank_lookup = self._rank_lookup
 		except AttributeError:
-			if self.match_key == 0:
+			if match_key == 0:			# UCI ID.
 				self._rank_lookup = {
 					re.uci_id:re.rank
-					for re in self.rankingentry_set.all().iterator() if re.uci_id is not None
+					for re in self.rankingentry_set.all().iterator() if re.uci_id
 				}
-			elif self.match_key == 1:
+			elif match_key == 1:		# License Code.
 				self._rank_lookup = {
 					re.license_code:re.rank
-					for re in self.rankingentry_set.all().iterator() if re.license_code is not None
+					for re in self.rankingentry_set.all().iterator() if re.license_code
 				}
-			else:
+			else:						# Name.
 				self._rank_lookup = {
 					get_name_key(re.first_name, re.last_name):re.rank
-					for re in self.rankingentry_set.all().iterator() if re.license_code is not None
+					for re in self.rankingentry_set.all().iterator() if (re.first_name or re.last_name)
 				}
 			rank_lookup = self._rank_lookup
 		
-		key = [
-			lambda p: p.license_holder.uci_id,
-			lambda p: p.license_holder.license_code,
-			lambda p: get_name_key( p.license_holder.first_name, p.license_holder.last_name ),
-		][self.match_key]( participant )
+		if match_key == 0:				# UCI ID.
+			key = participant.license_holder.uci_id
+		elif match_key == 1:			# License Code.
+			key = participant.license_holder.license_code
+		else:							# Name.
+			key = get_name_key( participant.license_holder.first_name, participant.license_holder.last_name )
 		
 		return rank_lookup.get( key, default )
 	
@@ -5249,7 +5254,8 @@ class EventTT( Event ):
 				[p for p in wave_tt.get_participants_unsorted()
 					.select_related('license_holder','category') if p.can_tt_start() and p.bib
 				],
-				key=wave_tt.get_sequence_key() )
+				key=wave_tt.get_sequence_key()
+			)
 			
 			# Carry the "before gaps" of empty waves.
 			if not participants:
@@ -5430,17 +5436,21 @@ class WaveTT( WaveBase ):
 	est_speed_decreasing = 6	# Added to support para and covid.
 	bib_60 = 7					# Seeds by bib number * 60
 	bib_30 = 8					# Seeds by bib number * 30
+	rank_increasing = 9
+	rank_decreasing = 10
 	SEQUENCE_CHOICES = (
 		(_("Increasing"), (
 				(est_speed_increasing, _("Est. Speed - Increasing")),
 				(age_increasing, _("Youngest to Oldest")),
 				(bib_increasing, _("Bib - Increasing")),
+				(rank_increasing, _("Rank - highest rank goes last")),
 			),
 		),
 		(_("Decreasing"), (
 				(est_speed_decreasing, _("Est. Speed - Decreasing")),
 				(age_decreasing, _("Oldest to Youngest")),
 				(bib_decreasing, _("Bib - Decreasing")),
+				(rank_decreasing, _("Rank - highest rank goes first")),
 			),
 		),
 		(_("Bib Time Multiple"), (
@@ -5544,6 +5554,40 @@ class WaveTT( WaveBase ):
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
 				p.id,
 			)
+		elif self.sequence_option in (self.rank_increasing, self.rank_decreasing):
+			competition = self.event.competition
+			
+			uci_lookup = get_callup_key_uci_lookup( competition )
+			cn_from_category = {}
+			callup_key_func_from_cn = {}		
+			for cn in competition.categorynumbers_set.all():
+				cn_from_category.update( { c:cn for c in cn.categories.all() } )
+				callup_key_func_from_cn[cn] = get_callup_key( competition, cn, uci_lookup )
+			
+			cn_from_p = { p:cn_from_category[p.category] for p in competition.get_participants().filter( category__isnull=False ).iterator() }
+			
+			'''
+			cn_from_p = {}
+			callup_key_func_from_cn = {}		
+			for cn in competition.categorynumbers_set.all():
+				# Get the callup_key_func for every category numbers.
+				callup_key_func_from_cn[cn] = get_callup_key( competition, cn )
+				
+				# Get a dict to quickly find the category numbers of a participant.
+				for p in cn.get_participants().order_by().iterator():
+					cn_from_p[p] = cn
+			'''
+					
+			if self.rank_increasing:
+				# Change the sign of the rankings as we want to end with the highest rank (lowest number).
+				def get_key( p ):
+					return [-r for r in callup_key_func_from_cn[cn_from_p[p]]( p )]
+			else:
+				# Keep the sign the same as we want to end with the lowest rank (highest number).
+				def get_key( p ):
+					return callup_key_func_from_cn[cn_from_p[p]]( p )
+				
+			return get_key
 		elif True or self.sequence_option == self.est_speed_increasing:
 			return lambda p: (
 				p.seed_option,

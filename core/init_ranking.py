@@ -163,3 +163,7 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 	
 	ms_write( '\n' )
 	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+
+	ranking.import_timestamp = timezone.now()
+	ranking.save()
+	

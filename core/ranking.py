@@ -88,6 +88,9 @@ class RankingForm( ModelForm ):
 			Row(
 				Field('match_key'),
 			),
+			Row(
+				Field('import_timestamp', readonly=True),
+			),
 			Field( 'competition', type='hidden' ),
 		)
 		self.additional_buttons = []

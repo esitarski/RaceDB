@@ -86,7 +86,7 @@ document.addEventListener('mouseup', processSelectedRows);
 <h4>{% trans "Categories" %}: {{category_numbers.category_list}}</h4>
 
 <form acton="." method="post">
-	{% csrf_token %}
+{% csrf_token %}
 
 <hr/>
 <p>
