@@ -110,8 +110,7 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 		
 		uci_id = v('uci_id', None)
 		if uci_id:
-			if isinstance(uci_id, float):
-				uci_id = str(int(uci_id))
+			uci_id = get_uci_id( uci_id )
 			uci_id_error = get_uci_id_error( uci_id )
 			if uci_id_error:
 				ms_write( '**** Row {:>6}: Ignoring. UCI ID error: {} ({})\n'.format(i, uci_id_error, uci_id) )

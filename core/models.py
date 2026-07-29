@@ -1391,7 +1391,7 @@ class Competition(models.Model):
 			seasons_pass=self.seasons_pass,
 			license_holder__pk__in=self.get_participants().values('license_holder__pk'),
 		).count() if self.seasons_pass else 0
-		
+					
 	class Meta:
 		verbose_name = _('Competition')
 		verbose_name_plural = _('Competitions')
@@ -1683,6 +1683,11 @@ class CategoryNumbers( models.Model ):
 					break
 			return key
 
+		# Get all the rank reference data for each participant.
+		for p in participants:
+			callup_key_func ( p )
+		
+		# Sort by the given criteria.
 		participants.sort( key=get_sort_key, reverse=self.reverse )
 		return participants
 		
@@ -4942,14 +4947,15 @@ class Participant(models.Model):
 
 	def get_bib_auto( self, suggested_bib=None ):
 		if self.bib:
-			return self.bib
+			return self.bib, (None, None, None, False)
 		# If no bib, return the first one that is available.
-		available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = self.get_available_numbers()
+		context = self.get_available_numbers()
+		available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = context
 		search_numbers = [suggested_bib] if suggested_bib else available_numbers
 		for bib in search_numbers:
 			if bib in available_numbers and bib not in allocated_numbers and bib not in lost_bibs:
-				return bib
-		return None
+				return bib, context
+		return None, context
 	
 	@staticmethod
 	def most_recent():
@@ -5010,6 +5016,9 @@ def get_str( s ):
 	return str(s) if s else ''
 
 def get_uci_id( v ):
+	if v is None:
+		return v
+	
 	if isinstance(v, float):
 		v = str(int(v))
 	elif isinstance( v, int):

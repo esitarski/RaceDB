@@ -208,6 +208,10 @@ def init_prereg(
 			
 			uci_id			= to_uci_id(v('uci_id', None))
 			nation_code		= to_str(v('nation_code', None))
+			nationality		= to_str(v('nationality', None))
+			if nationality and len(nationality) == 3 and nationality.upper() == nationality and not nation_code:
+				nation_code = nationality
+				nationality = None
 			
 			emergency_contact_name = to_str(v('emergency_contact_name', None))
 			emergency_contact_phone = to_phone(v('emergency_contact_phone', None))
@@ -242,7 +246,7 @@ def init_prereg(
 							i, category_code, name,
 						) )
 					else:
-						if gender is None:
+						if gender is None and category.gender != 2:
 							gender = category.gender
 
 				t_track.start( 'get_license_holder' )
@@ -284,6 +288,7 @@ def init_prereg(
 										'date_of_birth':date_of_birth,
 										'uci_code':uci_code,
 										'nation_code':nation_code,
+										'nationality':nationality,
 										'uci_id':uci_id,
 										'email':email,
 										'phone':phone,
@@ -407,11 +412,17 @@ def init_prereg(
 						i, f'Cannot assign new Bib={suggested_bib} as participant already has Bib={participant.bib} from the Number Set.',
 						category_code, name,
 					) )
+					
+				# If requested, ignore participants with missing bibs.
+				if assign_bibs_option == 3 and not suggested_bib:
+					ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+						i, 'Missing bib (ignoring)',
+						category_code, name,
+					) )
+					continue
 
 				# We still don't have a bib number.  Try to auto-assign it.
-				while not participant.bib and assign_bibs_option > 0:	# Not a loop (makes it neater to break out).
-					t_track.start( 'assign_bib' )
-					
+				while not participant.bib and assign_bibs_option > 0:
 					#---------------------------------------------------
 					if not participant.category:
 						ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
@@ -421,42 +432,48 @@ def init_prereg(
 						break
 						
 					#---------------------------------------------------
-					if assign_bibs_option >= 1 and suggested_bib:						
-						# Get a new bib using the suggested one (if supplied).
-						bib_auto = participant.get_bib_auto( suggested_bib )
-						if bib_auto:
-							participant.bib = bib_auto
-							if competition.number_set:
-								competition.number_set.assign_bib( participant.license_holder, bib_auto )
+					if suggested_bib:
+						if assign_bibs_option in (1, 2, 3):						
+							# Get a bib using the suggested one.  This will be execute if assign_bibs == 3.
+							# This is really, really slow.  FIXLATER.
+							bib_auto, context = participant.get_bib_auto( suggested_bib )
+							if bib_auto:
+								participant.bib = bib_auto
+								if competition.number_set:
+									competition.number_set.assign_bib( participant.license_holder, bib_auto )
+								break
+								
+							# Report a detailed error if there is a failure with the suggested bib.
+							available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = context
+							if suggested_bib not in available_numbers:
+								ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+									i, f'Suggested Bib={suggested_bib} is not in the available numbers for the Category.',
+									category_code, name,
+								) )
+							elif suggested_bib in allocated_numbers:
+								ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+									i, f'Suggested Bib={suggested_bib} is already allocated to another rider.',
+									category_code, name,
+								) )
 							break
-							
-						# Report a detailed error.
-						available_numbers, allocated_numbers, lost_bibs, category_numbers_defined = participant.get_available_numbers()
-						if suggested_bib not in available_numbers:
-							ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
-								i, f'Suggested Bib={suggested_bib} is not in the available numbers for the Category.',
-								category_code, name,
-							) )
-						elif suggested_bib in allocated_numbers:
-							ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
-								i, f'Suggested Bib={suggested_bib} is already allocated to another rider.',
-								category_code, name,
-							) )
-						break
 								
 					#---------------------------------------------------
-					if assign_bibs_option == 2 and not suggested_bib:						
-						bib_auto = participant.get_bib_auto()
-						if bib_auto:
-							participant.bib = bib_auto
-							if competition.number_set:
-								competition.number_set.assign_bib( participant.license_holder, bib_auto )
-						else:
-							ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
-								i, f'Cannot automatically assign bib (numbers are full or unavailable)',
-								category_code, name,
-							) )
-								
+					else: # no suggested_bib:
+						# There is no suggested bib.
+						if assign_bibs_option == 2:		# Automatically assign blank bibs.
+							bib_auto = participant.get_bib_auto()[0]
+							if bib_auto:
+								participant.bib = bib_auto
+								if competition.number_set:
+									competition.number_set.assign_bib( participant.license_holder, bib_auto )
+							else:
+								ms_write( '**** Row {}: {} Category="{}" Name="{}"\n'.format(
+									i, f'Cannot automatically assign bib (numbers are full or unavailable)',
+									category_code, name,
+								) )
+								break
+					
+					# Unconditional break so we don't repeat the loop.			
 					break
 				
 				# If we have an assigned bib, check all constraints so we do not get incorrect bibs allocated.

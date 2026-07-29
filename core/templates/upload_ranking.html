@@ -7,6 +7,7 @@
 {% endblock onload %}
 {% block content %}
 {% load i18n %}
+{% load format_uci_id %}
 {% load crispy_forms_tags %}
 <style>
 #id_excel_file { width: 600px; }
@@ -82,7 +83,7 @@ The spreadsheet must have a specific format:
 		<td class="text-right">{% if re.points %}{{re.points|floatformat:"-2"}}{% endif %}</td>
 		<td>{{re.last_name}}</td>
 		<td>{{re.first_name}}</td>
-		<td>{{re.uci_id|default:""}}</td>
+		<td>{{re.uci_id|default:""|format_uci_id}}</td>
 		<td>{{re.license_code|default:""}}</td>
 	</tr>
 	{% endfor %}

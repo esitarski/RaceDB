@@ -1605,15 +1605,17 @@ def CompetitionApplyOptionalEventChangesToExistingParticipants( request, competi
 class UploadPreregForm( Form ):
 	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
 
-	DO_NOT_ASSIGN_NEW_BIBS = 0
-	ASSIGN_NEW_BIBS_FROM_SPREADSHEET_ONLY = 1
-	ASSIGN_NEW_BIBS_FROM_SPREADSHEET_AUTO_BLANK = 2
+	DO_NOT_ASSIGN_BIBS = 0
+	ASSIGN_BIBS_FROM_SPREADSHEET_ONLY = 1
+	ASSIGN_BIBS_FROM_SPREADSHEET_AUTO_BLANK = 2
+	ASSIGN_BIBS_FROM_SPREADSHEET_SKIP_MISSING_BIBS = 3
 	NEW_BIB_ASSIGNMENT_CHOICES = (
-		(0, _('Do not assign new Bib numbers.  Bib numbers from the spreadsheet are ignored entirely.') ),
-		(1, _("Assign new Bib numbers from the spreadsheet's Bib column, but only where a value is present.  Leave the Bib unassigned if the spreadsheet's Bib entry is blank.") ),
-		(2, _("Assign new Bib numbers from the spreadsheet's Bib column where present; where blank, assign the next available Bib number.") ),
+		(0, _('Do not assign Bib numbers.  Ignore Bib numbers from the spreadsheet entirely.') ),
+		(1, _("Assign Bib numbers from the spreadsheet's Bib column, but only where a value is present.  Leave the Bib unassigned if the spreadsheet's Bib entry is blank.") ),
+		(2, _("Assign Bib numbers from the spreadsheet's Bib column where present; where blank, assign the next available Bib number.") ),
+		(3, _("Assign Bib numbers from the spreadsheet's Bib column where present; where blank, Do Not import the participant (skip the row entirely).") ),
 	)
-	assign_bibs_option = forms.TypedChoiceField( choices=NEW_BIB_ASSIGNMENT_CHOICES, required=False, coerce=int )
+	assign_bibs_option = forms.TypedChoiceField( choices=NEW_BIB_ASSIGNMENT_CHOICES, required=False, coerce=int, widget=forms.RadioSelect, initial=0, label=_('Assign Bibs:') )
 	
 	clear_existing = forms.BooleanField(
 		required=False,
@@ -1634,9 +1636,9 @@ class UploadPreregForm( Form ):
 			Row(
 				Col( Field('assign_bibs_option'), 12 ),
 			),
-			Row( HTML(_("IMPORTANT: If the Competition has a Number Set, its Bibs take precedence — the spreadsheet's Bib value is ignored (even if present).")) ),
+			Row( HTML(_("IMPORTANT: If the Competition has a Number Set, its Bib ranges and availability take precedence — the spreadsheet's Bib value is ignored (even if present).")) ),
 			Row(
-				Col( Field('clear_existing'), 4 ),
+				Col( Field('clear_existing'), 12 ),
 			),
 		)
 		

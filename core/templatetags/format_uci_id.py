@@ -6,5 +6,7 @@ register = template.Library()
 
 @register.filter
 def format_uci_id( value ):
+	if not value:
+		return value
 	uci_id = re.sub( '[^0-9]', '', '{}'.format(value) )
 	return mark_safe('&nbsp;'.join( uci_id[i:i+3] for i in range(0, len(uci_id), 3) ) )

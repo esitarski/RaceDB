@@ -9,22 +9,14 @@ from .models import *
 from .add_excel_info import add_excel_info
 
 data_headers = (
-	'Wave',
+	'Wave',		# Must be first.
 	'Category',
 	'Bib',
 	'LastName', 'FirstName',
 	'Team',
-	'Gender',
-	'DOB',
-	'City', 'StateProv',
-	'License',
-	'NatCode',
+	'Nationality',
 	'UCI ID',
-	'Prereg',
-	'Paid',
-	'SeasonsPass',
-	'Confirmed',
-	'Note',
+	'License',
 )
 
 def write_row_data( ws, row, row_data, format = None ):
@@ -70,18 +62,12 @@ def get_start_list_excel( event ):
 				data = [
 					w.name,
 					p.category.code if p.category else 'None',
-					p.bib if p.bib else 'None',
+					p.bib if p.bib else '',
 					lh.last_name, lh.first_name,
-					'{}'.format(p.team_name),
-					lh.get_gender_display(),
-					lh.date_of_birth.strftime('%Y-%m-%d'),
-					lh.city, lh.state_prov,
-					lh.license_code, lh.nation_code, lh.get_uci_id_text(),
-					p.preregistered,
-					p.paid,
-					lh.pk in seasons_pass,
-					p.confirmed,
-					p.note if p.note else '',
+					'{}'.format(p.team_name) if p.team else '',
+					lh.nation_code,
+					lh.get_uci_id_text(),
+					lh.license_code_trunc, 
 				]
 				row = write_row_data( ws, row, data )
 	elif event.event_type == 1:
@@ -93,18 +79,12 @@ def get_start_list_excel( event ):
 				timezone.localtime(p.clock_time).strftime('%H:%M:%S') if p.clock_time else p.clock_time,
 				p.start_time,
 				p.category.code if p.category else 'None',
-				p.bib if p.bib else 'None',
+				p.bib if p.bib else '',
 				lh.last_name, lh.first_name,
-				'{}'.format(p.team_name),
-				lh.get_gender_display(),
-				lh.date_of_birth.strftime('%Y-%m-%d'),
-				lh.city, lh.state_prov,
-				lh.license_code, lh.get_uci_id_text(), lh.nation_code,
-				p.preregistered,
-				p.paid,
-				lh.pk in seasons_pass,
-				p.confirmed,
-				p.note if p.note else '',
+				'{}'.format(p.team_name) if p.team else '',
+				lh.nation_code,
+				lh.get_uci_id_text(), 
+				lh.license_code_trunc,
 			]
 			row = write_row_data( ws, row, data, format_list )
 		
