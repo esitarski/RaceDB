@@ -374,15 +374,15 @@ class CategoryFinder:
 		self.categories = list( categories )
 		patterns = []
 		for c in self.categories:
-			# Initialize to the code name (escaped).  Add the gender code at the end.
-			aliases = [re.escape(utils.removeDiacritic(c.code.strip()))+f'_{c.gender}']
+			# Initialize to the code name (escaped).
+			aliases = [re.escape(utils.removeDiacritic(c.code.strip()))]
 			for a in split_ignoring_escaped(c.aliases):
 				a = a.strip()
 				if not a:
 					continue
 				if a.startswith('/') and a.endswith('/'):
 					# Treat as a regex if surrounded by /.
-					rx = a[1:-1]+f'_{c.gender}'
+					rx = a[1:-1]
 					try:
 						re.compile( rx )		# Check if we can compile it.
 						aliases.append( rx )
@@ -391,7 +391,7 @@ class CategoryFinder:
 						aliases.append( re.escape(a) )
 				else:
 					# This is a non-regex match, so escape it
-					aliases.append( re.escape(a)+f'_{c.gender}' )
+					aliases.append( re.escape(a) )
 				
 			p = '|'.join( aliases )
 			try:
@@ -403,14 +403,14 @@ class CategoryFinder:
 
 		# Combine all the regex's together and code them with the corresponding category index.
 		# This allows us to search all patterns simultaneously.
-		self.combined = re.compile('|'.join(f'(?P<p{i}>{p})' for i, p in enumerate(patterns)), re.IGNORECASE)
+		merged = '|'.join(f'(?P<p{i}>{p})' for i, p in enumerate(patterns))
+		self.combined = re.compile(merged, re.IGNORECASE)
 			
-	def fullmatch( self, s, gender_code ):
+	def fullmatch( self, s ):
 		# Returns category matching the string, or None if no match.
-		for g in (gender_code, 2):	# In addition to the given gender, check for an Open gender match.
-			m = self.combined.fullmatch( utils.removeDiacritic(s.strip())+f'_{gender_code}' )
-			if m:
-				return self.categories[int(m.lastgroup[1:])]  # extracts i from 'p{i}'
+		m = self.combined.fullmatch( utils.removeDiacritic(s.strip()) )
+		if m:
+			return self.categories[int(m.lastgroup[1:])]  # extracts i from 'p{i}'
 		return None
 		
 	def __call__( self, s, gender_code ):
@@ -1588,7 +1588,9 @@ def get_callup_key( competition, obj, uci_lookup = None ):
 		if ranking_options[i] == 0:
 			if not uci_lookup:
 				uci_lookup = get_callup_key_uci_lookup( competition )
-			ranking_lookups.append( lambda p: uci_lookup.get(p.license_holder.uci_id, NO_RANK) )
+			def gr( p, uci_lookup=uci_lookup ):
+				return uci_lookup.get(p.license_holder.uci_id, NO_RANK)
+			ranking_lookups.append( gr )
 		else:
 			# Use the specified ranking.
 			if rankings[i]:

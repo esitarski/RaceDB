@@ -103,8 +103,8 @@ def init_prereg(
 		category_numbers_set[category] = cn.get_numbers() if cn else set()
 	
 	category_finder = CategoryFinder( competition.category_format.category_set.all() )
-	def get_category( category_code_search, gender_search ):
-		return category_finder.fullmatch( category_code_search, gender_search )
+	def get_category( category_code_search ):
+		return category_finder.fullmatch( category_code_search )
 
 	'''
 	def get_category( category_code_search, gender_search ):
@@ -331,7 +331,7 @@ def init_prereg(
 				category = None
 				if category_code:
 					t_track.start( 'get_category_from_code' )
-					category = get_category( category_code, license_holder.gender )
+					category = get_category( category_code )
 					if category is None:
 						ms_write( '**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
 							i, category_code, name,
