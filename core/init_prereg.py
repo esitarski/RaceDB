@@ -230,6 +230,21 @@ def init_prereg(
 			license_holder = None
 			#with transaction.atomic():
 			if True:
+				#------------------------------------------------------------------------------
+				# Get Category.
+				#
+				category = None
+				if category_code:
+					t_track.start( 'get_category_from_code' )
+					category = get_category( category_code )
+					if category is None:
+						ms_write( '**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
+							i, category_code, name,
+						) )
+					else:
+						if gender is None:
+							gender = category.gender
+
 				t_track.start( 'get_license_holder' )
 			
 				if uci_id:
@@ -325,17 +340,6 @@ def init_prereg(
 						)
 						continue
 				
-				#------------------------------------------------------------------------------
-				# Get Category.  Open categories will match either Gender.
-				#
-				category = None
-				if category_code:
-					t_track.start( 'get_category_from_code' )
-					category = get_category( category_code )
-					if category is None:
-						ms_write( '**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
-							i, category_code, name,
-						) )
 				
 				#------------------------------------------------------------------------------
 				# Get Team
