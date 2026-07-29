@@ -6,7 +6,6 @@ from django.utils import version
 from django.conf import settings
 from .get_version import get_version
 
-import xwlxwriter
 import openpyxl
 from openpyxl.packaging.custom import (
     BoolProperty,

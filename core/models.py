@@ -1582,21 +1582,23 @@ def get_callup_key_uci_lookup( competition ):
 def get_callup_key( competition, obj, uci_lookup = None ):
 	# Get the lookup functions for all the callup criteria.
 	ranking_lookups = []
-	for r in range(1, RANKING_MAX+1):
-		if getattr(obj, f'ranking_{r}_option') == 0:
+	ranking_options = [getattr(obj, f'ranking_{r}_option') for r in range(1, RANKING_MAX+1)]
+	rankings = [getattr(obj, f'ranking_{r}') for r in range(1, RANKING_MAX+1)]
+	for i in range(len(ranking_options)):
+		if ranking_options[i] == 0:
 			if not uci_lookup:
 				uci_lookup = get_callup_key_uci_lookup( competition )
 			ranking_lookups.append( lambda p: uci_lookup.get(p.license_holder.uci_id, NO_RANK) )
 		else:
-			# Use the given ranking.
-			ranking = getattr(obj, f'ranking_{r}')
-			if ranking is None:
-				continue
-			ranking_lookups.append( lambda p: ranking.get_rank(p, NO_RANK) )
+			# Use the specified ranking.
+			if rankings[i]:
+				def gr( p, ranking=rankings[i] ):
+					return ranking.get_rank(p, NO_RANK)
+				ranking_lookups.append( gr )
 
-	def get_callup_key_func( p ):
+	def get_callup_key_func( p, ranking_lookups=ranking_lookups ):
 		key = [lookup(p) for lookup in ranking_lookups]
-		p.callup_ranks = [k if k != NO_RANK else None for k in key]	# Keep track of the rankings to show the work later.
+		p.callup_ranks = [(rank if rank != NO_RANK else None) for rank in key]	# Keep track of the rankings to show the work later.
 		# Add a "random" criteria if no other ranking is found.
 		key.append( hash(p.id) )
 		return key

@@ -122,6 +122,7 @@ document.addEventListener('mouseup', processSelectedRows);
 		<th>{% trans "Nation" %}</th>
 		<th>{% trans "Category" %}</th>
 		<th>{% trans "UCI ID" %}</th>
+		<th>{% trans "Nation" %}</th>
 		{% for h in category_numbers.ranking_titles %}
 			<th class="text-right">{{h}}</th>
 		{% endfor %}
@@ -142,7 +143,7 @@ document.addEventListener('mouseup', processSelectedRows);
 		<td>{{h.uci_id|format_uci_id}}</td>
 		<td class="text-center">{{h.get_nation_code_html}}</td>
 		{% for rank in p.callup_ranks %}
-			<td class="text-right">{% if v %}{{rank|floatformat:"-2"}}{% endif %}</td>
+			<td class="text-right">{% if rank %}{{rank|floatformat:"-2"}}{% endif %}</td>
 		{% endfor %}
 	</tr>
 	{% endwith %}
