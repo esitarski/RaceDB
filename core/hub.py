@@ -632,7 +632,7 @@ def SeriesCategoryResults( request, seriesId, categoryId, customCategoryIndex=No
 				except KeyError:
 					if not team or Team.is_independent_name(team):
 						team_count += 1
-						team_name = 'Ind {}'.format(team_count)
+						team_name = f'Ind {team_count}'
 					else:
 						team_name = team
 					if len(team_name) > max_team_len:

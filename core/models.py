@@ -2626,7 +2626,7 @@ class Team(models.Model):
 	def is_independent_name( team_name ):
 		if team_name is None:
 			return False
-		return team_name.lower() == 'independent'
+		return utils.remove_diacritics(team_name.lower()) == 'independent'
 	
 	class Meta:
 		verbose_name = _('Team')
@@ -5578,7 +5578,10 @@ class WaveTT( WaveBase ):
 			
 			callup_key_func_from_p = {
 				p:callup_key_func_from_cn[cn_from_category[p.category]]
-				for p in competition.get_participants().filter( category__isnull=False ).iterator()
+				for p in competition.get_participants()
+					.filter( category__isnull=False )
+					.select_related('category')
+					.iterator()
 			}
 			
 			if self.sequence_option == self.rank_increasing:
@@ -5595,7 +5598,7 @@ class WaveTT( WaveBase ):
 					try:
 						callup_key_func = callup_key_func_from_p[p]
 					except KeyError:
-						return [99999] * 5
+						return [999999] * 5
 					return callup_key_func(p)
 				
 			return get_key

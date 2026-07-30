@@ -129,14 +129,14 @@
 	{% for e in entry_tts %}
 		{% with w=e.wave p=e.participant h=e.participant.license_holder %}
 		<tr id="e_{{forloop.counter0}}" {% if e.gap_change > 0 %}class="gap-change-inc"{% elif e.gap_change < 0 %}class="gap-change-dec"{% endif %}>
-			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
+			<td class="text-right text-nowrap">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{forloop.counter}}.</td>
 			<td class="text-right">{{e.clock_time | time:"H:i:s"}}</td>
 			<td class="text-right">{{e.start_time}}</td>
 			<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
 			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
-			<td class="text-center">{{h.get_nation_code_html}}</td>
+			<td class="text-center text-nowrap ">{{h.get_nation_code_html}}</td>
 			<td>{{w.name}}</td>
 			<td class="text-right">{{e.est_speed}}</td>
 			<td>{{e.get_seed_option_display}}</td>
