@@ -7,10 +7,10 @@ from .add_excel_info import add_excel_info
 data_headers = (
 	'Bib',
 	'LastName', 'FirstName',
-	'Gender',
 	'Team',
 	'Nation',
 	'Category',
+	'Gender',
 	'UCIID',
 )
 
@@ -51,10 +51,10 @@ def get_category_numbers_assign_excel( category_numbers ):
 			p.bib or '',
 			lh.last_name,
 			lh.first_name,
-			str(lh.get_gender_display()),
-			lh.team.name if lh.team else '',
+			p.team.name if p.team else '',
 			lh.nation_code,
 			p.category.code,
+			str(lh.get_gender_display()),
 			lh.uci_id if lh.uci_id else '',
 		]
 		data.extend( (r or '') for r in p.callup_ranks )

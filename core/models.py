@@ -1582,19 +1582,17 @@ def get_callup_key_uci_lookup( competition ):
 def get_callup_key( competition, obj, uci_lookup = None ):
 	# Get the lookup functions for all the callup criteria.
 	ranking_lookups = []
-	ranking_options = [getattr(obj, f'ranking_{r}_option') for r in range(1, RANKING_MAX+1)]
-	rankings = [getattr(obj, f'ranking_{r}') for r in range(1, RANKING_MAX+1)]
-	for i in range(len(ranking_options)):
-		if ranking_options[i] == 0:
+	for ranking_option, ranking in [(getattr(obj, f'ranking_{r}_option'), getattr(obj, f'ranking_{r}')) for r in range(1, RANKING_MAX+1)]:
+		if ranking_option == 0:
 			if not uci_lookup:
 				uci_lookup = get_callup_key_uci_lookup( competition )
 			def gr( p, uci_lookup=uci_lookup ):
 				return uci_lookup.get(p.license_holder.uci_id, NO_RANK)
 			ranking_lookups.append( gr )
 		else:
-			# Use the specified ranking.
-			if rankings[i]:
-				def gr( p, ranking=rankings[i] ):
+			# Use the given ranking.
+			if ranking:
+				def gr( p, ranking=ranking ):
 					return ranking.get_rank(p, NO_RANK)
 				ranking_lookups.append( gr )
 
@@ -5568,6 +5566,7 @@ class WaveTT( WaveBase ):
 				p.id,
 			)
 		elif self.sequence_option in (self.rank_increasing, self.rank_decreasing):
+			
 			competition = self.event.competition
 			
 			uci_lookup = get_callup_key_uci_lookup( competition )
@@ -5577,30 +5576,30 @@ class WaveTT( WaveBase ):
 				cn_from_category.update( { c:cn for c in cn.categories.all() } )
 				callup_key_func_from_cn[cn] = get_callup_key( competition, cn, uci_lookup )
 			
-			cn_from_p = { p:cn_from_category[p.category] for p in competition.get_participants().filter( category__isnull=False ).iterator() }
+			callup_key_func_from_p = {
+				p:callup_key_func_from_cn[cn_from_category[p.category]]
+				for p in competition.get_participants().filter( category__isnull=False ).iterator()
+			}
 			
-			'''
-			cn_from_p = {}
-			callup_key_func_from_cn = {}		
-			for cn in competition.categorynumbers_set.all():
-				# Get the callup_key_func for every category numbers.
-				callup_key_func_from_cn[cn] = get_callup_key( competition, cn )
-				
-				# Get a dict to quickly find the category numbers of a participant.
-				for p in cn.get_participants().order_by().iterator():
-					cn_from_p[p] = cn
-			'''
-					
-			if self.rank_increasing:
+			if self.sequence_option == self.rank_increasing:
 				# Change the sign of the rankings as we want to end with the highest rank (lowest number).
-				def get_key( p ):
-					return [-r for r in callup_key_func_from_cn[cn_from_p[p]]( p )]
+				def get_key( p, callup_key_func_from_p=callup_key_func_from_p ):
+					try:
+						callup_key_func = callup_key_func_from_p[p]
+					except KeyError:
+						return [0] * 5
+					return [-r for r in callup_key_func(p)]
 			else:
 				# Keep the sign the same as we want to end with the lowest rank (highest number).
-				def get_key( p ):
-					return callup_key_func_from_cn[cn_from_p[p]]( p )
+				def get_key( p, callup_key_func_from_p=callup_key_func_from_p ):
+					try:
+						callup_key_func = callup_key_func_from_p[p]
+					except KeyError:
+						return [99999] * 5
+					return callup_key_func(p)
 				
 			return get_key
+			
 		elif True or self.sequence_option == self.est_speed_increasing:
 			return lambda p: (
 				p.seed_option,
