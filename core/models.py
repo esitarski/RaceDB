@@ -5023,8 +5023,8 @@ def get_uci_id( v ):
 		v = str(v)
 	elif not isinstance(v, str):
 		v = str(v)
-	v = re.sub(r'\D', '', v)   # \D matches any non-digit
-	return v
+	v = re.sub(r'\D', '', v)	# \D matches any non-digit (remove all non-digits).
+	return v[:11]				# Limit to 11 characters.
 		
 class UCIRank( models.Model ):
 	competition = models.ForeignKey( 'Competition', db_index = True, verbose_name=_('Competition'), on_delete=models.CASCADE )
