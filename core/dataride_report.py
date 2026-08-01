@@ -83,6 +83,7 @@ def get_report( wave, bibs, finish_times ):
 			r['irm'] = 'LAP'
 		elif result.startswith('D'):	# DNF, DNS, DSQ
 			r['irm'] = result
+			r['result'] = ''
 		else:
 			r['irm'] = ''
 		
@@ -97,12 +98,14 @@ def get_report( wave, bibs, finish_times ):
 			rank += 1		
 			report.append( get_participant_entry( bib, finish_time, bib_participant.get(bib, None), rank ) )
 
+	'''
 	if len(bibs_seen) != len(bib_participant):
 		for p in sorted( bib_participant.values(), key=operator.attrgetter('bib') ):
 			if p.bib not in bibs_seen:
 				rank += 1
 				report.append( get_participant_entry( p.bib, finish_time, p, rank, 'DNS' ) )
 				report[-1]['missing'] = True
+	'''
 		
 	return report
 
