@@ -59,7 +59,7 @@ def get_report( wave, bibs, finish_times ):
 			'sort_order':	rank,
 		}
 		try:
-			# If there is a UCI Ranking, use it's data as that is what dataride expects.
+			# If there is a UCI Ranking, use it's data to give dataride what it already knows ;)
 			uci = uci_lookup[r['uci_id']]
 			r.update( {
 				'last_name':	utils.removeDiacritic( uci.last_name ).upper(),
@@ -76,16 +76,17 @@ def get_report( wave, bibs, finish_times ):
 				'team':			'',
 			})
 
-		result = r['result']
-		if not result:
+		if not r['result']:
 			r['irm'] = default_status
-		elif result.startswith('-'):
-			r['irm'] = 'LAP'
-		elif result.startswith('D'):	# DNF, DNS, DSQ
-			r['irm'] = result
-			r['result'] = ''
 		else:
-			r['irm'] = ''
+			result = r['result'] = r['result'].upper()
+			if result.startswith('-'):
+				r['irm'] = 'LAP'
+			elif result.startswith('D'):	# DNF, DNS, DSQ, etc.
+				r['irm'] = r['result']
+				r['result'] = ''
+			else:
+				r['irm'] = ''
 		
 		return r
 	
