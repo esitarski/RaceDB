@@ -45,10 +45,13 @@ def get_report( wave, bibs, finish_times ):
 	
 	def get_participant_entry( bib, finish_time, p, rank, default_status='DNF' ):
 		if finish_time:
-			m = re.match( r'(\d+)h\s*(\d+)[′\']\s*(\d+)[″"]', finish_time )
+			# Check if the finish time is formatted as 3h14'38.341" format and change it to colons.
+			m = re.match( r'(\d+)h\s*(\d+)[′\']\s*(\d+\.?\d*)[″"]', finish_time )
 			if m:
-				hours, minutes, seconds = int(m.group(1)), int(m.group(2)), int(m.group(3))
-				finish_time = f'{hours}:{minutes:02d}:{seconds:02d}'
+				hours, minutes, seconds = int(m.group(1)), int(m.group(2)), float(m.group(3))
+				i_seconds = int(seconds)
+				f_seconds = int((seconds - i_seconds) * 1000.0)
+				finish_time = f'{hours}:{minutes:02d}:{i_seconds:02d}.{f_seconds:03d}'
 		
 		r = {
 			'rank':			rank,
