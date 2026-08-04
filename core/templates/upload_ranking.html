@@ -73,6 +73,7 @@ The spreadsheet must have a specific format:
 		<th>{% trans "First Name" %}</th>
 		<th>{% trans "UCI ID" %}</th>
 		<th>{% trans "License Code" %}</th>
+		<th class="text-right">{% trans "Bib" %}</th>
 	</tr>
 </thead>
 <tbody>
@@ -81,10 +82,11 @@ The spreadsheet must have a specific format:
 		<td class="text-right">{{forloop.counter}}.</td>
 		<td class="text-right">{{re.rank}}</td>
 		<td class="text-right">{% if re.points %}{{re.points|floatformat:"-2"}}{% endif %}</td>
-		<td>{{re.last_name}}</td>
-		<td>{{re.first_name}}</td>
-		<td>{{re.uci_id|default:""|format_uci_id}}</td>
-		<td>{{re.license_code|default:""}}</td>
+		<td{% if re.ranking.match_key == 2 and not re.last_name %}class="table-danger"{% endif %}>{{re.last_name}}</td>
+		<td{% if re.ranking.match_key == 2 and not re.first_name %}class="table-danger"{% endif %}>{{re.first_name}}</td>
+		<td {% if re.ranking.match_key == 0 and not re.uci_id %}class="table-danger"{% endif %}>{{re.uci_id|default:""|format_uci_id}}</td>
+		<td{% if re.ranking.match_key == 1 and not re.license_code %}class="table-danger"{% endif %}>{{re.license_code|default:""}}</td>
+		<td class="text-right{%if re.ranking.match_key == 3 and not re.bib %} table-danger{% endif %}" >{{re.bib|default:""}}</td>
 	</tr>
 	{% endfor %}
 </tbody>

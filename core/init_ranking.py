@@ -71,6 +71,7 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 	to_add = []
 	uci_id_seen = set()
 	license_code_seen = set()
+	bib_seen = set()
 	for i, row in enumerate(ws.iter_rows()):
 		if i == 0:
 			# Get the header fields from the first row.
@@ -115,7 +116,15 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 			if uci_id_error:
 				ms_write( '**** Row {:>6}: Ignoring. UCI ID error: {} ({})\n'.format(i, uci_id_error, uci_id) )
 				continue
-				
+		
+		bib = (v('bib', '') or '').strip() or None
+		if bib is not None:
+			try:
+				bib = int(bib)
+			except ValueError:
+				ms_write( '**** Row {:>6}: Ignoring. Bib number error\n'.format(i) )
+				continue
+		
 		license_code = v('license_code', None)
 		if not (uci_id or license_code or first_name or last_name):
 			ms_write( '**** Row {:>6}: Ignoring. A UCI ID or a License Code or First or Last Name must be present\n'.format(i) )
@@ -154,8 +163,14 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 		if not uci_id and not license_code and not first_name and not last_name:
 			ms_write( '**** Row {:>6}: Ignoring. Missing uci_id or license_code or first_name or last_name\n'.format(i) )
 			continue
+			
+		if bib:
+			if bib in bib_seen:
+				ms_write( '**** Row {:>6}: Ignoring. Duplicate Bib "{}"\n'.format(i, bib) )
+				continue
+			bib_seen.add( bib )
 		
-		to_add.append( RankingEntry(ranking=ranking, uci_id=uci_id, license_code=license_code, rank=rank, points=points, last_name=last_name, first_name=first_name) )
+		to_add.append( RankingEntry(ranking=ranking, uci_id=uci_id, license_code=license_code, rank=rank, points=points, last_name=last_name, first_name=first_name, bib=bib) )
 
 	ranking.rankingentry_set.all().delete()
 	RankingEntry.objects.bulk_create( to_add )

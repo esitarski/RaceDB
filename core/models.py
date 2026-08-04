@@ -1505,7 +1505,7 @@ def get_numbers( range_str ):
 	
 	return include
 
-RANKING_MAX = 4
+RANKING_MAX = 5
 RANKING_OPTION = ( (0, _('UCI')), (1, _('Ranking')) )
 NO_RANK = 999999
 
@@ -1576,16 +1576,16 @@ def get_ranking_titles( obj ):
 				titles.append( ranking.name )
 	return titles
 
-def get_callup_key_uci_lookup( competition ):
+def get_ranking_key_uci_lookup( competition ):
 	return { uci_id:rank for uci_id, rank in UCIRank.objects.filter(competition=competition).values_list('uci_id', 'rank') }
 
-def get_callup_key( competition, obj, uci_lookup = None ):
+def get_ranking_key( competition, obj, uci_lookup = None ):
 	# Get the lookup functions for all the callup criteria.
 	ranking_lookups = []
 	for ranking_option, ranking in [(getattr(obj, f'ranking_{r}_option'), getattr(obj, f'ranking_{r}')) for r in range(1, RANKING_MAX+1)]:
 		if ranking_option == 0:
 			if not uci_lookup:
-				uci_lookup = get_callup_key_uci_lookup( competition )
+				uci_lookup = get_ranking_key_uci_lookup( competition )
 			def gr( p, uci_lookup=uci_lookup ):
 				return uci_lookup.get(p.license_holder.uci_id, NO_RANK)
 			ranking_lookups.append( gr )
@@ -1596,14 +1596,14 @@ def get_callup_key( competition, obj, uci_lookup = None ):
 					return ranking.get_rank(p, NO_RANK)
 				ranking_lookups.append( gr )
 
-	def get_callup_key_func( p, ranking_lookups=ranking_lookups ):
+	def get_ranking_key_func( p, ranking_lookups=ranking_lookups ):
 		key = [lookup(p) for lookup in ranking_lookups]
 		p.callup_ranks = [(rank if rank != NO_RANK else None) for rank in key]	# Keep track of the rankings to show the work later.
 		# Add a "random" criteria if no other ranking is found.
 		key.append( hash(p.id) )
 		return key
 	
-	return get_callup_key_func
+	return get_ranking_key_func
 
 SORT_MAX = 4
 class CategoryNumbers( models.Model ):
@@ -1619,6 +1619,8 @@ class CategoryNumbers( models.Model ):
 	ranking_3=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_4_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
 	ranking_4=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_5_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_5=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	
 	SORT_CHOICES = (
 		(  0, '---'),
@@ -1653,14 +1655,14 @@ class CategoryNumbers( models.Model ):
 		do_fix_ranking_options( self )
 		
 	def get_participants_sorted( self ):
-		callup_key_func = get_callup_key( self.competition, self )
+		ranking_key_func = get_ranking_key( self.competition, self )
 		
 		participants = list( self.get_participants().select_related('license_holder', 'team').order_by().iterator() )
 		
 		field_deref = {
 			  0: lambda p: 0,
 			100: lambda p: p.category.code if p.category else '~~~',# Category
-			200: lambda p: callup_key_func( p ),					# Rank
+			200: lambda p: ranking_key_func( p ),					# Rank
 			300: lambda p: p.team.name if p.team else '~~~',		# Team
 			400: lambda p: utils.removeDiacritic( '{} {}'.format(p.license_holder.last_name.upper(), string.capwords(p.license_holder.first_name.lower())) ), # Name
 			500: lambda p: p.license_holder.nation_code,			# Nation
@@ -1683,7 +1685,7 @@ class CategoryNumbers( models.Model ):
 
 		# Get all the rank reference data for each participant.
 		for p in participants:
-			callup_key_func ( p )
+			ranking_key_func ( p )
 		
 		# Sort by the given criteria.
 		participants.sort( key=get_sort_key, reverse=self.reverse )
@@ -2499,6 +2501,8 @@ class Wave( WaveBase ):
 	ranking_3=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	ranking_4_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
 	ranking_4=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
+	ranking_5_option = models.PositiveSmallIntegerField( default=1, choices=RANKING_OPTION )
+	ranking_5=models.ForeignKey( 'Ranking', blank=True, default=None, null=True, on_delete=models.SET_NULL, related_name='+' )
 	
 	def has_callup_rankings( self ):
 		for r in range(1, RANKING_MAX+1):
@@ -2517,8 +2521,8 @@ class Wave( WaveBase ):
 		super().save( **kwargs )
 	
 	def get_participants_callup_order( self, reverse=False ):
-		callup_key_func = get_callup_key( self.event.competition, self )				
-		return sorted( self.get_participants().order_by(), key=callup_key_func, reverse=reverse )
+		ranking_key_func = get_ranking_key( self.event.competition, self )				
+		return sorted( self.get_participants().order_by(), key=ranking_key_func, reverse=reverse )
 		
 	@property
 	def ranking_titles( self ):
@@ -5100,6 +5104,7 @@ class Ranking( models.Model ):
 		(0, _('UCI ID')),
 		(1, _('License Code')),
 		(2, _('First Last Name')),
+		(3, _('Bib')),
 	)
 	match_key = models.PositiveSmallIntegerField( default=0, verbose_name = _('Match Key'), choices=MATCH_KEY_CHOICES )
 	
@@ -5119,10 +5124,15 @@ class Ranking( models.Model ):
 					re.license_code:re.rank
 					for re in self.rankingentry_set.all().iterator() if re.license_code
 				}
-			else:						# Name.
+			elif match_key == 2:		# Name.
 				self._rank_lookup = {
 					get_name_key(re.first_name, re.last_name):re.rank
 					for re in self.rankingentry_set.all().iterator() if (re.first_name or re.last_name)
+				}
+			else:						# Bib.
+				self._rank_lookup = {
+					re.bib:re.rank
+					for re in self.rankingentry_set.all().iterator() if re.bib
 				}
 			rank_lookup = self._rank_lookup
 		
@@ -5130,8 +5140,10 @@ class Ranking( models.Model ):
 			key = participant.license_holder.uci_id
 		elif match_key == 1:			# License Code.
 			key = participant.license_holder.license_code
-		else:							# Name.
+		elif match_key == 2:			# Name.
 			key = get_name_key( participant.license_holder.first_name, participant.license_holder.last_name )
+		else:							# Bib
+			key = participant.bib
 		
 		return rank_lookup.get( key, default )
 	
@@ -5152,11 +5164,13 @@ class RankingEntry( models.Model ):
 	last_name = models.CharField( max_length=64, verbose_name=_('Last Name'), blank=True, default='' )
 	first_name = models.CharField( max_length=64, verbose_name=_('First Name'), blank=True, default='' )
 
+	bib = models.PositiveIntegerField( null=True, default=None, verbose_name=_('Bib') )
+
 	rank = models.PositiveIntegerField( verbose_name=_('Rank') )
 	points = models.FloatField( default=None, null=True, verbose_name=_('Points') )	
 
 	class Meta:
-		ordering = ['uci_id', 'license_code', 'last_name', 'first_name']
+		ordering = ['uci_id', 'license_code', 'last_name', 'first_name', 'bib']
 		verbose_name = _('RankingEntry')
 		verbose_name_plural = _('RankingEntries')
 
@@ -5569,15 +5583,15 @@ class WaveTT( WaveBase ):
 			
 			competition = self.event.competition
 			
-			uci_lookup = get_callup_key_uci_lookup( competition )
+			uci_lookup = get_ranking_key_uci_lookup( competition )
 			cn_from_category = {}
-			callup_key_func_from_cn = {}		
+			ranking_key_func_from_cn = {}		
 			for cn in competition.categorynumbers_set.all():
 				cn_from_category.update( { c:cn for c in cn.categories.all() } )
-				callup_key_func_from_cn[cn] = get_callup_key( competition, cn, uci_lookup )
+				ranking_key_func_from_cn[cn] = get_ranking_key( competition, cn, uci_lookup )
 			
-			callup_key_func_from_p = {
-				p:callup_key_func_from_cn[cn_from_category[p.category]]
+			ranking_key_func_from_p = {
+				p:ranking_key_func_from_cn[cn_from_category[p.category]]
 				for p in competition.get_participants()
 					.filter( category__isnull=False )
 					.select_related('category')
@@ -5586,20 +5600,20 @@ class WaveTT( WaveBase ):
 			
 			if self.sequence_option == self.rank_increasing:
 				# Change the sign of the rankings as we want to end with the highest rank (lowest number).
-				def get_key( p, callup_key_func_from_p=callup_key_func_from_p ):
+				def get_key( p, ranking_key_func_from_p=ranking_key_func_from_p ):
 					try:
-						callup_key_func = callup_key_func_from_p[p]
+						ranking_key_func = ranking_key_func_from_p[p]
 					except KeyError:
 						return [0] * 5
-					return [-r for r in callup_key_func(p)]
+					return [-r for r in ranking_key_func(p)]
 			else:
 				# Keep the sign the same as we want to end with the lowest rank (highest number).
-				def get_key( p, callup_key_func_from_p=callup_key_func_from_p ):
+				def get_key( p, ranking_key_func_from_p=ranking_key_func_from_p ):
 					try:
-						callup_key_func = callup_key_func_from_p[p]
+						ranking_key_func = ranking_key_func_from_p[p]
 					except KeyError:
 						return [999999] * 5
-					return callup_key_func(p)
+					return ranking_key_func(p)
 				
 			return get_key
 			
