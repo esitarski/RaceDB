@@ -68,7 +68,10 @@ class FieldMap( object ):
 			return default
 		
 	def finder( self, fields ):
-		return lambda name, default=None: self.get_value(name, fields, default)
+		fields = [(f.strip() if isinstance(f, str) else f) for f in fields]
+		def get_value( name, default=None, fields=fields ):
+			return self.get_value(name, fields, default)
+		return get_value
 			
 	def __contains__( self, name ):
 		return name in self.name_to_col

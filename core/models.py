@@ -65,19 +65,27 @@ def duration_field_5m(): return 5*60
 invalid_date_of_birth = datetime.date(1900,1,1)
 
 class BulkSave( object ):
-	def __init__( self ):
-		self.objects = []
+	BUFFER_MAX = 998
+	def __init__( self, objects = None ):
+		if objects:
+			if not isinstance(objects, list):
+				objects = list( objects )
+			for i in range( 0, len(objects), self.BUFFER_MAX ):
+				self.objects = objects[i:i+self.BUFFER_MAX]
+				self.flush()
+		else:
+			self.objects = []
 		
 	def flush( self ):
 		if self.objects:
 			with transaction.atomic():
 				for o in self.objects:
-					o.save()		# Also performs field validation.
+					o.save()		# Performs field validation.
 			del self.objects[:]
 				
 	def append( self, obj ):
 		self.objects.append( obj )
-		if len(self.objects) >= 998:
+		if len(self.objects) >= self.BUFFER_MAX:
 			self.flush()
 
 	def __enter__( self ):
@@ -2716,12 +2724,16 @@ class LicenseHolderManager(models.Manager):
 
 def get_uci_id_error( uci_id ):
 	if not uci_id:
-		return _('uci id is missing')
-		
-	uci_id = str(uci_id).upper().replace(' ', '')
+		return _('uci id is 0, "" or missing')
+
+	if isinstance(uci_id, float):
+		uci_id = int( uci_id )
+
+	if not isinstance(uci_id, str):
+		uci_id = str( uci_id )
 	
 	if not uci_id.isdigit():
-		return _('uci id must be digits')
+		return _('uci id must be all digits')
 	
 	if uci_id.startswith('0'):
 		return _('uci id must not start with a zero')
@@ -2890,6 +2902,9 @@ class LicenseHolder(models.Model):
 		if self.license_code == 'TEMP' or not self.license_code:
 			self.license_code = random_temp_license()
 
+		# Normalize the uci_id.
+		self.uci_id = get_uci_id( self.uci_id )
+
 		self.search_text = self.get_search_text()[:self.SearchTextLength]
 		
 		super().save( **kwargs )
@@ -2935,7 +2950,7 @@ class LicenseHolder(models.Model):
 		if not self or not self.uci_id:
 			return None
 			
-		self.uci_id = '{}'.format(self.uci_id).upper().replace(' ', '')
+		self.uci_id = get_uci_id( self.uci_id )
 		return get_uci_id_error( self.uci_id )
 	
 	@property
@@ -5027,7 +5042,7 @@ def get_uci_id( v ):
 		v = str(v)
 	elif not isinstance(v, str):
 		v = str(v)
-	v = re.sub(r'\D', '', v)	# \D matches any non-digit (remove all non-digits).
+	v = re.sub(r'\D', '', v)	# Remove all non-digits (\D matches any non-digit).
 	return v[:11]				# Limit to 11 characters.
 		
 class UCIRank( models.Model ):
@@ -5185,16 +5200,43 @@ class EntryTT( models.Model ):
 	
 	start_sequence = models.PositiveIntegerField( default = 0, db_index = True, verbose_name = _('Start Sequence') )
 	
-	start_time = DurationField( null = True, blank = True, verbose_name=_('Start Time') )
+	# Gap information.
+	gap_time_calculated = DurationField( null=True, blank=True, verbose_name=_('Calculated Gap Time') )
+	gap_time_custom = DurationField( null=True, blank=True, verbose_name=_('Custom Gap Time') )
 	
+	# Start time of this participant.
+	start_time = DurationField( null=True, blank=True, verbose_name=_('Start Time') )
+	start_time_custom = DurationField( null=True, blank=True, verbose_name=_('Custom Start Time') )
+
+	# Results information.
 	finish_time = DurationField( null = True, blank = True, verbose_name=_('Finish Time') )
 	adjustment_time = DurationField( null = True, blank = True, verbose_name=_('Adjustment Time') )
 	adjustment_note = models.CharField( max_length = 128, default = '', verbose_name=_('Adjustment Note') )
 	
 	def swap_position( self, tt ):
-		self.start_sequence, tt.start_sequence = tt.start_sequence, self.start_sequence
-		self.start_time, tt.start_time = tt.start_time, self.start_time
-	
+		for attr in ('start_sequence', 'start_time', 'gap_time_calculated', 'gap_time_custom', 'finish_time', 'adjustment_time', 'adjustment_note'):
+			a, b = getattr( self, attr ), getattr( tt, attr )
+			setattr( self, attr, b )
+			setattr( tt, attr, a )
+
+	@staticmethod
+	def start_time_propagate( event ):
+		# Propate start times using calculated or custom gaps.
+		to_update = []
+		start_time_last = formatted_timedelta( seconds=0 )
+		for e in event.entrytt_set.all().order_by('start_sequence').iterator():
+			if e.start_time_custom and e.start_time_custom >= start_time_last:
+				start_time = e.start_time_custom
+			else:
+				start_time = formatted_timedelta( seconds=(start_time_last + (e.gap_time_custom or e.gap_time_calculated or (e.start_time - start_time_last))).total_seconds() )
+			
+			if e.start_time.total_seconds() != start_time.total_seconds():
+				e.start_time = start_time
+				to_update.append( e )
+			start_time_last = start_time
+		
+		EntryTT.objects.bulk_update( to_update, ['start_time'] )
+		
 	@transaction.atomic
 	def move_to( self, start_sequence_target ):
 		if self.start_sequence == start_sequence_target:
@@ -5288,7 +5330,7 @@ class EventTT( Event ):
 				continue
 			
 			last_fastest = len(participants) - wave_tt.num_fastest_participants
-			entry_tt_pending = []
+			to_create = []
 			for i, p in enumerate(participants):
 				if bib_gap:
 					# The start time is a multiple of the bib number.
@@ -5311,11 +5353,15 @@ class EventTT( Event ):
 				
 					tCur += gap
 				
-				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
+				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
 				sequenceCur += 1
-			
-			EntryTT.objects.bulk_create( entry_tt_pending )
-			entry_tt_pending = []
+
+			start_time_last = formatted_timedelta( seconds=0 )
+			for e in to_create:
+				e.gap_time_calculated = e.start_time - start_time_last
+				start_time_last = e.start_time
+							
+			EntryTT.objects.bulk_create( to_create )
 			empty_gap_before_wave = zero_gap
 	
 	def get_start_time( self, participant ):
@@ -5395,7 +5441,7 @@ class EventTT( Event ):
 		except IndexError:
 			gap_median = datetime.timedelta( seconds=60 )
 		
-		entry_tt_pending = []
+		to_create = []
 		tCur = datetime.timedelta( seconds=0 )
 		for sequenceCur, p in enumerate(participants, 1):
 			if p.start_time:
@@ -5403,9 +5449,9 @@ class EventTT( Event ):
 			else:
 				p.start_time = tCur + gap_median
 				tCur = p.start_time
-				entry_tt_pending.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
+				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur, gap_time_calculated=gap_medium) )
 				
-		EntryTT.objects.bulk_create( entry_tt_pending )
+		EntryTT.objects.bulk_create( to_create )
 
 	def get_unseeded_count( self ):
 		return sum( 1 for p in self.get_participants_seeded() if p.start_time is None ) if self.create_seeded_startlist else 0

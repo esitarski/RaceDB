@@ -61,33 +61,24 @@ class DurationFormField( CharField ):
 
 #------------------------------------------------------------------------------------
 
-class DurationField( FloatField ):
-
-	description = "Floating point representation of timedelta."
-
-	def __init__( self, *args, **kwargs ):
-		d = kwargs.get('default',None)
-		if isinstance(d, (int, float)):
-			kwargs['default'] = formatted_timedelta( seconds=d )
-		super().__init__( *args, **kwargs )
+def value_to_formatted_timedelta( value ):
+	if value is None:
+		return None
+		
+	if isinstance(value, formatted_timedelta):
+		return value
+		
+	if isinstance(value, datetime.timedelta):
+		return formatted_timedelta( seconds=value.total_seconds() )
+		
+	if isinstance(value, (int, float)):
+		return formatted_timedelta( seconds=value )
+		
+	if isinstance(value, datetime.time):
+		return formatted_timedelta( seconds = value.hour * 60.0*60.0 + value.minute * 60.0 +
+								   value.second + value.microsecond / 1000000.0 )
 	
-	def to_python( self, value ):
-		if value is None:
-			return None
-			
-		if isinstance(value, formatted_timedelta):
-			return value
-			
-		if isinstance(value, datetime.timedelta):
-			return formatted_timedelta( seconds=value.total_seconds() )
-			
-		if isinstance(value, (int, float)):
-			return formatted_timedelta( seconds=value )
-			
-		if isinstance(value, datetime.time):
-			return formatted_timedelta( seconds = value.hour * 60.0*60.0 + value.minute * 60.0 +
-									   value.second + value.microsecond / 1000000.0 )
-			
+	if isinstance(value, str):
 		try:
 			# Try parsing the value as a string.
 			
@@ -107,8 +98,24 @@ class DurationField( FloatField ):
 					secs *= 60.0
 			return formatted_timedelta( seconds = sgn * secs )
 		except Exception as e:
-			raise ValidationError('Unable to convert {} to time ({}).'.format(value, e) )
-		return value
+			raise ValidationError('Unable to convert "{}" to time ({}).'.format(value, e) )
+	else:
+		raise ValidationError('Incorrect type {}).'.format(value) )
+		
+	return value
+
+class DurationField( FloatField ):
+
+	description = "Floating point representation of timedelta."
+
+	def __init__( self, *args, **kwargs ):
+		d = kwargs.get('default',None)
+		if isinstance(d, (int, float)):
+			kwargs['default'] = formatted_timedelta( seconds=d )
+		super().__init__( *args, **kwargs )
+	
+	def to_python( self, value ):
+		return value_to_formatted_timedelta( value )
 	
 	def from_db_value( self, value, expression, connection ):
 		return formatted_timedelta( seconds=value ) if value is not None else None

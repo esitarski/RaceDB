@@ -33,6 +33,7 @@ from .license_holder_import_excel import license_holder_import_excel, license_ho
 from .uci_excel_dataride import uci_excel
 from .get_uci_ranking import get_uci_rank, get_discipline_code
 from . import authorization
+from .DurationField import DurationFormField, value_to_formatted_timedelta
 
 from .init_prereg import init_prereg
 from .emails import show_emails
@@ -1976,11 +1977,20 @@ def augment_entry_tts( entry_tts ):
 
 @autostrip
 class AdjustmentForm( Form ):
+	start_time_custom = DurationFormField( required=False )
+	gap_time_custom = DurationFormField( required=False )
+	
 	est_speed = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'est_speed'}) )
-	seed_option = forms.ChoiceField( choices=Participant.SEED_OPTION_CHOICES )
+	seed_option = forms.TypedChoiceField( choices=Participant.SEED_OPTION_CHOICES, coerce=int )
 	adjustment = forms.CharField( max_length=6, required=False, widget=forms.TextInput(attrs={'class':'adjustment'}) )
+	
 	entry_tt_pk = forms.CharField( widget=forms.HiddenInput() )
 	entry_tt_i = forms.CharField( widget=forms.HiddenInput() )
+	
+	def __init__( self, *args, **kwargs ):
+		super().__init__( *args, **kwargs )
+		self.fields['start_time_custom'].widget.attrs['size'] = 8
+		self.fields['gap_time_custom'].widget.attrs['size'] = 8
 
 class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000) ):
 	def __init__( self, *args, **kwargs ):
@@ -1996,11 +2006,13 @@ class AdjustmentFormSet( formset_factory(AdjustmentForm, extra=0, max_num=100000
 			entry_tts = entry_tts[max(0,entry_tt_i-before_entries):entry_tt_i+after_entries]
 			super().__init__(
 				initial=[{
-					'est_speed':'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
-					'seed_option': e.participant.seed_option,
-					'adjustment': '',
-					'entry_tt_pk': '{}'.format(e.pk),
-					'entry_tt_i': '{}'.format(entry_tt_is[e.pk]),
+					'start_time_custom':	utils.format_time(e.start_time_custom.total_seconds()) if e.start_time_custom else '',
+					'gap_time_custom':		utils.format_time(e.gap_time_custom.total_seconds()) if e.gap_time_custom else '',
+					'est_speed':			'{:.3f}'.format(e.participant.competition.to_local_speed(e.participant.est_kmh)),
+					'seed_option':			e.participant.seed_option,
+					'adjustment':			'',
+					'entry_tt_pk':			str(e.pk),
+					'entry_tt_i':			str(entry_tt_is[e.pk]),
 				} for e in entry_tts]
 			)
 			
@@ -2029,6 +2041,7 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 				''' Also commit the est_speed to the entry. '''
 				entries = { int(ett.pk):ett for ett in EntryTT.objects.filter(event=instance).select_related('participant').defer('participant__signature') }
 				
+				to_update = set()		# Used to update the custom_gap_time.
 				eda = []
 				for d in adjustment_formset.cleaned_data:
 					pk = d['entry_tt_pk']
@@ -2078,8 +2091,27 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 					if not adjustment:
 						direction, adjustment = None, None
 					
+					gap_time_custom = d['gap_time_custom']
+					try:
+						gap_time_custom = value_to_formatted_timedelta( gap_time_custom ) if gap_time_custom else None
+					except Exception:
+						gap_time_custom = None
+					if entry_tt.gap_time_custom != gap_time_custom:
+						entry_tt.gap_time_custom = gap_time_custom
+						to_update.add( entry_tt )
+					
+					start_time_custom = d['start_time_custom']
+					try:
+						start_time_custom = value_to_formatted_timedelta( start_time_custom ) if start_time_custom else None
+					except Exception:
+						start_time_custom = None
+					if entry_tt.start_time_custom != start_time_custom:
+						entry_tt.start_time_custom = start_time_custom
+						to_update.add( entry_tt )
+
 					eda.append( (entry_tt, direction, adjustment) )
 
+				EntryTT.objects.bulk_update( list(to_update), ['gap_time_custom'] )
 				return eda
 			
 			if "apply_adjustments" in request.POST or "ok_adjustments" in request.POST:
@@ -2138,10 +2170,12 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 					if direction == 'e' and len(eda) - adjustment > i:
 						move_to( i, len(eda) - adjustment )
 			
-				# And save it.
-				with BulkSave() as bs:
-					for e in eda:
-						bs.append( e[0] )
+				# And save everything.
+				with BulkSave( [e[0] for e in eda] ) as bs:
+					pass
+						
+				# Recompute the start times from the potentially modified gaps.
+				EntryTT.start_time_propagate( instance )
 						
 			if "ok_adjustments" in request.POST:
 				link = getContext(request,'pop2Url') + 'SeedingEdit/{}/{}/'.format(instance.id, entry_tt_i)

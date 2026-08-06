@@ -82,6 +82,8 @@
 		<th>{% trans "NatCode" %}</th>
 		<th>{% trans "Wave" %}</th>
 		<th>{% trans "Est" %} {{instance.competition.speed_unit_display}}</th>
+		<th>{% trans "Override Stopwatch Time (MM:SS)" %}</th>
+		<th>{% trans "Override Gap Time (MM:SS)" %}</th>
 		<th>{% trans "Seed Option" %}</th>
 		<th>{% trans "Adjust" %}</th>
 	</tr>
@@ -91,16 +93,18 @@
 		{% with e=form.entry_tt w=form.entry_tt.wave p=form.entry_tt.participant h=form.entry_tt.participant.license_holder %}
 		<tr {% if form.gap_change > 0 %}class="gap-change-inc"{% elif form.gap_change < 0 %}class="gap-change-dec"{% endif %}
 			{% if form.edit_entry %}style="background-color: #FFFF50;"{% endif %}>
-			<td class="text-right">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{form.entry_tt_i.value|add:"1"}}.</td>
+			<td class="text-right text-nowrap">{% if not p.can_start %}<img src="{% static "images/error.png" %}" style="width:20px;height:20px;"/>&nbsp;&nbsp;{% endif %}{{form.entry_tt_i.value|add:"1"}}.</td>
 			<td class="text-right">{{e.clock_time | time:"H:i:s"}}</td>
 			<td class="text-right">{{e.start_time}}</td>
 			<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
+			<td class="text-nowrap">{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 			<td class="text-nowrap">{{h.get_nation_code_html}}</td>
 			<td>{{w.name}}</td>
 			<td>{{form.est_speed}}</td>
+			<td>{{form.start_time_custom}}</td>
+			<td>{{form.gap_time_custom}}</td>
 			<td>{{form.seed_option}}</td>
 			<td>{{form.adjustment}}{{form.entry_tt_pk}}{{form.entry_tt_i}}</td>
 		</tr>

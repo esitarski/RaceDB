@@ -135,7 +135,7 @@
 			<td class="text-right">{% if p.bib %}{{p.bib}}{% endif %}</td>
 			<td>{{p.license_holder.full_name}}</td>
 			<td>{% if p.team %}{{p.team.name}}{% endif %}</td>
-			<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
+			<td class="text-nowrap">{% if p.category %}{{p.category.code_gender}}{% endif %}</td>
 			<td class="text-center text-nowrap ">{{h.get_nation_code_html}}</td>
 			<td>{{w.name}}</td>
 			<td class="text-right">{{e.est_speed}}</td>

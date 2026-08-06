@@ -75,12 +75,11 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 	for i, row in enumerate(ws.iter_rows()):
 		if i == 0:
 			# Get the header fields from the first row.
-			fields = ['{}'.format(f.value).strip() for f in row]
+			fields = [str(f.value).strip() for f in row]
 			
 			ifm.set_headers( fields )
-			print( ifm.get_names(), ifm.unmapped )
 			
-			expected_fields = {'rank', 'points', 'license_code', 'uci_id', 'last_name', 'first_name', 'name'}
+			expected_fields = {'rank', 'points', 'uci_id', 'license_code', 'last_name', 'first_name', 'name', 'bib'}
 			
 			ms_write( 'Header Row:\n' )
 			for col, f in enumerate(fields, 1):
@@ -92,8 +91,12 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 					if name in ifm:
 						del ifm[name]
 			
-			if not any( f in ifm for f in ('uci_id', 'license_code', 'name', 'first_name', 'last_name') ):
-				ms_write( 'Header Row must contain "UCIID" or "License" or First/Last Name or Name\n' )
+			if 'rank' not in ifm:
+				ms_write( 'Header Row must contain Rank\n' )
+				return
+				
+			if not any( f in ifm for f in ('uci_id', 'license_code', 'name', 'first_name', 'last_name', 'bib') ):
+				ms_write( 'Header Row must contain UCIID or License or First/Last Name or Name or Bib\n' )
 				return
 				
 			ms_write( '\n' )
@@ -102,14 +105,14 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 		values = [v.value for v in row]
 		v = ifm.finder( values )
 		
-		first_name = (v('first_name',"") or '').strip()
-		last_name  = (v('last_name',"" or '')).strip()
+		first_name = str(v('first_name',"") or "")
+		last_name  = str(v('last_name',"") or "")
 		
-		name = (v('name', "") or '').strip()
+		name = str(v('name', "") or "")
 		if name and not first_name and not last_name:
 			first_name, last_name = parse_name( name )
 		
-		uci_id = v('uci_id', None)
+		uci_id = v('uci_id', None) or None
 		if uci_id:
 			uci_id = get_uci_id( uci_id )
 			uci_id_error = get_uci_id_error( uci_id )
@@ -117,37 +120,41 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 				ms_write( '**** Row {:>6}: Ignoring. UCI ID error: {} ({})\n'.format(i, uci_id_error, uci_id) )
 				continue
 		
-		bib = (v('bib', '') or '').strip() or None
-		if bib is not None:
+		bib = v('bib', None) or None		
+		if bib and not isinstance(bib, int):
 			try:
 				bib = int(bib)
 			except ValueError:
 				ms_write( '**** Row {:>6}: Ignoring. Bib number error\n'.format(i) )
 				continue
 		
-		license_code = v('license_code', None)
-		if not (uci_id or license_code or first_name or last_name):
+		license_code = v('license_code', None) or None
+		
+		# Check for a valid key.  This will also ignore blank lines.
+		if not (uci_id or license_code or first_name or last_name or bib):
 			ms_write( '**** Row {:>6}: Ignoring. A UCI ID or a License Code or First or Last Name must be present\n'.format(i) )
 			continue
-		rank = v('rank', None)
-		if rank is None:
-			ms_write( '**** Row {:>6}: Ignoring. missing rank\n'.format(i) )
-		if isinstance(rank, float):
-			rank = int( rank )
-		elif isinstance( rank, str ):
-			rank = re.sub(r'\D', '', rank)	# Remove non-digts.
+		
+		rank = v('rank', None) or None
+		if not isinstance(rank, int):
 			try:
 				rank = int( rank )
 			except Exception:
-				ms_write( '**** Row {:>6}: Ignoring. Invalid rank (must be integer)\n'.format(i) )
+				ms_write( '**** Row {:>6}: Ignoring. Invalid Rank (must be a positive number)\n'.format(i) )
 				continue
+		
+		if not rank:
+			ms_write( '**** Row {:>6}: Ignoring. Invalid Rank (must be a positive number)\n'.format(i) )
 				
-		if not rank or not str(rank).isdigit():
-			ms_write( '**** Row {:>6}: Ignoring. Rank is invalid or missing "{}"\n'.format(i, rank) )
-			continue
+		points = v('points', None) or None
+		if points and not isinstance(points, float):
+			try:
+				points = float(points)
+			except:
+				ms_write( '**** Row {:>6}: Ignoring. Invalid Points "{}"\n'.format(i, points) )
+				continue
 		
-		points = v('points', None)
-		
+		# Check for non-unique keys.  We don't check names, but non-unique names won't work in the lookup.
 		if uci_id:
 			if uci_id in uci_id_seen:
 				ms_write( '**** Row {:>6}: Ignoring. Duplicate uci_id "{}"\n'.format(i, uci_id) )
@@ -160,10 +167,6 @@ def init_ranking( rankingId, worksheet_name='', worksheet_contents=None, message
 				continue
 			license_code_seen.add( license_code )
 		
-		if not uci_id and not license_code and not first_name and not last_name:
-			ms_write( '**** Row {:>6}: Ignoring. Missing uci_id or license_code or first_name or last_name\n'.format(i) )
-			continue
-			
 		if bib:
 			if bib in bib_seen:
 				ms_write( '**** Row {:>6}: Ignoring. Duplicate Bib "{}"\n'.format(i, bib) )
