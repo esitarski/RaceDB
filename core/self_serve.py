@@ -41,7 +41,11 @@ class SelfServeCompetitionForm( Form ):
 		
 @autostrip
 class SelfServeAntennaForm( Form ):
-	rfid_antenna = forms.ChoiceField( choices = [(-1, _("USB Reader"))] + [(i, mark_safe('&nbsp;&nbsp;&nbsp;Ant {}&nbsp;&nbsp;&nbsp;'.format(i))) for i in range(1,5)], label = _('Antenna to Read Tags') )
+	rfid_antenna = forms.TypedChoiceField(
+		choices = [(-1, _("USB Reader"))] + [(i, mark_safe('&nbsp;&nbsp;&nbsp;Ant {}&nbsp;&nbsp;&nbsp;'.format(i))) for i in range(1,5)],
+		label = _('Antenna to Read Tags'),
+		coerce=int
+	)
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)

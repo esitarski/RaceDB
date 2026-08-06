@@ -67,7 +67,7 @@ def home( request, rfid_antenna=None ):
 @autostrip
 class LicenseHolderTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
-	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna to Write Tag') )
+	rfid_antenna = forms.TypedChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna to Write Tag'), coerce=int )
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -124,7 +124,7 @@ def LicenseHolderTagChange( request, licenseHolderId ):
 			status_entries = []
 
 			tag = form.cleaned_data['tag'].strip().upper()
-			rfid_antenna = request.session['rfid_antenna'] = int(form.cleaned_data['rfid_antenna'])
+			rfid_antenna = request.session['rfid_antenna'] = form.cleaned_data['rfid_antenna']
 			
 			if 'auto-generate-tag-submit' in request.POST or 'auto-generate-and-write-tag-submit' in request.POST:
 				tag = license_holder.get_unique_tag()
@@ -599,7 +599,7 @@ def LicenseHolderBarcodeScan( request ):
 
 @autostrip
 class RfidScanForm( Form ):
-	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label=_('RFID Antenna to Read Tag') )
+	rfid_antenna = forms.TypedChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label=_('RFID Antenna to Read Tag'), coerce=int )
 	
 	def __init__(self, *args, **kwargs):
 		hide_cancel_button = kwargs.pop( 'hide_cancel_button', None )
@@ -631,7 +631,7 @@ def LicenseHolderRfidScan( request ):
 		form = RfidScanForm( request.POST )
 		if form.is_valid():
 		
-			request.session['rfid_antenna'] = rfid_antenna = int(form.cleaned_data['rfid_antenna'])
+			request.session['rfid_antenna'] = rfid_antenna = form.cleaned_data['rfid_antenna']
 			
 			if not rfid_antenna:
 				status = False
@@ -910,8 +910,8 @@ def InitializeNumberSet( request, competitionId ):
 
 @autostrip
 class CompetitionSearchForm( Form ):
-	year = forms.ChoiceField( required=False, label = _('Year') )
-	discipline = forms.ChoiceField( required=False, label = _('Discipline') )
+	year = forms.TypedChoiceField( required=False, label = _('Year'), coerce=int )
+	discipline = forms.TypedChoiceField( required=False, label = _('Discipline'), coerce=int )
 	search_text = forms.CharField( required=False, label = _('Search Text') )
 	
 	def __init__(self, *args, **kwargs):
@@ -1688,10 +1688,11 @@ class ImportExcelForm( Form ):
 		(1, _('Update License Codes based on UCI ID match')),
 		(2, _('update License Codes based on First Name, Last Name, DoB, Gender match')),
 	)
-	update_license_codes = forms.ChoiceField(
+	update_license_codes = forms.TypedChoiceField(
 		initial=0, required=False, label=_('Update License Codes'),
 		help_text=_('WARNING: Only check this if you wish to replace the License codes with new ones.  MAKE A BACKUP FIRST.  Be Careful!'),
-		choices = UPDATE_CHOICES
+		choices = UPDATE_CHOICES,
+		coerce=int
 	)
 	
 	def __init__( self, *args, **kwargs ):
@@ -1746,7 +1747,7 @@ def LicenseHoldersImportExcel( request ):
 		form = ImportExcelForm(request.POST, request.FILES)
 		if form.is_valid():
 			replace_tags=form.cleaned_data['replace_tags']
-			update_license_codes = int(form.cleaned_data['update_license_codes'])
+			update_license_codes=form.cleaned_data['update_license_codes']
 			results_str = handle_license_holder_import_excel(
 				request.FILES['excel_file'],
 				update_license_codes_by_name_dob_gender=bool(update_license_codes & 2),
@@ -2096,6 +2097,9 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 						gap_time_custom = value_to_formatted_timedelta( gap_time_custom ) if gap_time_custom else None
 					except Exception:
 						gap_time_custom = None
+					if gap_time_custom is not None and gap_time_custom.total_seconds() <= 0:
+						# Ignore negative gap times.
+						gap_time_custom = None
 					if entry_tt.gap_time_custom != gap_time_custom:
 						entry_tt.gap_time_custom = gap_time_custom
 						to_update.add( entry_tt )
@@ -2104,6 +2108,9 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 					try:
 						start_time_custom = value_to_formatted_timedelta( start_time_custom ) if start_time_custom else None
 					except Exception:
+						start_time_custom = None
+					if start_time_custom is not None and start_time_custom.total_seconds() <= 0:
+						# Ignore negative start times.
 						start_time_custom = None
 					if entry_tt.start_time_custom != start_time_custom:
 						entry_tt.start_time_custom = start_time_custom
@@ -2175,7 +2182,7 @@ def SeedingEditEntry( request, eventTTId, entry_tt_i ):
 					pass
 						
 				# Recompute the start times from the potentially modified gaps.
-				EntryTT.start_time_propagate( instance )
+				instance.start_time_propagate()
 						
 			if "ok_adjustments" in request.POST:
 				link = getContext(request,'pop2Url') + 'SeedingEdit/{}/{}/'.format(instance.id, entry_tt_i)
@@ -3204,11 +3211,11 @@ def get_year_on_year_form():
 	@autostrip
 	class YearOnYearReportForm( Form ):
 		discipline_choices, race_class_choices = get_discipline_race_class_choices()
-		discipline = forms.ChoiceField( required = False, label = _('Discipline'), choices = discipline_choices )
-		race_class = forms.ChoiceField( required = False, label = _('Race Class'), choices = race_class_choices )
-		organizers = forms.MultipleChoiceField( required = False, label = _('Organizers'), choices = get_organizer_choices(), help_text=_('Ctrl-Click to Multi-Select') )
-		include_labels = forms.MultipleChoiceField( required = False, label = _('Include Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
-		exclude_labels = forms.MultipleChoiceField( required = False, label = _('Exclude Labels'), choices = [(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
+		discipline = forms.TypedChoiceField( required=False, label=_('Discipline'), choices=discipline_choices, coerce=int )
+		race_class = forms.TypedChoiceField( required=False, label=_('Race Class'), choices=race_class_choices, coerce=int )
+		organizers = forms.MultipleChoiceField( required=False, label = _('Organizers'), choices=get_organizer_choices(), help_text=_('Ctrl-Click to Multi-Select') )
+		include_labels = forms.MultipleChoiceField( required=False, label=_('Include Labels'), choices=[(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
+		exclude_labels = forms.MultipleChoiceField( required=False, label=_('Exclude Labels'), choices=[(r.pk, r.name) for r in ReportLabel.objects.all()], help_text=_('Ctrl-Click to Multi-Select') )
 		
 		def __init__( self, *args, **kwargs ):
 			super().__init__(*args, **kwargs)
@@ -3244,8 +3251,8 @@ def YearOnYearAnalytics( request ):
 		form = get_year_on_year_form()( request.POST )
 		if form.is_valid():
 			initial = {
-				'discipline':int(form.cleaned_data['discipline']),
-				'race_class':int(form.cleaned_data['race_class']),
+				'discipline':form.cleaned_data['discipline'],
+				'race_class':form.cleaned_data['race_class'],
 				'organizers':form.cleaned_data['organizers'],
 				'include_labels':form.cleaned_data['include_labels'],
 				'exclude_labels':form.cleaned_data['exclude_labels'],

@@ -30,8 +30,8 @@ def competitions_with_results_or_prereg( competitions=None ):
 
 @autostrip
 class CompetitionSearchForm( Form ):
-	year = forms.ChoiceField( required=False, label=_('Year') )
-	discipline = forms.ChoiceField( required=False, label=('Discipline') )
+	year = forms.TypedChoiceField( required=False, label=_('Year'), coerce=int )
+	discipline = forms.TypedChoiceField( required=False, label=('Discipline'), coerce=int )
 	name_text = forms.CharField( required=False, label = _('Name Text') )
 	
 	def __init__(self, *args, **kwargs):
@@ -480,8 +480,12 @@ def ResultAnalysis( request, eventId, eventType, resultId ):
 @autostrip
 class LicenseHolderSearchForm( Form ):
 	search_text = forms.CharField( required=False, label=_('Text') )
-	search_type = forms.ChoiceField( required=False, choices = ((0,_('Name (Last, First)')),(1,_('License')),(2,_('UCI ID'))),
-		label=_('Search by') ) 
+	search_type = forms.TypedChoiceField(
+		required=False,
+		choices=((0,_('Name (Last, First)')),(1,_('License')),(2,_('UCI ID'))),
+		label=_('Search by'),
+		coerce=int
+	)
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -517,7 +521,7 @@ def SearchLicenseHolders( request ):
 		form = LicenseHolderSearchForm( initial = license_holder_filter )
 	
 	search_text = license_holder_filter.get('search_text','').strip()
-	search_type = int(license_holder_filter.get('search_type',0))
+	search_type = license_holder_filter.get('search_type',0)
 	
 	if search_text:
 		if search_type == 0:

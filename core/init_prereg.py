@@ -246,6 +246,7 @@ def init_prereg(
 							i, category_code, name,
 						) )
 					else:
+						# Set the gender from the category if it not explicitly defined.
 						if gender is None and category.gender != 2:
 							gender = category.gender
 
@@ -330,6 +331,7 @@ def init_prereg(
 						'zip_postal':zip_postal,
 						'nation_code':nation_code,
 						'uci_id':uci_id,
+						'gender':gender if gender != 2 else None,
 						'emergency_contact_name':emergency_contact_name,
 						'emergency_contact_phone':emergency_contact_phone,
 						'emergency_medical':emergency_medical,
@@ -344,7 +346,6 @@ def init_prereg(
 							)
 						)
 						continue
-				
 				
 				#------------------------------------------------------------------------------
 				# Get Team

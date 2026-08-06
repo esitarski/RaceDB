@@ -24,39 +24,45 @@ def get_participant( participantId ):
 
 @autostrip
 class ParticipantSearchForm( Form ):
-	scan = forms.CharField( required=False, label = _('Scan Search'), help_text=_('Searches License and RFID Tag only') )
-	event = forms.ChoiceField( required=False, label = _('Event'), help_text=_('For faster response, review one Event at a time') )
-	name_text = forms.CharField( required=False, label = _('Name') )
-	gender = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('Men')), (1, _('Women'))), initial = 2 )
-	category = forms.ChoiceField( required=False, label = _('Category') )
-	bib = forms.IntegerField( required=False, min_value = -1 , label=_('Bib (-1 for Missing)') )
-	rfid_text = forms.CharField( required=False, label = _('RFIDTag (-1 for Missing)') )
-	eligible = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Eligible') )	
-	license_checked = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Lic. Check') )
-	paid = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Paid') )
-	confirmed = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Confirmed') )
+	scan=forms.CharField( required=False, label=_('Scan Search'), help_text=_('Searches License and RFID Tag only') )
+	event=forms.ChoiceField( required=False, label=_('Event'), help_text=_('For faster response, review one Event at a time') )
+	name_text=forms.CharField( required=False, label=_('Name') )
+	gender=forms.TypedChoiceField( required=False, choices=((2, '----'), (0, _('Men')), (1, _('Women'))), initial=2, coerce=int )
+	category=forms.ChoiceField( required=False, label=_('Category') )
+	bib=forms.IntegerField( required=False, min_value=-1 , label=_('Bib (-1 for Missing)') )
+	rfid_text=forms.CharField( required=False, label=_('RFIDTag (-1 for Missing)') )
+	eligible=forms.TypedChoiceField( required=False, choices=((2, '----'), (0, _('No')), (1, _('Yes'))), label=_('Eligible'), coerce=int )
+	license_checked=forms.TypedChoiceField( required=False, choices=((2, '----'), (0, _('No')), (1, _('Yes'))), label=_('Lic. Check'), coerce=int )
+	paid=forms.TypedChoiceField( required=False, choices=((2, '----'), (0, _('No')), (1, _('Yes'))), label=_('Paid'), coerce=int )
+	confirmed=forms.TypedChoiceField( required=False, choices=((2, '----'), (0, _('No')), (1, _('Yes'))), label=_('Confirmed'), coerce=int )
 
-	team_text = forms.CharField( required=False, label = _('Team (-1 for Independent)') )
-	role_type = forms.ChoiceField( required=False, label = _('Role Type')  )
+	team_text=forms.CharField( required=False, label=_('Team (-1 for Independent)') )
+	role_type=forms.ChoiceField( required=False, label=_('Role Type')  )
 	
-	city_text = forms.CharField( required=False, label = _('City') )
-	state_prov_text = forms.CharField( required=False, label = _('State/Prov') )
-	nationality_text = forms.CharField( required=False, label = _('Nationality') )
+	city_text=forms.CharField( required=False, label=_('City') )
+	state_prov_text=forms.CharField( required=False, label=_('State/Prov') )
+	nationality_text=forms.CharField( required=False, label=_('Nationality') )
 	
-	complete = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('No')), (1, _('Yes'))), label = _('Complete') )
+	complete=forms.TypedChoiceField( required=False, choices=((2, '----'), (0, _('No')), (1, _('Yes'))), label=_('Complete'), coerce=int )
 	
-	has_events = forms.ChoiceField( required=False, choices = ((2, '----'), (0, _('None')), (1, _('Some'))), label = _('Has Events') )
+	has_events=forms.TypedChoiceField( required=False, choices=((2, '----'), (0, _('None')), (1, _('Some'))), label=_('Has Events'), coerce=int )
 	
 	def __init__(self, *args, **kwargs):
 		competition = kwargs.pop( 'competition', None )
 		super().__init__(*args, **kwargs)
 		
 		if competition:
-			self.fields['category'].choices = \
-				[(-1, '----')] + [(-2, _('*** Missing ***'))] + [(category.id, category.code_gender) for category in competition.get_categories()]
-			events = sorted( competition.get_events(), key = operator.attrgetter('date_time') )
-			self.fields['event'].choices = \
-				[('-1.0', _('All'))] + [('{}.{}'.format(event.event_type, event.id), '{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S'))) for event in events]
+			self.fields['category'].choices = (
+				[(-1, '----'), (-2, _('*** Missing ***'))] +
+				[(category.id, category.code_gender) for category in competition.get_categories()]
+			)
+			events = sorted( competition.get_events(), key=operator.attrgetter('date_time') )
+			self.fields['event'].choices = (
+				[('-1.0', _('All'))] +
+				[('{}.{}'.format(event.event_type, event.id), '{} {}'.format(event.short_name, timezone.localtime(event.date_time).strftime('%Y-%m-%d %H:%M:%S')))
+					for event in events
+				]
+			)
 			
 		roleChoices = [(i, role) for i, role in enumerate(Participant.ROLE_NAMES)]
 		roleChoices[0] = (0, '----')
@@ -188,7 +194,7 @@ def Participants( request, competitionId ):
 	if role_type > 0:
 		participants = participants.filter( role__range=(100*role_type, 100*role_type+99) )
 	
-	if 0 <= int(participant_filter.get('gender',-1)) <= 1:
+	if 0 <= participant_filter.get('gender',-1) <= 1:
 		participants = participants.filter( license_holder__gender=participant_filter['gender'])
 	
 	category_id = int(participant_filter.get('category',-1))
@@ -203,7 +209,7 @@ def Participants( request, competitionId ):
 	if 0 <= int(participant_filter.get('paid',-1)) <= 1:
 		participants = participants.filter( paid=bool(int(participant_filter['paid'])) )
 	
-	if 0 <= int(participant_filter.get('eligible',-1)) <= 1:
+	if 0 <= participant_filter.get('eligible',-1) <= 1:
 		participants = participants.filter( license_holder__eligible=bool(int(participant_filter['eligible'])) )
 	
 	participants = participants.select_related('team', 'license_holder')
@@ -1359,7 +1365,7 @@ def ParticipantWaiverChange( request, participantId ):
 @autostrip
 class ParticipantTagForm( Form ):
 	tag = forms.CharField( required = False, label = _('Tag') )
-	rfid_antenna = forms.ChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna') )
+	rfid_antenna = forms.TypedChoiceField( choices = ((0,_('None')), (1,'1'), (2,'2'), (3,'3'), (4,'4') ), label = _('RFID Antenna'), coerce=int )
 	
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -1417,7 +1423,7 @@ def ParticipantTagChange( request, participantId ):
 	make_this_existing_tag = competition.use_existing_tags
 	license_holder = participant.license_holder
 	system_info = SystemInfo.get_singleton()
-	rfid_antenna = int(request.session.get('rfid_antenna', 0))
+	rfid_antenna = request.session.get('rfid_antenna', 0)
 	validate_success = False
 	
 	status = True
@@ -1997,7 +2003,7 @@ class ParticipantConfirmForm( Form ):
 	first_name = forms.CharField( required=False, label = _('First Name') )
 	date_of_birth = forms.DateField( label = _('Date of Birth'))
 	nation_code = forms.CharField( max_length=3, required=False, label=_('Nation Code'), widget=forms.TextInput(attrs={'size': 3}) )
-	gender = forms.ChoiceField( required=False, choices = ((0, _('Men')), (1, _('Women'))), label=_('Gender') )
+	gender = forms.TypedChoiceField( required=False, choices = ((0, _('Men')), (1, _('Women'))), label=_('Gender'), coerce=int )
 	
 	uci_id = forms.CharField( required=False, label=_('UCI ID') )
 	license_code = forms.CharField( required=False, label=_('License Code') )
@@ -2143,7 +2149,7 @@ def ParticipantConfirm( request, participantId ):
 @autostrip
 class ParticipantNotFoundForm( Form ):
 	last_name = forms.CharField( label = _('Last Name') )
-	gender = forms.ChoiceField( choices = ((0, _('Men')), (1, _('Women'))) )
+	gender = forms.TypedChoiceField( choices = ((0, _('Men')), (1, _('Women'))), coerce=int )
 	date_of_birth = forms.DateField( label = _('Date of Birth') )
 	
 	def __init__(self, *args, **kwargs):
@@ -2193,7 +2199,7 @@ def ParticipantNotFound( request, competitionId ):
 		if form.is_valid():
 			last_name = form.cleaned_data['last_name']
 			last_name = last_name[:1].upper() + last_name[1:]
-			gender = int(form.cleaned_data['gender'])
+			gender = form.cleaned_data['gender']
 			date_of_birth = form.cleaned_data['date_of_birth']
 			set_form_fields( last_name, gender, date_of_birth )
 			

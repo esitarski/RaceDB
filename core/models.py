@@ -5219,24 +5219,6 @@ class EntryTT( models.Model ):
 			setattr( self, attr, b )
 			setattr( tt, attr, a )
 
-	@staticmethod
-	def start_time_propagate( event ):
-		# Propate start times using calculated or custom gaps.
-		to_update = []
-		start_time_last = formatted_timedelta( seconds=0 )
-		for e in event.entrytt_set.all().order_by('start_sequence').iterator():
-			if e.start_time_custom and e.start_time_custom >= start_time_last:
-				start_time = e.start_time_custom
-			else:
-				start_time = formatted_timedelta( seconds=(start_time_last + (e.gap_time_custom or e.gap_time_calculated or (e.start_time - start_time_last))).total_seconds() )
-			
-			if e.start_time.total_seconds() != start_time.total_seconds():
-				e.start_time = start_time
-				to_update.append( e )
-			start_time_last = start_time
-		
-		EntryTT.objects.bulk_update( to_update, ['start_time'] )
-		
 	@transaction.atomic
 	def move_to( self, start_sequence_target ):
 		if self.start_sequence == start_sequence_target:
@@ -5353,7 +5335,7 @@ class EventTT( Event ):
 				
 					tCur += gap
 				
-				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur) )
+				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur, gap_time_calculated=None, gap_time_custom=None, start_time_custom=None) )
 				sequenceCur += 1
 
 			start_time_last = formatted_timedelta( seconds=0 )
@@ -5442,16 +5424,37 @@ class EventTT( Event ):
 			gap_median = datetime.timedelta( seconds=60 )
 		
 		to_create = []
-		tCur = datetime.timedelta( seconds=0 )
+		tCur = formatted_timedelta( seconds=0 )
 		for sequenceCur, p in enumerate(participants, 1):
 			if p.start_time:
 				tCur = p.start_time
 			else:
 				p.start_time = tCur + gap_median
 				tCur = p.start_time
-				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur, gap_time_calculated=gap_medium) )
+				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur, gap_time_calculated=gap_medium, start_time_custom=None, gap_time_custom=None) )
 				
 		EntryTT.objects.bulk_create( to_create )
+
+	def start_time_propagate( self ):
+		# Propate start times using calculated or custom gaps.
+		to_update = []
+		start_time_last = formatted_timedelta( seconds=0 )
+		for e in self.entrytt_set.all().order_by('start_sequence').iterator():
+			if e.start_time_custom and e.start_time_custom >= start_time_last:
+				start_time = e.start_time_custom
+			else:
+				start_time = formatted_timedelta( seconds=(start_time_last + (e.gap_time_custom or e.gap_time_calculated or (e.start_time - start_time_last))).total_seconds() )
+			
+			# Check that we are not going back in time.
+			if start_time < start_time_last:
+				start_time = start_time_last + formatted_timedelta( seconds=60 )
+			
+			if e.start_time.total_seconds() != start_time.total_seconds():
+				e.start_time = start_time
+				to_update.append( e )
+			start_time_last = start_time
+		
+		EntryTT.objects.bulk_update( to_update, ['start_time'] )
 
 	def get_unseeded_count( self ):
 		return sum( 1 for p in self.get_participants_seeded() if p.start_time is None ) if self.create_seeded_startlist else 0
