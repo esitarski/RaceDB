@@ -69,6 +69,7 @@ class RankingForm( ModelForm ):
 	class Meta:
 		model = Ranking
 		fields = '__all__'
+		widgets = {'import_timestamp': forms.DateTimeInput(attrs={'type': 'datetime-local'})}
 		
 	def importFromExcelCB( self, request, ranking ):
 		return HttpResponseRedirect( pushUrl(request,'RankingImportFromExcel', ranking.id) )
@@ -81,6 +82,9 @@ class RankingForm( ModelForm ):
 		self.helper.form_action = '.'
 
 		self.fields['import_timestamp'].disabled = True
+		'''		
+		import_timestamp = self.initial.get('import_timestamp', '')
+		'''
 		
 		self.helper.layout = Layout(
 			Row(
@@ -98,7 +102,7 @@ class RankingForm( ModelForm ):
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
-					( 'mport-from_excel-submit', _('Import from Excel'), 'btn btn-primary', self.importFromExcelCB ),
+				 ( 'mport-from_excel-submit', _('Import from Excel'), 'btn btn-primary', self.importFromExcelCB ),
 			])
 			
 		addFormButtons( self, button_mask, self.additional_buttons )
@@ -117,11 +121,15 @@ def RankingNew( request, competitionId ):
 @access_validation()
 def RankingEdit( request, rankingId ):
 	ranking = get_object_or_404( Ranking, pk=rankingId )
-	return GenericEdit( Ranking, request, rankingId, RankingForm )
+	ranking_entries = ranking.rankingentry_set.all().order_by('rank').iterator()
+	print( f'RankingEdit: {ranking.import_timestamp}' )
+	return GenericEdit( Ranking, request, rankingId, RankingForm, template="ranking_form.html", additional_context={'ranking_entries':ranking_entries} )
 	
 @access_validation()
 def RankingDelete( request, rankingId ):
-	return GenericDelete( Ranking, request, rankingId, RankingForm )
+	ranking = get_object_or_404( Ranking, pk=rankingId )
+	ranking_entries = ranking.rankingentry_set.all().order_by('rank').iterator()
+	return GenericDelete( Ranking, request, rankingId, RankingForm, template="ranking_form.html", additional_context={'ranking_entries':ranking_entries} )
 
 @access_validation()
 def RankingImportFromExcel( request, rankingId ):
