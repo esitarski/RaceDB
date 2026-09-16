@@ -119,14 +119,14 @@ def RankingNew( request, competitionId ):
 @access_validation()
 def RankingEdit( request, rankingId ):
 	ranking = get_object_or_404( Ranking, pk=rankingId )
-	ranking_entries = ranking.rankingentry_set.all().order_by('rank').iterator()
+	ranking_entries = ranking.rankingentry_set.all().order_by('rank')
 	print( f'RankingEdit: {ranking.import_timestamp}' )
 	return GenericEdit( Ranking, request, rankingId, RankingForm, template="ranking_form.html", additional_context={'ranking_entries':ranking_entries} )
 	
 @access_validation()
 def RankingDelete( request, rankingId ):
 	ranking = get_object_or_404( Ranking, pk=rankingId )
-	ranking_entries = ranking.rankingentry_set.all().order_by('rank').iterator()
+	ranking_entries = ranking.rankingentry_set.all().order_by('rank')
 	return GenericDelete( Ranking, request, rankingId, RankingForm, template="ranking_form.html", additional_context={'ranking_entries':ranking_entries} )
 
 @access_validation()
