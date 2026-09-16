@@ -43,6 +43,7 @@ def UploadRanking( request, rankingId ):
 		form = UploadRankingForm(request.POST, request.FILES)
 		if form.is_valid():
 			results_str = handle_upload_ranking( rankingId, request.FILES['excel_file'] )
+			ranking = get_object_or_404( Ranking, pk=rankingId )	# Refresh the ranking as the import_timestamp may be changed.
 	else:
 		form = UploadRankingForm()
 	
@@ -69,7 +70,7 @@ class RankingForm( ModelForm ):
 	class Meta:
 		model = Ranking
 		fields = '__all__'
-		widgets = {'import_timestamp': forms.DateTimeInput(attrs={'type': 'datetime-local'})}
+		widgets = {'import_timestamp': forms.DateTimeInput(format='%Y-%m-%dT%H:%M')}
 		
 	def importFromExcelCB( self, request, ranking ):
 		return HttpResponseRedirect( pushUrl(request,'RankingImportFromExcel', ranking.id) )
@@ -81,10 +82,7 @@ class RankingForm( ModelForm ):
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
 
-		self.fields['import_timestamp'].disabled = True
-		'''		
-		import_timestamp = self.initial.get('import_timestamp', '')
-		'''
+		self.fields['import_timestamp'].widget.attrs['readonly'] = True
 		
 		self.helper.layout = Layout(
 			Row(
