@@ -16,7 +16,8 @@
 
 <h2 class="hidden-print">{{title}}</h2>
 <h2><strong>{{instance.competition.name}}</strong>: {{instance.competition.date_range_year_str}}</h2>
-<h2 class="visible-print"><strong>{{instance.name}}</strong>: {{instance.date_time|date_hhmm}}</h2>
+{{instance}}
+<h2 class="visible-print"><strong>{{instance.name}}</strong>: {{instance.date_time}}</h2>
 <hr class="hidden-print"/>
 {% crispy form %}
 <hr/>
@@ -45,7 +46,7 @@
 			{% for w in wave_set %}
 				<tr onclick="jump('./WaveEdit/{{w.id}}/');">
 					<td class="text-right">{{forloop.counter}}.</td>
-					<td>{{w.name}}</td>
+					<td class="text-nowrap">{{w.name}}</td>
 					<td>{{w.start_offset}}</td>
 					<td>{{w.category_text}}</td>
 					<td>{{w.rank_categories_together}}</td>

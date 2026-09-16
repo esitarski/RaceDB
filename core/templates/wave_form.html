@@ -13,6 +13,24 @@
 {% endwith %}
 <hr/>
 {% crispy form %}
+{% if form.errors %}
+    <div class="alert alert-danger">
+        <strong>Please correct the following errors:</strong>
+        <ul>
+            <!-- 1. Display non-field errors (e.g., cross-field validation) -->
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+
+            <!-- 2. Display field-specific errors -->
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
 {% with potential_duplicate_bibs=instance.get_potential_duplicate_bibs %}
 {% if potential_duplicate_bibs %}
 	<style>

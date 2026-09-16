@@ -37,7 +37,7 @@ class TimeTracker:
 		return '\n'.join( s )
 
 def init_prereg(
-		competition_name='', worksheet_name='', assign_bibs_option=0, clear_existing=False,
+		competition_name='', worksheet_name='', assign_bibs_option=0, clear_existing=False, skip_unmatched_category=False,
 		competitionId=None, worksheet_contents=None, message_stream=sys.stdout
 	):
 
@@ -46,7 +46,7 @@ def init_prereg(
 	ASSIGN_NEW_BIBS_FROM_SPREADSHEET_AUTO_BLANK = 2
 
 	t_track = TimeTracker()
-		
+	
 	team_lookup = TeamLookup()
 		
 	tstart = datetime.datetime.now()
@@ -114,7 +114,7 @@ def init_prereg(
 				return category
 		return None
 	'''
-		
+	
 	times = defaultdict(float)
 	
 	has_legal_entity = competition.legal_entity
@@ -245,6 +245,8 @@ def init_prereg(
 						ms_write( '**** Row {}: cannot match Category (ignoring): "{}" Name="{}"\n'.format(
 							i, category_code, name,
 						) )
+						if skip_unmatched_category:
+							continue
 					else:
 						# Set the gender from the category if it not explicitly defined.
 						if gender is None and category.gender != 2:
@@ -265,6 +267,9 @@ def init_prereg(
 				elif not license_holder:
 					# No license code.  Try to find the participant by last/first name, [date_of_birth] and [gender].
 					# Case insensitive comparison, accents ignored for names.
+					if not (last_name and first_name):
+						continue
+						
 					q = Q( search_text__startswith=utils.get_search_text([last_name, first_name]) )
 					if date_of_birth and date_of_birth != invalid_date_of_birth:
 						if year_only_dob:
@@ -570,7 +575,8 @@ def init_prereg(
 	except Exception:
 		ms_write( 'Cannot find sheet "{}"\n'.format(sheet_name) )
 		return
-		
+	
+	participant_current_count = 0
 	ur_records = []
 	
 	for r, row in enumerate(ws.iter_rows()):
@@ -618,6 +624,8 @@ def init_prereg(
 				return
 			
 			ms_write( '\n' )
+			
+			participant_current_count = competition.get_participants().count()
 			continue
 			
 		ur_records.append( (r+1, [v.value for v in row]) )
@@ -627,7 +635,9 @@ def init_prereg(
 			
 	process_ur_records( ur_records )
 	
+	participant_new_count = competition.get_participants().count() - participant_current_count
 	ms_write( '\n' )
+	ms_write( f'Participants Added: {participant_new_count}' )
 	for section, total in sorted( times.items(), key = operator.itemgetter(1), reverse=True ):
 		ms_write( '{}={:.6f}\n'.format(section, total) )
 	ms_write( '\n' )

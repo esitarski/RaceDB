@@ -79,6 +79,8 @@ class RankingForm( ModelForm ):
 		super().__init__(*args, **kwargs)
 		self.helper = FormHelper( self )
 		self.helper.form_action = '.'
+
+		self.fields['import_timestamp'].disabled = True
 		
 		self.helper.layout = Layout(
 			Row(
@@ -89,7 +91,7 @@ class RankingForm( ModelForm ):
 				Field('match_key'),
 			),
 			Row(
-				Field('import_timestamp', readonly=True),
+				Field('import_timestamp'),
 			),
 			Field( 'competition', type='hidden' ),
 		)

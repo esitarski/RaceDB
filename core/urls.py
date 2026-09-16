@@ -297,6 +297,7 @@ urlpatterns = [
 	re_path(r'^.*CategoryNew/(?P<categoryFormatId>\d+)/$', category.CategoryNew),
 	re_path(r'^.*CategoryEdit/(?P<categoryId>\d+)/$', category.CategoryEdit),
 	re_path(r'^.*CategoryDelete/(?P<categoryId>\d+)/$', category.CategoryDelete),
+	re_path(r'^.*CategorySequence/(?P<categoryId>\d+)/(?P<sequence>\d+)/$', category.CategorySequence),
 	
 	re_path(r'^.*NumberSets/$', number_set.NumberSetsDisplay),
 	re_path(r'^.*NumberSetNew/$', number_set.NumberSetNew),

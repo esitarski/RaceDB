@@ -1025,6 +1025,8 @@ class Competition(models.Model):
 				)
 				self.adjust_event_times( time_delta )
 		
+		for w in self.get_waves():
+			w.harmonize_categories()
 		
 		return super().save(**kwargs)
 	
@@ -1146,7 +1148,17 @@ class Competition(models.Model):
 		return EventTT.objects.filter(competition = self).order_by('date_time')
 		
 	def get_events( self ):
-		return list(self.get_events_mass_start()) + list(self.get_events_tt())
+		events = list( self.get_events_mass_start() )
+		events.extend( list(self.get_events_tt()) )
+		return events
+
+	def get_waves( self ):
+		waves = []
+		for e in self.get_events_mass_start():
+			waves.extend( Wave.objects.filter(event=e) )
+		for e in self.get_events_tt():
+			waves.extend( WaveTT.objects.filter(event=e) )
+		return waves
 		
 	def get_categories( self ):
 		return Category.objects.filter( format=self.category_format )
@@ -1212,7 +1224,7 @@ class Competition(models.Model):
 		return False
 	
 	def get_participants( self ):
-		return Participant.objects.filter( competition=self )
+		return self.participant_set.all()
 		
 	def has_participants( self ):
 		return self.get_participants().exists()
@@ -1534,8 +1546,6 @@ def do_fix_ranking_options( obj ):
 	rankings = [v for v in rankings if not (v in already_seen or already_seen.add(v))]
 	rankings.extend( [(1, None)] * (RANKING_MAX - len(rankings)) )
 
-	print( rankings )
-	
 	def set_value( obj, field, value ):
 		if getattr(obj, field) != value:
 			setattr(obj, field, value)
@@ -1553,12 +1563,10 @@ def do_fix_ranking_options( obj ):
 	ranking_ids = []
 	for r in range(1, RANKING_MAX+1):
 		ri = -1 if (getattr(obj, f'ranking_{r}_option') == 0) else getattr(obj, f'ranking_{r}')
-		print( getattr(obj, f'ranking_{r}_option') )
 		if ri is not None and ri not in already_seen:
 			ranking_ids.append( ri )
 			already_seen.add( ri )
 	
-	print( ranking_ids )
 	ranking_ids.extend( [None] * (RANKING_MAX - len(ranking_ids)) )
 	
 	changed = False
@@ -1607,8 +1615,8 @@ def get_ranking_key( competition, obj, uci_lookup = None ):
 	def get_ranking_key_func( p, ranking_lookups=ranking_lookups ):
 		key = [lookup(p) for lookup in ranking_lookups]
 		p.callup_ranks = [(rank if rank != NO_RANK else None) for rank in key]	# Keep track of the rankings to show the work later.
-		# Add a "random" criteria if no other ranking is found.
-		key.append( hash(p.id) )
+		# Add a stable, random order based on the record id to make this participant callup in random order if there are not rankings available.
+		key.append( p.stable_random() )
 		return key
 	
 	return get_ranking_key_func
@@ -2052,57 +2060,23 @@ class Event( models.Model ):
 		return q or Category.objects.none()
 	
 	def get_participants( self ):
-		if not self.option_id:
-			return Participant.objects.filter(
-				competition=self.competition,
-				role=Participant.Competitor,
-				category__in=self.get_categories_query(),
-			).select_related('license_holder','team')
-		else:
-			return Participant.objects.filter(
-				pk__in=ParticipantOption.objects.filter(
-					competition=self.competition,
-					option_id=self.option_id,
-					participant__role=Participant.Competitor,
-					participant__competition=self.competition,
-					participant__category__in=self.get_categories_query(),
-				).values_list('participant__pk', flat=True)
-			).select_related('license_holder','team')
+		q = self.competition.participant_set.filter(
+			role=Participant.Competitor,
+			category__in=self.get_categories_query(),
+		)
+		if self.option_id:
+			q = q.filter( pk__in=self.competition.participantoption_set.filter(option_id=self.option_id).values_list('participant__pk', flat=True) )
+			
+		return q.select_related('license_holder','team')
 
 	def get_num_nationalities( self ):
 		return get_num_nationalities( self.get_participants() )
 			
 	def has_participants( self ):
-		if not self.option_id:
-			return Participant.objects.filter(
-				competition=self.competition,
-				role=Participant.Competitor,
-				category__in=self.get_categories_query(),
-			).exists()
-		else:
-			return ParticipantOption.objects.filter(
-				competition=self.competition,
-				option_id=self.option_id,
-				participant__role=Participant.Competitor,
-				participant__competition=self.competition,
-				participant__category__in=self.get_categories_query(),
-			).exists()
+		return self.get_participants().exists()
 		
 	def get_participant_count( self ):
-		if not self.option_id:
-			return Participant.objects.filter(
-				competition=self.competition,
-				role=Participant.Competitor,
-				category__in=self.get_categories_query(),
-			).count()
-		else:
-			return ParticipantOption.objects.filter(
-				competition=self.competition,
-				option_id=self.option_id,
-				participant__role=Participant.Competitor,
-				participant__competition=self.competition,
-				participant__category__in=self.get_categories_query(),
-			).count()
+		return self.get_participants().count()
 			
 	def get_ineligible( self ):
 		return (self.get_participants()
@@ -2234,8 +2208,7 @@ class WaveBase( models.Model ):
 		return sorted( other_bibs & my_bibs )
 	
 	def get_participant_options( self ):
-		return ParticipantOption.objects.filter(
-			competition=self.event.competition,
+		return self.competition.participantoption_set.filter(
 			option_id=self.event.option_id,
 			participant__role=Participant.Competitor,
 			participant__competition=self.event.competition,
@@ -2470,6 +2443,18 @@ class WaveBase( models.Model ):
 			
 		return ', '.join( f.replace(' ', '&nbsp;') for f in fields )
 	
+	def harmonize_categories( self ):
+		competition_format_id = self.event.competition.category_format_id
+		
+		# Check that the many-to-many references are still valid.
+		categories = list( self.categories.all() )
+		to_remove = []
+		for c in categories:
+			if c.format_id != competition_format_id:
+				to_remove.append( c )
+		
+		self.categories.remove( *to_remove )
+	
 	class Meta:
 		verbose_name = _('Wave Base')
 		verbose_name_plural = _('Wave Bases')
@@ -2480,7 +2465,10 @@ class Wave( WaveBase ):
 	start_offset = DurationField( default = duration_field_0, null = True, blank = True, verbose_name = _('Start Offset') )
 	
 	minutes = models.PositiveSmallIntegerField( null = True, blank = True, verbose_name = _('Race Minutes') )
-	
+	cycle_category_callups = models.BooleanField( default=False, verbose_name = _("Cycle Category Callups"),
+		help_text=_('Cycle callups if multiple categories are in the Wave.  For example, A.1, B.1, C.1, A.2, B.2, A3.')
+	)
+
 	def get_results( self, category = None ):
 		return super().get_results( category ).select_related('participant', 'participant__license_holder')
 	
@@ -2529,7 +2517,28 @@ class Wave( WaveBase ):
 		super().save( **kwargs )
 	
 	def get_participants_callup_order( self, reverse=False ):
-		ranking_key_func = get_ranking_key( self.event.competition, self )				
+		ranking_key_func = get_ranking_key( self.event.competition, self )
+		
+		if self.cycle_category_callups:
+			category_ids = list( self.categories.all().values_list('id', flat=True) )
+			
+			if len(category_ids) > 1:
+				participants_by_category = [ [] for c_id in category_ids ]
+				i_from_category_id = { c_id:i for i, c_id in enumerate(category_ids) }
+				
+				# Split out the participants by category in increasing callup order.
+				for participant in sorted( self.get_participants().order_by(), key=ranking_key_func ):
+					participants_by_category[i_from_category_id[participant.category_id]].append( participant )
+				
+				# Round-robin partipants from each category.
+				participant_callups = [
+					p for p in itertools.chain.from_iterable(itertools.zip_longest(*participants_by_category)) if p
+				]
+				if reverse:
+					participant_callups.reverse()
+				
+				return participant_callups
+			
 		return sorted( self.get_participants().order_by(), key=ranking_key_func, reverse=reverse )
 		
 	@property
@@ -2638,7 +2647,7 @@ class Team(models.Model):
 	def is_independent_name( team_name ):
 		if team_name is None:
 			return False
-		return utils.remove_diacritics(team_name.lower()) == 'independent'
+		return utils.removeDiacritic(team_name.lower()) == 'independent'
 	
 	class Meta:
 		verbose_name = _('Team')
@@ -4974,6 +4983,11 @@ class Participant(models.Model):
 				return bib, context
 		return None, context
 	
+	def stable_random( self ):
+		# Return a random number based on the participant registration timestamp, record id and license_holder record id.
+		# This number is random but remains the same on every call.
+		return random.Random(self.registration_timestamp.timestamp() + self.id + self.license_holder_id).random()
+	
 	@staticmethod
 	def most_recent():
 		participants = Participant.objects.all()
@@ -5002,13 +5016,10 @@ class Participant(models.Model):
 			series_rank = series_rank_max
 		else:
 			series_rank = p.series_rank
-		# To break ties "randomly" but deterministically, return a hash of the id, competition_id and license_holder_id.
-		# To break any ties after that, return our own rank.
 		return (
 			p.uci_rank if p.uci_rank is not None else rank_max,		# First by rank
 			series_rank if series_rank is not None else rank_max,	# Then by series.
-			hash((p.id, p.competition_id, p.license_holder_id)),	# Then by self, competition and license_holder id.
-			p.id,													# Finally by id to break all ties.
+			p.stable_random(),
 		)
 	
 	class Meta:
@@ -5164,6 +5175,9 @@ class Ranking( models.Model ):
 	
 	def get_entry_count( self ):
 		return self.rankingentry_set.all().count()
+	
+	def __str__( self ):
+		return self.name
 	
 	class Meta:
 		ordering = ['name']
@@ -5583,27 +5597,27 @@ class WaveTT( WaveBase ):
 			return lambda p: (
 				p.seed_option,
 				-licence_holder_series_rank.get(p.license_holder_id, 999999),	# If no rank in series, rank high and fallback to random.
-				random.random(),	# Break ties randomly.
+				p.stable_random(),
 			)
 		elif self.sequence_option == self.age_increasing:
 			return lambda p: (
 				p.seed_option,
 				p.license_holder.date_of_birth,
 				-(p.bib or 0),
-				p.id,
+				p.stable_random(),
 			)
 		elif self.sequence_option == self.bib_increasing:
 			return lambda p: (
 				p.seed_option,
 				p.bib or 0,
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
-				p.id,
+				p.stable_random(),
 			)
 		elif self.sequence_option in (self.bib_60, self.bib_30):
 			return lambda p: (
 				p.bib or 0,
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
-				p.id,
+				p.stable_random(),
 			)
 		elif self.sequence_option == self.age_decreasing:
 			return lambda p: (
@@ -5611,14 +5625,14 @@ class WaveTT( WaveBase ):
 				datetime.date(3000,1,1) - p.license_holder.date_of_birth,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
-				p.id,
+				p.stable_random(),
 			)
 		elif self.sequence_option == self.bib_decreasing:
 			return lambda p: (
 				p.seed_option,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
-				p.id,
+				p.stable_random(),
 			)
 		elif self.sequence_option == self.est_speed_decreasing:
 			return lambda p: (
@@ -5626,7 +5640,7 @@ class WaveTT( WaveBase ):
 				-p.est_kmh,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
-				p.id,
+				p.stable_random(),
 			)
 		elif self.sequence_option in (self.rank_increasing, self.rank_decreasing):
 			
@@ -5672,7 +5686,7 @@ class WaveTT( WaveBase ):
 				p.est_kmh,
 				-(p.bib or 0),
 				p.license_holder.get_tt_metric(timezone.localtime(timezone.now()).date()),
-				p.id,
+				p.stable_random(),
 			)
 	
 	@property

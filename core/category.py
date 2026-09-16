@@ -84,7 +84,7 @@ def CategorySwapAdjacent( category, swapBefore ):
 	categoryAdjacent.sequence, category.sequence = category.sequence, categoryAdjacent.sequence
 	categoryAdjacent.save()
 	category.save()
-	
+
 #--------------------------------------------------------------------------------------------
 
 @autostrip
@@ -151,4 +151,16 @@ def CategoryEdit( request, categoryId ):
 def CategoryDelete( request, categoryId ):
 	return GenericDelete( Category, request, categoryId, CategoryForm )
 
-
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def CategorySequence( request, categoryId, sequence ):
+	category = get_object_or_404( Category, pk=categoryId )
+	
+	elements = list( category.format.category_set.all() )
+	i_new = max( 0, min( int(sequence)-1, len(elements)-1 ) )
+	elements.remove( category )
+	elements.insert( i_new, category )
+	category.sequence = -1
+	validate_sequence( elements )
+	return HttpResponseRedirect( getContext(request, 'cancelUrl') )
+	

@@ -87,12 +87,15 @@
 	{% if request.user.is_superuser %}<a class="btn btn-success btn-xs hidden-print" href="./WaveEdit/{{w.id}}/">{% trans "Edit" %}</a>{% endif %}
 <br/>
 </h4>
-<h5 style="margin-top: 8px">{% trans "Categories" %}: {{w.category_count_text}}</h5>
+<h5 style="margin-top: 8px">
+	{% trans "Categories" %}: {{w.category_count_text}}{% if show_callups and w.cycle_category_callups %}, {% trans "Cycle Category Callups" %}{% endif %}
+</h5>
 {% spaceless %}
 <table class="table table-striped table-hover table-condensed participant_table">
 {% if show_callups and w.ranking_titles %}
 	<thead>
 		<tr>
+			<th></th>
 			<th class="text-right">{% trans "Bib" %}</th>
 			<th>{% trans "Name" %}</th>
 			<th>{% trans "Category" %}</th>
@@ -111,6 +114,7 @@
 			{% for p in w.get_participants_callup_order %}
 				{% with h=p.license_holder %}
 				<tr onclick="jump('./ParticipantEdit/{{p.id}}/');">
+					<td class="text-right">{{forloop.counter}}.</td>
 					<td class="text-right">{% if p.bib %}{{p.bib}}{% else %}<span class="is-err"/>{% endif %}</td>
 					<td>{{h.full_name}}</td>
 					<td>{% if p.category %}{{p.category.code_gender}}{% endif %}</td>

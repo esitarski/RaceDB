@@ -1618,12 +1618,18 @@ class UploadPreregForm( Form ):
 	)
 	assign_bibs_option = forms.TypedChoiceField( choices=NEW_BIB_ASSIGNMENT_CHOICES, required=False, coerce=int, widget=forms.RadioSelect, initial=0, label=_('Assign Bibs:') )
 	
+	skip_unmatched_category = forms.BooleanField(
+		required=False,
+		label=_('Skip Unmatched Category Rows'),
+		help_text=_("Skips rows with unmatched categories.")
+	)
+
 	clear_existing = forms.BooleanField(
 		required=False,
 		label=_('Clear All Participants First'),
 		help_text=_("Removes all existing Participants from the Competition before the Upload.  Use with Caution.")
 	)
-	
+
 	def __init__( self, *args, **kwargs ):
 		super().__init__( *args, **kwargs )
 		self.helper = FormHelper( self )
@@ -1639,13 +1645,16 @@ class UploadPreregForm( Form ):
 			),
 			Row( HTML(_("IMPORTANT: If the Competition has a Number Set, its Bib ranges and availability take precedence — the spreadsheet's Bib value is ignored (even if present).")) ),
 			Row(
+				Col( Field('skip_unmatched_category'), 12 ),
+			),
+			Row(
 				Col( Field('clear_existing'), 12 ),
 			),
 		)
 		
 		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
 
-def handle_upload_prereg( competitionId, excel_contents, assign_bibs_option, clear_existing ):
+def handle_upload_prereg( competitionId, excel_contents, assign_bibs_option, clear_existing, skip_unmatched_category ):
 	worksheet_contents = excel_contents.read()
 	message_stream = StringIO()
 	init_prereg(
@@ -1654,6 +1663,7 @@ def handle_upload_prereg( competitionId, excel_contents, assign_bibs_option, cle
 		message_stream=message_stream,
 		assign_bibs_option=assign_bibs_option,
 		clear_existing=clear_existing,
+		skip_unmatched_category=skip_unmatched_category,
 	)
 	results_str = message_stream.getvalue()
 	return results_str
@@ -1666,7 +1676,13 @@ def UploadPrereg( request, competitionId ):
 	if request.method == 'POST':
 		form = UploadPreregForm(request.POST, request.FILES)
 		if form.is_valid():
-			results_str = handle_upload_prereg( competitionId, request.FILES['excel_file'], form.cleaned_data['assign_bibs_option'], form.cleaned_data['clear_existing'] )
+			results_str = handle_upload_prereg(
+				competitionId,
+				request.FILES['excel_file'],
+				form.cleaned_data['assign_bibs_option'],
+				form.cleaned_data['clear_existing'],
+				form.cleaned_data['skip_unmatched_category']
+			)
 			return render( request, 'upload_prereg.html', locals() )
 	else:
 		form = UploadPreregForm()
@@ -2438,9 +2454,12 @@ def GetWaveForm( event_mass_start, wave = None ):
 			self.helper.form_action = '.'
 			self.helper.form_class = 'form-inline hidden-print'
 			
+			ranking_queryset = wave.event.competition.ranking_set.all()
+			
 			for r in range(1, RANKING_MAX+1):
 				self.fields[f'ranking_{r}_option'].label = format_lazy( '{} {}', _("Option"), str(r) )
-				self.fields['ranking_1'].label = _("Use")
+				self.fields[f'ranking_{r}'].label = _("Use")
+				self.fields[f'ranking_{r}'].queryset = ranking_queryset
 			
 			self.helper.layout = Layout( 
 				Field( 'event', type='hidden' ),
@@ -2458,18 +2477,10 @@ def GetWaveForm( event_mass_start, wave = None ):
 				Row(
 					Col(Field('categories', size=12, css_class='hidden-print'), 6),
 					Col(Field('rank_categories_together'), 3),
+					Col(Field('cycle_category_callups'), 3),
 				),
 				Row( HTML( format_lazy('{}:', _('Callup Sequence')) ) ),
-				Row(
-					Field( 'ranking_1_option' ),
-					Field( 'ranking_1' ),
-					Field( 'ranking_2_option' ),
-					Field( 'ranking_2' ),
-					Field( 'ranking_3_option' ),
-					Field( 'ranking_3' ),
-					Field( 'ranking_4_option' ),
-					Field( 'ranking_4' ),
-				),			
+				Row( *list( itertools.chain.from_iterable( [Field(f'ranking_{r}_option'), Field(f'ranking_{r}')] for r in range(1, RANKING_MAX+1) ) ) ),
 			)
 			addFormButtons( self, button_mask )
 			
@@ -2492,7 +2503,7 @@ def WaveNew( request, eventMassStartId ):
 	wave = Wave( event = event_mass_start )
 	c = len( waves_existing )
 	waveLetter = []
-	while 1:
+	while True:
 		waveLetter.append( string.ascii_uppercase[c % 26] )
 		c //= 26
 		if c == 0:
