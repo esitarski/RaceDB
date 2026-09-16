@@ -63,6 +63,7 @@ def UploadRanking( request, rankingId ):
 		for f, optional in (('uci_id', True), ('license_code', True), ('rank', False), ('points', True), ('first_name', True), ('last_name', True), ('name', True))
 	]
 
+	ranking_entries = ranking.rankingentry_set.all().order_by('rank')
 	return render( request, 'upload_ranking.html', locals() )
 
 @autostrip
