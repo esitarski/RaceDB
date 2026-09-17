@@ -43,7 +43,8 @@ document.querySelectorAll(`button[id^="${prefix}"]`).forEach( button => {
 <thead>
 	<tr>
 		<th></th>
-		<th>{% trans "Code (Gender)" %}</th>
+		<th>{% trans "Code" %}</th>
+		<th>{% trans "Gender" %}</th>
 		<th>{% trans "Aliases" %}</th>
 		<th>{% trans "Description" %}</th>
 		{% if isEdit %}
@@ -55,7 +56,8 @@ document.querySelectorAll(`button[id^="${prefix}"]`).forEach( button => {
 	{% for c in instance.category_set.all %}
 		<tr>
 			<td class="text-right">{{forloop.counter}}.</td>
-			<td>{{c.code_gender}}</td>
+			<td>{{c.code}}</td>
+			<td>{{c.get_gender_display}}</td>
 			<td>{{c.aliases}}</td>
 			<td>{{c.description}}</td>
 			{% if isEdit %}

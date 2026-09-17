@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% block onload %}
+	$( "form" ).submit(function( event ) {
+		setTimeout( function() { $('#loader-circle').removeClass('hidden'); }, 3000 );
+	});
+{% endblock onload %}
+{% block content %}
+{% load i18n %}
+{% load format_uci_id %}
+{% load crispy_forms_tags %}
+<style>
+#id_excel_file { width: 600px; }
+</style>
+<h2>{{title}}</h2>
+<hr/>
+{% crispy form %}
+<hr/>
+<p class="text-center">
+&nbsp;<img id='loader-circle' class='hidden' src="{% static "images/loader_circle.gif" %}"</img>&nbsp;
+</p>
+{% if results_str %}
+<pre>{{results_str}}</pre>
+{% endif %}
+<p>
+<h3>Import a Category Format from an Excel spreadsheet.</h3>
+<p>
+<p>
+The spreadsheet must have a specific format:
+<ul>
+<li>The Category Format data <strong>must</strong> be the first Sheet of the spreadsheet</li>
+<li>The first Row of the sheet must be a <strong>Header Row</strong>.</li>
+<li>The Header Row must contain a <strong>Category</strong> column.</li>
+<li>The Header Row may contain a <strong>Gender</strong> column and a <strong>Aliases</strong> column or a <strong>Description</strong> column.
+<li>Other header columns are ignored.</li>
+<li>Capitalization in the Header Row is ignored (Category=category=CATEGORY).  Underscores '_' are treated as spaces.</li>
+<li>Common header names are accepted (for example: Pos=Rank).</li>
+</ul>
+</p>
+<table class="table">
+<thead>
+<tr>
+	<th>Column</th>
+	<th>Aliases</th>
+	<td>Required</td>
+	<th>Description</th>
+</tr>
+</thead>
+<tbody>
+{% for field, aliases, optional, description in column_info %}
+<tr>
+	<td>{{field}}</td>
+	<td>{{aliases|join:" | "}}</td>
+	<td>{% if optional %}Optional{% else %}Required{% endif %}</td>
+	<td>{{description}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</p>
+<hr>
+<h4>{% trans "Total" %}: {{ranking_entries.count}}</h4>
+
+{% spaceless %}
+<table class="table table-striped table-hover table-condensed">
+<thead>
+	<tr>
+		<th></th>
+		<th>{% trans "Code" %}</th>
+		<th>{% trans "Gender" %}</th>
+		<th>{% trans "Aliases" %}</th>
+		<th>{% trans "Description" %}</th>
+	</tr>
+</thead>
+<tbody>
+	{% for c in categories %}
+	<tr>
+		<td class="text-right">{{forloop.counter}}.</td>
+		<td>{{c.code}}</td>
+		<td>{{c.get_gender_display}}</td>
+		<td>{{c.aliases}}</td>
+		<td>{{c.description}}</td>
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endspaceless %}
+
+{% endblock content %}

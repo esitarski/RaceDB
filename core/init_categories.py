@@ -1,4 +1,11 @@
 from django.db import transaction
+from openpyxl import load_workbook
+import sys
+import io
+import itertools
+from . import import_utils
+from .FieldMap import standard_field_map
+from .import_utils import *
 from .models import *
 from .large_delete_all import large_delete_all
 
@@ -257,6 +264,144 @@ def init_categories():
 								description = description, sequence = sequence )
 				c.save()
 				sequence += 1
+
+#-----------------------------------------------------------------------
+
+def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=None, clear_contents=False, message_stream=sys.stdout ):
+	
+	tstart = datetime.datetime.now()
+
+	if message_stream == sys.stdout or message_stream == sys.stderr:
+		def ms_write( s ):
+			message_stream.write( removeDiacritic(s) )
+	else:
+		def ms_write( s ):
+			message_stream.write( '{}'.format(s) )
+	
+	try:
+		category_format = CategoryFormat.objects.get( pk=categoryFormatId )
+	except CategoryFormat.DoesNotExist:
+		ms_write( '**** Cannot find CategoryFormat\n' )
+		return
+	
+	sheet_name = None
+	if worksheet_contents is not None:
+		wb = load_workbook( filename = io.BytesIO(worksheet_contents), read_only=True, data_only=True )
+	else:
+		try:
+			fname, sheet_name = worksheet_name.split('$')
+		except Exception:
+			fname = worksheet_name
+		wb = load_workbook( filename = fname, read_only=True, data_only=True )
+	
+	try:
+		sheet_name = sheet_name or wb.sheetnames[0]
+		ws = wb[sheet_name]
+		ms_write( f'Reading sheet "{sheet_name}"\n' )
+	except Exception:
+		ms_write( f'Cannot find sheet "{sheet_name}"\n' )
+		return
+	
+	if clear_contents:
+		ms_write( '**** Clearing contents.\n' )
+		category_format.category_set.all().delete()
+		i_sequence = itertools.count( 0 )
+	else:
+		i_sequence = itertools.count( category_format.category_set.all().count() )
+		
+	ifm = standard_field_map()
+	
+	to_add = []
+	to_update = set()
+	category_code_seen = set()
+	for i, row in enumerate(ws.iter_rows()):
+		if i == 0:
+			# Get the header fields from the first row.
+			fields = [str(f.value).strip() for f in row]
+			
+			ifm.set_headers( fields )
+			
+			expected_fields = {'category_code', 'aliases', 'description', 'gender',}
+			
+			ms_write( 'Header Row:\n' )
+			for col, f in enumerate(fields, 1):
+				name = ifm.get_name_from_alias( f )
+				if name in expected_fields:
+					ms_write( '        {}. {} --> {}\n'.format(col, f, name) )
+				else:
+					ms_write( '        {}. ****{} (Ignored)\n'.format(col, f) )
+					if name in ifm:
+						del ifm[name]
+			
+			if 'category_code' not in ifm:
+				ms_write( 'Header Row must contain a Category Code\n' )
+				return
+				
+			ms_write( '\n' )
+			continue	
+		
+		values = [v.value for v in row]
+		v = ifm.finder( values )
+		
+		category_code = str(v('category_code',"") or "")
+		if not category_code:
+			ms_write( '**** Row {:>6}: Ignoring. Missing Category Code.\n'.format(i) )
+			continue
+		
+		gender = v('gender', None) or None
+		aliases = v('aliases', None) or None
+		description = v('description', None) or None
+		
+		if not gender:
+			s = utils.remove_diacritic( category_code )
+			if re.search( " Men| Boys| Hommes| Garcon | Hombres| Chicos", s, flags=re.IGNORECASE ):
+				gender = 0
+			elif re.search( " Women| Girls| Femmes| Filles| Mujer | Chicas", s, flags=re.IGNORECASE ):
+				gender = 1
+			else:
+				gender = 2
+		else:
+			s = utils.removeDiacritic( gender )
+			if re.search( "^M|H", s, flags=re.IGNORECASE ):
+				gender = 0
+			elif re.search( "^W|F", s, flags=re.IGNORECASE ):
+				gender = 1
+			else:
+				gender = 2
+		
+		# Check for non-unique keys.
+		if (category_code, gender) in category_code_seen:
+			ms_write( '**** Row {:>6}: Ignoring. Duplicate "{}"\n'.format(i, category_code) )
+			continue
+		category_code_seen.add( (category_code, gender) )
+		
+		category = category_format.category_set.filter( code=category_code, gender=gender ).first()
+		if category:
+			update = False
+			if description and category.description != description:
+				category.description = description
+				update = True
+			if aliases and category.aliases != aliases:
+				category.aliases = aliases
+				update = True
+			if update:
+				to_update.append( category )
+		else:
+			to_add.append(
+				Category(
+					format=category_format,
+					code=category_code, gender=gender,
+					description=description or "", aliases=aliases or "",
+					sequence=next(i_sequence) )
+			)
+	
+	Category.objects.bulk_create( to_add )
+	Category.objects.bulk_update( to_update, ['aliases', 'description'] )
+	
+	validate_sequence( category_format.category_set.all() )
+	
+	ms_write( '\n' )
+	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
 
 if __name__ == '__main__':
 	init_categories()

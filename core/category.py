@@ -1,6 +1,10 @@
+import io
+
 from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
+from .init_categories import read_categories
+from .FieldMap import standard_field_map
 
 @autostrip
 class CategoryFormatForm( ModelForm ):
@@ -10,6 +14,9 @@ class CategoryFormatForm( ModelForm ):
 		
 	def newCategoryCB( self, request, categoryFormat ):
 		return HttpResponseRedirect( pushUrl(request, 'CategoryNew', categoryFormat.id) )
+		
+	def importFromExcelCB( self, request, categoryFormat ):
+		return HttpResponseRedirect( pushUrl(request, 'UploadCategoryFormat', categoryFormat.id) )
 	
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', EDIT_BUTTONS )
@@ -28,14 +35,15 @@ class CategoryFormatForm( ModelForm ):
 		self.additional_buttons = []
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
-					( 'new-category-submit', _('New Category'), 'btn btn-success', self.newCategoryCB ),
+				( 'new-category-submit', _('New Category'), 'btn btn-success', self.newCategoryCB ),
+				( 'immport_from-excel-submit', _('Upload From Excel'), 'btn btn-primart', self.importFromExcelCB ),
 			])
 			
 		addFormButtons( self, button_mask, self.additional_buttons )
 		
 def CategoryFormatsDisplay( request ):
 	search_text = request.session.get('categoryFormat_filter', '')
-	btns = [('new-submit', _('New Category'), 'btn btn-success')]
+	btns = [('new-submit', _('New Category Format'), 'btn btn-success')]
 	
 	if request.method == 'POST':
 	
@@ -164,3 +172,59 @@ def CategorySequence( request, categoryId, sequence ):
 	validate_sequence( elements )
 	return HttpResponseRedirect( getContext(request, 'cancelUrl') )
 	
+#-----------------------------------------------------------------------
+
+@autostrip
+class UploadCategoryFormatForm( Form ):
+	excel_file = forms.FileField( required=True, label=_('Excel Spreadsheet (*.xlsx)') )
+	clear_contents = forms.BooleanField( required=False, label=_('Clear Existing Categories') )
+	
+	def __init__( self, *args, **kwargs ):
+		super().__init__( *args, **kwargs )
+		self.helper = FormHelper( self )
+		self.helper.form_action = '.'
+		self.helper.form_class = 'form-inline'
+		
+		self.helper.layout = Layout(
+			Row(
+				Col( Field('excel_file', accept=".xlsx"), 8),
+			),
+			Row(
+				Col( Field('clear_contents', accept=".xlsx"), 8),
+			),
+		)
+		
+		addFormButtons( self, OK_BUTTON | CANCEL_BUTTON, cancel_alias=_('Done') )
+
+def handle_upload_category_format( categoryFormatId, excel_contents, clear_contents=False ):
+	worksheet_contents = excel_contents.read()
+	message_stream = StringIO()
+	read_categories(
+		categoryFormatId=categoryFormatId,
+		worksheet_contents=worksheet_contents,
+		message_stream=message_stream,
+		clear_contents=clear_contents,
+	)
+	results_str = message_stream.getvalue()
+	return results_str
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def UploadCategoryFormat( request, categoryFormatId ):
+	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
+
+	if request.method == 'POST':
+		form = UploadCategoryFormatForm(request.POST, request.FILES)
+		if form.is_valid():
+			results_str = handle_upload_category_format( categoryFormatId, request.FILES['excel_file'], clear_contents=form.cleaned_data['clear_contents'] )
+	else:
+		form = UploadCategoryFormatForm()
+	
+	ifm = standard_field_map()
+	column_info = [(f, ifm.get_aliases(f), optional, ifm.get_description(f))
+		for f, optional in (('category_format', True), ('aliases', True), ('gender', True), ('description', True))
+	]
+
+	categories = category_format.category_set.all()
+	return render( request, 'upload_category_format.html', locals() )
+
