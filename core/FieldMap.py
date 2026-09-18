@@ -270,7 +270,7 @@ standard_field_aliases = (
 	),
 	('aliases',
 		('Aliases',),
-		"Alternate names separated by '|'.  Regex surrouinded by '/', eg. '/Elite Men.*/'",
+		"Alternate names separated by '|'.  Regex are valid but must be surrounded by '/', eg. '/Elite Men.*/'",
 	),
 	('description',
 		('Description','Desc.'),

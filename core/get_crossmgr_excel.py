@@ -48,6 +48,7 @@ property_headers = (
 	'Distance Unit',
 	'Time Trial',
 	'RFID Option',
+	'Min Possible Lap Time',
 	
 	'Use SFTP',
 	'FTP Host',

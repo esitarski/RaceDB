@@ -1,8 +1,8 @@
+import io
+import sys
+import itertools
 from django.db import transaction
 from openpyxl import load_workbook
-import sys
-import io
-import itertools
 from . import import_utils
 from .FieldMap import standard_field_map
 from .import_utils import *
@@ -276,7 +276,7 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 			message_stream.write( utils.removeDiacritic(s) )
 	else:
 		def ms_write( s ):
-			message_stream.write( '{}'.format(s) )
+			message_stream.write( f'{s}' )
 	
 	try:
 		category_format = CategoryFormat.objects.get( pk=categoryFormatId )
@@ -305,9 +305,8 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 	if clear_contents:
 		ms_write( '**** Clearing contents.\n' )
 		category_format.category_set.all().delete()
-		i_sequence = itertools.count( 0 )
-	else:
-		i_sequence = itertools.count( category_format.category_set.all().count() )
+	
+	i_sequence = itertools.count( category_format.category_set.all().count() )
 		
 	ifm = standard_field_map()
 	
@@ -390,8 +389,10 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 			to_add.append(
 				Category(
 					format=category_format,
-					code=category_code, gender=gender,
-					description=description or "", aliases=aliases or "",
+					code=category_code,
+					gender=gender,
+					description=description or "",
+					aliases=aliases or "",
 					sequence=next(i_sequence)
 				)
 			)

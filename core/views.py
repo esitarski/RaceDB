@@ -2277,7 +2277,7 @@ class EventMassStartForm( ModelForm ):
 				Col(Field('optional'), 6),
 				Col(Field('select_by_default'), 6),
 			),
-			Row( Field('rfid_option') ),
+			Row( Col(Field('rfid_option'), 4), Col(Field('min_possible_lap_time'),4) ),
 			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4), Col(Field('win_and_out'),4) ),
 			Row( Field('note', rows='4', cols='60') ),
 			Row( Col(Field('gpx_course'),3) ),
@@ -2609,7 +2609,7 @@ class EventTTForm( ModelForm ):
 				Col(Field('group_size'), 4),
 				Col(Field('group_size_gap'), 4),
 			),
-			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4) ),
+			Row( Col(Field('road_race_finish_times'),4), Col(Field('dnsNoData'),4), Col(Field('min_possible_lap_time'),4) ),
 			Row( Field('note', rows='4', cols='60') ),
 			Row( Col(Field('gpx_course'),3) ),
 		)

@@ -1821,7 +1821,6 @@ class Event( models.Model ):
 		(2, _('Manual Start: Skip first tag read for all riders.  Required when start run-up passes the finish line.')),
 	)
 	rfid_option = models.PositiveIntegerField( choices=RFID_OPTION_CHOICES, default=1, verbose_name = _('RFID Option') )
-	
 	road_race_finish_times = models.BooleanField( default = False, verbose_name = _("Road Race Finish Times"),
 		help_text = _("Ignore decimals, groups get same time") )
 	
@@ -1831,6 +1830,8 @@ class Event( models.Model ):
 	
 	gpx_course = models.ForeignKey( "GPXCourse", null=True, blank=True, default=None, on_delete=models.SET_NULL, verbose_name=_("GPX Course") )
 
+	min_possible_lap_time = DurationField( default=15.0, verbose_name=_('Min Possible Lap Time') )
+	
 	def get_gpx_course( self ):
 		return self.gpx_course or self.competition.gpx_course_default
 		
