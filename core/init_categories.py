@@ -273,7 +273,7 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 
 	if message_stream == sys.stdout or message_stream == sys.stderr:
 		def ms_write( s ):
-			message_stream.write( removeDiacritic(s) )
+			message_stream.write( utils.removeDiacritic(s) )
 	else:
 		def ms_write( s ):
 			message_stream.write( '{}'.format(s) )
@@ -312,7 +312,7 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 	ifm = standard_field_map()
 	
 	to_add = []
-	to_update = set()
+	to_update = []
 	category_code_seen = set()
 	for i, row in enumerate(ws.iter_rows()):
 		if i == 0:
@@ -371,7 +371,7 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 		
 		# Check for non-unique keys.
 		if (category_code, gender) in category_code_seen:
-			ms_write( '**** Row {:>6}: Ignoring. Duplicate "{}"\n'.format(i, category_code) )
+			ms_write( '**** Row {:>6}: Ignoring. Duplicate "{} ({})"\n'.format(i, category_code, ['Men', 'Women', 'Open'][gender]) )
 			continue
 		category_code_seen.add( (category_code, gender) )
 		
@@ -392,7 +392,8 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 					format=category_format,
 					code=category_code, gender=gender,
 					description=description or "", aliases=aliases or "",
-					sequence=next(i_sequence) )
+					sequence=next(i_sequence)
+				)
 			)
 	
 	Category.objects.bulk_create( to_add )
