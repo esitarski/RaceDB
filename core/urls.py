@@ -294,6 +294,7 @@ urlpatterns = [
 	re_path(r'^.*CategoryFormatCopy/(?P<categoryFormatId>\d+)/$', category.CategoryFormatCopy),
 	re_path(r'^.*CategoryFormatDelete/(?P<categoryFormatId>\d+)/$', category.CategoryFormatDelete),
 	re_path(r'^.*UploadCategoryFormat/(?P<categoryFormatId>\d+)/$', category.UploadCategoryFormat),
+	re_path(r'^.*ExportCategoryFormat/(?P<categoryFormatId>\d+)/$', category.ExportCategoryFormat),
 	
 	re_path(r'^.*CategoryNew/(?P<categoryFormatId>\d+)/$', category.CategoryNew),
 	re_path(r'^.*CategoryEdit/(?P<categoryId>\d+)/$', category.CategoryEdit),

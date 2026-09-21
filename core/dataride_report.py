@@ -9,6 +9,7 @@ from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
 from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
+from .utils import sanitize_windows_filename
 
 class DatarideReportForm( Form ):
 	bibs = forms.CharField( label=_('Bibs'), help_text=_('Bib finish order (paste from timing system)'), widget=forms.Textarea(attrs={'rows': 4, 'cols': 60}))
@@ -112,11 +113,6 @@ def get_report( wave, bibs, finish_times ):
 	'''
 		
 	return report
-
-def sanitize_windows_filename( s ):
-	s = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', s)
-	s = s.strip('. ')
-	return s or "unnamed"
 
 def get_dataride_excel( wave, report ):
 	wb = Workbook()

@@ -2,6 +2,11 @@ import re
 import math
 import unicodedata
 
+def sanitize_windows_filename( s ):
+	s = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', s)
+	s = s.strip('. ')
+	return s or "unnamed"
+
 def uniquify(seq, idfun=None):  
 	# order preserving 
 	if idfun is None:

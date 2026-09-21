@@ -9,6 +9,10 @@ from .import_utils import *
 from .models import *
 from .large_delete_all import large_delete_all
 
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment, PatternFill, Font, Border, Side
+
 uci_road = '''
 RWU13	Women	Road Girls Under 13 <age 10-12>
 RWU15	Women	Road Girls Under 15 <age 13-14>
@@ -404,6 +408,69 @@ def read_categories( categoryFormatId, worksheet_name='', worksheet_contents=Non
 	
 	ms_write( '\n' )
 	ms_write( 'Initialization in: {}\n'.format(datetime.datetime.now() - tstart) )
+
+#-----------------------------------------------------------------------
+
+def get_category_excel( category_format ):
+	wb = Workbook()
+	ws = wb.worksheets[0]
+	ws.title = "Categories"
+	
+	header_fields = (
+		('Code',			'code'),
+		('Gender',			'gender'),
+		('Aliases',			'aliases'),
+		('Description',		'description'),
+	)
+	font_name = 'Calabri'
+	font_regular = Font( name=font_name, size=11 )
+	font_bold = Font( name=font_name, size=11, bold=True )
+	font_title = Font( name=font_name, size=11, color="FFFFFF" )
+	
+	row = 1
+	for col, (header, field) in enumerate(header_fields, 1):
+		cell = ws.cell( row, col )
+		cell.value = header
+		cell.font = font_title
+		cell.fill = PatternFill(fill_type="solid", fgColor="000000")
+	
+	font_regular = Font( name='Arial', size=11 )
+	font_bold = Font( name='Arial', size=11, bold=True )
+	center_fields = {'rank', 'bib', 'country', 'gender', 'sort_order'}
+	for row, c in enumerate(category_format.category_set.all(), 2):
+		for col, (header, field) in enumerate(header_fields, 1):
+			if field is not None:
+				cell = ws.cell( row, col )
+				if field == 'gender':
+					value = str( c.get_gender_display() )
+				else:
+					value = getattr( c, field )
+					
+				cell.value = value
+				cell.font = font_regular
+	
+	# Make all columns wide enough to show the content.
+	for col in ws.columns:
+		max_length = max(len(str(cell.value or "")) for cell in col)
+		ws.column_dimensions[col[0].column_letter].width = max_length + 4
+
+	# Add auto-filter to all culumns.
+	ws.auto_filter.ref = ws.dimensions
+		
+	# Make the rows alternating colors.
+	
+	thin = Side(style='thin', color='000000')
+	border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+	fill_even = PatternFill(fill_type="solid", fgColor="FFFFFF")  # white
+	fill_odd  = PatternFill(fill_type="solid", fgColor="EEF2FF")  # light blue
+
+	for row in ws.iter_rows(min_row=2):  # skip header
+		for cell in row:
+			cell.fill = fill_odd if (row[0].row & 1) else fill_even
+			cell.border = border
+		
+	return wb
 
 if __name__ == '__main__':
 	init_categories()

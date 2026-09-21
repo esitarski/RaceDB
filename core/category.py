@@ -3,8 +3,9 @@ import io
 from django.utils.translation import gettext_lazy as _
 
 from .views_common import *
-from .init_categories import read_categories
+from .init_categories import read_categories, get_category_excel
 from .FieldMap import standard_field_map
+from .utils import sanitize_windows_filename
 
 @autostrip
 class CategoryFormatForm( ModelForm ):
@@ -17,6 +18,9 @@ class CategoryFormatForm( ModelForm ):
 		
 	def importFromExcelCB( self, request, categoryFormat ):
 		return HttpResponseRedirect( pushUrl(request, 'UploadCategoryFormat', categoryFormat.id) )
+	
+	def exportToExcelCB( self, request, categoryFormat ):
+		return HttpResponseRedirect( pushUrl(request, 'ExportCategoryFormat', categoryFormat.id) )
 	
 	def __init__( self, *args, **kwargs ):
 		button_mask = kwargs.pop( 'button_mask', EDIT_BUTTONS )
@@ -37,6 +41,7 @@ class CategoryFormatForm( ModelForm ):
 			self.additional_buttons.extend( [
 				( 'new-category-submit', _('New Category'), 'btn btn-success', self.newCategoryCB ),
 				( 'immport_from-excel-submit', _('Upload From Excel'), 'btn btn-primart', self.importFromExcelCB ),
+				( 'export_to-excel-submit', _('Export to Excel'), 'btn btn-primart', self.exportToExcelCB ),
 			])
 			
 		addFormButtons( self, button_mask, self.additional_buttons )
@@ -228,3 +233,21 @@ def UploadCategoryFormat( request, categoryFormatId ):
 	categories = category_format.category_set.all()
 	return render( request, 'upload_category_format.html', locals() )
 
+
+@access_validation()
+@user_passes_test( lambda u: u.is_superuser )
+def ExportCategoryFormat( request, categoryFormatId ):
+	category_format = get_object_or_404( CategoryFormat, pk=categoryFormatId )
+	
+	wb = get_category_excel( category_format )
+	buffer = io.BytesIO()
+	wb.save( buffer )
+	buffer.seek( 0 )
+	response = HttpResponse(
+		buffer.read(),
+		content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	)
+	now_str = timezone.now().strftime("%Y-%m-%dT%H%M%S")
+	fname = sanitize_windows_filename( f'{category_format.name}-{now_str}' ) + '.xlsx'
+	response["Content-Disposition"] = f'attachment; filename="{fname}"'
+	return response
