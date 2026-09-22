@@ -40,8 +40,8 @@ class CategoryFormatForm( ModelForm ):
 		if button_mask == EDIT_BUTTONS:
 			self.additional_buttons.extend( [
 				( 'new-category-submit', _('New Category'), 'btn btn-success', self.newCategoryCB ),
-				( 'immport_from-excel-submit', _('Upload From Excel'), 'btn btn-primart', self.importFromExcelCB ),
-				( 'export_to-excel-submit', _('Export to Excel'), 'btn btn-primart', self.exportToExcelCB ),
+				( 'import-from-excel-submit', _('Import From Excel'), 'btn btn-primart', self.importFromExcelCB ),
+				( 'export-to-excel-submit', _('Export to Excel'), 'btn btn-primart', self.exportToExcelCB ),
 			])
 			
 		addFormButtons( self, button_mask, self.additional_buttons )

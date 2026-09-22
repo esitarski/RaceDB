@@ -1025,8 +1025,8 @@ class Competition(models.Model):
 				)
 				self.adjust_event_times( time_delta )
 		
-		for w in self.get_waves():
-			w.harmonize_categories()
+			for w in self.get_waves():
+				w.harmonize_categories()
 		
 		return super().save(**kwargs)
 	
@@ -1142,10 +1142,10 @@ class Competition(models.Model):
 		return utils.get_search_text( [self.name, self.organizer] )
 	
 	def get_events_mass_start( self ):
-		return EventMassStart.objects.filter(competition = self).order_by('date_time')
+		return self.eventmassstart_set.all().order_by('date_time')
 		
 	def get_events_tt( self ):
-		return EventTT.objects.filter(competition = self).order_by('date_time')
+		return self.eventtt_set.all().order_by('date_time')
 		
 	def get_events( self ):
 		events = list( self.get_events_mass_start() )
