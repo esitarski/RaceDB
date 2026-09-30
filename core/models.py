@@ -2183,7 +2183,6 @@ class WaveBase( models.Model ):
 	def get_potential_duplicate_bibs( self ):
 		if not self.id:
 			return []
-		competition = self.event.competition
 		
 		other_categories = set()
 		my_categories = set()
@@ -2209,7 +2208,7 @@ class WaveBase( models.Model ):
 		return sorted( other_bibs & my_bibs )
 	
 	def get_participant_options( self ):
-		return self.competition.participantoption_set.filter(
+		return self.event.competition.participantoption_set.filter(
 			option_id=self.event.option_id,
 			participant__role=Participant.Competitor,
 			participant__competition=self.event.competition,
@@ -4011,7 +4010,7 @@ class FormatTimeDelta( datetime.timedelta ):
 	def __str__( self ):
 		return '{}'.format( self.__repr__() )
 
-class ParticipantDefaultValues( object ):
+class ParticipantDefaultValues:
 	def __init__( self, competition ):
 		self.competition = competition
 		self.category_format = self.competition.category_format
@@ -5446,7 +5445,7 @@ class EventTT( Event ):
 			else:
 				p.start_time = tCur + gap_median
 				tCur = p.start_time
-				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur, gap_time_calculated=gap_medium, start_time_custom=None, gap_time_custom=None) )
+				to_create.append( EntryTT(event=self, participant=p, start_time=tCur, start_sequence=sequenceCur, gap_time_calculated=gap_median, start_time_custom=None, gap_time_custom=None) )
 				
 		EntryTT.objects.bulk_create( to_create )
 
