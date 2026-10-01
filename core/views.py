@@ -2542,7 +2542,7 @@ def WaveDelete( request, waveId ):
 	
 @access_validation()
 @user_passes_test( lambda u: u.is_superuser )
-def WaveCallup( request, waveId ):
+def WaveCallupHandler( request, waveId ):
 	wave = get_object_or_404( Wave, pk=waveId )
 	ranking_titles = wave.ranking_titles
 	participants = wave.get_participants_callup_order()
